@@ -35,9 +35,6 @@ const safeUnsubscribe = async (
   if (!listener) return;
 
   if (listener.isTerminating) {
-    console.log(
-      `⏳ [chatCanisterService] Listener ${listenerId} already terminating`,
-    );
     return;
   }
 
@@ -48,14 +45,7 @@ const safeUnsubscribe = async (
       try {
         listener.unsubscribe();
         activeListeners.delete(listenerId);
-        console.log(
-          `✅ [chatCanisterService] Listener ${listenerId} cleaned up`,
-        );
       } catch (error) {
-        console.error(
-          `❌ [chatCanisterService] Error cleaning up listener ${listenerId}:`,
-          error,
-        );
       }
       resolve();
     }, delayMs);
@@ -167,14 +157,6 @@ const adaptBackendConversation = (
 const adaptBackendConversationSummary = (
   backendSummary: any,
 ): FrontendConversationSummary => {
-  console.log("🔍 [adaptBackendConversationSummary] Input:", {
-    conversationId: backendSummary.conversation?.id,
-    hasLastMessage: !!backendSummary.lastMessage,
-    lastMessageIsArray: Array.isArray(backendSummary.lastMessage),
-    lastMessageLength: backendSummary.lastMessage?.length,
-    lastMessageContent: backendSummary.lastMessage?.[0]?.content,
-  });
-
   const adapted = {
     conversation: adaptBackendConversation(backendSummary.conversation),
     lastMessage:
@@ -184,14 +166,6 @@ const adaptBackendConversationSummary = (
         ? backendSummary.lastMessage.map(adaptBackendMessage).filter(Boolean)
         : undefined,
   };
-
-  console.log("✅ [adaptBackendConversationSummary] Output:", {
-    conversationId: adapted.conversation.id,
-    hasLastMessage: !!adapted.lastMessage && adapted.lastMessage.length > 0,
-    lastMessageCount: adapted.lastMessage?.length || 0,
-    firstMessageContent: adapted.lastMessage?.[0]?.content,
-  });
-
   return adapted;
 };
 
@@ -220,10 +194,6 @@ export const chatCanisterService = {
     clientId: string,
     providerId: string,
   ): Promise<FrontendConversation | null> {
-    console.log("🚀 [chatCanisterService] createConversation called with:", {
-      clientId,
-      providerId,
-    });
     try {
       const createConversationFn = httpsCallable(
         functions,
@@ -234,23 +204,10 @@ export const chatCanisterService = {
         clientId,
         providerId,
       });
-
-      console.log(
-        "✅ [chatCanisterService] createConversation raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: any })
         .data;
-      console.log(
-        "✅ [chatCanisterService] createConversation extracted data:",
-        responseData,
-      );
       return adaptBackendConversation(responseData);
     } catch (error) {
-      console.error(
-        "❌ [chatCanisterService] Error creating conversation:",
-        error,
-      );
       throw new Error(`Failed to create conversation: ${error}`);
     }
   },
@@ -266,11 +223,6 @@ export const chatCanisterService = {
     receiverId: string,
     content: string,
   ): Promise<FrontendMessage | null> {
-    console.log("🚀 [chatCanisterService] sendMessage called with:", {
-      conversationId,
-      receiverId,
-      contentLength: content.length,
-    });
     try {
       // Validate message length
       if (content.length > 500) {
@@ -289,16 +241,10 @@ export const chatCanisterService = {
         content: content.trim(),
       });
 
-      console.log("✅ [chatCanisterService] sendMessage raw result:", result);
       const responseData = (result.data as { success: boolean; data: any })
         .data;
-      console.log(
-        "✅ [chatCanisterService] sendMessage extracted data:",
-        responseData,
-      );
       return adaptBackendMessage(responseData);
     } catch (error) {
-      console.error("❌ [chatCanisterService] Error sending message:", error);
       throw new Error(`Failed to send message: ${error}`);
     }
   },
@@ -307,7 +253,6 @@ export const chatCanisterService = {
    * Get all conversations for the current user
    */
   async getMyConversations(): Promise<FrontendConversationSummary[]> {
-    console.log("🚀 [chatCanisterService] getMyConversations called");
     try {
       const getMyConversationsFn = httpsCallable(
         functions,
@@ -316,22 +261,10 @@ export const chatCanisterService = {
 
       const result = await getMyConversationsFn({});
 
-      console.log(
-        "✅ [chatCanisterService] getMyConversations raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: any[] })
         .data;
-      console.log(
-        `✅ [chatCanisterService] getMyConversations extracted ${responseData?.length ?? 0} conversations.`,
-      );
-
       return (responseData || []).map(adaptBackendConversationSummary);
     } catch (error) {
-      console.error(
-        "❌ [chatCanisterService] Error fetching conversations:",
-        error,
-      );
       return [];
     }
   },
@@ -347,14 +280,6 @@ export const chatCanisterService = {
     limit: number = 20,
     offset: number = 0,
   ): Promise<FrontendMessagePage> {
-    console.log(
-      "🚀 [chatCanisterService] getConversationMessages called with:",
-      {
-        conversationId,
-        limit,
-        offset,
-      },
-    );
     try {
       const getConversationMessagesFn = httpsCallable(
         functions,
@@ -367,10 +292,6 @@ export const chatCanisterService = {
         offset,
       });
 
-      console.log(
-        "✅ [chatCanisterService] getConversationMessages raw result:",
-        result,
-      );
       const responseData = (
         result.data as {
           success: boolean;
@@ -381,10 +302,6 @@ export const chatCanisterService = {
           };
         }
       ).data;
-      console.log(
-        `✅ [chatCanisterService] getConversationMessages extracted ${responseData?.messages?.length ?? 0} messages.`,
-      );
-
       return {
         messages: (responseData?.messages || []).map(adaptBackendMessage),
         hasMore: responseData?.hasMore || false,
@@ -394,10 +311,6 @@ export const chatCanisterService = {
             : undefined,
       };
     } catch (error) {
-      console.error(
-        "❌ [chatCanisterService] Error fetching conversation messages:",
-        error,
-      );
       return {
         messages: [],
         hasMore: false,
@@ -410,10 +323,6 @@ export const chatCanisterService = {
    * @param conversationId ID of the conversation
    */
   async markMessagesAsRead(conversationId: string): Promise<boolean> {
-    console.log(
-      "🚀 [chatCanisterService] markMessagesAsRead called for conversation:",
-      conversationId,
-    );
     try {
       const markMessagesAsReadFn = httpsCallable(
         functions,
@@ -424,22 +333,11 @@ export const chatCanisterService = {
         conversationId,
       });
 
-      console.log(
-        "✅ [chatCanisterService] markMessagesAsRead raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: boolean })
         .data;
-      console.log(
-        "✅ [chatCanisterService] markMessagesAsRead extracted data:",
-        responseData,
-      );
+
       return responseData;
     } catch (error) {
-      console.error(
-        "❌ [chatCanisterService] Error marking messages as read:",
-        error,
-      );
       throw new Error(`Failed to mark messages as read: ${error}`);
     }
   },
@@ -451,33 +349,16 @@ export const chatCanisterService = {
   async getConversation(
     conversationId: string,
   ): Promise<FrontendConversation | null> {
-    console.log(
-      "🚀 [chatCanisterService] getConversation called for conversation:",
-      conversationId,
-    );
     try {
       const getConversationFn = httpsCallable(functions, "getConversation");
 
       const result = await getConversationFn({
         conversationId,
       });
-
-      console.log(
-        "✅ [chatCanisterService] getConversation raw result:",
-        result,
-      );
       const responseData = (result.data as { success: boolean; data: any })
         .data;
-      console.log(
-        "✅ [chatCanisterService] getConversation extracted data:",
-        responseData,
-      );
       return adaptBackendConversation(responseData);
     } catch (error) {
-      console.error(
-        "❌ [chatCanisterService] Error fetching conversation:",
-        error,
-      );
       throw new Error(`Failed to fetch conversation: ${error}`);
     }
   },
@@ -501,12 +382,6 @@ export const chatCanisterService = {
       safeUnsubscribe(clientListenerId),
       safeUnsubscribe(providerListenerId),
     ]);
-
-    console.log(
-      "🔔 [chatCanisterService] Setting up real-time listener for conversations:",
-      userId,
-    );
-
     let unsubscribed = false;
     const conversationMap = new Map<string, any>();
 
@@ -517,10 +392,6 @@ export const chatCanisterService = {
           const allConversations = Array.from(conversationMap.values());
           onUpdate(allConversations);
         } catch (error) {
-          console.error(
-            "❌ [chatCanisterService] Error in updateConversations callback:",
-            error,
-          );
         }
       }
     }, 200); // 200ms debounce
@@ -549,18 +420,10 @@ export const chatCanisterService = {
             });
             debouncedUpdate();
           } catch (error) {
-            console.error(
-              "❌ [chatCanisterService] Error processing client conversations snapshot:",
-              error,
-            );
           }
         },
         (error) => {
           if (unsubscribed) return;
-          console.error(
-            "❌ [chatCanisterService] Error in client conversations listener:",
-            error,
-          );
           if (onError && !unsubscribed) onError(error as Error);
         },
       );
@@ -594,18 +457,10 @@ export const chatCanisterService = {
             });
             debouncedUpdate();
           } catch (error) {
-            console.error(
-              "❌ [chatCanisterService] Error processing provider conversations snapshot:",
-              error,
-            );
           }
         },
         (error) => {
           if (unsubscribed) return;
-          console.error(
-            "❌ [chatCanisterService] Error in provider conversations listener:",
-            error,
-          );
           if (onError && !unsubscribed) onError(error as Error);
         },
       );
@@ -620,9 +475,6 @@ export const chatCanisterService = {
       return async () => {
         if (unsubscribed) return;
 
-        console.log(
-          "🔕 [chatCanisterService] Unsubscribing from conversations listener",
-        );
         unsubscribed = true;
 
         await Promise.all([
@@ -631,10 +483,6 @@ export const chatCanisterService = {
         ]);
       };
     } catch (error) {
-      console.error(
-        "❌ [chatCanisterService] Error setting up conversations listener:",
-        error,
-      );
       if (onError) onError(error as Error);
       return async () => {}; // Return no-op unsubscribe
     }
@@ -657,11 +505,6 @@ export const chatCanisterService = {
 
     // Clean up existing listener for this conversation
     await safeUnsubscribe(listenerId);
-
-    console.log(
-      "🔔 [chatCanisterService] Setting up real-time listener for messages:",
-      conversationId,
-    );
 
     let unsubscribed = false;
 
@@ -690,23 +533,13 @@ export const chatCanisterService = {
               id: doc.id,
               ...doc.data(),
             }));
-            console.log(
-              `✅ [chatCanisterService] Real-time update: ${messages.length} messages`,
-            );
             debouncedUpdate(messages);
           } catch (error) {
-            console.error(
-              "❌ [chatCanisterService] Error processing messages snapshot:",
-              error,
-            );
+
           }
         },
         (error) => {
           if (unsubscribed) return;
-          console.error(
-            "❌ [chatCanisterService] Error in messages listener:",
-            error,
-          );
           if (onError && !unsubscribed) onError(error as Error);
         },
       );
@@ -721,18 +554,10 @@ export const chatCanisterService = {
       return async () => {
         if (unsubscribed) return;
 
-        console.log(
-          "🔕 [chatCanisterService] Unsubscribing from messages listener:",
-          conversationId,
-        );
         unsubscribed = true;
         await safeUnsubscribe(listenerId);
       };
     } catch (error) {
-      console.error(
-        "❌ [chatCanisterService] Error setting up messages listener:",
-        error,
-      );
       if (onError) onError(error as Error);
       return async () => {}; // Return no-op unsubscribe
     }
@@ -749,11 +574,6 @@ export const chatCanisterService = {
     onUpdate: (summaries: any[]) => void,
     onError?: (error: Error) => void,
   ): Promise<AsyncUnsubscribe> {
-    console.log(
-      "🔔 [chatCanisterService] Setting up real-time listener for conversation summaries:",
-      userId,
-    );
-
     let unsubscribed = false;
     const conversationMap = new Map<string, any>();
     const lastMessageMap = new Map<string, any>();
@@ -785,10 +605,6 @@ export const chatCanisterService = {
           onUpdate(summaries);
         }
       } catch (error) {
-        console.error(
-          "❌ [chatCanisterService] Error in updateSummaries:",
-          error,
-        );
       }
     }, 300); // 300ms debounce
 
@@ -821,27 +637,15 @@ export const chatCanisterService = {
               }
               updateSummaries();
             } catch (error) {
-              console.error(
-                "❌ [chatCanisterService] Error processing last message snapshot:",
-                error,
-              );
             }
           },
-          (error) => {
+          () => {
             if (unsubscribed) return;
-            console.error(
-              "❌ [chatCanisterService] Error in last message listener:",
-              error,
-            );
           },
         );
 
         messageUnsubscribers.set(conversationId, unsubscribe);
       } catch (error) {
-        console.error(
-          "❌ [chatCanisterService] Error subscribing to last message:",
-          error,
-        );
       }
     };
 
@@ -873,10 +677,6 @@ export const chatCanisterService = {
                   try {
                     unsub();
                   } catch (error) {
-                    console.error(
-                      "❌ [chatCanisterService] Error unsubscribing message listener:",
-                      error,
-                    );
                   }
                   messageUnsubscribers.delete(convId);
                 }
@@ -885,19 +685,11 @@ export const chatCanisterService = {
 
             updateSummaries();
           } catch (error) {
-            console.error(
-              "❌ [chatCanisterService] Error processing conversations update:",
-              error,
-            );
           }
         },
         onError,
       );
     } catch (error) {
-      console.error(
-        "❌ [chatCanisterService] Error setting up conversation summaries listener:",
-        error,
-      );
       if (onError) onError(error as Error);
       return async () => {}; // Return no-op unsubscribe
     }
@@ -905,10 +697,6 @@ export const chatCanisterService = {
     // Return combined unsubscribe function
     return async () => {
       if (unsubscribed) return; // Prevent double unsubscribe
-
-      console.log(
-        "🔕 [chatCanisterService] Unsubscribing from conversation summaries listener",
-      );
       unsubscribed = true;
 
       try {
@@ -917,22 +705,14 @@ export const chatCanisterService = {
           conversationsUnsubscribe = null;
         }
 
-        messageUnsubscribers.forEach((unsub, convId) => {
+        messageUnsubscribers.forEach((unsub,) => {
           try {
             unsub();
           } catch (error) {
-            console.error(
-              `❌ [chatCanisterService] Error unsubscribing message listener for ${convId}:`,
-              error,
-            );
           }
         });
         messageUnsubscribers.clear();
       } catch (error) {
-        console.error(
-          "❌ [chatCanisterService] Error during conversation summaries unsubscribe:",
-          error,
-        );
       }
     };
   },

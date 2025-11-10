@@ -32,7 +32,6 @@ export const useUserProfile = () => {
         const userProfile = await authCanisterService.getMyProfile();
         setProfile(userProfile);
       } catch (err) {
-        //console.error("Failed to fetch profile:", err);
         setError("Could not load your profile.");
       } finally {
         setLoading(false);
@@ -51,7 +50,6 @@ export const useUserProfile = () => {
         await mediaService.uploadProfilePictureWithDescaling(imageFile);
       return updatedProfile;
     } catch (error) {
-      //console.error("Error uploading profile picture:", error);
       throw error;
     }
   };
@@ -90,7 +88,6 @@ export const useUserProfile = () => {
             setProfile(updatedProfileWithImage);
           }
         } catch (imageError) {
-          console.error("Error uploading profile image:", imageError);
           throw new Error(
             "Failed to upload image. It might be too large or in an unsupported format. Please try a different image.",
           );
@@ -116,7 +113,6 @@ export const useUserProfile = () => {
       await fetchProfile();
       return true;
     } catch (err) {
-      console.error("Error updating profile:", err);
       const errorMessage = (err as Error).message;
       setError(errorMessage);
       return false;
@@ -150,7 +146,6 @@ export const useUserProfile = () => {
       }
     } catch (err) {
       const errorMessage = (err as Error).message;
-      //console.error("Error switching role:", errorMessage);
       setError(errorMessage);
       return false;
     } finally {
@@ -182,7 +177,6 @@ export const useUserProfile = () => {
       }
     } catch (err) {
       const errorMessage = (err as Error).message;
-      //console.error("Error removing profile picture:", errorMessage);
       setError(errorMessage);
       return false;
     } finally {

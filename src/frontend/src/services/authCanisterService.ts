@@ -76,7 +76,6 @@ export const authCanisterService = {
 
       throw new Error("Failed to fetch service providers");
     } catch (error) {
-      console.error("Error fetching service providers:", error);
       throw new Error(`Failed to fetch service providers: ${error}`);
     }
   },
@@ -95,7 +94,6 @@ export const authCanisterService = {
 
       return null;
     } catch (error) {
-      console.error("Error fetching profile:", error);
       return null;
     }
   },
@@ -114,7 +112,6 @@ export const authCanisterService = {
 
       return null;
     } catch (error) {
-      console.error("Error fetching my profile:", error);
       return null;
     }
   },
@@ -143,7 +140,6 @@ export const authCanisterService = {
 
       throw new Error("Failed to create profile");
     } catch (error) {
-      console.error("Error creating profile:", error);
       throw error;
     }
   },
@@ -157,7 +153,6 @@ export const authCanisterService = {
       const result = await identityBridge.validatePhone(phone);
       return result.success;
     } catch (error) {
-      console.error("Error validating phone:", error);
       return false;
     }
   },
@@ -180,7 +175,6 @@ export const authCanisterService = {
 
       throw new Error("Failed to update profile");
     } catch (error) {
-      console.error("Error updating profile:", error);
       throw error;
     }
   },
@@ -199,24 +193,10 @@ export const authCanisterService = {
 
       throw new Error("Failed to switch user role");
     } catch (error) {
-      console.error("Error switching user role:", error);
       throw error;
     }
   },
 
-  /**
-   * Set canister references (DEPRECATED - No longer needed with Firebase)
-   * Kept for backward compatibility but does nothing
-   */
-  async setCanisterReferences(
-    providedMediaCanisterId?: string,
-  ): Promise<string | null> {
-    console.log(providedMediaCanisterId);
-    console.warn(
-      "setCanisterReferences is deprecated in Firebase architecture",
-    );
-    return null;
-  },
 
   /**
    * Upload a profile picture
@@ -254,7 +234,6 @@ export const authCanisterService = {
 
       throw new Error("Failed to upload profile picture");
     } catch (error) {
-      console.error("Error uploading profile picture:", error);
       throw error;
     }
   },
@@ -272,7 +251,6 @@ export const authCanisterService = {
 
       throw new Error("Failed to remove profile picture");
     } catch (error) {
-      console.error("Error removing profile picture:", error);
       throw error;
     }
   },
@@ -298,9 +276,7 @@ export const authCanisterService = {
         );
       }
 
-      console.log(`✅ User active status updated to: ${isActive}`);
     } catch (error) {
-      console.error("Error updating user active status:", error);
       throw error;
     }
   },

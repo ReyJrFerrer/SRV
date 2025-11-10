@@ -121,7 +121,6 @@ const ClientServiceDetailsPage: React.FC = () => {
           setHasSufficientReputation(true);
         }
       } catch (error) {
-        console.error("Error checking reputations:", error);
         setReputationError(
           "Unable to verify reputation requirements. Please try again later.",
         );

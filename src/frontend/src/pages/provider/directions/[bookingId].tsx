@@ -58,15 +58,11 @@ const ProviderDirectionsPage: React.FC = () => {
     }
 
     if (!booking) {
-      console.warn("Directions: booking not found");
       navigate("/provider/bookings", { replace: true });
       return;
     }
 
     if (booking.status !== "Accepted") {
-      console.warn(
-        `Directions: booking status is ${booking.status}, not Accepted`,
-      );
       navigate("/provider/bookings", { replace: true });
       return;
     }
@@ -324,8 +320,6 @@ const ProviderDirectionsPage: React.FC = () => {
             lastOriginRef.current = origin;
           } else {
             setDirectionsStatus("failed");
-            // eslint-disable-next-line no-console
-            console.error("Directions request failed:", status);
           }
         },
       );
@@ -725,7 +719,6 @@ const ProviderDirectionsPage: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error("Failed to start service:", error);
     } finally {
       setIsStartingService(false);
     }

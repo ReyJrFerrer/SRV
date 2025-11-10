@@ -34,7 +34,6 @@ export const useChatNotifications = () => {
         return total + count;
       }, 0);
     } catch (error) {
-      //console.error("Failed to fetch real unread count:", error);
       return 0;
     }
   }, [isAuthenticated, identity]);
@@ -67,8 +66,6 @@ export const useChatNotifications = () => {
       const realCount = await fetchRealUnreadCount();
       setUnreadChatCount(realCount);
     } catch (error) {
-      //console.error("Failed to get real unread count, using fallback:", error);
-      // Fallback to localStorage-based count
       const fallbackCount = checkFallbackUnreadStatus();
       setUnreadChatCount(fallbackCount);
     } finally {
@@ -127,7 +124,6 @@ export const useChatNotifications = () => {
       localStorage.setItem(HAS_UNREAD_CHATS_KEY, "false");
       window.dispatchEvent(new CustomEvent(CHATS_READ_EVENT));
     } catch (error) {
-      //console.error("Failed to mark chats as read:", error);
 
       // Fallback to localStorage method
       localStorage.setItem(HAS_UNREAD_CHATS_KEY, "false");

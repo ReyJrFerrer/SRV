@@ -42,7 +42,6 @@ export const persistentImageCache = {
     try {
       // Validate data URL before caching
       if (!isValidDataUrl(dataUrl)) {
-        console.warn("Attempted to cache invalid or blank image data");
         return;
       }
 
@@ -55,8 +54,6 @@ export const persistentImageCache = {
         JSON.stringify(cacheData),
       );
     } catch (error) {
-      // SessionStorage might be full or unavailable
-      console.warn("Failed to cache image:", error);
       // If storage is full, try to clear old entries
       if (error instanceof Error && error.name === "QuotaExceededError") {
         this.clearExpired();
@@ -84,14 +81,12 @@ export const persistentImageCache = {
 
       // Validate the cached data before returning
       if (!isValidDataUrl(dataUrl)) {
-        console.warn("Cached image data is invalid, clearing");
         sessionStorage.removeItem(`${CACHE_KEY_PREFIX}${key}`);
         return null;
       }
 
       return dataUrl;
     } catch (error) {
-      console.warn("Failed to retrieve cached image:", error);
       // Clear corrupted cache entry
       try {
         sessionStorage.removeItem(`${CACHE_KEY_PREFIX}${key}`);
@@ -108,7 +103,6 @@ export const persistentImageCache = {
     try {
       sessionStorage.removeItem(`${CACHE_KEY_PREFIX}${key}`);
     } catch (error) {
-      console.warn("Failed to clear cached image:", error);
     }
   },
 
@@ -137,7 +131,6 @@ export const persistentImageCache = {
         }
       });
     } catch (error) {
-      console.warn("Failed to clear expired cached images:", error);
     }
   },
 
@@ -153,7 +146,6 @@ export const persistentImageCache = {
         }
       });
     } catch (error) {
-      console.warn("Failed to clear all cached images:", error);
     }
   },
 };

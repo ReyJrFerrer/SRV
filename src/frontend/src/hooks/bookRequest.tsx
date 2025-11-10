@@ -114,7 +114,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
             );
             setProviderProfile(providerData);
           } catch (providerError) {
-            console.warn("Could not load provider profile:", providerError);
             setProviderProfile(null);
           }
 
@@ -145,7 +144,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load service data";
       setError(errorMessage);
-      console.error("Error loading service data:", err);
       setLoading(false);
     }
   }, []);
@@ -210,7 +208,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         return isAvailable || false;
       } catch (err) {
-        //console.log("Same-day booking not available for this service today");
         return false;
       }
     },
@@ -242,7 +239,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         return availableSlots;
       } catch (err) {
-        //console.error("Error fetching available slots:", err);
         setAvailableSlots([]);
         return [];
       }
@@ -272,7 +268,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
         }
 
         if (isNaN(hours) || isNaN(minutes)) {
-          //console.error("Invalid time slot format:", timeSlot);
           return false;
         }
 
@@ -289,29 +284,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         // Debug logging
         const currentTime = new Date();
-        const isToday = date.toDateString() === currentTime.toDateString();
-        console.log("🔍 [checkTimeSlotAvailability] Debug info:", {
-          originalTimeSlot: timeSlot,
-          parsedHours: hours,
-          parsedMinutes: minutes,
-          originalDate: date.toISOString(),
-          requestedDateTime: requestedDateTime.toISOString(),
-          dayOfWeek: requestedDateTime.getDay(),
-          dayName: [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-          ][requestedDateTime.getDay()],
-          isToday,
-          currentTime: currentTime.toISOString(),
-          timeDifferenceHours:
-            (requestedDateTime.getTime() - currentTime.getTime()) /
-            (1000 * 60 * 60),
-        }); // IMPORTANT: Using booking canister for availability check (with conflict checking)
+        date.toDateString() === currentTime.toDateString();
         const isAvailable =
           await bookingCanisterService.checkServiceAvailability(
             serviceId,
@@ -320,7 +293,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
 
         return isAvailable || false;
       } catch (err) {
-        //console.error("Error checking time slot availability:", err);
         return false;
       }
     },
@@ -394,24 +366,9 @@ export const useBookRequest = (): UseBookRequestReturn => {
         const scheduledDate = new Date(baseDate);
         scheduledDate.setHours(endHour, endMinute, 0, 0);
 
-        // Debug logging
-        console.log("🔍 [createBookingRequest] Booking times:", {
-          bookingType: bookingData.bookingType,
-          scheduledTime: bookingData.scheduledTime,
-          requestedDate: requestedDate.toISOString(),
-          requestedDayOfWeek: requestedDate.getDay(),
-          scheduledDate: scheduledDate.toISOString(),
-          scheduledDayOfWeek: scheduledDate.getDay(),
-        });
-
         // Validate that totalPrice is a valid number
         const totalPrice = Number(bookingData.totalPrice);
         if (isNaN(totalPrice) || totalPrice < 0) {
-          // //console.error("❌ Invalid total price for BigInt conversion:", {
-          //   originalPrice: bookingData.totalPrice,
-          //   convertedPrice: totalPrice,
-          //   type: typeof bookingData.totalPrice,
-          // });
           throw new Error(`Invalid total price: ${bookingData.totalPrice}`);
         }
 
@@ -433,13 +390,11 @@ export const useBookRequest = (): UseBookRequestReturn => {
           bookingData.paymentId, // Pass the payment ID (Xendit invoice ID) for e-wallet payments
           bookingData.locationDetection || "manual", // Pass the location detection mode
         );
-        //console.log("✅ Booking created successfully:", booking);
         return booking;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to create booking";
         setError(errorMessage);
-        //console.error("❌ Error creating booking:", err);
         return null;
       } finally {
         setLoading(false);

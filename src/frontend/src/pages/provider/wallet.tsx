@@ -95,12 +95,10 @@ const WalletPage: React.FC = () => {
     const checkOnboardingStatus = async () => {
       try {
         const profile = await authCanisterService.getMyProfile();
-        console.log("Profile onboarding check", profile);
         if (profile && !profile.isOnboarded) {
           setShowOnboardingModal(true);
         }
       } catch (error) {
-        console.error("Error checking onboarding status:", error);
       }
     };
 
@@ -176,7 +174,6 @@ const WalletPage: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error(`Error checking invoice ${invoiceId}:`, error);
       }
     }
 

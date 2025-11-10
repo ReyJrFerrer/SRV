@@ -81,7 +81,6 @@ export const useChat = () => {
 
         return userName;
       } catch (error) {
-        //console.error("Failed to fetch user name:", error);
         const fallbackName = `User ${userId.slice(0, 8)}...`;
 
         // Cache the fallback name to avoid repeated failed requests
@@ -203,15 +202,12 @@ export const useChat = () => {
     }
 
     const userId = identity.getPrincipal().toString();
-    console.log("🔔 [useChat] Setting up conversations listener for:", userId);
 
     // Cleanup existing listener
     if (conversationsUnsubscribe.current) {
-      console.log("🔄 [useChat] Cleaning up existing conversations listener");
       try {
         await conversationsUnsubscribe.current();
       } catch (error) {
-        console.error("❌ [useChat] Error cleaning up listener:", error);
       }
       conversationsUnsubscribe.current = null;
     }
@@ -228,10 +224,6 @@ export const useChat = () => {
           async (summaries) => {
             if (!isMountedRef.current) return;
 
-            console.log(
-              `✅ [useChat] Real-time update: ${summaries.length} conversations`,
-            );
-
             try {
               // Enhance conversations with user names
               const enhancedConversations =
@@ -242,23 +234,14 @@ export const useChat = () => {
                 setLoading(false);
               }
             } catch (error) {
-              console.error(
-                "❌ [useChat] Error enhancing conversations:",
-                error,
-              );
               if (isMountedRef.current) {
                 setError("Could not load conversations.");
                 setLoading(false);
               }
             }
           },
-          (error) => {
+          () => {
             if (!isMountedRef.current) return;
-
-            console.error(
-              "❌ [useChat] Error in conversations listener:",
-              error,
-            );
             if (isMountedRef.current) {
               setError("Could not load conversations.");
               setLoading(false);
@@ -266,10 +249,6 @@ export const useChat = () => {
           },
         );
     } catch (error) {
-      console.error(
-        "❌ [useChat] Error setting up conversations listener:",
-        error,
-      );
       if (isMountedRef.current) {
         setError("Could not set up conversations listener.");
         setLoading(false);
@@ -301,7 +280,6 @@ export const useChat = () => {
         );
         return messagePage;
       } catch (err) {
-        //console.error("Failed to fetch messages:", err);
         throw new Error("Could not load messages.");
       }
     },
@@ -330,34 +308,20 @@ export const useChat = () => {
       try {
         // Cleanup existing messages listener
         if (messagesUnsubscribe.current) {
-          console.log("🔄 [useChat] Cleaning up existing messages listener");
           try {
             await messagesUnsubscribe.current();
           } catch (error) {
-            console.error(
-              "❌ [useChat] Error cleaning up messages listener:",
-              error,
-            );
           }
           messagesUnsubscribe.current = null;
         }
 
         if (!isMountedRef.current) return;
 
-        // Setup real-time listener for messages
-        console.log(
-          "🔔 [useChat] Setting up messages listener for:",
-          conversationId,
-        );
         messagesUnsubscribe.current =
           await chatCanisterService.subscribeToMessages(
             conversationId,
             (rawMessages) => {
               if (!isMountedRef.current) return;
-
-              console.log(
-                `✅ [useChat] Real-time update: ${rawMessages.length} messages`,
-              );
 
               try {
                 // Adapt messages to frontend format
@@ -367,29 +331,20 @@ export const useChat = () => {
                   setLoading(false);
                 }
               } catch (error) {
-                console.error("❌ [useChat] Error adapting messages:", error);
                 if (isMountedRef.current) {
                   setError("Could not process messages.");
                   setLoading(false);
                 }
               }
             },
-            (error) => {
+            () => {
               if (!isMountedRef.current) return;
-
-              console.error("❌ [useChat] Error in messages listener:", error);
               if (isMountedRef.current) {
                 setError("Could not load messages.");
                 setLoading(false);
               }
             },
           );
-
-        // Setup polling fallback (3 seconds)
-        console.log(
-          "⏰ [useChat] Starting polling mechanism for:",
-          conversationId,
-        );
 
         // Clear any existing polling interval
         if (pollingIntervalRef.current) {
@@ -406,7 +361,6 @@ export const useChat = () => {
           }
 
           try {
-            console.log("🔄 [useChat] Polling for new messages...");
             const messagePage =
               await chatCanisterService.getConversationMessages(
                 conversationId,
@@ -418,13 +372,8 @@ export const useChat = () => {
               const adaptedMessages =
                 messagePage.messages.map(adaptBackendMessage);
               setMessages(adaptedMessages);
-              console.log(
-                `✅ [useChat] Polling update: ${adaptedMessages.length} messages`,
-              );
             }
           } catch (error) {
-            console.error("❌ [useChat] Error polling messages:", error);
-            // Don't set error state for polling failures, just log it
           }
         }, 3000);
 
@@ -441,7 +390,6 @@ export const useChat = () => {
           await chatCanisterService.markMessagesAsRead(conversationId);
         }
       } catch (err) {
-        console.error("Failed to load conversation:", err);
         if (isMountedRef.current) {
           setError("Could not load conversation.");
           setLoading(false);
@@ -488,7 +436,6 @@ export const useChat = () => {
 
         return newMessage;
       } catch (err) {
-        //console.error("Failed to send message:", err);
         setError(
           err instanceof Error ? err.message : "Could not send message.",
         );
@@ -528,7 +475,6 @@ export const useChat = () => {
 
         return newConversation;
       } catch (err) {
-        //console.error("Failed to create conversation:", err);
         setError("Could not create conversation.");
         throw err;
       } finally {
@@ -552,7 +498,6 @@ export const useChat = () => {
         await chatCanisterService.markMessagesAsRead(conversationId);
         // Real-time listener will automatically update unread counts
       } catch (err) {
-        console.error("Failed to mark messages as read:", err);
       }
     },
     [isAuthenticated, identity],
@@ -577,7 +522,6 @@ export const useChat = () => {
    * Cleanup all real-time listeners
    */
   const cleanupListeners = useCallback(async () => {
-    console.log("🔕 [useChat] Cleaning up all listeners");
 
     try {
       if (conversationsUnsubscribe.current) {
@@ -585,10 +529,6 @@ export const useChat = () => {
         conversationsUnsubscribe.current = null;
       }
     } catch (error) {
-      console.error(
-        "❌ [useChat] Error cleaning up conversations listener:",
-        error,
-      );
     }
 
     try {
@@ -597,7 +537,6 @@ export const useChat = () => {
         messagesUnsubscribe.current = null;
       }
     } catch (error) {
-      console.error("❌ [useChat] Error cleaning up messages listener:", error);
     }
   }, []);
 
@@ -607,7 +546,6 @@ export const useChat = () => {
   const clearCurrentConversation = useCallback(async () => {
     // Clear polling interval
     if (pollingIntervalRef.current) {
-      console.log("⏹️ [useChat] Stopping polling mechanism");
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
@@ -619,7 +557,6 @@ export const useChat = () => {
         messagesUnsubscribe.current = null;
       }
     } catch (error) {
-      console.error("❌ [useChat] Error cleaning up messages listener:", error);
     }
 
     if (isMountedRef.current) {
@@ -631,7 +568,6 @@ export const useChat = () => {
 
   // Setup real-time listeners on auth state change
   useEffect(() => {
-    console.log("🔄 [useChat] Auth state changed, updating listeners");
 
     if (isAuthenticated && identity && isMountedRef.current) {
       setupConversationsListener();
@@ -645,9 +581,6 @@ export const useChat = () => {
 
     // Cleanup on unmount or auth change
     return () => {
-      console.log(
-        "🔕 [useChat] Cleaning up listeners (unmount or auth change)",
-      );
       cleanupListeners();
     };
   }, [

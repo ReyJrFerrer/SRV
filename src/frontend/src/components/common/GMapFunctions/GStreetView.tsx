@@ -41,8 +41,6 @@ const GStreetView: React.FC<Props> = ({
         );
         return true;
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.debug("StreetView init failed:", e);
         failedRef.current = true;
         return false;
       }

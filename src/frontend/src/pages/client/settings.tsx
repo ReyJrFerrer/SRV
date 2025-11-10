@@ -59,7 +59,6 @@ const SettingsPage: React.FC = () => {
       await switchRole();
       navigate("/provider/settings");
     } catch (error) {
-      console.error("Failed to switch role:", error);
     } finally {
       setSwitching(false);
     }

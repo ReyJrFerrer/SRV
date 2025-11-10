@@ -78,7 +78,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
           estimatedCommission: validation.estimatedCommission,
         });
       } catch (error) {
-        console.error("Error checking commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };
@@ -409,7 +408,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   const reviewButtonContent = getReviewButtonContent();
 
-  console.log(booking);
 
   // --- Render: Booking Card Layout ---
   return (

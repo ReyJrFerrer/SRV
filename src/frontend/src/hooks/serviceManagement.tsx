@@ -366,7 +366,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Error handling
   const handleError = useCallback((error: any, operation: string) => {
-    //console.error(`Error in ${operation}:`, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     setError(`${operation}: ${errorMessage}`);
   }, []);
@@ -414,7 +413,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
         }
         return null;
       } catch (error) {
-        //console.error("Error fetching provider profile:", error);
         return null;
       }
     },
@@ -1123,7 +1121,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
           await fetchUserProfile();
           break;
         default:
-        //console.warn(`Retry not implemented for operation: ${operation}`);
       }
     },
     [fetchServices, fetchCategories, fetchUserProfile],

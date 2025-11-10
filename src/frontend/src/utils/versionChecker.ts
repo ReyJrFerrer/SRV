@@ -21,12 +21,10 @@ export async function initVersionChecker(): Promise<void> {
   try {
     // Get initial version
     currentVersion = await fetchVersion();
-    console.log("📦 App version:", currentVersion);
 
     // Start periodic checks
     startVersionCheck();
   } catch (error) {
-    console.warn("⚠️ Version checker initialization failed:", error);
   }
 }
 
@@ -49,8 +47,6 @@ async function fetchVersion(): Promise<string> {
     const data: VersionInfo = await response.json();
     return data.buildTime;
   } catch (error) {
-    // If version file doesn't exist yet, return current timestamp
-    console.warn("Version file not found, using fallback");
     return new Date().toISOString();
   }
 }
@@ -68,15 +64,10 @@ function startVersionCheck(): void {
       const latestVersion = await fetchVersion();
 
       if (currentVersion && latestVersion !== currentVersion) {
-        console.log("🔄 New version detected!");
-        console.log("Current:", currentVersion);
-        console.log("Latest:", latestVersion);
-
         // Notify user about new version
         showUpdateNotification();
       }
     } catch (error) {
-      console.warn("Version check failed:", error);
     }
   }, VERSION_CHECK_INTERVAL);
 }
@@ -241,7 +232,6 @@ async function clearAllCaches(): Promise<void> {
       await Promise.all(
         cacheNames.map((cacheName) => caches.delete(cacheName)),
       );
-      console.log("✅ Cleared Cache API");
     }
 
     // Unregister service workers
@@ -250,15 +240,12 @@ async function clearAllCaches(): Promise<void> {
       await Promise.all(
         registrations.map((registration) => registration.unregister()),
       );
-      console.log("✅ Unregistered service workers");
     }
 
     // Clear localStorage version marker
     localStorage.removeItem("app-version");
 
-    console.log("✅ All caches cleared");
   } catch (error) {
-    console.error("Failed to clear caches:", error);
   }
 }
 
@@ -270,7 +257,6 @@ export async function checkForUpdates(): Promise<boolean> {
     const latestVersion = await fetchVersion();
     return currentVersion !== latestVersion;
   } catch (error) {
-    console.error("Failed to check for updates:", error);
     return false;
   }
 }

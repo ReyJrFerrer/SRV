@@ -144,7 +144,6 @@ const PayoutSettingsPage: React.FC = () => {
         );
       }
     } catch (err: any) {
-      console.error("Error setting up payout:", err);
       setError(
         err.message || "Failed to set up payout settings. Please try again.",
       );

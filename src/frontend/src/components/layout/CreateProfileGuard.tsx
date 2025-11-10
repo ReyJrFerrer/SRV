@@ -28,7 +28,6 @@ export const CreateProfileGuard: React.FC<CreateProfileGuardProps> = ({
 
       // If not authenticated, redirect to landing page
       if (!isAuthenticated || !identity) {
-        console.log("Not authenticated, redirecting to landing page");
         navigate("/", { replace: true });
         return;
       }
@@ -38,28 +37,18 @@ export const CreateProfileGuard: React.FC<CreateProfileGuardProps> = ({
         const profile = await authCanisterService.getMyProfile();
 
         if (profile && profile.name && profile.phone) {
-          // User already has a complete profile - redirect based on their role
-          console.log(
-            "User already has a profile, cannot access create-profile page",
-          );
 
           if (profile.activeRole === "Client") {
             navigate("/client/home", { replace: true });
           } else if (profile.activeRole === "ServiceProvider") {
             navigate("/provider/home", { replace: true });
           } else {
-            // Has profile but no valid role - allow access to update role
-            console.log("Profile exists but no valid role, allowing access");
             setCanAccessCreateProfile(true);
           }
         } else {
-          // No complete profile - allow access to create-profile page
-          console.log("No complete profile found, allowing access");
           setCanAccessCreateProfile(true);
         }
       } catch (err) {
-        // Error fetching profile (likely "Profile not found") - allow access
-        console.log("Profile not found or error, allowing profile creation");
         setCanAccessCreateProfile(true);
       } finally {
         setIsChecking(false);

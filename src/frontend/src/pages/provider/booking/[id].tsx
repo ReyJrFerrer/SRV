@@ -141,7 +141,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
         setClientReviews(reviews);
         setClientReputation(reputation);
       } catch (error) {
-        console.error("Failed to fetch client data:", error);
       }
     };
 
@@ -172,7 +171,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
           loading: false,
         });
       } catch (error) {
-        //console.error("Error validating commission:", error);
         setCommissionValidation({
           estimatedCommission: 0,
           hasInsufficientBalance: true,
@@ -282,7 +280,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
       }
       setCancellingBooking(null);
     } catch (error) {
-      console.error("Error cancelling booking:", error);
       toast.error("Failed to cancel booking. Please try again.");
       throw error;
     } finally {
@@ -290,7 +287,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
-  console.log("From booking details page", specificBooking);
 
   // Updated: Navigate to directions page if location was detected automatically, otherwise start directly
   const handleStartService = useCallback(async () => {

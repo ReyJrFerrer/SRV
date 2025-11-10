@@ -78,18 +78,9 @@ export function initializeFirebase(): {
           connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
           connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
           emulatorsConnected = true;
-          console.log(
-            "🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
-          );
         } catch (emulatorError) {
-          console.warn(
-            "Emulator connection skipped (may already be connected):",
-            emulatorError,
-          );
         }
       }
-
-      console.log("Firebase already initialized");
       return {
         app: firebaseApp,
         auth: firebaseAuth,
@@ -111,7 +102,6 @@ export function initializeFirebase(): {
 
     // Validate required config
     if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-      console.error("Firebase config missing required fields");
       throw new Error("Firebase configuration is incomplete");
     }
 
@@ -132,18 +122,13 @@ export function initializeFirebase(): {
         connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
         connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
         emulatorsConnected = true;
-        console.log(
-          "🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
-        );
       } catch (emulatorError) {
-        console.warn("Could not connect to emulators:", emulatorError);
       }
     }
 
     // Set language code for auth (optional)
     firebaseAuth.languageCode = "en";
 
-    console.log("✅ Firebase initialized successfully");
     return {
       app: firebaseApp,
       auth: firebaseAuth,
@@ -152,7 +137,6 @@ export function initializeFirebase(): {
       firestore: firebaseFirestore,
     };
   } catch (error) {
-    console.error("❌ Failed to initialize Firebase:", error);
     throw error;
   }
 }
@@ -234,11 +218,7 @@ export function storeICCustomToken(token: string): void {
   try {
     localStorage.setItem(IC_TOKEN_KEY, token);
     localStorage.setItem(IC_TOKEN_TIMESTAMP_KEY, Date.now().toString());
-    console.log(
-      "🔐 Stored IC custom token in localStorage for session restoration",
-    );
   } catch (error) {
-    console.error("Failed to store IC custom token:", error);
   }
 }
 
@@ -261,17 +241,12 @@ export function getStoredICCustomToken(): string | null {
 
     // Check if token is still valid (less than 55 minutes old)
     if (age > TOKEN_VALIDITY_DURATION) {
-      console.log("⏰ IC custom token expired, clearing...");
       clearICCustomToken();
       return null;
     }
 
-    console.log(
-      `✅ IC custom token is valid (age: ${Math.floor(age / 60000)} minutes)`,
-    );
     return token;
   } catch (error) {
-    console.error("Failed to retrieve IC custom token:", error);
     return null;
   }
 }
@@ -283,8 +258,6 @@ export function clearICCustomToken(): void {
   try {
     localStorage.removeItem(IC_TOKEN_KEY);
     localStorage.removeItem(IC_TOKEN_TIMESTAMP_KEY);
-    console.log("🗑️ Cleared stored IC custom token from localStorage");
   } catch (error) {
-    console.error("Failed to clear IC custom token:", error);
   }
 }

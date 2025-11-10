@@ -96,7 +96,6 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
               },
             };
           } catch (err) {
-            console.error(`Error fetching data for service ${serviceId}:`, err);
             // Find the service to get media URLs even on error
             const service = services.find((s) => s.id === serviceId);
             return {

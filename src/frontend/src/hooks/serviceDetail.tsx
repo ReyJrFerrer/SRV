@@ -310,7 +310,6 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
                 serviceData.providerId,
               );
             } catch (err) {
-              console.error("Failed to fetch provider data:", err);
             }
           }
 
@@ -325,7 +324,6 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
           setService(formattedService);
           setError(null);
         } catch (err) {
-          console.error("Failed to process service data:", err);
           setError("Failed to load service data");
         } finally {
           setLoading(false);
@@ -359,7 +357,6 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
         setService(formattedService);
       }
     } catch (err) {
-      console.error("Failed to refetch service:", err);
     }
   }, [serviceId]);
 

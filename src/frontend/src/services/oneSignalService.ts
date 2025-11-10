@@ -48,7 +48,6 @@ class OneSignalService {
         JSON.stringify(metadata),
       );
     } catch (error) {
-      console.error("OneSignal: Failed to save player ID metadata", error);
     }
   }
 
@@ -59,7 +58,6 @@ class OneSignalService {
     try {
       localStorage.removeItem(this.PLAYER_ID_STORAGE_KEY);
     } catch (error) {
-      console.error("OneSignal: Failed to clear player ID metadata", error);
     }
   }
 
@@ -69,19 +67,13 @@ class OneSignalService {
    */
   setupAfterInit(): void {
     if (this.isInitialized) {
-      console.log("OneSignal: Already setup");
       return;
     }
 
     // Check if OneSignal SDK is loaded
     if (typeof window.OneSignal === "undefined") {
-      console.error(
-        "OneSignal: SDK not loaded. Make sure OneSignal.init() is called first.",
-      );
       return;
     }
-
-    console.log("OneSignal: Setting up service wrapper...");
 
     this.isInitialized = true;
 
@@ -93,9 +85,6 @@ class OneSignalService {
     try {
       const isSubscribed = window.OneSignal.User.PushSubscription.optedIn;
       if (isSubscribed) {
-        console.log(
-          "OneSignal: User previously subscribed, will restore on next action",
-        );
 
         // Get player ID (OneSignal User ID)
         try {
@@ -103,17 +92,12 @@ class OneSignalService {
           if (playerId) {
             this.currentPlayerId = playerId;
             this.savePlayerIdMetadata(playerId, true);
-            console.log("OneSignal: Restored player ID:", playerId);
           }
         } catch (idError) {
-          console.error("OneSignal: Failed to restore player ID", idError);
         }
       }
     } catch (error) {
-      console.error("OneSignal: Failed to check subscription status", error);
     }
-
-    console.log("OneSignal: Service wrapper setup complete");
   }
 
   /**
@@ -124,7 +108,6 @@ class OneSignalService {
     window.OneSignal.User.PushSubscription.addEventListener(
       "change",
       (event: any) => {
-        console.log("OneSignal: Subscription changed", event);
 
         if (event.current.optedIn) {
           const playerId = event.current.id;
@@ -141,8 +124,6 @@ class OneSignalService {
 
     // Listen for notification clicks
     window.OneSignal.Notifications.addEventListener("click", (event: any) => {
-      console.log("OneSignal: Notification clicked", event);
-
       // Handle notification click
       const url = event.notification?.url || event.notification?.data?.url;
       if (url) {
@@ -153,10 +134,7 @@ class OneSignalService {
     // Listen for foreground notifications
     window.OneSignal.Notifications.addEventListener(
       "foregroundWillDisplay",
-      (event: any) => {
-        console.log("OneSignal: Foreground notification received", event);
-        // You can prevent the notification from showing by calling event.preventDefault()
-        // Or modify the notification before it displays
+      () => {
       },
     );
   }
@@ -167,17 +145,13 @@ class OneSignalService {
    */
   async subscribe(): Promise<string | null> {
     if (!this.isInitialized) {
-      console.error("OneSignal: Not initialized. Call setupAfterInit() first.");
       return null;
     }
 
     try {
-      console.log("OneSignal: Starting subscription process...");
-
       // Check current permission (property access, not Promise)
       // Note: OneSignal returns boolean (true/false) not string ("granted"/"denied"/"default")
       const permissionGranted = window.OneSignal.Notifications.permission;
-      console.log("OneSignal: Current permission status:", permissionGranted);
 
       // Check native browser permission for more accurate status
       const nativePermission =
@@ -186,27 +160,16 @@ class OneSignalService {
           : "default";
 
       if (nativePermission === "denied") {
-        console.error(
-          "OneSignal: Permission denied. User needs to enable in browser settings.",
-        );
         throw new Error(
           "Notifications are blocked. Please enable them in your browser settings.",
         );
       }
 
       if (!permissionGranted) {
-        console.log("OneSignal: Requesting notification permission...");
         try {
           const newPermissionGranted =
             await window.OneSignal.Notifications.requestPermission();
-
-          console.log(
-            "OneSignal: Permission request result:",
-            newPermissionGranted,
-          );
-
           if (!newPermissionGranted) {
-            console.warn("OneSignal: Permission request returned false");
 
             // Check if user actually denied or if there was another issue
             const updatedNativePermission = Notification.permission;
@@ -218,46 +181,26 @@ class OneSignalService {
               throw new Error(
                 "Notification permission was not granted. Please try again and allow notifications when prompted.",
               );
-            } else {
-              // Permission is granted but OneSignal returned false - might be a timing issue
-              console.log(
-                "OneSignal: Native permission is granted, continuing...",
-              );
             }
-          } else {
-            console.log("OneSignal: Permission granted successfully");
-          }
+          } 
         } catch (error) {
-          console.error("OneSignal: Permission request failed:", error);
           throw error;
         }
-      } else {
-        console.log("OneSignal: Permission already granted");
       }
 
       // Check if already subscribed before opting in (property access, not Promise)
       const alreadySubscribed = window.OneSignal.User.PushSubscription.optedIn;
       if (alreadySubscribed) {
-        console.log("OneSignal: User already subscribed, fetching player ID");
         const existingPlayerId = window.OneSignal.User.onesignalId;
         if (existingPlayerId) {
           this.currentPlayerId = existingPlayerId;
           this.savePlayerIdMetadata(existingPlayerId, true);
-          console.log("OneSignal: Existing player ID found:", existingPlayerId);
           return existingPlayerId;
-        } else {
-          console.log(
-            "OneSignal: Subscribed but no player ID yet, will retry after opt-in",
-          );
-          // Continue to opt-in flow to ensure subscription is fully established
         }
       }
 
-      // Opt in to push notifications
-      console.log("OneSignal: Opting in to push notifications...");
       await window.OneSignal.User.PushSubscription.optIn();
 
-      console.log("OneSignal: Waiting for subscription to be ready...");
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Get player ID with retry logic
@@ -267,10 +210,6 @@ class OneSignalService {
 
       while (attempts < maxAttempts && !playerId) {
         attempts++;
-        console.log(
-          `OneSignal: Attempting to get player ID (attempt ${attempts}/${maxAttempts})...`,
-        );
-
         playerId = await this.getPlayerId();
 
         if (!playerId && attempts < maxAttempts) {
@@ -280,24 +219,14 @@ class OneSignalService {
       }
 
       if (playerId) {
-        console.log("OneSignal: Player ID retrieved successfully:", playerId);
         this.currentPlayerId = playerId;
         this.savePlayerIdMetadata(playerId, true);
         await this.registerPlayerId(playerId);
         return playerId;
       } else {
-        console.error(
-          "OneSignal: Failed to get player ID after",
-          maxAttempts,
-          "attempts",
-        );
 
-        const finalSubscriptionCheck =
-          window.OneSignal.User.PushSubscription.optedIn;
-        console.log(
-          "OneSignal: Final subscription check:",
-          finalSubscriptionCheck,
-        );
+  
+        window.OneSignal.User.PushSubscription.optedIn;
 
         // Always fail if player ID wasn't found - don't wait for event listener
         throw new Error(
@@ -305,7 +234,6 @@ class OneSignalService {
         );
       }
     } catch (error) {
-      console.error("OneSignal: Subscription failed", error);
       if (error instanceof Error) {
         throw error;
       }
@@ -318,7 +246,6 @@ class OneSignalService {
    */
   async unsubscribe(): Promise<boolean> {
     if (!this.isInitialized) {
-      console.error("OneSignal: Not initialized");
       return false;
     }
 
@@ -329,7 +256,6 @@ class OneSignalService {
       this.clearPlayerIdMetadata();
       return true;
     } catch (error) {
-      console.error("OneSignal: Unsubscribe failed", error);
       return false;
     }
   }
@@ -346,24 +272,13 @@ class OneSignalService {
     try {
       // Check if User object exists
       if (!window.OneSignal.User) {
-        console.error("OneSignal.User is not available");
         return null;
       }
 
       // Check if PushSubscription exists
       if (!window.OneSignal.User.PushSubscription) {
-        console.error("OneSignal.User.PushSubscription is not available");
         return null;
       }
-
-      // Debug: Log all available properties safely
-      console.log("OneSignal.User properties:", {
-        onesignalId: window.OneSignal.User.onesignalId,
-        pushSubscription: window.OneSignal.User.PushSubscription,
-        pushSubscriptionId: window.OneSignal.User.PushSubscription.id,
-        pushToken: window.OneSignal.User.PushSubscription.token,
-        optedIn: window.OneSignal.User.PushSubscription.optedIn,
-      });
 
       // Try multiple possible locations for the player ID
       let playerId = window.OneSignal.User.onesignalId;
@@ -378,10 +293,8 @@ class OneSignalService {
         playerId = window.OneSignal.User.PushSubscription.token;
       }
 
-      console.log("OneSignal: Resolved player ID:", playerId);
       return playerId || null;
     } catch (error) {
-      console.error("OneSignal: Failed to get player ID", error);
       return null;
     }
   }
@@ -399,7 +312,6 @@ class OneSignalService {
       const optedIn = window.OneSignal.User.PushSubscription.optedIn;
       return optedIn;
     } catch (error) {
-      console.error("OneSignal: Failed to check subscription status", error);
       return false;
     }
   }
@@ -423,7 +335,6 @@ class OneSignalService {
       const permissionGranted = window.OneSignal.Notifications.permission;
       return permissionGranted ? "granted" : "default";
     } catch (error) {
-      console.error("OneSignal: Failed to get permission status", error);
       return "default";
     }
   }
@@ -434,16 +345,13 @@ class OneSignalService {
    */
   async setExternalUserId(externalId: string): Promise<boolean> {
     if (!this.isInitialized) {
-      console.error("OneSignal: Not initialized");
       return false;
     }
 
     try {
       await window.OneSignal.login(externalId);
-      console.log("OneSignal: External user ID set:", externalId);
       return true;
     } catch (error) {
-      console.error("OneSignal: Failed to set external user ID", error);
       return false;
     }
   }
@@ -458,10 +366,8 @@ class OneSignalService {
 
     try {
       await window.OneSignal.logout();
-      console.log("OneSignal: External user ID removed");
       return true;
     } catch (error) {
-      console.error("OneSignal: Failed to remove external user ID", error);
       return false;
     }
   }
@@ -477,10 +383,8 @@ class OneSignalService {
 
     try {
       await window.OneSignal.User.addTags(tags);
-      console.log("OneSignal: Tags added", tags);
       return true;
     } catch (error) {
-      console.error("OneSignal: Failed to add tags", error);
       return false;
     }
   }
@@ -496,10 +400,8 @@ class OneSignalService {
 
     try {
       await window.OneSignal.User.removeTags(tagKeys);
-      console.log("OneSignal: Tags removed", tagKeys);
       return true;
     } catch (error) {
-      console.error("OneSignal: Failed to remove tags", error);
       return false;
     }
   }
@@ -509,7 +411,6 @@ class OneSignalService {
    */
   private async registerPlayerId(playerId: string): Promise<boolean> {
     if (!playerId) {
-      console.error("OneSignal: Cannot register undefined/null player ID");
       return false;
     }
 
@@ -520,19 +421,10 @@ class OneSignalService {
       );
       const functions = getFunctions();
       const storePlayerId = httpsCallable(functions, "storeOneSignalPlayerId");
-
-      console.log("OneSignal: Registering player ID with backend:", playerId);
-
       const result = await storePlayerId({ playerId });
       const data = result.data as { success: boolean };
-
-      console.log("OneSignal: Player ID registered successfully");
       return data.success;
     } catch (error) {
-      console.error(
-        "OneSignal: Failed to register player ID with backend",
-        error,
-      );
       return false;
     }
   }
@@ -545,8 +437,7 @@ class OneSignalService {
       const playerId = this.currentPlayerId;
 
       if (!playerId) {
-        console.warn("OneSignal: No player ID to unregister");
-        return true; // Not an error, just nothing to do
+        return true; 
       }
 
       // Import Firebase functions
@@ -558,20 +449,10 @@ class OneSignalService {
         functions,
         "removeOneSignalPlayerId",
       );
-
-      console.log("OneSignal: Unregistering player ID from backend");
-
-      // httpsCallable automatically wraps parameters in { data: ... }
       const result = await removePlayerId({ playerId });
       const data = result.data as { success: boolean };
-
-      console.log("OneSignal: Player ID unregistered successfully");
       return data.success;
     } catch (error) {
-      console.error(
-        "OneSignal: Failed to unregister player ID from backend",
-        error,
-      );
       return false;
     }
   }
@@ -625,22 +506,9 @@ class OneSignalService {
    * Print diagnostics to console
    */
   async printDiagnostics(): Promise<void> {
-    const diagnostics = await this.getDiagnostics();
+    await this.getDiagnostics();
+  
 
-    console.group("🔔 OneSignal Diagnostics");
-    console.log("Initialized:", diagnostics.isInitialized ? "✅" : "❌");
-    console.log("Subscribed:", diagnostics.isSubscribed ? "✅" : "❌");
-    console.log("Player ID:", diagnostics.playerId || "N/A");
-    console.log("Permission:", diagnostics.permission);
-    console.log("Browser Support:", diagnostics.browserSupport ? "✅" : "❌");
-
-    if (diagnostics.errors.length > 0) {
-      console.error("Errors:", diagnostics.errors);
-    } else {
-      console.log("No errors");
-    }
-
-    console.groupEnd();
   }
 
   /**

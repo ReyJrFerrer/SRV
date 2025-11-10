@@ -19,14 +19,6 @@ export const PWAInstall: React.FC<PWAInstallProps> = ({
     try {
       const result = await promptInstall();
       onInstall?.(result);
-
-      if (result === "accepted") {
-        //console.log("PWA installation accepted");
-      } else if (result === "dismissed") {
-        //console.log("PWA installation dismissed");
-      } else {
-        //console.log("PWA installation not available");
-      }
       setShowModal(false);
     } finally {
       setInstalling(false);

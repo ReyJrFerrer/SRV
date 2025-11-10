@@ -393,7 +393,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       setEditTitleCategory(false);
       toast.success("Service title and category updated!");
     } catch (err) {
-      console.error("Error saving title/category:", err);
       const errorMessage =
         err instanceof Error ? err.message : "An unknown error occurred.";
       toast.error(`Failed to update: ${errorMessage}`);

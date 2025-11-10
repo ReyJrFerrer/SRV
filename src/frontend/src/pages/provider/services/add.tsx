@@ -263,7 +263,6 @@ const AddServicePage: React.FC = () => {
     setLoadingCommissions(true);
     const quotes: { [packageId: string]: CommissionQuote } = {};
 
-    console.log(formData.categoryId);
     const categoryForCommission =
       categories.find((cat) => cat.id === formData.categoryId)?.name ||
       "Default Category";
@@ -280,7 +279,6 @@ const AddServicePage: React.FC = () => {
       }
       setCommissionQuotes(quotes);
     } catch (error) {
-      console.error("Failed to fetch commission quotes:", error);
     } finally {
       setLoadingCommissions(false);
     }

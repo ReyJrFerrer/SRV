@@ -41,7 +41,6 @@ class NotificationIntegrationService {
     try {
       // Check if OneSignal is ready
       if (!oneSignalService.isReady()) {
-        console.error("OneSignal not initialized");
         return false;
       }
 
@@ -60,7 +59,6 @@ class NotificationIntegrationService {
 
       return false;
     } catch (error) {
-      console.error("Failed to enable push notifications:", error);
       return false;
     }
   }
@@ -80,7 +78,6 @@ class NotificationIntegrationService {
 
       return false;
     } catch (error) {
-      console.error("Failed to disable push notifications:", error);
       return false;
     }
   }

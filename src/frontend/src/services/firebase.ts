@@ -99,7 +99,6 @@ export async function createDirectPayment(
     const result = await createDirectPaymentFn(request);
     return result.data;
   } catch (error: any) {
-    console.error("Error creating direct payment:", error);
     return {
       success: false,
       error: error.message || "Failed to create payment invoice",
@@ -123,7 +122,6 @@ export async function createTopupInvoice(
     const result = await createTopupInvoiceFn(request);
     return result.data;
   } catch (error: any) {
-    console.error("Error creating topup invoice:", error);
     return {
       success: false,
       error: error.message || "Failed to create topup invoice",
@@ -180,7 +178,6 @@ export async function onboardProvider(
     const result = await onboardProviderFn(request);
     return result.data;
   } catch (error: any) {
-    console.error("Error onboarding provider:", error);
     return {
       success: false,
       isOnboarded: false,
@@ -208,22 +205,16 @@ export async function checkProviderOnboarding(
     const onboardingResult = result.data;
 
     if (!onboardingResult.success) {
-      console.error(
-        "Provider onboarding check failed:",
-        onboardingResult.error,
-      );
       return false;
     }
 
     return onboardingResult.isOnboarded || false;
   } catch (error: any) {
-    console.error("Error checking provider onboarding:", error);
 
     // Fallback to localStorage check for backwards compatibility
     try {
       return localStorage.getItem("provider_onboarded") === "true";
     } catch (storageError) {
-      console.error("Error accessing localStorage:", storageError);
       return false;
     }
   }
@@ -245,7 +236,6 @@ export async function getProviderOnboardingDetails(
     const result = await checkProviderOnboardingFn({ providerId });
     return result.data;
   } catch (error: any) {
-    console.error("Error getting provider onboarding details:", error);
     return {
       success: false,
       isOnboarded: false,
@@ -272,7 +262,6 @@ export async function getPaymentData(
     const result = await getPaymentDataFn({ invoiceId });
     return result.data;
   } catch (error: any) {
-    console.error("Error getting payment data:", error);
     return {
       success: false,
       error: error.message || "Failed to retrieve payment data",
@@ -350,10 +339,8 @@ export async function checkInvoiceStatus(
     >(functions, "checkInvoiceStatus");
 
     const result = await checkInvoiceStatusFn({ invoiceId });
-    console.log("From wallet", result);
     return result.data;
   } catch (error: any) {
-    console.error("Error checking invoice status:", error);
     return {
       success: false,
       error: error.message || "Failed to check invoice status",
@@ -369,8 +356,6 @@ export async function releaseHeldPayment(
   request: ReleasePaymentRequest,
 ): Promise<ReleasePaymentResponse> {
   try {
-    console.log("🔄 Releasing held payment:", request);
-
     const functions = getFirebaseFunctions();
     const releaseHeldPaymentFn = httpsCallable<
       ReleasePaymentRequest,
@@ -378,10 +363,8 @@ export async function releaseHeldPayment(
     >(functions, "releaseHeldPayment");
 
     const result = await releaseHeldPaymentFn(request);
-    console.log("✅ Payment release response:", result.data);
     return result.data;
   } catch (error: any) {
-    console.error("❌ Error releasing held payment:", error);
     return {
       success: false,
       error: error.message || "Failed to release held payment",

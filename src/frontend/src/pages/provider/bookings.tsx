@@ -149,7 +149,6 @@ const ProviderBookingsPage: React.FC = () => {
       await refreshBookings();
       setCancellingBooking(null);
     } catch (error) {
-      console.error("Error cancelling booking:", error);
       toast.error("Failed to cancel booking. Please try again.");
       throw error;
     } finally {
@@ -434,7 +433,6 @@ const ProviderBookingsPage: React.FC = () => {
               loading: false,
             };
           } catch (err) {
-            console.error("Error fetching client data:", err);
             mapCopy[clientId] = {
               reviews: [],
               reputation: null,
@@ -455,7 +453,6 @@ const ProviderBookingsPage: React.FC = () => {
     try {
       await refreshBookings();
     } catch (error) {
-      //console.error("❌ Failed to retry loading bookings:", error);
     }
   };
 

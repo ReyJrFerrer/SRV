@@ -304,7 +304,6 @@ const MyBookingsPage: React.FC = () => {
                   };
                 }
               } catch (err) {
-                console.error("Error fetching reputation:", err);
               }
             }
 

@@ -48,7 +48,6 @@ class FirebaseAuthService {
 
       // Validate required config
       if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-        console.error("Firebase config missing required fields");
         return false;
       }
 
@@ -59,10 +58,8 @@ class FirebaseAuthService {
       // Set language code for SMS (optional)
       this.auth.languageCode = "en";
 
-      console.log("Firebase Auth initialized successfully");
       return true;
     } catch (error) {
-      console.error("Failed to initialize Firebase Auth:", error);
       return false;
     }
   }
@@ -103,11 +100,9 @@ class FirebaseAuthService {
               {
                 size: "invisible",
                 callback: () => {
-                  console.log("reCAPTCHA solved");
                   resolve();
                 },
                 "expired-callback": () => {
-                  console.log("reCAPTCHA expired");
                   reject(new Error("reCAPTCHA expired"));
                 },
               },
@@ -117,11 +112,9 @@ class FirebaseAuthService {
             this.recaptchaVerifier
               .render()
               .then(() => {
-                console.log("reCAPTCHA rendered successfully");
                 resolve();
               })
-              .catch((error: any) => {
-                console.error("reCAPTCHA render error:", error);
+              .catch(() => {
                 this.clearRecaptcha();
                 reject(
                   new Error(
@@ -130,7 +123,6 @@ class FirebaseAuthService {
                 );
               });
           } catch (error) {
-            console.error("reCAPTCHA setup error:", error);
             this.clearRecaptcha();
             reject(
               new Error(
@@ -140,7 +132,6 @@ class FirebaseAuthService {
           }
         }, 100);
       } catch (error) {
-        console.error("reCAPTCHA setup error:", error);
         reject(
           new Error(
             "Service temporarily unavailable. Please reload the page and try again.",
@@ -166,18 +157,14 @@ class FirebaseAuthService {
       // Format phone number to international format
       const formattedPhone = this.formatPhoneNumber(phoneNumber);
 
-      console.log("Sending OTP to:", formattedPhone);
-
       const confirmationResult = await signInWithPhoneNumber(
         this.auth,
         formattedPhone,
         this.recaptchaVerifier,
       );
 
-      console.log("OTP sent successfully");
       return confirmationResult;
     } catch (error: any) {
-      console.error("Error sending OTP:", error);
 
       // Reset reCAPTCHA on error
       if (this.recaptchaVerifier) {
@@ -200,51 +187,22 @@ class FirebaseAuthService {
       const result = await confirmationResult.confirm(otpCode);
 
       if (result.user) {
-        console.log("✅ Phone number verified successfully");
 
-        // CRITICAL: Restore the IC-based Firebase session
-        // Phone verification creates a separate Firebase user, so we need to
-        // restore the original IC-based session for profile creation
         const icToken = getStoredICCustomToken();
         if (icToken && this.auth) {
-          console.log(
-            "🔄 Restoring IC-based Firebase session after phone verification...",
-          );
           try {
             await signInWithCustomToken(this.auth, icToken);
-            console.log("✅ IC-based Firebase session restored successfully");
           } catch (restoreError) {
-            console.error(
-              "❌ Failed to restore IC Firebase session:",
-              restoreError,
-            );
             throw new Error(
               "Failed to restore authentication session. Please refresh and try again.",
             );
           }
-        } else {
-          console.warn(
-            "⚠️ No IC custom token found to restore. User may need to re-authenticate.",
-          );
         }
-
         return true;
       }
 
       return false;
     } catch (error: any) {
-      // Don't log expected validation errors
-      if (error.code === "auth/invalid-verification-code") {
-        // Silent - this is expected when user enters wrong code
-      } else if (error.code === "auth/invalid-verification-id") {
-        console.log("⚠️ Verification session expired or invalid");
-      } else if (error.code === "auth/code-expired") {
-        console.log("⚠️ Verification code expired");
-      } else {
-        // Log unexpected errors
-        console.error("❌ Error verifying OTP:", error);
-      }
-
       throw this.handleFirebaseError(error);
     }
   }
@@ -350,7 +308,6 @@ class FirebaseAuthService {
         this.recaptchaVerifier = null;
       }
     } catch (error) {
-      console.error("Error clearing reCAPTCHA:", error);
       this.recaptchaVerifier = null;
     }
   }

@@ -162,7 +162,6 @@ export default function ProviderReviewView() {
           const validation = await checkCommissionValidation(foundBooking);
           setCommissionValidation(validation);
         } catch (error) {
-          console.error("Failed to validate commission:", error);
           setCommissionValidation({ estimatedCommission: 0 });
         }
       } else {
@@ -182,7 +181,6 @@ export default function ProviderReviewView() {
         setClientReview(null);
       }
     } catch (error) {
-      //console.error("Error loading booking/review data:", error);
       setError("Failed to load booking and review data.");
     } finally {
       setLoading(false);

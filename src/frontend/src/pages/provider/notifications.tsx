@@ -182,7 +182,6 @@ const NotificationsPageSP = () => {
       try {
         deleteNotification(id);
       } catch (e) {
-        console.error("bulk delete failed for", id, e);
       }
     });
     setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));

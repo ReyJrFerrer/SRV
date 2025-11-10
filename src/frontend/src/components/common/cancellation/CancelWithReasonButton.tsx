@@ -37,8 +37,6 @@ const CancelWithReasonButton: React.FC<CancelWithReasonButtonProps> = ({
       setReason("");
       setError(null);
     } catch (err) {
-      // Error handling is done in the parent component
-      console.error("Error submitting cancellation:", err);
     }
   };
 

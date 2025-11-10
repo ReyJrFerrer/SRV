@@ -59,7 +59,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     try {
       await fetchBalance();
     } catch (error) {
-      console.error("Failed to refresh balance:", error);
     }
   };
 
@@ -176,7 +175,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         },
       ];
     } catch (err) {
-      //console.error("Error calculating stats:", err);
       return defaultStats;
     }
   }, [analytics, getRevenueByPeriod, ratingData]);

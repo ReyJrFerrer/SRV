@@ -72,7 +72,6 @@ const getReadIds = async (): Promise<string[]> => {
       await notificationCanisterService.getUserNotifications();
     return notifications.filter((n) => n.read).map((n) => n.id);
   } catch (error) {
-    console.error("Error reading from canister", error);
     // Fallback to localStorage
     try {
       const item = window.localStorage.getItem(READ_NOTIFICATIONS_KEY);
@@ -90,12 +89,10 @@ const setReadIds = async (ids: string[]) => {
       await notificationCanisterService.markAsRead(id);
     }
   } catch (error) {
-    console.error("Error marking as read in canister", error);
     // Fallback to localStorage
     try {
       window.localStorage.setItem(READ_NOTIFICATIONS_KEY, JSON.stringify(ids));
     } catch (fallbackError) {
-      console.error("Error writing to localStorage", fallbackError);
     }
   }
 };
@@ -110,7 +107,6 @@ const getPushSentIds = async (): Promise<string[]> => {
       .filter((n) => n.metadata?.pushSent === true)
       .map((n) => n.id);
   } catch (error) {
-    console.error("Error reading push sent notifications from canister", error);
     // Fallback to localStorage
     try {
       const item = window.localStorage.getItem(PUSH_SENT_NOTIFICATIONS_KEY);
@@ -128,7 +124,6 @@ const setPushSentIds = async (ids: string[]) => {
       await notificationCanisterService.markAsPushSent(id);
     }
   } catch (error) {
-    console.error("Error marking as push sent in canister", error);
     // Fallback to localStorage
     try {
       window.localStorage.setItem(
@@ -136,10 +131,6 @@ const setPushSentIds = async (ids: string[]) => {
         JSON.stringify(ids),
       );
     } catch (fallbackError) {
-      console.error(
-        "Error writing push sent notifications to localStorage",
-        fallbackError,
-      );
     }
   }
 };
@@ -283,7 +274,6 @@ export const useNotificationsWithPush = () => {
       notificationStore.setCount(newUnreadCount);
       setLoading(false);
     } catch (error) {
-      console.error("Error generating client notifications:", error);
       setError("Failed to load notifications");
       setLoading(false);
     }
@@ -303,21 +293,11 @@ export const useNotificationsWithPush = () => {
     }
 
     const userId = getUserId();
-    console.log(
-      "🔔 [useNotifications] Setting up real-time listener for:",
-      userId,
-    );
-
     // Subscribe to real-time updates
     const unsubscribe =
       notificationCanisterService.subscribeToUserNotifications(
         userId,
         (newNotifications) => {
-          console.log(
-            "🔔 [useNotifications] Received real-time update:",
-            newNotifications.length,
-            "notifications",
-          );
 
           // Convert to frontend format
           const formattedNotifications: Notification[] = newNotifications.map(
@@ -347,7 +327,6 @@ export const useNotificationsWithPush = () => {
       );
 
     return () => {
-      console.log("🔔 [useNotifications] Cleaning up real-time listener");
       unsubscribe();
     };
   }, [identity]);
@@ -358,13 +337,11 @@ export const useNotificationsWithPush = () => {
       // Try to mark as read in canister first
       await notificationCanisterService.markAsRead(notificationId);
     } catch (error) {
-      console.error("Error marking notification as read:", error);
       // If it's a frontend-generated notification (not in canister), just update locally
       if (
         notificationId.startsWith("frontend-review-") ||
         notificationId.startsWith("frontend-booking-status-")
       ) {
-        console.log("Frontend-generated notification, updating locally only");
       } else {
         // For other errors, try localStorage fallback
         const readIds = await getReadIds();
@@ -397,7 +374,6 @@ export const useNotificationsWithPush = () => {
       const newPushSentIds = pushSentIds.filter((id) => id !== notificationId);
       await setPushSentIds(newPushSentIds);
     } catch (error) {
-      console.error("Error marking notification as unread:", error);
     }
 
     setNotifications((prev) => {
@@ -416,7 +392,6 @@ export const useNotificationsWithPush = () => {
       // Use canister's markAllAsRead method
       await notificationCanisterService.markAllAsRead();
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
       // Fallback to individual marking
       const currentIds = notifications.map((n) => n.id);
       const readIds = await getReadIds();
@@ -433,7 +408,6 @@ export const useNotificationsWithPush = () => {
     try {
       await notificationCanisterService.deleteNotification(notificationId);
     } catch (error) {
-      console.error("Error deleting notification:", error);
       // continue to update local state even if server call fails
     }
 

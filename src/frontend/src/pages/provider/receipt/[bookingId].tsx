@@ -48,15 +48,11 @@ const ReceiptPage: React.FC = () => {
     }
 
     if (!booking) {
-      console.warn("Receipt: booking not found");
       navigate("/provider/bookings", { replace: true });
       return;
     }
 
     if (booking.status !== "Completed") {
-      console.warn(
-        `Receipt: booking status is ${booking.status}, not Completed`,
-      );
       navigate("/provider/bookings", { replace: true });
       return;
     }
@@ -92,7 +88,6 @@ const ReceiptPage: React.FC = () => {
         const validation = await checkCommissionValidation(booking);
         setCommissionValidation(validation);
       } catch (error) {
-        console.error("Failed to validate commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };
