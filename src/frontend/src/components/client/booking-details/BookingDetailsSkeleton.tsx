@@ -25,23 +25,23 @@ const BookingDetailsSkeleton: React.FC = () => {
               <PhoneIcon className="h-5 w-5 text-gray-300" />
               <div className="h-5 w-36 rounded bg-gray-300"></div>
             </div>
-            
+
             {/* Provider Info Content */}
             <div className="flex items-center gap-5">
               {/* Profile Image */}
               <div className="h-20 w-20 flex-shrink-0 rounded-full border-4 border-blue-100 bg-gray-300"></div>
-              
+
               {/* Provider Details */}
               <div className="flex-1">
                 {/* Name */}
                 <div className="mb-2 h-5 w-32 rounded bg-gray-300"></div>
-                
+
                 {/* Reputation Score */}
                 <div className="mb-2 mt-2 flex items-center gap-2">
                   <div className="h-4 w-28 rounded bg-gray-300"></div>
                   <div className="h-4 w-8 rounded bg-gray-300"></div>
                 </div>
-                
+
                 {/* Rating */}
                 <div className="mt-1 flex items-center gap-3">
                   <div className="flex items-center gap-1">
@@ -50,7 +50,7 @@ const BookingDetailsSkeleton: React.FC = () => {
                   </div>
                   <div className="h-4 w-20 rounded bg-gray-300"></div>
                 </div>
-                
+
                 {/* Phone */}
                 <div className="mt-1 flex items-center">
                   <PhoneIcon className="mr-1.5 h-4 w-4 text-gray-300" />
@@ -67,7 +67,7 @@ const BookingDetailsSkeleton: React.FC = () => {
               <BriefcaseIcon className="h-5 w-5 text-gray-300" />
               <div className="h-5 w-32 rounded bg-gray-300"></div>
             </div>
-            
+
             {/* Service Details Content */}
             <div className="space-y-3 text-base">
               {/* Package */}
@@ -77,7 +77,7 @@ const BookingDetailsSkeleton: React.FC = () => {
                   <div className="h-4 w-full max-w-xs rounded bg-gray-300"></div>
                 </div>
               </div>
-              
+
               {/* Scheduled */}
               <div className="flex items-start">
                 <CalendarDaysIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-300" />
@@ -85,7 +85,7 @@ const BookingDetailsSkeleton: React.FC = () => {
                   <div className="h-4 w-full max-w-md rounded bg-gray-300"></div>
                 </div>
               </div>
-              
+
               {/* Location */}
               <div className="flex items-start">
                 <MapPinIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-300" />
@@ -93,7 +93,7 @@ const BookingDetailsSkeleton: React.FC = () => {
                   <div className="h-4 w-full rounded bg-gray-300"></div>
                 </div>
               </div>
-              
+
               {/* Payment */}
               <div className="flex items-start">
                 <CurrencyDollarIcon className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-300" />
