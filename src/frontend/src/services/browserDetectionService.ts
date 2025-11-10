@@ -39,7 +39,6 @@ class BrowserDetectionService {
     const os = result.os;
     const device = result.device;
 
-
     const isDesktop = device.type === undefined;
     const isMobile = device.type === "mobile";
     const isTablet = device.type === "tablet";
@@ -114,7 +113,6 @@ class BrowserDetectionService {
   getPWACapabilities(): PWACapabilities {
     const info = this.browserInfo;
     const limitations: string[] = [];
-
 
     // Analyze installation capabilities
     let canInstall = false;
@@ -237,9 +235,7 @@ class BrowserDetectionService {
     const capabilities = this.getPWACapabilities();
 
     if (capabilities.limitations.length > 0) {
-
     }
-
   }
 }
 

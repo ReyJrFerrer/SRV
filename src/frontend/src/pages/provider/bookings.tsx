@@ -452,8 +452,7 @@ const ProviderBookingsPage: React.FC = () => {
     clearError();
     try {
       await refreshBookings();
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   if (!isProviderAuthenticated() && !loading) {

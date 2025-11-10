@@ -61,7 +61,6 @@ const PaymentPendingPage: React.FC = () => {
             return;
           }
 
-
           if (
             statusResponse.status === "PAID" ||
             statusResponse.status === "SETTLED"
@@ -75,8 +74,7 @@ const PaymentPendingPage: React.FC = () => {
             setPaymentStatus("failed");
             setStatusMessage("Payment expired. Please create a new booking.");
           }
-        } catch (error) {
-        }
+        } catch (error) {}
       }
     };
 

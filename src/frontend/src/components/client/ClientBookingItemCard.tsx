@@ -408,7 +408,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   const reviewButtonContent = getReviewButtonContent();
 
-
   // --- Render: Booking Card Layout ---
   return (
     <Link

@@ -181,8 +181,7 @@ const NotificationsPageSP = () => {
     selectedIds.forEach((id) => {
       try {
         deleteNotification(id);
-      } catch (e) {
-      }
+      } catch (e) {}
     });
     setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
     clearSelection();

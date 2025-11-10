@@ -140,8 +140,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         ]);
         setClientReviews(reviews);
         setClientReputation(reputation);
-      } catch (error) {
-      }
+      } catch (error) {}
     };
 
     fetchClientData();
@@ -286,7 +285,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
       setIsCancelling(false);
     }
   };
-
 
   // Updated: Navigate to directions page if location was detected automatically, otherwise start directly
   const handleStartService = useCallback(async () => {

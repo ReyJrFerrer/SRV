@@ -25,7 +25,6 @@ import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import authCanisterService from "../services/authCanisterService";
 
-
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
 
@@ -67,8 +66,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const updateAllActors = (identity: Identity | null) => {
   try {
     updateReputationActor(identity);
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 export const useAuth = () => {
@@ -144,10 +142,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               };
             }
           })
-          .catch(() => {
-          });
-      } catch {
-      }
+          .catch(() => {});
+      } catch {}
     }
     return () => {
       mounted = false;
@@ -184,7 +180,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const userId = identity.getPrincipal().toString();
           await enablePushNotificationsPWA(userId);
-        
         } catch (error) {
           // Silently fail auto-enable - user can still enable manually if desired
         }
@@ -296,10 +291,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setFirebaseUser(result.user);
             try {
               await authCanisterService.updateUserActiveStatus(true);
-            } catch (error) {
-            }
-          } catch (fbError) {
-          }
+            } catch (error) {}
+          } catch (fbError) {}
 
           setIsLoading(false);
         },
@@ -319,8 +312,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Update user active status to false before logout
     try {
       await authCanisterService.updateUserActiveStatus(false);
-    } catch (error) {
-    }
+    } catch (error) {}
 
     // Clear stored IC custom token
     clearICCustomToken();
@@ -328,10 +320,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Logout from Firebase
     const auth = getFirebaseAuth();
     try {
-      await firebaseSignOut(auth).catch(() => {
-      });
-    } catch (error) {
-    }
+      await firebaseSignOut(auth).catch(() => {});
+    } catch (error) {}
 
     // Logout from Internet Identity
     await authClient.logout();
@@ -340,7 +330,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setFirebaseUser(null);
     updateAllActors(null);
   };
-
 
   // Helpers exposed for pages to render the post-login prompt UI
   const requestLocationFromPrompt = async () => {

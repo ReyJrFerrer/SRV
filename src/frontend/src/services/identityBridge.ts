@@ -66,7 +66,6 @@ export async function signInWithInternetIdentity(
   principal: string,
 ): Promise<SignInResult> {
   try {
-
     // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
     const signInFn = httpsCallable<
@@ -184,8 +183,7 @@ export async function getProfile(userId?: string): Promise<any> {
     });
 
     return result.data;
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 /**

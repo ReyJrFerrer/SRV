@@ -73,8 +73,7 @@ class ReputationCanisterService {
         return result.ok;
       } else {
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   /***
@@ -90,9 +89,8 @@ class ReputationCanisterService {
       const result = await actor.getReputationScore(userPrincipal);
       if ("ok" in result) {
         return result.ok;
-      } 
-    } catch (error) {
-    }
+      }
+    } catch (error) {}
   }
 
   /**

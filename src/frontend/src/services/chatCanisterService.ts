@@ -45,8 +45,7 @@ const safeUnsubscribe = async (
       try {
         listener.unsubscribe();
         activeListeners.delete(listenerId);
-      } catch (error) {
-      }
+      } catch (error) {}
       resolve();
     }, delayMs);
   });
@@ -391,8 +390,7 @@ export const chatCanisterService = {
         try {
           const allConversations = Array.from(conversationMap.values());
           onUpdate(allConversations);
-        } catch (error) {
-        }
+        } catch (error) {}
       }
     }, 200); // 200ms debounce
 
@@ -419,8 +417,7 @@ export const chatCanisterService = {
               }
             });
             debouncedUpdate();
-          } catch (error) {
-          }
+          } catch (error) {}
         },
         (error) => {
           if (unsubscribed) return;
@@ -456,8 +453,7 @@ export const chatCanisterService = {
               }
             });
             debouncedUpdate();
-          } catch (error) {
-          }
+          } catch (error) {}
         },
         (error) => {
           if (unsubscribed) return;
@@ -534,9 +530,7 @@ export const chatCanisterService = {
               ...doc.data(),
             }));
             debouncedUpdate(messages);
-          } catch (error) {
-
-          }
+          } catch (error) {}
         },
         (error) => {
           if (unsubscribed) return;
@@ -604,8 +598,7 @@ export const chatCanisterService = {
         if (!unsubscribed) {
           onUpdate(summaries);
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }, 300); // 300ms debounce
 
     // Subscribe to each conversation's last message
@@ -636,8 +629,7 @@ export const chatCanisterService = {
                 lastMessageMap.delete(conversationId);
               }
               updateSummaries();
-            } catch (error) {
-            }
+            } catch (error) {}
           },
           () => {
             if (unsubscribed) return;
@@ -645,8 +637,7 @@ export const chatCanisterService = {
         );
 
         messageUnsubscribers.set(conversationId, unsubscribe);
-      } catch (error) {
-      }
+      } catch (error) {}
     };
 
     // Main conversations listener
@@ -676,16 +667,14 @@ export const chatCanisterService = {
                 if (unsub) {
                   try {
                     unsub();
-                  } catch (error) {
-                  }
+                  } catch (error) {}
                   messageUnsubscribers.delete(convId);
                 }
               }
             });
 
             updateSummaries();
-          } catch (error) {
-          }
+          } catch (error) {}
         },
         onError,
       );
@@ -705,15 +694,13 @@ export const chatCanisterService = {
           conversationsUnsubscribe = null;
         }
 
-        messageUnsubscribers.forEach((unsub,) => {
+        messageUnsubscribers.forEach((unsub) => {
           try {
             unsub();
-          } catch (error) {
-          }
+          } catch (error) {}
         });
         messageUnsubscribers.clear();
-      } catch (error) {
-      }
+      } catch (error) {}
     };
   },
 };

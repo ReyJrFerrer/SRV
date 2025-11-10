@@ -37,7 +37,6 @@ export const CreateProfileGuard: React.FC<CreateProfileGuardProps> = ({
         const profile = await authCanisterService.getMyProfile();
 
         if (profile && profile.name && profile.phone) {
-
           if (profile.activeRole === "Client") {
             navigate("/client/home", { replace: true });
           } else if (profile.activeRole === "ServiceProvider") {

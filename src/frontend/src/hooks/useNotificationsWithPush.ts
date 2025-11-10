@@ -92,8 +92,7 @@ const setReadIds = async (ids: string[]) => {
     // Fallback to localStorage
     try {
       window.localStorage.setItem(READ_NOTIFICATIONS_KEY, JSON.stringify(ids));
-    } catch (fallbackError) {
-    }
+    } catch (fallbackError) {}
   }
 };
 
@@ -130,8 +129,7 @@ const setPushSentIds = async (ids: string[]) => {
         PUSH_SENT_NOTIFICATIONS_KEY,
         JSON.stringify(ids),
       );
-    } catch (fallbackError) {
-    }
+    } catch (fallbackError) {}
   }
 };
 
@@ -298,7 +296,6 @@ export const useNotificationsWithPush = () => {
       notificationCanisterService.subscribeToUserNotifications(
         userId,
         (newNotifications) => {
-
           // Convert to frontend format
           const formattedNotifications: Notification[] = newNotifications.map(
             (notif) => ({
@@ -373,8 +370,7 @@ export const useNotificationsWithPush = () => {
       const pushSentIds = await getPushSentIds();
       const newPushSentIds = pushSentIds.filter((id) => id !== notificationId);
       await setPushSentIds(newPushSentIds);
-    } catch (error) {
-    }
+    } catch (error) {}
 
     setNotifications((prev) => {
       const newNotifications = prev.map((n) =>

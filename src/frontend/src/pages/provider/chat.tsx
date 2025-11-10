@@ -30,8 +30,7 @@ const ProviderChatPage: React.FC = () => {
           otherUserImage: otherUserImageUrl,
         },
       });
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   // Helper for timestamp formatting (accepts string or Date)

@@ -102,8 +102,7 @@ export const persistentImageCache = {
   async clear(key: string): Promise<void> {
     try {
       sessionStorage.removeItem(`${CACHE_KEY_PREFIX}${key}`);
-    } catch (error) {
-    }
+    } catch (error) {}
   },
 
   /**
@@ -130,8 +129,7 @@ export const persistentImageCache = {
           }
         }
       });
-    } catch (error) {
-    }
+    } catch (error) {}
   },
 
   /**
@@ -145,7 +143,6 @@ export const persistentImageCache = {
           sessionStorage.removeItem(key);
         }
       });
-    } catch (error) {
-    }
+    } catch (error) {}
   },
 };

@@ -210,7 +210,6 @@ export async function checkProviderOnboarding(
 
     return onboardingResult.isOnboarded || false;
   } catch (error: any) {
-
     // Fallback to localStorage check for backwards compatibility
     try {
       return localStorage.getItem("provider_onboarded") === "true";

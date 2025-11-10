@@ -303,8 +303,7 @@ const MyBookingsPage: React.FC = () => {
                     completedBookings: rep.completedBookings,
                   };
                 }
-              } catch (err) {
-              }
+              } catch (err) {}
             }
 
             mapCopy[serviceId] = {

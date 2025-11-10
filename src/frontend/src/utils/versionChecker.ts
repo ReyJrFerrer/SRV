@@ -24,8 +24,7 @@ export async function initVersionChecker(): Promise<void> {
 
     // Start periodic checks
     startVersionCheck();
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 /**
@@ -67,8 +66,7 @@ function startVersionCheck(): void {
         // Notify user about new version
         showUpdateNotification();
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }, VERSION_CHECK_INTERVAL);
 }
 
@@ -244,9 +242,7 @@ async function clearAllCaches(): Promise<void> {
 
     // Clear localStorage version marker
     localStorage.removeItem("app-version");
-
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 /**

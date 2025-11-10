@@ -149,8 +149,7 @@ export const useProfileImage = (
           if (mounted && cached) {
             setInitialCache(cached);
           }
-        } catch (error) {
-        }
+        } catch (error) {}
       }
       if (mounted) {
         setCacheChecked(true);
@@ -591,7 +590,6 @@ export const useServiceCertificateUpload = (
           isVerified,
         );
       } catch (error) {
-
         throw error;
       }
     },

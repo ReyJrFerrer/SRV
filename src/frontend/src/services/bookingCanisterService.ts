@@ -534,7 +534,6 @@ export const bookingCanisterService = {
       ).data;
       return responseData;
     } catch (error) {
-
       throw new Error(`Failed to fetch client analytics: ${error}`);
     }
   },

@@ -134,7 +134,6 @@ export const feedbackCanisterService = {
    * Get feedback by ID
    */
   async getFeedbackById(feedbackId: string): Promise<AppFeedback> {
-
     try {
       const getFeedbackByIdFn = httpsCallable(functions, "getFeedbackById");
 
@@ -145,7 +144,7 @@ export const feedbackCanisterService = {
         success: boolean;
         data: AppFeedback;
       };
- 
+
       return responseData.data;
     } catch (error) {
       throw new Error(`Failed to get feedback by ID: ${error}`);
@@ -261,7 +260,6 @@ export const feedbackCanisterService = {
 
       return responseData.data;
     } catch (error) {
-
       throw new Error(`Failed to update report status: ${error}`);
     }
   },
@@ -292,14 +290,12 @@ export const feedbackCanisterService = {
    * Get report by ID
    */
   async getReportById(reportId: string): Promise<AppReport> {
-
     try {
       const getReportByIdFn = httpsCallable(functions, "getReportById");
 
       const result = await getReportByIdFn({
         data: { data: { reportId } },
       });
-
 
       const responseData = result.data as { success: boolean; data: AppReport };
 

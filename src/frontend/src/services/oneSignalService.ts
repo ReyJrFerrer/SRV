@@ -47,8 +47,7 @@ class OneSignalService {
         this.PLAYER_ID_STORAGE_KEY,
         JSON.stringify(metadata),
       );
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   /**
@@ -57,8 +56,7 @@ class OneSignalService {
   private clearPlayerIdMetadata(): void {
     try {
       localStorage.removeItem(this.PLAYER_ID_STORAGE_KEY);
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   /**
@@ -85,7 +83,6 @@ class OneSignalService {
     try {
       const isSubscribed = window.OneSignal.User.PushSubscription.optedIn;
       if (isSubscribed) {
-
         // Get player ID (OneSignal User ID)
         try {
           const playerId = window.OneSignal.User.onesignalId;
@@ -93,11 +90,9 @@ class OneSignalService {
             this.currentPlayerId = playerId;
             this.savePlayerIdMetadata(playerId, true);
           }
-        } catch (idError) {
-        }
+        } catch (idError) {}
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   /**
@@ -108,7 +103,6 @@ class OneSignalService {
     window.OneSignal.User.PushSubscription.addEventListener(
       "change",
       (event: any) => {
-
         if (event.current.optedIn) {
           const playerId = event.current.id;
           this.currentPlayerId = playerId;
@@ -134,8 +128,7 @@ class OneSignalService {
     // Listen for foreground notifications
     window.OneSignal.Notifications.addEventListener(
       "foregroundWillDisplay",
-      () => {
-      },
+      () => {},
     );
   }
 
@@ -170,7 +163,6 @@ class OneSignalService {
           const newPermissionGranted =
             await window.OneSignal.Notifications.requestPermission();
           if (!newPermissionGranted) {
-
             // Check if user actually denied or if there was another issue
             const updatedNativePermission = Notification.permission;
             if (updatedNativePermission === "denied") {
@@ -182,7 +174,7 @@ class OneSignalService {
                 "Notification permission was not granted. Please try again and allow notifications when prompted.",
               );
             }
-          } 
+          }
         } catch (error) {
           throw error;
         }
@@ -224,8 +216,6 @@ class OneSignalService {
         await this.registerPlayerId(playerId);
         return playerId;
       } else {
-
-  
         window.OneSignal.User.PushSubscription.optedIn;
 
         // Always fail if player ID wasn't found - don't wait for event listener
@@ -437,7 +427,7 @@ class OneSignalService {
       const playerId = this.currentPlayerId;
 
       if (!playerId) {
-        return true; 
+        return true;
       }
 
       // Import Firebase functions
@@ -507,8 +497,6 @@ class OneSignalService {
    */
   async printDiagnostics(): Promise<void> {
     await this.getDiagnostics();
-  
-
   }
 
   /**

@@ -634,7 +634,8 @@ export const useProviderBookingManagement =
               booking.servicePackageId.length === 0, // Consider loaded if no packages
           };
           return enhancedBooking;
-        } catch (error) {   // Return booking with minimal enhancement but proper packageName handling
+        } catch (error) {
+          // Return booking with minimal enhancement but proper packageName handling
           return {
             ...booking,
             clientName: "Unknown Client",
@@ -850,8 +851,7 @@ export const useProviderBookingManagement =
                 );
               } else {
               }
-            } catch (chatError) {
-            }
+            } catch (chatError) {}
           }
 
           if (updatedBooking) {
@@ -1301,8 +1301,7 @@ export const useProviderBookingManagement =
         try {
           clearError();
           await operation();
-        } catch (error) {
-        }
+        } catch (error) {}
       },
       [clearError],
     );

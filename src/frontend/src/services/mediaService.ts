@@ -191,8 +191,7 @@ export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string => {
 export const preloadImage = async (mediaUrl: string): Promise<void> => {
   try {
     await getImageDataUrl(mediaUrl, { enableCache: true });
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 /**
@@ -368,7 +367,6 @@ export const processServiceImageFiles = async (
           file,
           opts.maxSizeKB,
         );
-
       }
 
       // Apply dimension limits if specified

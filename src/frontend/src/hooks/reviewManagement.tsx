@@ -1004,8 +1004,7 @@ export const useReviewManagement = (
       try {
         const stats = await reviewCanisterService.getReviewStatistics();
         setStatistics(stats);
-      } catch (error) {
-      }
+      } catch (error) {}
     };
 
     loadStatistics();

@@ -18,7 +18,6 @@ export const PWAInstallDetailed: React.FC<PWAInstallDetailedProps> = ({
     try {
       const result = await promptInstall();
       onInstall?.(result);
-
     } finally {
       setInstalling(false);
     }

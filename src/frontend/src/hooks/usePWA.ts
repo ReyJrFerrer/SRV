@@ -146,9 +146,7 @@ export const usePWA = () => {
             pushPermission: refreshedPermission,
             pushSubscribed,
           }));
-
-        } catch (err) {
-        }
+        } catch (err) {}
       }
     };
 
@@ -164,7 +162,6 @@ export const usePWA = () => {
    */
   const refreshPWAState = useCallback(async (): Promise<void> => {
     try {
-
       const refreshedPermission =
         await pwaService.refreshNotificationPermission();
       const currentSubscription = await pwaService.getCurrentPushSubscription();
@@ -179,7 +176,6 @@ export const usePWA = () => {
         isInstallable,
         isPWA,
       }));
-
     } catch (err) {
       setError(
         `Failed to refresh PWA state: ${err instanceof Error ? err.message : "Unknown error"}`,
@@ -233,7 +229,6 @@ export const usePWA = () => {
           setPwaState((prev) => ({ ...prev, pushPermission: permission }));
 
           if (playerId === "pending") {
-
             // Update state to show as subscribed
             setPwaState((prev) => ({
               ...prev,
@@ -269,7 +264,6 @@ export const usePWA = () => {
 
         return true;
       } catch (err) {
-
         // Provide user-friendly error messages
         let errorMessage = "Failed to enable push notifications";
         if (err instanceof Error) {
@@ -354,8 +348,7 @@ export const usePWA = () => {
     async (title: string, body: string, options?: NotificationOptions) => {
       try {
         await pwaService.showLocalNotification(title, { body, ...options });
-      } catch (err) {
-      }
+      } catch (err) {}
     },
     [],
   );

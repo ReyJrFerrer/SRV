@@ -158,7 +158,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const status = booking.status;
   const notes = booking.notes;
 
-
   // --- Date range formatting helper ---
   const formatDateRange = (
     requestedDate: Date | string | number,

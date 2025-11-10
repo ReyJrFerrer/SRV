@@ -11,8 +11,7 @@ import { initializeFirebase } from "./services/firebaseApp";
 // Initialize Firebase as early as possible
 try {
   initializeFirebase();
-} catch (error) {
-}
+} catch (error) {}
 
 type CurrentView = "main" | "about" | "contact";
 
@@ -72,7 +71,6 @@ const LandingPage = () => {
             navigate("/create-profile");
           }
         } catch (err) {
-
           // Only redirect if we're not already on landing page
           if (location.pathname !== "/") {
             navigate("/");

@@ -90,7 +90,7 @@ export const reviewCanisterService = {
       });
 
       const responseData = result.data as { success: boolean; data: Review };
- 
+
       return responseData.data;
     } catch (error) {
       throw new Error(`Failed to get review: ${error}`);
@@ -141,7 +141,6 @@ export const reviewCanisterService = {
     rating: number,
     comment: string,
   ): Promise<Review> {
-
     try {
       const updateReviewFn = httpsCallable(functions, "updateReview");
 

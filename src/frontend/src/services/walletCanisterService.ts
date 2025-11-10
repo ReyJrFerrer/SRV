@@ -78,7 +78,10 @@ export const walletCanisterService = {
       };
     } catch (error: any) {
       // Silently handle authentication errors (expected when user is not logged in)
-      if (error?.code === 'functions/unauthenticated' || error?.message?.includes('401')) {
+      if (
+        error?.code === "functions/unauthenticated" ||
+        error?.message?.includes("401")
+      ) {
         return {
           balance: 0,
           heldBalance: 0,
@@ -189,7 +192,10 @@ export const walletCanisterService = {
       return responseData.transactions || [];
     } catch (error: any) {
       // Silently handle authentication errors (expected when user is not logged in)
-      if (error?.code === 'functions/unauthenticated' || error?.message?.includes('401')) {
+      if (
+        error?.code === "functions/unauthenticated" ||
+        error?.message?.includes("401")
+      ) {
         return [];
       }
       // Return empty array on other errors to prevent .map() issues
@@ -214,7 +220,6 @@ export const walletCanisterService = {
       const responseData = result.data as { success: boolean; message: string };
       return responseData.message;
     } catch (error) {
-
       throw new Error(`Failed to add authorized controller: ${error}`);
     }
   },

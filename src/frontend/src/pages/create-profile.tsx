@@ -98,8 +98,7 @@ export default function CreateProfilePage() {
             navigate("/provider/home", { replace: true });
           }
         }
-      } catch (err) {
-      }
+      } catch (err) {}
 
       // Reset any reauth requirements
       setReauthRequired(false);

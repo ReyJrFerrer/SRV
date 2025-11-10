@@ -207,8 +207,7 @@ export const useChat = () => {
     if (conversationsUnsubscribe.current) {
       try {
         await conversationsUnsubscribe.current();
-      } catch (error) {
-      }
+      } catch (error) {}
       conversationsUnsubscribe.current = null;
     }
 
@@ -310,8 +309,7 @@ export const useChat = () => {
         if (messagesUnsubscribe.current) {
           try {
             await messagesUnsubscribe.current();
-          } catch (error) {
-          }
+          } catch (error) {}
           messagesUnsubscribe.current = null;
         }
 
@@ -373,8 +371,7 @@ export const useChat = () => {
                 messagePage.messages.map(adaptBackendMessage);
               setMessages(adaptedMessages);
             }
-          } catch (error) {
-          }
+          } catch (error) {}
         }, 3000);
 
         // Fetch conversation details after setting up listener
@@ -497,8 +494,7 @@ export const useChat = () => {
       try {
         await chatCanisterService.markMessagesAsRead(conversationId);
         // Real-time listener will automatically update unread counts
-      } catch (err) {
-      }
+      } catch (err) {}
     },
     [isAuthenticated, identity],
   );
@@ -522,22 +518,19 @@ export const useChat = () => {
    * Cleanup all real-time listeners
    */
   const cleanupListeners = useCallback(async () => {
-
     try {
       if (conversationsUnsubscribe.current) {
         await conversationsUnsubscribe.current();
         conversationsUnsubscribe.current = null;
       }
-    } catch (error) {
-    }
+    } catch (error) {}
 
     try {
       if (messagesUnsubscribe.current) {
         await messagesUnsubscribe.current();
         messagesUnsubscribe.current = null;
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }, []);
 
   /**
@@ -556,8 +549,7 @@ export const useChat = () => {
         await messagesUnsubscribe.current();
         messagesUnsubscribe.current = null;
       }
-    } catch (error) {
-    }
+    } catch (error) {}
 
     if (isMountedRef.current) {
       setCurrentConversation(null);
@@ -568,7 +560,6 @@ export const useChat = () => {
 
   // Setup real-time listeners on auth state change
   useEffect(() => {
-
     if (isAuthenticated && identity && isMountedRef.current) {
       setupConversationsListener();
     } else {

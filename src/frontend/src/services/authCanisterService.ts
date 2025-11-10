@@ -197,7 +197,6 @@ export const authCanisterService = {
     }
   },
 
-
   /**
    * Upload a profile picture
    * @param fileName Name of the file
@@ -275,7 +274,6 @@ export const authCanisterService = {
           result.data?.message || "Failed to update user active status",
         );
       }
-
     } catch (error) {
       throw error;
     }

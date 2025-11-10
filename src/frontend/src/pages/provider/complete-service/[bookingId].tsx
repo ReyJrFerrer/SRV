@@ -177,11 +177,9 @@ const CompleteServicePage: React.FC = () => {
                   releaseResult.bookingData?.commissionRetained,
                   releaseResult.payoutData?.payoutId,
                 );
-              } catch (canisterError) {
-              }
+              } catch (canisterError) {}
             }
-          } catch (releaseError) {
-          }
+          } catch (releaseError) {}
         }
       } else {
         setError("Unsupported payment method.");

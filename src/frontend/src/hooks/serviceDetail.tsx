@@ -309,8 +309,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
               providerData = await authCanisterService.getProfile(
                 serviceData.providerId,
               );
-            } catch (err) {
-            }
+            } catch (err) {}
           }
 
           setProvider(providerData);
@@ -356,8 +355,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
         );
         setService(formattedService);
       }
-    } catch (err) {
-    }
+    } catch (err) {}
   }, [serviceId]);
 
   return {

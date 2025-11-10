@@ -39,7 +39,6 @@ class PWAService {
     const capabilities = browserDetectionService.getPWACapabilities();
 
     window.addEventListener("beforeinstallprompt", (e) => {
-
       e.preventDefault();
       // Store the event so it can be triggered later
       this.deferredPrompt = e as unknown as PWAInstallPrompt;
@@ -212,8 +211,6 @@ class PWAService {
 
       // For mobile PWAs, we need to handle permission requests more carefully
       if (browserInfo.isMobile && browserInfo.isStandalone) {
-
-
         // Add a small delay to ensure PWA is fully loaded
         await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -238,13 +235,11 @@ class PWAService {
         permission = await this.requestPermissionWithRetry();
       } else if (browserInfo.name.toLowerCase().includes("safari")) {
         permission = await Notification.requestPermission();
-
       } else if (
         browserInfo.name.toLowerCase().includes("brave") ||
         browserInfo.name.toLowerCase().includes("vivaldi")
       ) {
         permission = await Notification.requestPermission();
-
       } else {
         permission = await Notification.requestPermission();
       }
@@ -434,8 +429,7 @@ class PWAService {
     if (permission === "granted" && this.swRegistration) {
       try {
         await oneSignalService.getPlayerId(); // Check if we have a valid player ID
-      } catch (error) {
-      }
+      } catch (error) {}
     }
 
     return permission;

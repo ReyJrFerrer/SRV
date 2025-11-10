@@ -83,8 +83,7 @@ const ConversationPage: React.FC = () => {
       ) {
         setOtherUserImageUrl(profile.profilePicture.imageUrl);
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   // Mark messages as read when conversation loads
@@ -120,8 +119,7 @@ const ConversationPage: React.FC = () => {
 
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const handleReportClick = () => {

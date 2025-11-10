@@ -98,8 +98,7 @@ const WalletPage: React.FC = () => {
         if (profile && !profile.isOnboarded) {
           setShowOnboardingModal(true);
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     };
 
     checkOnboardingStatus();
@@ -173,8 +172,7 @@ const WalletPage: React.FC = () => {
             );
           }
         }
-      } catch (error) {
-      }
+      } catch (error) {}
     }
 
     // Remove completed/expired invoices from tracking

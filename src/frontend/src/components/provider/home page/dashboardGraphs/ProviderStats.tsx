@@ -58,8 +58,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   const handleRefreshBalance = async () => {
     try {
       await fetchBalance();
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);

@@ -36,8 +36,7 @@ const CancelWithReasonButton: React.FC<CancelWithReasonButtonProps> = ({
       await onSubmit(reason.trim());
       setReason("");
       setError(null);
-    } catch (err) {
-    }
+    } catch (err) {}
   };
 
   if (!show) return null;

@@ -162,7 +162,6 @@ export const useReputation = () => {
       } catch (fetchError: any) {
         // If reputation doesn't exist, try to initialize it
         if (fetchError.message.includes("No reputation score found")) {
-
           const initialReputation =
             await reputationCanisterService.initializeMyReputation();
 

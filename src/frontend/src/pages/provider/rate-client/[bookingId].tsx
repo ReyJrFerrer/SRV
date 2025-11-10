@@ -59,7 +59,6 @@ const ProviderRateClientPage: React.FC = () => {
         return;
       }
 
-
       // Step 3: Check if booking exists
       if (!booking) {
         navigate("/provider/bookings", { replace: true });

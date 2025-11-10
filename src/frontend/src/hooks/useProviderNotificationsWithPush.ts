@@ -86,8 +86,7 @@ const setProviderReadIds = async (ids: string[]) => {
         PROVIDER_READ_NOTIFICATIONS_KEY,
         JSON.stringify(ids),
       );
-    } catch (fallbackError) {
-    }
+    } catch (fallbackError) {}
   }
 };
 
@@ -126,8 +125,7 @@ const setProviderPushSentIds = async (ids: string[]) => {
         PROVIDER_PUSH_SENT_NOTIFICATIONS_KEY,
         JSON.stringify(ids),
       );
-    } catch (fallbackError) {
-    }
+    } catch (fallbackError) {}
   }
 };
 
@@ -387,8 +385,7 @@ export const useProviderNotificationsWithPush = () => {
       const pushSentIds = await getProviderPushSentIds();
       const newPushSentIds = pushSentIds.filter((id) => id !== notificationId);
       await setProviderPushSentIds(newPushSentIds);
-    } catch (error) {
-    }
+    } catch (error) {}
 
     setNotifications((prev) => {
       const newNotifications = prev.map((n) =>

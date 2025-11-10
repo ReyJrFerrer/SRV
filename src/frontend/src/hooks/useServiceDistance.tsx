@@ -184,8 +184,7 @@ export const useBulkServiceDistance = (
               location,
               service.location,
             );
-          } catch (err) {
-          }
+          } catch (err) {}
         }
       });
 

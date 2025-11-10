@@ -165,7 +165,6 @@ class FirebaseAuthService {
 
       return confirmationResult;
     } catch (error: any) {
-
       // Reset reCAPTCHA on error
       if (this.recaptchaVerifier) {
         this.recaptchaVerifier.clear();
@@ -187,7 +186,6 @@ class FirebaseAuthService {
       const result = await confirmationResult.confirm(otpCode);
 
       if (result.user) {
-
         const icToken = getStoredICCustomToken();
         if (icToken && this.auth) {
           try {

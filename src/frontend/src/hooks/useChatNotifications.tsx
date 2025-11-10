@@ -124,7 +124,6 @@ export const useChatNotifications = () => {
       localStorage.setItem(HAS_UNREAD_CHATS_KEY, "false");
       window.dispatchEvent(new CustomEvent(CHATS_READ_EVENT));
     } catch (error) {
-
       // Fallback to localStorage method
       localStorage.setItem(HAS_UNREAD_CHATS_KEY, "false");
       window.dispatchEvent(new CustomEvent(CHATS_READ_EVENT));
