@@ -10,7 +10,6 @@ import ServiceListItem from "../../components/client/home page/ServiceListingCar
 import BottomNavigation from "../../components/client/NavigationBar";
 import SearchBar from "../../components/client/SearchBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
-import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import {
   useAllServicesWithProviders,
   EnrichedService,
@@ -129,9 +128,7 @@ const SearchResultsPage: React.FC = () => {
     isVerified: false,
     averageRating: service.rating?.average ?? 0,
     totalReviews: service.rating?.count ?? 0,
-    serviceImages: service.heroImage ? [service.heroImage] : [],
-    userImageUrl: service.providerAvatar || null,
-    isLoadingImages: false,
+    mediaUrls: service.media || [],
   });
 
   return (
@@ -169,11 +166,6 @@ const SearchResultsPage: React.FC = () => {
       </header>
 
       <main className="flex-grow overflow-y-auto p-2 pb-20 sm:p-4">
-        {loading && (
-          <div className="py-2">
-            <ServiceGridSkeleton count={8} />
-          </div>
-        )}
         {error && (
           <div className="py-16 text-center">
             <p className="text-lg text-red-500">

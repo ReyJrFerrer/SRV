@@ -32,9 +32,7 @@ const ViewAllServicesPage: React.FC = () => {
     isVerified: false,
     averageRating: service.rating?.average ?? 0,
     totalReviews: service.rating?.count ?? 0,
-    serviceImages: service.heroImage ? [service.heroImage] : [],
-    userImageUrl: service.providerAvatar || null,
-    isLoadingImages: false,
+    mediaUrls: service.media || [],
   });
 
   return (

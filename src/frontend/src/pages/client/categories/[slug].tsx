@@ -9,7 +9,6 @@ import SearchBar from "../../../components/client/SearchBar";
 import ServiceListItem from "../../../components/client/home page/ServiceListingCard";
 import BottomNavigation from "../../../components/client/NavigationBar";
 import Appear from "../../../components/common/pageFlowImprovements/Appear";
-import { ServiceGridSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
 import {
   useServicesByCategory,
   useAllServicesWithProviders,
@@ -62,7 +61,6 @@ const CategoryPage: React.FC = () => {
 
   const {
     services,
-    loading: servicesLoading,
     error: servicesError,
   } = isAllServices ? allServicesHook : categoryServicesHook;
 
@@ -117,9 +115,7 @@ const CategoryPage: React.FC = () => {
     isVerified: false,
     averageRating: service.rating?.average ?? 0,
     totalReviews: service.rating?.count ?? 0,
-    serviceImages: service.heroImage ? [service.heroImage] : [],
-    userImageUrl: service.providerAvatar || null,
-    isLoadingImages: false,
+    mediaUrls: service.media || [],
   });
 
   const sortedAndFilteredServices = useMemo(() => {
@@ -259,17 +255,7 @@ const CategoryPage: React.FC = () => {
           </div>
         )}
 
-        {servicesLoading || !category ? (
-          <ServiceGridSkeleton count={8} />
-        ) : sortedAndFilteredServices.length === 0 && !servicesError ? (
-          <div className="py-10 text-center">
-            <p className="text-gray-500">
-              {searchTerm
-                ? `No services found for "${searchTerm}" with the current filters.`
-                : "No services found in this category with the current filters."}
-            </p>
-          </div>
-        ) : (
+ 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {sortedAndFilteredServices.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
@@ -281,7 +267,7 @@ const CategoryPage: React.FC = () => {
               </Appear>
             ))}
           </div>
-        )}
+   
       </div>
 
       <BottomNavigation />
