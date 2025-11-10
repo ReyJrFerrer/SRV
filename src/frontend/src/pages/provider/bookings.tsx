@@ -77,12 +77,10 @@ const ProviderBookingsPage: React.FC = () => {
   const {
     bookings,
     loading,
-    error,
     getPendingBookings,
     getUpcomingBookings,
     getCompletedBookings,
     getBookingsByStatus,
-    clearError,
     refreshBookings,
     isProviderAuthenticated,
     declineBookingById,
@@ -448,13 +446,6 @@ const ProviderBookingsPage: React.FC = () => {
     if (currentBookings.length > 0) fetchStatsForClients();
   }, [currentBookings, getClientReviewsByUser, fetchUserReputation]);
 
-  const handleRetry = async () => {
-    clearError();
-    try {
-      await refreshBookings();
-    } catch (error) {}
-  };
-
   if (!isProviderAuthenticated() && !loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -469,33 +460,6 @@ const ProviderBookingsPage: React.FC = () => {
           >
             Back to Login
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && bookings.length === 0) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">
-            Unable to load bookings
-          </h1>
-          <p className="mb-4 text-gray-600">{error}</p>
-          <div className="space-x-3">
-            <button
-              onClick={() => navigate("/provider/dashboard")}
-              className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-            >
-              Back to Dashboard
-            </button>
-            <button
-              onClick={handleRetry}
-              className="rounded-lg bg-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-400"
-            >
-              Retry
-            </button>
-          </div>
         </div>
       </div>
     );
