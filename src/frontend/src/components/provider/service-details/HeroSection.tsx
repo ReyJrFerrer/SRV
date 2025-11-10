@@ -65,7 +65,7 @@ const HeroSection: React.FC<Props> = ({
     const loadImage = async () => {
       if (hasValidImage && serviceImages[0].dataUrl) {
         const imageSrc = serviceImages[0].dataUrl;
-        
+
         // If it's already the current image and loaded, no need to reload
         if (currentImageSrc === imageSrc && imageLoaded) {
           return;
@@ -76,7 +76,7 @@ const HeroSection: React.FC<Props> = ({
         setCurrentImageSrc(imageSrc);
 
         // For SVG or data URLs, mark as loaded immediately
-        if (imageSrc.endsWith('.svg') || imageSrc.startsWith('data:')) {
+        if (imageSrc.endsWith(".svg") || imageSrc.startsWith("data:")) {
           setImageLoaded(true);
           return;
         }
@@ -103,7 +103,12 @@ const HeroSection: React.FC<Props> = ({
     };
 
     loadImage();
-  }, [serviceImages, hasValidImage, isLoadingServiceImages, service.category?.slug]);
+  }, [
+    serviceImages,
+    hasValidImage,
+    isLoadingServiceImages,
+    service.category?.slug,
+  ]);
 
   return (
     <>
@@ -112,16 +117,18 @@ const HeroSection: React.FC<Props> = ({
           {(isLoadingServiceImages || !currentImageSrc || !imageLoaded) && (
             <div className="absolute inset-0 h-full w-full animate-pulse bg-gradient-to-r from-blue-200 via-blue-100 to-blue-50"></div>
           )}
-          
+
           {/* Show image once we have a source and it's loaded */}
           {currentImageSrc && (
             <img
               src={currentImageSrc}
               alt="Service Hero"
               className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-80' : 'opacity-0'
+                imageLoaded ? "opacity-80" : "opacity-0"
               }`}
-              style={!imageLoaded ? { position: 'absolute', top: 0, left: 0 } : {}}
+              style={
+                !imageLoaded ? { position: "absolute", top: 0, left: 0 } : {}
+              }
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.onerror = null;
@@ -130,7 +137,7 @@ const HeroSection: React.FC<Props> = ({
               }}
             />
           )}
-          
+
           <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent"></div>
         </div>
         <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">
