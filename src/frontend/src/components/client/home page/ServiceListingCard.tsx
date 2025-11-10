@@ -6,15 +6,17 @@ import {
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
 import { EnrichedService } from "../../../hooks/serviceInformation";
+import {
+  useServiceImages,
+  useUserImage,
+} from "../../../hooks/useMediaLoader";
 
 // Enhanced service data interface with all fetched information
 export interface EnhancedServiceData {
   isVerified?: boolean;
   averageRating: number;
   totalReviews: number;
-  serviceImages: string[];
-  userImageUrl: string | null;
-  isLoadingImages: boolean;
+  mediaUrls: string[]; // URLs to load
 }
 
 interface ServiceListItemProps {
@@ -80,17 +82,33 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
   }) => {
     // Track image loading state to prevent flash of default image
     const [imageLoaded, setImageLoaded] = React.useState(false);
-    const [imageSrc, setImageSrc] = React.useState<string>("");
+    const [imageSrc, setImageSrc] = React.useState<string>(
+      `/images/ai-sp/${service.category?.slug || "others"}.svg`,
+    );
 
-    // Use the passed service data instead of fetching
-    const {
-      isVerified,
-      averageRating,
-      totalReviews,
-      serviceImages,
-      userImageUrl,
-      isLoadingImages,
-    } = serviceData;
+    // Load service images using the hook
+    const { images: serviceImages, isLoading: isLoadingServiceImages } =
+      useServiceImages(service.id, serviceData.mediaUrls, {
+        enabled: !!service.id && serviceData.mediaUrls.length > 0,
+      });
+
+    // Load provider avatar using the hook
+    const { userImageUrl, isLoading: isLoadingUserImage } = useUserImage(
+      service.providerAvatar,
+      {
+        enabled: !!service.providerAvatar,
+      },
+    );
+
+    // Determine if images are still loading
+    const isLoadingImages = isLoadingServiceImages || isLoadingUserImage;
+
+    // Extract loaded image data URLs
+    const loadedServiceImages =
+      serviceImages?.map((img) => img.dataUrl).filter((url): url is string => !!url && url.length > 0) || [];
+
+    // Use the passed service data
+    const { isVerified, averageRating, totalReviews } = serviceData;
 
     const serviceRating = {
       average: averageRating,
@@ -171,17 +189,21 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       // Accept any valid image URL (data:, http(s) or local path)
       const isValidImageUrl = (u?: string | null): u is string =>
         !!u &&
-        (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/")) &&
-        u.length > 20;
+        u.length > 20 &&
+        (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/"));
 
       // Priority 1: Service images (if loaded and valid)
-      const firstImage = serviceImages[0];
+      const firstImage = loadedServiceImages[0];
       if (isValidImageUrl(firstImage)) {
         return firstImage;
       }
 
       // Priority 2: User avatar (if loaded and valid)
-      if (!isLoadingImages && isValidImageUrl(userImageUrl)) {
+      if (
+        !isLoadingImages &&
+        isValidImageUrl(userImageUrl) &&
+        userImageUrl !== "/default-provider.svg"
+      ) {
         return userImageUrl;
       }
 
@@ -224,7 +246,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         img.onload = null;
         img.onerror = null;
       };
-    }, [serviceImages, userImageUrl, service.category?.slug, isLoadingImages]);
+    }, [loadedServiceImages, userImageUrl, service.category?.slug, isLoadingImages]);
 
     // Show skeleton while data is loading (after all hooks)
     if (isLoadingImages) {

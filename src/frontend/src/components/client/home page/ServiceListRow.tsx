@@ -26,9 +26,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     isVerified?: boolean;
     averageRating: number;
     totalReviews: number;
-    serviceImages: string[];
-    userImageUrl: string | null;
-    isLoadingImages: boolean;
+    mediaUrls: string[]; // URLs to be loaded by ServiceListingCard
   }
 
   const [serviceDataMap, setServiceDataMap] = useState<
@@ -50,13 +48,13 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
       // Initialize loading state for new services
       const newEntries: Record<string, ServiceData> = {};
       toFetch.forEach((serviceId) => {
+        // Find the service to get media URLs
+        const service = services.find((s) => s.id === serviceId);
         newEntries[serviceId] = {
           isVerified: false,
           averageRating: 0,
           totalReviews: 0,
-          serviceImages: [],
-          userImageUrl: null,
-          isLoadingImages: true,
+          mediaUrls: service?.media || [],
         };
       });
 
@@ -67,6 +65,9 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
       const fetchedData = await Promise.all(
         toFetch.map(async (serviceId) => {
           try {
+            // Find the service to get media URLs
+            const service = services.find((s) => s.id === serviceId);
+
             // Fetch service details for verification status
             const serviceDetails =
               await serviceCanisterService.getService(serviceId);
@@ -85,41 +86,26 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
                   ) / visibleReviews.length
                 : 0;
 
-            // Find the service from the list to get provider avatar
-            const service = services.find((s) => s.id === serviceId);
-
-            // For service images, we'll use the heroImage from the enriched service
-            // and the provider avatar as fallback
-            const serviceImages: string[] = [];
-            if (service?.heroImage) {
-              serviceImages.push(service.heroImage);
-            }
-
-            // Use provider avatar from enriched service
-            const userImageUrl = service?.providerAvatar || null;
-
             return {
               serviceId,
               data: {
                 isVerified: (serviceDetails as any)?.isVerified || false,
                 averageRating,
                 totalReviews: visibleReviews.length,
-                serviceImages,
-                userImageUrl,
-                isLoadingImages: false,
+                mediaUrls: service?.media || [],
               },
             };
           } catch (err) {
             console.error(`Error fetching data for service ${serviceId}:`, err);
+            // Find the service to get media URLs even on error
+            const service = services.find((s) => s.id === serviceId);
             return {
               serviceId,
               data: {
                 isVerified: false,
                 averageRating: 0,
                 totalReviews: 0,
-                serviceImages: [],
-                userImageUrl: null,
-                isLoadingImages: false,
+                mediaUrls: service?.media || [],
               },
             };
           }
@@ -172,9 +158,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         isVerified: false,
         averageRating: service.rating?.average || 0,
         totalReviews: service.rating?.count || 0,
-        serviceImages: [],
-        userImageUrl: null,
-        isLoadingImages: true,
+        mediaUrls: service.media || [],
       };
 
       return {

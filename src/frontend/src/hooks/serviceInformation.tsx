@@ -44,6 +44,9 @@ export interface EnrichedService {
 
   // Availability
   availability: { isAvailable: boolean };
+
+  // Media URLs for images
+  media: string[];
 }
 
 // Hook result interface
@@ -126,6 +129,9 @@ const transformToEnrichedService = (
     availability: {
       isAvailable: service.status === "Available",
     },
+
+    // Media URLs - filter out empty strings
+    media: (service.imageUrls || []).filter((url) => url && url.length > 0),
   };
 };
 
