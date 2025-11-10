@@ -88,7 +88,6 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
 
 /**
  * Upload a media file to Cloud Storage and store metadata in Firestore
- * Mirrors uploadMedia function from media.mo canister
  */
 exports.uploadMedia = functions.https.onCall(async (data, context) => {
   const {fileName, contentType, mediaType, fileData} = data.data;

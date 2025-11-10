@@ -332,8 +332,8 @@ exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
       success: true,
       customToken,
       principal: principalText,
-      hasProfile: hasFirestoreProfile, // Let frontend know if user needs to create profile
-      needsProfile: !hasFirestoreProfile, // Explicit flag for new users
+      hasProfile: hasFirestoreProfile,
+      needsProfile: !hasFirestoreProfile,
       message: hasFirestoreProfile ?
         "Successfully authenticated with Internet Identity" :
         "Successfully authenticated. Please complete your profile.",

@@ -2,7 +2,7 @@
  * Account Management Cloud Functions
  *
  * This module handles all user profile and account management operations
- * migrated from the auth.mo canister. All profile data is stored in Firestore.
+ *  All profile data is stored in Firestore.
  */
 
 const functions = require("firebase-functions");
@@ -96,6 +96,7 @@ async function isPhoneTaken(phone, excludePrincipal = null) {
 }
 /**
  * Validates phone number if it exists
+ * HTTPS onCall Cloud Function
  */
 exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -130,17 +131,10 @@ exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
 });
 /**
  * Create a new user profile
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.createProfile = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
-
-  // Debug logging
-  console.log("🔍 createProfile called:", {
-    hasContextAuth: !!context.auth,
-    hasDataAuth: !!data.auth,
-    authUid: auth?.uid,
-  });
 
   // Check authentication
   if (!auth) {
@@ -192,7 +186,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
   // Create new profile
   const now = new Date().toISOString();
 
-  // Initialize reputation score. If this fails, the entire function will fail.
+  // Initialize reputation score. But if it fails, creation will push through.
   try {
     await initializeReputationInternal(principalId, now);
     console.log(`✅ Reputation initialized for user: ${principalId}`);
@@ -201,7 +195,6 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
   }
 
 
-  // Initialize reputation score, if this fails then push through with profile creation
   const newProfile = {
     id: principalId,
     name: name,
@@ -228,7 +221,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
 
 /**
  * Get user profile by ID
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.getProfile = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -264,7 +257,7 @@ exports.getProfile = functions.https.onCall(async (data, context) => {
 
 /**
  * Update user profile
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.updateProfile = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -323,7 +316,7 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
 
 /**
  * Switch user active role between Client and ServiceProvider
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.switchUserRole = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -367,7 +360,7 @@ exports.switchUserRole = functions.https.onCall(async (data, context) => {
 
 /**
  * Get all service providers
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.getAllServiceProviders = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -399,7 +392,7 @@ exports.getAllServiceProviders = functions.https.onCall(async (data, context) =>
 
 /**
  * Get all users (admin function)
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.getAllUsers = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -412,13 +405,6 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // TODO: Add admin role check in production
-  // if (!auth.token.admin) {
-  //   throw new functions.https.HttpsError(
-  //     "permission-denied",
-  //     "Only admins can access all users"
-  //   );
-  // }
 
   const db = admin.firestore();
   const usersSnapshot = await db.collection("users").get();
@@ -494,7 +480,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
       fileName,
       contentType,
       mediaType: "UserProfile",
-      fileData, // Already base64 encoded from frontend
+      fileData,
       ownerId: principalId,
     });
 
@@ -503,7 +489,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
       profilePicture: {
         mediaId: mediaItem.id,
         imageUrl: mediaItem.url,
-        thumbnailUrl: mediaItem.url, // Use same URL for thumbnail (can be enhanced later)
+        thumbnailUrl: mediaItem.url,
       },
       updatedAt: new Date().toISOString(),
     });
@@ -523,7 +509,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
 
 /**
  * Remove profile picture
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
@@ -584,7 +570,7 @@ exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
 
 /**
  * Update user active status and last activity timestamp
- * HTTP onCall Cloud Function
+ * HTTPS onCall Cloud Function
  */
 exports.updateUserActiveStatus = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;

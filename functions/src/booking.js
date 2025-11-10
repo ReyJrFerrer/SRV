@@ -446,19 +446,6 @@ async function cancelConflictingBookings(
  */
 exports.createBooking = functions.https.onCall(async (data, context) => {
   console.log("🚀 [createBooking] called");
-  // const safeDataForLog = {
-  //   serviceId: data.data?.serviceId,
-  //   providerId: data.data?.providerId,
-  //   price: data.data?.price,
-  //   location: data.data?.location ? "Present" : "Missing",
-  //   requestedDate: data.data?.requestedDate,
-  //   scheduledDate: data.data?.scheduledDate,
-  //   paymentMethod: data.data?.paymentMethod,
-  //   servicePackageIds: data.data?.servicePackageIds,
-  //   notes: data.data?.notes,
-  //   auth: data.auth ? "Present" : "Missing",
-  // };
-  // console.log("📦 [createBooking] Received payload:", JSON.stringify(safeDataForLog, null, 2));
   // Extract payload from data.data
   const payload = data.data || data;
   const {
@@ -551,8 +538,6 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     }
 
     const service = serviceDoc.data();
-    // console.log(`[createBooking] Fetched service data for serviceId ${serviceId}:`,
-    //   JSON.stringify(service, null, 2));
 
     if (service.providerId !== providerId) {
       console.error(`❌ [createBooking] 
@@ -648,9 +633,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       evidence: null,
       notes: notes || null,
       paymentMethod,
-      // Location detection flag (automatic = detected via GPS/maps, manual = manually entered)
       locationDetection: locationDetection,
-      // Initialize payment status tracking fields
       paymentStatus: paymentId ? "PAID_HELD" : "PENDING",
       paymentId: paymentId || null,
       heldAmount: paymentId ? finalPrice : null,
@@ -663,8 +646,6 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       updatedAt: now,
     };
 
-    // console.log("📝 [createBooking] Creating new booking object:"
-    //   , JSON.stringify(newBooking, null, 2));
     // Use Firestore transaction for atomic booking creation
     await db.runTransaction(async (transaction) => {
       transaction.set(db.collection("bookings").doc(bookingId), newBooking);
@@ -1507,8 +1488,6 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
         console.error(
           `⚠️ [cancelBooking] Failed to release held commission: ${releaseError.message}`,
         );
-        // Don't throw error here - cancellation should still succeed
-        // But log it for manual review
       }
     }
 

@@ -35,7 +35,6 @@ function generateId() {
 
 /**
  * Create a new conversation (called after booking completion)
- * Mirrors: createConversation(clientId: Principal, providerId: Principal)
  */
 exports.createConversation = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -79,7 +78,6 @@ exports.createConversation = functions.https.onCall(async (data, context) => {
       .get();
 
     if (!existingConversations.empty) {
-      // Return existing conversation
       const existing = existingConversations.docs[0];
       return {
         success: true,
@@ -221,15 +219,15 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
         conversationId: conversationId,
         senderId: senderId,
         receiverId: receiverId,
-        messageType: {Text: null}, // Mirror Motoko variant structure
+        messageType: {Text: null},
         content: {
-          encryptedText: content.trim(), // Not actually encrypted for now
+          encryptedText: content.trim(),
           encryptionKey: "", // Placeholder for future encryption
         },
-        attachment: [], // Empty array mirrors Motoko's null
-        status: {Sent: null}, // Mirror Motoko variant structure
+        attachment: [],
+        status: {Sent: null},
         createdAt: now,
-        readAt: [], // Empty array mirrors Motoko's null
+        readAt: [],
       };
 
       const messageRef = db.collection("messages").doc(messageId);
@@ -314,7 +312,6 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
         console.log(`Chat notification created and sent to ${receiverId}`);
       }
     } catch (notificationError) {
-      // Don't fail the message send if notification fails
       console.error("Error creating chat notification:", notificationError);
     }
 
@@ -350,7 +347,6 @@ exports.getMyConversations = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // Use requested userId if admin, otherwise use authenticated user's ID
   const userId = (authInfo.isAdmin && requestedUserId) ? requestedUserId : authInfo.uid;
 
   // Log for debugging admin queries
@@ -469,7 +465,6 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
     }
 
     const conversation = conversationDoc.data();
-    // Admin can view any conversation, otherwise check if user is part of conversation
     if (
       !authInfo.isAdmin &&
       userId !== conversation.clientId &&
@@ -520,7 +515,6 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
 
 /**
  * Mark all messages in a conversation as read
- * Mirrors: markMessagesAsRead(conversationId: Text)
  */
 exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
   // Extract payload

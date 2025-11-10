@@ -5,7 +5,6 @@
  * reputation canister. It handles all reputation-related operations including initialization,
  * updates, and review processing with AI-powered sentiment analysis.
  *
- * This is a critical component of the hybrid ICP-Firebase architecture.
  */
 
 const functions = require("firebase-functions");
