@@ -232,7 +232,7 @@ const PayoutSettingsPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-md p-4">
+      <main className="mx-auto max-w-md p-4 pt-20">
         <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
           <div className="p-6">
             <div className="mb-6 text-center">
