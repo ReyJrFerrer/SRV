@@ -25,6 +25,7 @@ import ServiceDetails from "../../../components/client/booking-details/ServiceDe
 import BookingProgressTracker from "../../../components/client/booking-details/BookingProgressTracker";
 import BookingNotes from "../../../components/client/booking-details/BookingNotes";
 import ActionButtons from "../../../components/client/booking-details/ActionButtons";
+import BookingDetailsSkeleton from "../../../components/client/booking-details/BookingDetailsSkeleton";
 
 type BookingStatus =
   | "Requested"
@@ -40,14 +41,14 @@ const BookingDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [specificBooking, setSpecificBooking] =
     useState<EnhancedBooking | null>(null);
-  const [localLoading, setLocalLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [canUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
-  const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(true);
   const { identity } = useAuth();
   const { conversations, loading: chatLoading, createConversation } = useChat();
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
@@ -75,15 +76,14 @@ const BookingDetailsPage: React.FC = () => {
   }, [specificBooking?.serviceName]);
 
   useEffect(() => {
-    if (id && typeof id === "string" && !hookLoading) {
-      setLocalLoading(true);
+    if (id && typeof id === "string" && !hookLoading && bookings.length > 0) {
       const foundBooking = bookings.find((booking) => booking.id === id);
       if (foundBooking) {
         setSpecificBooking(foundBooking);
       } else {
         setSpecificBooking(null);
       }
-      setLocalLoading(false);
+      setIsInitialLoad(false);
     }
   }, [id, bookings, hookLoading]);
 
@@ -270,7 +270,7 @@ const BookingDetailsPage: React.FC = () => {
   } = specificBooking || {};
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
-  const isLoading = hookLoading || localLoading || loadingStats;
+  const isLoading = hookLoading || isInitialLoad || loadingStats;
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
@@ -287,16 +287,12 @@ const BookingDetailsPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="mx-auto space-y-6 p-4 sm:p-6">
+      <main className="mx-auto space-y-6 p-4 pt-20 sm:p-6 sm:pt-20">
         {isLoading ? (
-          <div className="flex min-h-[calc(100vh-150px)] items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-              <p className="text-gray-600">Loading booking details...</p>
-            </div>
-          </div>
+          <BookingDetailsSkeleton />
         ) : (
           <>
+            {/* Cancellation reasons (frontend-only / informational) */}
             <div>
               <CancellationReasons
                 bookingId={specificBooking?.id ?? null}

@@ -26,7 +26,6 @@ const NotificationsPageSP = () => {
     markAllAsRead,
   } = useProviderNotifications();
   // Track processed notification IDs to prevent flickering from re-renders
-  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
   const [stableNotifications, setStableNotifications] = React.useState<
     ProviderNotification[]
   >([]);
@@ -36,22 +35,44 @@ const NotificationsPageSP = () => {
     document.title = "Notifications | SRV";
   }, []);
 
-  // Stabilize notifications array to prevent flickering
+  // Stabilize notifications similar to client page to detect changes in read status, type, etc.
+  const previousNotificationsRef = React.useRef<Map<string, string>>(new Map());
+
   React.useEffect(() => {
     if (loading) return;
 
-    // Check if there are new notifications that haven't been processed
-    const newNotifications = notifications.filter(
-      (n) => !processedNotificationsRef.current.has(n.id),
-    );
+    const nextMap = new Map<string, string>();
+    notifications.forEach((n) => {
+      try {
+        nextMap.set(
+          n.id,
+          JSON.stringify({
+            id: n.id,
+            type: n.type,
+            read: n.read,
+            href: n.href,
+          }),
+        );
+      } catch (e) {
+        nextMap.set(n.id, String(n.id));
+      }
+    });
 
-    if (newNotifications.length > 0 || notifications.length === 0) {
-      // Mark all current notifications as processed
-      notifications.forEach((n) => {
-        processedNotificationsRef.current.add(n.id);
-      });
+    const prevMap = previousNotificationsRef.current;
+    let changed = false;
+    if (prevMap.size !== nextMap.size) {
+      changed = true;
+    } else {
+      for (const [id, sig] of nextMap.entries()) {
+        if (prevMap.get(id) !== sig) {
+          changed = true;
+          break;
+        }
+      }
+    }
 
-      // Update stable notifications only when there are actual changes
+    if (changed || notifications.length === 0) {
+      previousNotificationsRef.current = nextMap;
       setStableNotifications(notifications);
     }
   }, [notifications, loading]);
