@@ -9,7 +9,7 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
-import { useNotifications } from "../../hooks/useNotificationsWithPush";
+import { useProviderNotificationsWithPush } from "../../hooks/useProviderNotificationsWithPush";
 import { useUserProfile } from "../../hooks/useUserProfile";
 
 type BottomNavigationProps = {
@@ -22,7 +22,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 }) => {
   const location = useLocation();
   const { unreadChatCount } = useChatNotifications();
-  const { unreadCount } = useNotifications();
+  const { unreadCount } = useProviderNotificationsWithPush();
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
 
