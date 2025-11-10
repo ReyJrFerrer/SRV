@@ -1435,7 +1435,8 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     }
 
     // Deduct reputation for cancelling Accepted or InProgress bookings (both clients and providers)
-    const shouldDeductReputation = booking.status === "Accepted" || booking.status === "InProgress";
+    const shouldDeductReputation = booking.status === "Accepted" ||
+    booking.status === "InProgress"|| booking.status === "Requested";
 
     if (shouldDeductReputation) {
       try {
