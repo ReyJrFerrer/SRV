@@ -82,10 +82,16 @@ const NotificationMenu: React.FC<Props> = ({
     });
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    onDelete(e);
     setOpen(false);
+    await onDelete(e);
+  };
+
+  const handleMarkAsRead = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen(false);
+    await onMarkAsRead(e);
   };
 
   const menu = (
@@ -102,10 +108,7 @@ const NotificationMenu: React.FC<Props> = ({
       <div className="py-1">
         {!isRead && (
           <button
-            onClick={(e) => {
-              onMarkAsRead(e);
-              setOpen(false);
-            }}
+            onClick={handleMarkAsRead}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
           >
             Mark as read

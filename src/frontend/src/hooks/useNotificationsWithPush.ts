@@ -203,47 +203,8 @@ export const useNotificationsWithPush = () => {
           bookingId: notif.bookingId,
         }));
 
-      // For backward compatibility, still generate some notifications from booking data
-      // But only if they don't already exist in the canister
-      const existingNotificationBookingIds = new Set(
-        canisterNotifications
-          .filter((n) => n.bookingId)
-          .map((n) => n.bookingId!),
-      );
-
-      // Generate additional notifications for bookings not covered by canister
-      const additionalNotifications: Notification[] = [];
-
-      // Only generate for bookings that don't have canister notifications
-      const uncoveredBookings = bookings.filter(
-        (b) => !existingNotificationBookingIds.has(b.id),
-      );
-
-      if (uncoveredBookings.length > 0) {
-        // Generate review reminders for completed but unreviewed bookings
-        const reviewReminderNotifications: Notification[] = uncoveredBookings
-          .filter((b) => b.status === "Completed")
-          .map((booking) => ({
-            id: `frontend-review-${booking.id}-${Date.now()}`,
-            message: `Please review your recent "${booking.serviceName}" service`,
-            type: "review_reminder",
-            timestamp: new Date(
-              booking.completedDate || Date.now(),
-            ).toISOString(),
-            read: false,
-            href: `/client/review/${booking.id}`,
-            providerName: booking.providerProfile?.name,
-            bookingId: booking.id,
-          }));
-
-        additionalNotifications.push(...reviewReminderNotifications);
-      }
-
-      // Combine canister notifications with additional frontend-generated ones
-      const allNotifications = [
-        ...notificationsFromCanister,
-        ...additionalNotifications,
-      ].sort(
+      // Use only canister notifications (no frontend-generated ones)
+      const allNotifications = notificationsFromCanister.sort(
         (a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
@@ -383,17 +344,10 @@ export const useNotificationsWithPush = () => {
       // Try to mark as read in canister first
       await notificationCanisterService.markAsRead(notificationId);
     } catch (error) {
-      // If it's a frontend-generated notification (not in canister), just update locally
-      if (
-        notificationId.startsWith("frontend-review-") ||
-        notificationId.startsWith("frontend-booking-status-")
-      ) {
-      } else {
-        // For other errors, try localStorage fallback
-        const readIds = await getReadIds();
-        if (!readIds.includes(notificationId)) {
-          await setReadIds([...readIds, notificationId]);
-        }
+      // Fallback to localStorage
+      const readIds = await getReadIds();
+      if (!readIds.includes(notificationId)) {
+        await setReadIds([...readIds, notificationId]);
       }
     }
 

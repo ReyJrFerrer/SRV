@@ -54,18 +54,18 @@ const ProviderRateClientPage: React.FC = () => {
         return;
       }
 
-      // Step 2: Wait for booking to load
+      // Step 2: IMPORTANT - Wait for booking to load
       if (isLoadingBooking) {
         return;
       }
 
-      // Step 3: Check if booking exists
+      // Step 3: Only redirect if loading is complete and booking is null
       if (!booking) {
         navigate("/provider/bookings", { replace: true });
         return;
       }
 
-      // Step 4: Check if booking is completed
+      // Step 4: Only check status after confirming booking exists
       if (booking.status !== "Completed") {
         navigate("/provider/bookings", { replace: true });
         return;
@@ -185,7 +185,7 @@ const ProviderRateClientPage: React.FC = () => {
   }
 
   // Show loading state while booking is being fetched
-  if (!booking) {
+  if (isLoadingBooking || !booking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>

@@ -203,64 +203,8 @@ export const useProviderNotificationsWithPush = () => {
           amount: notif.metadata?.amount || undefined,
         }));
 
-      // For backward compatibility, still generate some notifications from booking data
-      // But only if they don't already exist in the canister
-      const existingNotificationBookingIds = new Set(
-        canisterNotifications
-          .filter((n) => n.bookingId)
-          .map((n) => n.bookingId!),
-      );
-
-      // Generate additional notifications for bookings not covered by canister
-      const additionalNotifications: ProviderNotification[] = [];
-
-      // Only generate for bookings that don't have canister notifications
-      const uncoveredBookings = bookings.filter(
-        (b) => !existingNotificationBookingIds.has(b.id),
-      );
-
-      if (uncoveredBookings.length > 0) {
-        // 1. Service completion reminders (for InProgress bookings)
-        const serviceReminders = uncoveredBookings
-          .filter((booking) => booking.status === "InProgress")
-          .map((booking) => ({
-            id: `frontend-reminder-${booking.id}-${Date.now()}`,
-            message: `Don't forget to complete the service for`,
-            type: "service_completion_reminder" as const,
-            timestamp: new Date().toISOString(),
-            read: false,
-            href: `/provider/active-service/${booking.id}`,
-            clientName: booking.clientName,
-            bookingId: booking.id,
-          }));
-
-        // 2. Review reminders for completed but unreviewed bookings
-        const reviewReminderNotifications = uncoveredBookings
-          .filter((booking) => booking.status === "Completed")
-          .map((booking) => ({
-            id: `frontend-review-${booking.id}-${Date.now()}`,
-            message: `Rate your experience with ${booking.clientName} for "${booking.serviceName}"`,
-            type: "review_request" as const,
-            timestamp: new Date(
-              booking.completedDate || Date.now(),
-            ).toISOString(),
-            read: false,
-            href: `/provider/rate-client/${booking.id}`,
-            clientName: booking.clientName,
-            bookingId: booking.id,
-          }));
-
-        additionalNotifications.push(
-          ...serviceReminders,
-          ...reviewReminderNotifications,
-        );
-      }
-
-      // Combine canister notifications with additional frontend-generated ones
-      const allNotifications = [
-        ...notificationsFromCanister,
-        ...additionalNotifications,
-      ].sort(
+      // Use only canister notifications (no frontend-generated ones)
+      const allNotifications = notificationsFromCanister.sort(
         (a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
@@ -396,17 +340,10 @@ export const useProviderNotificationsWithPush = () => {
       // Try to mark as read in canister first
       await notificationCanisterService.markAsRead(notificationId);
     } catch (error) {
-      // If it's a frontend-generated notification (not in canister), just update locally
-      if (
-        notificationId.startsWith("frontend-reminder-") ||
-        notificationId.startsWith("frontend-new-booking-")
-      ) {
-      } else {
-        // For other errors, try localStorage fallback
-        const readIds = await getProviderReadIds();
-        if (!readIds.includes(notificationId)) {
-          await setProviderReadIds([...readIds, notificationId]);
-        }
+      // Fallback to localStorage
+      const readIds = await getProviderReadIds();
+      if (!readIds.includes(notificationId)) {
+        await setProviderReadIds([...readIds, notificationId]);
       }
     }
 
