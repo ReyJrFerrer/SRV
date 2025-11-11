@@ -804,10 +804,9 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         );
       }
 
-      const isOwner = reviewCollection === "reviews" 
-        ? existingReview.clientId === authInfo.uid
-        : existingReview.providerId === authInfo.uid;
-      
+      const isOwner = reviewCollection === "reviews" ? existingReview.clientId === authInfo.uid :
+        existingReview.providerId === authInfo.uid;
+
       if (!isOwner && !authInfo.isAdmin) {
         throw new functions.https.HttpsError(
           "permission-denied",
