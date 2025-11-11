@@ -1,6 +1,6 @@
 // Shared Tailwind class constants for booking action buttons (client + provider)
 export const containerDefault =
-  "mb-6 flex flex-col gap-3 rounded-xl bg-white p-3 shadow-sm justify-end";
+  "mb-1 flex flex-col gap-3 rounded-xl bg-white p-3 shadow-sm justify-end";
 export const containerCompact = "flex flex-wrap gap-2 items-center justify-end";
 
 export const baseButtonDefault =
@@ -11,10 +11,10 @@ export const baseButtonCompact =
 
 // Color tokens - use the same across client + provider
 export const color = {
-  chat: "bg-slate-600 hover:bg-slate-700",
+  chat: "bg-slate-600 hover:bg-slate-700 ",
   cancel: "bg-red-500 hover:bg-red-600",
   bookAgain: "bg-green-500 hover:bg-green-600",
-  accept: "bg-green-500 hover:bg-green-600",
+  accept: "bg-blue-600 hover:bg-blue-600",
   decline: "bg-red-500 hover:bg-red-600",
   start: "bg-indigo-500 hover:bg-indigo-600",
   complete: "bg-green-500 hover:bg-green-600",

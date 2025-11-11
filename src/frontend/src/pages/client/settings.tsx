@@ -145,9 +145,7 @@ const SettingsPage: React.FC = () => {
                       aria-expanded={pwaOpen}
                       className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
                     >
-                      <span className="mr-2 text-xs text-gray-500">
-                        {pwaOpen ? "Hide" : "Show"}
-                      </span>
+                      <span className="mr-2 text-xs text-gray-500"></span>
                       <ChevronRightIcon
                         className={`h-5 w-5 transform transition-transform ${pwaOpen ? "rotate-90" : ""}`}
                       />
@@ -170,9 +168,7 @@ const SettingsPage: React.FC = () => {
                       aria-expanded={notifOpen}
                       className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
                     >
-                      <span className="mr-2 text-xs text-gray-500">
-                        {notifOpen ? "Hide" : "Show"}
-                      </span>
+                      <span className="mr-2 text-xs text-gray-500"></span>
                       <ChevronRightIcon
                         className={`h-5 w-5 transform transition-transform ${notifOpen ? "rotate-90" : ""}`}
                       />

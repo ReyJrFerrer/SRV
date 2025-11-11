@@ -283,9 +283,21 @@ const NotificationsPageSP = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex min-h-[57px] w-full items-center justify-center px-4 py-3">
-          <h1 className="absolute text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+      <header className="sticky top-0 z-20 bg-white">
+        <div
+          className={`w-full px-4 py-3 ${
+            stableNotifications.length === 0
+              ? "flex items-center justify-center"
+              : "relative flex items-center justify-between"
+          }`}
+        >
+          <h1
+            className={`text-xl font-extrabold tracking-tight text-black lg:text-2xl ${
+              stableNotifications.length === 0 && unread.length > 0
+                ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
+                : ""
+            }`}
+          >
             Notifications
           </h1>
           {stableNotifications.length > 0 && (
@@ -412,9 +424,9 @@ const NotificationsPageSP = () => {
       </header>
 
       {/* Tabs navigation for notification categories */}
-      <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
-        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
-          <nav className="flex space-x-4 overflow-x-auto px-4 py-3">
+      <div className="mb-5 border-t border-gray-200 bg-white">
+        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap border-b border-gray-200 p-2 sm:justify-center">
+          <nav className="flex space-x-4 overflow-x-auto px-2 py-1">
             {TAB_ITEMS.map((tab) => (
               <button
                 key={tab}
@@ -433,7 +445,7 @@ const NotificationsPageSP = () => {
       </div>
 
       {editMode && (
-        <div className="sticky top-14 z-30 mx-auto mt-2 flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
+        <div className="sticky top-14 z-30 mx-auto flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
           <div className="text-sm text-gray-700">
             {selectedIds.length} selected
           </div>

@@ -28,16 +28,18 @@ interface Props {
   onCancel?: () => void;
   onStart: () => void;
   onComplete: () => void;
+  status?: string | null;
   canStartServiceNow: () => boolean;
   isBookingActionInProgress: (bookingId: string, action: string) => boolean;
   commissionValidation: CommissionValidation;
-  // navigate removed: ActionButtons no longer navigates directly
-  // optional Book Again from provider side (rare)
+  onReport: () => void;
   onBookAgain?: () => void;
   bookAgainLabel?: string;
 }
 
 const ActionButtons: React.FC<Props> = ({
+  onReport,
+  status,
   booking,
   onChat,
   onAccept,
@@ -93,6 +95,7 @@ const ActionButtons: React.FC<Props> = ({
   const showStart = !!(booking?.canStart && canStartServiceNow());
   const showComplete = !!booking?.canComplete;
   const showViewReview = booking?.status === "Completed";
+  const showReport = !!(status === "Completed" || status === "Cancelled");
 
   const baseContainer = containerDefault;
   const baseButtonClass = baseButtonDefault;
@@ -113,7 +116,7 @@ const ActionButtons: React.FC<Props> = ({
         onClick={stopAndRun(onChat)}
         className={`${baseButtonClass} w-full ${color.chat}`}
       >
-        <ChatBubbleLeftRightIcon className="hidden h-5 w-5 md:mr-2" />
+        <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" />
         Chat {booking?.clientName?.split(" ")[0] || "Client"}
       </button>,
     );
@@ -127,6 +130,32 @@ const ActionButtons: React.FC<Props> = ({
         className={`${baseButtonClass} w-full ${color.bookAgain}`}
       >
         <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+      </button>,
+    );
+  }
+
+  if (showReport) {
+    buttons.push(
+      <button
+        key="report"
+        onClick={stopAndRun(onReport)}
+        className={`${baseButtonClass} w-full ${color.report}`}
+        title="Report this booking"
+      >
+        <svg
+          className="mr-2 h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
+        </svg>
+        Report
       </button>,
     );
   }
@@ -161,9 +190,9 @@ const ActionButtons: React.FC<Props> = ({
         }`}
       >
         {cancelInProgress ? (
-          <ArrowPathIcon className="hidden h-5 w-5 animate-spin md:mr-2" />
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
         ) : (
-          <XCircleIcon className="hidden h-5 w-5 md:mr-2" />
+          <XCircleIcon className="mr-2 h-5 w-5" />
         )}
         Cancel
       </button>,
@@ -203,7 +232,7 @@ const ActionButtons: React.FC<Props> = ({
               : undefined
         }
         className={`${baseButtonClass} w-full ${color.accept} ${
-          acceptDisabled ? "cursor-not-allowed opacity-60" : ""
+          acceptDisabled ? "cursor-not-allowed opacity-100" : ""
         }`}
       >
         {acceptInProgress ? (
@@ -223,7 +252,7 @@ const ActionButtons: React.FC<Props> = ({
         onClick={stopAndRun(onStart)}
         className={`${baseButtonClass} w-full ${color.start}`}
       >
-        <ArrowPathIcon className="hidden h-5 w-5 md:mr-2" />
+        <ArrowPathIcon className="mr-2 h-5 w-5" />
         Start Driving
       </button>,
     );
