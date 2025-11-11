@@ -1,10 +1,9 @@
 // --- Imports ---
 import React, { useState, useEffect, useRef } from "react";
-import { MapPinIcon, BellIcon } from "@heroicons/react/24/solid";
+import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
-import { useProviderNotifications } from "../../../hooks/useProviderNotificationsWithPush";
 import { useLocationStore } from "../../../store/locationStore";
 import MapFunctions from "../../common/GMapFunctions/MapFunctions";
 import { APIProvider } from "@vis.gl/react-google-maps";
@@ -21,7 +20,6 @@ export interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { unreadCount } = useProviderNotifications();
   // location status is handled by MapFunctions; no direct usage here
   useLocationStore();
   const [profile, setProfile] = useState<any>(null);
@@ -47,8 +45,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
     }
   }, [isAuthenticated, isAuthLoading]);
 
-  const handleNotificationsClick = () => {
-    navigate("/provider/notifications");
+  const handleProfileClick = () => {
+    navigate("/provider/profile");
   };
 
   // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
@@ -156,19 +154,14 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 </span>
               </div>
             </div>
-            {/* Notification Button with badge */}
+            {/* Profile Button */}
             {isAuthenticated && (
               <button
-                onClick={handleNotificationsClick}
+                onClick={handleProfileClick}
                 className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-                aria-label="Notifications"
+                aria-label="Profile"
               >
-                <BellIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
-                {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow">
-                    {unreadCount}
-                  </span>
-                )}
+                <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
               </button>
             )}
           </div>
@@ -176,7 +169,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
           <div className="md:hidden">
             <div className="flex items-center justify-between">
-              <Link to="/client/home">
+              <Link to="/provider/home">
                 <img
                   src="/logo.svg"
                   alt="SRV Logo"
@@ -185,16 +178,11 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
               </Link>
               {isAuthenticated && (
                 <button
-                  onClick={handleNotificationsClick}
+                  onClick={handleProfileClick}
                   className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
-                  aria-label="Notifications"
+                  aria-label="Profile"
                 >
-                  <BellIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
-                      {unreadCount}
-                    </span>
-                  )}
+                  <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
                 </button>
               )}
             </div>

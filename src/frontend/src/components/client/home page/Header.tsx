@@ -225,7 +225,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 onClick={handleProfileClick}
                 className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
               >
-                <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+                <UserCircleIcon className="h-10 w-10 text-yellow-500 transition-colors group-hover:text-blue-700" />
               </button>
             )}
           </div>
@@ -245,7 +245,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   onClick={handleProfileClick}
                   className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
                 >
-                  <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+                  <UserCircleIcon className="h-8 w-8 text-yellow-500 transition-colors group-hover:text-blue-700" />
                 </button>
               )}
             </div>
