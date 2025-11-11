@@ -20,10 +20,9 @@ const BottomNavigation: React.FC = () => {
   // Derive booking accepted count (client perspective) from notifications excluding chat/provider messages
   const bookingAcceptedCount = React.useMemo(
     () =>
-      notifications.filter(
-        (n) => !n.read && n.type === "booking_accepted"
-      ).length,
-    [notifications]
+      notifications.filter((n) => !n.read && n.type === "booking_accepted")
+        .length,
+    [notifications],
   );
 
   // Notifications badge should exclude chat related items now hidden from page
@@ -31,11 +30,9 @@ const BottomNavigation: React.FC = () => {
     () =>
       notifications.filter(
         (n) =>
-          !n.read &&
-          n.type !== "chat_message" &&
-          n.type !== "provider_message"
+          !n.read && n.type !== "chat_message" && n.type !== "provider_message",
       ).length,
-    [notifications]
+    [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
@@ -234,8 +231,8 @@ const BottomNavigation: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    {item.count > 0 && (
-                      item.label === "Booking" ? (
+                    {item.count > 0 &&
+                      (item.label === "Booking" ? (
                         <span
                           aria-label={
                             item.count > 99
@@ -248,8 +245,7 @@ const BottomNavigation: React.FC = () => {
                         </span>
                       ) : (
                         <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
-                      )
-                    )}
+                      ))}
                   </Link>
                 );
               })}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 import useChat from "../../../hooks/useChat";
@@ -24,6 +24,7 @@ import CancelWithReasonButton from "../../../components/common/cancellation/Canc
 import BookingDetailsSkeleton from "../../../components/provider/booking-details/BookingDetailsSkeleton";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";
 import { toast } from "sonner";
+import { dispatchBookingInteracted } from "../../../utils/interactionEvents";
 
 // BookingProgressSection moved to components
 
@@ -124,6 +125,19 @@ const ProviderBookingDetailsPage: React.FC = () => {
       }
     }
   }, [id, bookings, hookLoading]);
+
+  // When a provider opens a booking request, mark the corresponding notification as interacted
+  const dispatchedForBookingRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!specificBooking) return;
+    // Only relevant for new booking requests (status Requested)
+    if (specificBooking.status === "Requested") {
+      if (dispatchedForBookingRef.current !== specificBooking.id) {
+        dispatchBookingInteracted(specificBooking.id);
+        dispatchedForBookingRef.current = specificBooking.id;
+      }
+    }
+  }, [specificBooking]);
 
   const clientId =
     specificBooking?.clientProfile?.id?.toString() ||

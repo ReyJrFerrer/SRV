@@ -243,8 +243,13 @@ const NotificationsPage = () => {
     // First filter out locally deleted items
     const visible = stableNotifications
       .filter((n) => !deletedIds.includes(n.id))
-      // Hide chat-related notifications from the Notifications page
-      .filter((n) => n.type !== "chat_message" && n.type !== "provider_message");
+      // Hide chat and booking accept notifications from the Notifications page
+      .filter(
+        (n) =>
+          n.type !== "chat_message" &&
+          n.type !== "provider_message" &&
+          n.type !== "booking_accepted",
+      );
 
     const byTab =
       activeTab === "All"

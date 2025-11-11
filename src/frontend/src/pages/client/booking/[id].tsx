@@ -1,5 +1,5 @@
 // SECTION: Imports — dependencies for this page
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast, Toaster } from "sonner";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 import { useNavigate, useParams } from "react-router-dom";
@@ -26,6 +26,7 @@ import BookingProgressTracker from "../../../components/client/booking-details/B
 import BookingNotes from "../../../components/client/booking-details/BookingNotes";
 import ActionButtons from "../../../components/client/booking-details/ActionButtons";
 import BookingDetailsSkeleton from "../../../components/client/booking-details/BookingDetailsSkeleton";
+import { dispatchBookingInteracted } from "../../../utils/interactionEvents";
 
 type BookingStatus =
   | "Requested"
@@ -86,6 +87,19 @@ const BookingDetailsPage: React.FC = () => {
       setIsInitialLoad(false);
     }
   }, [id, bookings, hookLoading]);
+
+  // When user views an accepted booking for the first time in this session, dispatch interaction event
+  const dispatchedForBookingRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!specificBooking) return;
+    // Only relevant for bookings that were Accepted (related notification type booking_accepted)
+    if (specificBooking.status === "Accepted") {
+      if (dispatchedForBookingRef.current !== specificBooking.id) {
+        dispatchBookingInteracted(specificBooking.id);
+        dispatchedForBookingRef.current = specificBooking.id;
+      }
+    }
+  }, [specificBooking]);
 
   useEffect(() => {
     const fetchReviewStats = async () => {

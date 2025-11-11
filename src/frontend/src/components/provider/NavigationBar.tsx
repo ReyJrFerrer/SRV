@@ -27,10 +27,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   // Provider: count new booking requests for Booking badge
   const newBookingRequestCount = React.useMemo(
     () =>
-      notifications.filter(
-        (n) => !n.read && n.type === "new_booking_request"
-      ).length,
-    [notifications]
+      notifications.filter((n) => !n.read && n.type === "new_booking_request")
+        .length,
+    [notifications],
   );
 
   // Notifications badge should exclude chat and new booking request notifications
@@ -38,9 +37,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     () =>
       notifications.filter(
         (n) =>
-          !n.read && n.type !== "chat_message" && n.type !== "new_booking_request"
+          !n.read &&
+          n.type !== "chat_message" &&
+          n.type !== "new_booking_request",
       ).length,
-    [notifications]
+    [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
@@ -315,7 +316,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         }
                         className="absolute -top-1 right-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
                       >
-                        {filteredNotificationUnreadCount > 99 ? "99+" : filteredNotificationUnreadCount}
+                        {filteredNotificationUnreadCount > 99
+                          ? "99+"
+                          : filteredNotificationUnreadCount}
                       </span>
                     )}
                   </Link>
@@ -518,7 +521,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
                 className="absolute right-2 top-2 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white"
               >
-                {filteredNotificationUnreadCount > 99 ? "99+" : filteredNotificationUnreadCount}
+                {filteredNotificationUnreadCount > 99
+                  ? "99+"
+                  : filteredNotificationUnreadCount}
               </span>
             )}
           </Link>

@@ -336,6 +336,53 @@ export const useProviderNotificationsWithPush = () => {
     };
   }, [identity]);
 
+  // Decrease booking request badge when a provider interacts with a booking request
+  // Listens for global 'booking-interacted' with optional detail { bookingId?: string }
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent)?.detail as { bookingId?: string } | undefined;
+      let targetIds = notifications
+        .filter(
+          (n) =>
+            !n.read &&
+            n.type === "new_booking_request" &&
+            (!detail?.bookingId || (n.bookingId && n.bookingId === detail.bookingId)),
+        )
+        .map((n) => n.id);
+
+      // Fallback: if we couldn't find a matching notification for the provided bookingId,
+      // mark the most recent unread new_booking_request notification so the badge decrements.
+      if (targetIds.length === 0) {
+        const fallback = notifications.find(
+          (n) => !n.read && n.type === "new_booking_request",
+        );
+        if (fallback) targetIds = [fallback.id];
+      }
+
+      if (targetIds.length === 0) return;
+
+      await Promise.all(
+        targetIds.map(async (id) => {
+          try {
+            await notificationCanisterService.markAsRead(id);
+          } catch {}
+        }),
+      );
+
+      setNotifications((prev) => {
+        const updated = prev.map((n) =>
+          targetIds.includes(n.id) ? { ...n, read: true } : n,
+        );
+        const newUnreadCount = updated.filter((n) => !n.read).length;
+        providerNotificationStore.setCount(newUnreadCount);
+        return updated;
+      });
+    };
+
+    window.addEventListener("booking-interacted", handler as EventListener);
+    return () => window.removeEventListener("booking-interacted", handler as EventListener);
+  }, [notifications]);
+
   // Marks a single notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {

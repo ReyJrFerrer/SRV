@@ -26,6 +26,7 @@ import { bookingCanisterService } from "../../services/bookingCanisterService";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
+import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 
 type BookingStatusTab =
   | "ALL"
@@ -615,6 +616,9 @@ const ProviderBookingsPage: React.FC = () => {
                         ) {
                           navigate(`/provider/active-service/${booking.id}`);
                         } else if (booking.id) {
+                          if (booking.status === "Requested") {
+                            dispatchBookingInteracted(booking.id);
+                          }
                           navigate(`/provider/booking/${booking.id}`);
                         }
                       }}

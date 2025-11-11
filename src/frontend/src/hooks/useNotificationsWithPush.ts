@@ -321,6 +321,55 @@ export const useNotificationsWithPush = () => {
     };
   }, [identity]);
 
+  // Decrease booking badge when a booking is interacted (clicked/opened)
+  // Listens for a global event 'booking-interacted' with optional detail { bookingId?: string }
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent)?.detail as { bookingId?: string } | undefined;
+      let targetIds = notifications
+        .filter(
+          (n) =>
+            !n.read &&
+            n.type === "booking_accepted" &&
+            (!detail?.bookingId || (n.bookingId && n.bookingId === detail.bookingId)),
+        )
+        .map((n) => n.id);
+
+      // Fallback: if a specific bookingId was provided but we couldn't find a matching
+      // notification (e.g., bookingId missing on notif or notifications not yet enriched),
+      // mark the most recent unread booking_accepted notification to ensure the badge decrements.
+      if (targetIds.length === 0) {
+        const fallback = notifications.find(
+          (n) => !n.read && n.type === "booking_accepted",
+        );
+        if (fallback) targetIds = [fallback.id];
+      }
+
+      if (targetIds.length === 0) return;
+
+      // Attempt to mark in canister; proceed optimistically in UI regardless
+      await Promise.all(
+        targetIds.map(async (id) => {
+          try {
+            await notificationCanisterService.markAsRead(id);
+          } catch {}
+        }),
+      );
+
+      setNotifications((prev) => {
+        const updated = prev.map((n) =>
+          targetIds.includes(n.id) ? { ...n, read: true } : n,
+        );
+        const newUnreadCount = updated.filter((n) => !n.read).length;
+        notificationStore.setCount(newUnreadCount);
+        return updated;
+      });
+    };
+
+    window.addEventListener("booking-interacted", handler as EventListener);
+    return () => window.removeEventListener("booking-interacted", handler as EventListener);
+  }, [notifications]);
+
   // Marks a single notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {

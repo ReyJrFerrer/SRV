@@ -246,7 +246,9 @@ const NotificationsPageSP = () => {
     const visible = stableNotifications
       .filter((n) => !deletedIds.includes(n.id))
       // Hide chat messages and new booking requests from the Notifications page
-      .filter((n) => n.type !== "chat_message" && n.type !== "new_booking_request");
+      .filter(
+        (n) => n.type !== "chat_message" && n.type !== "new_booking_request",
+      );
 
     // Then filter by active tab (category) if not 'All'
     const byTab =

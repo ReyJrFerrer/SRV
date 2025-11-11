@@ -6,6 +6,7 @@ import { useChat } from "../../hooks/useChat";
 // Components
 import BottomNavigation from "../../components/provider/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
+import { dispatchChatsRead } from "../../utils/interactionEvents";
 
 const ProviderChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -23,6 +24,8 @@ const ProviderChatPage: React.FC = () => {
   ) => {
     try {
       await markAsRead(conversationId);
+      // Trigger refresh of unread chat badges globally
+      dispatchChatsRead();
       navigate(`/provider/chat/${conversationId}`, {
         state: {
           conversationId,

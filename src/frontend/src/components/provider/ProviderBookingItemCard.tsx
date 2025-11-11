@@ -14,6 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
 import { useEffect, useState } from "react";
 import ActionButtons from "./booking-details/ActionButtons";
+import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -247,6 +248,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     const scheduledDate = new Date(booking.scheduledDate);
     const success = await acceptBookingById(booking.id, scheduledDate);
     if (success) {
+      // Booking has transitioned from Requested to Accepted; mark interaction of original request notification
+      dispatchBookingInteracted(booking.id);
       navigate(`../../provider/booking/${booking.id}`);
     }
   };
