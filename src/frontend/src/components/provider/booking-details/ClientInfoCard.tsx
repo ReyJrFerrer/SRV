@@ -23,7 +23,7 @@ const ClientInfoCard: React.FC<Props> = ({
 }) => {
   const [showRatingInfo, setShowRatingInfo] = useState(false);
   return (
-    <div className="relative min-w-[320px] max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
+    <div className="relative lg:min-w-[320px] max-w-md min-w-full flex-1 overflow-hidden rounded-2xl bg-white shadow-xl">
       {/* Header Section */}
       <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 p-8">
         {/* Profile Image */}

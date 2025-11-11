@@ -93,7 +93,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({
             />
             <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
               <div className="flex items-center space-x-2 rounded-full bg-white/70 px-3 py-1 backdrop-blur-sm">
-                <h1 className="text-xl font-bold">{data.name}</h1>
+                <h1 className="text-xl lg:text-2xl font-bold">{data.name}</h1>
                 {data.isVerified && (
                   <CheckCircleIcon className="h-5 w-5 fill-blue-500 text-blue-500" />
                 )}

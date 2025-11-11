@@ -12,6 +12,7 @@ import {
   baseButtonCompact,
   color,
 } from "../../shared/buttonStyles";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 type ReviewButtonContent = {
   text: string;
@@ -31,10 +32,8 @@ const ActionButtons: React.FC<{
   reviewButtonContent: ReviewButtonContent | null;
   status?: string | null;
   onReport: () => void;
-  // Optional Book Again action
   onBookAgain?: () => void;
   bookAgainLabel?: string;
-  // Layout variant: compact for inline small buttons, default for card-like group
   compact?: boolean;
 }> = ({
   onChat,
@@ -84,7 +83,7 @@ const ActionButtons: React.FC<{
         onClick={stopAndRun(onChat)}
         className={`${baseButtonClass} w-full ${color.chat}`}
       >
-        <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" />
+        <ChatBubbleLeftRightIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />
         {!compact ? "Chat with Provider" : "Chat"}
       </button>,
     );
@@ -98,7 +97,7 @@ const ActionButtons: React.FC<{
         className={`${baseButtonClass} w-full ${color.cancel}`}
       >
         <span className="flex items-center">
-          <XCircleIcon className="mr-2 h-5 w-5" />{" "}
+          <XCircleIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />
           {!compact ? "Cancel" : "Cancel"}
         </span>
       </button>,
@@ -114,19 +113,7 @@ const ActionButtons: React.FC<{
         className={`${baseButtonClass} w-full ${color.report}`}
         title="Report this booking"
       >
-        <svg
-          className="mr-2 h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-          />
-        </svg>
+        <ExclamationTriangleIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />
         Report
       </button>,
     );
@@ -166,7 +153,7 @@ const ActionButtons: React.FC<{
         onClick={stopAndRun(onBookAgain)}
         className={`${baseButtonClass} w-full ${color.bookAgain}`}
       >
-        <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+        <ArrowPathIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" /> {bookAgainLabel}
       </button>,
     );
   }
@@ -188,16 +175,13 @@ const ActionButtons: React.FC<{
   // Four buttons: 3 on top row, 1 on bottom centered
   if (visibleCount === 4) {
     return (
-      <div className={`${baseContainer} w-full flex-col`}>
-        <div className="grid w-full grid-cols-3 gap-2">
-          {buttons.slice(0, 3).map((b, i) => (
-            <div key={`top-${i}`} className="w-full">
+      <div className={`${baseContainer} w-full`}>
+        <div className="grid w-full grid-cols-2 gap-2">
+          {buttons.map((b, i) => (
+            <div key={`button-${i}`} className="w-full">
               {b}
             </div>
           ))}
-        </div>
-        <div className="mt-2 flex w-full justify-center">
-          {<div className="w-full">{buttons[3]}</div>}
         </div>
       </div>
     );

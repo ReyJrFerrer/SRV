@@ -281,7 +281,7 @@ const NotificationsPageSP = () => {
         >
           <h1
             className={`text-xl font-extrabold tracking-tight text-black lg:text-2xl ${
-              stableNotifications.length === 0 && unreadCount > 0
+              stableNotifications.length === 0 && unread.length > 0
                 ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
                 : ""
             }`}
@@ -433,7 +433,7 @@ const NotificationsPageSP = () => {
       </div>
 
       {editMode && (
-        <div className="sticky top-14 z-30 mx-auto mt-2 flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
+        <div className="sticky top-14 z-30 mx-auto flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
           <div className="text-sm text-gray-700">
             {selectedIds.length} selected
           </div>

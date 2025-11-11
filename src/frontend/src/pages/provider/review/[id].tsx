@@ -285,15 +285,15 @@ export default function ProviderReviewView() {
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="container mx-auto flex items-center px-4 py-6">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="mr-2 rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full p-2 transition-colors hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="truncate text-lg font-semibold text-slate-800">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Client Review
           </h1>
         </div>
@@ -321,7 +321,7 @@ export default function ProviderReviewView() {
         ) : (
           <>
             {/* Booking Information Card */}
-            <div className="rounded-xl bg-white p-6 shadow-lg">
+            <div className="rounded-xl bg-white p-6 shadow-lg mt-3 lg:mt-6">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 Booking Details
               </h3>
@@ -408,7 +408,7 @@ export default function ProviderReviewView() {
                         </span>
                       </div>
                       <div className="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-4">
-                        <p className="italic text-gray-800">
+                        <p className="text-gray-800 italic">
                           "{clientReview.comment}"
                         </p>
                       </div>

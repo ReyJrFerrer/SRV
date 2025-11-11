@@ -450,7 +450,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               <div className="mt-4 border-t border-gray-200 lg:hidden"></div>
 
               <div className="mt-4 flex flex-col justify-center lg:mt-0 lg:border-l lg:border-blue-200 lg:pl-8">
-                <h1 className="mb-2 text-center text-3xl font-extrabold text-gray-900 drop-shadow-sm lg:text-left">
+                <h1 className="mb-2 text-center lg:text-3xl text-xl font-extrabold text-gray-900 drop-shadow-sm lg:text-left">
                   {name}
                 </h1>
                 <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
@@ -556,7 +556,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         />
       </main>
 
-      <div className="shadow-t-lg fixed bottom-12 left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
+      <div className="shadow-t-lg fixed bottom-15 left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
         <div className="mx-auto flex w-full items-center justify-between gap-3">
           <button
             onClick={handleChatProviderClick}
