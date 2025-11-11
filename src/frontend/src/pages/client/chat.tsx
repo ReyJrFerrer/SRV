@@ -129,7 +129,7 @@ const ClientChatPage: React.FC = () => {
                             className=""
                           />
                           {unreadCount > 0 && (
-                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
                               {unreadCount}
                             </span>
                           )}
@@ -140,7 +140,7 @@ const ClientChatPage: React.FC = () => {
                               {otherUserName}
                             </p>
                             <p
-                              className={`ml-2 whitespace-nowrap text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
+                              className={`ml-2 text-xs whitespace-nowrap ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
                             >
                               {formatTimestamp(lastMessage?.createdAt)}
                             </p>
@@ -150,7 +150,7 @@ const ClientChatPage: React.FC = () => {
                               {lastMessage?.content?.encryptedText ? (
                                 lastMessage.content.encryptedText
                               ) : (
-                                <span className="italic text-gray-400">
+                                <span className="text-gray-400 italic">
                                   No messages yet
                                 </span>
                               )}
@@ -164,6 +164,7 @@ const ClientChatPage: React.FC = () => {
             </div>
           ) : (
             <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
+              <div className="mb-3 text-4xl">💬</div>
               <p className="mb-4 text-lg text-gray-600">No conversations yet</p>
               <p className="text-sm text-gray-500">
                 Your conversations with service providers will appear here after

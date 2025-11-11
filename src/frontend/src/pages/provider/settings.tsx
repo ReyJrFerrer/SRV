@@ -73,7 +73,7 @@ const SettingsPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
         <div className="relative flex w-full items-center px-4 py-3">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Settings
           </h1>
         </div>

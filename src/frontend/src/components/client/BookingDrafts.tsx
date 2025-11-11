@@ -50,22 +50,22 @@ const BookingDrafts: React.FC<Props> = ({
       <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
         <h2 className="mb-2 text-lg font-bold">{title}</h2>
         <p className="mb-4 text-sm text-gray-600">{message}</p>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-center gap-2">
           <button
             onClick={onClose}
-            className="rounded-md border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="w-full rounded-md border px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 lg:px-4 lg:py-2 lg:text-sm"
           >
             {closeLabel}
           </button>
           <button
             onClick={handleDiscard}
-            className="rounded-md border px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            className="w-full rounded-md border px-2 py-2 text-xs text-red-600 hover:bg-red-50 lg:px-4 lg:py-2 lg:text-sm"
           >
             {discardLabel}
           </button>
           <button
             onClick={handleRestore}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="w-full rounded-md bg-blue-600 px-2 py-2 text-xs font-medium text-white hover:bg-blue-700 lg:px-4 lg:py-2 lg:text-sm"
           >
             {restoreLabel}
           </button>

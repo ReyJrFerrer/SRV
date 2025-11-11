@@ -254,7 +254,7 @@ const NotificationsPageSP = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-20 bg-white">
         <div
           className={`w-full px-4 py-3 ${
             stableNotifications.length === 0
@@ -263,7 +263,7 @@ const NotificationsPageSP = () => {
           }`}
         >
           <h1
-            className={`text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl ${
+            className={`text-xl font-extrabold tracking-tight text-black lg:text-2xl ${
               stableNotifications.length === 0 && unreadCount > 0
                 ? "sm:absolute sm:left-1/2 sm:-translate-x-1/2"
                 : ""
@@ -305,7 +305,7 @@ const NotificationsPageSP = () => {
                 {unread.length > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                    className="flex items-center rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold whitespace-nowrap text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
                   >
                     <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
                     Mark all as read
@@ -327,7 +327,7 @@ const NotificationsPageSP = () => {
                 {mobileMenuOpen && (
                   <div
                     ref={mobileMenuRef}
-                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
+                    className="ring-opacity-5 absolute top-full right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500"
                   >
                     <div className="py-1" role="menu">
                       <button
@@ -387,9 +387,9 @@ const NotificationsPageSP = () => {
       </header>
 
       {/* Tabs navigation for notification categories */}
-      <div className="sticky top-[57px] z-10 mb-5 border-b border-gray-200 bg-white">
-        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap p-2 sm:justify-center">
-          <nav className="flex space-x-4 overflow-x-auto px-4 py-3">
+      <div className="mb-5 border-t border-gray-200 bg-white">
+        <div className="hide-scrollbar flex justify-start overflow-x-auto border-b border-gray-200 p-2 whitespace-nowrap sm:justify-center">
+          <nav className="flex space-x-4 overflow-x-auto px-2 py-1">
             {TAB_ITEMS.map((tab) => (
               <button
                 key={tab}

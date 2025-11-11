@@ -334,9 +334,9 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
   return (
     <div className="mx-auto max-w-xl space-y-8 p-4">
       <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
-        <div className="mb-6 flex items-center gap-3">
-          <MapPinIcon className="h-8 w-8 text-blue-600" />
-          <h3 className="text-2xl font-bold text-blue-800">
+        <div className="mb-6 flex items-center gap-2">
+          <MapPinIcon className="md:h-8 md:w-8 h-5 w-5 text-blue-600" />
+          <h3 className="text-md font-bold text-blue-800 md:text-2xl">
             Service Location
             <span className="ml-1 text-base text-red-500">*</span>
           </h3>
@@ -376,7 +376,7 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                 <span className="mb-1 text-xs font-medium text-blue-500">
                   Using Your Current Location
                 </span>
-                <span className="break-words text-lg font-semibold text-blue-900">
+                <span className="text-lg font-semibold break-words text-blue-900">
                   {getDisplayAddress()}
                 </span>
               </div>

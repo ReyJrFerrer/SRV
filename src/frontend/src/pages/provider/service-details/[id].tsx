@@ -982,7 +982,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   if (loading && !service) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
         <p className="mt-4 text-gray-700">Loading service details...</p>
         {retryCount > 0 && (
           <p className="mt-2 text-sm text-gray-500">
@@ -1088,7 +1088,7 @@ const ProviderServiceDetailPage: React.FC = () => {
 
       <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Service Details
           </h1>
         </div>
