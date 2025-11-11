@@ -243,9 +243,10 @@ const NotificationsPageSP = () => {
 
   const { unread, read } = useMemo(() => {
     // First filter out locally deleted items
-    const visible = stableNotifications.filter(
-      (n) => !deletedIds.includes(n.id),
-    );
+    const visible = stableNotifications
+      .filter((n) => !deletedIds.includes(n.id))
+      // Hide chat messages and new booking requests from the Notifications page
+      .filter((n) => n.type !== "chat_message" && n.type !== "new_booking_request");
 
     // Then filter by active tab (category) if not 'All'
     const byTab =

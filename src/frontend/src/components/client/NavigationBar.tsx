@@ -14,8 +14,29 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 
 const BottomNavigation: React.FC = () => {
   const location = useLocation();
-  const { unreadCount } = useNotifications();
+  const { notifications } = useNotifications();
   const { unreadChatCount } = useChatNotifications();
+
+  // Derive booking accepted count (client perspective) from notifications excluding chat/provider messages
+  const bookingAcceptedCount = React.useMemo(
+    () =>
+      notifications.filter(
+        (n) => !n.read && n.type === "booking_accepted"
+      ).length,
+    [notifications]
+  );
+
+  // Notifications badge should exclude chat related items now hidden from page
+  const filteredNotificationUnreadCount = React.useMemo(
+    () =>
+      notifications.filter(
+        (n) =>
+          !n.read &&
+          n.type !== "chat_message" &&
+          n.type !== "provider_message"
+      ).length,
+    [notifications]
+  );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
 
@@ -86,14 +107,19 @@ const BottomNavigation: React.FC = () => {
 
   const navItems = [
     { to: "/client/home", label: "Home", icon: null, count: 0 },
-    { to: "/client/booking", label: "Booking", icon: null, count: 0 },
+    {
+      to: "/client/booking",
+      label: "Booking",
+      icon: null,
+      count: bookingAcceptedCount,
+    },
     { to: "/client/profile/reviews", label: "Ratings", icon: null, count: 0 },
     { to: "/client/chat", label: "Chat", icon: null, count: unreadChatCount },
     {
       to: "/client/notifications",
       label: "Notifications",
       icon: null,
-      count: unreadCount,
+      count: filteredNotificationUnreadCount,
     },
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
@@ -209,7 +235,20 @@ const BottomNavigation: React.FC = () => {
                       )}
                     </div>
                     {item.count > 0 && (
-                      <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                      item.label === "Booking" ? (
+                        <span
+                          aria-label={
+                            item.count > 99
+                              ? "99+ new accepted bookings"
+                              : `${item.count} new accepted bookings`
+                          }
+                          className="absolute right-1 top-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
+                        >
+                          {item.count > 99 ? "99+" : item.count}
+                        </span>
+                      ) : (
+                        <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                      )
                     )}
                   </Link>
                 );

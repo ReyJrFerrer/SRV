@@ -241,9 +241,10 @@ const NotificationsPage = () => {
 
   const { unread, read } = useMemo(() => {
     // First filter out locally deleted items
-    const visible = stableNotifications.filter(
-      (n) => !deletedIds.includes(n.id),
-    );
+    const visible = stableNotifications
+      .filter((n) => !deletedIds.includes(n.id))
+      // Hide chat-related notifications from the Notifications page
+      .filter((n) => n.type !== "chat_message" && n.type !== "provider_message");
 
     const byTab =
       activeTab === "All"
