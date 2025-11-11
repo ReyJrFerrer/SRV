@@ -3,9 +3,7 @@ import { useProviderBookingManagement } from "./useProviderBookingManagement";
 import { useAuth } from "../context/AuthContext";
 import { usePWA } from "./usePWA";
 import notificationIntegrationService from "../services/notificationIntegrationService";
-import notificationCanisterService, {
-  updateNotificationActor,
-} from "../services/notificationCanisterService";
+import notificationCanisterService from "../services/notificationCanisterService";
 
 // Re-export the original types
 export interface ProviderNotification {
@@ -155,10 +153,6 @@ export const useProviderNotificationsWithPush = () => {
     return identity?.getPrincipal().toString() || "anonymous";
   };
 
-  // Update notification actor when identity changes
-  useEffect(() => {
-    updateNotificationActor(identity);
-  }, [identity]);
 
   // Initialize notification integration service
   useEffect(() => {
