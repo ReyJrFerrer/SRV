@@ -453,7 +453,7 @@ export default function AboutUs({
                 </p>
                 <a
                   className="milestone-cta"
-                  href="https://preview.canva.site/0d91fe27-9cd7-4de4-b6eb-81fd83058c91/intto-startups.com/"
+                  href="https://intto.uc-bcf.edu.ph"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

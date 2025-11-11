@@ -347,43 +347,6 @@ const Contact = ({
           </div>
         </section>
       </div>
-      {showMapModal && (
-        <div
-          className="contact-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Map showing SRV location in Baguio City"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowMapModal(false);
-          }}
-        >
-          <div className="map-modal-content contact-map-modal">
-            <button
-              className="map-modal-close"
-              aria-label="Close map"
-              onClick={() => setShowMapModal(false)}
-            >
-              &times;
-            </button>
-            <div className="map-modal-header">
-              <h3 className="map-modal-title">SRV Location</h3>
-              <p className="map-modal-sub">
-                University of the Cordilleras (Legarda Campus) • InTT Office
-              </p>
-            </div>
-            <div className="map-modal-iframe-wrapper">
-              <iframe
-                title="SRV - University of the Cordilleras (Legarda Campus) map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3827.2841143403452!2d120.59157560000001!3d16.4103908!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3391a1685e7b7073%3A0xe6bda988e8558d2!2sUniversity%20of%20Cordilleras%20Legarda!5e0!3m2!1sen!2sph!4v1759030399917!5m2!1sen!2sph"
-                style={{ border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen={false}
-              />
-            </div>
-          </div>
-        </div>
-      )}
       <SiteFooter
         current="contact"
         onHome={() => {
@@ -396,6 +359,55 @@ const Contact = ({
         }}
         onContact={() => window.scrollTo(0, 0)}
       />
+
+      {showMapModal && (
+        <div
+          className="contact-page-wrapper"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            className="contact-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Map showing SRV location in Baguio City"
+            style={{ pointerEvents: "auto" }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowMapModal(false);
+            }}
+          >
+            <div className="map-modal-content contact-map-modal">
+              <button
+                className="map-modal-close"
+                aria-label="Close map"
+                onClick={() => setShowMapModal(false)}
+              >
+                &times;
+              </button>
+              <div className="map-modal-header">
+                <h3 className="map-modal-title">SRV Location</h3>
+                <p className="map-modal-sub">
+                  University of the Cordilleras (Legarda Campus) • InTT Office
+                </p>
+              </div>
+              <div className="map-modal-iframe-wrapper">
+                <iframe
+                  title="SRV - University of the Cordilleras (Legarda Campus) map"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3827.2841143403452!2d120.59157560000001!3d16.4103908!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3391a1685e7b7073%3A0xe6bda988e8558d2!2sUniversity%20of%20Cordilleras%20Legarda!5e0!3m2!1sen!2sph!4v1759030399917!5m2!1sen!2sph"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen={false}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
