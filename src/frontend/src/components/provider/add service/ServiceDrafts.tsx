@@ -7,6 +7,7 @@ import {
   getFilesEntries,
   deleteDraftFromIDB,
 } from "../../../utils/draftStorage";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   formData: any;
@@ -281,8 +282,8 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
           title: "Restore service draft?",
           message:
             "We found a saved draft for this service. Would you like to restore your progress now?",
-          restoreLabel: "Restore draft",
-          discardLabel: "Discard draft",
+          restoreLabel: "Restore",
+          discardLabel: "Discard",
           closeLabel: "Not now",
         } as any)}
       />
@@ -296,25 +297,25 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
               You haven't finished creating this service. Would you like to save
               your current progress as a draft?
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-center gap-2">
               <button
                 onClick={() => setShowExitPrompt(false)}
-                className="rounded-md border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="w-full rounded-md border px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 lg:px-4 lg:py-2 lg:text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDontSaveAndExit}
-                className="rounded-md border px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                className="w-full rounded-md border px-2 py-2 text-xs text-red-600 hover:bg-red-50 lg:px-4 lg:py-2 lg:text-sm"
               >
                 Don't Save
               </button>
               <button
                 onClick={handleSaveDraftAndExit}
                 disabled={isSavingDraft}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="w-full rounded-md bg-blue-600 px-2 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 lg:px-4 lg:py-2 lg:text-sm"
               >
-                {isSavingDraft ? "Saving..." : "Save Draft & Exit"}
+                {isSavingDraft ? "Saving..." : "Save Draft"}
               </button>
             </div>
           </div>
@@ -324,35 +325,23 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
       {/* Draft available banner (uses draftAvailable state) */}
       {draftAvailable && !showRestorePrompt && (
         <div className="fixed left-0 right-0 top-16 z-40 flex justify-center">
-          <div className="mx-4 flex w-full max-w-4xl items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 p-3">
-            <div className="flex items-center gap-3">
-              <svg
-                className="h-5 w-5 text-yellow-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+          <div className="mx-4 flex flex-col items-center gap-4 rounded-md border border-yellow-200 bg-yellow-50 p-3">
+            <div className="flex items-start gap-3">
+              <ExclamationCircleIcon className="h-6 w-6 text-yellow-600" />
               <p className="text-sm font-medium text-yellow-800">
                 A saved draft for this service is available.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex w-full justify-center gap-2">
               <button
                 onClick={handleDiscardDraft}
-                className="rounded-md border px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+                className="flex-1 rounded-md border px-3 py-1 text-sm text-red-600 hover:bg-red-50"
               >
                 Discard
               </button>
               <button
                 onClick={handleRestoreDraft}
-                className="rounded-md bg-yellow-600 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-700"
+                className="flex-1 rounded-md bg-yellow-600 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-700"
               >
                 Restore
               </button>

@@ -163,7 +163,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     <>
       {!location.pathname.startsWith("/provider/chat/") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
-          <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
+          <nav className="mx-auto flex w-full max-w-full items-center justify-center">
             <div className="grid w-full grid-cols-6 font-medium">
               {navItems
                 .filter((it) =>
@@ -309,7 +309,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                             ? "99+ new notifications"
                             : `${filteredNotificationUnreadCount} new notifications`
                         }
-                        className="absolute -top-1 right-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
+                        className="absolute -top-0 right-2 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
                       >
                         {filteredNotificationUnreadCount > 99
                           ? "99+"
@@ -452,7 +452,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           ? "99+ new notifications"
                           : `${item.count} new notifications`
                       }
-                      className="absolute right-2 top-2 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white"
+                      className="absolute right-3 top-1 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
                     >
                       {item.count > 99 ? "99+" : item.count}
                     </span>
@@ -514,7 +514,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     ? "99+ new notifications"
                     : `${filteredNotificationUnreadCount} new notifications`
                 }
-                className="absolute right-2 top-2 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white"
+                className="absolute right-3 top-1 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
               >
                 {filteredNotificationUnreadCount > 99
                   ? "99+"

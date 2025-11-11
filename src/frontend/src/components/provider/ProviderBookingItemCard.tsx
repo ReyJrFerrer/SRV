@@ -389,9 +389,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           <div className="mt-3 space-y-1.5 text-xs text-gray-600">
             {/* REPUTATION AND RATING: Show skeleton while loading, then fade in data */}
             {clientId && (
-              <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
+              <div className="mb-1.5 flex flex-col items-start">
                 {hasClientData ? (
-                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                  <div className="flex w-full flex-col">
                     <ClientReputationScore reputation={reputation} />
                     <ClientRatingSummary reviews={review} />
                   </div>
@@ -414,7 +414,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
             {/* Date/Time */}
             <p className="flex items-center">
-              <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+              <CalendarDaysIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
               {formatDateRange(
                 booking.requestedDate,
                 booking.scheduledDate || "hello",
@@ -423,7 +423,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
             {/* Location */}
             <p className="flex items-center">
-              <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+              <MapPinIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
               <span className="truncate">{locationAddress}</span>
             </p>
 
@@ -432,18 +432,22 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               <>
                 {price !== undefined && (
                   <p className="flex items-center">
-                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    <span className="font-bold text-gray-600">
-                      Price: <strong>₱{price.toFixed(2)}</strong>
+                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                    <span className="text-gray-600">
+                      <span className="font-extrabold">Price: </span>₱
+                      {price.toFixed(2)}
                     </span>
                   </p>
                 )}
                 {amountToPay !== undefined && (
                   <p className="flex items-center">
-                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                    <span className="font-bold text-gray-600">
-                      Client's amount to pay:{" "}
-                      <strong>₱{amountToPay.toFixed(2)}</strong>
+                    <CurrencyDollarIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+
+                    <span className="text-gray-600">
+                      <span className="font-extrabold">
+                        Client's amount to pay:{" "}
+                      </span>
+                      ₱{amountToPay.toFixed(2)}
                     </span>
                   </p>
                 )}
@@ -452,29 +456,26 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
             {/* Payment Method */}
             <p className="flex items-center">
-              <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-              <span className="font-bold text-gray-600">
-                Payment Method:
-                <strong>
-                  {" "}
-                  {booking.paymentMethod === "CashOnHand"
-                    ? "Cash on Hand"
-                    : booking.paymentMethod}
-                </strong>
+              <CurrencyDollarIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+              <span className="text-gray-600">
+                <span className="font-extrabold">Payment Method: </span>
+                {booking.paymentMethod === "CashOnHand"
+                  ? "Cash on Hand"
+                  : booking.paymentMethod}
               </span>
             </p>
 
             {/* Duration */}
             {showDurationInDetails && duration !== "N/A" && (
               <p className="flex items-center">
-                <ClockIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                <ClockIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
                 Duration: {duration}
               </p>
             )}
 
             {/* Booking Notes */}
             {notes && (
-              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+              <div className="mt-2 break-words rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
                 <strong>Booking Notes:</strong> {notes}
               </div>
             )}

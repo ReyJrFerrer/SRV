@@ -301,7 +301,7 @@ const BookingDetailsPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="mx-auto space-y-6 p-4 pt-20 sm:p-6 sm:pt-20">
+      <main className="sm:pt-13 mx-auto space-y-6 p-4 pt-10 sm:p-6">
         {isLoading ? (
           <BookingDetailsSkeleton />
         ) : (
@@ -316,7 +316,7 @@ const BookingDetailsPage: React.FC = () => {
             </div>
 
             <div>
-              <div className="mt-13 relative rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-7">
+              <div className="relative rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-7">
                 <span
                   className={`absolute right-4 top-5 rounded-full px-3 py-1 text-xs font-bold shadow-lg lg:top-4 lg:px-4 lg:py-2 lg:text-base ${getStatusPillStyle(status || "")}`}
                   aria-label="Booking status"
@@ -324,7 +324,7 @@ const BookingDetailsPage: React.FC = () => {
                   {status?.replace("_", " ")}
                 </span>
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
+                <div className="grid grid-cols-1 gap-1 lg:grid-cols-5">
                   <ProviderInfo
                     providerProfile={providerProfile}
                     userImageUrl={userImageUrl ?? null}

@@ -178,9 +178,9 @@ const PayoutSettingsPage: React.FC = () => {
               onClick={() => navigate("/provider/home")}
               className="rounded-full hover:bg-gray-100"
             >
-              <ArrowLeftIcon className="mr-2 h-6 w-6" />
+              <ArrowLeftIcon className="mr-2 h-5 w-6 lg:h-6 lg:w-6" />
             </button>
-            <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+            <h1 className="absolute left-1/2 -translate-x-1/2 text-sm font-extrabold tracking-tight text-black lg:text-2xl">
               Complete Onboarding
             </h1>
           </div>
@@ -224,7 +224,7 @@ const PayoutSettingsPage: React.FC = () => {
             onClick={() => navigate("/provider/home")}
             className="flex items-center text-gray-600 hover:text-blue-700"
           >
-            <ArrowLeftIcon className="mr-2 h-6 w-6" />
+            <ArrowLeftIcon className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
           </button>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-sm font-extrabold tracking-tight text-black lg:text-2xl">
             Complete Onboarding

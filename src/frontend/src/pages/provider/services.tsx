@@ -179,7 +179,7 @@ const MyServicesPage: React.FC = () => {
 
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-3.5 py-2.5">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             My Services
           </h1>
           <div className="flex flex-1 justify-end">
@@ -191,7 +191,7 @@ const MyServicesPage: React.FC = () => {
                   toast.error("You can only have a maximum of 5 services.");
                 }
               }}
-              className={`flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4 ${
+              className={`flex items-center rounded-lg bg-blue-600 px-2 py-1 text-sm font-medium text-white transition-colors hover:bg-blue-700 lg:px-3 lg:py-2 ${
                 userServices.length >= 5 ? "cursor-not-allowed opacity-50" : ""
               }`}
               aria-label="Add new service"

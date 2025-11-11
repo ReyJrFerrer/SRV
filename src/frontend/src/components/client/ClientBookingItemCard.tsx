@@ -440,7 +440,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
           <div>
             <div className="flex items-start justify-between">
-              <p className="truncate text-xs font-semibold uppercase tracking-wider text-indigo-500">
+              <p className="break-words text-xs font-semibold uppercase tracking-wider text-indigo-500">
                 {serviceTitle}
               </p>
               <span
@@ -451,7 +451,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             </div>
 
             <h3
-              className="mt-1 truncate text-lg font-bold text-slate-800 md:text-xl"
+              className="mt-1 break-words text-lg font-bold text-slate-800 md:text-xl"
               title={serviceTitle}
             >
               {booking.packageName}
@@ -464,7 +464,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             {providerId && (
               <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
                 {hasProviderData ? (
-                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                  <div className="flex w-full flex-col">
                     <div className="flex-shrink-0">
                       <ReputationScore reputation={reputation} />
                     </div>
@@ -503,7 +503,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
               <p className="flex items-start">
-                <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                <CalendarDaysIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
                 {booking.scheduledDate
                   ? formatDateRange(
                       booking.requestedDate || booking.createdAt,
@@ -513,13 +513,13 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               </p>
 
               <p className="flex items-start">
-                <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
-                <span className="truncate">{bookingLocation}</span>
+                <MapPinIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                <span className="break-words">{bookingLocation}</span>
               </p>
 
               {booking.price && (
                 <p className="flex items-start">
-                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
                   <span className="font-semibold text-green-600">
                     ₱
                     {(
@@ -532,7 +532,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
             {/* Booking Notes (if any) */}
             {notes && (
-              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+              <div className="mt-2 break-words rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
                 <strong>Booking Notes:</strong> {notes}
               </div>
             )}

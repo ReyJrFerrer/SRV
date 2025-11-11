@@ -69,7 +69,7 @@ const SettingsPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
         <div className="relative flex w-full items-center px-4 py-3">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Settings
           </h1>
         </div>
@@ -147,9 +147,7 @@ const SettingsPage: React.FC = () => {
                       aria-expanded={pwaOpen}
                       className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
                     >
-                      <span className="mr-2 text-xs text-gray-500">
-                        {pwaOpen ? "Hide" : "Show"}
-                      </span>
+                      <span className="mr-2 text-xs text-gray-500"></span>
                       <ChevronRightIcon
                         className={`h-5 w-5 transform transition-transform ${pwaOpen ? "rotate-90" : ""}`}
                       />
@@ -173,9 +171,7 @@ const SettingsPage: React.FC = () => {
                       aria-expanded={notifOpen}
                       className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
                     >
-                      <span className="mr-2 text-xs text-gray-500">
-                        {notifOpen ? "Hide" : "Show"}
-                      </span>
+                      <span className="mr-2 text-xs text-gray-500"></span>
                       <ChevronRightIcon
                         className={`h-5 w-5 transform transition-transform ${notifOpen ? "rotate-90" : ""}`}
                       />

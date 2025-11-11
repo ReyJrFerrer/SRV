@@ -506,7 +506,7 @@ const MyBookingsPage: React.FC = () => {
                       Scheduled Bookings
                     </h2>
                   </div>
-                  <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
+                  <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
                     {scheduledBookings.map((booking, idx) => (
                       <Appear
                         key={booking.id}

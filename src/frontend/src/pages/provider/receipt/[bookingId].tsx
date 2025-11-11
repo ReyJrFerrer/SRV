@@ -9,6 +9,7 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 const ReceiptPage: React.FC = () => {
   const navigate = useNavigate();
@@ -133,8 +134,8 @@ const ReceiptPage: React.FC = () => {
     : new Date(booking.updatedAt);
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-yellow-50 py-6 print:bg-white sm:py-12">
-      <main className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-blue-100 print:border print:border-gray-300 print:shadow-none sm:p-10 md:p-12">
+    <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-yellow-50 py-6 sm:py-12 print:bg-white">
+      <main className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-blue-100 sm:p-10 md:p-12 print:border print:border-gray-300 print:shadow-none">
         <div className="mb-8 flex flex-col items-center">
           <img
             src="/images/srv characters (SVG)/girl.svg"
@@ -142,7 +143,7 @@ const ReceiptPage: React.FC = () => {
             className="h-25 w-25 mb-3 drop-shadow-lg"
             draggable={false}
           />
-          <h1 className="text-3xl font-extrabold text-blue-900 sm:text-4xl">
+          <h1 className="text-2xl font-extrabold text-blue-900 lg:text-3xl">
             Service Completed!
           </h1>
           <p className="mt-2 text-base text-gray-500">
@@ -247,7 +248,7 @@ const ReceiptPage: React.FC = () => {
           your transaction history.
         </div>
 
-        <div className="flex flex-col gap-3 print:hidden sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row print:hidden">
           <button
             onClick={handlePrint}
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
@@ -270,7 +271,7 @@ const ReceiptPage: React.FC = () => {
               onClick={() => setShowRatingInfo(true)}
               className="rounded-md px-3 py-1 text-sm text-blue-600 hover:underline"
             >
-              About ratings
+              <InformationCircleIcon className="h-5 w-5" />
             </button>
           </div>
           <button

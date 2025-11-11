@@ -167,6 +167,7 @@ const ClientChatPage: React.FC = () => {
             </div>
           ) : (
             <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
+              <div className="mb-3 text-4xl">💬</div>
               <p className="mb-4 text-lg text-gray-600">No conversations yet</p>
               <p className="text-sm text-gray-500">
                 Your conversations with service providers will appear here after
