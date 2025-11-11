@@ -329,13 +329,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       );
     }
   };
-
-
-  // --- Report handler ---
-  const handleReport = () => {
-    navigate(`/provider/report/${booking.id}`);
-  };
-
   // --- Booking state checks for button logic ---
   const isInProgress = status === "InProgress";
 
@@ -496,7 +489,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             onCancel={() => onCancelClick(booking)}
             onStart={handleStartService}
             onComplete={handleMarkAsCompleted}
-            onReport={handleReport}
+            onReport={() =>
+                navigate(`/provider/report`, { state: { bookingId: booking.id } })
+              }
             canStartServiceNow={() => !isScheduledForFuture}
             isBookingActionInProgress={isBookingActionInProgress}
             commissionValidation={commissionValidation}
