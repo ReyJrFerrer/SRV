@@ -13,7 +13,6 @@ interface ReviewItemProps {
   isDeleting: boolean;
   bulkActionLoading: boolean;
   onSelect: (reviewId: string) => void;
-  onDelete: (reviewId: string) => void;
   onRestore: (reviewId: string) => void;
   onShowDeleteConfirm: (reviewId: string) => void;
 }
@@ -24,7 +23,6 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
   isDeleting,
   bulkActionLoading,
   onSelect,
-  onDelete,
   onRestore,
   onShowDeleteConfirm,
 }) => {

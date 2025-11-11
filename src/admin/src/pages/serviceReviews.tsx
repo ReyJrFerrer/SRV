@@ -38,7 +38,6 @@ const ReviewItem: React.FC<{
   formatReviewDate: (date: string) => string;
   getRelativeTime: (date: string) => string;
   isDeleting: boolean;
-  onDelete: (reviewId: string) => void;
   onRestore: (reviewId: string) => void;
   onShowDeleteConfirm: (reviewId: string) => void;
 }> = ({
@@ -46,7 +45,6 @@ const ReviewItem: React.FC<{
   formatReviewDate,
   getRelativeTime,
   isDeleting,
-  onDelete,
   onRestore,
   onShowDeleteConfirm,
 }) => {
@@ -506,7 +504,6 @@ const ServiceReviewsPage: React.FC = () => {
                 formatReviewDate={formatReviewDate}
                 getRelativeTime={getRelativeTime}
                 isDeleting={deletingReviewId === review.id}
-                onDelete={handleDeleteReview}
                 onRestore={handleRestoreReview}
                 onShowDeleteConfirm={setShowDeleteConfirm}
               />
