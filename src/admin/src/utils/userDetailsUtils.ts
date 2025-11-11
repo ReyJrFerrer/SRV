@@ -5,30 +5,32 @@ import { walletCanisterService } from "../../../frontend/src/services/walletCani
 /**
  * Convert date value to Date object
  */
-const convertToDate = (value: bigint | string | number | Date | undefined | null): Date => {
+const convertToDate = (
+  value: bigint | string | number | Date | undefined | null,
+): Date => {
   if (!value) {
     return new Date();
   }
-  
+
   if (value instanceof Date) {
     return value;
   }
-  
+
   if (typeof value === "bigint") {
     // Motoko nanoseconds - convert to milliseconds
     return new Date(Number(value) / 1_000_000);
   }
-  
+
   if (typeof value === "string") {
     // Firebase ISO string
     return new Date(value);
   }
-  
+
   if (typeof value === "number") {
     // Timestamp in milliseconds
     return new Date(value);
   }
-  
+
   return new Date();
 };
 
@@ -78,9 +80,7 @@ export const convertProfileToUserData = async (
         adminServiceCanister.getUserReviews(profile.id.toString()),
         adminServiceCanister.getUserReputation(profile.id.toString()),
         walletCanisterService.getBalanceOf(profile.id.toString()),
-        adminServiceCanister.getUserServicesAndBookings(
-          profile.id.toString(),
-        ),
+        adminServiceCanister.getUserServicesAndBookings(profile.id.toString()),
       ]);
 
     // Extract results with fallbacks
@@ -242,7 +242,6 @@ export const convertProfileToUserData = async (
   }
 };
 
-
 /**
  * Format date for display
  */
@@ -253,4 +252,3 @@ export const formatDate = (date: Date) => {
     year: "numeric",
   });
 };
-

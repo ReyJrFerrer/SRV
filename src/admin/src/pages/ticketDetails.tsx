@@ -183,7 +183,6 @@ export const TicketDetailsPage: React.FC = () => {
     }
   }, [ticket]);
 
-
   const handleStatusChange = async (newStatus: string) => {
     if (!ticket) return;
 

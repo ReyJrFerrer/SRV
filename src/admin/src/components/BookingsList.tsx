@@ -13,17 +13,19 @@ interface Booking {
   completedAt?: string;
   rating?: number;
   review?: string;
-  location?: string | {
-    latitude?: number;
-    longitude?: number;
-    address?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postalCode?: string;
-    zipCode?: string;
-    street?: string;
-  };
+  location?:
+    | string
+    | {
+        latitude?: number;
+        longitude?: number;
+        address?: string;
+        city?: string;
+        state?: string;
+        country?: string;
+        postalCode?: string;
+        zipCode?: string;
+        street?: string;
+      };
 }
 
 interface BookingsListProps {
@@ -147,9 +149,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                     </div>
                   </div>
                   <div className="mt-2 flex items-center text-sm text-gray-500">
-                    <p className="truncate">
-                      Provider: {booking.providerName}
-                    </p>
+                    <p className="truncate">Provider: {booking.providerName}</p>
                     <span className="mx-2">•</span>
                     <p>₱{booking.price.toLocaleString()}</p>
                     <span className="mx-2">•</span>
@@ -157,7 +157,9 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                   </div>
                   {booking.location && (
                     <div className="mt-1 text-sm text-gray-500">
-                      <p className="truncate">Location: {formatLocation(booking.location)}</p>
+                      <p className="truncate">
+                        Location: {formatLocation(booking.location)}
+                      </p>
                     </div>
                   )}
                   {booking.scheduledDate && (
@@ -197,7 +199,9 @@ export const BookingsList: React.FC<BookingsListProps> = ({
               Previous
             </button>
             <button
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              onClick={() =>
+                onPageChange(Math.min(totalPages, currentPage + 1))
+              }
               disabled={currentPage === totalPages}
               className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -207,13 +211,12 @@ export const BookingsList: React.FC<BookingsListProps> = ({
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-gray-700">
-                Showing{" "}
-                <span className="font-medium">{startIndex + 1}</span> to{" "}
+                Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
                 <span className="font-medium">
                   {Math.min(endIndex, bookings.length)}
                 </span>{" "}
-                of{" "}
-                <span className="font-medium">{bookings.length}</span> results
+                of <span className="font-medium">{bookings.length}</span>{" "}
+                results
               </p>
             </div>
             <div>
@@ -241,7 +244,9 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                   ),
                 )}
                 <button
-                  onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    onPageChange(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -255,4 +260,3 @@ export const BookingsList: React.FC<BookingsListProps> = ({
     </div>
   );
 };
-

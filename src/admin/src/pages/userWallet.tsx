@@ -103,13 +103,12 @@ const UserWalletPage: React.FC = () => {
   const refreshWalletData = useCallback(async () => {
     await Promise.all([fetchBalance(), fetchTransactions()]);
   }, [fetchBalance, fetchTransactions]);
-  
+
   useEffect(() => {
     if (id) {
       refreshWalletData();
     }
   }, [id, refreshWalletData]);
-
 
   // Handle Update Wallet Balance
   const handleUpdateCommissionClick = () => {

@@ -930,10 +930,7 @@ export const adminServiceCanister = {
       const callable = httpsCallable(functions, "getBookingsData");
       console.log("[getBookingsData] Calling Firebase function...");
       const result = await callable({ data: {} });
-      console.log(
-        "[getBookingsData] Firebase function result:",
-        result.data,
-      );
+      console.log("[getBookingsData] Firebase function result:", result.data);
 
       if ((result.data as any).success) {
         console.log("[getBookingsData] Success response received");
@@ -959,10 +956,7 @@ export const adminServiceCanister = {
         (error?.code && error.code.includes("internal"));
 
       if (!isNetworkError) {
-        console.error(
-          "[getBookingsData] Error getting bookings data:",
-          error,
-        );
+        console.error("[getBookingsData] Error getting bookings data:", error);
       }
       return { bookings: [], commissionTransactions: [] };
     }
@@ -1407,8 +1401,13 @@ export const adminServiceCanister = {
           if (booking.providerId) {
             try {
               const callable = httpsCallable(functions, "getProfile");
-              const providerResponse = await callable({ userId: booking.providerId });
-              if ((providerResponse.data as any).success && (providerResponse.data as any).profile?.name) {
+              const providerResponse = await callable({
+                userId: booking.providerId,
+              });
+              if (
+                (providerResponse.data as any).success &&
+                (providerResponse.data as any).profile?.name
+              ) {
                 providerName = (providerResponse.data as any).profile.name;
               }
             } catch (error) {
@@ -1420,8 +1419,13 @@ export const adminServiceCanister = {
           if (booking.serviceId) {
             try {
               const callable = httpsCallable(functions, "getService");
-              const serviceResponse = await callable({ serviceId: booking.serviceId });
-              if ((serviceResponse.data as any).success && (serviceResponse.data as any).service?.title) {
+              const serviceResponse = await callable({
+                serviceId: booking.serviceId,
+              });
+              if (
+                (serviceResponse.data as any).success &&
+                (serviceResponse.data as any).service?.title
+              ) {
                 serviceName = (serviceResponse.data as any).service.title;
               }
             } catch (error) {

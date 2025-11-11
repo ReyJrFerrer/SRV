@@ -180,4 +180,3 @@ export const BookingStatsCards: React.FC<BookingStatsCardsProps> = ({
     </div>
   );
 };
-

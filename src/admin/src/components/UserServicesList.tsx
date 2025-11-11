@@ -370,7 +370,9 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
               Previous
             </button>
             <button
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              onClick={() =>
+                onPageChange(Math.min(totalPages, currentPage + 1))
+              }
               disabled={currentPage === totalPages}
               className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -380,8 +382,7 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{startIndex + 1}</span>{" "}
-                to{" "}
+                Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
                 <span className="font-medium">
                   {Math.min(endIndex, filteredServices.length)}
                 </span>{" "}
@@ -415,7 +416,9 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
                   ),
                 )}
                 <button
-                  onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    onPageChange(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -429,4 +432,3 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
     </div>
   );
 };
-

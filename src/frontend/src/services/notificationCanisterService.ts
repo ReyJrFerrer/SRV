@@ -413,6 +413,4 @@ export const notificationCanisterService = {
   },
 };
 
-
-
 export default notificationCanisterService;

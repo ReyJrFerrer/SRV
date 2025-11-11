@@ -89,4 +89,3 @@ export const groupTransactionsByDate = (
 
   return groups;
 };
-

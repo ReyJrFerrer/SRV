@@ -50,13 +50,11 @@ export const extractMediaIdFromUrl = async (
       const parts = certificateUrl.split("/");
       const filename = parts[parts.length - 1]?.split("?")[0];
       mediaId = filename?.split("_")[0] || null;
-    }
-    else if (certificateUrl.includes("/media/")) {
+    } else if (certificateUrl.includes("/media/")) {
       mediaId =
         certificateUrl.split("/media/")[1]?.split("?")[0]?.split("/")[0] ||
         null;
-    }
-    else if (certificateUrl.startsWith("media://")) {
+    } else if (certificateUrl.startsWith("media://")) {
       mediaId = certificateUrl.replace("media://", "").split("/").pop() || null;
     }
 

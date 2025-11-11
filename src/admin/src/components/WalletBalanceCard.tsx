@@ -45,4 +45,3 @@ const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({
 };
 
 export default WalletBalanceCard;
-

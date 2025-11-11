@@ -70,8 +70,7 @@ export const UserChatsPage: React.FC = () => {
                 imagesMap.set(otherUserId, DEFAULT_USER_IMAGE);
               }
             }
-          } catch (e) {
-          }
+          } catch (e) {}
         }),
       );
 

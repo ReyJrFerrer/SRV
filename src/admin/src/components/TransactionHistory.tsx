@@ -189,4 +189,3 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 };
 
 export default TransactionHistory;
-

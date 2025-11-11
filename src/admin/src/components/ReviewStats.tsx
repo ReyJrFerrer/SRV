@@ -71,4 +71,3 @@ export const ReviewStats: React.FC<ReviewStatsProps> = ({
     </section>
   );
 };
-

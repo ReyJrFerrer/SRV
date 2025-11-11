@@ -40,7 +40,6 @@ export const UserListPage: React.FC = () => {
   const [loadingAdminIds, setLoadingAdminIds] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
-
   // Load users from backend on component mount
   useEffect(() => {
     const initializeAndLoadUsers = async () => {
@@ -201,7 +200,6 @@ export const UserListPage: React.FC = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
-
 
   const handleUserClick = (user: UserData) => {
     if (!showOnlyAdmins) {

@@ -22,7 +22,6 @@ const TicketCard: React.FC<{
   ticket: Ticket;
   onView: (ticket: Ticket) => void;
 }> = ({ ticket, onView }) => {
-
   return (
     <div
       className="cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"

@@ -105,8 +105,7 @@ export const UserChatHistoryPage: React.FC = () => {
           }
         }
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   };
 
   const loadUserProfile = async () => {
@@ -120,8 +119,7 @@ export const UserChatHistoryPage: React.FC = () => {
           setUserImage(profile.profilePicture.imageUrl);
         }
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   };
 
   const formatTimestamp = (dateStr?: string | Date) => {

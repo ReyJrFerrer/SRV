@@ -33,9 +33,7 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
   return (
     <div
       className={`rounded-xl bg-white p-5 shadow ${
-        isHidden
-          ? "border-l-4 border-orange-400 bg-orange-50/30"
-          : ""
+        isHidden ? "border-l-4 border-orange-400 bg-orange-50/30" : ""
       }`}
     >
       <div className="mb-1 flex items-center justify-between">
@@ -51,9 +49,7 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
               <StarIcon
                 key={s}
                 className={`h-4 w-4 ${
-                  s <= review.rating
-                    ? "text-yellow-400"
-                    : "text-gray-200"
+                  s <= review.rating ? "text-yellow-400" : "text-gray-200"
                 }`}
               />
             ))}
@@ -91,11 +87,8 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
         </div>
       </div>
       {review.comment && (
-        <p className="mt-2 text-sm text-gray-700">
-          {review.comment}
-        </p>
+        <p className="mt-2 text-sm text-gray-700">{review.comment}</p>
       )}
     </div>
   );
 };
-

@@ -6,11 +6,7 @@ interface StarBarProps {
   total: number;
 }
 
-export const StarBar: React.FC<StarBarProps> = ({
-  label,
-  value,
-  total,
-}) => {
+export const StarBar: React.FC<StarBarProps> = ({ label, value, total }) => {
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
@@ -25,4 +21,3 @@ export const StarBar: React.FC<StarBarProps> = ({
     </div>
   );
 };
-

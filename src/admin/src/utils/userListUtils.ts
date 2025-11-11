@@ -143,9 +143,7 @@ export const isUserOnline = (user: UserData): boolean => {
 // Extract userId from profile
 export const extractUserId = (profile: any): string | null => {
   if (profile.id) {
-    return typeof profile.id === "string"
-      ? profile.id
-      : profile.id.toString();
+    return typeof profile.id === "string" ? profile.id : profile.id.toString();
   }
   if (profile.principal) {
     return typeof profile.principal === "string"
@@ -194,4 +192,3 @@ export const filterProfilesByAdminStatus = (
     return showOnlyAdmins ? isAdmin : !isAdmin;
   });
 };
-

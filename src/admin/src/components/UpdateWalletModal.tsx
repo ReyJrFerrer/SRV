@@ -161,4 +161,3 @@ const UpdateWalletModal: React.FC<UpdateWalletModalProps> = ({
 };
 
 export default UpdateWalletModal;
-

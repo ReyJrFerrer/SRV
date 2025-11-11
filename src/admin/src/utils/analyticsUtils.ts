@@ -28,7 +28,7 @@ export const isUserOnline = (user: any): boolean => {
   return false;
 };
 
-// Helper function to check if user is dormant 
+// Helper function to check if user is dormant
 export const isUserDormant = (user: any): boolean => {
   if (user.lastActivity) {
     const lastActivityDate =

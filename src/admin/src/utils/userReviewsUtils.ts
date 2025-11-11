@@ -124,4 +124,3 @@ export const toggleSelectReview = (
   }
   return newSelected;
 };
-

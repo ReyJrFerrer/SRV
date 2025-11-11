@@ -91,4 +91,3 @@ export const TicketFilters: React.FC<TicketFiltersProps> = ({
     </div>
   );
 };
-

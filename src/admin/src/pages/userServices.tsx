@@ -143,7 +143,6 @@ const UserServicesPage: React.FC = () => {
     loadUser();
   }, [id, backendUsers, navigate, refreshUsers]);
 
-
   // Filter services
   const filteredServices = services.filter((service) => {
     const matchesSearch =

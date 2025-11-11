@@ -153,7 +153,6 @@ export const useProviderNotificationsWithPush = () => {
     return identity?.getPrincipal().toString() || "anonymous";
   };
 
-
   // Initialize notification integration service
   useEffect(() => {
     const initializeIntegration = async () => {

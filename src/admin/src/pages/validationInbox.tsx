@@ -23,8 +23,12 @@ export const ValidationInboxPage: React.FC = () => {
     any[]
   >([]);
   const [certificateLoading, setCertificateLoading] = useState(false);
-  const [approvingCertificate, setApprovingCertificate] = useState<string | null>(null);
-  const [rejectingCertificate, setRejectingCertificate] = useState<string | null>(null);
+  const [approvingCertificate, setApprovingCertificate] = useState<
+    string | null
+  >(null);
+  const [rejectingCertificate, setRejectingCertificate] = useState<
+    string | null
+  >(null);
 
   // Statistics state
   const [stats, setStats] = useState({
@@ -38,7 +42,7 @@ export const ValidationInboxPage: React.FC = () => {
   // Certificate validation state
   const [approvedCertificates, setApprovedCertificates] = useState<any[]>([]);
   const [rejectedCertificates, setRejectedCertificates] = useState<any[]>([]);
-  
+
   const [mediaModal, setMediaModal] = useState<{
     isOpen: boolean;
     mediaItem: {
@@ -288,8 +292,12 @@ export const ValidationInboxPage: React.FC = () => {
                       onViewCertificate={handleViewCertificate}
                       onApprove={handleApproveCertificate}
                       onReject={handleRejectCertificate}
-                      isApproving={approvingCertificate === `${service.serviceId}-${index}`}
-                      isRejecting={rejectingCertificate === `${service.serviceId}-${index}`}
+                      isApproving={
+                        approvingCertificate === `${service.serviceId}-${index}`
+                      }
+                      isRejecting={
+                        rejectingCertificate === `${service.serviceId}-${index}`
+                      }
                       onCardClick={(
                         service,
                         _certificateIndex,
