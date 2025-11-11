@@ -9,9 +9,11 @@ const ClientActiveServiceBanner: React.FC = () => {
     useBookingManagement();
 
   // Hide on client booking details page itself
-  if (location.pathname.startsWith("/client/booking/") || location.pathname.startsWith("/client/chat/")
-
-  ) return null;
+  if (
+    location.pathname.startsWith("/client/booking/") ||
+    location.pathname.startsWith("/client/chat/")
+  )
+    return null;
 
   const active = bookingsByStatus("InProgress");
   if (!active || active.length === 0) return null;
@@ -24,8 +26,7 @@ const ClientActiveServiceBanner: React.FC = () => {
   const clientVisibleName =
     booking.providerName || booking.providerProfile?.name || "Provider";
 
-  const isBookingPage =
-    location.pathname.startsWith("/client/book/");
+  const isBookingPage = location.pathname.startsWith("/client/book/");
 
   return (
     <>

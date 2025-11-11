@@ -9,13 +9,15 @@ const ActiveServiceBanner: React.FC = () => {
     useProviderBookingManagement();
 
   // Hide on active-service page itself
-  if (location.pathname.startsWith("/provider/active-service/") || location.pathname.startsWith("/provider/chat/")) {
+  if (
+    location.pathname.startsWith("/provider/active-service/") ||
+    location.pathname.startsWith("/provider/chat/")
+  ) {
     return null;
   }
 
   const activeBookings = getActiveBookings();
   if (!activeBookings || activeBookings.length === 0) return null;
-
 
   const booking = activeBookings[0];
   const serviceName =
