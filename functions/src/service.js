@@ -31,7 +31,7 @@ const MIN_DESCRIPTION_LENGTH = 1;
 const MAX_DESCRIPTION_LENGTH = 100;
 const MIN_PRICE = 1;
 const MAX_PRICE = 1000000;
-const MAX_SERVICE_IMAGES = 5;
+const MAX_SERVICE_IMAGES = 10;
 const MAX_SERVICE_CERTIFICATES = 10;
 const MIN_PACKAGE_TITLE_LENGTH = 1;
 const MAX_PACKAGE_TITLE_LENGTH = 40;
@@ -63,15 +63,6 @@ function calculateDistance(loc1, loc2) {
  * @return {boolean} True if valid
  */
 function validateTitle(title) {
-  console.log("🔍 validateTitle called with:", {
-    title: title,
-    type: typeof title,
-    truthy: !!title,
-    length: title ? title.length : "N/A",
-    minRequired: MIN_TITLE_LENGTH,
-    maxRequired: MAX_TITLE_LENGTH,
-  });
-
   const result = (
     title &&
     title.length >= MIN_TITLE_LENGTH &&
@@ -141,7 +132,6 @@ function validateLocation(location) {
  * @return {Promise<object>} Commission fee and rate
  */
 async function calculateCommissionInfo(categoryName, price) {
-  // Import commission logic locally to avoid HTTPS call overhead
   const {
     getCategoryTier,
     getFeeStructure,
@@ -208,7 +198,6 @@ async function uploadImagesToStorage(ownerId, images, mediaType) {
 async function deleteImagesFromStorage(mediaItems) {
   for (const item of mediaItems) {
     try {
-      // Call media.js deleteMediaInternal to remove both Storage file and Firestore metadata
       await deleteMediaInternal(item.id);
     } catch (error) {
       console.error(`Error deleting media ${item.id}:`, error);
@@ -279,35 +268,19 @@ exports.createService = functions.https.onCall(async (data, context) => {
     serviceCertificates,
   } = payload;
 
-  console.log("📋 Extracted data from payload:");
-  console.log("  - Title:", title,
-    "(type:", typeof title, ", length:", title ? title.length : "N/A", ")");
-  console.log("  - Description:", description,
-    "(type:", typeof description, ", length:",
-    description ? description.length : "N/A", ")");
-  console.log("  - CategoryId:", categoryId, "(type:", typeof categoryId, ")");
-  console.log("  - Price:", price, "(type:", typeof price, ")");
-  console.log("  - Location:", location ? "Present" : "Missing");
 
   const providerId = authInfo.uid;
 
-  // Validate input
-  console.log("🔍 Starting validation...");
-  console.log("🔍 Title validation - Min:", MIN_TITLE_LENGTH, "Max:", MAX_TITLE_LENGTH);
 
   const titleValid = validateTitle(title);
-  console.log("📝 Title validation result:", titleValid);
   if (!titleValid) {
-    console.log("❌ Title validation failed for:", title);
     throw new functions.https.HttpsError(
       "invalid-argument",
       `Service title must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters`);
   }
 
   const descValid = validateDescription(description);
-  console.log("📝 Description validation result:", descValid);
   if (!descValid) {
-    console.log("❌ Description validation failed for:", description);
     throw new functions.https.HttpsError(
       "invalid-argument",
       `Service description must be between 
@@ -315,9 +288,7 @@ exports.createService = functions.https.onCall(async (data, context) => {
   }
 
   const priceValid = validatePrice(price);
-  console.log("💰 Price validation result:", priceValid);
   if (!priceValid) {
-    console.log("❌ Price validation failed for:", price);
     throw new functions.https.HttpsError(
       "invalid-argument",
       `Service price must be between ₱${MIN_PRICE} and ₱${MAX_PRICE}`);
@@ -409,9 +380,9 @@ exports.createService = functions.https.onCall(async (data, context) => {
       rating: null,
       reviewCount: 0,
       imageUrls: imageMedia.map((m) => m.url),
-      imageMedia: imageMedia, // Store full media metadata
+      imageMedia: imageMedia,
       certificateUrls: certificateMedia.map((m) => m.url),
-      certificateMedia: certificateMedia, // Store full media metadata
+      certificateMedia: certificateMedia,
       isVerifiedService: certificateMedia.length > 0,
       weeklySchedule: weeklySchedule || null,
       instantBookingEnabled: instantBookingEnabled || false,
@@ -690,7 +661,6 @@ exports.updateService = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Handle null data gracefully by preserving existing values
     // Update title - preserve existing if null/undefined provided
     let updatedTitle;
     if (title !== undefined && title !== null) {

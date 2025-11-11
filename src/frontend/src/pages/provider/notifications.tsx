@@ -19,35 +19,60 @@ const NotificationsPageSP = () => {
   // Use the new provider notifications hook
   const {
     notifications,
-    unreadCount,
     loading,
     error,
     markAsRead,
     deleteNotification,
     markAllAsRead,
   } = useProviderNotifications();
+  // Track processed notification IDs to prevent flickering from re-renders
+  const [stableNotifications, setStableNotifications] = React.useState<
+    ProviderNotification[]
+  >([]);
 
   // Set the document title
   useEffect(() => {
     document.title = "Notifications | SRV";
   }, []);
 
-  // Stabilize notifications array to prevent flickering
+  // Stabilize notifications similar to client page to detect changes in read status, type, etc.
+  const previousNotificationsRef = React.useRef<Map<string, string>>(new Map());
+
   React.useEffect(() => {
     if (loading) return;
 
-    // Check if there are new notifications that haven't been processed
-    const newNotifications = notifications.filter(
-      (n) => !processedNotificationsRef.current.has(n.id),
-    );
+    const nextMap = new Map<string, string>();
+    notifications.forEach((n) => {
+      try {
+        nextMap.set(
+          n.id,
+          JSON.stringify({
+            id: n.id,
+            type: n.type,
+            read: n.read,
+            href: n.href,
+          }),
+        );
+      } catch (e) {
+        nextMap.set(n.id, String(n.id));
+      }
+    });
 
-    if (newNotifications.length > 0 || notifications.length === 0) {
-      // Mark all current notifications as processed
-      notifications.forEach((n) => {
-        processedNotificationsRef.current.add(n.id);
-      });
+    const prevMap = previousNotificationsRef.current;
+    let changed = false;
+    if (prevMap.size !== nextMap.size) {
+      changed = true;
+    } else {
+      for (const [id, sig] of nextMap.entries()) {
+        if (prevMap.get(id) !== sig) {
+          changed = true;
+          break;
+        }
+      }
+    }
 
-      // Update stable notifications only when there are actual changes
+    if (changed || notifications.length === 0) {
+      previousNotificationsRef.current = nextMap;
       setStableNotifications(notifications);
     }
   }, [notifications, loading]);
@@ -55,21 +80,15 @@ const NotificationsPageSP = () => {
   // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
-  // Track processed notification IDs to prevent flickering from re-renders
-  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
-  const [stableNotifications, setStableNotifications] = React.useState<
-    ProviderNotification[]
-  >([]);
-
   // Tabs for categorizing notifications
-  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "From Admin";
+  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
     "Bookings",
     "Chat",
     "Ratings",
-    "From Admin",
+    "Admin",
   ];
 
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
@@ -141,7 +160,7 @@ const NotificationsPageSP = () => {
     if (bookingTypes.includes(type)) return "Bookings";
     if (type === "chat_message") return "Chat";
     if (type === "review_request") return "Ratings";
-    if (adminTypes.includes(type)) return "From Admin";
+    if (adminTypes.includes(type)) return "Admin";
     return "All";
   };
 
@@ -183,9 +202,7 @@ const NotificationsPageSP = () => {
     selectedIds.forEach((id) => {
       try {
         deleteNotification(id);
-      } catch (e) {
-        console.error("bulk delete failed for", id, e);
-      }
+      } catch (e) {}
     });
     setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
     clearSelection();
@@ -272,10 +289,14 @@ const NotificationsPageSP = () => {
             Notifications
           </h1>
           {stableNotifications.length > 0 && (
-            <>
+            <div className="ml-auto flex items-center">
               <div className="hidden sm:block" aria-hidden="true" />
 
-              <div className="hidden items-center gap-2 sm:flex">
+              <div
+                className={`hidden items-center gap-2 transition-opacity duration-200 lg:flex ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
                 <button
                   onClick={() => {
                     if (!editMode) {
@@ -313,7 +334,11 @@ const NotificationsPageSP = () => {
                 )}
               </div>
 
-              <div className="relative sm:hidden">
+              <div
+                className={`relative transition-opacity duration-200 lg:hidden ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
                 <button
                   ref={mobileMenuButtonRef}
                   onClick={() => setMobileMenuOpen((s) => !s)}
@@ -381,7 +406,7 @@ const NotificationsPageSP = () => {
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
         </div>
       </header>

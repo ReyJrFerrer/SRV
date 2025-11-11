@@ -36,8 +36,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
   try {
     console.log(`🔧 [Admin] Creating admin profile for UID: ${uid}`);
 
-    // Count existing admin users BEFORE assigning the new role to determine the next admin number
-    // This ensures correct sequential numbering (admin00, admin01, admin02, etc.)
+
     const adminRolesSnapshot = await db.collection("userRoles")
       .where("role", "==", "ADMIN")
       .get();
@@ -54,7 +53,6 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
 
     if (!profileDoc.exists) {
       // Create new admin profile
-      // Always use the generated admin name (admin00, admin01, etc.) regardless of provided name
       const newProfile = {
         uid: uid,
         principal: principal || uid,
@@ -119,7 +117,6 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       }
     }
 
-    // Assign admin role (happens AFTER counting to ensure correct numbering)
     const roleAssignment = {
       userId: uid,
       role: "ADMIN",

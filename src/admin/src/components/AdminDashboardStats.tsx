@@ -141,7 +141,7 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 
               {card.isAlert && (
                 <div className="mt-3 text-xs font-medium text-yellow-800">
-                  ⚠️ Requires attention
+                  Requires attention
                 </div>
               )}
             </div>

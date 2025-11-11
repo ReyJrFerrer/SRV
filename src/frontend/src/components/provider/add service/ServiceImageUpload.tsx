@@ -149,7 +149,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
         </p>
         <FileInput
           id="serviceImages"
-          accept="image/png, image/jpeg, image/gif, image/svg+xml"
+          accept="image/png, image/jpeg, image/gif"
           multiple={true}
           onChange={onImageFilesChange}
           files={serviceImageFiles}
@@ -214,7 +214,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
         </p>
         <FileInput
           id="certificationImages"
-          accept="image/png, image/jpeg, image/gif, image/svg+xml"
+          accept="image/png, image/jpeg"
           multiple={true}
           onChange={onCertificationFilesChange}
           files={certificationFiles}

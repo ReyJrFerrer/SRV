@@ -173,7 +173,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error creating service:", error);
       throw error;
     }
   },
@@ -195,8 +194,7 @@ export const serviceCanisterService = {
           callback(null);
         }
       },
-      (error) => {
-        console.error("Error listening to service:", error);
+      () => {
         callback(null);
       },
     );
@@ -213,7 +211,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error getting service:", error);
       return null;
     }
   },
@@ -237,8 +234,7 @@ export const serviceCanisterService = {
         });
         callback(services);
       },
-      (error) => {
-        console.error("Error listening to provider services:", error);
+      () => {
         callback([]);
       },
     );
@@ -258,7 +254,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; services: Service[] };
       return data.success ? data.services : [];
     } catch (error) {
-      console.error("Error getting services by provider:", error);
       return [];
     }
   },
@@ -282,8 +277,7 @@ export const serviceCanisterService = {
         });
         callback(services);
       },
-      (error) => {
-        console.error("Error listening to category services:", error);
+      () => {
         callback([]);
       },
     );
@@ -303,7 +297,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; services: Service[] };
       return data.success ? data.services : [];
     } catch (error) {
-      console.error("Error getting services by category:", error);
       return [];
     }
   },
@@ -325,7 +318,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error updating service status:", error);
       throw error;
     }
   },
@@ -352,7 +344,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; services: Service[] };
       return data.success ? data.services : [];
     } catch (error) {
-      console.error("Error searching services by location:", error);
       return [];
     }
   },
@@ -390,7 +381,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error updating service:", error);
       throw error;
     }
   },
@@ -406,7 +396,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; message: string };
       return data.success ? data.message : null;
     } catch (error) {
-      console.error("Error deleting service:", error);
       throw error;
     }
   },
@@ -476,8 +465,7 @@ export const serviceCanisterService = {
 
         callback(sorted);
       },
-      (error) => {
-        console.error("Error listening to all services:", error);
+      () => {
         callback([]);
       },
     );
@@ -494,7 +482,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; services: Service[] };
       return data.success ? data.services : [];
     } catch (error) {
-      console.error("Error getting all services:", error);
       return [];
     }
   },
@@ -520,7 +507,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error uploading service images:", error);
       throw error;
     }
   },
@@ -542,7 +528,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error removing service image:", error);
       throw error;
     }
   },
@@ -567,7 +552,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error reordering service images:", error);
       throw error;
     }
   },
@@ -596,7 +580,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error uploading service certificates:", error);
       throw error;
     }
   },
@@ -621,7 +604,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error removing service certificate:", error);
       throw error;
     }
   },
@@ -640,7 +622,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error verifying service:", error);
       throw error;
     }
   },
@@ -671,7 +652,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.category : null;
     } catch (error) {
-      console.error("Error adding category:", error);
       throw error;
     }
   },
@@ -693,8 +673,7 @@ export const serviceCanisterService = {
         });
         callback(categories);
       },
-      (error) => {
-        console.error("Error listening to categories:", error);
+      () => {
         callback([]);
       },
     );
@@ -714,7 +693,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.categories : [];
     } catch (error) {
-      console.error("Error getting all categories:", error);
       return [];
     }
   },
@@ -746,7 +724,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.package : null;
     } catch (error) {
-      console.error("Error creating service package:", error);
       throw error;
     }
   },
@@ -770,8 +747,7 @@ export const serviceCanisterService = {
         });
         callback(packages);
       },
-      (error) => {
-        console.error("Error listening to service packages:", error);
+      () => {
         callback([]);
       },
     );
@@ -794,7 +770,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.packages : [];
     } catch (error) {
-      console.error("Error getting service packages:", error);
       return [];
     }
   },
@@ -813,7 +788,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.package : null;
     } catch (error) {
-      console.error("Error getting package:", error);
       return null;
     }
   },
@@ -845,7 +819,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.package : null;
     } catch (error) {
-      console.error("Error updating service package:", error);
       throw error;
     }
   },
@@ -864,7 +837,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; message: string };
       return data.success ? data.message : null;
     } catch (error) {
-      console.error("Error deleting service package:", error);
       throw error;
     }
   },
@@ -886,7 +858,6 @@ export const serviceCanisterService = {
       const data = result.data as CommissionQuote & { success: boolean };
       return data.success ? data : null;
     } catch (error) {
-      console.error("Error getting commission quote:", error);
       return null;
     }
   },
@@ -913,7 +884,6 @@ export const serviceCanisterService = {
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
     } catch (error) {
-      console.error("Error updating service rating:", error);
       throw error;
     }
   },
@@ -947,7 +917,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.availability : null;
     } catch (error) {
-      console.error("Error setting service availability:", error);
       throw error;
     }
   },
@@ -971,7 +940,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.availability : null;
     } catch (error) {
-      console.error("Error getting service availability:", error);
       throw error;
     }
   },
@@ -996,7 +964,6 @@ export const serviceCanisterService = {
       };
       return data.success ? data.slots : [];
     } catch (error) {
-      console.error("Error getting available time slots:", error);
       return [];
     }
   },

@@ -73,7 +73,7 @@ export function initializeFirebase(): {
           connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
           emulatorsConnected = true;
           console.log(
-            "🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
+            "Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
           );
         } catch (emulatorError) {
           console.warn(
@@ -128,7 +128,7 @@ export function initializeFirebase(): {
         connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
         emulatorsConnected = true;
         console.log(
-          "🔧 Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
+          "Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
         );
       } catch (emulatorError) {
         console.warn("Could not connect to emulators:", emulatorError);
@@ -138,7 +138,7 @@ export function initializeFirebase(): {
     // Set language code for auth (optional)
     firebaseAuth.languageCode = "en";
 
-    console.log("✅ Firebase initialized successfully");
+    console.log("Firebase initialized successfully");
     return {
       app: firebaseApp,
       auth: firebaseAuth,
@@ -147,7 +147,7 @@ export function initializeFirebase(): {
       firestore: firebaseFirestore,
     };
   } catch (error) {
-    console.error("❌ Failed to initialize Firebase:", error);
+    console.error("Failed to initialize Firebase:", error);
     throw error;
   }
 }

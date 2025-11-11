@@ -51,7 +51,6 @@ export const useWallet = () => {
       setHeldBalance(walletDetails.heldBalance);
       setAvailableBalance(walletDetails.availableBalance);
     } catch (err) {
-      console.error("Failed to fetch wallet balance:", err);
       setError("Could not load wallet balance.");
       setBalance(0);
       setHeldBalance(0);
@@ -90,7 +89,6 @@ export const useWallet = () => {
       );
       setHasMoreTransactions(sortedTransactions.length > TRANSACTIONS_PER_PAGE);
     } catch (err) {
-      console.error("Failed to fetch transaction history:", err);
       setError("Could not load transaction history.");
       setAllTransactions([]);
       setDisplayedTransactions([]);
@@ -118,7 +116,6 @@ export const useWallet = () => {
         currentCount + TRANSACTIONS_PER_PAGE < allTransactions.length,
       );
     } catch (err) {
-      console.error("Failed to load more transactions:", err);
       setError("Could not load more transactions.");
     } finally {
       setLoadMoreLoading(false);
@@ -138,7 +135,6 @@ export const useWallet = () => {
       try {
         return await walletCanisterService.getBalanceOf(principal.toString());
       } catch (err) {
-        console.error("Failed to fetch balance for principal:", err);
         throw new Error("Could not load balance for the specified user.");
       }
     },
@@ -177,7 +173,6 @@ export const useWallet = () => {
 
         return transactionId;
       } catch (err) {
-        console.error("Failed to transfer funds:", err);
         const errorMessage =
           err instanceof Error ? err.message : "Transfer failed";
         setError(errorMessage);
@@ -227,7 +222,6 @@ export const useWallet = () => {
 
         return result;
       } catch (err) {
-        console.error("Failed to credit wallet:", err);
         const errorMessage =
           err instanceof Error ? err.message : "Failed to credit wallet";
         setError(errorMessage);

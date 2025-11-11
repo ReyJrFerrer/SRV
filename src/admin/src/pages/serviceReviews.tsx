@@ -5,10 +5,14 @@ import {
   StarIcon as StarSolid,
   EyeSlashIcon,
   ChartBarIcon,
+  TrashIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../frontend/src/hooks/reviewManagement";
 import { useServiceById } from "../../../frontend/src/hooks/serviceInformation";
 import { useUserImage } from "../../../frontend/src/hooks/useMediaLoader";
+import { adminServiceCanister } from "../services/adminServiceCanister";
+import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
@@ -33,10 +37,21 @@ const ReviewItem: React.FC<{
   review: any;
   formatReviewDate: (date: string) => string;
   getRelativeTime: (date: string) => string;
-}> = ({ review, formatReviewDate, getRelativeTime }) => {
+  isDeleting: boolean;
+  onRestore: (reviewId: string) => void;
+  onShowDeleteConfirm: (reviewId: string) => void;
+}> = ({
+  review,
+  formatReviewDate,
+  getRelativeTime,
+  isDeleting,
+  onRestore,
+  onShowDeleteConfirm,
+}) => {
   const { userImageUrl: clientImageUrl } = useUserImage(
     review.clientProfile?.profilePicture?.imageUrl,
   );
+  const isHidden = review.status === "Hidden";
 
   return (
     <div
@@ -59,12 +74,33 @@ const ReviewItem: React.FC<{
             <h4 className="font-semibold text-blue-900">
               {review.clientName || "Anonymous User"}
             </h4>
-            {review.status !== "Visible" && (
-              <div className="flex items-center text-xs text-yellow-600">
-                <EyeSlashIcon className="mr-1 h-4 w-4" />
-                {review.status}
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {review.status !== "Visible" && (
+                <div className="flex items-center text-xs text-yellow-600">
+                  <EyeSlashIcon className="mr-1 h-4 w-4" />
+                  {review.status}
+                </div>
+              )}
+              {isHidden ? (
+                <button
+                  onClick={() => onRestore(review.id)}
+                  disabled={isDeleting}
+                  className="rounded-full p-1.5 text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
+                  title="Restore review"
+                >
+                  <ArrowPathIcon className="h-5 w-5" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => onShowDeleteConfirm(review.id)}
+                  disabled={isDeleting}
+                  className="rounded-full p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                  title="Delete review"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             <p className="text-xs text-gray-500">
@@ -129,6 +165,11 @@ const ServiceReviewsPage: React.FC = () => {
   >("newest");
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [showHiddenReviews, setShowHiddenReviews] = useState(true);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
+    null,
+  );
+  const [error, setError] = useState<string | null>(null);
 
   const sortedAndFilteredReviews = React.useMemo(() => {
     let filtered = reviews;
@@ -169,6 +210,39 @@ const ServiceReviewsPage: React.FC = () => {
   const flaggedReviews = reviews.filter(
     (review) => review.status === "Flagged",
   );
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!reviewId) return;
+
+    setDeletingReviewId(reviewId);
+    setError(null);
+    try {
+      await adminServiceCanister.deleteReview(reviewId);
+      window.location.reload();
+    } catch (e) {
+      console.error("Error deleting review:", e);
+      setError("Failed to delete review.");
+    } finally {
+      setDeletingReviewId(null);
+      setShowDeleteConfirm(null);
+    }
+  };
+
+  const handleRestoreReview = async (reviewId: string) => {
+    if (!reviewId) return;
+
+    setDeletingReviewId(reviewId);
+    setError(null);
+    try {
+      await adminServiceCanister.restoreReview(reviewId);
+      window.location.reload();
+    } catch (e) {
+      console.error("Error restoring review:", e);
+      setError("Failed to restore review.");
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
 
   if (serviceLoading || reviewsLoading) {
     return (
@@ -271,7 +345,7 @@ const ServiceReviewsPage: React.FC = () => {
               )}
               {flaggedReviews.length > 0 && (
                 <span className="flex items-center">
-                  <span className="mr-1 text-red-500">🚩</span>
+                  <span className="mr-1 text-red-500">Flagged</span>
                   {flaggedReviews.length} Flagged
                 </span>
               )}
@@ -414,6 +488,12 @@ const ServiceReviewsPage: React.FC = () => {
           </div>
         </div>
 
+        {error && (
+          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* Reviews List */}
         {sortedAndFilteredReviews.length > 0 ? (
           <div className="space-y-6">
@@ -423,6 +503,9 @@ const ServiceReviewsPage: React.FC = () => {
                 review={review}
                 formatReviewDate={formatReviewDate}
                 getRelativeTime={getRelativeTime}
+                isDeleting={deletingReviewId === review.id}
+                onRestore={handleRestoreReview}
+                onShowDeleteConfirm={setShowDeleteConfirm}
               />
             ))}
           </div>
@@ -444,6 +527,14 @@ const ServiceReviewsPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm !== null}
+        reviewId={showDeleteConfirm}
+        isDeleting={deletingReviewId !== null}
+        onConfirm={handleDeleteReview}
+        onCancel={() => setShowDeleteConfirm(null)}
+      />
     </div>
   );
 };

@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import { adminServiceCanister } from "../services/adminServiceCanister";
+import { BookingStatsCards } from "../components/BookingStatsCards";
+import { BookingFilters } from "../components/BookingFilters";
+import { BookingsList } from "../components/BookingsList";
 
 interface Booking {
   id: string;
@@ -9,7 +12,7 @@ interface Booking {
   serviceName: string;
   providerId: string;
   providerName: string;
-  status: string;
+  status: any;
   price: number;
   createdAt: string;
   scheduledDate: string;
@@ -39,11 +42,7 @@ export const UserBookingsPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-
-        // Filter out any invalid profiles before searching
         const validUsers = backendUsers.filter((u) => u && u.id);
-
-        // Find user in backend users
         const foundUser = validUsers.find((u) => u.id.toString() === userId);
         if (foundUser) {
           setUser(foundUser);
@@ -85,7 +84,7 @@ export const UserBookingsPage: React.FC = () => {
   const getStatusColor = (status: any) => {
     if (!status) return "bg-gray-100 text-gray-800";
 
-    // Handle object status (like {Requested: null})
+    // Handle object status
     if (typeof status === "object") {
       const statusKeys = Object.keys(status);
       if (statusKeys.length > 0) {
@@ -128,7 +127,6 @@ export const UserBookingsPage: React.FC = () => {
     try {
       const date = new Date(dateString);
 
-      // Check if date is valid
       if (isNaN(date.getTime())) {
         console.log("Invalid date string:", dateString);
         return "Invalid Date";
@@ -164,7 +162,6 @@ export const UserBookingsPage: React.FC = () => {
 
   // Filter bookings based on search term and status
   const filteredBookings = bookings.filter((booking) => {
-    // Search filter - check service name and provider name
     const matchesSearch =
       searchTerm === "" ||
       booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,11 +175,9 @@ export const UserBookingsPage: React.FC = () => {
     if (statusFilter === "all") {
       matchesStatus = true;
     } else if (filterValue === "pending") {
-      // Pending includes both "pending" and "requested"
       matchesStatus =
         normalizedStatus === "pending" || normalizedStatus === "requested";
     } else if (filterValue === "inprogress") {
-      // Handle both "inprogress" and "in_progress"
       matchesStatus =
         normalizedStatus === "inprogress" || normalizedStatus === "in_progress";
     } else {
@@ -192,11 +187,21 @@ export const UserBookingsPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Pagination
-  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentBookings = filteredBookings.slice(startIndex, endIndex);
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setCurrentPage(1);
+  };
 
   if (loading) {
     return (
@@ -280,418 +285,29 @@ export const UserBookingsPage: React.FC = () => {
 
       {/* Content */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Stats Cards */}
-        <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="overflow-hidden rounded-lg bg-white shadow">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-6 w-6 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500">
-                      Total Bookings
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {filteredBookings.length}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+        <BookingStatsCards
+          bookings={filteredBookings}
+          normalizeBookingStatus={normalizeBookingStatus}
+        />
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-6 w-6 text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500">
-                      Completed
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {
-                        filteredBookings.filter((b) => {
-                          if (!b.status) return false;
-                          if (typeof b.status === "string") {
-                            return b.status.toLowerCase() === "completed";
-                          }
-                          if (typeof b.status === "object") {
-                            return Object.keys(b.status).some(
-                              (key) => key.toLowerCase() === "completed",
-                            );
-                          }
-                          return false;
-                        }).length
-                      }
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+        <BookingFilters
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          onSearchChange={handleSearchChange}
+          onStatusFilterChange={handleStatusFilterChange}
+          onClearFilters={handleClearFilters}
+        />
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-6 w-6 text-yellow-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500">
-                      Pending
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {
-                        filteredBookings.filter((b) => {
-                          if (!b.status) return false;
-                          const normalizedStatus = normalizeBookingStatus(
-                            b.status,
-                          );
-                          return (
-                            normalizedStatus === "pending" ||
-                            normalizedStatus === "requested" ||
-                            normalizedStatus === "accepted" ||
-                            normalizedStatus === "in_progress" ||
-                            normalizedStatus === "inprogress"
-                          );
-                        }).length
-                      }
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-lg bg-white shadow">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-6 w-6 text-red-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500">
-                      Canceled
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {
-                        filteredBookings.filter((b) => {
-                          if (!b.status) return false;
-                          const normalizedStatus = normalizeBookingStatus(
-                            b.status,
-                          );
-                          return (
-                            normalizedStatus === "cancelled" ||
-                            normalizedStatus === "canceled" ||
-                            normalizedStatus === "declined"
-                          );
-                        }).length
-                      }
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-8 rounded-lg bg-white p-6 shadow">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <label
-                htmlFor="search"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Search
-              </label>
-              <input
-                type="text"
-                id="search"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page on search
-                }}
-                placeholder="Search by service or provider..."
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="status"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Status
-              </label>
-              <select
-                id="status"
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1); // Reset to first page on filter change
-                }}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Statuses</option>
-                <option value="requested">Requested</option>
-                <option value="pending">Pending</option>
-                <option value="accepted">Accepted</option>
-                <option value="inprogress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="declined">Declined</option>
-              </select>
-            </div>
-
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setStatusFilter("all");
-                  setCurrentPage(1);
-                }}
-                className="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Clear Filters
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bookings List */}
-        <div className="overflow-hidden bg-white shadow sm:rounded-md">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">
-              Booking History ({filteredBookings.length})
-            </h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">
-              Complete booking history for this user
-            </p>
-          </div>
-          <ul className="divide-y divide-gray-200">
-            {filteredBookings.length === 0 ? (
-              <li className="px-4 py-5 sm:px-6">
-                <div className="py-8 text-center">
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">
-                    No bookings found
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {searchTerm || statusFilter !== "all"
-                      ? "No bookings match your search criteria. Try adjusting your filters."
-                      : "This user hasn't made any bookings yet."}
-                  </p>
-                </div>
-              </li>
-            ) : (
-              currentBookings.map((booking) => (
-                <li key={booking.id} className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="truncate text-sm font-medium text-blue-600">
-                          {booking.serviceName}
-                        </p>
-                        <div className="ml-2 flex flex-shrink-0">
-                          <span
-                            className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(booking.status)}`}
-                          >
-                            {typeof booking.status === "string"
-                              ? booking.status
-                              : typeof booking.status === "object" &&
-                                  booking.status !== null
-                                ? Object.keys(booking.status)[0]
-                                : "Unknown"}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-2 flex items-center text-sm text-gray-500">
-                        <p className="truncate">
-                          Provider: {booking.providerName}
-                        </p>
-                        <span className="mx-2">•</span>
-                        <p>₱{booking.price.toLocaleString()}</p>
-                        <span className="mx-2">•</span>
-                        <p>Created: {formatDate(booking.createdAt)}</p>
-                      </div>
-                      {booking.location && (
-                        <div className="mt-1 text-sm text-gray-500">
-                          <p className="truncate">
-                            Location: {booking.location}
-                          </p>
-                        </div>
-                      )}
-                      {booking.scheduledDate && (
-                        <div className="mt-1 text-sm text-gray-500">
-                          <p>Scheduled: {formatDate(booking.scheduledDate)}</p>
-                        </div>
-                      )}
-                      {booking.completedAt && (
-                        <div className="mt-1 text-sm text-gray-500">
-                          <p>Completed: {formatDate(booking.completedAt)}</p>
-                        </div>
-                      )}
-                      {booking.rating && (
-                        <div className="mt-1 text-sm text-gray-500">
-                          <p>
-                            Rating: {booking.rating}/5{" "}
-                            {booking.review && `- ${booking.review}`}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-              <div className="flex flex-1 justify-between sm:hidden">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() =>
-                    setCurrentPage(Math.min(totalPages, currentPage + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing{" "}
-                    <span className="font-medium">{startIndex + 1}</span> to{" "}
-                    <span className="font-medium">
-                      {Math.min(endIndex, filteredBookings.length)}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-medium">
-                      {filteredBookings.length}
-                    </span>{" "}
-                    results
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex -space-x-px rounded-md shadow-sm">
-                    <button
-                      onClick={() =>
-                        setCurrentPage(Math.max(1, currentPage - 1))
-                      }
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center rounded-l-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`relative inline-flex items-center border px-4 py-2 text-sm font-medium ${
-                            page === currentPage
-                              ? "z-10 border-blue-500 bg-blue-50 text-blue-600"
-                              : "border-gray-300 bg-white text-gray-500 hover:bg-gray-50"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ),
-                    )}
-                    <button
-                      onClick={() =>
-                        setCurrentPage(Math.min(totalPages, currentPage + 1))
-                      }
-                      disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </nav>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <BookingsList
+          bookings={filteredBookings}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          onPageChange={setCurrentPage}
+          getStatusColor={getStatusColor}
+          formatDate={formatDate}
+        />
       </div>
     </div>
   );

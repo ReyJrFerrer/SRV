@@ -1,7 +1,7 @@
 const functions = require("firebase-functions");
 
 /**
- * Commission tier definitions - migrated from commission.mo
+ * Commission tier definitions
  */
 const COMMISSION_TIERS = {
   TIER_A: "TierA", // Premium services

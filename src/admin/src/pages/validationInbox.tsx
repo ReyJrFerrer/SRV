@@ -19,13 +19,16 @@ import {
 
 export const ValidationInboxPage: React.FC = () => {
   const navigate = useNavigate();
-  // Certificate validation page - no need for useAdmin loading states
-
-  // Certificate validation state
   const [servicesWithCertificates, setServicesWithCertificates] = useState<
     any[]
   >([]);
   const [certificateLoading, setCertificateLoading] = useState(false);
+  const [approvingCertificate, setApprovingCertificate] = useState<
+    string | null
+  >(null);
+  const [rejectingCertificate, setRejectingCertificate] = useState<
+    string | null
+  >(null);
 
   // Statistics state
   const [stats, setStats] = useState({
@@ -40,7 +43,6 @@ export const ValidationInboxPage: React.FC = () => {
   const [approvedCertificates, setApprovedCertificates] = useState<any[]>([]);
   const [rejectedCertificates, setRejectedCertificates] = useState<any[]>([]);
 
-  // State for media modal
   const [mediaModal, setMediaModal] = useState<{
     isOpen: boolean;
     mediaItem: {
@@ -130,8 +132,13 @@ export const ValidationInboxPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Handle certificate approval
-  const handleApproveCertificate = async (certificateUrl: string) => {
+  const handleApproveCertificate = async (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => {
+    const certificateKey = `${service.serviceId}-${certificateIndex}`;
+    setApprovingCertificate(certificateKey);
     try {
       const mediaId = await extractMediaIdFromUrl(certificateUrl);
 
@@ -139,14 +146,6 @@ export const ValidationInboxPage: React.FC = () => {
         throw new Error("Media ID is required but was empty or invalid");
       }
 
-      console.log(
-        "Using mediaId for certificate update:",
-        mediaId,
-        "from URL:",
-        certificateUrl,
-      );
-
-      // Update validation status in media collection
       const { adminServiceCanister } = await import(
         "../services/adminServiceCanister"
       );
@@ -155,9 +154,6 @@ export const ValidationInboxPage: React.FC = () => {
         "Validated",
       );
 
-      console.log("Certificate validated successfully, reloading data...");
-
-      // Reload all data to reflect the changes
       await Promise.all([
         loadServicesWithCertificates(),
         loadValidatedCertificates(),
@@ -165,11 +161,18 @@ export const ValidationInboxPage: React.FC = () => {
       ]);
     } catch (error) {
       console.error("Error approving certificate:", error);
+    } finally {
+      setApprovingCertificate(null);
     }
   };
 
-  // Handle certificate rejection
-  const handleRejectCertificate = async (certificateUrl: string) => {
+  const handleRejectCertificate = async (
+    service: any,
+    certificateIndex: number,
+    certificateUrl: string,
+  ) => {
+    const certificateKey = `${service.serviceId}-${certificateIndex}`;
+    setRejectingCertificate(certificateKey);
     try {
       const mediaId = await extractMediaIdFromUrl(certificateUrl);
 
@@ -177,14 +180,6 @@ export const ValidationInboxPage: React.FC = () => {
         throw new Error("Media ID is required but was empty or invalid");
       }
 
-      console.log(
-        "Using mediaId for certificate update:",
-        mediaId,
-        "from URL:",
-        certificateUrl,
-      );
-
-      // Update validation status in media collection
       const { adminServiceCanister } = await import(
         "../services/adminServiceCanister"
       );
@@ -193,9 +188,6 @@ export const ValidationInboxPage: React.FC = () => {
         "Rejected",
       );
 
-      console.log("Certificate rejected successfully, reloading data...");
-
-      // Reload all data to reflect the changes
       await Promise.all([
         loadServicesWithCertificates(),
         loadValidatedCertificates(),
@@ -203,6 +195,8 @@ export const ValidationInboxPage: React.FC = () => {
       ]);
     } catch (error) {
       console.error("Error rejecting certificate:", error);
+    } finally {
+      setRejectingCertificate(null);
     }
   };
   const handleUndoCertificate = async (certificate: any) => {
@@ -235,8 +229,6 @@ export const ValidationInboxPage: React.FC = () => {
       setServicesWithCertificates((prev) =>
         addCertificateToServices(prev, certificate),
       );
-
-      console.log("Certificate undone:", certificate);
     } catch (error) {
       console.error("Error undoing certificate:", error);
     }
@@ -300,6 +292,12 @@ export const ValidationInboxPage: React.FC = () => {
                       onViewCertificate={handleViewCertificate}
                       onApprove={handleApproveCertificate}
                       onReject={handleRejectCertificate}
+                      isApproving={
+                        approvingCertificate === `${service.serviceId}-${index}`
+                      }
+                      isRejecting={
+                        rejectingCertificate === `${service.serviceId}-${index}`
+                      }
                       onCardClick={(
                         service,
                         _certificateIndex,

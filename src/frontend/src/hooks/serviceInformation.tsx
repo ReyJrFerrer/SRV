@@ -44,6 +44,9 @@ export interface EnrichedService {
 
   // Availability
   availability: { isAvailable: boolean };
+
+  // Media URLs for images
+  media: string[];
 }
 
 // Hook result interface
@@ -126,6 +129,9 @@ const transformToEnrichedService = (
     availability: {
       isAvailable: service.status === "Available",
     },
+
+    // Media URLs - filter out empty strings
+    media: (service.imageUrls || []).filter((url) => url && url.length > 0),
   };
 };
 
@@ -146,10 +152,6 @@ const fetchProviderProfiles = async (
       try {
         return await authCanisterService.getProfile(providerId);
       } catch (err) {
-        // //console.error(
-        //   `Failed to fetch profile for provider ${providerId}`,
-        //   err,
-        // );
         return null;
       }
     }),
@@ -477,7 +479,6 @@ export const useServicesByCategory = (
       setError(
         err instanceof Error ? err : new Error("Failed to fetch services"),
       );
-      //console.error("Error fetching services by category:", err);
     } finally {
       setLoading(false);
     }
@@ -622,7 +623,6 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch top services"),
       );
-      //console.error("Error fetching top services:", err);
     } finally {
       setLoading(false);
     }
@@ -764,7 +764,6 @@ export const useCategories = (): {
 
       setCategories(canisterCategories || []);
     } catch (err) {
-      //console.error("Failed to load categories from service canister:", err);
       setError(
         err instanceof Error ? err : new Error("Failed to fetch categories"),
       );

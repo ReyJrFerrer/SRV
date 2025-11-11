@@ -30,9 +30,7 @@ const ProviderChatPage: React.FC = () => {
           otherUserImage: otherUserImageUrl,
         },
       });
-    } catch (error) {
-      console.error("Error handling conversation click:", error);
-    }
+    } catch (error) {}
   };
 
   // Helper for timestamp formatting (accepts string or Date)

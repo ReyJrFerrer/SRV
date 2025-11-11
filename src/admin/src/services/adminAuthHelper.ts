@@ -16,9 +16,7 @@ export interface CreateAdminProfileResult {
 }
 
 /**
- * Create admin profile and assign admin role
- * This function creates a user profile if it doesn't exist,
- * then assigns admin role and sets custom claims
+ * Creates admin profile and assign admin role
  *
  * @param uid - Firebase UID
  * @param principal - Internet Identity principal
@@ -35,7 +33,6 @@ export async function createAdminProfile(
   try {
     const createAdminFn = httpsCallable(functions, "createAdminProfile");
 
-    // Pass the data directly - httpsCallable will send it as-is
     const result = await createAdminFn({
       uid,
       principal,
@@ -46,19 +43,19 @@ export async function createAdminProfile(
     const data = result.data as CreateAdminProfileResult;
 
     if (data.success) {
-      console.log("✅ Admin profile created:", data.message);
-      console.log("ℹ️  UID:", data.uid);
+      console.log("Admin profile created:", data.message);
+      console.log("UID:", data.uid);
 
       if (data.needsSignOut) {
         console.log(
-          "⚠️  Please sign out and sign in again to refresh your admin token",
+          "Please sign out and sign in again to refresh your admin token",
         );
       }
     }
 
     return data;
   } catch (error) {
-    console.error("❌ Failed to create admin profile:", error);
+    console.error("Failed to create admin profile:", error);
     throw error;
   }
 }

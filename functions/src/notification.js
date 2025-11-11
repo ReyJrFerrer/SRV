@@ -6,7 +6,6 @@ const {FieldValue} = require("firebase-admin/firestore");
 const db = admin.firestore();
 
 // OneSignal Configuration
-// Get from Firebase Functions config or environment variables
 const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "6ca84c57-1e6b-466d-b792-64df97dea60b";
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "";
 
@@ -28,7 +27,7 @@ function getAuthInfo(context, data) {
   };
 }
 
-// Constants for spam prevention (matching Motoko logic)
+// Constants for spam prevention
 const SPAM_PREVENTION_WINDOW = 5 * 60 * 1000; // 5 minutes in milliseconds
 const MAX_NOTIFICATIONS_PER_WINDOW = 10;
 const NOTIFICATION_EXPIRY_DAYS = 30;
@@ -84,7 +83,6 @@ const NOTIFICATION_STATUS = {
  * @return {string} URL path (no hash) for in-app navigation
  */
 function generateNotificationHref(notificationType, userType, entityId) {
-  // Special handling for generic notifications without entityId
   // Return "/" to make them clickable to homepage (used for in-app navigation)
   if (notificationType === NOTIFICATION_TYPES.GENERIC &&
       (!entityId || entityId === null)) {
@@ -97,8 +95,6 @@ function generateNotificationHref(notificationType, userType, entityId) {
 
   switch (notificationType) {
   case NOTIFICATION_TYPES.CHAT_MESSAGE:
-    // For chat messages, entityId is the conversation ID
-    // Return a path without hash for in-app navigation
     return isProvider ?
       `/provider/chat/${entityId}` :
       `/client/chat/${entityId}`;
@@ -160,7 +156,7 @@ async function isSpamming(userId, notificationType) {
     return recentTimestamps.length >= MAX_NOTIFICATIONS_PER_WINDOW;
   } catch (error) {
     console.error("Error checking spam prevention:", error);
-    return false; // Fail open to avoid blocking legitimate notifications
+    return false;
   }
 }
 
@@ -1265,7 +1261,6 @@ exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) 
 });
 
 // Export helper functions and constants for use in other modules
-// (Adding to existing exports object, not replacing it)
 exports.NOTIFICATION_TYPES = NOTIFICATION_TYPES;
 exports.USER_TYPES = USER_TYPES;
 exports.NOTIFICATION_STATUS = NOTIFICATION_STATUS;

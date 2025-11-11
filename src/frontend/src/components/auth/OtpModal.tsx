@@ -74,7 +74,6 @@ const OtpModal: React.FC<OtpModalProps> = ({
 
     // Prevent concurrent verification attempts
     if (isProcessingVerification || isVerified) {
-      console.log("⏭️ Skipping duplicate verification attempt");
       return;
     }
 

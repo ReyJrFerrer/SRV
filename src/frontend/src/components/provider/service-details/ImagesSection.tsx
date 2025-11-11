@@ -134,13 +134,13 @@ const ImagesSection: React.FC<Props> = ({
                 <span className="text-base">No images uploaded yet.</span>
               </div>
             )}
-            {tempDisplayImages.length < 5 && (
+            {tempDisplayImages.length < 10 && (
               <label className="flex aspect-video cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-blue-200 bg-blue-50 text-blue-400 transition-colors hover:border-blue-400 hover:bg-blue-100">
                 <PhotoIcon className="mb-1 h-8 w-8" />
                 <span className="text-xs">Add Image</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/png, image/jpeg"
                   multiple
                   className="hidden"
                   onChange={onUpload}

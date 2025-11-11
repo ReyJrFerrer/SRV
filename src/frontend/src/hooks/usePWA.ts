@@ -52,11 +52,6 @@ export const usePWA = () => {
   useEffect(() => {
     const initializePWA = async () => {
       try {
-        // console.log("🔧 PWA Hook: Initializing PWA state", {
-        //   browser: `${browserInfo.name} ${browserInfo.version}`,
-        //   capabilities: browserCapabilities,
-        // });
-
         // Check basic PWA state
         const isPWA = pwaService.isPWA();
         const isInstallable = pwaService.isInstallable();
@@ -68,16 +63,6 @@ export const usePWA = () => {
         const currentSubscription =
           await pwaService.getCurrentPushSubscription();
         const pushSubscribed = currentSubscription !== null;
-
-        // console.log("📊 PWA Hook: State initialized", {
-        //   isPWA,
-        //   isInstallable,
-        //   pushNotificationSupported,
-        //   pushPermission,
-        //   pushSubscribed,
-        //   browserLimitations: browserCapabilities.limitations,
-        // });
-
         setPwaState((prev) => ({
           ...prev,
           isPWA,
@@ -86,18 +71,8 @@ export const usePWA = () => {
           pushPermission,
           pushSubscribed,
         }));
-
-        // Log any browser limitations for debugging
-        if (browserCapabilities.limitations.length > 0) {
-          // console.warn(
-          //   "⚠️ PWA Hook: Browser limitations detected:",
-          //   browserCapabilities.limitations,
-          // );
-        }
-
         setLoading(false);
       } catch (err) {
-        // console.error("❌ PWA Hook: Error initializing PWA:", err);
         setError(
           `Failed to initialize PWA features: ${err instanceof Error ? err.message : "Unknown error"}`,
         );
@@ -159,9 +134,6 @@ export const usePWA = () => {
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (!document.hidden) {
-        // console.log(
-        //   "🔄 PWA Hook: App became visible, refreshing permission status",
-        // );
         try {
           const refreshedPermission =
             await pwaService.refreshNotificationPermission();
@@ -174,17 +146,7 @@ export const usePWA = () => {
             pushPermission: refreshedPermission,
             pushSubscribed,
           }));
-
-          // console.log("📊 PWA Hook: Permission status refreshed", {
-          //   permission: refreshedPermission,
-          //   pushSubscribed,
-          // });
-        } catch (err) {
-          // console.error(
-          //   "❌ PWA Hook: Error refreshing permission status:",
-          //   err,
-          // );
-        }
+        } catch (err) {}
       }
     };
 
@@ -200,8 +162,6 @@ export const usePWA = () => {
    */
   const refreshPWAState = useCallback(async (): Promise<void> => {
     try {
-      // console.log("🔄 PWA Hook: Manually refreshing PWA state");
-
       const refreshedPermission =
         await pwaService.refreshNotificationPermission();
       const currentSubscription = await pwaService.getCurrentPushSubscription();
@@ -216,15 +176,7 @@ export const usePWA = () => {
         isInstallable,
         isPWA,
       }));
-
-      // console.log("✅ PWA Hook: PWA state refreshed", {
-      //   permission: refreshedPermission,
-      //   pushSubscribed,
-      //   isInstallable,
-      //   isPWA,
-      // });
     } catch (err) {
-      // console.error("❌ PWA Hook: Error refreshing PWA state:", err);
       setError(
         `Failed to refresh PWA state: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
@@ -244,7 +196,6 @@ export const usePWA = () => {
       }
       return result;
     } catch (err) {
-      // console.error("Error showing install prompt:", err);
       setError("Failed to show install prompt");
       return "dismissed";
     }
@@ -258,29 +209,15 @@ export const usePWA = () => {
       try {
         setError(null);
 
-        // console.log("🔔 PWA Hook: Attempting to enable push notifications", {
-        //   userId,
-        //   currentPermission: pwaState.pushPermission,
-        //   browserInfo: pwaState.browserInfo,
-        // });
-
         // Check browser capabilities first
         if (!pwaState.browserInfo.canReceivePushNotifications) {
           const limitationsMessage =
             pwaState.browserInfo.limitations.join("; ");
-          // console.error(
-          //   "❌ PWA Hook: Browser doesn't support push notifications:",
-          //   limitationsMessage,
-          // );
           throw new Error(
             `Push notifications not supported: ${limitationsMessage}`,
           );
         }
 
-        // OneSignal handles initialization in main.tsx, no need for explicit init check
-
-        // Subscribe to push notifications (OneSignal handles permission request internally)
-        // console.log("� PWA Hook: Subscribing to push notifications via OneSignal");
         const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || "";
         const playerId =
           await pwaService.subscribeToPushNotifications(vapidKey);
@@ -292,11 +229,6 @@ export const usePWA = () => {
           setPwaState((prev) => ({ ...prev, pushPermission: permission }));
 
           if (playerId === "pending") {
-            // Subscription is in progress, player ID will come via event listener
-            console.log(
-              "✅ PWA Hook: Subscription in progress, player ID will be available soon",
-            );
-
             // Update state to show as subscribed
             setPwaState((prev) => ({
               ...prev,
@@ -322,9 +254,6 @@ export const usePWA = () => {
           }
         }
 
-        // Subscription successful
-        // console.log("� PWA Hook: Push subscription created with player ID:", playerId);
-
         // Update permission state
         const permission = await pwaService.getNotificationPermission();
         setPwaState((prev) => ({
@@ -333,11 +262,8 @@ export const usePWA = () => {
           pushPermission: permission,
         }));
 
-        // console.log("✅ PWA Hook: Push notifications enabled successfully");
         return true;
       } catch (err) {
-        // console.error("❌ PWA Hook: Error enabling push notifications:", err);
-
         // Provide user-friendly error messages
         let errorMessage = "Failed to enable push notifications";
         if (err instanceof Error) {
@@ -375,7 +301,6 @@ export const usePWA = () => {
 
         return false;
       } catch (err) {
-        // console.error("Error disabling push notifications:", err);
         setError("Failed to disable push notifications");
         return false;
       }
@@ -389,11 +314,8 @@ export const usePWA = () => {
    */
   const updatePWA = useCallback(async () => {
     try {
-      // Custom SW is disabled, OneSignal handles its own updates
-      console.log("PWA: OneSignal service worker updates automatically");
       setPwaState((prev) => ({ ...prev, updateAvailable: false }));
     } catch (err) {
-      // console.error("Error updating PWA:", err);
       setError("Failed to update PWA");
     }
   }, []);
@@ -414,7 +336,6 @@ export const usePWA = () => {
       }
       return false;
     } catch (err) {
-      // console.error("Error sending test notification:", err);
       setError("Failed to send test notification");
       return false;
     }
@@ -427,9 +348,7 @@ export const usePWA = () => {
     async (title: string, body: string, options?: NotificationOptions) => {
       try {
         await pwaService.showLocalNotification(title, { body, ...options });
-      } catch (err) {
-        // console.error("Error showing local notification:", err);
-      }
+      } catch (err) {}
     },
     [],
   );

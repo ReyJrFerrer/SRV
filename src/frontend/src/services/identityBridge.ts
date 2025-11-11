@@ -66,8 +66,6 @@ export async function signInWithInternetIdentity(
   principal: string,
 ): Promise<SignInResult> {
   try {
-    console.log("🔗 Calling Identity Bridge for principal:", principal);
-
     // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
     const signInFn = httpsCallable<
@@ -78,14 +76,8 @@ export async function signInWithInternetIdentity(
     const result = await signInFn({ principal });
     const data = result.data;
 
-    console.log("✅ Identity Bridge response:", {
-      hasProfile: data.hasProfile,
-      needsProfile: data.needsProfile,
-      message: data.message,
-    });
-
     if (!data.success || !data.customToken) {
-      throw new Error("Invalid response from Identity Bridge");
+      throw new Error("Error signing in with Internet Identity");
     }
 
     // Store the custom token for potential restoration after phone verification
@@ -103,7 +95,6 @@ export async function signInWithInternetIdentity(
     await new Promise<void>((resolve) => {
       const unsubscribe = authInstance.onAuthStateChanged((user) => {
         if (user && user.uid === userCredential.user.uid) {
-          console.log("✅ Firebase auth state confirmed:", user.uid);
           unsubscribe();
           resolve();
         }
@@ -116,8 +107,6 @@ export async function signInWithInternetIdentity(
       }, 2000);
     });
 
-    console.log("✅ Firebase sign-in successful and auth state ready");
-
     return {
       user: userCredential.user,
       hasProfile: data.hasProfile,
@@ -125,7 +114,6 @@ export async function signInWithInternetIdentity(
       message: data.message,
     };
   } catch (error) {
-    console.error("❌ Error in signInWithInternetIdentity:", error);
     throw error;
   }
 }
@@ -154,7 +142,6 @@ export async function createProfile(
 
     return result.data;
   } catch (error) {
-    console.error("Error creating profile:", error);
     throw error;
   }
 }
@@ -177,7 +164,6 @@ export async function validatePhone(phone: string): Promise<any> {
 
     return result.data;
   } catch (error) {
-    console.error("Error validating phone:", error);
     throw error;
   }
 }
@@ -197,10 +183,7 @@ export async function getProfile(userId?: string): Promise<any> {
     });
 
     return result.data;
-  } catch (error) {
-    console.error("Error getting profile:", error);
-    throw error;
-  }
+  } catch (error) {}
 }
 
 /**
@@ -224,7 +207,6 @@ export async function updateProfile(
 
     return result.data;
   } catch (error) {
-    console.error("Error updating profile:", error);
     throw error;
   }
 }
@@ -242,7 +224,6 @@ export async function switchUserRole(): Promise<any> {
 
     return result.data;
   } catch (error) {
-    console.error("Error switching role:", error);
     throw error;
   }
 }
@@ -263,7 +244,6 @@ export async function getAllServiceProviders(): Promise<any> {
 
     return result.data;
   } catch (error) {
-    console.error("Error getting service providers:", error);
     throw error;
   }
 }
@@ -291,7 +271,6 @@ export async function uploadProfilePicture(
 
     return result.data;
   } catch (error) {
-    console.error("Error uploading profile picture:", error);
     throw error;
   }
 }
@@ -311,7 +290,6 @@ export async function removeProfilePicture(): Promise<any> {
 
     return result.data;
   } catch (error) {
-    console.error("Error removing profile picture:", error);
     throw error;
   }
 }

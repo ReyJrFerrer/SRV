@@ -26,12 +26,12 @@ const createAdminError = (
 
 // Helper function for success logging
 const logSuccess = (message: string) => {
-  console.log(`✅ ${message}`);
+  console.log(`${message}`);
 };
 
 // Helper function for error logging
 const logError = (message: string, error?: any) => {
-  console.error(`❌ ${message}`, error);
+  console.error(`${message}`, error);
 };
 
 // Service data conversion functions (matching provider implementation)
@@ -308,7 +308,7 @@ const sendTicketStatusNotification = async (
     );
 
     console.log(
-      `✅ [sendTicketStatusNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
+      `[sendTicketStatusNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
     );
 
     // If ticket is related to a booking, send notification to the other party
@@ -337,11 +337,11 @@ const sendTicketStatusNotification = async (
             },
           );
           console.log(
-            `✅ [sendTicketStatusNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
+            `[sendTicketStatusNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
           );
         } catch (otherPartyError) {
           console.error(
-            `⚠️ [sendTicketStatusNotification] Failed to notify related party ${otherPartyId}:`,
+            `[sendTicketStatusNotification] Failed to notify related party ${otherPartyId}:`,
             otherPartyError,
           );
           // Don't throw - the main notification was sent successfully
@@ -350,7 +350,7 @@ const sendTicketStatusNotification = async (
     }
   } catch (error) {
     console.error(
-      "❌ [sendTicketStatusNotification] Error sending notification:",
+      "[sendTicketStatusNotification] Error sending notification:",
       error,
     );
     // Don't throw error to avoid breaking the main flow
@@ -436,7 +436,7 @@ const sendTicketCommentNotification = async (
     );
 
     console.log(
-      `✅ [sendTicketCommentNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
+      `[sendTicketCommentNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
     );
 
     // If ticket is related to a booking, send notification to the other party
@@ -465,11 +465,11 @@ const sendTicketCommentNotification = async (
             },
           );
           console.log(
-            `✅ [sendTicketCommentNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
+            `[sendTicketCommentNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
           );
         } catch (otherPartyError) {
           console.error(
-            `⚠️ [sendTicketCommentNotification] Failed to notify related party ${otherPartyId}:`,
+            `[sendTicketCommentNotification] Failed to notify related party ${otherPartyId}:`,
             otherPartyError,
           );
           // Don't throw - the main notification was sent successfully
@@ -478,7 +478,7 @@ const sendTicketCommentNotification = async (
     }
   } catch (error) {
     console.error(
-      "❌ [sendTicketCommentNotification] Error sending notification:",
+      "[sendTicketCommentNotification] Error sending notification:",
       error,
     );
     // Don't throw error to avoid breaking the main flow
@@ -888,27 +888,27 @@ export const adminServiceCanister = {
     try {
       requireAuth();
 
-      console.log("🔍 [getAllUsers] Calling Firebase function...");
+      console.log("[getAllUsers] Calling Firebase function...");
       // Call Firebase function directly since callFirebaseFunction expects { success: true, data: [...] }
       // but getAllUsers returns { success: true, users: [...] }
       const callable = httpsCallable(functions, "getAllUsers");
       const result = await callable({ data: {} });
 
-      console.log("🔍 [getAllUsers] Firebase function result:", result.data);
+      console.log("[getAllUsers] Firebase function result:", result.data);
 
       if ((result.data as any).success) {
         const users = (result.data as any).users || [];
         console.log(
-          `🔍 [getAllUsers] Successfully retrieved ${users.length} users`,
+          `[getAllUsers] Successfully retrieved ${users.length} users`,
         );
         return users;
       } else {
         const errorMsg = (result.data as any).message || "Failed to get users";
-        console.error("🔍 [getAllUsers] Error:", errorMsg);
+        console.error("[getAllUsers] Error:", errorMsg);
         throw new Error(errorMsg);
       }
     } catch (error) {
-      console.error("❌ [getAllUsers] Error getting all users:", error);
+      console.error("[getAllUsers] Error getting all users:", error);
       if (error instanceof AdminServiceError) throw error;
       throw new AdminServiceError({
         message: `Failed to get users: ${error instanceof Error ? error.message : String(error)}`,
@@ -923,27 +923,24 @@ export const adminServiceCanister = {
     commissionTransactions: any[];
   }> {
     try {
-      console.log("🔍 [getBookingsData] Starting...");
+      console.log("[getBookingsData] Starting...");
       requireAuth();
-      console.log("🔍 [getBookingsData] Auth passed");
+      console.log("[getBookingsData] Auth passed");
 
       const callable = httpsCallable(functions, "getBookingsData");
-      console.log("🔍 [getBookingsData] Calling Firebase function...");
+      console.log("[getBookingsData] Calling Firebase function...");
       const result = await callable({ data: {} });
-      console.log(
-        "🔍 [getBookingsData] Firebase function result:",
-        result.data,
-      );
+      console.log("[getBookingsData] Firebase function result:", result.data);
 
       if ((result.data as any).success) {
-        console.log("🔍 [getBookingsData] Success response received");
+        console.log("[getBookingsData] Success response received");
         return {
           bookings: (result.data as any).bookings,
           commissionTransactions: (result.data as any).commissionTransactions,
         };
       } else {
         console.error(
-          "🔍 [getBookingsData] Error response:",
+          "[getBookingsData] Error response:",
           (result.data as any).message,
         );
         throw new Error(
@@ -959,10 +956,7 @@ export const adminServiceCanister = {
         (error?.code && error.code.includes("internal"));
 
       if (!isNetworkError) {
-        console.error(
-          "❌ [getBookingsData] Error getting bookings data:",
-          error,
-        );
+        console.error("[getBookingsData] Error getting bookings data:", error);
       }
       return { bookings: [], commissionTransactions: [] };
     }
@@ -1406,11 +1400,15 @@ export const adminServiceCanister = {
           // Get provider name from Firebase
           if (booking.providerId) {
             try {
-              const providerResult = await callFirebaseFunction("getProfile", {
+              const callable = httpsCallable(functions, "getProfile");
+              const providerResponse = await callable({
                 userId: booking.providerId,
               });
-              if (providerResult?.name) {
-                providerName = providerResult.name;
+              if (
+                (providerResponse.data as any).success &&
+                (providerResponse.data as any).profile?.name
+              ) {
+                providerName = (providerResponse.data as any).profile.name;
               }
             } catch (error) {
               console.error("Error fetching provider name:", error);
@@ -1420,11 +1418,15 @@ export const adminServiceCanister = {
           // Get service name from Firebase
           if (booking.serviceId) {
             try {
-              const serviceResult = await callFirebaseFunction("getService", {
+              const callable = httpsCallable(functions, "getService");
+              const serviceResponse = await callable({
                 serviceId: booking.serviceId,
               });
-              if (serviceResult?.title) {
-                serviceName = serviceResult.title;
+              if (
+                (serviceResponse.data as any).success &&
+                (serviceResponse.data as any).service?.title
+              ) {
+                serviceName = (serviceResponse.data as any).service.title;
               }
             } catch (error) {
               console.error("Error fetching service name:", error);

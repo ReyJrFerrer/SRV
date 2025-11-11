@@ -145,7 +145,7 @@ exports.upsertCommissionRules = functions.https.onCall(async (data, context) => 
         effectiveTo: draft.effectiveTo || null,
         createdAt: draft.id ? undefined : now, // Don't overwrite creation date for updates
         updatedAt: now,
-        version: 1, // For now, simple versioning
+        version: 1,
       };
 
       // Remove undefined fields
@@ -573,7 +573,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     const bookingsSnapshot = await db.collection("bookings").get();
     const totalBookings = bookingsSnapshot.size;
 
-    // Debug: Log all booking statuses to see what we're working with
+    // Debug: Log all booking statuses
     console.log("Debug - All booking statuses:");
     bookingsSnapshot.docs.forEach((doc, index) => {
       const data = doc.data();

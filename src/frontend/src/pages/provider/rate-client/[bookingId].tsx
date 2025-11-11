@@ -50,44 +50,29 @@ const ProviderRateClientPage: React.FC = () => {
     const checkBookingAndReview = async () => {
       // Step 1: Check if we have a booking ID
       if (!bookingId) {
-        console.warn("Rate client: No booking ID");
         navigate("/provider/bookings", { replace: true });
         return;
       }
 
       // Step 2: Wait for booking to load
       if (isLoadingBooking) {
-        console.log("⏳ Waiting for booking to load...", {
-          bookingId,
-          booking,
-          isLoadingBooking,
-        });
         return;
       }
 
-      console.log("✅ Booking loaded!", { booking, isLoadingBooking });
-
       // Step 3: Check if booking exists
       if (!booking) {
-        console.warn("Rate client: booking not found");
         navigate("/provider/bookings", { replace: true });
         return;
       }
 
       // Step 4: Check if booking is completed
       if (booking.status !== "Completed") {
-        console.warn(
-          `Rate client: booking status is ${booking.status}, not Completed`,
-        );
         navigate("/provider/bookings", { replace: true });
         return;
       }
 
       // Step 5: Quick check - if booking already has providerReviewSubmitted flag
       if ((booking as any).providerReviewSubmitted === true) {
-        console.warn(
-          "⚠️ Provider has already reviewed this client (from booking flag)",
-        );
         setHasExistingReview(true);
         setCheckingReview(false);
         // Redirect after a brief moment to show the message
@@ -100,29 +85,19 @@ const ProviderRateClientPage: React.FC = () => {
       // Step 6: Double-check with API for existing review
       try {
         setCheckingReview(true);
-        console.log(
-          "🔍 Checking for existing client review for booking:",
-          bookingId,
-        );
         const reviews = await getClientReviews(bookingId);
-        console.log("📝 Client reviews fetched:", reviews);
 
         // Check if provider has already submitted a review
         if (reviews && reviews.length > 0) {
-          console.warn(
-            "⚠️ Provider has already reviewed this client (from API)",
-          );
           setHasExistingReview(true);
           // Redirect after a brief moment to show the message
           setTimeout(() => {
             navigate("/provider/bookings?tab=Completed", { replace: true });
           }, 2000);
         } else {
-          console.log("✅ No existing review found, allowing rating");
           setHasExistingReview(false);
         }
       } catch (error) {
-        console.error("❌ Error checking existing review:", error);
         setHasExistingReview(false);
       } finally {
         setCheckingReview(false);
@@ -298,7 +273,7 @@ const ProviderRateClientPage: React.FC = () => {
                   disabled={submitting}
                 >
                   <StarIcon
-                    className={`h-12 w-12 drop-shadow transition-colors ${(hovered ?? rating) >= star ? "text-blue-500" : "text-gray-200"}`}
+                    className={`h-12 w-12 drop-shadow transition-colors ${(hovered ?? rating) >= star ? "text-yellow-500" : "text-gray-200"}`}
                     fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
                   />
                 </button>

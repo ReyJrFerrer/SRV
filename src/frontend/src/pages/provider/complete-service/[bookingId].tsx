@@ -65,7 +65,6 @@ const CompleteServicePage: React.FC = () => {
         const validation = await checkCommissionValidation(booking);
         setCommissionValidation(validation);
       } catch (error) {
-        console.error("Failed to validate commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };
@@ -168,9 +167,6 @@ const CompleteServicePage: React.FC = () => {
             });
 
             if (!releaseResult.success) {
-              console.warn("Payment release failed:", releaseResult.error);
-              // Don't fail the entire flow if payment release fails
-              // This can be handled asynchronously or retried later
             } else {
               // If Cloud Function succeeded, update the canister with payment release info
               try {
@@ -181,19 +177,9 @@ const CompleteServicePage: React.FC = () => {
                   releaseResult.bookingData?.commissionRetained,
                   releaseResult.payoutData?.payoutId,
                 );
-                console.log("Payment release updated in canister successfully");
-              } catch (canisterError) {
-                console.warn(
-                  "Error updating canister with payment release:",
-                  canisterError,
-                );
-                // Don't fail the flow if canister update fails - this can be handled later
-              }
+              } catch (canisterError) {}
             }
-          } catch (releaseError) {
-            console.warn("Error releasing payment:", releaseError);
-            // Don't fail the booking completion if payment release fails
-          }
+          } catch (releaseError) {}
         }
       } else {
         setError("Unsupported payment method.");
@@ -224,7 +210,6 @@ const CompleteServicePage: React.FC = () => {
         setError("Failed to complete the booking. Please try again.");
       }
     } catch (error) {
-      console.error("Error completing booking:", error);
       setError(
         "An error occurred while completing the booking. Please try again.",
       );

@@ -62,9 +62,6 @@ export interface CategoryData {
 
 // Main service object
 export const serviceCanister = {
-  /**
-   * Get all services
-   */
   async getAllServices(): Promise<ServiceData[]> {
     try {
       checkAuth();
@@ -75,7 +72,7 @@ export const serviceCanister = {
 
       if ((result.data as any).success) {
         console.log(
-          `✅ Successfully fetched ${(result.data as any).services.length} services`,
+          `Successfully fetched ${(result.data as any).services.length} services`,
         );
         return (result.data as any).services.map((service: any) => ({
           ...service,
@@ -90,7 +87,7 @@ export const serviceCanister = {
         throw new Error("Failed to fetch services");
       }
     } catch (error) {
-      console.error("❌ Error fetching services:", error);
+      console.error("Error fetching services:", error);
       throw error;
     }
   },
@@ -108,7 +105,7 @@ export const serviceCanister = {
 
       if ((result.data as any).success) {
         console.log(
-          `✅ Successfully fetched ${(result.data as any).categories.length} categories`,
+          `Successfully fetched ${(result.data as any).categories.length} categories`,
         );
         return (result.data as any).categories.map((category: any) => ({
           ...category,
@@ -123,7 +120,7 @@ export const serviceCanister = {
         throw new Error("Failed to fetch categories");
       }
     } catch (error) {
-      console.error("❌ Error fetching categories:", error);
+      console.error("Error fetching categories:", error);
       throw error;
     }
   },
@@ -143,7 +140,7 @@ export const serviceCanister = {
 
       if ((result.data as any).success) {
         console.log(
-          `✅ Successfully fetched ${(result.data as any).services.length} services for category ${categoryId}`,
+          `Successfully fetched ${(result.data as any).services.length} services for category ${categoryId}`,
         );
         return (result.data as any).services.map((service: any) => ({
           ...service,
@@ -158,7 +155,7 @@ export const serviceCanister = {
         throw new Error("Failed to fetch services by category");
       }
     } catch (error) {
-      console.error("❌ Error fetching services by category:", error);
+      console.error("Error fetching services by category:", error);
       throw error;
     }
   },
@@ -175,7 +172,7 @@ export const serviceCanister = {
       const result = await getService({ serviceId });
 
       if ((result.data as any).success && (result.data as any).service) {
-        console.log(`✅ Successfully fetched service: ${serviceId}`);
+        console.log(`Successfully fetched service: ${serviceId}`);
         return {
           ...(result.data as any).service,
           createdAt: (result.data as any).service.createdAt
@@ -186,11 +183,11 @@ export const serviceCanister = {
             : new Date(),
         };
       } else {
-        console.log(`ℹ️ Service not found: ${serviceId}`);
+        console.log(`Service not found: ${serviceId}`);
         return null;
       }
     } catch (error) {
-      console.error("❌ Error fetching service:", error);
+      console.error("Error fetching service:", error);
       throw error;
     }
   },

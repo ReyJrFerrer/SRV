@@ -345,7 +345,6 @@ export const useProviderBookingManagement =
 
     // Error handling functions
     const handleBookingError = useCallback((error: any, operation: string) => {
-      //console.error(`Error in ${operation}:`, error);
       const errorMessage = error?.message || `Failed to ${operation}`;
       setError(errorMessage);
     }, []);
@@ -419,10 +418,6 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          // //console.error(
-          //   `❌ Error loading client profile for ${clientId}:`,
-          //   error,
-          // );
           return null;
         } finally {
           setLoadingState("clients", false);
@@ -452,10 +447,6 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          // //console.error(
-          //   `❌ Error loading service details for ${serviceId}:`,
-          //   error,
-          // );
           return null;
         } finally {
           setLoadingState("services", false);
@@ -484,10 +475,6 @@ export const useProviderBookingManagement =
             return null;
           }
         } catch (error) {
-          // //console.error(
-          //   `❌ Error loading package details for ${packageId}:`,
-          //   error,
-          // );
           return null;
         } finally {
           setLoadingState("packages", false);
@@ -646,11 +633,8 @@ export const useProviderBookingManagement =
               !booking.servicePackageId ||
               booking.servicePackageId.length === 0, // Consider loaded if no packages
           };
-          console.log("From useProviderBookingManagement", enhancedBooking);
           return enhancedBooking;
         } catch (error) {
-          //console.error(`❌ Error enriching booking ${booking.id}:`, error);
-
           // Return booking with minimal enhancement but proper packageName handling
           return {
             ...booking,
@@ -865,21 +849,9 @@ export const useProviderBookingManagement =
                   clientIdStr,
                   providerIdStr,
                 );
-                // //console.log(
-                //   "Conversation created for accepted booking:",
-                //   bookingId,
-                // );
               } else {
-                //console.log("Conversation already exists between these users");
               }
-            } catch (chatError) {
-              // Log the error but don't prevent the booking status update
-              // //console.error(
-              //   "Failed to create conversation for booking:",
-              //   bookingId,
-              //   chatError,
-              // );
-            }
+            } catch (chatError) {}
           }
 
           if (updatedBooking) {
@@ -1329,10 +1301,7 @@ export const useProviderBookingManagement =
         try {
           clearError();
           await operation();
-        } catch (error) {
-          //console.error("Retry operation failed:", error);
-          // Error is handled by the individual operation
-        }
+        } catch (error) {}
       },
       [clearError],
     );
@@ -1395,7 +1364,6 @@ export const useProviderBookingManagement =
             availableBalance: walletAvailableBalance,
           };
         } catch (error) {
-          //console.error("Commission validation error:", error);
           return {
             estimatedCommission: 0,
             hasInsufficientBalance: true,
@@ -1432,7 +1400,6 @@ export const useProviderBookingManagement =
         await fetchBalance();
         return walletBalance;
       } catch (error) {
-        //console.error("Error fetching wallet balance:", error);
         return 0;
       }
     }, [fetchBalance, walletBalance]);
@@ -1465,7 +1432,6 @@ export const useProviderBookingManagement =
             return enrichedBookings;
           });
         } catch (error) {
-          console.error("Error enriching bookings:", error);
           handleBookingError(error, "enrich provider bookings");
         } finally {
           setLoadingState("bookings", false);
@@ -1527,7 +1493,6 @@ export const useProviderBookingManagement =
           const newAnalytics = calculateAnalytics();
           setAnalytics(newAnalytics);
         } catch (error) {
-          //console.error("Error calculating analytics:", error);
         } finally {
           setLoadingState("analytics", false);
         }
@@ -1645,7 +1610,6 @@ export const useProviderBookingManagement =
 
           return null;
         } catch (error) {
-          console.error(`Error fetching booking ${bookingId}:`, error);
           return null;
         }
       },
@@ -1666,10 +1630,6 @@ export const useProviderBookingManagement =
           if (!booking) return null;
           return await enrichBookingWithClientData(booking);
         } catch (error) {
-          console.error(
-            `Error fetching booking with client data ${bookingId}:`,
-            error,
-          );
           return null;
         }
       },

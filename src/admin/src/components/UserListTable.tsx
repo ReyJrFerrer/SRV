@@ -276,7 +276,7 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                       {isUserOnline(user) ? "Online" : "Offline"}
                     </span>
                   </td>
-                  {/* Actions cell (desktop only) */}
+                  {/* Actions cell */}
                   <td className="hidden whitespace-nowrap px-6 py-4 text-sm font-medium sm:table-cell">
                     {showOnlyAdmins ? (
                       // Show Lock/Unlock button for admin users

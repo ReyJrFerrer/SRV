@@ -7,6 +7,7 @@ interface Props {
   onBack: () => void;
   service: any;
   serviceImages: Array<{ dataUrl?: string | null }> | undefined;
+  isLoadingServiceImages: boolean;
   hasActiveBookings: boolean;
   activeBookingsCount: number;
   editTitleCategory: boolean;
@@ -25,6 +26,7 @@ interface Props {
 const HeroSection: React.FC<Props> = ({
   service,
   serviceImages,
+  isLoadingServiceImages,
   hasActiveBookings,
   activeBookingsCount,
   editTitleCategory,
@@ -39,36 +41,103 @@ const HeroSection: React.FC<Props> = ({
   onSave,
   onCancel,
 }) => {
-  console.log("From Hero Section: ", service);
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  const [currentImageSrc, setCurrentImageSrc] = React.useState<string>("");
+
+  // Check if we have a valid cached/loaded image (data URL or blob URL)
+  const hasValidImage =
+    serviceImages &&
+    serviceImages.length > 0 &&
+    serviceImages[0].dataUrl &&
+    (serviceImages[0].dataUrl.startsWith("data:") ||
+      serviceImages[0].dataUrl.startsWith("blob:"));
+
+  // Determine the fallback image source
+  const getFallbackImageSrc = () => {
+    if (service.category?.slug) {
+      return `/images/ai-sp/${service.category.slug}.svg`;
+    }
+    return "/images/ai-sp/others.svg";
+  };
+
+  // Effect to handle image loading and preloading
+  React.useEffect(() => {
+    const loadImage = async () => {
+      if (hasValidImage && serviceImages[0].dataUrl) {
+        const imageSrc = serviceImages[0].dataUrl;
+
+        // If it's already the current image and loaded, no need to reload
+        if (currentImageSrc === imageSrc && imageLoaded) {
+          return;
+        }
+
+        // Reset loading state
+        setImageLoaded(false);
+        setCurrentImageSrc(imageSrc);
+
+        // For SVG or data URLs, mark as loaded immediately
+        if (imageSrc.endsWith(".svg") || imageSrc.startsWith("data:")) {
+          setImageLoaded(true);
+          return;
+        }
+
+        // Preload the image
+        const img = new Image();
+        img.onload = () => {
+          setImageLoaded(true);
+        };
+        img.onerror = () => {
+          // On error, use fallback
+          setCurrentImageSrc(getFallbackImageSrc());
+          setImageLoaded(true);
+        };
+        img.src = imageSrc;
+      } else if (!isLoadingServiceImages && !hasValidImage) {
+        // Only set fallback when loading is complete AND we confirmed there's no valid image
+        const fallback = getFallbackImageSrc();
+        if (currentImageSrc !== fallback) {
+          setCurrentImageSrc(fallback);
+          setImageLoaded(true);
+        }
+      }
+    };
+
+    loadImage();
+  }, [
+    serviceImages,
+    hasValidImage,
+    isLoadingServiceImages,
+    service.category?.slug,
+  ]);
+
   return (
     <>
       <section className="relative mt-5 overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl sm:mt-8">
         <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
-          {serviceImages &&
-          serviceImages.length > 0 &&
-          serviceImages[0].dataUrl ? (
+          {(isLoadingServiceImages || !currentImageSrc || !imageLoaded) && (
+            <div className="absolute inset-0 h-full w-full animate-pulse bg-gradient-to-r from-blue-200 via-blue-100 to-blue-50"></div>
+          )}
+
+          {/* Show image once we have a source and it's loaded */}
+          {currentImageSrc && (
             <img
-              src={serviceImages[0].dataUrl}
+              src={currentImageSrc}
               alt="Service Hero"
-              className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
-            />
-          ) : service.category?.slug ? (
-            <img
-              src={`/images/ai-sp/${service.category?.slug || "default-provider"}.svg`}
-              alt={service.category.name}
-              className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
-            />
-          ) : (
-            <img
-              src={`/images/ai-sp/${service.category?.slug || "default-provider"}.svg`}
-              alt={service.category?.name || "Category"}
-              className="absolute inset-0 h-full w-full object-cover object-center opacity-80"
-              onError={(e) =>
-                ((e.target as HTMLImageElement).src =
-                  "/images/ai-sp/default.jpg")
+              className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-300 ${
+                imageLoaded ? "opacity-80" : "opacity-0"
+              }`}
+              style={
+                !imageLoaded ? { position: "absolute", top: 0, left: 0 } : {}
               }
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.src = getFallbackImageSrc();
+                setImageLoaded(true);
+              }}
             />
           )}
+
           <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent"></div>
         </div>
         <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">

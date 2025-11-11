@@ -85,23 +85,10 @@ export const AnalyticsPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Refresh system stats when bookings or commission transactions change
-  useEffect(() => {
-    if (bookings && bookings.length > 0) {
-      console.log(
-        "🔍 [Analytics] Bookings data changed, refreshing system stats",
-      );
-      refreshSystemStats();
-    }
-  }, [bookings, commissionTransactions, refreshSystemStats]);
-
   // Fetch wallet balances for all providers
   useEffect(() => {
     const fetchWalletBalances = async () => {
-      // Get all provider IDs from serviceProviderPerformanceData
       const providerIds = new Set<string>();
-
-      // Collect provider IDs from various sources
       if (serviceProviders && serviceProviders.length > 0) {
         serviceProviders.forEach((provider) => {
           providerIds.add(provider.id);
@@ -156,17 +143,12 @@ export const AnalyticsPage: React.FC = () => {
     console.log("Provider analytics loading removed - was using mock data");
   };
 
-  // Debug logging for analytics page
-  console.log("🔍 [Analytics] systemStats:", systemStats);
-  console.log("🔍 [Analytics] totalRevenue:", systemStats?.totalRevenue);
-  console.log("🔍 [Analytics] totalCommission:", systemStats?.totalCommission);
-
   // Filter users based on selected filter
   const filteredUsers = useMemo(() => {
     return filterUsers(users || [], userFilter);
   }, [users, userFilter]);
 
-  // Count users by their current active role (with filtering applied)
+  // Count users by their current active role
   const totalProviders = useMemo(() => {
     return countProviders(filteredUsers);
   }, [filteredUsers]);
@@ -180,11 +162,17 @@ export const AnalyticsPage: React.FC = () => {
     return calculateOnlineUsers(users || []);
   }, [users]);
 
-  // Pie: Users by type (Providers vs Clients only) with filtering
-  const userPieData = [
-    { name: "Providers", value: totalProviders, color: "#10b981" },
-    { name: "Clients", value: totalClients, color: "#3b82f6" },
-  ];
+  // Pie: Users by type
+  const userPieData = useMemo(() => {
+    const data = [];
+    if (totalProviders > 0) {
+      data.push({ name: "Providers", value: totalProviders, color: "#10b981" });
+    }
+    if (totalClients > 0) {
+      data.push({ name: "Clients", value: totalClients, color: "#3b82f6" });
+    }
+    return data;
+  }, [totalProviders, totalClients]);
 
   // Service Provider Records Data
   const serviceProviderPerformanceData = useMemo(() => {

@@ -59,7 +59,6 @@ const ProviderHomePage: React.FC = () => {
       );
       if (oneSignalScript) {
         oneSignalScript.addEventListener("error", () => {
-          console.error("OneSignal SDK blocked by browser or extension");
           setShowOneSignalBlockedModal(true);
         });
       }
@@ -67,7 +66,6 @@ const ProviderHomePage: React.FC = () => {
       // Also check if window.OneSignal is undefined after a delay
       setTimeout(() => {
         if (typeof window.OneSignal === "undefined") {
-          console.error("OneSignal SDK not loaded - may be blocked");
           setShowOneSignalBlockedModal(true);
         }
       }, 5000); // Give it 5 seconds to load
@@ -184,7 +182,6 @@ const ProviderHomePage: React.FC = () => {
 
         // Load provider stats
       } catch (error) {
-        //console.error("Error loading provider data:", error);
       } finally {
         setPageLoading(false);
       }

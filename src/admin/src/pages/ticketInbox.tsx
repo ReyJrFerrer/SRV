@@ -8,147 +8,20 @@ import {
   WrenchScrewdriverIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
-
-// Function to parse structured report data
-const parseReportData = (description: string) => {
-  try {
-    const data = JSON.parse(description);
-    if (data.title && data.description && data.category) {
-      return data;
-    }
-  } catch (e) {}
-  return null;
-};
-
-// Function to convert feedback reports to tickets
-const convertReportsToTickets = (reports: any[], _users: any[]): Ticket[] => {
-  return reports.map((report) => {
-    const parsedData = parseReportData(report.description);
-
-    let ticket: Ticket;
-    if (parsedData) {
-      // Build tags based on source and category
-      const tags = [];
-      if (
-        parsedData.source === "provider_report" ||
-        parsedData.source === "provider_cancellation"
-      ) {
-        tags.push("provider");
-      } else if (
-        parsedData.source === "client_report" ||
-        parsedData.source === "client_cancellation"
-      ) {
-        tags.push("client");
-      }
-
-      if (parsedData.category === "cancellation") {
-        tags.push("cancellation");
-      }
-
-      tags.push("user-report");
-
-      ticket = {
-        id: `REPORT-${report.id}`,
-        title: parsedData.title,
-        description: parsedData.description,
-        status: (report.status || "open") as Ticket["status"],
-        category: parsedData.category as Ticket["category"],
-        submittedBy: report.userName || `User_${report.userId}`,
-        submittedById: report.userId,
-        submittedAt: report.createdAt,
-        lastUpdated: report.createdAt,
-        tags: tags,
-      };
-    } else {
-      ticket = {
-        id: `REPORT-${report.id}`,
-        title: "User Report",
-        description: report.description,
-        status: (report.status || "open") as Ticket["status"],
-        category: "other" as const,
-        submittedBy: report.userName || `User_${report.userId}`,
-        submittedById: report.userId,
-        submittedAt: report.createdAt,
-        lastUpdated: report.createdAt,
-        tags: ["legacy", "user-report"],
-      };
-    }
-    return ticket;
-  });
-};
-
-// Types for tickets
-interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: "open" | "in_progress" | "resolved" | "closed";
-  category:
-    | "technical"
-    | "billing"
-    | "account"
-    | "service"
-    | "cancellation"
-    | "other";
-  submittedBy: string;
-  submittedById: string; // User ID for navigation
-  submittedAt: string;
-  assignedTo?: string;
-  lastUpdated: string;
-  tags: string[];
-}
-
-// Status colors
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "open":
-      return "bg-red-100 text-red-800";
-    case "in_progress":
-      return "bg-blue-100 text-blue-800";
-    case "resolved":
-      return "bg-green-100 text-green-800";
-    case "closed":
-      return "bg-gray-100 text-gray-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
-
-// Category colors
-const getCategoryColor = (category: string) => {
-  switch (category) {
-    case "technical":
-      return "bg-purple-100 text-purple-800";
-    case "billing":
-      return "bg-green-100 text-green-800";
-    case "account":
-      return "bg-blue-100 text-blue-800";
-    case "service":
-      return "bg-yellow-100 text-yellow-800";
-    case "cancellation":
-      return "bg-orange-100 text-orange-800";
-    case "other":
-      return "bg-gray-100 text-gray-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
+import {
+  Ticket,
+  convertReportsToTickets,
+  getStatusColor,
+  getCategoryColor,
+  formatDateShort,
+} from "../utils/ticketUtils";
+import { TicketFilters } from "../components/TicketFilters";
 
 // Ticket card component
 const TicketCard: React.FC<{
   ticket: Ticket;
   onView: (ticket: Ticket) => void;
 }> = ({ ticket, onView }) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <div
       className="cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
@@ -169,7 +42,7 @@ const TicketCard: React.FC<{
           <div className="flex items-center space-x-4 text-xs text-gray-500">
             <span>ID: {ticket.id}</span>
             <span>By: {ticket.submittedBy}</span>
-            <span>Submitted: {formatDate(ticket.submittedAt)}</span>
+            <span>Submitted: {formatDateShort(ticket.submittedAt)}</span>
           </div>
         </div>
 
@@ -482,73 +355,16 @@ export const TicketInboxPage: React.FC = () => {
           </div>
 
           {/* Filters and Search */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Search
-                </label>
-                <input
-                  type="text"
-                  placeholder="Search tickets..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                >
-                  <option value="all">All Status</option>
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Category
-                </label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                >
-                  <option value="all">All Categories</option>
-                  <option value="technical">Technical</option>
-                  <option value="billing">Billing</option>
-                  <option value="account">Account</option>
-                  <option value="service">Service</option>
-                  <option value="cancellation">Cancellation</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Sort By
-                </label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="status">Status</option>
-                </select>
-              </div>
-            </div>
-          </div>
+          <TicketFilters
+            searchTerm={searchTerm}
+            statusFilter={statusFilter}
+            categoryFilter={categoryFilter}
+            sortBy={sortBy}
+            onSearchChange={setSearchTerm}
+            onStatusChange={setStatusFilter}
+            onCategoryChange={setCategoryFilter}
+            onSortChange={setSortBy}
+          />
 
           {/* Tickets List */}
           <div className="rounded-lg border border-blue-100 bg-white shadow-sm">

@@ -1,7 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
-// Import reputation bridge for processing reviews with AI sentiment analysis
 const {
   processReviewForReputationInternal,
 } = require("./reputation");
@@ -228,7 +227,7 @@ async function checkConsecutiveBadReviews(
         };
 
         // Save report to Firestore
-        await db.collection("app_reports").doc(reportId).set(newReport);
+        await db.collection("reports").doc(reportId).set(newReport);
         console.log(`✅ Automatically created ticket ${reportId} for ` +
           `${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} consecutive bad reviews.`);
         return true;
@@ -545,8 +544,6 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
   // Use authenticated user's ID if no userId provided
   const targetUserId = userId || authInfo.uid;
 
-  // Reviews are public (as per firestore.rules), so any authenticated user can view them
-  // Only restriction: admins can request hidden reviews
 
   // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;
@@ -777,10 +774,27 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    return await db.runTransaction(async (transaction) => {
-      // ===== ALL READ OPERATIONS FIRST =====
+    const reviewDoc = await db.collection("reviews").doc(reviewId).get();
+    const providerReviewDoc = await db.collection("providerReviews").doc(reviewId).get();
 
-      const reviewRef = db.collection("reviews").doc(reviewId);
+    let reviewCollection = null;
+    let existingReview = null;
+
+    if (reviewDoc.exists) {
+      reviewCollection = "reviews";
+      existingReview = reviewDoc.data();
+    } else if (providerReviewDoc.exists) {
+      reviewCollection = "providerReviews";
+      existingReview = providerReviewDoc.data();
+    } else {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Review not found",
+      );
+    }
+
+    return await db.runTransaction(async (transaction) => {
+      const reviewRef = db.collection(reviewCollection).doc(reviewId);
       const reviewSnap = await transaction.get(reviewRef);
 
       if (!reviewSnap.exists) {
@@ -790,16 +804,10 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         );
       }
 
-      const existingReview = reviewSnap.data();
+      const isOwner = reviewCollection === "reviews" ? existingReview.clientId === authInfo.uid :
+        existingReview.providerId === authInfo.uid;
 
-      // Read service data for rating statistics update
-      const serviceRef = db.collection("services").doc(existingReview.serviceId);
-      const serviceSnap = await transaction.get(serviceRef);
-
-      // ===== VALIDATION CHECKS =====
-
-      // Verify user owns this review or is admin
-      if (existingReview.clientId !== authInfo.uid && !authInfo.isAdmin) {
+      if (!isOwner && !authInfo.isAdmin) {
         throw new functions.https.HttpsError(
           "permission-denied",
           "Not authorized to delete this review",
@@ -813,8 +821,6 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         );
       }
 
-      // ===== ALL WRITE OPERATIONS AFTER =====
-
       const now = new Date().toISOString();
       const updatedReview = {
         ...existingReview,
@@ -824,26 +830,29 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
 
       transaction.update(reviewRef, updatedReview);
 
-      // Update service rating statistics
+      if (reviewCollection === "reviews" && existingReview.serviceId) {
+        const serviceRef = db.collection("services").doc(existingReview.serviceId);
+        const serviceSnap = await transaction.get(serviceRef);
 
-      if (serviceSnap.exists) {
-        const service = serviceSnap.data();
-        const currentRating = service.averageRating || 0;
-        const currentCount = service.reviewCount || 1;
-        const newCount = Math.max(0, currentCount - 1);
+        if (serviceSnap.exists) {
+          const service = serviceSnap.data();
+          const currentRating = service.averageRating || 0;
+          const currentCount = service.reviewCount || 1;
+          const newCount = Math.max(0, currentCount - 1);
 
-        let newAverageRating = 0;
-        if (newCount > 0) {
-          const oldTotal = currentRating * currentCount;
-          const newTotal = oldTotal - existingReview.rating;
-          newAverageRating = newTotal / newCount;
+          let newAverageRating = 0;
+          if (newCount > 0) {
+            const oldTotal = currentRating * currentCount;
+            const newTotal = oldTotal - existingReview.rating;
+            newAverageRating = newTotal / newCount;
+          }
+
+          transaction.update(serviceRef, {
+            averageRating: newAverageRating,
+            reviewCount: newCount,
+            updatedAt: now,
+          });
         }
-
-        transaction.update(serviceRef, {
-          averageRating: newAverageRating,
-          reviewCount: newCount,
-          updatedAt: now,
-        });
       }
 
       return {success: true, message: "Review hidden successfully"};

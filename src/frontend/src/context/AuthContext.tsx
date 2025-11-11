@@ -15,10 +15,6 @@ import {
 import { getFirebaseAuth, clearICCustomToken } from "../services/firebaseApp";
 import { updateReputationActor } from "../services/reputationCanisterService";
 
-// import {
-//   initializeCanisterReferences,
-//   shouldInitializeCanisters,
-// } from "../services/canisterInitService";
 import {
   useLocationStore,
   type LocationStatus,
@@ -28,8 +24,6 @@ import {
 import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import authCanisterService from "../services/authCanisterService";
-// Location prompt UI is rendered by pages (e.g. Home). Helpers/flags are
-// exposed via the context value below.
 
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
@@ -70,17 +64,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const updateAllActors = (identity: Identity | null) => {
-  // try {
-  //   updateAuthActor(identity);
-  // } catch (error) {
-  //   console.warn("Failed to update auth actor:", error);
-  // }
-
   try {
     updateReputationActor(identity);
-  } catch (error) {
-    console.warn("Failed to update reputation actor:", error);
-  }
+  } catch (error) {}
 };
 
 export const useAuth = () => {
@@ -124,9 +110,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     locationStore.initialize();
   }, [locationStore]);
 
-  // If the browser already granted geolocation permission (or the user
-  // enables it while the app is open), proactively request the location so
-  // the store moves to 'allowed' and the UI can display the current address.
   useEffect(() => {
     let mounted = true;
     if (typeof navigator !== "undefined" && (navigator as any).permissions) {
@@ -159,12 +142,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               };
             }
           })
-          .catch(() => {
-            /* ignore permission API errors */
-          });
-      } catch {
-        /* ignore */
-      }
+          .catch(() => {});
+      } catch {}
     }
     return () => {
       mounted = false;
@@ -176,11 +155,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setFirebaseUser(user);
-      if (user) {
-        console.log("Firebase user authenticated:", user.uid);
-      } else {
-        console.log("No Firebase user");
-      }
     });
 
     return () => unsubscribe();
@@ -205,13 +179,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       ) {
         try {
           const userId = identity.getPrincipal().toString();
-          const success = await enablePushNotificationsPWA(userId);
-          if (success) {
-            console.log("✅ Auto-enabled push notifications for user:", userId);
-          }
+          await enablePushNotificationsPWA(userId);
         } catch (error) {
           // Silently fail auto-enable - user can still enable manually if desired
-          console.log("ℹ️ Auto-enable push notifications skipped:", error);
         }
       }
     };
@@ -260,10 +230,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [awaitingGeoResult, locationStore.locationStatus]);
 
-  // If the post-login prompt is visible but the store reports a known permission
-  // state (allowed/denied/unsupported), hide the prompt automatically. This
-  // covers the race where a page triggers the prompt before the location store
-  // has finished initializing and the real permission state becomes known.
   useEffect(() => {
     if (!postLoginLocationPromptVisible) return;
     const status = locationStore.locationStatus;
@@ -288,7 +254,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           updateAllActors(null);
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "An unknown error occurred");
       } finally {
         setIsLoading(false);
       }
@@ -316,63 +281,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAuthenticated(true);
           setIdentity(identity);
 
-          console.log("✅ Successfully authenticated with Internet Identity");
-          console.log("Principal:", identity.getPrincipal().toString());
-
           // Update actors (with error handling)
           updateAllActors(identity);
 
           // Get the principal and exchange for Firebase token
           try {
             const principal = identity.getPrincipal().toString();
-            console.log("🔄 Attempting to authenticate with Firebase...");
-
             const result = await signInWithInternetIdentity(principal);
             setFirebaseUser(result.user);
-
-            console.log("✅ Successfully authenticated with Firebase!");
-            console.log("Firebase UID:", result.user.uid);
-
-            // Update user active status to true on successful login
             try {
               await authCanisterService.updateUserActiveStatus(true);
-            } catch (error) {
-              console.error(
-                "Error updating user active status on login:",
-                error,
-              );
-              // Continue with login even if this fails
-            }
-
-            // Notify user if they need to create a profile
-            if (result.needsProfile) {
-              console.log("📝 New user detected - profile creation required");
-              console.log("Message:", result.message);
-              // You can show a notification or redirect to profile creation here
-            } else {
-              console.log("👤 User has existing profile");
-            }
-          } catch (fbError) {
-            console.error("❌ Failed to authenticate with Firebase:", fbError);
-            // Don't fail the login if Firebase auth fails
-            // The user is still authenticated with IC
-          }
+            } catch (error) {}
+          } catch (fbError) {}
 
           setIsLoading(false);
         },
         onError: (err?: string) => {
-          console.error("❌ Login error:", err);
           setError(err || "Login failed");
           setIsLoading(false);
         },
       });
     } catch (e) {
-      console.error("❌ Login exception:", e);
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Failed to connect to Internet Identity",
-      );
       setIsLoading(false);
     }
   };
@@ -383,10 +312,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Update user active status to false before logout
     try {
       await authCanisterService.updateUserActiveStatus(false);
-    } catch (error) {
-      console.error("Error updating user active status on logout:", error);
-      // Continue with logout even if this fails
-    }
+    } catch (error) {}
 
     // Clear stored IC custom token
     clearICCustomToken();
@@ -394,10 +320,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Logout from Firebase
     const auth = getFirebaseAuth();
     try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      console.error("Error signing out from Firebase:", error);
-    }
+      await firebaseSignOut(auth).catch(() => {});
+    } catch (error) {}
 
     // Logout from Internet Identity
     await authClient.logout();
