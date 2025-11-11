@@ -39,7 +39,6 @@ interface Props {
 
 const ActionButtons: React.FC<Props> = ({
   onReport,
-  status,
   booking,
   onChat,
   onAccept,
@@ -95,7 +94,7 @@ const ActionButtons: React.FC<Props> = ({
   const showStart = !!(booking?.canStart && canStartServiceNow());
   const showComplete = !!booking?.canComplete;
   const showViewReview = booking?.status === "Completed";
-  const showReport = !!(status === "Completed" || status === "Cancelled");
+  const showReport = !!(booking?.status === "Completed" || booking?.status === "Cancelled");
 
   const baseContainer = containerDefault;
   const baseButtonClass = baseButtonDefault;

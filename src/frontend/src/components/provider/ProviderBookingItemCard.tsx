@@ -23,7 +23,6 @@ interface ProviderBookingItemCardProps {
   onDeclineClick: () => void;
   onCancelClick: (booking: ProviderEnhancedBooking) => void;
   isDeclining: boolean;
-
   acceptBookingById: any;
   isBookingActionInProgress: any;
   checkCommissionValidation: any;
