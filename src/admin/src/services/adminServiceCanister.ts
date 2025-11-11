@@ -1406,11 +1406,10 @@ export const adminServiceCanister = {
           // Get provider name from Firebase
           if (booking.providerId) {
             try {
-              const providerResult = await callFirebaseFunction("getProfile", {
-                userId: booking.providerId,
-              });
-              if (providerResult?.name) {
-                providerName = providerResult.name;
+              const callable = httpsCallable(functions, "getProfile");
+              const providerResponse = await callable({ userId: booking.providerId });
+              if ((providerResponse.data as any).success && (providerResponse.data as any).profile?.name) {
+                providerName = (providerResponse.data as any).profile.name;
               }
             } catch (error) {
               console.error("Error fetching provider name:", error);
@@ -1420,11 +1419,10 @@ export const adminServiceCanister = {
           // Get service name from Firebase
           if (booking.serviceId) {
             try {
-              const serviceResult = await callFirebaseFunction("getService", {
-                serviceId: booking.serviceId,
-              });
-              if (serviceResult?.title) {
-                serviceName = serviceResult.title;
+              const callable = httpsCallable(functions, "getService");
+              const serviceResponse = await callable({ serviceId: booking.serviceId });
+              if ((serviceResponse.data as any).success && (serviceResponse.data as any).service?.title) {
+                serviceName = (serviceResponse.data as any).service.title;
               }
             } catch (error) {
               console.error("Error fetching service name:", error);

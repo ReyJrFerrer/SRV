@@ -40,6 +40,8 @@ export const UserDetailsPage: React.FC = () => {
     "7" | "30" | "custom" | "indefinite"
   >("7");
   const [customDays, setCustomDays] = useState<number>(7);
+  const [updatingReputation, setUpdatingReputation] = useState(false);
+  const [lockingAccount, setLockingAccount] = useState(false);
 
   const handleUpdateCommission = (newAmount: number) => {
     // Update local balance when refreshed from ProviderStats
@@ -60,28 +62,24 @@ export const UserDetailsPage: React.FC = () => {
   const handleActivateAccount = async () => {
     if (!user) return;
 
+    setLockingAccount(true);
     try {
-      // Call Firebase function to unlock the account
       await adminServiceCanister.lockUserAccount(user.id, false);
-
-      // Update localStorage via useAdmin hook
       updateUserLockStatus(user.id, false);
-
-      // Update local state
       setUser((prev) => (prev ? { ...prev, isLocked: false } : null));
-
       console.log("Account activated successfully");
       alert("Account activated successfully");
     } catch (error) {
       console.error("Failed to activate account:", error);
       alert("Failed to activate account. Please try again.");
+    } finally {
+      setLockingAccount(false);
     }
   };
 
   const confirmLockAccount = async () => {
     if (!user) return;
 
-    // Determine suspension duration in days
     let suspensionDurationDays: number | null;
     if (suspensionDuration === "indefinite") {
       suspensionDurationDays = null;
@@ -105,29 +103,25 @@ export const UserDetailsPage: React.FC = () => {
         : `${suspensionDurationDays} days`,
     );
 
+    setLockingAccount(true);
     try {
-      // Call Firebase function to lock the account with suspension duration
       await adminServiceCanister.lockUserAccount(
         user.id,
         true,
         suspensionDurationDays,
       );
-
-      // Update localStorage via useAdmin hook
       updateUserLockStatus(user.id, true);
-
-      // Update local state
       setUser((prev) => (prev ? { ...prev, isLocked: true } : null));
-
       console.log("Account locked successfully");
       setShowLockConfirmation(false);
-      // Reset suspension duration to default
       setSuspensionDuration("7");
       setCustomDays(7);
       alert("Account locked successfully");
     } catch (error) {
       console.error("Failed to lock account:", error);
       alert("Failed to lock account. Please try again.");
+    } finally {
+      setLockingAccount(false);
     }
   };
 
@@ -138,16 +132,13 @@ export const UserDetailsPage: React.FC = () => {
   const confirmReputationUpdate = async () => {
     if (!user) return;
 
+    setUpdatingReputation(true);
     try {
-      // Call backend to update reputation
       await adminServiceCanister.updateUserReputation(
         user.id,
         pendingReputationScore,
       );
-
-      // Refresh user data to get the updated reputation from backend
       await loadUser();
-
       console.log(
         "Reputation updated successfully to:",
         pendingReputationScore,
@@ -156,9 +147,10 @@ export const UserDetailsPage: React.FC = () => {
     } catch (error) {
       console.error("Failed to update reputation:", error);
       alert("Failed to update reputation. Please try again.");
+    } finally {
+      setUpdatingReputation(false);
+      setShowReputationConfirmation(false);
     }
-
-    setShowReputationConfirmation(false);
   };
 
   // Load user data function
@@ -321,6 +313,7 @@ export const UserDetailsPage: React.FC = () => {
         formatDate={formatDate}
         onLockClick={handleLockConfirmation}
         onActivateClick={handleActivateAccount}
+        lockingAccount={lockingAccount}
       />
 
       {/* Main Content */}
@@ -357,6 +350,7 @@ export const UserDetailsPage: React.FC = () => {
               pendingReputationScore={pendingReputationScore}
               onReputationChange={handleReputationChange}
               onSaveReputation={handleSaveReputation}
+              updatingReputation={updatingReputation}
             />
           </div>
         </div>
@@ -368,6 +362,8 @@ export const UserDetailsPage: React.FC = () => {
         pendingReputationScore={pendingReputationScore}
         suspensionDuration={suspensionDuration}
         customDays={customDays}
+        updatingReputation={updatingReputation}
+        lockingAccount={lockingAccount}
         onReputationConfirm={confirmReputationUpdate}
         onReputationCancel={() => setShowReputationConfirmation(false)}
         onLockConfirm={confirmLockAccount}

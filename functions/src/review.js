@@ -777,10 +777,27 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    return await db.runTransaction(async (transaction) => {
-      // ===== ALL READ OPERATIONS FIRST =====
+    const reviewDoc = await db.collection("reviews").doc(reviewId).get();
+    const providerReviewDoc = await db.collection("providerReviews").doc(reviewId).get();
 
-      const reviewRef = db.collection("reviews").doc(reviewId);
+    let reviewCollection = null;
+    let existingReview = null;
+
+    if (reviewDoc.exists) {
+      reviewCollection = "reviews";
+      existingReview = reviewDoc.data();
+    } else if (providerReviewDoc.exists) {
+      reviewCollection = "providerReviews";
+      existingReview = providerReviewDoc.data();
+    } else {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Review not found",
+      );
+    }
+
+    return await db.runTransaction(async (transaction) => {
+      const reviewRef = db.collection(reviewCollection).doc(reviewId);
       const reviewSnap = await transaction.get(reviewRef);
 
       if (!reviewSnap.exists) {
@@ -790,16 +807,11 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         );
       }
 
-      const existingReview = reviewSnap.data();
-
-      // Read service data for rating statistics update
-      const serviceRef = db.collection("services").doc(existingReview.serviceId);
-      const serviceSnap = await transaction.get(serviceRef);
-
-      // ===== VALIDATION CHECKS =====
-
-      // Verify user owns this review or is admin
-      if (existingReview.clientId !== authInfo.uid && !authInfo.isAdmin) {
+      const isOwner = reviewCollection === "reviews" 
+        ? existingReview.clientId === authInfo.uid
+        : existingReview.providerId === authInfo.uid;
+      
+      if (!isOwner && !authInfo.isAdmin) {
         throw new functions.https.HttpsError(
           "permission-denied",
           "Not authorized to delete this review",
@@ -813,8 +825,6 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         );
       }
 
-      // ===== ALL WRITE OPERATIONS AFTER =====
-
       const now = new Date().toISOString();
       const updatedReview = {
         ...existingReview,
@@ -824,26 +834,29 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
 
       transaction.update(reviewRef, updatedReview);
 
-      // Update service rating statistics
+      if (reviewCollection === "reviews" && existingReview.serviceId) {
+        const serviceRef = db.collection("services").doc(existingReview.serviceId);
+        const serviceSnap = await transaction.get(serviceRef);
 
-      if (serviceSnap.exists) {
-        const service = serviceSnap.data();
-        const currentRating = service.averageRating || 0;
-        const currentCount = service.reviewCount || 1;
-        const newCount = Math.max(0, currentCount - 1);
+        if (serviceSnap.exists) {
+          const service = serviceSnap.data();
+          const currentRating = service.averageRating || 0;
+          const currentCount = service.reviewCount || 1;
+          const newCount = Math.max(0, currentCount - 1);
 
-        let newAverageRating = 0;
-        if (newCount > 0) {
-          const oldTotal = currentRating * currentCount;
-          const newTotal = oldTotal - existingReview.rating;
-          newAverageRating = newTotal / newCount;
+          let newAverageRating = 0;
+          if (newCount > 0) {
+            const oldTotal = currentRating * currentCount;
+            const newTotal = oldTotal - existingReview.rating;
+            newAverageRating = newTotal / newCount;
+          }
+
+          transaction.update(serviceRef, {
+            averageRating: newAverageRating,
+            reviewCount: newCount,
+            updatedAt: now,
+          });
         }
-
-        transaction.update(serviceRef, {
-          averageRating: newAverageRating,
-          reviewCount: newCount,
-          updatedAt: now,
-        });
       }
 
       return {success: true, message: "Review hidden successfully"};

@@ -13,7 +13,17 @@ interface Booking {
   completedAt?: string;
   rating?: number;
   review?: string;
-  location?: string;
+  location?: string | {
+    latitude?: number;
+    longitude?: number;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postalCode?: string;
+    zipCode?: string;
+    street?: string;
+  };
 }
 
 interface BookingsListProps {
@@ -41,6 +51,41 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentBookings = bookings.slice(startIndex, endIndex);
+
+  // Helper function to format location (handles both string and object)
+  const formatLocation = (location: any): string => {
+    if (!location) return "No location provided";
+
+    // Handle string locations
+    if (typeof location === "string") return location;
+
+    // Handle object locations with address fields
+    if (typeof location === "object") {
+      const parts = [];
+
+      if (location.address) {
+        parts.push(location.address);
+      } else {
+        if (location.street) parts.push(location.street);
+        if (location.city) parts.push(location.city);
+        if (location.state) parts.push(location.state);
+        if (location.zipCode || location.postalCode)
+          parts.push(location.zipCode || location.postalCode);
+        if (location.country) parts.push(location.country);
+      }
+
+      if (parts.length > 0) return parts.join(", ");
+
+      // If no standard address fields, try to JSON stringify but handle circular refs
+      try {
+        return JSON.stringify(location);
+      } catch {
+        return "Complex location object";
+      }
+    }
+
+    return "Unknown location format";
+  };
 
   return (
     <div className="overflow-hidden bg-white shadow sm:rounded-md">
@@ -112,7 +157,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                   </div>
                   {booking.location && (
                     <div className="mt-1 text-sm text-gray-500">
-                      <p className="truncate">Location: {booking.location}</p>
+                      <p className="truncate">Location: {formatLocation(booking.location)}</p>
                     </div>
                   )}
                   {booking.scheduledDate && (
