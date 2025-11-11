@@ -49,7 +49,6 @@ const ActiveServicePage: React.FC = () => {
       return;
     }
 
-
     if (isLoadingBooking) {
       return;
     }
@@ -214,7 +213,6 @@ const ActiveServicePage: React.FC = () => {
       </div>
     );
   }
-
 
   // --- UI Section ---
   return (

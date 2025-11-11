@@ -208,7 +208,7 @@ const NotificationsPageSP = () => {
     const idsToMark = [...selectedIds];
     clearSelection();
     setEditMode(false);
-    
+
     // Perform actual mark as read operations
     await Promise.all(idsToMark.map((id) => markAsRead(id)));
   };
@@ -228,15 +228,17 @@ const NotificationsPageSP = () => {
         } catch (e) {
           console.error(`Failed to delete notification ${id}:`, e);
         }
-      })
+      }),
     );
   };
 
-  const handleNotificationClick = async (notification: ProviderNotification) => {
+  const handleNotificationClick = async (
+    notification: ProviderNotification,
+  ) => {
     if (!notification.read) {
       // Mark as read asynchronously but don't wait for it
-      markAsRead(notification.id).catch((e) => 
-        console.error("Failed to mark notification as read:", e)
+      markAsRead(notification.id).catch((e) =>
+        console.error("Failed to mark notification as read:", e),
       );
     }
 
@@ -296,21 +298,79 @@ const NotificationsPageSP = () => {
   }, [stableNotifications, deletedIds, activeTab]);
 
   return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
       <header className="sticky top-0 z-20 bg-white">
-              <div className="relative flex w-full items-center justify-center px-4 py-3">
-                <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
-                  Notifications
-                </h1>
-                {stableNotifications.length > 0 && (
-                  <>
-                    <div className="hidden sm:block" aria-hidden="true" />
-      
-                    <div
-                      className={`absolute inset-y-0 right-4 hidden items-center gap-2 transition-opacity duration-200 lg:flex ${
-                        loading ? "pointer-events-none opacity-0" : "opacity-100"
-                      }`}
-                    >
+        <div className="relative flex w-full items-center justify-center px-4 py-3">
+          <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+            Notifications
+          </h1>
+          {stableNotifications.length > 0 && (
+            <>
+              <div className="hidden sm:block" aria-hidden="true" />
+
+              <div
+                className={`absolute inset-y-0 right-4 hidden items-center gap-2 transition-opacity duration-200 lg:flex ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
+                <button
+                  onClick={() => {
+                    if (!editMode) {
+                      setEditMode(true);
+                      clearSelection();
+                    } else {
+                      setEditMode(false);
+                      clearSelection();
+                    }
+                  }}
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  {editMode ? "Done" : "Edit"}
+                </button>
+                <button
+                  onClick={handleSelectAll}
+                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  {selectedIds.length > 0 &&
+                  selectedIds.length ===
+                    stableNotifications.filter(
+                      (n) => !deletedIds.includes(n.id),
+                    ).length
+                    ? "Clear"
+                    : "Select all"}
+                </button>
+                {unread.length > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                  >
+                    <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+
+              <div
+                className={`absolute inset-y-0 right-4 flex items-center transition-opacity duration-200 lg:hidden ${
+                  loading ? "pointer-events-none opacity-0" : "opacity-100"
+                }`}
+              >
+                <button
+                  ref={mobileMenuButtonRef}
+                  onClick={() => setMobileMenuOpen((s) => !s)}
+                  className="text-black-600 rounded-full p-2 hover:bg-gray-100"
+                  aria-haspopup="true"
+                  aria-expanded={mobileMenuOpen}
+                >
+                  <EllipsisVerticalIcon className="h-6 w-6" />
+                </button>
+
+                {mobileMenuOpen && (
+                  <div
+                    ref={mobileMenuRef}
+                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
+                  >
+                    <div className="py-1" role="menu">
                       <button
                         onClick={() => {
                           if (!editMode) {
@@ -320,110 +380,52 @@ const NotificationsPageSP = () => {
                             setEditMode(false);
                             clearSelection();
                           }
+                          setMobileMenuOpen(false);
                         }}
-                        className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
                       >
                         {editMode ? "Done" : "Edit"}
                       </button>
+
                       <button
-                        onClick={handleSelectAll}
-                        className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                        onClick={() => {
+                          handleSelectAll();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
                       >
                         {selectedIds.length > 0 &&
                         selectedIds.length ===
                           stableNotifications.filter(
                             (n) => !deletedIds.includes(n.id),
                           ).length
-                          ? "Clear"
+                          ? "Clear selection"
                           : "Select all"}
                       </button>
+
                       {unread.length > 0 && (
                         <button
-                          onClick={markAllAsRead}
-                          className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                          onClick={() => {
+                            markAllAsRead();
+                            setMobileMenuOpen(false);
+                          }}
+                          className="flex w-full items-center px-4 py-2 text-left text-sm font-medium text-blue-700 hover:bg-gray-100"
+                          role="menuitem"
                         >
-                          <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                          <EnvelopeOpenIcon className="mr-2 h-4 w-4" />
                           Mark all as read
                         </button>
                       )}
                     </div>
-      
-                    <div
-                      className={`absolute inset-y-0 right-4 flex items-center transition-opacity duration-200 lg:hidden ${
-                        loading ? "pointer-events-none opacity-0" : "opacity-100"
-                      }`}
-                    >
-                      <button
-                        ref={mobileMenuButtonRef}
-                        onClick={() => setMobileMenuOpen((s) => !s)}
-                        className="text-black-600 rounded-full p-2 hover:bg-gray-100"
-                        aria-haspopup="true"
-                        aria-expanded={mobileMenuOpen}
-                      >
-                        <EllipsisVerticalIcon className="h-6 w-6" />
-                      </button>
-      
-                      {mobileMenuOpen && (
-                        <div
-                          ref={mobileMenuRef}
-                          className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
-                        >
-                          <div className="py-1" role="menu">
-                            <button
-                              onClick={() => {
-                                if (!editMode) {
-                                  setEditMode(true);
-                                  clearSelection();
-                                } else {
-                                  setEditMode(false);
-                                  clearSelection();
-                                }
-                                setMobileMenuOpen(false);
-                              }}
-                              className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
-                              role="menuitem"
-                            >
-                              {editMode ? "Done" : "Edit"}
-                            </button>
-      
-                            <button
-                              onClick={() => {
-                                handleSelectAll();
-                                setMobileMenuOpen(false);
-                              }}
-                              className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
-                              role="menuitem"
-                            >
-                              {selectedIds.length > 0 &&
-                              selectedIds.length ===
-                                stableNotifications.filter(
-                                  (n) => !deletedIds.includes(n.id),
-                                ).length
-                                ? "Clear selection"
-                                : "Select all"}
-                            </button>
-      
-                            {unread.length > 0 && (
-                              <button
-                                onClick={() => {
-                                  markAllAsRead();
-                                  setMobileMenuOpen(false);
-                                }}
-                                className="flex w-full items-center px-4 py-2 text-left text-sm font-medium text-blue-700 hover:bg-gray-100"
-                                role="menuitem"
-                              >
-                                <EnvelopeOpenIcon className="mr-2 h-4 w-4" />
-                                Mark all as read
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
-            </header>
+            </>
+          )}
+        </div>
+      </header>
 
       {/* Tabs navigation for notification categories */}
       <div className="mb-5 border-t border-gray-200 bg-white">
@@ -526,16 +528,24 @@ const NotificationsPageSP = () => {
                               setDeletedIds((prev) => [...prev, notif.id]);
                               await deleteNotification(notif.id);
                             } catch (e) {
-                              console.error("Failed to delete notification:", e);
+                              console.error(
+                                "Failed to delete notification:",
+                                e,
+                              );
                               // Revert optimistic update on error
-                              setDeletedIds((prev) => prev.filter(id => id !== notif.id));
+                              setDeletedIds((prev) =>
+                                prev.filter((id) => id !== notif.id),
+                              );
                             }
                           }}
                           onMarkAsRead={async () => {
                             try {
                               await markAsRead(notif.id);
                             } catch (e) {
-                              console.error("Failed to mark notification as read:", e);
+                              console.error(
+                                "Failed to mark notification as read:",
+                                e,
+                              );
                             }
                           }}
                           selectable={editMode}
