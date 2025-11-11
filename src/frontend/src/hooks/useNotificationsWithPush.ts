@@ -325,13 +325,16 @@ export const useNotificationsWithPush = () => {
   // Listens for a global event 'booking-interacted' with optional detail { bookingId?: string }
   useEffect(() => {
     const handler = async (e: Event) => {
-      const detail = (e as CustomEvent)?.detail as { bookingId?: string } | undefined;
+      const detail = (e as CustomEvent)?.detail as
+        | { bookingId?: string }
+        | undefined;
       let targetIds = notifications
         .filter(
           (n) =>
             !n.read &&
             n.type === "booking_accepted" &&
-            (!detail?.bookingId || (n.bookingId && n.bookingId === detail.bookingId)),
+            (!detail?.bookingId ||
+              (n.bookingId && n.bookingId === detail.bookingId)),
         )
         .map((n) => n.id);
 
@@ -367,7 +370,11 @@ export const useNotificationsWithPush = () => {
     };
 
     window.addEventListener("booking-interacted", handler as EventListener);
-    return () => window.removeEventListener("booking-interacted", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "booking-interacted",
+        handler as EventListener,
+      );
   }, [notifications]);
 
   // Marks a single notification as read

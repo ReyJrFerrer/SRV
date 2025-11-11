@@ -3,8 +3,7 @@ export function dispatchBookingInteracted(bookingId?: string) {
   try {
     const detail = bookingId ? { bookingId } : {};
     window.dispatchEvent(new CustomEvent("booking-interacted", { detail }));
-  } catch (e) {
-  }
+  } catch (e) {}
 }
 
 export function dispatchChatsRead() {
