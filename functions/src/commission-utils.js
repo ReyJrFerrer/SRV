@@ -17,17 +17,17 @@ const COMMISSION_TIERS = {
  */
 const TIER_STRUCTURES = {
   [COMMISSION_TIERS.TIER_A]: {
-    baseFee: 15, // ₱50 minimum commission
+    baseFee: 15,
     breakpoints: [500, 2000, 8000, 20000], // ₱500, ₱2K, ₱8K, ₱20K
     rates: [0.1, 0.08, 0.07, 0.06, 0.05], // 10%, 8%, 7%, 6%, 5%
   },
   [COMMISSION_TIERS.TIER_B]: {
-    baseFee: 15, // ₱35 minimum commission
+    baseFee: 15,
     breakpoints: [300, 1500, 6000, 15000], // ₱300, ₱1.5K, ₱6K, ₱15K
     rates: [0.08, 0.06, 0.05, 0.04, 0.03], // 8%, 6%, 5%, 4%, 3%
   },
   [COMMISSION_TIERS.TIER_C]: {
-    baseFee: 15, // ₱25 minimum commission
+    baseFee: 15,
     breakpoints: [200, 1000, 4000, 12000], // ₱200, ₱1K, ₱4K, ₱12K
     rates: [0.06, 0.04, 0.035, 0.025, 0.02], // 6%, 4%, 3.5%, 2.5%, 2%
   },

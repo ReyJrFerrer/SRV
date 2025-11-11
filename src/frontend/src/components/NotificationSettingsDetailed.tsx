@@ -27,12 +27,8 @@ export const NotificationSettingsDetailed: React.FC<
   const handleEnableNotifications = async () => {
     setLoading(true);
     try {
-      const success = await enablePushNotifications(getUserId());
-      if (success) {
-        //console.log("Push notifications enabled successfully");
-      }
+      await enablePushNotifications(getUserId());
     } catch (err) {
-      console.error("Failed to enable push notifications:", err);
     } finally {
       setLoading(false);
     }
@@ -41,10 +37,7 @@ export const NotificationSettingsDetailed: React.FC<
   const handleDisableNotifications = async () => {
     setLoading(true);
     try {
-      const success = await disablePushNotifications(getUserId());
-      if (success) {
-        //console.log("Push notifications disabled successfully");
-      }
+      await disablePushNotifications(getUserId());
     } finally {
       setLoading(false);
     }

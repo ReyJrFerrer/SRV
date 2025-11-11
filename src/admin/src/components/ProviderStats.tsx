@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ClockIcon,
   CheckCircleIcon,
   StarIcon,
   ChartBarIcon,
@@ -89,7 +88,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   const stats = userData
     ? {
         monthlyRevenue: userData.monthlyRevenue || userData.totalEarnings * 0.3,
-        pendingPayout: userData.pendingCommission,
         completedJobs: userData.completedJobs,
         averageRating: userData.averageRating,
         totalReviews: userData.totalReviews,
@@ -99,7 +97,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       }
     : {
         monthlyRevenue: 15750.0,
-        pendingPayout: 3200.0,
         completedJobs: 23,
         averageRating: 4.7,
         totalReviews: 18,
@@ -114,12 +111,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         title: "Earnings This Month",
         value: `₱${stats.monthlyRevenue.toFixed(2)}`,
         icon: <BanknotesIcon className="h-6 w-6 text-white" />,
-        bgColor: "bg-[#4068F4]",
-      },
-      {
-        title: "Pending Payout",
-        value: `₱${stats.pendingPayout.toFixed(2)}`,
-        icon: <ClockIcon className="h-6 w-6 text-white" />,
         bgColor: "bg-[#4068F4]",
       },
       {

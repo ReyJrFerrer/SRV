@@ -7,6 +7,7 @@ import {
   StarIcon,
   EnvelopeOpenIcon,
   TicketIcon,
+  ServerStackIcon,
 } from "@heroicons/react/24/solid";
 
 const NotificationIconClient: React.FC<{
@@ -52,7 +53,7 @@ const NotificationIconClient: React.FC<{
         bg = "bg-purple-100";
         break;
       case "system_announcement":
-        icon = <BellAlertIcon className="h-6 w-6 text-gray-700" />;
+        icon = <ServerStackIcon className="h-6 w-6 text-gray-700" />;
         bg = "bg-gray-200";
         break;
       case "service_rescheduled":

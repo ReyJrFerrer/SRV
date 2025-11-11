@@ -83,10 +83,7 @@ const ConversationPage: React.FC = () => {
       ) {
         setOtherUserImageUrl(profile.profilePicture.imageUrl);
       }
-    } catch (error) {
-      //console.error("Failed to fetch other user's profile:", error);
-      // Silently fail - user will see default avatar
-    }
+    } catch (error) {}
   };
 
   // Mark messages as read when conversation loads
@@ -122,9 +119,7 @@ const ConversationPage: React.FC = () => {
 
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
-    } catch (error) {
-      //console.error("Failed to send message:", error);
-    }
+    } catch (error) {}
   };
 
   const handleReportClick = () => {
@@ -151,38 +146,6 @@ const ConversationPage: React.FC = () => {
     if (!identity) return false;
     return senderId === identity.getPrincipal().toString();
   };
-
-  // if (error) {
-  //   return (
-  //     <div className="flex h-screen flex-col bg-gray-50">
-  //       <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3">
-  //         <button
-  //           onClick={() => navigate(-1)}
-  //           className="rounded-full p-2 hover:bg-gray-100"
-  //         >
-  //           <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-  //         </button>
-  //         <div className="ml-3">
-  //           <h1 className="text-lg font-semibold text-gray-900">Error</h1>
-  //         </div>
-  //       </header>
-  //       <main className="flex flex-1 items-center justify-center">
-  //         <div className="text-center">
-  //           <p className="mb-4 text-red-600">{error}</p>
-  //           <button
-  //             onClick={() => window.location.reload()}
-  //             className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-  //           >
-  //             Retry
-  //           </button>
-  //         </div>
-  //       </main>
-  //       <div className="fixed bottom-0 left-0 z-30 w-full">
-  //         <BottomNavigation />
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="flex h-screen flex-col bg-gray-50">
@@ -241,7 +204,6 @@ const ConversationPage: React.FC = () => {
           </div>
         ) : (
           messages.map((message) => {
-            console.log("Chat message:", message);
             const fromCurrentUser = isFromCurrentUser(message.senderId);
             return (
               <div

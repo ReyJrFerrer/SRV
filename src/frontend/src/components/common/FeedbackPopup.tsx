@@ -97,7 +97,6 @@ const FeedbackPopup: React.FC = () => {
                 // Show success message
                 toast.success("Thank you for your feedback!");
               } catch (error) {
-                //console.error("Failed to submit feedback:", error);
                 toast.error("Failed to submit feedback. Please try again.");
               }
             }}

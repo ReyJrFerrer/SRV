@@ -27,6 +27,14 @@ const ViewAllServicesPage: React.FC = () => {
     navigate(-1);
   };
 
+  // Create service data for ServiceListItem
+  const createServiceData = (service: any) => ({
+    isVerified: false,
+    averageRating: service.rating?.average ?? 0,
+    totalReviews: service.rating?.count ?? 0,
+    mediaUrls: service.media || [],
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
@@ -70,7 +78,11 @@ const ViewAllServicesPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {services.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                <ServiceListItem service={service} inCategories={true} />
+                <ServiceListItem
+                  service={service}
+                  serviceData={createServiceData(service)}
+                  inCategories={true}
+                />
               </Appear>
             ))}
           </div>

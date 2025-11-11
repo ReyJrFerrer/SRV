@@ -84,7 +84,6 @@ const Contact = ({
           "Sorry, there was an error sending your message. Please try again or contact us directly.",
         );
       }
-      console.error("Contact form error:", err);
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setFormMessage(""), 5000);

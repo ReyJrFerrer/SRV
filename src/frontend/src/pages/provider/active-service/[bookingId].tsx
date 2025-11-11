@@ -54,15 +54,11 @@ const ActiveServicePage: React.FC = () => {
     }
 
     if (!booking) {
-      console.warn("Active service: booking not found");
       navigate("/provider/bookings", { replace: true });
       return;
     }
 
     if (booking.status !== "InProgress") {
-      console.warn(
-        `Active service: booking status is ${booking.status}, not InProgress`,
-      );
       navigate("/provider/bookings", { replace: true });
       return;
     }
@@ -92,7 +88,6 @@ const ActiveServicePage: React.FC = () => {
         const validation = await checkCommissionValidation(booking);
         setCommissionValidation(validation);
       } catch (error) {
-        console.error("Failed to validate commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };
@@ -218,7 +213,7 @@ const ActiveServicePage: React.FC = () => {
       <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-4 py-3">
           <h1 className="text-2xl font-extrabold tracking-tight text-black">
-            Service InProgress
+            Service In Progress
           </h1>
         </div>
       </header>

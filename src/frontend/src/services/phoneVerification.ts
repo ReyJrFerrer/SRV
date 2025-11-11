@@ -67,7 +67,6 @@ class PhoneVerificationService {
         timeUntilResend: this.resendCooldown,
       };
     } catch (error: any) {
-      console.error("Error starting verification:", error);
       firebaseAuthService.clearRecaptcha();
 
       return {
@@ -83,9 +82,6 @@ class PhoneVerificationService {
   async verifyCode(otpCode: string): Promise<PhoneVerificationResult> {
     // Prevent concurrent verification attempts
     if (this.isVerifying) {
-      console.log(
-        "⏳ Verification already in progress, ignoring duplicate request",
-      );
       return {
         success: false,
         phoneNumber: this.currentPhoneNumber,
@@ -159,7 +155,6 @@ class PhoneVerificationService {
         error.code === "auth/invalid-verification-id" ||
         error.message?.includes("Verification session expired")
       ) {
-        console.log("🚫 Verification session invalidated");
         this.confirmationResult = null;
         return {
           success: false,

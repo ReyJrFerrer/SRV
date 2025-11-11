@@ -28,7 +28,6 @@ const MapView: React.FC<MapViewProps> = ({
   destinationName,
 }) => {
   if (!providerLocation) return null;
-
   return (
     <APIProvider apiKey={mapApiKey}>
       <Map
@@ -41,7 +40,17 @@ const MapView: React.FC<MapViewProps> = ({
         onIdle={(ev) => setMapRef(ev.map)}
         onTilesLoaded={(ev) => setMapRef(ev.map)}
         onCameraChanged={(ev) => setMapRef(ev.map)}
-        gestureHandling={isInNavigationMode ? "none" : "greedy"}
+        // On touch devices prefer 'cooperative' so users can pinch-to-zoom
+        // with two fingers while preserving single-finger page scroll.
+        // Keep 'none' during navigation mode to avoid accidental interactions.
+        gestureHandling={
+          isInNavigationMode
+            ? "none"
+            : typeof window !== "undefined" &&
+                (navigator.maxTouchPoints || "ontouchstart" in window)
+              ? "cooperative"
+              : "greedy"
+        }
         disableDefaultUI={true}
         // Hide built-in +/- zoom controls but keep programmatic zooming intact
         zoomControl={false}

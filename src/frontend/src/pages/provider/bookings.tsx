@@ -13,6 +13,9 @@ import {
   ProviderEnhancedBooking,
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import serviceCanisterService, {
+  ServiceCategory,
+} from "../../services/serviceCanisterService";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import useClientRating from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
@@ -57,6 +60,10 @@ const ProviderBookingsPage: React.FC = () => {
   const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] =
     useState<boolean>(false);
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
   const [showDeclineConfirm, setShowDeclineConfirm] = useState<boolean>(false);
   const [decliningBookingId, setDecliningBookingId] = useState<string | null>(
     null,
@@ -70,12 +77,10 @@ const ProviderBookingsPage: React.FC = () => {
   const {
     bookings,
     loading,
-    error,
     getPendingBookings,
     getUpcomingBookings,
     getCompletedBookings,
     getBookingsByStatus,
-    clearError,
     refreshBookings,
     isProviderAuthenticated,
     declineBookingById,
@@ -142,7 +147,6 @@ const ProviderBookingsPage: React.FC = () => {
       await refreshBookings();
       setCancellingBooking(null);
     } catch (error) {
-      console.error("Error cancelling booking:", error);
       toast.error("Failed to cancel booking. Please try again.");
       throw error;
     } finally {
@@ -180,6 +184,24 @@ const ProviderBookingsPage: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Load service categories for filtering
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const cats = await serviceCanisterService.getAllCategories();
+        if (!mounted) return;
+        setCategories(cats || []);
+      } catch (err) {
+        // ignore
+      }
+    })();
+
+    return () => {
+      mounted = false;
     };
   }, []);
 
@@ -228,8 +250,23 @@ const ProviderBookingsPage: React.FC = () => {
 
     if (timingFilter !== "All") {
       filteredBookings = filteredBookings.filter((booking) => {
+        const status = (booking.status || "").toString().toLowerCase();
+
+        const statusNorm = status.replace(/[^a-z]/g, "");
+
+        if (
+          statusNorm.includes("complete") ||
+          statusNorm.includes("cancel") ||
+          statusNorm.includes("declined")
+        ) {
+          return false;
+        }
+
         const bookingDateString =
-          (booking as any).scheduledDateTime || (booking as any).createdAt;
+          (booking as any).scheduledDateTime ||
+          (booking as any).requestedDate ||
+          (booking as any).requestedDateTime ||
+          (booking as any).createdAt;
         if (!bookingDateString) {
           return false;
         }
@@ -265,6 +302,14 @@ const ProviderBookingsPage: React.FC = () => {
             .includes(searchTerm.toLowerCase()) ||
           booking.id.toLowerCase().includes(searchTerm.toLowerCase()),
       );
+    }
+
+    // Category filter (if selected, filter by the booking's serviceDetails.category.id)
+    if (selectedCategoryId) {
+      filteredBookings = filteredBookings.filter((booking) => {
+        const categoryId = booking.serviceDetails?.category?.id;
+        return categoryId === selectedCategoryId;
+      });
     }
 
     // --- Custom sort for ALL tab: requested > accepted > inprogress > others ---
@@ -339,7 +384,13 @@ const ProviderBookingsPage: React.FC = () => {
     }
 
     return filteredBookings;
-  }, [activeTab, categorizedBookings, searchTerm, timingFilter]);
+  }, [
+    activeTab,
+    categorizedBookings,
+    searchTerm,
+    timingFilter,
+    selectedCategoryId,
+  ]);
 
   // Effect to fetch client data for all unique client IDs
   useEffect(() => {
@@ -380,7 +431,6 @@ const ProviderBookingsPage: React.FC = () => {
               loading: false,
             };
           } catch (err) {
-            console.error("Error fetching client data:", err);
             mapCopy[clientId] = {
               reviews: [],
               reputation: null,
@@ -396,15 +446,6 @@ const ProviderBookingsPage: React.FC = () => {
     if (currentBookings.length > 0) fetchStatsForClients();
   }, [currentBookings, getClientReviewsByUser, fetchUserReputation]);
 
-  const handleRetry = async () => {
-    clearError();
-    try {
-      await refreshBookings();
-    } catch (error) {
-      //console.error("❌ Failed to retry loading bookings:", error);
-    }
-  };
-
   if (!isProviderAuthenticated() && !loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -419,33 +460,6 @@ const ProviderBookingsPage: React.FC = () => {
           >
             Back to Login
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && bookings.length === 0) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">
-            Unable to load bookings
-          </h1>
-          <p className="mb-4 text-gray-600">{error}</p>
-          <div className="space-x-3">
-            <button
-              onClick={() => navigate("/provider/dashboard")}
-              className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-            >
-              Back to Dashboard
-            </button>
-            <button
-              onClick={handleRetry}
-              className="rounded-lg bg-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-400"
-            >
-              Retry
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -476,48 +490,78 @@ const ProviderBookingsPage: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* Timing Filter Dropdown */}
-            <div className="relative" ref={timingDropdownRef}>
-              <button
-                className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
-              >
-                <FunnelIcon className="mr-1 h-5 w-5" />
-                <span className="hidden md:inline">{timingFilter}</span>
-                <ChevronDownIcon
-                  className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${
-                    isTimingDropdownOpen ? "rotate-180" : "rotate-0"
-                  }`}
-                />
-              </button>
-              {isTimingDropdownOpen && (
-                <div className="absolute right-0 z-50 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                  <div
-                    className="py-1"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="options-menu"
-                  >
-                    {TIMING_FILTERS.map((filter) => (
-                      <button
-                        key={filter}
-                        onClick={() => {
-                          setTimingFilter(filter);
-                          setIsTimingDropdownOpen(false);
-                        }}
-                        className={`${
-                          timingFilter === filter
-                            ? "bg-blue-100 text-blue-900"
-                            : "text-gray-700"
-                        } block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
-                        role="menuitem"
-                      >
-                        {filter}
-                      </button>
-                    ))}
+            {/* Filters: Timing + Category */}
+            <div className="flex gap-2">
+              {/* Timing Filter Dropdown */}
+              <div className="relative" ref={timingDropdownRef}>
+                <button
+                  className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
+                >
+                  <FunnelIcon className="mr-1 h-5 w-5" />
+                  <span className="hidden md:inline">{timingFilter}</span>
+                  <ChevronDownIcon
+                    className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${
+                      isTimingDropdownOpen ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+                {isTimingDropdownOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      {TIMING_FILTERS.map((filter) => (
+                        <button
+                          key={filter}
+                          onClick={() => {
+                            setTimingFilter(filter);
+                            setIsTimingDropdownOpen(false);
+                          }}
+                          className={`${
+                            timingFilter === filter
+                              ? "bg-blue-100 text-blue-900"
+                              : "text-gray-700"
+                          } block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                          role="menuitem"
+                        >
+                          {filter}
+                        </button>
+                      ))}
+
+                      <div className="border-t px-2 pt-2">
+                        <div className="px-4 pb-1 text-xs font-medium text-gray-500">
+                          Categories
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedCategoryId(null);
+                            setIsTimingDropdownOpen(false);
+                          }}
+                          className={`${selectedCategoryId === null ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                        >
+                          All Categories
+                        </button>
+                        {categories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => {
+                              setSelectedCategoryId(cat.id);
+                              setIsTimingDropdownOpen(false);
+                            }}
+                            className={`${selectedCategoryId === cat.id ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
           <div className="w-full overflow-x-auto">

@@ -47,10 +47,6 @@ export default function CreateProfilePage() {
         .getMyProfile()
         .then((profile) => {
           if (profile && profile.name && profile.phone) {
-            // User has a profile, redirect to their dashboard instead of allowing back
-            console.log(
-              "Preventing navigation back to create-profile - user already has profile",
-            );
             if (profile.activeRole === "Client") {
               navigate("/client/home", { replace: true });
             } else if (profile.activeRole === "ServiceProvider") {
@@ -85,7 +81,6 @@ export default function CreateProfilePage() {
       if (!isAuthenticated || !identity) {
         // Not authenticated - redirect to landing page after delay
         const timer = setTimeout(() => {
-          console.warn("Not authenticated, redirecting to landing page...");
           navigate("/");
         }, 1500);
         return () => clearTimeout(timer);
@@ -97,22 +92,13 @@ export default function CreateProfilePage() {
 
         if (profile && profile.name && profile.phone) {
           // User already has a complete profile - redirect based on their role
-          console.log(
-            "User already has a profile, redirecting to dashboard...",
-          );
           if (profile.activeRole === "Client") {
             navigate("/client/home", { replace: true });
           } else if (profile.activeRole === "ServiceProvider") {
             navigate("/provider/home", { replace: true });
-          } else {
-            // Has profile but no valid role - stay on create profile page
-            console.log("Profile exists but no valid role set");
           }
         }
-      } catch (err) {
-        // Profile not found or error - user can stay on create-profile page
-        console.log("No existing profile found, user can create one");
-      }
+      } catch (err) {}
 
       // Reset any reauth requirements
       setReauthRequired(false);
@@ -331,7 +317,6 @@ export default function CreateProfilePage() {
       } else {
         setError(errorMessage);
       }
-      //console.error("Profile creation error:", err);
     } finally {
       setIsCreatingProfile(false);
     }

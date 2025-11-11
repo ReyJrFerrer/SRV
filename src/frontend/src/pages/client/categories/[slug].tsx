@@ -9,10 +9,10 @@ import SearchBar from "../../../components/client/SearchBar";
 import ServiceListItem from "../../../components/client/home page/ServiceListingCard";
 import BottomNavigation from "../../../components/client/NavigationBar";
 import Appear from "../../../components/common/pageFlowImprovements/Appear";
-import { ServiceGridSkeleton } from "../../../components/common/pageFlowImprovements/Skeletons";
 import {
   useServicesByCategory,
   useAllServicesWithProviders,
+  EnrichedService,
 } from "../../../hooks/serviceInformation";
 import serviceCanisterService from "../../../services/serviceCanisterService";
 import { getCategoryIcon } from "../../../utils/serviceHelpers";
@@ -59,11 +59,9 @@ const CategoryPage: React.FC = () => {
   const allServicesHook = useAllServicesWithProviders();
   const categoryServicesHook = useServicesByCategory(categoryId);
 
-  const {
-    services,
-    loading: servicesLoading,
-    error: servicesError,
-  } = isAllServices ? allServicesHook : categoryServicesHook;
+  const { services, error: servicesError } = isAllServices
+    ? allServicesHook
+    : categoryServicesHook;
 
   useEffect(() => {
     document.title = category ? `${category.name} | SRV` : "Category | SRV";
@@ -102,7 +100,6 @@ const CategoryPage: React.FC = () => {
         }
         setCategory(foundCategory);
       } catch (error) {
-        //console.error("Failed to load category data:", error);
         setCategory(null);
       }
     };
@@ -110,6 +107,14 @@ const CategoryPage: React.FC = () => {
   }, [slug]);
 
   const handleSearch = (term: string) => setSearchTerm(term);
+
+  // Create service data for ServiceListItem
+  const createServiceData = (service: EnrichedService) => ({
+    isVerified: false,
+    averageRating: service.rating?.average ?? 0,
+    totalReviews: service.rating?.count ?? 0,
+    mediaUrls: service.media || [],
+  });
 
   const sortedAndFilteredServices = useMemo(() => {
     let processedServices = services.filter(
@@ -248,25 +253,17 @@ const CategoryPage: React.FC = () => {
           </div>
         )}
 
-        {servicesLoading || !category ? (
-          <ServiceGridSkeleton count={8} />
-        ) : sortedAndFilteredServices.length === 0 && !servicesError ? (
-          <div className="py-10 text-center">
-            <p className="text-gray-500">
-              {searchTerm
-                ? `No services found for "${searchTerm}" with the current filters.`
-                : "No services found in this category with the current filters."}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-            {sortedAndFilteredServices.map((service, idx) => (
-              <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                <ServiceListItem service={service} retainMobileLayout={true} />
-              </Appear>
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+          {sortedAndFilteredServices.map((service, idx) => (
+            <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+              <ServiceListItem
+                service={service}
+                serviceData={createServiceData(service)}
+                retainMobileLayout={true}
+              />
+            </Appear>
+          ))}
+        </div>
       </div>
 
       <BottomNavigation />

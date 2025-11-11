@@ -151,14 +151,11 @@ export const notificationCanisterService = {
           });
           debouncedCallback(notifications);
         },
-        (error) => {
-          console.error("Error in notification listener:", error);
+        () => {
           callback([]);
         },
       );
     } catch (error) {
-      console.error("Error setting up notification subscription:", error);
-      // Return a no-op unsubscribe function
       return () => {};
     }
   },
@@ -189,7 +186,6 @@ export const notificationCanisterService = {
 
       return [];
     } catch (error) {
-      console.error("Error fetching user notifications:", error);
       throw new Error(`Failed to fetch notifications: ${error}`);
     }
   },
@@ -211,7 +207,6 @@ export const notificationCanisterService = {
         throw new Error("Failed to mark notification as read");
       }
     } catch (error) {
-      console.error("Error marking notification as read:", error);
       throw new Error(`Failed to mark notification as read: ${error}`);
     }
   },
@@ -236,7 +231,6 @@ export const notificationCanisterService = {
         throw new Error("Failed to mark notification as push sent");
       }
     } catch (error) {
-      console.error("Error marking notification as push sent:", error);
       throw new Error(`Failed to mark notification as push sent: ${error}`);
     }
   },
@@ -265,7 +259,6 @@ export const notificationCanisterService = {
 
       return [];
     } catch (error) {
-      console.error("Error fetching notifications for push:", error);
       throw new Error(`Failed to fetch notifications for push: ${error}`);
     }
   },
@@ -289,7 +282,6 @@ export const notificationCanisterService = {
 
       return { total: 0, unread: 0, pushSent: 0, read: 0 };
     } catch (error) {
-      console.error("Error getting notification stats:", error);
       throw new Error(`Failed to get notification stats: ${error}`);
     }
   },
@@ -314,7 +306,6 @@ export const notificationCanisterService = {
 
       return 0;
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
       throw new Error(`Failed to mark all notifications as read: ${error}`);
     }
   },
@@ -339,7 +330,6 @@ export const notificationCanisterService = {
         throw new Error("Failed to delete notification");
       }
     } catch (error) {
-      console.error("Error deleting notification:", error);
       throw new Error(`Failed to delete notification: ${error}`);
     }
   },
@@ -363,7 +353,6 @@ export const notificationCanisterService = {
 
       return response.canReceive || false;
     } catch (error) {
-      console.error("Error checking notification rate limit:", error);
       return false;
     }
   },
@@ -414,11 +403,8 @@ export const notificationCanisterService = {
 
       throw new Error("Failed to create notification");
     } catch (error) {
-      console.error("Error creating notification:", error);
-
       // Don't rethrow rate limit errors as they're expected
       if (error instanceof Error && error.message.includes("rate limit")) {
-        console.warn("Rate limit reached, skipping notification creation");
         return "rate-limited";
       }
 
@@ -427,10 +413,6 @@ export const notificationCanisterService = {
   },
 };
 
-export const updateNotificationActor = (_identity: any) => {
-  console.warn(
-    "updateNotificationActor is deprecated - Firebase handles auth automatically",
-  );
-};
+
 
 export default notificationCanisterService;

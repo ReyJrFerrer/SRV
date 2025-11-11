@@ -29,7 +29,7 @@ function getAuthInfo(context, data) {
 }
 
 // Constants - mirroring media.mo canister
-const MAX_FILE_SIZE = 450000; // 450KB in bytes
+const MAX_FILE_SIZE = 1000000; // 1MB in bytes
 const MAX_REMITTANCE_FILE_SIZE = 1048576; // 1MB in bytes
 const SUPPORTED_CONTENT_TYPES = [
   "image/jpeg",
@@ -88,7 +88,6 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
 
 /**
  * Upload a media file to Cloud Storage and store metadata in Firestore
- * Mirrors uploadMedia function from media.mo canister
  */
 exports.uploadMedia = functions.https.onCall(async (data, context) => {
   const {fileName, contentType, mediaType, fileData} = data.data;

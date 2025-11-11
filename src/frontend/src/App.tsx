@@ -11,9 +11,7 @@ import { initializeFirebase } from "./services/firebaseApp";
 // Initialize Firebase as early as possible
 try {
   initializeFirebase();
-} catch (error) {
-  console.error("Failed to initialize Firebase in App.tsx:", error);
-}
+} catch (error) {}
 
 type CurrentView = "main" | "about" | "contact";
 
@@ -41,25 +39,15 @@ const LandingPage = () => {
             const hasShownSuspension = sessionStorage.getItem(
               "hasShownSuspensionModal",
             );
-            const isOnLandingPage = location.pathname === "/";
+            location.pathname === "/";
 
             // If user has already seen the modal, never show it again (especially on landing page)
             if (hasShownSuspension === "true") {
-              if (isOnLandingPage) {
-                console.log(
-                  "Account is suspended but user has already seen the modal and returned to landing page - not showing again",
-                );
-              } else {
-                console.log(
-                  "Account is suspended but user has already seen the modal - not showing again",
-                );
-              }
               setIsCheckingProfile(false);
               return;
             }
 
             // Only show modal if we haven't shown it yet
-            console.log("Account is suspended, showing suspension modal");
             setShowSuspensionModal(true);
             sessionStorage.setItem("hasShownSuspensionModal", "true");
             setIsCheckingProfile(false);
@@ -80,20 +68,9 @@ const LandingPage = () => {
               navigate("/create-profile");
             }
           } else {
-            // No profile or incomplete profile - go to create profile
-            console.log(
-              "No complete profile found, redirecting to create profile",
-            );
             navigate("/create-profile");
           }
         } catch (err) {
-          // Error fetching profile (network issues, canister errors, etc.)
-          // Redirect to landing page instead of create-profile to avoid confusion
-          console.error(
-            "Error fetching profile, redirecting to landing page:",
-            err,
-          );
-
           // Only redirect if we're not already on landing page
           if (location.pathname !== "/") {
             navigate("/");
@@ -102,8 +79,6 @@ const LandingPage = () => {
           setIsCheckingProfile(false);
         }
       } else if (isAuthenticated && identity && !firebaseUser) {
-        // IC auth ready but Firebase not ready yet - keep loading
-        console.log("Waiting for Firebase auth...");
         setIsCheckingProfile(true);
       } else {
         // Not authenticated - done checking

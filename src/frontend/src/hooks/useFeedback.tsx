@@ -30,7 +30,6 @@ export const useFeedback = () => {
       await feedbackCanisterService.submitFeedback(rating, comment);
       return true;
     } catch (err) {
-      console.error("Failed to submit feedback:", err);
       setError(
         err instanceof Error ? err.message : "Failed to submit feedback",
       );
@@ -59,7 +58,6 @@ export const useFeedback = () => {
       await feedbackCanisterService.submitReport(description, attachments);
       return true;
     } catch (err) {
-      console.error("Failed to submit report:", err);
       setError(err instanceof Error ? err.message : "Failed to submit report");
       return false;
     } finally {
@@ -78,7 +76,6 @@ export const useFeedback = () => {
     try {
       return await feedbackCanisterService.getMyFeedback();
     } catch (err) {
-      console.error("Failed to get my feedback:", err);
       setError(err instanceof Error ? err.message : "Failed to get feedback");
       return [];
     }
@@ -95,7 +92,6 @@ export const useFeedback = () => {
     try {
       return await feedbackCanisterService.getMyReports();
     } catch (err) {
-      console.error("Failed to get my reports:", err);
       setError(err instanceof Error ? err.message : "Failed to get reports");
       return [];
     }
@@ -108,7 +104,6 @@ export const useFeedback = () => {
     try {
       return await feedbackCanisterService.getFeedbackStats();
     } catch (err) {
-      console.error("Failed to get feedback stats:", err);
       setError(
         err instanceof Error ? err.message : "Failed to get feedback stats",
       );
@@ -123,7 +118,6 @@ export const useFeedback = () => {
     try {
       return await feedbackCanisterService.getReportStats();
     } catch (err) {
-      console.error("Failed to get report stats:", err);
       setError(
         err instanceof Error ? err.message : "Failed to get report stats",
       );

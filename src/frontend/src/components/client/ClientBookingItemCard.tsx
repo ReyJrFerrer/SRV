@@ -28,7 +28,6 @@ interface ClientBookingItemCardProps {
   averageRating?: number | null;
   reviewCount?: number | null;
   reviews?: any[];
-  loadingStats?: boolean;
   reputation: any;
 }
 
@@ -37,7 +36,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   onCancelClick,
   averageRating,
   reviewCount,
-  loadingStats,
   reputation,
 }) => {
   const navigate = useNavigate();
@@ -80,7 +78,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
           estimatedCommission: validation.estimatedCommission,
         });
       } catch (error) {
-        console.error("Error checking commission:", error);
         setCommissionValidation({ estimatedCommission: 0 });
       }
     };
@@ -151,6 +148,17 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     (typeof booking.location === "string"
       ? booking.location
       : "Location not specified");
+
+  const providerId =
+    booking?.providerProfile?.id?.toString() || booking?.providerId?.toString();
+
+  // Determine if provider data has been loaded
+  const hasProviderData =
+    averageRating !== undefined &&
+    averageRating !== null &&
+    reviewCount !== undefined &&
+    reviewCount !== null &&
+    reputation !== null;
 
   // --- Format date function ---
   const formatDate = (date: Date | string | number) => {
@@ -400,8 +408,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   const reviewButtonContent = getReviewButtonContent();
 
-  console.log(booking);
-
   // --- Render: Booking Card Layout ---
   return (
     <Link
@@ -448,34 +454,42 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               Provided by: {providerName}
             </p>
             {/* Reputation + Rating (real frontend display using shared components) */}
-            <div className="left-0 flex flex-col items-start lg:flex-row">
-              <div className="flex-shrink-0">
-                <ReputationScore reputation={reputation} />
-              </div>
+            {providerId && (
+              <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
+                {hasProviderData ? (
+                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    <div className="flex-shrink-0">
+                      <ReputationScore reputation={reputation} />
+                    </div>
 
-              <div className="flex items-center gap-2 rounded-full py-1 pr-3 text-sm font-semibold text-gray-800">
-                {loadingStats ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600" />
-                    <span className="text-xs text-gray-500">Loading...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <StarRatingDisplay rating={averageRating ?? 0} />
-                      <span className="ml-1 font-bold">
-                        {averageRating != null
-                          ? (averageRating as number).toFixed(1)
-                          : "N/A"}
+                    <div className="flex items-center gap-2 rounded-full py-1 pr-3 text-sm font-semibold text-gray-800">
+                      <div className="flex items-center gap-2">
+                        <StarRatingDisplay rating={averageRating ?? 0} />
+                        <span className="ml-1 font-bold">
+                          {(averageRating as number).toFixed(1)}
+                        </span>
+                      </div>
+                      <span className="ml-2 text-xs text-gray-500">
+                        ({reviewCount})
                       </span>
                     </div>
-                    <span className="ml-2 text-xs text-gray-500">
-                      ({reviewCount ?? 0})
-                    </span>
-                  </>
+                  </div>
+                ) : (
+                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                    {/* Skeleton for Reputation Score */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-pulse rounded-full bg-gray-200"></div>
+                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                    {/* Skeleton for Rating Summary */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
+                      <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
+            )}
             <p className="mt-1 text-xs text-gray-500">
               Contact: {booking.providerProfile?.phone}
             </p>

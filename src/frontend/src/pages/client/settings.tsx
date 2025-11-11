@@ -26,7 +26,6 @@ const SettingsPage: React.FC = () => {
     loading: profileLoading,
     switchRole,
     profileImageUrl,
-    refetchImage,
   } = useUserProfile();
 
   useEffect(() => {
@@ -52,21 +51,18 @@ const SettingsPage: React.FC = () => {
   ];
 
   const [switching, setSwitching] = React.useState(false);
+  const [pwaOpen, setPwaOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
   const handleSwitchToProvider = async () => {
     setSwitching(true);
     try {
-      const success = await switchRole();
-      if (success) {
-        navigate("/provider");
-      }
+      await switchRole();
+      navigate("/provider/settings");
     } catch (error) {
-      //console.error("Failed to switch role:", error);
     } finally {
       setSwitching(false);
     }
   };
-
-  refetchImage();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-24">
@@ -137,23 +133,53 @@ const SettingsPage: React.FC = () => {
                 <h2 className="mb-4 text-lg font-semibold text-blue-900">
                   App Settings
                 </h2>
-                {/* SECTION: PWA install */}
+                {/* SECTION: PWA install (collapsible) */}
                 <div className="mb-6">
-                  <div className="mb-3 flex items-center">
-                    <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">Install App</h3>
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
+                      <h3 className="font-medium text-blue-900">Install App</h3>
+                    </div>
+                    <button
+                      onClick={() => setPwaOpen((v) => !v)}
+                      aria-expanded={pwaOpen}
+                      className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+                    >
+                      <span className="mr-2 text-xs text-gray-500">
+                        {pwaOpen ? "Hide" : "Show"}
+                      </span>
+                      <ChevronRightIcon
+                        className={`h-5 w-5 transform transition-transform ${pwaOpen ? "rotate-90" : ""}`}
+                      />
+                    </button>
                   </div>
-                  <PWAInstallDetailed />
+
+                  {pwaOpen && <PWAInstallDetailed />}
                 </div>
-                {/* SECTION: Notification settings */}
+                {/* SECTION: Notification settings (collapsible) */}
                 <div>
-                  <div className="mb-3 flex items-center">
-                    <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
-                    <h3 className="font-medium text-blue-900">
-                      Push Notifications
-                    </h3>
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
+                      <h3 className="font-medium text-blue-900">
+                        Push Notifications
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setNotifOpen((v) => !v)}
+                      aria-expanded={notifOpen}
+                      className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+                    >
+                      <span className="mr-2 text-xs text-gray-500">
+                        {notifOpen ? "Hide" : "Show"}
+                      </span>
+                      <ChevronRightIcon
+                        className={`h-5 w-5 transform transition-transform ${notifOpen ? "rotate-90" : ""}`}
+                      />
+                    </button>
                   </div>
-                  <NotificationSettingsDetailed />
+
+                  {notifOpen && <NotificationSettingsDetailed />}
                 </div>
               </div>
             </div>

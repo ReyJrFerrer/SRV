@@ -1,7 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
-// Import reputation bridge for processing reviews with AI sentiment analysis
 const {
   processReviewForReputationInternal,
 } = require("./reputation");
@@ -545,8 +544,6 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
   // Use authenticated user's ID if no userId provided
   const targetUserId = userId || authInfo.uid;
 
-  // Reviews are public (as per firestore.rules), so any authenticated user can view them
-  // Only restriction: admins can request hidden reviews
 
   // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;

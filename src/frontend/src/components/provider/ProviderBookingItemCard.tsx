@@ -158,8 +158,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const status = booking.status;
   const notes = booking.notes;
 
-  console.log("From Provider Booking Item Card", booking);
-
   // --- Date range formatting helper ---
   const formatDateRange = (
     requestedDate: Date | string | number,
@@ -433,7 +431,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <p className="flex items-center">
                     <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                     <span className="font-bold text-gray-600">
-                      Price: ₱{price.toFixed(2)}
+                      Price: <strong>₱{price.toFixed(2)}</strong>
                     </span>
                   </p>
                 )}
@@ -441,7 +439,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
                   <p className="flex items-center">
                     <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                     <span className="font-bold text-gray-600">
-                      Client's amount to pay: ₱{amountToPay.toFixed(2)}
+                      Client's amount to pay:{" "}
+                      <strong>₱{amountToPay.toFixed(2)}</strong>
                     </span>
                   </p>
                 )}
@@ -452,10 +451,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             <p className="flex items-center">
               <CurrencyDollarIcon className="mr-1.5 h-4 w-4 text-gray-400" />
               <span className="font-bold text-gray-600">
-                Payment:{" "}
-                {booking.paymentMethod === "CashOnHand"
-                  ? "Cash on Hand"
-                  : booking.paymentMethod}
+                Payment Method:
+                <strong>
+                  {" "}
+                  {booking.paymentMethod === "CashOnHand"
+                    ? "Cash on Hand"
+                    : booking.paymentMethod}
+                </strong>
               </span>
             </p>
 

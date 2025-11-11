@@ -67,10 +67,8 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [service, setService] = useState<EnhancedService | null>(null);
 
   // Load service images using the useServiceImages hook
-  const { images: serviceImages } = useServiceImages(
-    service?.id,
-    service?.imageUrls || [],
-  );
+  const { images: serviceImages, isLoading: isLoadingServiceImages } =
+    useServiceImages(service?.id, service?.imageUrls || []);
 
   // Image upload hook
   const { uploadImages, removeImage } = useServiceImageUpload(service?.id);
@@ -395,7 +393,6 @@ const ProviderServiceDetailPage: React.FC = () => {
       setEditTitleCategory(false);
       toast.success("Service title and category updated!");
     } catch (err) {
-      console.error("Error saving title/category:", err);
       const errorMessage =
         err instanceof Error ? err.message : "An unknown error occurred.";
       toast.error(`Failed to update: ${errorMessage}`);
@@ -516,9 +513,9 @@ const ProviderServiceDetailPage: React.FC = () => {
     const files = Array.from(event.target.files);
 
     // Check if adding these files would exceed the 5 image limit
-    if (tempDisplayImages.length + files.length > 5) {
+    if (tempDisplayImages.length + files.length > 10) {
       setUploadError(
-        `Cannot upload ${files.length} image(s). Maximum 5 images allowed. You currently have ${tempDisplayImages.length} image(s).`,
+        `Cannot upload ${files.length} image(s). Maximum 10 images allowed. You currently have ${tempDisplayImages.length} image(s).`,
       );
       event.target.value = "";
       return;
@@ -627,8 +624,14 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingUploads([]);
       setPendingRemovals([]);
       setTempDisplayImages([]);
+
+      // Exit edit mode
+      setEditImages(false);
+
       toast.success("Service images updated!");
-      window.location.reload();
+
+      // Trigger a refresh of service data to get updated image URLs
+      setRetryCount((prev) => prev + 1);
     } catch (error) {
       setUploadError(
         error instanceof Error
@@ -841,8 +844,14 @@ const ProviderServiceDetailPage: React.FC = () => {
       setPendingCertificateUploads([]);
       setPendingCertificateRemovals([]);
       setTempDisplayCertificates([]);
+
+      // Exit edit mode
+      setEditCertifications(false);
+
       toast.success("Certifications updated!");
-      window.location.reload();
+
+      // Trigger a refresh of service data to get updated certificate URLs
+      setRetryCount((prev) => prev + 1);
     } catch (error) {
       setCertificateUploadError(
         error instanceof Error
@@ -1100,6 +1109,7 @@ const ProviderServiceDetailPage: React.FC = () => {
           onBack={() => navigate("/provider/home")}
           service={service}
           serviceImages={serviceImages}
+          isLoadingServiceImages={isLoadingServiceImages}
           hasActiveBookings={hasActiveBookings}
           activeBookingsCount={activeBookingsCount}
           editTitleCategory={editTitleCategory}

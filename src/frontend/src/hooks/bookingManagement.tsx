@@ -183,7 +183,6 @@ export const useBookingManagement = (): BookingManagementHook => {
 
   // Error handling functions
   const handleBookingError = useCallback((error: any, operation: string) => {
-    //console.error(`Error in ${operation}:`, error);
     const errorMessage = error?.message || `Failed to ${operation}`;
     setError(errorMessage);
   }, []);
@@ -323,10 +322,6 @@ export const useBookingManagement = (): BookingManagementHook => {
           return null;
         }
       } catch (error) {
-        // //console.error(
-        //   `❌ Error loading service details for ${serviceId}:`,
-        //   error,
-        // );
         return null;
       } finally {
         setLoadingState("services", false);
@@ -354,10 +349,6 @@ export const useBookingManagement = (): BookingManagementHook => {
           return null;
         }
       } catch (error) {
-        // //console.error(
-        //   `❌ Error loading package details for ${packageId}:`,
-        //   error,
-        // );
         return null;
       } finally {
         setLoadingState("packages", false);
@@ -386,10 +377,6 @@ export const useBookingManagement = (): BookingManagementHook => {
           return null;
         }
       } catch (error) {
-        // //console.error(
-        //   `❌ Error loading provider profile for ${providerId}:`,
-        //   error,
-        // );
         return null;
       } finally {
         setLoadingState("providers", false);
@@ -462,8 +449,6 @@ export const useBookingManagement = (): BookingManagementHook => {
 
         return enhancedBooking;
       } catch (error) {
-        //console.error(`❌ Error enriching booking ${booking.id}:`, error);
-
         // Return booking with minimal enhancement but proper packageName handling
         return {
           ...booking,
@@ -750,7 +735,6 @@ export const useBookingManagement = (): BookingManagementHook => {
 
         return null;
       } catch (error) {
-        console.error(`Error fetching booking ${bookingId}:`, error);
         return null;
       }
     },
@@ -821,7 +805,6 @@ export const useBookingManagement = (): BookingManagementHook => {
           await refreshBookings();
           break;
         default:
-        //console.warn(`Unknown operation to retry: ${operation}`);
       }
     },
     [clearError, loadUserBookings, loadUserProfile, refreshBookings],
@@ -857,7 +840,6 @@ export const useBookingManagement = (): BookingManagementHook => {
         setUserBookings(enrichedBookings);
         setLoadingState("bookings", false);
       } catch (error) {
-        console.error("Error enriching client bookings:", error);
         handleBookingError(error, "enrich client bookings");
         setLoadingState("bookings", false);
       }

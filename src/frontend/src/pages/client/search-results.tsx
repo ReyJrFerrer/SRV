@@ -10,7 +10,6 @@ import ServiceListItem from "../../components/client/home page/ServiceListingCar
 import BottomNavigation from "../../components/client/NavigationBar";
 import SearchBar from "../../components/client/SearchBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
-import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import {
   useAllServicesWithProviders,
   EnrichedService,
@@ -124,6 +123,14 @@ const SearchResultsPage: React.FC = () => {
     }
   };
 
+  // Create service data for ServiceListItem
+  const createServiceData = (service: EnrichedService) => ({
+    isVerified: false,
+    averageRating: service.rating?.average ?? 0,
+    totalReviews: service.rating?.count ?? 0,
+    mediaUrls: service.media || [],
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="sticky top-0 z-40 bg-white px-4 py-3 shadow-sm">
@@ -159,11 +166,6 @@ const SearchResultsPage: React.FC = () => {
       </header>
 
       <main className="flex-grow overflow-y-auto p-2 pb-20 sm:p-4">
-        {loading && (
-          <div className="py-2">
-            <ServiceGridSkeleton count={8} />
-          </div>
-        )}
         {error && (
           <div className="py-16 text-center">
             <p className="text-lg text-red-500">
@@ -264,7 +266,11 @@ const SearchResultsPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
             {sortedAndFilteredResults.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                <ServiceListItem service={service} retainMobileLayout={true} />
+                <ServiceListItem
+                  service={service}
+                  serviceData={createServiceData(service)}
+                  retainMobileLayout={true}
+                />
               </Appear>
             ))}
           </div>

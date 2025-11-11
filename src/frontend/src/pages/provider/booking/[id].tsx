@@ -21,6 +21,7 @@ import CommissionInfo from "../../../components/provider/booking-details/Commiss
 import DeclineConfirmDialog from "../../../components/provider/booking-details/DeclineConfirmDialog";
 import ActionButtons from "../../../components/provider/booking-details/ActionButtons";
 import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
+import BookingDetailsSkeleton from "../../../components/provider/booking-details/BookingDetailsSkeleton";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";
 import { toast } from "sonner";
 
@@ -140,9 +141,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         ]);
         setClientReviews(reviews);
         setClientReputation(reputation);
-      } catch (error) {
-        console.error("Failed to fetch client data:", error);
-      }
+      } catch (error) {}
     };
 
     fetchClientData();
@@ -172,7 +171,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
           loading: false,
         });
       } catch (error) {
-        //console.error("Error validating commission:", error);
         setCommissionValidation({
           estimatedCommission: 0,
           hasInsufficientBalance: true,
@@ -282,15 +280,12 @@ const ProviderBookingDetailsPage: React.FC = () => {
       }
       setCancellingBooking(null);
     } catch (error) {
-      console.error("Error cancelling booking:", error);
       toast.error("Failed to cancel booking. Please try again.");
       throw error;
     } finally {
       setIsCancelling(false);
     }
   };
-
-  console.log("From booking details page", specificBooking);
 
   // Updated: Navigate to directions page if location was detected automatically, otherwise start directly
   const handleStartService = useCallback(async () => {
@@ -621,8 +616,11 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const isLoading = hookLoading || localLoading;
   const displayError = localError || hookError;
 
-  // Error state
-  if (displayError && !specificBooking) {
+  // Only show error after loading is complete to prevent flash
+  const shouldShowError = !isLoading && displayError && !specificBooking;
+
+  // Error state (only after loading completes)
+  if (shouldShowError) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50">
         <div className="text-center">
@@ -650,23 +648,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // No booking found (after loading completed)
-  if (!specificBooking && !isLoading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-yellow-50 p-4">
-        <h1 className="mb-4 text-xl font-semibold text-red-600">
-          Booking Not Found
-        </h1>
-        <Link
-          to="/provider/booking"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Back to My Bookings
-        </Link>
       </div>
     );
   }
@@ -775,12 +756,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       <main className="container mx-auto space-y-6 p-4 sm:p-6">
         {isLoading ? (
-          <div className="flex min-h-[calc(100vh-200px)] items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-              <p className="text-gray-600">Loading booking details...</p>
-            </div>
-          </div>
+          <BookingDetailsSkeleton />
         ) : (
           <>
             {/* Side by side layout for provider and service details */}

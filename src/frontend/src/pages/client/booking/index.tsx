@@ -303,9 +303,7 @@ const MyBookingsPage: React.FC = () => {
                     completedBookings: rep.completedBookings,
                   };
                 }
-              } catch (err) {
-                console.error("Error fetching reputation:", err);
-              }
+              } catch (err) {}
             }
 
             mapCopy[serviceId] = {
@@ -440,7 +438,12 @@ const MyBookingsPage: React.FC = () => {
           className="container mx-auto flex-grow p-3 pb-[120px] sm:p-4 md:pb-[120px]"
           style={{ minHeight: "calc(100vh - 180px)" }}
         >
-          {bookingManagement.loading ? (
+          {bookingManagement.loading ||
+          !bookingManagement.bookings ||
+          (Array.isArray(bookingManagement.bookings) &&
+            bookingManagement.bookings.length === 0 &&
+            !bookingManagement.error &&
+            filteredBookings.length === 0) ? (
             <BookingListSkeleton count={6} />
           ) : bookingManagement.error ? (
             <div className="mt-4 rounded-2xl border border-red-100 bg-white py-16 text-center shadow-md">
@@ -486,9 +489,6 @@ const MyBookingsPage: React.FC = () => {
                           reviews={
                             serviceStatsMap[booking.serviceId || ""]?.reviews
                           }
-                          loadingStats={
-                            serviceStatsMap[booking.serviceId || ""]?.loading
-                          }
                           reputation={
                             serviceStatsMap[booking.serviceId || ""]?.reputation
                           }
@@ -526,9 +526,6 @@ const MyBookingsPage: React.FC = () => {
                           }
                           reviews={
                             serviceStatsMap[booking.serviceId || ""]?.reviews
-                          }
-                          loadingStats={
-                            serviceStatsMap[booking.serviceId || ""]?.loading
                           }
                           reputation={
                             serviceStatsMap[booking.serviceId || ""]?.reputation

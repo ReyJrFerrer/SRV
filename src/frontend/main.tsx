@@ -143,8 +143,6 @@ initVersionChecker();
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 window.OneSignalDeferred.push(async function (OneSignal) {
   try {
-    console.log("🔧 Initializing OneSignal...");
-
     await OneSignal.init({
       appId: "6ca84c57-1e6b-466d-b792-64df97dea60b",
       safari_web_id: "web.onesignal.auto.514888af-c9d7-482b-90d4-9de98d872128",
@@ -157,18 +155,12 @@ window.OneSignalDeferred.push(async function (OneSignal) {
       serviceWorkerPath: "OneSignalSDKWorker.js",
     });
 
-    console.log("✅ OneSignal initialized");
-
     // Wait a bit to ensure OneSignal is fully ready
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Setup our service wrapper after OneSignal is fully initialized
     oneSignalService.setupAfterInit();
-
-    console.log("✅ OneSignal service wrapper ready");
-  } catch (error) {
-    console.error("❌ Failed to initialize OneSignal:", error);
-  }
+  } catch (error) {}
 });
 
 const ConversationPage = lazy(

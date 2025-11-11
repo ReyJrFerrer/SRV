@@ -55,18 +55,11 @@ const PaymentPendingPage: React.FC = () => {
     const checkPaymentStatus = async () => {
       if (state?.invoiceId && paymentStatus === "pending") {
         try {
-          console.log(`🔍 Checking invoice status for: ${state.invoiceId}`);
           const statusResponse = await checkInvoiceStatus(state.invoiceId);
 
           if (!statusResponse.success) {
-            console.error(
-              "Failed to check invoice status:",
-              statusResponse.error,
-            );
             return;
           }
-
-          console.log(`📋 Invoice status: ${statusResponse.status}`);
 
           if (
             statusResponse.status === "PAID" ||
@@ -81,9 +74,7 @@ const PaymentPendingPage: React.FC = () => {
             setPaymentStatus("failed");
             setStatusMessage("Payment expired. Please create a new booking.");
           }
-        } catch (error) {
-          console.error("Error checking payment status:", error);
-        }
+        } catch (error) {}
       }
     };
 
@@ -105,7 +96,6 @@ const PaymentPendingPage: React.FC = () => {
       paymentStatus === "creating_booking" ||
       paymentStatus === "booking_success"
     ) {
-      console.log("Booking creation already in progress or completed");
       return;
     }
 
@@ -117,8 +107,6 @@ const PaymentPendingPage: React.FC = () => {
       if (!state?.invoiceId) {
         throw new Error("Invoice ID not found. Please try again.");
       }
-
-      console.log(`🔍 Fetching payment data for invoice: ${state.invoiceId}`);
       const paymentDataResponse = await getPaymentData(state.invoiceId);
 
       if (!paymentDataResponse.success || !paymentDataResponse.bookingData) {
@@ -126,7 +114,6 @@ const PaymentPendingPage: React.FC = () => {
       }
 
       const { bookingData } = paymentDataResponse;
-      console.log("✅ Retrieved booking data:", bookingData);
 
       const bookingRequest: BookingRequest = {
         serviceId: bookingData.serviceId,
@@ -157,7 +144,6 @@ const PaymentPendingPage: React.FC = () => {
       if (booking) {
         setPaymentStatus("booking_success");
         setStatusMessage("Booking created successfully!");
-        console.log(booking);
 
         setTimeout(() => {
           navigate("/client/booking/confirmation", {
@@ -185,7 +171,6 @@ const PaymentPendingPage: React.FC = () => {
         throw new Error("Failed to create booking. Please contact support.");
       }
     } catch (error) {
-      console.error("Error creating booking:", error);
       setPaymentStatus("booking_failed");
       setStatusMessage("Payment successful, but booking creation failed.");
       setBookingCreationError(
