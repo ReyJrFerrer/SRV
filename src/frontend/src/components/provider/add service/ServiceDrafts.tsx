@@ -324,7 +324,7 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
 
       {/* Draft available banner (uses draftAvailable state) */}
       {draftAvailable && !showRestorePrompt && (
-        <div className="fixed top-16 right-0 left-0 z-40 flex justify-center">
+        <div className="fixed left-0 right-0 top-16 z-40 flex justify-center">
           <div className="mx-4 flex flex-col items-center gap-4 rounded-md border border-yellow-200 bg-yellow-50 p-3">
             <div className="flex items-start gap-3">
               <ExclamationCircleIcon className="h-6 w-6 text-yellow-600" />
@@ -335,13 +335,13 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
             <div className="flex w-full justify-center gap-2">
               <button
                 onClick={handleDiscardDraft}
-                className="rounded-md border flex-1 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+                className="flex-1 rounded-md border px-3 py-1 text-sm text-red-600 hover:bg-red-50"
               >
                 Discard
               </button>
               <button
                 onClick={handleRestoreDraft}
-                className="rounded-md bg-yellow-600 flex-1 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-700"
+                className="flex-1 rounded-md bg-yellow-600 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-700"
               >
                 Restore
               </button>

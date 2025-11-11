@@ -155,12 +155,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             {isActive ? (
               <>
                 <LockClosedIcon className="h-5 w-5" />
-                <h5 className="lg:text-lg text-sm">Deactivate</h5>
+                <h5 className="text-sm lg:text-lg">Deactivate</h5>
               </>
             ) : (
               <>
                 <LockOpenIcon className="h-5 w-5" />
-                <h5 className="lg:text-lg text-sm">Activate</h5>
+                <h5 className="text-sm lg:text-lg">Activate</h5>
               </>
             )}
           </button>
@@ -190,7 +190,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             }
           >
             <TrashIcon className="h-5 w-5" />
-            <h5 className="lg:text-lg text-sm">Delete</h5>
+            <h5 className="text-sm lg:text-lg">Delete</h5>
           </button>
         </Tooltip>
       </div>
