@@ -154,7 +154,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 </span>
               </div>
             </div>
-            {/* Profile Button (replaces notifications) */}
+            {/* Profile Button */}
             {isAuthenticated && (
               <button
                 onClick={handleProfileClick}
