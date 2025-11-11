@@ -332,6 +332,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // contact removed; ActionButtons no longer supports contact action
 
+  // --- Report handler ---
+  const handleReport = () => {
+    // Navigate to report page or open report modal
+    navigate(`/provider/report-booking/${booking.id}`);
+  };
+
   // --- Booking state checks for button logic ---
   const isInProgress = status === "InProgress";
 
@@ -492,6 +498,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             onCancel={() => onCancelClick(booking)}
             onStart={handleStartService}
             onComplete={handleMarkAsCompleted}
+            onReport={handleReport}
             canStartServiceNow={() => !isScheduledForFuture}
             isBookingActionInProgress={isBookingActionInProgress}
             commissionValidation={commissionValidation}
