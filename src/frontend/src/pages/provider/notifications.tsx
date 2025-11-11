@@ -81,13 +81,13 @@ const NotificationsPageSP = () => {
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
   // Tabs for categorizing notifications
-  type NotificationTab = "All" | "Bookings" | "Chat" | "Ratings" | "Admin";
+  type NotificationTab = "All" | "Bookings" | "Ratings" | "System" | "Admin";
 
   const TAB_ITEMS: NotificationTab[] = [
     "All",
     "Bookings",
-    "Chat",
     "Ratings",
+    "System",
     "Admin",
   ];
 
@@ -140,6 +140,18 @@ const NotificationsPageSP = () => {
     );
   };
 
+  // Determine if a notification should be displayed on the Notifications page.
+  // Hide chat messages and booking request/accept notifications per UX rules.
+  const isVisibleOnPage = (n: ProviderNotification) => {
+    const hidden = new Set([
+      "chat_message",
+      "provider_message",
+      "new_booking_request",
+      "booking_accepted",
+    ]);
+    return !hidden.has(n.type);
+  };
+
   // Helper to map notification type to a UI category
   const categoryOfType = (type: string) => {
     const bookingTypes = [
@@ -151,22 +163,22 @@ const NotificationsPageSP = () => {
       "service_completion_reminder",
       "service_reminder",
     ];
-    const adminTypes = [
+    const systemTypes = [
       "system_announcement",
+      "promo_offer",
       "admin_message",
-      "admin_announcement",
       "platform_update",
+      "admin_announcement",
     ];
     if (bookingTypes.includes(type)) return "Bookings";
-    if (type === "chat_message") return "Chat";
     if (type === "review_request") return "Ratings";
-    if (adminTypes.includes(type)) return "Admin";
+    if (systemTypes.includes(type)) return "System";
     return "All";
   };
 
   const getCountForTab = (tab: NotificationTab) => {
     const visible = stableNotifications.filter(
-      (n) => !deletedIds.includes(n.id),
+      (n) => !deletedIds.includes(n.id) && isVisibleOnPage(n),
     );
     if (tab === "All") return visible.length;
     return visible.filter((n) => categoryOfType(n.type) === tab).length;
@@ -242,13 +254,10 @@ const NotificationsPageSP = () => {
   };
 
   const { unread, read } = useMemo(() => {
-    // First filter out locally deleted items
-    const visible = stableNotifications
-      .filter((n) => !deletedIds.includes(n.id))
-      // Hide chat messages and new booking requests from the Notifications page
-      .filter(
-        (n) => n.type !== "chat_message" && n.type !== "new_booking_request",
-      );
+    // First filter out locally deleted items and types we hide from this page
+    const visible = stableNotifications.filter(
+      (n) => !deletedIds.includes(n.id) && isVisibleOnPage(n),
+    );
 
     // Then filter by active tab (category) if not 'All'
     const byTab =
