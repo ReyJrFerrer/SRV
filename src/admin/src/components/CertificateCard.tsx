@@ -29,6 +29,9 @@ interface CertificateCardProps {
     certificateIndex: number,
     certificateUrl: string,
   ) => void;
+
+  isApproving?: boolean;
+  isRejecting?: boolean;
 }
 
 export const CertificateCard: React.FC<CertificateCardProps> = ({

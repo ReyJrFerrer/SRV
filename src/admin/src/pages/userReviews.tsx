@@ -372,7 +372,6 @@ const UserReviewsPage: React.FC = () => {
                       isDeleting={deletingReviewId === rev.id}
                       bulkActionLoading={bulkActionLoading}
                       onSelect={toggleSelectReview}
-                      onDelete={handleDeleteReview}
                       onRestore={handleRestoreReview}
                       onShowDeleteConfirm={setShowDeleteConfirm}
                     />
