@@ -141,12 +141,13 @@ const NotificationsPageSP = () => {
   };
 
   // Determine if a notification should be displayed on the Notifications page.
-  // Hide chat messages and booking request/accept notifications per UX rules.
+  // Hide chat messages, but include new booking requests per new UX.
   const isVisibleOnPage = (n: ProviderNotification) => {
     const hidden = new Set([
       "chat_message",
       "provider_message",
-      "new_booking_request",
+      // Include new_booking_request so providers see them in Notifications
+      // booking_accepted is client-focused; keep hidden if present
       "booking_accepted",
     ]);
     return !hidden.has(n.type);
@@ -487,8 +488,14 @@ const NotificationsPageSP = () => {
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (
                 <section>
-                  <h2 className="border-b bg-gradient-to-r from-blue-500 to-blue-400 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-sm">
-                    New
+                  <h2 className="flex items-center justify-between border-b bg-gradient-to-r from-blue-500 to-blue-400 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-sm">
+                    <span>New</span>
+                    <span
+                      aria-label={`${unread.length} new notifications`}
+                      className="ml-2 inline-flex min-w-[20px] items-center justify-center rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white"
+                    >
+                      {unread.length > 99 ? "99+" : unread.length}
+                    </span>
                   </h2>
                   <div className="divide-y divide-blue-100">
                     {unread.map((notif, idx) => (

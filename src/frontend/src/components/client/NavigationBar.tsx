@@ -231,13 +231,13 @@ const BottomNavigation: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    {item.count > 0 &&
-                      (item.label === "Booking" ? (
+                    {item.count > 0 && (
+                      item.label === "Booking" || item.label === "Notifications" ? (
                         <span
                           aria-label={
                             item.count > 99
-                              ? "99+ new accepted bookings"
-                              : `${item.count} new accepted bookings`
+                              ? `99+ new ${item.label.toLowerCase()}`
+                              : `${item.count} new ${item.label.toLowerCase()}`
                           }
                           className="absolute right-1 top-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
                         >
@@ -245,7 +245,8 @@ const BottomNavigation: React.FC = () => {
                         </span>
                       ) : (
                         <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
-                      ))}
+                      )
+                    )}
                   </Link>
                 );
               })}

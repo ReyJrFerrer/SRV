@@ -32,15 +32,10 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     [notifications],
   );
 
-  // Notifications badge should exclude chat and new booking request notifications
+  // Notifications badge should exclude chat messages only (include new booking requests now)
   const filteredNotificationUnreadCount = React.useMemo(
     () =>
-      notifications.filter(
-        (n) =>
-          !n.read &&
-          n.type !== "chat_message" &&
-          n.type !== "new_booking_request",
-      ).length,
+      notifications.filter((n) => !n.read && n.type !== "chat_message").length,
     [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
