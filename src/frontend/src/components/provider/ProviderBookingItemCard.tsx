@@ -490,8 +490,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             onStart={handleStartService}
             onComplete={handleMarkAsCompleted}
             onReport={() =>
-                navigate(`/provider/report`, { state: { bookingId: booking.id } })
-              }
+              navigate(`/provider/report`, { state: { bookingId: booking.id } })
+            }
             canStartServiceNow={() => !isScheduledForFuture}
             isBookingActionInProgress={isBookingActionInProgress}
             commissionValidation={commissionValidation}
