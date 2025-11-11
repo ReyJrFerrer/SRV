@@ -843,28 +843,26 @@ const ProviderBookingDetailsPage: React.FC = () => {
             <BookingNotes notes={(specificBooking as any)?.notes} />
 
             {/* Action Buttons */}
-            {specificBooking &&
-              (specificBooking?.status === "Completed" ||
-                specificBooking?.status === "Cancelled") && (
-                <ActionButtons
-                  booking={specificBooking}
-                  onChat={handleChatClient}
-                  onAccept={handleAcceptBooking}
-                  onDecline={handleDeclineBooking}
-                  onCancel={() => setCancellingBooking(specificBooking)}
-                  onStart={handleStartService}
-                  onComplete={handleCompleteService}
-                  canStartServiceNow={canStartServiceNow}
-                  isBookingActionInProgress={isBookingActionInProgress}
-                  commissionValidation={commissionValidation}
-                  status={specificBooking.status}
-                  onReport={() =>
-                    navigate("/provider/report", {
-                      state: { bookingId: specificBooking.id },
-                    })
-                  }
-                />
-              )}
+            {specificBooking && (
+              <ActionButtons
+                booking={specificBooking}
+                onChat={handleChatClient}
+                onAccept={handleAcceptBooking}
+                onDecline={handleDeclineBooking}
+                onCancel={() => setCancellingBooking(specificBooking)}
+                onStart={handleStartService}
+                onComplete={handleCompleteService}
+                canStartServiceNow={canStartServiceNow}
+                isBookingActionInProgress={isBookingActionInProgress}
+                commissionValidation={commissionValidation}
+                status={specificBooking.status}
+                onReport={() =>
+                  navigate("/provider/report", {
+                    state: { bookingId: specificBooking.id },
+                  })
+                }
+              />
+            )}
           </>
         )}
       </main>

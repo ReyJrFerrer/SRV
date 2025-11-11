@@ -28,6 +28,7 @@ const ActiveServicePage: React.FC = () => {
     null,
   );
   const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
+  const [isCancelling, setIsCancelling] = useState<boolean>(false);
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
   }>({
@@ -125,6 +126,7 @@ const ActiveServicePage: React.FC = () => {
   // Special cancel: cancel booking (ticket is automatically created by cancelBooking)
   const handleCancelActiveService = async (reason: string) => {
     if (!booking) return;
+    setIsCancelling(true);
     try {
       // Cancel the booking - this automatically creates a ticket with structured data
       await bookingCanisterService.cancelBooking(booking.id, reason);
@@ -134,6 +136,8 @@ const ActiveServicePage: React.FC = () => {
     } catch (err) {
       toast.error("Unable to cancel active service. Please try again.");
       throw err;
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -369,6 +373,7 @@ const ActiveServicePage: React.FC = () => {
         textareaLabel="Reason for cancellation"
         submitText="Submit"
         cancelText="Back"
+        isSubmitting={isCancelling}
       />
       <BottomNavigation />
     </div>
