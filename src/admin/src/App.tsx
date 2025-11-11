@@ -183,7 +183,6 @@ const AdminSuspensionModal: React.FC<{
 };
 
 // Navigation guard that checks suspension via real-time listener
-// Note: Route-change checking removed - the real-time listener handles all suspension detection
 const NavigationGuard = () => {
   const { firebaseUser, isAuthenticated, isAdmin } = useAuth();
   const [isSuspended, setIsSuspended] = React.useState(false);
@@ -193,7 +192,6 @@ const NavigationGuard = () => {
   >(undefined);
 
   // Real-time listener for immediate suspension detection
-  // This catches suspension changes immediately, even between page navigations
   React.useEffect(() => {
     if (!firebaseUser || !isAuthenticated || !isAdmin) {
       return;
@@ -227,8 +225,6 @@ const NavigationGuard = () => {
                 } else {
                   setSuspensionEndDate(null);
                 }
-
-                // Show suspension modal - user is blocked but not automatically logged out
               }
             }
           },
@@ -256,7 +252,7 @@ const NavigationGuard = () => {
     };
   }, [firebaseUser, isAuthenticated, isAdmin]);
 
-  // Render modal if suspended - this blocks all content
+  // Render modal if suspended
   if (isSuspended || showSuspensionModal) {
     return (
       <div
@@ -279,7 +275,6 @@ const NavigationGuard = () => {
 };
 
 // Protected route component
-// Note: Suspension checking is now handled by NavigationGuard component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
 
@@ -294,8 +289,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!isAuthenticated || !isAdmin) {
     return <LoginPage />;
   }
-
-  // Suspension handling is done by NavigationGuard, so we just render children here
   return <>{children}</>;
 };
 

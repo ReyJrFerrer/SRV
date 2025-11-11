@@ -46,8 +46,6 @@ export const UserChatsPage: React.FC = () => {
     try {
       const data = await adminServiceCanister.getUserConversations(userId);
       setConversations(data || []);
-
-      // Load user names and images for other users in conversations
       const otherUserIds = new Set<string>();
       data?.forEach((conv: ConversationSummary) => {
         if (conv.conversation.clientId === userId) {
@@ -57,7 +55,6 @@ export const UserChatsPage: React.FC = () => {
         }
       });
 
-      // Fetch names and images for other users
       const namesMap = new Map<string, string>();
       const imagesMap = new Map<string, string>();
 
@@ -67,17 +64,13 @@ export const UserChatsPage: React.FC = () => {
             const profile = await authCanisterService.getProfile(otherUserId);
             if (profile) {
               namesMap.set(otherUserId, profile.name);
-              // Only set image URL if it exists (like client/provider does)
               if (profile.profilePicture && profile.profilePicture.imageUrl) {
                 imagesMap.set(otherUserId, profile.profilePicture.imageUrl);
               } else {
-                // If null, set to default (or don't set at all, will use default)
                 imagesMap.set(otherUserId, DEFAULT_USER_IMAGE);
               }
             }
-          } catch (e) {
-            // Ignore errors
-          }
+          } catch (e) {}
         }),
       );
 

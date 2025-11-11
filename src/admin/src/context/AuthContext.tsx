@@ -16,7 +16,6 @@ import {
 import { getFirebaseAuth, getFirebaseFirestore } from "../services/firebaseApp";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import { updateAdminActor } from "../services/adminServiceCanister";
-import { updateMediaActor } from "../services/mediaServiceCanister";
 import { createAdminProfile } from "../services/adminAuthHelper";
 import authCanisterService from "../../../frontend/src/services/authCanisterService";
 import { updateReputationActor } from "../../../frontend/src/services/reputationCanisterService";
@@ -37,7 +36,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const updateAllAdminActors = (identity: Identity | null) => {
   updateAdminActor(identity);
-  updateMediaActor();
   updateReputationActor(identity);
 };
 

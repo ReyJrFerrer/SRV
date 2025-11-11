@@ -65,7 +65,7 @@ export async function signInWithInternetIdentity(
   principal: string,
 ): Promise<SignInResult> {
   try {
-    console.log("🔗 [Admin] Calling Identity Bridge for principal:", principal);
+    console.log("[Admin] Calling Identity Bridge for principal:", principal);
 
     // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
@@ -77,7 +77,7 @@ export async function signInWithInternetIdentity(
     const result = await signInFn({ principal });
     const data = result.data;
 
-    console.log("✅ [Admin] Identity Bridge response:", {
+    console.log("[Admin] Identity Bridge response:", {
       hasProfile: data.hasProfile,
       needsProfile: data.needsProfile,
       message: data.message,
@@ -99,7 +99,7 @@ export async function signInWithInternetIdentity(
     await new Promise<void>((resolve) => {
       const unsubscribe = authInstance.onAuthStateChanged((user) => {
         if (user && user.uid === userCredential.user.uid) {
-          console.log("✅ [Admin] Firebase auth state confirmed:", user.uid);
+          console.log("[Admin] Firebase auth state confirmed:", user.uid);
           unsubscribe();
           resolve();
         }
@@ -112,7 +112,7 @@ export async function signInWithInternetIdentity(
       }, 2000);
     });
 
-    console.log("✅ [Admin] Firebase sign-in successful and auth state ready");
+    console.log("[Admin] Firebase sign-in successful and auth state ready");
 
     return {
       user: userCredential.user,
@@ -121,7 +121,7 @@ export async function signInWithInternetIdentity(
       message: data.message,
     };
   } catch (error) {
-    console.error("❌ [Admin] Error in signInWithInternetIdentity:", error);
+    console.error("[Admin] Error in signInWithInternetIdentity:", error);
     throw error;
   }
 }

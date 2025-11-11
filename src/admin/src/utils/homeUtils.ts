@@ -102,7 +102,7 @@ export const generateBookingsChartData = (
 
     let count = 0;
 
-    // Count bookings for this specific date
+    // Count bookings for specific date
     if (bookings && bookings.length > 0) {
       const dateStr = date.toISOString().slice(0, 10);
       count = bookings.filter((booking) => {
@@ -155,7 +155,7 @@ export const generateRevenueChartData = (
     let revenue = 0;
     let commission = 0;
 
-    // Calculate revenue for this specific date
+    // Calculate revenue for specific date
     if (bookings && bookings.length > 0) {
       const dateStr = date.toISOString().slice(0, 10);
 
@@ -189,7 +189,6 @@ export const generateRevenueChartData = (
           .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
       }
     } else if (i === 0) {
-      // If no bookings data, show totals on today
       revenue = systemStats?.totalRevenue || 0;
       commission = systemStats?.totalCommission || 0;
     }

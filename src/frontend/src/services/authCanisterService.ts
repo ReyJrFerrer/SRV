@@ -31,11 +31,6 @@ export interface FrontendProfile {
 }
 
 /**
- * Updates the auth actor with a new identity
- * This is kept for backward compatibility but doesn't create actors anymore
- * Firebase authentication is handled by the AuthContext
- */
-/**
  * Helper function to convert Firestore profile data to FrontendProfile
  * @param firestoreProfile Profile data from Firestore
  * @returns FrontendProfile object

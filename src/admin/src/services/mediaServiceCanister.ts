@@ -475,19 +475,6 @@ export const getStorageStats = async (): Promise<FrontendMediaStorageStats> => {
   }
 };
 
-// Reset functions for compatibility (no longer needed but kept for interface)
-export const resetMediaActor = () => {
-  // No-op: Firebase doesn't need actor reset
-};
-
-export const refreshMediaActor = async () => {
-  // No-op: Firebase doesn't need actor refresh
-};
-
-export const updateMediaActor = () => {
-  // No-op: Firebase doesn't need actor updates
-};
-
 // Default export of all service functions
 export const mediaServiceCanister = {
   getMediaItem,
@@ -499,9 +486,6 @@ export const mediaServiceCanister = {
   updateMediaMetadata,
   deleteMedia,
   getStorageStats,
-  updateMediaActor,
-  resetMediaActor,
-  refreshMediaActor,
   getImageDataUrl,
   extractMediaIdFromUrl,
   convertBlobToDataUrl,

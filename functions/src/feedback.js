@@ -479,7 +479,7 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
     console.log("New report object:", newReport);
 
     // Save report to Firestore
-    await db.collection("app_reports").doc(reportId).set(newReport);
+    await db.collection("reports").doc(reportId).set(newReport);
 
     return {success: true, data: newReport};
   } catch (error) {
@@ -506,7 +506,7 @@ exports.getAllReports = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const reportsSnap = await db.collection("app_reports")
+    const reportsSnap = await db.collection("reports")
       .orderBy("createdAt", "desc")
       .get();
 
@@ -540,7 +540,7 @@ exports.getMyReports = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const reportsSnap = await db.collection("app_reports")
+    const reportsSnap = await db.collection("reports")
       .where("userId", "==", authInfo.uid)
       .orderBy("createdAt", "desc")
       .get();
@@ -591,7 +591,7 @@ exports.updateReportStatus = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const reportRef = db.collection("app_reports").doc(reportId);
+    const reportRef = db.collection("reports").doc(reportId);
     const reportSnap = await reportRef.get();
 
     if (!reportSnap.exists) {
@@ -625,7 +625,7 @@ exports.getReportStats = functions.https.onCall(async (data, _context) => {
   console.log("Get Report Stats Payload", payload);
 
   try {
-    const reportsSnap = await db.collection("app_reports").get();
+    const reportsSnap = await db.collection("reports").get();
     const allReports = [];
     reportsSnap.forEach((doc) => {
       allReports.push(doc.data());
@@ -677,7 +677,7 @@ exports.getReportById = functions.https.onCall(async (data, _context) => {
   }
 
   try {
-    const reportSnap = await db.collection("app_reports").doc(reportId).get();
+    const reportSnap = await db.collection("reports").doc(reportId).get();
 
     if (!reportSnap.exists) {
       throw new functions.https.HttpsError("not-found", "Report not found");
@@ -711,7 +711,7 @@ exports.getRecentReports = functions.https.onCall(async (data, _context) => {
   }
 
   try {
-    const reportsSnap = await db.collection("app_reports")
+    const reportsSnap = await db.collection("reports")
       .orderBy("createdAt", "desc")
       .limit(limit)
       .get();

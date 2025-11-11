@@ -15,8 +15,7 @@ interface MediaGalleryProps {
   isLoading: boolean;
   emptyIcon?: React.ReactNode;
   emptyMessage?: string;
-  onItemClick: (url: string, type: "image" | "pdf") => void;
-  isPdfFile: (url: string) => boolean;
+  onItemClick: (url: string, type: "image") => void;
 }
 
 export const MediaGallery: React.FC<MediaGalleryProps> = ({
@@ -27,7 +26,6 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
   emptyIcon,
   emptyMessage = "No items available",
   onItemClick,
-  isPdfFile,
 }) => {
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
@@ -55,7 +53,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
                 key={index}
                 className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 shadow-sm focus:outline-none"
                 onClick={() => {
-                  onItemClick(url, isPdfFile(url) ? "pdf" : "image");
+                  onItemClick(url, "image");
                 }}
                 type="button"
                 tabIndex={0}
