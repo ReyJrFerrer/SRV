@@ -349,7 +349,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           <img
             src={serviceImage || "/default-client.svg"}
             alt={clientName}
-            className="h-full w-full rounded-t-lg object-cover md:rounded-t-none md:rounded-l-lg"
+            className="h-full w-full rounded-t-lg object-cover md:rounded-l-lg md:rounded-t-none"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/default-client.svg";
             }}
@@ -362,7 +362,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         {/* Booking Information */}
         <div>
           <div className="flex items-start justify-between">
-            <p className="truncate text-xs font-semibold tracking-wider text-indigo-500 uppercase">
+            <p className="truncate text-xs font-semibold uppercase tracking-wider text-indigo-500">
               {serviceTitle}
             </p>
 
@@ -472,7 +472,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
             {/* Booking Notes */}
             {notes && (
-              <div className="mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs break-words text-yellow-900">
+              <div className="mt-2 break-words rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
                 <strong>Booking Notes:</strong> {notes}
               </div>
             )}

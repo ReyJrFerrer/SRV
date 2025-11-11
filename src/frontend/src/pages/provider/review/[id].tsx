@@ -321,7 +321,7 @@ export default function ProviderReviewView() {
         ) : (
           <>
             {/* Booking Information Card */}
-            <div className="rounded-xl bg-white p-6 shadow-lg mt-3 lg:mt-6">
+            <div className="mt-3 rounded-xl bg-white p-6 shadow-lg lg:mt-6">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 Booking Details
               </h3>
@@ -408,7 +408,7 @@ export default function ProviderReviewView() {
                         </span>
                       </div>
                       <div className="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-4">
-                        <p className="text-gray-800 italic">
+                        <p className="italic text-gray-800">
                           "{clientReview.comment}"
                         </p>
                       </div>

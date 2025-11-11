@@ -471,7 +471,7 @@ export default function CreateProfilePage() {
                       <div className="space-y-5 border-t pt-7">
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 ">
-                            <UserIcon className="lg:h-6 lg:w-6 h-4 w-4 text-blue-400" />
+                            <UserIcon className="h-4 w-4 text-blue-400 lg:h-6 lg:w-6" />
                           </div>
                           <input
                             type="text"
@@ -480,13 +480,13 @@ export default function CreateProfilePage() {
                             value={formData.name}
                             onChange={handleInputChange}
                             required
-                            className="w-full rounded-xl border border-blue-200 bg-white/80 py-3 pl-8 lg:pl-12 pr-3 text-sm lg:text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-full rounded-xl border border-blue-200 bg-white/80 py-3 pl-8 pr-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 lg:pl-12 lg:text-lg"
                           />
                         </div>
 
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 ">
-                            <PhoneIcon className="lg:h-6 lg:w-6 h-4 w-4 text-yellow-400" />
+                            <PhoneIcon className="h-4 w-4 text-yellow-400 lg:h-6 lg:w-6" />
                           </div>
                           <input
                             type="tel"
@@ -495,7 +495,7 @@ export default function CreateProfilePage() {
                             value={formData.phone}
                             onChange={handleInputChange}
                             required
-                            className="w-full rounded-xl border border-yellow-200 bg-white/80 py-3 pl-8 lg:pl-12 pr-3 text-sm lg:text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                            className="w-full rounded-xl border border-yellow-200 bg-white/80 py-3 pl-8 pr-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 lg:pl-12 lg:text-lg"
                           />
                         </div>
                       </div>
@@ -520,7 +520,7 @@ export default function CreateProfilePage() {
                           </>
                         ) : (
                           <>
-                            <UserPlusIcon className="mr-2 h-6 w-6 tex" />
+                            <UserPlusIcon className="tex mr-2 h-6 w-6" />
                             Verify Phone & Create Profile
                           </>
                         )}

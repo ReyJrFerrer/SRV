@@ -223,7 +223,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                               ? "99+ new notifications"
                               : `${item.count} new notifications`
                           }
-                          className="absolute -top-1 right-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:top-2 sm:right-2"
+                          className="absolute -top-1 right-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
                         >
                           {item.count > 99 ? "99+" : item.count}
                         </span>
@@ -294,7 +294,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                             ? "99+ new notifications"
                             : `${unreadCount} new notifications`
                         }
-                        className="absolute -top-0 right-2 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white sm:top-2 sm:right-2"
+                        className="absolute -top-0 right-2 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
                       >
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
@@ -367,7 +367,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       )}
 
       {/* Desktop left sidebar */}
-      <aside className="safe-area-inset-left fixed top-0 left-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
+      <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
         {/* Top section: main nav items (Profile rendered separately so we can insert Notifications above it on desktop) */}
         <div className="flex w-full flex-1 flex-col items-center gap-2">
           {navItems
@@ -435,7 +435,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           ? "99+ new notifications"
                           : `${item.count} new notifications`
                       }
-                      className="absolute top-1 right-3 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
+                      className="absolute right-3 top-1 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
                     >
                       {item.count > 99 ? "99+" : item.count}
                     </span>
@@ -497,7 +497,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     ? "99+ new notifications"
                     : `${unreadCount} new notifications`
                 }
-                className="absolute top-1 right-3 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
+                className="absolute right-3 top-1 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
               >
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
@@ -558,7 +558,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
         </div>
 
         {/* Bottom section: Settings anchored at bottom */}
-        <div className="mt-auto mb-4 flex w-full flex-col items-center border-t border-gray-100 pt-2">
+        <div className="mb-4 mt-auto flex w-full flex-col items-center border-t border-gray-100 pt-2">
           {(() => {
             const item = settingsItem;
             const isActive = location.pathname.startsWith(item.to);

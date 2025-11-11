@@ -25,7 +25,7 @@ const CommissionInfo: React.FC<Props> = ({ show, commissionValidation }) => {
   if (!show) return null;
   return (
     <div className="rounded-2xl bg-white p-4 shadow-lg">
-      <h3 className="mb-3 lg:text-lg text-md font-bold text-blue-700">
+      <h3 className="text-md mb-3 font-bold text-blue-700 lg:text-lg">
         Wallet & Commission Information
       </h3>
       {commissionValidation.loading ? (

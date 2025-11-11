@@ -124,7 +124,7 @@ const ReceiptPage: React.FC = () => {
   if (!booking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -140,7 +140,7 @@ const ReceiptPage: React.FC = () => {
           <img
             src="/images/srv characters (SVG)/girl.svg"
             alt="Service Completed"
-            className="mb-3 h-25 w-25 drop-shadow-lg"
+            className="h-25 w-25 mb-3 drop-shadow-lg"
             draggable={false}
           />
           <h1 className="text-2xl font-extrabold text-blue-900 lg:text-3xl">
@@ -171,7 +171,7 @@ const ReceiptPage: React.FC = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Service:</span>
-            <span className="max-w-[60%] text-right font-semibold break-words text-blue-900">
+            <span className="max-w-[60%] break-words text-right font-semibold text-blue-900">
               {booking.packageName}
             </span>
           </div>
@@ -276,7 +276,7 @@ const ReceiptPage: React.FC = () => {
           </div>
           <button
             onClick={handleRateClient}
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none print:hidden"
+            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 print:hidden"
           >
             Proceed to Rate Client
           </button>

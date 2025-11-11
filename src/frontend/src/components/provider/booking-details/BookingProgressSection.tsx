@@ -100,7 +100,7 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
 
   return (
     <section className="my-4 flex flex-col items-center rounded-2xl bg-white p-4 shadow">
-      <h3 className="mb-3 ml-5 mt-1 w-full text-left lg:text-lg text-md font-bold text-blue-700">
+      <h3 className="text-md mb-3 ml-5 mt-1 w-full text-left font-bold text-blue-700 lg:text-lg">
         Progress Tracker
       </h3>
       <div className="flex w-full max-w-xl items-center justify-center gap-0 sm:gap-4 md:max-w-3xl">

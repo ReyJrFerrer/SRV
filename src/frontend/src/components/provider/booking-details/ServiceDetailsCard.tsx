@@ -48,19 +48,21 @@ const ServiceDetailsCard: React.FC<Props> = ({
 }) => {
   return (
     <div className="min-w-full flex-1 rounded-2xl bg-white p-4 shadow-lg lg:min-w-[320px]">
-      <h3 className="mb-3 lg:text-lg text-md font-bold text-blue-700">Service Section</h3>
+      <h3 className="text-md mb-3 font-bold text-blue-700 lg:text-lg">
+        Service Section
+      </h3>
       <div className="mb-2 flex items-start gap-2 lg:items-center">
-        <BriefcaseIcon className="flex-shrink-0 h-5 w-5 text-blue-500" />
+        <BriefcaseIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
         <span className="min-w-0 font-medium text-gray-700">
           Service:{" "}
-          <span className="font-semibold break-words text-blue-900">
+          <span className="break-words font-semibold text-blue-900">
             {serviceName}
           </span>
         </span>
       </div>
       {packageTitle && (
         <div className="mb-2 flex items-start gap-2 lg:items-center">
-          <ClipboardDocumentListIcon className="flex-shrink-0 h-5 w-5 text-blue-500" />
+          <ClipboardDocumentListIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
           <span className="font-medium text-gray-700">
             Package:{" "}
             <span className="font-normal text-gray-700">{packageName}</span>
@@ -68,7 +70,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
         </div>
       )}
       <div className="mb-2 flex items-start gap-2 lg:items-center">
-        <CalendarDaysIcon className="flex-shrink-0 h-5 w-5 text-blue-500" />
+        <CalendarDaysIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
         <span className="font-medium text-gray-700">
           Date:{" "}
           <span className="font-normal text-gray-700">
@@ -80,7 +82,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
         <MapPinIcon className="mt-0.5 h-5 w-5 text-blue-500" />
         <div className="flex flex-col">
           <span className="font-medium text-gray-700">Location:</span>
-          <span className="text-sm leading-snug font-normal text-gray-700">
+          <span className="text-sm font-normal leading-snug text-gray-700">
             {bookingLocation}
           </span>
           {(displayAddress || preciseAddress || geocodedAddress) && (
@@ -118,7 +120,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
       </div>
       {price !== undefined && (
         <div className="mb-2 flex items-start gap-2 lg:items-center">
-          <CurrencyDollarIcon className="flex-shrink-0 h-5 w-5 text-blue-500" />
+          <CurrencyDollarIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
           <span className="font-medium text-gray-700">
             Price:{" "}
             <span className="font-semibold text-green-700">
@@ -128,7 +130,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
         </div>
       )}
       <div className="mb-2 flex items-start gap-2 lg:items-center">
-        <CurrencyDollarIcon className="flex-shrink-0 h-5 w-5 text-blue-500" />
+        <CurrencyDollarIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
         <span className="font-medium text-gray-700">
           Client's amount to pay:{" "}
           <span className="font-semibold text-green-700">
@@ -138,7 +140,7 @@ const ServiceDetailsCard: React.FC<Props> = ({
       </div>
       {duration !== "N/A" && (
         <div className="mb-2 flex items-start gap-2 lg:items-center">
-          <ClockIcon className="flex-shrink-0 h-5 w-5 text-blue-500" />
+          <ClockIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
           <span className="font-medium text-gray-700">
             Duration:{" "}
             <span className="font-normal text-gray-700">{duration}</span>
