@@ -83,7 +83,6 @@ const ProviderBookingsPage: React.FC = () => {
     getCompletedBookings,
     getBookingsByStatus,
     refreshBookings,
-    isProviderAuthenticated,
     declineBookingById,
     isBookingActionInProgress,
     acceptBookingById,
@@ -446,25 +445,6 @@ const ProviderBookingsPage: React.FC = () => {
 
     if (currentBookings.length > 0) fetchStatsForClients();
   }, [currentBookings, getClientReviewsByUser, fetchUserReputation]);
-
-  if (!isProviderAuthenticated() && !loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">Oops!</h1>
-          <p className="mb-4 text-gray-600">
-            You need to be logged in as service provider to continue.
-          </p>
-          <button
-            onClick={() => navigate("/provider/login")}
-            className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-          >
-            Back to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
