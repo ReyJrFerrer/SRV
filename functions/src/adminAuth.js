@@ -49,7 +49,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
         principal: principal || uid,
         name: adminName, // Always use generated sequential admin name
         phone: phone || "",
-        role: "ServiceProvider", // Application role (Client/ServiceProvider)
+        role: "Admin",
         // Note: Admin role is stored separately in userRoles collection
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),

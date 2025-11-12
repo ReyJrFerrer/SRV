@@ -47,10 +47,11 @@ export function adaptBackendProfile(backendProfile: any): any {
   };
 
   // Extract role type from backend variant
-  const extractRole = (roleVariant: any): "Client" | "ServiceProvider" => {
+  const extractRole = (roleVariant: any): "Client" | "ServiceProvider" | "Admin" => {
     if (roleVariant && typeof roleVariant === "object") {
       if ("Client" in roleVariant) return "Client";
       if ("ServiceProvider" in roleVariant) return "ServiceProvider";
+      if ("Admin" in roleVariant) return "Admin";
     }
     return "Client"; // default fallback
   };

@@ -6,7 +6,7 @@ import SuspensionModal from "../SuspensionModal";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "Client" | "ServiceProvider";
+  requiredRole?: "Client" | "ServiceProvider" | "Admin";
 }
 
 export default function ProtectedRoute({

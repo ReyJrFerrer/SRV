@@ -23,7 +23,7 @@ export default function CreateProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [selectedRole, setSelectedRole] = useState<
-    "Client" | "ServiceProvider" | null
+    "Client" | "ServiceProvider" | "Admin" | null
   >(null);
   const [formData, setFormData] = useState({
     name: "",

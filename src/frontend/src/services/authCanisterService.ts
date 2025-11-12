@@ -16,8 +16,8 @@ export interface FrontendProfile {
   id: string;
   name: string;
   phone: string;
-  role: "Client" | "ServiceProvider"; // Original role (everyone is ServiceProvider for discoverability)
-  activeRole: "Client" | "ServiceProvider"; // Current UI preference/mode
+  role: "Client" | "ServiceProvider" | "Admin"; // Original role (everyone is ServiceProvider for discoverability)
+  activeRole: "Client" | "ServiceProvider" | "Admin"; // Current UI preference/mode
   profilePicture?: {
     imageUrl: string | null; // Asset URL or null
     thumbnailUrl: string | null; // Asset URL or null
@@ -115,12 +115,12 @@ export const authCanisterService = {
    * Create a new profile (requires authentication)
    * @param name User's name
    * @param phone User's phone number
-   * @param activeRole User's preferred role/mode (Client or ServiceProvider)
+   * @param activeRole User's preferred role/mode (Client, ServiceProvider, or Admin)
    */
   async createProfile(
     name: string,
     phone: string,
-    activeRole: "Client" | "ServiceProvider",
+    activeRole: "Client" | "ServiceProvider" | "Admin",
   ): Promise<FrontendProfile | null> {
     try {
       const result = await identityBridge.createProfile(

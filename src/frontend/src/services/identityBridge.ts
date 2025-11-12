@@ -122,13 +122,13 @@ export async function signInWithInternetIdentity(
  * Call Firebase Cloud Function for creating a profile
  * @param name - User's name
  * @param phone - User's phone number
- * @param role - User's initial role (Client or ServiceProvider)
+ * @param role - User's initial role (Client, ServiceProvider, or Admin)
  * @returns Profile data
  */
 export async function createProfile(
   name: string,
   phone: string,
-  role: "Client" | "ServiceProvider",
+  role: "Client" | "ServiceProvider" | "Admin",
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
