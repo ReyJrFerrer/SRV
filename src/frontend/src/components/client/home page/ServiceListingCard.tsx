@@ -309,13 +309,10 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             {/* Image container */}
             <div className="aspect-video w-full bg-blue-50">
               {/* Persistent skeleton background that fades out */}
-              {!imageLoaded && (
-                <div className="absolute inset-0 h-full w-full rounded-t-2xl bg-gray-200 transition-opacity duration-500" />
-              )}
               <img
                 src={imageSrc}
                 alt={service.title}
-                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity  ${
+                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity duration-500 ${
                   imageLoaded ? "opacity-100" : "opacity-0"
                 }`}
                 onError={(e) => {
