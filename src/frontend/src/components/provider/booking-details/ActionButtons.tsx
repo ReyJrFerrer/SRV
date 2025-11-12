@@ -230,7 +230,7 @@ const ActionButtons: React.FC<Props> = ({
       const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (acceptDisabled) {
           // Show tooltip on click for mobile/tablet
           setIsTooltipVisible(true);
@@ -256,7 +256,7 @@ const ActionButtons: React.FC<Props> = ({
       }, []);
 
       return (
-        <div 
+        <div
           className="relative w-full"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
