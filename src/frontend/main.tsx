@@ -30,7 +30,6 @@ import {
 
 import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
 
-
 // Auth Pages
 const CreateProfile = lazy(() => import("./src/pages/create-profile"));
 

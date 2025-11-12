@@ -5,7 +5,7 @@ import authCanisterService from "../../services/authCanisterService";
 
 /**
  * NotFound Component
- * 
+ *
  * Handles 404 errors by redirecting authenticated users to their home page
  * and unauthenticated users to the landing page.
  */
@@ -16,14 +16,14 @@ const NotFound: React.FC = () => {
   useEffect(() => {
     const redirectUser = async () => {
       // Wait a moment to show the message
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // If user is fully authenticated (both IC and Firebase)
       if (isAuthenticated && identity && firebaseUser) {
         try {
           // Try to get user profile to determine their role
           const profile = await authCanisterService.getMyProfile();
-          
+
           if (profile) {
             // Redirect based on active role
             if (profile.activeRole === "Client") {
