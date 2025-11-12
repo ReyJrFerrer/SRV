@@ -14,6 +14,10 @@ import {
   ChevronRightIcon,
   InformationCircleIcon,
   StarIcon,
+  SparklesIcon,
+  ExclamationTriangleIcon,
+  TrophyIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/NavigationBar";
 import { useUserProfile } from "../../hooks/useUserProfile";
@@ -118,11 +122,11 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
       case "New":
         return {
           color: "bg-blue-50 text-blue-900 border-blue-200",
-          icon: "🆕",
+          icon: SparklesIcon,
           description: (
             <>
               <span className="mb-1 flex items-center justify-center gap-2 text-lg font-bold text-blue-700">
-                <span className="inline-block text-2xl">🎉</span> Welcome to
+                <SparklesIcon className="h-6 w-6 text-blue-500" /> Welcome to
                 SRV!
               </span>
               <span className="block text-gray-700">
@@ -134,46 +138,47 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
       case "Low":
         return {
           color: "bg-red-100 text-red-800 border-red-300",
-          icon: "⚠️",
+          icon: ExclamationTriangleIcon,
           description:
             "Building trust - Focus on completing bookings and maintaining good conduct to improve your client rating.",
         };
       case "Medium":
         return {
           color: "bg-yellow-100 text-yellow-800 border-yellow-300",
-          icon: "⭐",
+          icon: StarIcon,
           description:
             "Reliable client - You're building a good reputation! Keep up the excellent conduct.",
         };
       case "High":
         return {
           color: "bg-blue-100 text-blue-800 border-blue-300",
-          icon: "🏆",
+          icon: TrophyIcon,
           description:
             "Trusted client - Excellent reputation! Service providers trust you as a reliable client.",
         };
-      case "VeryHigh":
+      case "Premium":
         return {
           color: "bg-green-100 text-green-800 border-green-300",
-          icon: "💎",
+          icon: ShieldCheckIcon,
           description:
-            "Elite client - Outstanding reputation! You're among the top-rated clients on our platform.",
+            "Premium client - Outstanding reputation! You're among the top-rated clients on our platform.",
         };
       default:
         return {
           color: "bg-gray-100 text-gray-800 border-gray-300",
-          icon: "❓",
+          icon: InformationCircleIcon,
           description: "Trust level not available.",
         };
     }
   };
   const config = getTrustLevelConfig(trustLevel);
+  const IconComponent = config.icon;
   return (
     <div className="mt-4 flex flex-col items-center">
       <div
         className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
       >
-        <span className="mr-2">{config.icon}</span>
+        <IconComponent className="mr-2 h-5 w-5" />
         {trustLevel} User
         {/* Info button for all badges */}
         <button
@@ -223,7 +228,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
         <ul className="space-y-4">
           <li className="flex flex-col gap-1 rounded-lg border border-blue-100 bg-blue-50 p-3">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">🆕</span>
+              <SparklesIcon className="h-6 w-6 text-blue-500" />
               <span className="font-semibold text-blue-700">New User</span>
               <span className="text-xs text-gray-500">Score: 50</span>
             </div>
@@ -234,7 +239,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           </li>
           <li className="flex flex-col gap-1 rounded-lg border border-red-100 bg-red-50 p-3">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">⚠️</span>
+              <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
               <span className="font-semibold text-red-700">Low Trust</span>
               <span className="text-xs text-gray-500">Score: 0.0 - 20.0</span>
             </div>
@@ -245,7 +250,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           </li>
           <li className="flex flex-col gap-1 rounded-lg border border-yellow-100 bg-yellow-50 p-3">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">⭐</span>
+              <StarIcon className="h-6 w-6 text-yellow-500" />
               <span className="font-semibold text-yellow-700">
                 Medium Trust
               </span>
@@ -258,7 +263,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           </li>
           <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-100 p-3">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">🏆</span>
+              <TrophyIcon className="h-6 w-6 text-blue-600" />
               <span className="font-semibold text-blue-700">High Trust</span>
               <span className="text-xs text-gray-500">Score: 50.01 - 80.0</span>
             </div>
@@ -269,17 +274,17 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           </li>
           <li className="flex flex-col gap-1 rounded-lg border border-green-200 bg-green-50 p-3">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">💎</span>
+              <ShieldCheckIcon className="h-6 w-6 text-green-600" />
               <span className="font-semibold text-green-700">
-                Very High Trust
+                Premium Trust
               </span>
               <span className="text-xs text-gray-500">
                 Score: 80.01 - 100.0
               </span>
             </div>
             <span className="text-xs text-gray-700">
-              Signifies: Elite client. Outstanding reputation! You're among the
-              top-rated clients on our platform.
+              Signifies: Premium client. Outstanding reputation! You're among
+              the top-rated clients on our platform.
             </span>
           </li>
         </ul>
