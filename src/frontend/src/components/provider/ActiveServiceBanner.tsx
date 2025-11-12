@@ -30,13 +30,13 @@ const ActiveServiceBanner: React.FC = () => {
     "Category";
   const clientName =
     booking.clientName || booking.clientProfile?.name || "Client";
-
+    const isFullPage = location.pathname.startsWith("/client/report/");
   return (
     <>
       <div
         className={
           `fixed inset-x-0 top-0 z-50 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow ` +
-          "md:left-20"
+                    (isFullPage ? "" : "md:left-20")
         }
       >
         <button
