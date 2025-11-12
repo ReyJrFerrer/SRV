@@ -709,7 +709,7 @@ const TermsAndConditionsPage: React.FC = () => {
           </div>
         </div>
       </div>
-      <BottomNavigation/>
+      <BottomNavigation />
     </div>
   );
 };
