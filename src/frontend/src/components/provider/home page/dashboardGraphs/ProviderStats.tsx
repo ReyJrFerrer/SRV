@@ -47,7 +47,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   reviewsLoading,
   reviewsError,
 }) => {
-  const { balance} = useWallet();
+  const { balance } = useWallet();
 
   const navigate = useNavigate();
 
