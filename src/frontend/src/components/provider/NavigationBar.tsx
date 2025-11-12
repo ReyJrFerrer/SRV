@@ -208,7 +208,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         <div
                           className={
                             active
-                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
+                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
                               : ""
                           }
                         >
@@ -216,7 +216,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                             className={
                               active
                                 ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                                : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
+                                : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                             }
                           />
                         </div>
@@ -279,7 +279,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
                             : ""
                         }
                       >
@@ -287,7 +287,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             active
                               ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -352,7 +352,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
                             : ""
                         }
                       >
@@ -360,7 +360,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             active
                               ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -422,7 +422,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           isActive
-                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
+                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
                             : ""
                         }
                       >
@@ -430,7 +430,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             isActive
                               ? "h-6 w-6 text-yellow-300"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -492,7 +492,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <div
               className={
                 location.pathname.startsWith("/provider/notifications")
-                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
+                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
                   : ""
               }
             >
@@ -500,7 +500,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 className={
                   location.pathname.startsWith("/provider/notifications")
                     ? "h-6 w-6 text-yellow-300"
-                    : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
+                    : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
                 }
               />
             </div>
@@ -611,7 +611,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 <div
                   className={
                     isActive
-                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
+                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
                       : ""
                   }
                 >
@@ -619,7 +619,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     className={
                       isActive
                         ? "h-6 w-6 text-yellow-300"
-                        : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
+                        : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
                     }
                   />
                 </div>
