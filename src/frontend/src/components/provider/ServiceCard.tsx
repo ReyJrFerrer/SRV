@@ -154,12 +154,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           >
             {isActive ? (
               <>
-                <LockClosedIcon className="flex flex-shrink-0 h-5 w-5" />
+                <LockClosedIcon className="flex h-5 w-5 flex-shrink-0" />
                 <h5 className="text-sm lg:text-lg">Deactivate</h5>
               </>
             ) : (
               <>
-                <LockOpenIcon className="flex flex-shrink-0 h-5 w-5" />
+                <LockOpenIcon className="flex h-5 w-5 flex-shrink-0" />
                 <h5 className="text-sm lg:text-lg">Activate</h5>
               </>
             )}
@@ -189,7 +189,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               deletingId === service.id || hasActiveBookings(service.id)
             }
           >
-            <TrashIcon className="flex flex-shrink-0 h-5 w-5" />
+            <TrashIcon className="flex h-5 w-5 flex-shrink-0" />
             <h5 className="text-sm lg:text-lg">Delete</h5>
           </button>
         </Tooltip>
