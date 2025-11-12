@@ -159,13 +159,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // If Firebase session expired but IC session is still valid, refresh
       if (!user && isAuthenticated && identity) {
         try {
-          console.log("🔄 Firebase session expired, refreshing with IC delegation...");
           const principal = identity.getPrincipal().toString();
           const result = await signInWithInternetIdentity(principal);
           setFirebaseUser(result.user);
-          console.log("✅ Firebase session refreshed successfully");
         } catch (error) {
-          console.error("❌ Failed to refresh Firebase session:", error);
           // Only logout if we truly can't refresh (IC delegation expired)
           await logout();
         }

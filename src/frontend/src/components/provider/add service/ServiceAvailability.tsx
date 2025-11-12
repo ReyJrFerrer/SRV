@@ -228,28 +228,101 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   validationErrors = {},
 }) => {
   const handleDayToggle = (day: DayOfWeek) => {
-    setFormData((prev: { availabilitySchedule: DayOfWeek[] }) => {
-      const newSchedule = prev.availabilitySchedule.includes(day)
-        ? prev.availabilitySchedule.filter((d: any) => d !== day)
-        : [...prev.availabilitySchedule, day];
-      return { ...prev, availabilitySchedule: newSchedule };
+    setFormData((prev: { 
+      availabilitySchedule: DayOfWeek[];
+      perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
+      useSameTimeForAllDays: boolean;
+    }) => {
+      const isCurrentlySelected = prev.availabilitySchedule.includes(day);
+      
+      if (isCurrentlySelected) {
+        // Removing the day - also clear its time slots
+        const newSchedule = prev.availabilitySchedule.filter((d: any) => d !== day);
+        const newPerDayTimeSlots = { ...prev.perDayTimeSlots };
+        delete newPerDayTimeSlots[day];
+        
+        return { 
+          ...prev, 
+          availabilitySchedule: newSchedule,
+          perDayTimeSlots: newPerDayTimeSlots,
+        };
+      } else {
+        // Adding the day
+        const newSchedule = [...prev.availabilitySchedule, day];
+        
+        // If using separate times per day, ensure this day gets a default time slot
+        if (!prev.useSameTimeForAllDays) {
+          const newPerDayTimeSlots = { ...prev.perDayTimeSlots };
+          if (!newPerDayTimeSlots[day] || newPerDayTimeSlots[day].length === 0) {
+            newPerDayTimeSlots[day] = [
+              {
+                id: nanoid(),
+                startHour: "09",
+                startMinute: "00",
+                startPeriod: "AM",
+                endHour: "05",
+                endMinute: "00",
+                endPeriod: "PM",
+              },
+            ];
+          }
+          return {
+            ...prev,
+            availabilitySchedule: newSchedule,
+            perDayTimeSlots: newPerDayTimeSlots,
+          };
+        }
+        
+        return { ...prev, availabilitySchedule: newSchedule };
+      }
     });
   };
 
   const handlePresetChange = (presetDays: DayOfWeek[], isChecked: boolean) => {
-    setFormData((prev: { availabilitySchedule: DayOfWeek[] }) => {
+    setFormData((prev: { 
+      availabilitySchedule: DayOfWeek[];
+      perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
+      useSameTimeForAllDays: boolean;
+    }) => {
       let newSchedule = [...prev.availabilitySchedule];
+      const newPerDayTimeSlots = { ...prev.perDayTimeSlots };
 
       if (isChecked) {
         presetDays.forEach((day) => {
           if (!newSchedule.includes(day)) {
             newSchedule.push(day);
+            
+            // If using separate times per day, ensure each day gets a default time slot
+            if (!prev.useSameTimeForAllDays) {
+              if (!newPerDayTimeSlots[day] || newPerDayTimeSlots[day].length === 0) {
+                newPerDayTimeSlots[day] = [
+                  {
+                    id: nanoid(),
+                    startHour: "09",
+                    startMinute: "00",
+                    startPeriod: "AM",
+                    endHour: "05",
+                    endMinute: "00",
+                    endPeriod: "PM",
+                  },
+                ];
+              }
+            }
           }
         });
       } else {
         newSchedule = newSchedule.filter((day) => !presetDays.includes(day));
+        // Clear time slots for removed days
+        presetDays.forEach((day) => {
+          delete newPerDayTimeSlots[day];
+        });
       }
-      return { ...prev, availabilitySchedule: newSchedule };
+      
+      return { 
+        ...prev, 
+        availabilitySchedule: newSchedule,
+        perDayTimeSlots: newPerDayTimeSlots,
+      };
     });
   };
 
@@ -447,8 +520,14 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
       (prev: {
         commonTimeSlots: any[];
         perDayTimeSlots: { [x: string]: any[] };
+        availabilitySchedule: DayOfWeek[];
       }) => {
         if (day === "common") {
+          // Prevent removing the last time slot for common slots
+          if (prev.commonTimeSlots.length <= 1) {
+            // Instead of removing, show a warning or do nothing
+            return prev;
+          }
           return {
             ...prev,
             commonTimeSlots: prev.commonTimeSlots.filter(
@@ -456,6 +535,23 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             ),
           };
         }
+        
+        const currentDaySlots = prev.perDayTimeSlots[day] || [];
+        
+        // If this is the last slot for the day, remove the day from availability instead
+        if (currentDaySlots.length <= 1) {
+          return {
+            ...prev,
+            availabilitySchedule: prev.availabilitySchedule.filter(
+              (d) => d !== day,
+            ),
+            perDayTimeSlots: {
+              ...prev.perDayTimeSlots,
+              [day]: [],
+            },
+          };
+        }
+        
         return {
           ...prev,
           perDayTimeSlots: {
@@ -754,6 +850,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
 
           {formData.useSameTimeForAllDays ? (
             <div className="space-y-2">
+              {formData.commonTimeSlots.length === 1 && (
+                <div className="mb-2 rounded-md bg-yellow-50 p-2 text-xs text-yellow-700">
+                  At least one time slot is required
+                </div>
+              )}
               {formData.commonTimeSlots.map((slot) => (
                 <TimeSlotInput
                   key={slot.id}
@@ -786,45 +887,55 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             </div>
           ) : (
             <div className="space-y-6">
-              {formData.availabilitySchedule.map((day) => (
-                <div
-                  key={day}
-                  className="flex flex-col rounded-lg border border-blue-100 bg-white p-4 shadow-sm"
-                >
-                  <h4 className="mb-2 font-semibold text-blue-700">{day}</h4>
-                  <div className="flex flex-col gap-2">
-                    {(formData.perDayTimeSlots[day] || []).map((slot) => (
-                      <TimeSlotInput
-                        key={slot.id}
-                        slot={slot}
-                        onSlotChange={(id, field, value) =>
-                          handleTimeSlotChange(day, id, field, value)
-                        }
-                        onRemoveSlot={(id) => removeTimeSlot(day, id)}
-                      />
+              {formData.availabilitySchedule.map((day) => {
+                const daySlots = formData.perDayTimeSlots[day] || [];
+                const isLastSlot = daySlots.length === 1;
+                
+                return (
+                  <div
+                    key={day}
+                    className="flex flex-col rounded-lg border border-blue-100 bg-white p-4 shadow-sm"
+                  >
+                    <h4 className="mb-2 font-semibold text-blue-700">{day}</h4>
+                    {isLastSlot && (
+                      <div className="mb-2 rounded-md bg-yellow-50 p-2 text-xs text-yellow-700">
+                        Removing the last time slot will unselect this day
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-2">
+                      {daySlots.map((slot) => (
+                        <TimeSlotInput
+                          key={slot.id}
+                          slot={slot}
+                          onSlotChange={(id, field, value) =>
+                            handleTimeSlotChange(day, id, field, value)
+                          }
+                          onRemoveSlot={(id) => removeTimeSlot(day, id)}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addTimeSlot(day)}
+                      className="mt-2 flex items-center gap-1 self-end text-sm font-semibold text-blue-600 hover:text-blue-800"
+                    >
+                      <PlusCircleIcon className="h-5 w-5" />
+                      Add Time Slot
+                    </button>
+                    {/* Error messages for per-day time slots */}
+                    {getTimeValidationErrors(
+                      formData.perDayTimeSlots[day] || [],
+                    ).map((error, index) => (
+                      <div
+                        key={index}
+                        className="mt-2 flex items-center gap-2 text-sm text-red-600"
+                      >
+                        <span>{error}</span>
+                      </div>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => addTimeSlot(day)}
-                    className="mt-2 flex items-center gap-1 self-end text-sm font-semibold text-blue-600 hover:text-blue-800"
-                  >
-                    <PlusCircleIcon className="h-5 w-5" />
-                    Add Time Slot
-                  </button>
-                  {/* Error messages for per-day time slots */}
-                  {getTimeValidationErrors(
-                    formData.perDayTimeSlots[day] || [],
-                  ).map((error, index) => (
-                    <div
-                      key={index}
-                      className="mt-2 flex items-center gap-2 text-sm text-red-600"
-                    >
-                      <span>⚠️ {error}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {/* Error message for same start/end time is now displayed below each "Add Time Slot" button */}
