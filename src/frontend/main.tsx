@@ -82,9 +82,7 @@ const ClientProfileReviews = lazy(
 const SettingsPageC = lazy(() => import("./src/pages/client/settings"));
 const TermsAndConditionsPage = lazy(() => import("./src/pages/terms"));
 const ReportIssuePage = lazy(() => import("./src/pages/report"));
-const HelpSupportPage = lazy(
-  () => import("./src/pages/provider/inside settings/help"),
-);
+const HelpSupportPage = lazy(() => import("./src/pages/client/help"));
 
 // Provider Pages
 const ProviderHome = lazy(() => import("./src/pages/provider/home"));
@@ -180,7 +178,9 @@ const ProviderTermsAndConditionsPage = lazy(
   () => import("./src/pages/provider/inside settings/terms"),
 );
 const ProviderReportIssuePage = lazy(() => import("./src/pages/report"));
-const ProviderHelpSupportPage = lazy(() => import("./src/pages/provider/help"));
+const ProviderHelpSupportPage = lazy(
+  () => import("./src/pages/provider/inside settings/help"),
+);
 
 // Payment
 import WalletPage from "./src/pages/provider/wallet";

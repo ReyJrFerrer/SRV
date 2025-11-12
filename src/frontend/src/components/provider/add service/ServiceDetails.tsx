@@ -464,6 +464,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
             <h2 className="mb-4 text-xl font-bold text-blue-700">
               Service Packages <span className="text-red-500">*</span>
             </h2>
+            <div className="mb-4 rounded-lg  bg-yellow-50 p-3">
+              <p className="text-sm text-yellow-800">
+                <span className="font-semibold">Note:</span> At least one
+                package is required to create your service. If your service
+                doesn't have different tiers or packages, simply create one
+                package that describes your complete offering.
+              </p>
+            </div>
             <fieldset>
               <div className="space-y-6">
                 {formData.servicePackages.map((pkg, index) => {
@@ -601,7 +609,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             htmlFor={`pkgDesc-${pkg.id}`}
                             className="block text-xs font-medium text-gray-600"
                           >
-                            Description<span className="text-red-500">*</span>
+                            Brief Description
+                            <span className="text-red-500">*</span>
                           </label>
                           <textarea
                             id={`pkgDesc-${pkg.id}`}
@@ -622,8 +631,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 ? "border-red-400 bg-red-50 focus:border-red-500"
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
-                            placeholder="Describe what's included in this package."
-                            maxLength={100}
+                            placeholder="Describe what's included in this package. 150 words maximum"
+                            maxLength={150}
                           />
                           {pkgError &&
                             pkgError.description &&
