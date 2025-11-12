@@ -609,7 +609,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             htmlFor={`pkgDesc-${pkg.id}`}
                             className="block text-xs font-medium text-gray-600"
                           >
-                            Brief Description<span className="text-red-500">*</span>
+                            Brief Description
+                            <span className="text-red-500">*</span>
                           </label>
                           <textarea
                             id={`pkgDesc-${pkg.id}`}
