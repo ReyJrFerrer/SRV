@@ -9,6 +9,7 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 const ReceiptPage: React.FC = () => {
   const navigate = useNavigate();
@@ -142,7 +143,7 @@ const ReceiptPage: React.FC = () => {
             className="h-25 w-25 mb-3 drop-shadow-lg"
             draggable={false}
           />
-          <h1 className="text-3xl font-extrabold text-blue-900 sm:text-4xl">
+          <h1 className="text-2xl font-extrabold text-blue-900 lg:text-3xl">
             Service Completed!
           </h1>
           <p className="mt-2 text-base text-gray-500">
@@ -270,7 +271,7 @@ const ReceiptPage: React.FC = () => {
               onClick={() => setShowRatingInfo(true)}
               className="rounded-md px-3 py-1 text-sm text-blue-600 hover:underline"
             >
-              About ratings
+              <InformationCircleIcon className="h-5 w-5" />
             </button>
           </div>
           <button

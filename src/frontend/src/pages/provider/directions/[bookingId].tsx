@@ -39,7 +39,7 @@ function haversineDistanceMeters(
 const ProviderDirectionsPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
-  const { error, startBookingById } = useProviderBookingManagement();
+  const { startBookingById } = useProviderBookingManagement();
 
   // Use cached booking hook - fetches once, shares across all pages
   const { booking, isLoading: isLoadingBooking } =
@@ -734,14 +734,6 @@ const ProviderDirectionsPage: React.FC = () => {
             : "Preparing directions..."
         }
       />
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-red-600">
-        Error: You are not allowed to start an active service.
-      </div>
     );
   }
 

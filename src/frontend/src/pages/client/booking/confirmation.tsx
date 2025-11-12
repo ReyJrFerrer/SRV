@@ -237,7 +237,7 @@ const BookingConfirmationPage: React.FC = () => {
                   </ul>
                 </div>
                 {bookingDetails.notes && (
-                  <p>
+                  <p className="break-words">
                     <span className="font-bold text-gray-700">
                       Notes for Provider:
                     </span>{" "}

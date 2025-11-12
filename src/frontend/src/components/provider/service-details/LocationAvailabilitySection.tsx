@@ -214,10 +214,18 @@ const LocationAvailabilitySection: React.FC<Props> = ({
             </label>
             <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
               {service.weeklySchedule?.filter(
-                (entry: any) => entry.availability.isAvailable,
+                (entry: any) =>
+                  entry.availability.isAvailable &&
+                  entry.availability.slots &&
+                  entry.availability.slots.length > 0,
               ).length ? (
                 [...service.weeklySchedule]
-                  .filter((entry: any) => entry.availability.isAvailable)
+                  .filter(
+                    (entry: any) =>
+                      entry.availability.isAvailable &&
+                      entry.availability.slots &&
+                      entry.availability.slots.length > 0,
+                  )
                   .sort((a: any, b: any) => dayOrder[a.day] - dayOrder[b.day])
                   .map((entry: any) => (
                     <div
@@ -228,26 +236,21 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                         <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
                         {entry.day}
                       </span>
-                      {entry.availability.slots &&
-                      entry.availability.slots.length > 0 ? (
-                        <ul className="ml-1 space-y-1">
-                          {entry.availability.slots.map(
-                            (slot: any, idx: number) => (
-                              <li
-                                key={idx}
-                                className="flex items-center gap-2 text-xs text-blue-900"
-                              >
-                                <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
-                                  {formatTime(slot.startTime)} -{" "}
-                                  {formatTime(slot.endTime)}
-                                </span>
-                              </li>
-                            ),
-                          )}
-                        </ul>
-                      ) : (
-                        <span className="text-xs text-blue-400">No slots</span>
-                      )}
+                      <ul className="ml-1 space-y-1">
+                        {entry.availability.slots.map(
+                          (slot: any, idx: number) => (
+                            <li
+                              key={idx}
+                              className="flex items-center gap-2 text-xs text-blue-900"
+                            >
+                              <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
+                                {formatTime(slot.startTime)} -{" "}
+                                {formatTime(slot.endTime)}
+                              </span>
+                            </li>
+                          ),
+                        )}
+                      </ul>
                     </div>
                   ))
               ) : (

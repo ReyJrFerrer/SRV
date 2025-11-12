@@ -37,7 +37,7 @@ const ClientRatingSummary: React.FC<ClientRatingSummaryProps> = ({
   };
 
   return (
-    <span className="flex items-center justify-center rounded-lg text-sm font-medium text-gray-700">
+    <span className="mt-1 flex rounded-lg text-sm font-medium text-gray-700">
       <span className="mr-2 flex items-center">
         {renderStars(typeof avgRating === "number" ? avgRating : 0)}
       </span>

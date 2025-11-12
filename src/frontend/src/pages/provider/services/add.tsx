@@ -488,13 +488,15 @@ const AddServicePage: React.FC = () => {
             }
           }
         } else {
-          const hasTimeSlots = formData.availabilitySchedule.some(
+          // Ensure all selected days have at least one time slot
+          const daysWithoutSlots = formData.availabilitySchedule.filter(
             (day) =>
-              formData.perDayTimeSlots[day] &&
-              formData.perDayTimeSlots[day].length > 0,
+              !formData.perDayTimeSlots[day] ||
+              formData.perDayTimeSlots[day].length === 0,
           );
-          if (!hasTimeSlots) {
-            errors.timeSlots = "Please add time slots for your available days";
+
+          if (daysWithoutSlots.length > 0) {
+            errors.timeSlots = `Each selected day must have at least one time slot. Missing slots for: ${daysWithoutSlots.join(", ")}`;
           } else {
             // Validate all per-day time slots
             for (const day of formData.availabilitySchedule) {

@@ -121,7 +121,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
                   Checking availability...
                 </div>
-              ) : availableSlots.length > 0 ? (
+              ) : (
                 availableSlots
                   .filter((slot: any) => slot.isAvailable)
                   .map((slot: any, index: number) => {
@@ -186,10 +186,6 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                       </button>
                     );
                   })
-              ) : (
-                <p className="text-sm text-gray-500">
-                  No available slots for today.
-                </p>
               )}
             </div>
           </div>
@@ -309,7 +305,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
                     Checking availability...
                   </div>
-                ) : availableSlots.length > 0 ? (
+                ) : (
                   availableSlots
                     .filter((slot: any) => slot.isAvailable)
                     .map((slot: any, index: number) => {
@@ -356,15 +352,11 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                             <span className="ml-1 text-xs">(You Booked)</span>
                           )}
                           {!isUserBooked && !isSlotAvailable && (
-                            <span className="ml-1 text-xs">(Booked)</span>
+                            <span className="ml-1 text-xs"></span>
                           )}
                         </button>
                       );
                     })
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    No available slots for this day.
-                  </p>
                 )}
               </div>
             </div>

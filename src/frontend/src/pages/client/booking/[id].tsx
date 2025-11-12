@@ -1,5 +1,5 @@
 // SECTION: Imports — dependencies for this page
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast, Toaster } from "sonner";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 import { useNavigate, useParams } from "react-router-dom";
@@ -26,6 +26,7 @@ import BookingProgressTracker from "../../../components/client/booking-details/B
 import BookingNotes from "../../../components/client/booking-details/BookingNotes";
 import ActionButtons from "../../../components/client/booking-details/ActionButtons";
 import BookingDetailsSkeleton from "../../../components/client/booking-details/BookingDetailsSkeleton";
+import { dispatchBookingInteracted } from "../../../utils/interactionEvents";
 
 type BookingStatus =
   | "Requested"
@@ -86,6 +87,19 @@ const BookingDetailsPage: React.FC = () => {
       setIsInitialLoad(false);
     }
   }, [id, bookings, hookLoading]);
+
+  // When user views an accepted booking for the first time in this session, dispatch interaction event
+  const dispatchedForBookingRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!specificBooking) return;
+    // Only relevant for bookings that were Accepted (related notification type booking_accepted)
+    if (specificBooking.status === "Accepted") {
+      if (dispatchedForBookingRef.current !== specificBooking.id) {
+        dispatchBookingInteracted(specificBooking.id);
+        dispatchedForBookingRef.current = specificBooking.id;
+      }
+    }
+  }, [specificBooking]);
 
   useEffect(() => {
     const fetchReviewStats = async () => {
@@ -287,7 +301,7 @@ const BookingDetailsPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="mx-auto space-y-6 p-4 pt-20 sm:p-6 sm:pt-20">
+      <main className="sm:pt-13 mx-auto space-y-6 p-4 pt-10 sm:p-6">
         {isLoading ? (
           <BookingDetailsSkeleton />
         ) : (
@@ -302,7 +316,7 @@ const BookingDetailsPage: React.FC = () => {
             </div>
 
             <div>
-              <div className="mt-13 relative rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-7">
+              <div className="relative rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-7">
                 <span
                   className={`absolute right-4 top-5 rounded-full px-3 py-1 text-xs font-bold shadow-lg lg:top-4 lg:px-4 lg:py-2 lg:text-base ${getStatusPillStyle(status || "")}`}
                   aria-label="Booking status"
@@ -310,7 +324,7 @@ const BookingDetailsPage: React.FC = () => {
                   {status?.replace("_", " ")}
                 </span>
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-0">
+                <div className="grid grid-cols-1 gap-1 lg:grid-cols-5">
                   <ProviderInfo
                     providerProfile={providerProfile}
                     userImageUrl={userImageUrl ?? null}

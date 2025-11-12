@@ -14,8 +14,26 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 
 const BottomNavigation: React.FC = () => {
   const location = useLocation();
-  const { unreadCount } = useNotifications();
+  const { notifications } = useNotifications();
   const { unreadChatCount } = useChatNotifications();
+
+  // Derive booking accepted count (client perspective) from notifications excluding chat/provider messages
+  const bookingAcceptedCount = React.useMemo(
+    () =>
+      notifications.filter((n) => !n.read && n.type === "booking_accepted")
+        .length,
+    [notifications],
+  );
+
+  // Notifications badge should exclude chat related items now hidden from page
+  const filteredNotificationUnreadCount = React.useMemo(
+    () =>
+      notifications.filter(
+        (n) =>
+          !n.read && n.type !== "chat_message" && n.type !== "provider_message",
+      ).length,
+    [notifications],
+  );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
 
@@ -86,14 +104,19 @@ const BottomNavigation: React.FC = () => {
 
   const navItems = [
     { to: "/client/home", label: "Home", icon: null, count: 0 },
-    { to: "/client/booking", label: "Booking", icon: null, count: 0 },
+    {
+      to: "/client/booking",
+      label: "Booking",
+      icon: null,
+      count: bookingAcceptedCount,
+    },
     { to: "/client/profile/reviews", label: "Ratings", icon: null, count: 0 },
     { to: "/client/chat", label: "Chat", icon: null, count: unreadChatCount },
     {
       to: "/client/notifications",
       label: "Notifications",
       icon: null,
-      count: unreadCount,
+      count: filteredNotificationUnreadCount,
     },
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
@@ -146,7 +169,7 @@ const BottomNavigation: React.FC = () => {
     <>
       {!location.pathname.startsWith("/client/chat/") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
-          <nav className="mx-auto flex w-full max-w-full items-center justify-center py-1">
+          <nav className="mx-auto flex w-full max-w-full items-center justify-center">
             <div className="grid w-full grid-cols-6 font-medium">
               {mobileItems.map((item) => {
                 const displayItem = item;
@@ -196,21 +219,34 @@ const BottomNavigation: React.FC = () => {
                               className={
                                 isActive
                                   ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                                  : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-300 sm:h-8 sm:w-8"
+                                  : "h-6 w-6 text-blue-700 transition-colors duration-200 group-hover:text-yellow-300 sm:h-8 sm:w-8"
                               }
                             />
                           );
                         })()}
                       </div>
                       {!isActive && (
-                        <span className="mt-1 hidden text-xs text-blue-500 transition duration-300 ease-in-out group-hover:text-yellow-300 sm:block">
+                        <span className="mt-1 hidden text-xs text-blue-700 transition duration-300 ease-in-out group-hover:text-yellow-300 sm:block">
                           {item.label}
                         </span>
                       )}
                     </div>
-                    {item.count > 0 && (
-                      <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
-                    )}
+                    {item.count > 0 &&
+                      (item.label === "Booking" ||
+                      item.label === "Notifications" ? (
+                        <span
+                          aria-label={
+                            item.count > 99
+                              ? `99+ new ${item.label.toLowerCase()}`
+                              : `${item.count} new ${item.label.toLowerCase()}`
+                          }
+                          className="absolute right-1 top-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
+                        >
+                          {item.count > 99 ? "99+" : item.count}
+                        </span>
+                      ) : (
+                        <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                      ))}
                   </Link>
                 );
               })}
@@ -246,7 +282,7 @@ const BottomNavigation: React.FC = () => {
                     <div
                       className={`flex items-center justify-center transition-all duration-300 ${
                         isActive
-                          ? "h-12 w-12 rounded-full bg-blue-500"
+                          ? "h-12 w-12 rounded-full bg-blue-700"
                           : "h-10 w-10"
                       }`}
                     >
@@ -282,7 +318,7 @@ const BottomNavigation: React.FC = () => {
                       <div
                         className={
                           isActive
-                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-500"
+                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-700"
                             : ""
                         }
                       >
@@ -290,7 +326,7 @@ const BottomNavigation: React.FC = () => {
                           className={
                             isActive
                               ? "h-6 w-6 text-yellow-300"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
+                              : "h-6 w-6 text-blue-700 transition-colors duration-200 group-hover:text-yellow-500"
                           }
                         />
                       </div>
@@ -342,7 +378,7 @@ const BottomNavigation: React.FC = () => {
                 <div
                   className={`flex items-center justify-center transition-all duration-300 ${
                     isActive
-                      ? "h-12 w-12 rounded-full bg-blue-500"
+                      ? "h-12 w-12 rounded-full bg-blue-700"
                       : "h-10 w-10"
                   }`}
                 >
@@ -350,7 +386,7 @@ const BottomNavigation: React.FC = () => {
                     className={
                       isActive
                         ? "h-6 w-6 text-yellow-300"
-                        : "h-6 w-6 text-blue-500 transition-colors duration-200 group-hover:text-yellow-500"
+                        : "h-6 w-6 text-blue-700 transition-colors duration-200 group-hover:text-yellow-500"
                     }
                   />
                 </div>

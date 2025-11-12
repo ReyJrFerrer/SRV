@@ -133,7 +133,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-colors ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -155,12 +155,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             {isActive ? (
               <>
                 <LockClosedIcon className="h-5 w-5" />
-                <h5 className="text-lg">Deactivate</h5>
+                <h5 className="text-sm lg:text-lg">Deactivate</h5>
               </>
             ) : (
               <>
                 <LockOpenIcon className="h-5 w-5" />
-                <h5 className="text-lg">Activate</h5>
+                <h5 className="text-sm lg:text-lg">Activate</h5>
               </>
             )}
           </button>
@@ -174,7 +174,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
-            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-2 py-1 text-xs font-medium text-white hover:bg-red-600 ${
+            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-2 py-2 text-xs font-medium text-white hover:bg-red-600 ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -190,7 +190,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             }
           >
             <TrashIcon className="h-5 w-5" />
-            <h5 className="text-lg">Delete</h5>
+            <h5 className="text-sm lg:text-lg">Delete</h5>
           </button>
         </Tooltip>
       </div>

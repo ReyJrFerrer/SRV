@@ -26,6 +26,7 @@ import { bookingCanisterService } from "../../services/bookingCanisterService";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
+import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 
 type BookingStatusTab =
   | "ALL"
@@ -82,7 +83,6 @@ const ProviderBookingsPage: React.FC = () => {
     getCompletedBookings,
     getBookingsByStatus,
     refreshBookings,
-    isProviderAuthenticated,
     declineBookingById,
     isBookingActionInProgress,
     acceptBookingById,
@@ -446,31 +446,12 @@ const ProviderBookingsPage: React.FC = () => {
     if (currentBookings.length > 0) fetchStatsForClients();
   }, [currentBookings, getClientReviewsByUser, fetchUserReputation]);
 
-  if (!isProviderAuthenticated() && !loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">Oops!</h1>
-          <p className="mb-4 text-gray-600">
-            You need to be logged in as service provider to continue.
-          </p>
-          <button
-            onClick={() => navigate("/provider/login")}
-            className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-          >
-            Back to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-100">
         <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
           <div className="flex w-full items-center justify-center px-4 py-3">
-            <h1 className="text-md font-extrabold tracking-tight text-black sm:text-xl lg:text-2xl">
+            <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
               My Bookings
             </h1>
           </div>
@@ -615,6 +596,9 @@ const ProviderBookingsPage: React.FC = () => {
                         ) {
                           navigate(`/provider/active-service/${booking.id}`);
                         } else if (booking.id) {
+                          if (booking.status === "Requested") {
+                            dispatchBookingInteracted(booking.id);
+                          }
                           navigate(`/provider/booking/${booking.id}`);
                         }
                       }}

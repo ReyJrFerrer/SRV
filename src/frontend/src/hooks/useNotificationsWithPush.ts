@@ -203,47 +203,8 @@ export const useNotificationsWithPush = () => {
           bookingId: notif.bookingId,
         }));
 
-      // For backward compatibility, still generate some notifications from booking data
-      // But only if they don't already exist in the canister
-      const existingNotificationBookingIds = new Set(
-        canisterNotifications
-          .filter((n) => n.bookingId)
-          .map((n) => n.bookingId!),
-      );
-
-      // Generate additional notifications for bookings not covered by canister
-      const additionalNotifications: Notification[] = [];
-
-      // Only generate for bookings that don't have canister notifications
-      const uncoveredBookings = bookings.filter(
-        (b) => !existingNotificationBookingIds.has(b.id),
-      );
-
-      if (uncoveredBookings.length > 0) {
-        // Generate review reminders for completed but unreviewed bookings
-        const reviewReminderNotifications: Notification[] = uncoveredBookings
-          .filter((b) => b.status === "Completed")
-          .map((booking) => ({
-            id: `frontend-review-${booking.id}-${Date.now()}`,
-            message: `Please review your recent "${booking.serviceName}" service`,
-            type: "review_reminder",
-            timestamp: new Date(
-              booking.completedDate || Date.now(),
-            ).toISOString(),
-            read: false,
-            href: `/client/review/${booking.id}`,
-            providerName: booking.providerProfile?.name,
-            bookingId: booking.id,
-          }));
-
-        additionalNotifications.push(...reviewReminderNotifications);
-      }
-
-      // Combine canister notifications with additional frontend-generated ones
-      const allNotifications = [
-        ...notificationsFromCanister,
-        ...additionalNotifications,
-      ].sort(
+      // Use only canister notifications (no frontend-generated ones)
+      const allNotifications = notificationsFromCanister.sort(
         (a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
@@ -321,23 +282,72 @@ export const useNotificationsWithPush = () => {
     };
   }, [identity]);
 
+  // Decrease booking badge when a booking is interacted (clicked/opened)
+  // Listens for a global event 'booking-interacted' with optional detail { bookingId?: string }
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent)?.detail as
+        | { bookingId?: string }
+        | undefined;
+      let targetIds = notifications
+        .filter(
+          (n) =>
+            !n.read &&
+            n.type === "booking_accepted" &&
+            (!detail?.bookingId ||
+              (n.bookingId && n.bookingId === detail.bookingId)),
+        )
+        .map((n) => n.id);
+
+      // Fallback: if a specific bookingId was provided but we couldn't find a matching
+      // notification (e.g., bookingId missing on notif or notifications not yet enriched),
+      // mark the most recent unread booking_accepted notification to ensure the badge decrements.
+      if (targetIds.length === 0) {
+        const fallback = notifications.find(
+          (n) => !n.read && n.type === "booking_accepted",
+        );
+        if (fallback) targetIds = [fallback.id];
+      }
+
+      if (targetIds.length === 0) return;
+
+      // Attempt to mark in canister; proceed optimistically in UI regardless
+      await Promise.all(
+        targetIds.map(async (id) => {
+          try {
+            await notificationCanisterService.markAsRead(id);
+          } catch {}
+        }),
+      );
+
+      setNotifications((prev) => {
+        const updated = prev.map((n) =>
+          targetIds.includes(n.id) ? { ...n, read: true } : n,
+        );
+        const newUnreadCount = updated.filter((n) => !n.read).length;
+        notificationStore.setCount(newUnreadCount);
+        return updated;
+      });
+    };
+
+    window.addEventListener("booking-interacted", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "booking-interacted",
+        handler as EventListener,
+      );
+  }, [notifications]);
+
   // Marks a single notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       // Try to mark as read in canister first
       await notificationCanisterService.markAsRead(notificationId);
     } catch (error) {
-      // If it's a frontend-generated notification (not in canister), just update locally
-      if (
-        notificationId.startsWith("frontend-review-") ||
-        notificationId.startsWith("frontend-booking-status-")
-      ) {
-      } else {
-        // For other errors, try localStorage fallback
-        const readIds = await getReadIds();
-        if (!readIds.includes(notificationId)) {
-          await setReadIds([...readIds, notificationId]);
-        }
+      // Fallback to localStorage
+      const readIds = await getReadIds();
+      if (!readIds.includes(notificationId)) {
+        await setReadIds([...readIds, notificationId]);
       }
     }
 

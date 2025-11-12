@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 import useChat from "../../../hooks/useChat";
@@ -24,6 +30,7 @@ import CancelWithReasonButton from "../../../components/common/cancellation/Canc
 import BookingDetailsSkeleton from "../../../components/provider/booking-details/BookingDetailsSkeleton";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";
 import { toast } from "sonner";
+import { dispatchBookingInteracted } from "../../../utils/interactionEvents";
 
 // BookingProgressSection moved to components
 
@@ -124,6 +131,19 @@ const ProviderBookingDetailsPage: React.FC = () => {
       }
     }
   }, [id, bookings, hookLoading]);
+
+  // When a provider opens a booking request, mark the corresponding notification as interacted
+  const dispatchedForBookingRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!specificBooking) return;
+    // Only relevant for new booking requests (status Requested)
+    if (specificBooking.status === "Requested") {
+      if (dispatchedForBookingRef.current !== specificBooking.id) {
+        dispatchBookingInteracted(specificBooking.id);
+        dispatchedForBookingRef.current = specificBooking.id;
+      }
+    }
+  }, [specificBooking]);
 
   const clientId =
     specificBooking?.clientProfile?.id?.toString() ||
@@ -308,10 +328,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     if (!specificBooking) return;
     navigate(`/provider/complete-service/${specificBooking.id}`);
   }, [specificBooking, navigate]);
-
-  const handleReportClick = useCallback(() => {
-    navigate("/provider/report");
-  }, [navigate]);
 
   // Chat button handler (ProviderBookingItemCard logic)
   const handleChatClient = useCallback(async () => {
@@ -735,9 +751,9 @@ const ProviderBookingDetailsPage: React.FC = () => {
             className="rounded-full p-2 transition-colors hover:bg-gray-100"
             aria-label="Go back"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700 lg:h-6 lg:w-6" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Booking Details
           </h1>
         </div>
@@ -745,7 +761,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
       {/* Cancellation reasons (frontend-only / informational) */}
       {/* Add top margin so this block isn't hidden behind the sticky header */}
-      <div className="mt-16">
+      <div>
         <CancellationReasons
           bookingId={specificBooking?.id}
           cancelledBy={(specificBooking as any)?.cancelledBy}
@@ -839,41 +855,18 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 canStartServiceNow={canStartServiceNow}
                 isBookingActionInProgress={isBookingActionInProgress}
                 commissionValidation={commissionValidation}
+                status={specificBooking.status}
+                onReport={() =>
+                  navigate("/provider/report", {
+                    state: { bookingId: specificBooking.id },
+                  })
+                }
               />
             )}
           </>
         )}
-
-        {(specificBooking?.status === "Completed" ||
-          specificBooking?.status === "Cancelled") && (
-          <div className="mt-3 flex">
-            <button
-              onClick={handleReportClick}
-              className="group relative flex min-w-[150px] items-center justify-center rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-red-100 hover:text-red-700"
-              title="Report this booking"
-            >
-              <svg
-                className="mr-2 h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-              Report
-            </button>
-          </div>
-        )}
       </main>
-
-      <div></div>
       <BottomNavigation />
-
       {/* Cancel Booking Dialog */}
       <CancelWithReasonButton
         show={!!cancellingBooking}

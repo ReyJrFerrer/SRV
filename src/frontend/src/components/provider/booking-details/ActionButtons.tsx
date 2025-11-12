@@ -28,16 +28,17 @@ interface Props {
   onCancel?: () => void;
   onStart: () => void;
   onComplete: () => void;
+  status?: string | null;
   canStartServiceNow: () => boolean;
   isBookingActionInProgress: (bookingId: string, action: string) => boolean;
   commissionValidation: CommissionValidation;
-  // navigate removed: ActionButtons no longer navigates directly
-  // optional Book Again from provider side (rare)
+  onReport: () => void;
   onBookAgain?: () => void;
   bookAgainLabel?: string;
 }
 
 const ActionButtons: React.FC<Props> = ({
+  onReport,
   booking,
   onChat,
   onAccept,
@@ -93,6 +94,9 @@ const ActionButtons: React.FC<Props> = ({
   const showStart = !!(booking?.canStart && canStartServiceNow());
   const showComplete = !!booking?.canComplete;
   const showViewReview = booking?.status === "Completed";
+  const showReport = !!(
+    booking?.status === "Completed" || booking?.status === "Cancelled"
+  );
 
   const baseContainer = containerDefault;
   const baseButtonClass = baseButtonDefault;
@@ -113,7 +117,7 @@ const ActionButtons: React.FC<Props> = ({
         onClick={stopAndRun(onChat)}
         className={`${baseButtonClass} w-full ${color.chat}`}
       >
-        <ChatBubbleLeftRightIcon className="hidden h-5 w-5 md:mr-2" />
+        <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" />
         Chat {booking?.clientName?.split(" ")[0] || "Client"}
       </button>,
     );
@@ -127,6 +131,32 @@ const ActionButtons: React.FC<Props> = ({
         className={`${baseButtonClass} w-full ${color.bookAgain}`}
       >
         <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+      </button>,
+    );
+  }
+
+  if (showReport) {
+    buttons.push(
+      <button
+        key="report"
+        onClick={stopAndRun(onReport)}
+        className={`${baseButtonClass} w-full ${color.report}`}
+        title="Report this booking"
+      >
+        <svg
+          className="mr-2 h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
+        </svg>
+        Report
       </button>,
     );
   }
@@ -161,9 +191,9 @@ const ActionButtons: React.FC<Props> = ({
         }`}
       >
         {cancelInProgress ? (
-          <ArrowPathIcon className="hidden h-5 w-5 animate-spin md:mr-2" />
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
         ) : (
-          <XCircleIcon className="hidden h-5 w-5 md:mr-2" />
+          <XCircleIcon className="mr-2 h-5 w-5" />
         )}
         Cancel
       </button>,
@@ -173,47 +203,99 @@ const ActionButtons: React.FC<Props> = ({
   if (showAccept) {
     const acceptDisabled = acceptDisabledBecauseCommission || acceptInProgress;
 
-    buttons.push(
-      <button
-        key="accept"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          // If commission validation indicates insufficient balance, prompt user to top up
-          if (acceptDisabled) {
-            if (commissionValidation.hasInsufficientBalance) {
-              // Prefer a simple user-facing message; can be replaced with a toast/modal
-              alert(
-                "You need to top up your SRV wallet to cover the commission before accepting this booking.",
-              );
-            } else if (commissionValidation.loading) {
-              alert("Please wait while we validate commission requirements.");
-            }
-            return;
-          }
-          onAccept && onAccept();
-        }}
-        disabled={acceptDisabled}
-        aria-disabled={acceptDisabled}
-        title={
-          commissionValidation.hasInsufficientBalance
-            ? "Top up required to cover commission"
-            : commissionValidation.loading
-              ? "Validating commission"
-              : undefined
+    // Tooltip message for disabled state
+    const tooltipMessage = commissionValidation.hasInsufficientBalance
+      ? "You don't have available balance in your wallet."
+      : commissionValidation.loading
+        ? "Please wait while we validate commission requirements."
+        : "";
+
+    const AcceptButtonWithTooltip = () => {
+      const [isTooltipVisible, setIsTooltipVisible] = React.useState(false);
+      const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+      const handleMouseEnter = () => {
+        if (acceptDisabled) {
+          setIsTooltipVisible(true);
         }
-        className={`${baseButtonClass} w-full ${color.accept} ${
-          acceptDisabled ? "cursor-not-allowed opacity-60" : ""
-        }`}
-      >
-        {acceptInProgress ? (
-          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
-        ) : (
-          <CheckCircleIcon className="mr-2 h-5 w-5" />
-        )}
-        Accept
-      </button>,
-    );
+      };
+
+      const handleMouseLeave = () => {
+        setIsTooltipVisible(false);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+
+      const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (acceptDisabled) {
+          // Show tooltip on click for mobile/tablet
+          setIsTooltipVisible(true);
+          // Clear any existing timeout
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+          // Auto-hide tooltip after 3 seconds
+          timeoutRef.current = setTimeout(() => {
+            setIsTooltipVisible(false);
+          }, 3000);
+          return;
+        }
+        onAccept && onAccept();
+      };
+
+      React.useEffect(() => {
+        return () => {
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+        };
+      }, []);
+
+      return (
+        <div
+          className="relative w-full"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <button
+            onClick={handleClick}
+            disabled={acceptDisabled}
+            aria-disabled={acceptDisabled}
+            aria-label={acceptDisabled ? tooltipMessage : "Accept booking"}
+            className={`${baseButtonClass} w-full ${color.accept} ${
+              acceptDisabled ? "cursor-not-allowed opacity-50" : ""
+            }`}
+          >
+            {acceptInProgress ? (
+              <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <CheckCircleIcon className="mr-2 h-5 w-5" />
+            )}
+            Accept
+          </button>
+
+          {/* Tooltip */}
+          {acceptDisabled && isTooltipVisible && (
+            <div
+              className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-64 -translate-x-1/2 animate-[fadeIn_0.2s_ease-in] rounded-lg bg-gray-900 px-4 py-3 text-center text-sm leading-relaxed text-white shadow-xl"
+              role="tooltip"
+            >
+              {tooltipMessage}
+              {/* Tooltip arrow */}
+              <div className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-px">
+                <div className="h-0 w-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    buttons.push(<AcceptButtonWithTooltip key="accept" />);
   }
 
   if (showStart) {
@@ -223,7 +305,7 @@ const ActionButtons: React.FC<Props> = ({
         onClick={stopAndRun(onStart)}
         className={`${baseButtonClass} w-full ${color.start}`}
       >
-        <ArrowPathIcon className="hidden h-5 w-5 md:mr-2" />
+        <ArrowPathIcon className="mr-2 h-5 w-5" />
         Start Driving
       </button>,
     );

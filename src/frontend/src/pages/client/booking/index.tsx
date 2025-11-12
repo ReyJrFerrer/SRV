@@ -438,12 +438,7 @@ const MyBookingsPage: React.FC = () => {
           className="container mx-auto flex-grow p-3 pb-[120px] sm:p-4 md:pb-[120px]"
           style={{ minHeight: "calc(100vh - 180px)" }}
         >
-          {bookingManagement.loading ||
-          !bookingManagement.bookings ||
-          (Array.isArray(bookingManagement.bookings) &&
-            bookingManagement.bookings.length === 0 &&
-            !bookingManagement.error &&
-            filteredBookings.length === 0) ? (
+          {bookingManagement.loading ? (
             <BookingListSkeleton count={6} />
           ) : bookingManagement.error ? (
             <div className="mt-4 rounded-2xl border border-red-100 bg-white py-16 text-center shadow-md">
@@ -506,7 +501,7 @@ const MyBookingsPage: React.FC = () => {
                       Scheduled Bookings
                     </h2>
                   </div>
-                  <div className="space-y-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:space-y-6">
+                  <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
                     {scheduledBookings.map((booking, idx) => (
                       <Appear
                         key={booking.id}
