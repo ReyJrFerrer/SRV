@@ -246,6 +246,7 @@ const NotificationsPage = () => {
     if (type === "review_reminder") return "Ratings";
     if (systemTypes.includes(type)) return "System";
     if (type === "provider_message") return "Admin";
+    if (type === "generic") return "Admin";
     return "All";
   };
 

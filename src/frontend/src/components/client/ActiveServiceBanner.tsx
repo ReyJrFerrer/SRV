@@ -26,14 +26,16 @@ const ClientActiveServiceBanner: React.FC = () => {
   const clientVisibleName =
     booking.providerName || booking.providerProfile?.name || "Provider";
 
-  const isBookingPage = location.pathname.startsWith("/client/book/");
+  const isFullPage =
+    location.pathname.startsWith("/client/book/") ||
+    location.pathname.startsWith("/client/report/");
 
   return (
     <>
       <div
         className={
           `fixed inset-x-0 top-0 z-50 w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black shadow ` +
-          (isBookingPage ? "" : "md:left-20")
+          (isFullPage ? "" : "md:left-20")
         }
       >
         <button

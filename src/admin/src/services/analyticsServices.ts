@@ -50,9 +50,7 @@ export const getAllUsers = async (): Promise<any[]> => {
 
     if ((result.data as any).success) {
       const users = (result.data as any).users || [];
-      console.log(
-        `[getAllUsers] Successfully retrieved ${users.length} users`,
-      );
+      console.log(`[getAllUsers] Successfully retrieved ${users.length} users`);
       return users;
     } else {
       const errorMsg = (result.data as any).message || "Failed to get users";
@@ -113,4 +111,3 @@ export const getBookingsData = async (): Promise<{
     return { bookings: [], commissionTransactions: [] };
   }
 };
-

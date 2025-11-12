@@ -4,7 +4,9 @@ import { sendTicketStatusNotification } from "./notificationServices";
 /**
  * Get detailed reviews for a user (received, given as client, given as provider)
  */
-export const getUserDetailedReviews = async (userId: string): Promise<{
+export const getUserDetailedReviews = async (
+  userId: string,
+): Promise<{
   receivedReviews: any[]; // Reviews RECEIVED (what providers wrote about this user)
   givenAsClientReviews: any[]; // Reviews GIVEN as client (what user wrote about providers/services)
   givenAsProviderReviews: any[]; // Reviews GIVEN as provider (what user wrote about clients)
@@ -252,4 +254,3 @@ export const updateReportStatus = async (
     return false;
   }
 };
-

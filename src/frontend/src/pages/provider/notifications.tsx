@@ -174,6 +174,7 @@ const NotificationsPageSP = () => {
     if (bookingTypes.includes(type)) return "Bookings";
     if (type === "review_request") return "Ratings";
     if (systemTypes.includes(type)) return "System";
+    if (type === "generic") return "Admin";
     return "All";
   };
 

@@ -37,7 +37,10 @@ export const requireAuth = () => {
  * Helper function to call Firebase Cloud Functions
  * Follows the established pattern of wrapping payload in data object
  */
-export const callFirebaseFunction = async (functionName: string, payload: any) => {
+export const callFirebaseFunction = async (
+  functionName: string,
+  payload: any,
+) => {
   try {
     requireAuth(); // Ensure user is authenticated
     const callable = httpsCallable(functions, functionName);
@@ -71,4 +74,3 @@ export const updateAdminActor = (_identity: any) => {
 
 // Export functions for direct use
 export { functions };
-

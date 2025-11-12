@@ -13,7 +13,7 @@ const db = admin.firestore();
 exports.createAdminProfile = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
 
-  const {principal, name, phone, uid: providedUid} = payload;
+  const {principal, phone, uid: providedUid} = payload;
 
   // Get UID from context if authenticated, otherwise use provided UID
   let uid;
@@ -58,7 +58,6 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
 
       await profileRef.set(newProfile);
     } else {
-
       // If profile exists but doesn't have a numbered admin name, update it
       const existingData = profileDoc.data();
       if (existingData.isAdmin || existingData.name === "Admin User") {
