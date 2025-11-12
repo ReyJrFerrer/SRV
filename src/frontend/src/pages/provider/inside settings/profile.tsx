@@ -150,7 +150,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
           description:
             "Trusted provider - Excellent reputation! Clients trust you as a reliable provider.",
         };
-      case "Premium":
+      case "VeryHigh":
         return {
           color: "bg-green-100 text-green-800 border-green-300",
           icon: ShieldCheckIcon,
@@ -173,7 +173,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
       >
         <IconComponent className="mr-2 h-5 w-5" />
-        {trustLevel} Provider
+        {trustLevel === "VeryHigh" ? "Premium" : trustLevel} Provider
         <button
           type="button"
           aria-label="Show badge info"

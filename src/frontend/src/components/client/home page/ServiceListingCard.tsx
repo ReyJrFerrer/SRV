@@ -315,7 +315,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               <img
                 src={imageSrc}
                 alt={service.title}
-                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity duration-500 ${
+                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity  ${
                   imageLoaded ? "opacity-100" : "opacity-0"
                 }`}
                 onError={(e) => {
