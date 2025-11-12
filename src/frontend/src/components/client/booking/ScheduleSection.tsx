@@ -186,7 +186,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                       </button>
                     );
                   })
-              ) }
+              )}
             </div>
           </div>
         </div>
@@ -352,7 +352,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                             <span className="ml-1 text-xs">(You Booked)</span>
                           )}
                           {!isUserBooked && !isSlotAvailable && (
-                            <span className="ml-1 text-xs">(Booked)</span>
+                            <span className="ml-1 text-xs"></span>
                           )}
                         </button>
                       );

@@ -228,102 +228,114 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   validationErrors = {},
 }) => {
   const handleDayToggle = (day: DayOfWeek) => {
-    setFormData((prev: { 
-      availabilitySchedule: DayOfWeek[];
-      perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
-      useSameTimeForAllDays: boolean;
-    }) => {
-      const isCurrentlySelected = prev.availabilitySchedule.includes(day);
-      
-      if (isCurrentlySelected) {
-        // Removing the day - also clear its time slots
-        const newSchedule = prev.availabilitySchedule.filter((d: any) => d !== day);
-        const newPerDayTimeSlots = { ...prev.perDayTimeSlots };
-        delete newPerDayTimeSlots[day];
-        
-        return { 
-          ...prev, 
-          availabilitySchedule: newSchedule,
-          perDayTimeSlots: newPerDayTimeSlots,
-        };
-      } else {
-        // Adding the day
-        const newSchedule = [...prev.availabilitySchedule, day];
-        
-        // If using separate times per day, ensure this day gets a default time slot
-        if (!prev.useSameTimeForAllDays) {
+    setFormData(
+      (prev: {
+        availabilitySchedule: DayOfWeek[];
+        perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
+        useSameTimeForAllDays: boolean;
+      }) => {
+        const isCurrentlySelected = prev.availabilitySchedule.includes(day);
+
+        if (isCurrentlySelected) {
+          // Removing the day - also clear its time slots
+          const newSchedule = prev.availabilitySchedule.filter(
+            (d: any) => d !== day,
+          );
           const newPerDayTimeSlots = { ...prev.perDayTimeSlots };
-          if (!newPerDayTimeSlots[day] || newPerDayTimeSlots[day].length === 0) {
-            newPerDayTimeSlots[day] = [
-              {
-                id: nanoid(),
-                startHour: "09",
-                startMinute: "00",
-                startPeriod: "AM",
-                endHour: "05",
-                endMinute: "00",
-                endPeriod: "PM",
-              },
-            ];
-          }
+          delete newPerDayTimeSlots[day];
+
           return {
             ...prev,
             availabilitySchedule: newSchedule,
             perDayTimeSlots: newPerDayTimeSlots,
           };
+        } else {
+          // Adding the day
+          const newSchedule = [...prev.availabilitySchedule, day];
+
+          // If using separate times per day, ensure this day gets a default time slot
+          if (!prev.useSameTimeForAllDays) {
+            const newPerDayTimeSlots = { ...prev.perDayTimeSlots };
+            if (
+              !newPerDayTimeSlots[day] ||
+              newPerDayTimeSlots[day].length === 0
+            ) {
+              newPerDayTimeSlots[day] = [
+                {
+                  id: nanoid(),
+                  startHour: "09",
+                  startMinute: "00",
+                  startPeriod: "AM",
+                  endHour: "05",
+                  endMinute: "00",
+                  endPeriod: "PM",
+                },
+              ];
+            }
+            return {
+              ...prev,
+              availabilitySchedule: newSchedule,
+              perDayTimeSlots: newPerDayTimeSlots,
+            };
+          }
+
+          return { ...prev, availabilitySchedule: newSchedule };
         }
-        
-        return { ...prev, availabilitySchedule: newSchedule };
-      }
-    });
+      },
+    );
   };
 
   const handlePresetChange = (presetDays: DayOfWeek[], isChecked: boolean) => {
-    setFormData((prev: { 
-      availabilitySchedule: DayOfWeek[];
-      perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
-      useSameTimeForAllDays: boolean;
-    }) => {
-      let newSchedule = [...prev.availabilitySchedule];
-      const newPerDayTimeSlots = { ...prev.perDayTimeSlots };
+    setFormData(
+      (prev: {
+        availabilitySchedule: DayOfWeek[];
+        perDayTimeSlots: Record<DayOfWeek, TimeSlotUIData[]>;
+        useSameTimeForAllDays: boolean;
+      }) => {
+        let newSchedule = [...prev.availabilitySchedule];
+        const newPerDayTimeSlots = { ...prev.perDayTimeSlots };
 
-      if (isChecked) {
-        presetDays.forEach((day) => {
-          if (!newSchedule.includes(day)) {
-            newSchedule.push(day);
-            
-            // If using separate times per day, ensure each day gets a default time slot
-            if (!prev.useSameTimeForAllDays) {
-              if (!newPerDayTimeSlots[day] || newPerDayTimeSlots[day].length === 0) {
-                newPerDayTimeSlots[day] = [
-                  {
-                    id: nanoid(),
-                    startHour: "09",
-                    startMinute: "00",
-                    startPeriod: "AM",
-                    endHour: "05",
-                    endMinute: "00",
-                    endPeriod: "PM",
-                  },
-                ];
+        if (isChecked) {
+          presetDays.forEach((day) => {
+            if (!newSchedule.includes(day)) {
+              newSchedule.push(day);
+
+              // If using separate times per day, ensure each day gets a default time slot
+              if (!prev.useSameTimeForAllDays) {
+                if (
+                  !newPerDayTimeSlots[day] ||
+                  newPerDayTimeSlots[day].length === 0
+                ) {
+                  newPerDayTimeSlots[day] = [
+                    {
+                      id: nanoid(),
+                      startHour: "09",
+                      startMinute: "00",
+                      startPeriod: "AM",
+                      endHour: "05",
+                      endMinute: "00",
+                      endPeriod: "PM",
+                    },
+                  ];
+                }
               }
             }
-          }
-        });
-      } else {
-        newSchedule = newSchedule.filter((day) => !presetDays.includes(day));
-        // Clear time slots for removed days
-        presetDays.forEach((day) => {
-          delete newPerDayTimeSlots[day];
-        });
-      }
-      
-      return { 
-        ...prev, 
-        availabilitySchedule: newSchedule,
-        perDayTimeSlots: newPerDayTimeSlots,
-      };
-    });
+          });
+        } else {
+          newSchedule = newSchedule.filter((day) => !presetDays.includes(day));
+          // Clear time slots for removed days
+          presetDays.forEach((day) => {
+            delete newPerDayTimeSlots[day];
+          });
+        }
+
+        return {
+          ...prev,
+          availabilitySchedule: newSchedule,
+          perDayTimeSlots: newPerDayTimeSlots,
+        };
+      },
+    );
   };
 
   const handleClearAll = () => {
@@ -535,9 +547,9 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             ),
           };
         }
-        
+
         const currentDaySlots = prev.perDayTimeSlots[day] || [];
-        
+
         // If this is the last slot for the day, remove the day from availability instead
         if (currentDaySlots.length <= 1) {
           return {
@@ -551,7 +563,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             },
           };
         }
-        
+
         return {
           ...prev,
           perDayTimeSlots: {
@@ -890,7 +902,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               {formData.availabilitySchedule.map((day) => {
                 const daySlots = formData.perDayTimeSlots[day] || [];
                 const isLastSlot = daySlots.length === 1;
-                
+
                 return (
                   <div
                     key={day}

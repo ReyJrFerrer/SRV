@@ -201,23 +201,22 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                     );
                     const currentlyAvailable =
                       dayEntry.availability.isAvailable;
-                    
+
                     // When enabling a day, always ensure it has at least one slot
                     const newAvailability = {
                       ...dayEntry.availability,
                       isAvailable: !currentlyAvailable,
-                      slots:
-                        !currentlyAvailable
-                          ? (!dayEntry.availability.slots ||
-                            dayEntry.availability.slots.length === 0)
-                            ? [
-                                {
-                                  startTime: templateTimeSlot.startTime,
-                                  endTime: templateTimeSlot.endTime,
-                                },
-                              ]
-                            : dayEntry.availability.slots
-                          : dayEntry.availability.slots || [],
+                      slots: !currentlyAvailable
+                        ? !dayEntry.availability.slots ||
+                          dayEntry.availability.slots.length === 0
+                          ? [
+                              {
+                                startTime: templateTimeSlot.startTime,
+                                endTime: templateTimeSlot.endTime,
+                              },
+                            ]
+                          : dayEntry.availability.slots
+                        : dayEntry.availability.slots || [],
                     };
 
                     newSchedule[idx] = {
@@ -348,18 +347,25 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
                                 const dayIdx = weeklySchedule.findIndex(
                                   (d) => d.day === dayEntry.day,
                                 );
-                                const currentSlots = newSchedule[dayIdx].availability.slots || [];
-                                
+                                const currentSlots =
+                                  newSchedule[dayIdx].availability.slots || [];
+
                                 // Prevent removing the last slot if day is marked as available
-                                if (currentSlots.length <= 1 && dayEntry.availability.isAvailable) {
+                                if (
+                                  currentSlots.length <= 1 &&
+                                  dayEntry.availability.isAvailable
+                                ) {
                                   // Instead of removing, uncheck the day
-                                  newSchedule[dayIdx].availability.isAvailable = false;
+                                  newSchedule[dayIdx].availability.isAvailable =
+                                    false;
                                   newSchedule[dayIdx].availability.slots = [];
                                 } else {
                                   // Remove the slot
-                                  newSchedule[dayIdx].availability.slots!.splice(slotIndex, 1);
+                                  newSchedule[
+                                    dayIdx
+                                  ].availability.slots!.splice(slotIndex, 1);
                                 }
-                                
+
                                 setWeeklySchedule(newSchedule);
                               }}
                               className="rounded-full p-1 text-red-600 hover:bg-red-100"

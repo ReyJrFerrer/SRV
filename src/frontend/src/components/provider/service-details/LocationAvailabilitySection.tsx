@@ -214,16 +214,16 @@ const LocationAvailabilitySection: React.FC<Props> = ({
             </label>
             <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
               {service.weeklySchedule?.filter(
-                (entry: any) => 
-                  entry.availability.isAvailable && 
-                  entry.availability.slots && 
+                (entry: any) =>
+                  entry.availability.isAvailable &&
+                  entry.availability.slots &&
                   entry.availability.slots.length > 0,
               ).length ? (
                 [...service.weeklySchedule]
                   .filter(
-                    (entry: any) => 
-                      entry.availability.isAvailable && 
-                      entry.availability.slots && 
+                    (entry: any) =>
+                      entry.availability.isAvailable &&
+                      entry.availability.slots &&
                       entry.availability.slots.length > 0,
                   )
                   .sort((a: any, b: any) => dayOrder[a.day] - dayOrder[b.day])

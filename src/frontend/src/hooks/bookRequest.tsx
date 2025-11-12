@@ -198,15 +198,35 @@ export const useBookRequest = (): UseBookRequestReturn => {
           }
         }
 
-        // IMPORTANT: Using booking canister for availability check (with conflict checking)
-        // Use the backend-friendly date for the API call
-        const isAvailable =
-          await bookingCanisterService.checkServiceAvailability(
-            serviceId,
-            todayForBackend,
-          );
+        // IMPORTANT: Check if there are ANY available slots remaining for today
+        // Get all slots for today
+        const slots = await bookingCanisterService.getServiceAvailableSlots(
+          serviceId,
+          todayForBackend,
+        );
 
-        return isAvailable || false;
+        if (!slots || slots.length === 0) {
+          return false;
+        }
+
+        // Check if at least one slot is available and hasn't passed yet
+        const hasAvailableSlot = slots.some((slot) => {
+          // Check if slot is marked as available
+          if (!slot.isAvailable) {
+            return false;
+          }
+
+          // Check if the slot time hasn't passed yet
+          const [endHour, endMinute] = slot.timeSlot.endTime
+            .split(":")
+            .map(Number);
+          const slotEndTime = new Date();
+          slotEndTime.setHours(endHour, endMinute, 0, 0);
+
+          return now < slotEndTime;
+        });
+
+        return hasAvailableSlot;
       } catch (err) {
         return false;
       }

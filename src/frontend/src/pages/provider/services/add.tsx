@@ -494,7 +494,7 @@ const AddServicePage: React.FC = () => {
               !formData.perDayTimeSlots[day] ||
               formData.perDayTimeSlots[day].length === 0,
           );
-          
+
           if (daysWithoutSlots.length > 0) {
             errors.timeSlots = `Each selected day must have at least one time slot. Missing slots for: ${daysWithoutSlots.join(", ")}`;
           } else {
