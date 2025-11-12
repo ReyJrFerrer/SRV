@@ -737,7 +737,6 @@ const ProviderDirectionsPage: React.FC = () => {
     );
   }
 
-
   const destinationHasCoords = !!destinationCoords;
 
   const toggleNavigationMode = () => {
