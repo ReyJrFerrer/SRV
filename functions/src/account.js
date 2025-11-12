@@ -102,7 +102,7 @@ exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
   const auth = context.auth || data.auth;
   // Check authentication
   if (!auth) {
-    console.error("❌ No authentication context found!");
+    console.error("No authentication context found!");
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated to create a profile",
@@ -138,7 +138,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
 
   // Check authentication
   if (!auth) {
-    console.error("❌ No authentication context found!");
+    console.error("No authentication context found!");
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated to create a profile",
@@ -189,9 +189,8 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
   // Initialize reputation score. But if it fails, creation will push through.
   try {
     await initializeReputationInternal(principalId, now);
-    console.log(`✅ Reputation initialized for user: ${principalId}`);
   } catch (error) {
-    console.log(`❌ Reputation initialization failed for user: ${principalId}`);
+    console.error(`Reputation initialization failed for user: ${principalId}`, error);
   }
 
 

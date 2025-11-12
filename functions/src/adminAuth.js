@@ -12,20 +12,16 @@ const db = admin.firestore();
  */
 exports.createAdminProfile = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  console.log("createAdminProfile", payload);
 
   const {principal, name, phone, uid: providedUid} = payload;
-  console.log("Destructured values:", {principal, name, phone, providedUid});
 
   // Get UID from context if authenticated, otherwise use provided UID
   let uid;
 
   if (context.auth) {
     uid = context.auth.uid;
-    console.log(`🔧 [Admin] Using authenticated UID: ${uid}`);
   } else if (providedUid) {
     uid = providedUid;
-    console.log(`🔧 [Admin] Using provided UID: ${uid}`);
   } else {
     throw new functions.https.HttpsError(
       "invalid-argument",
@@ -34,9 +30,6 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    console.log(`🔧 [Admin] Creating admin profile for UID: ${uid}`);
-
-
     const adminRolesSnapshot = await db.collection("userRoles")
       .where("role", "==", "ADMIN")
       .get();
@@ -44,8 +37,6 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
     const adminCount = adminRolesSnapshot.size;
     const adminNumber = String(adminCount).padStart(2, "0");
     const adminName = `admin${adminNumber}`;
-
-    console.log(`🔢 [Admin] Found ${adminCount} existing admin(s), assigning name: ${adminName}`);
 
     // Check if profile already exists
     const profileRef = db.collection("users").doc(uid);
@@ -66,9 +57,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       };
 
       await profileRef.set(newProfile);
-      console.log(`✅ [Admin] Profile created for UID: ${uid} with name: ${newProfile.name}`);
     } else {
-      console.log(`ℹ️  [Admin] Profile already exists for UID: ${uid}`);
 
       // If profile exists but doesn't have a numbered admin name, update it
       const existingData = profileDoc.data();
@@ -102,16 +91,12 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
               name: correctAdminName,
               updatedAt: FieldValue.serverTimestamp(),
             });
-
-            console.log(`🔄 [Admin] Updated existing admin profile name to: ${correctAdminName}`);
           } else {
             // No role yet, will be assigned below - use the calculated name
             await profileRef.update({
               name: adminName,
               updatedAt: FieldValue.serverTimestamp(),
             });
-
-            console.log(`🔄 [Admin] Updated existing admin profile name to: ${adminName}`);
           }
         }
       }
@@ -126,11 +111,9 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
     };
 
     await db.collection("userRoles").doc(uid).set(roleAssignment);
-    console.log(`✅ [Admin] Admin role assigned to UID: ${uid}`);
 
     // Set custom claims for Firebase Auth
     await admin.auth().setCustomUserClaims(uid, {isAdmin: true});
-    console.log(`✅ [Admin] Custom claims set for UID: ${uid}`);
 
     return {
       success: true,
@@ -139,7 +122,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       needsSignOut: false, // Token refresh is handled automatically in the frontend
     };
   } catch (error) {
-    console.error("❌ [Admin] Error in createAdminProfile:", error);
+    console.error("Error in createAdminProfile:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
