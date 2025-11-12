@@ -203,47 +203,99 @@ const ActionButtons: React.FC<Props> = ({
   if (showAccept) {
     const acceptDisabled = acceptDisabledBecauseCommission || acceptInProgress;
 
-    buttons.push(
-      <button
-        key="accept"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          // If commission validation indicates insufficient balance, prompt user to top up
-          if (acceptDisabled) {
-            if (commissionValidation.hasInsufficientBalance) {
-              // Prefer a simple user-facing message; can be replaced with a toast/modal
-              alert(
-                "You need to top up your SRV wallet to cover the commission before accepting this booking.",
-              );
-            } else if (commissionValidation.loading) {
-              alert("Please wait while we validate commission requirements.");
-            }
-            return;
-          }
-          onAccept && onAccept();
-        }}
-        disabled={acceptDisabled}
-        aria-disabled={acceptDisabled}
-        title={
-          commissionValidation.hasInsufficientBalance
-            ? "Top up required to cover commission"
-            : commissionValidation.loading
-              ? "Validating commission"
-              : undefined
+    // Tooltip message for disabled state
+    const tooltipMessage = commissionValidation.hasInsufficientBalance
+      ? "You don't have available balance in your wallet."
+      : commissionValidation.loading
+        ? "Please wait while we validate commission requirements."
+        : "";
+
+    const AcceptButtonWithTooltip = () => {
+      const [isTooltipVisible, setIsTooltipVisible] = React.useState(false);
+      const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+      const handleMouseEnter = () => {
+        if (acceptDisabled) {
+          setIsTooltipVisible(true);
         }
-        className={`${baseButtonClass} w-full ${color.accept} ${
-          acceptDisabled ? "cursor-not-allowed opacity-100" : ""
-        }`}
-      >
-        {acceptInProgress ? (
-          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
-        ) : (
-          <CheckCircleIcon className="mr-2 h-5 w-5" />
-        )}
-        Accept
-      </button>,
-    );
+      };
+
+      const handleMouseLeave = () => {
+        setIsTooltipVisible(false);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+
+      const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (acceptDisabled) {
+          // Show tooltip on click for mobile/tablet
+          setIsTooltipVisible(true);
+          // Clear any existing timeout
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+          // Auto-hide tooltip after 3 seconds
+          timeoutRef.current = setTimeout(() => {
+            setIsTooltipVisible(false);
+          }, 3000);
+          return;
+        }
+        onAccept && onAccept();
+      };
+
+      React.useEffect(() => {
+        return () => {
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+        };
+      }, []);
+
+      return (
+        <div 
+          className="relative w-full"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <button
+            onClick={handleClick}
+            disabled={acceptDisabled}
+            aria-disabled={acceptDisabled}
+            aria-label={acceptDisabled ? tooltipMessage : "Accept booking"}
+            className={`${baseButtonClass} w-full ${color.accept} ${
+              acceptDisabled ? "cursor-not-allowed opacity-50" : ""
+            }`}
+          >
+            {acceptInProgress ? (
+              <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <CheckCircleIcon className="mr-2 h-5 w-5" />
+            )}
+            Accept
+          </button>
+
+          {/* Tooltip */}
+          {acceptDisabled && isTooltipVisible && (
+            <div
+              className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-64 -translate-x-1/2 animate-[fadeIn_0.2s_ease-in] rounded-lg bg-gray-900 px-4 py-3 text-center text-sm leading-relaxed text-white shadow-xl"
+              role="tooltip"
+            >
+              {tooltipMessage}
+              {/* Tooltip arrow */}
+              <div className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-px">
+                <div className="h-0 w-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    buttons.push(<AcceptButtonWithTooltip key="accept" />);
   }
 
   if (showStart) {
