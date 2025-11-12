@@ -464,6 +464,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
             <h2 className="mb-4 text-xl font-bold text-blue-700">
               Service Packages <span className="text-red-500">*</span>
             </h2>
+            <div className="mb-4 rounded-lg  bg-yellow-50 p-3">
+              <p className="text-sm text-yellow-800">
+                <span className="font-semibold">Note:</span> At least one
+                package is required to create your service. If your service
+                doesn't have different tiers or packages, simply create one
+                package that describes your complete offering.
+              </p>
+            </div>
             <fieldset>
               <div className="space-y-6">
                 {formData.servicePackages.map((pkg, index) => {
