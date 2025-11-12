@@ -201,6 +201,7 @@ export const useNotificationsWithPush = () => {
           providerName: notif.providerName,
           clientName: notif.clientName,
           bookingId: notif.bookingId,
+          metadata: notif.metadata,
         }));
 
       // Use only canister notifications (no frontend-generated ones)

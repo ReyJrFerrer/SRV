@@ -331,7 +331,6 @@ exports.assignRole = functions.https.onCall(async (data, context) => {
   const {userId, role = "ADMIN", scope} = payload;
 
   const authInfo = getAuthInfo(context, data);
-  console.log("In assign role", payload);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -573,14 +572,6 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     const bookingsSnapshot = await db.collection("bookings").get();
     const totalBookings = bookingsSnapshot.size;
 
-    // Debug: Log all booking statuses
-    console.log("Debug - All booking statuses:");
-    bookingsSnapshot.docs.forEach((doc, index) => {
-      const data = doc.data();
-      console.log(`Booking ${index + 1}: status="${data.status}", price=${data.price}, 
-        servicePrice=${data.servicePrice}, amount=${data.amount}`);
-    });
-
     const settledBookings = bookingsSnapshot.docs.filter((doc) => {
       const status = doc.data().status;
       return status === "Completed" || status === "Settled" ||
@@ -590,28 +581,20 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     }).length;
 
     // Calculate total revenue from completed bookings
-    console.log("Debug - Total bookings found:", bookingsSnapshot.size);
     const completedBookings = bookingsSnapshot.docs.filter((doc) => {
       const status = doc.data().status;
-      const price = doc.data().price || 0;
-      console.log("Debug - Booking status:", status, "price:", price);
       return status === "Completed" || status === "Settled" ||
       status === "completed" || status === "settled" ||
              status === "Confirmed" || status === "confirmed"||
              status === "Accepted" || status === "accepted";
     });
-    console.log("Debug - Completed bookings count:", completedBookings.length);
 
     const totalRevenue = completedBookings.reduce((sum, doc) => {
       const data = doc.data();
       const price = parseFloat(data.price) ||
       parseFloat(data.servicePrice) || parseFloat(data.amount) || 0;
-      console.log("Debug - Adding price to revenue:", price,
-        "from fields:", {price: data.price, servicePrice: data.servicePrice, amount: data.amount});
       return sum + price;
     }, 0);
-
-    console.log("Debug - Total revenue calculated:", totalRevenue);
 
     // Calculate total commission from actual wallet deductions
     const commissionTransactionsSnapshot = await db.collection("transactions")
@@ -619,21 +602,15 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       .where("payment_channel", "==", "SRV_COMMISSION")
       .get();
 
-    console.log("Debug - Commission transactions found:", commissionTransactionsSnapshot.size);
     const totalCommission = commissionTransactionsSnapshot.docs.reduce((sum, doc) => {
       const amount = doc.data().amount || 0;
-      console.log("Debug - Commission transaction amount:", amount);
       return sum + amount;
     }, 0);
-
-    console.log("Debug - Total commission calculated:", totalCommission);
 
     // Calculate total topups amount from transactions collection
     const allCreditTransactionsSnapshot = await db.collection("transactions")
       .where("transaction_type", "==", "Credit")
       .get();
-
-    console.log("Debug - All Credit transactions found:", allCreditTransactionsSnapshot.size);
 
     // Filter and sum topup transaction amounts (exclude admin credits, etc.)
     const totalTopups = allCreditTransactionsSnapshot.docs.reduce((sum, doc) => {
@@ -647,14 +624,11 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
         (description.includes("topup") || description.includes("top-up")) &&
         paymentChannel !== "ADMIN_UPDATE"
       ) {
-        console.log("Debug - Topup transaction amount:", amount, "description:", data.description);
         return sum + amount;
       }
 
       return sum;
     }, 0);
-
-    console.log("Debug - Total topups amount calculated:", totalTopups);
 
     const stats = {
       totalCommissionRules: rulesSnapshot.size,
@@ -722,8 +696,6 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
     });
 
     const allUsers = Array.from(userMap.values());
-    console.log(`✅ [getAllUsers] Found ${allUsers.length} users (${profiles.length}
-      from profiles, ${users.length} from users)`);
 
     return {success: true, users: allUsers};
   } catch (error) {
@@ -1160,12 +1132,10 @@ exports.getServicesWithCertificates = functions.https.onCall(async (data, contex
 
     // Get all services
     const services = await getAllServicesInternal();
-    console.log(`Got ${services.length} services from service collection`);
 
     // Get all pending certificates
     const pendingCerts = await getCertificatesByValidationStatusInternal("Pending");
     const pendingCertUrls = pendingCerts.map((cert) => cert.url);
-    console.log(`Got ${pendingCerts.length} pending certificates`);
 
     const servicesWithCerts = [];
 
@@ -1204,7 +1174,6 @@ exports.getServicesWithCertificates = functions.https.onCall(async (data, contex
       }
     }
 
-    console.log(`Returning ${servicesWithCerts.length} services with pending certificates`);
     return {success: true, data: servicesWithCerts};
   } catch (error) {
     console.error("Error in getServicesWithCertificates:", error);
@@ -1327,26 +1296,16 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    console.log("🔍 [getBookingsData] Starting to fetch bookings...");
     const bookingsSnapshot = await db.collection("bookings").get();
-    console.log(`🔍 [getBookingsData] Found ${bookingsSnapshot.size} bookings`);
 
     const bookings = bookingsSnapshot.docs.map((doc) => {
       const data = doc.data();
-      console.log(`🔍 [getBookingsData] Booking ${doc.id}:`, {
-        id: doc.id,
-        status: data.status,
-        createdAt: data.createdAt,
-        price: data.price,
-      });
       return {
         id: doc.id,
         ...data,
         createdAt: data.createdAt?.toDate() || new Date(),
       };
     });
-
-    console.log(`🔍 [getBookingsData] Processed ${bookings.length} bookings`);
 
     // Get commission transactions for daily tracking
     const commissionTransactionsSnapshot = await db.collection("transactions")
@@ -1359,9 +1318,6 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
       ...doc.data(),
       timestamp: new Date(doc.data().timestamp),
     }));
-
-    console.log(`🔍 [getBookingsData] Returning ${bookings.length} 
-      bookings and ${commissionTransactions.length} commission transactions`);
 
     return {
       success: true,
@@ -1379,9 +1335,6 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
  * Scheduled function that runs every hour to check for expired suspensions
  */
 exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event) => {
-  console.log("🚀 [autoReactivateSuspendedAccounts] Scheduled function running...");
-  console.log(`📅 [autoReactivateSuspendedAccounts] Current time: ${new Date().toISOString()}`);
-
   try {
     const now = new Date();
 
@@ -1391,11 +1344,7 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
       .where("suspensionEndDate", "<=", now.toISOString())
       .get();
 
-    console.log(`📊 [autoReactivateSuspendedAccounts] Found ${expiredSuspensionsQuery.size}
-      expired suspensions.`);
-
     if (expiredSuspensionsQuery.empty) {
-      console.log("✅ [autoReactivateSuspendedAccounts] No expired suspensions found.");
       return {success: true, count: 0};
     }
 
@@ -1405,10 +1354,6 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
     // Process each expired suspension
     for (const doc of expiredSuspensionsQuery.docs) {
       const user = doc.data();
-
-      console.log(`📝 [autoReactivateSuspendedAccounts]
-        Reactivating account for user ${user.id}...`);
-      console.log(`   Suspension end date: ${user.suspensionEndDate}`);
 
       // Update user's locked status in Firestore
       batch.update(doc.ref, {
@@ -1420,10 +1365,8 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
       // Enable user in Firebase Auth
       try {
         await admin.auth().updateUser(user.id, {disabled: false});
-        console.log(`✅ [autoReactivateSuspendedAccounts] Enabled user ${user.id} in Firebase Auth`);
       } catch (authError) {
-        console.error(`⚠️ [autoReactivateSuspendedAccounts]
-          Failed to enable user ${user.id} in Firebase Auth: ${authError.message}`);
+        console.error(`Failed to enable user ${user.id} in Firebase Auth:`, authError.message);
         // Continue with Firestore update even if Auth update fails
       }
 
@@ -1432,14 +1375,11 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
 
     if (reactivatedCount > 0) {
       await batch.commit();
-      console.log(`✅ [autoReactivateSuspendedAccounts] Reactivated ${reactivatedCount} accounts.`);
     }
 
     return {success: true, count: reactivatedCount};
   } catch (error) {
-    console.error("❌ [autoReactivateSuspendedAccounts]Error reactivating suspended accounts:",
-      error);
-    console.error("Stack trace:", error.stack);
+    console.error("Error reactivating suspended accounts:", error);
     throw error;
   }
 });
