@@ -1,5 +1,4 @@
 import { callFirebaseFunction, requireAuth } from "./coreUtils";
-import { AdminServiceError } from "./serviceTypes";
 import { sendTicketStatusNotification } from "./notificationServices";
 
 /**
