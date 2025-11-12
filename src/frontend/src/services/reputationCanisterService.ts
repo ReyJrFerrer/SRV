@@ -72,8 +72,21 @@ class ReputationCanisterService {
       if ("ok" in result) {
         return result.ok;
       } else {
+        throw new Error("Failed to fetch reputation score");
       }
-    } catch (error) {}
+    } catch (error: any) {
+      // Check if it's a signature verification error (delegation expired)
+      if (
+        error?.message?.includes("Invalid signature") ||
+        error?.message?.includes("signature could not be verified")
+      ) {
+        console.error("❌ IC delegation expired, please re-authenticate");
+        throw new Error(
+          "Session expired: Please refresh the page and log in again",
+        );
+      }
+      throw error;
+    }
   }
 
   /***
@@ -90,7 +103,18 @@ class ReputationCanisterService {
       if ("ok" in result) {
         return result.ok;
       }
-    } catch (error) {}
+    } catch (error: any) {
+      // Check if it's a signature verification error (delegation expired)
+      if (
+        error?.message?.includes("Invalid signature") ||
+        error?.message?.includes("signature could not be verified")
+      ) {
+        throw new Error(
+          "Reputation cannot be retrieved: Please refresh the page and log in again",
+        );
+      }
+      throw error;
+    }
   }
 
   /**

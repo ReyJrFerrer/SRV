@@ -143,14 +143,14 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
             Could not compute directions.
           </p>
         )}
-        {!destinationHasCoords && destResolveStatus !== "pending" && (
-          <p className="mt-2 text-center text-xs text-red-600">
-            Destination coordinates missing for this booking.
-          </p>
-        )}
         {!destinationHasCoords && destResolveStatus === "pending" && (
           <p className="mt-2 text-center text-xs text-gray-600">
             Resolving destination...
+          </p>
+        )}
+        {!destinationHasCoords && destResolveStatus !== "pending" && (
+          <p className="mt-2 text-center text-xs text-red-600">
+            Destination coordinates missing for this booking.
           </p>
         )}
       </div>
