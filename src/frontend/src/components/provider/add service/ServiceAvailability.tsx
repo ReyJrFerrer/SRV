@@ -89,122 +89,119 @@ const TimeSlotInput: React.FC<{
 
   return (
     <div
-      className={`relative mb-2 flex-grow flex-col gap-2 rounded-lg border px-3 pb-3 pt-3 shadow-sm lg:p-3 ${
+      className={`relative mb-2 w-full rounded-lg border px-3 pt-3 pb-3 shadow-sm lg:p-3 xl:w-fit ${
         isSameTime ? "border-red-200 bg-red-50" : "border-blue-100 bg-blue-50"
       }`}
     >
-      <div className="flex w-full flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex w-full flex-col gap-2 xl:w-auto xl:flex-row xl:items-center xl:gap-3">
-          {/* --- START TIME BLOCK --- */}
-          <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
-            {/* Label row (with mobile-only delete button) */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">Start:</span>
-              {/* Mobile/Tablet Delete Button (visible xs-lg) */}
-              <button
-                type="button"
-                onClick={() => onRemoveSlot(slot.id)}
-                className="rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 xl:hidden"
-                title="Remove time slot"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </button>
-            </div>
-            {/* Input row */}
-            <div className="flex gap-1 sm:gap-2">
-              <select
-                value={slot.startHour}
-                onChange={(e) =>
-                  onSlotChange(slot.id, "startHour", e.target.value)
-                }
-                className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                {hourOptions.map((h) => (
-                  <option key={h} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
-              <span className="flex items-center text-gray-400">:</span>
-              <select
-                value={slot.startMinute}
-                onChange={(e) =>
-                  onSlotChange(slot.id, "startMinute", e.target.value)
-                }
-                className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                {minuteOptions.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={slot.startPeriod}
-                onChange={(e) =>
-                  onSlotChange(slot.id, "startPeriod", e.target.value)
-                }
-                className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                {periodOptions.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
+      {/* This content now determines the outer div's size */}
+      <div className="flex flex-col justify-center gap-2 xl:w-auto xl:flex-row xl:items-center xl:gap-4">
+        {/* --- START TIME BLOCK --- */}
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
+          {/* Label row (with mobile-only delete button) */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-600">Start:</span>
+            {/* Mobile/Tablet Delete Button (visible xs-lg) */}
+            <button
+              type="button"
+              onClick={() => onRemoveSlot(slot.id)}
+              className="rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700 xl:hidden"
+              title="Remove time slot"
+            >
+              <TrashIcon className="h-4 w-4" />
+            </button>
           </div>
-
-          {/* --- "to" SEPARATOR (desktop-only) --- */}
-          <div className="hidden items-center justify-center px-2 xl:flex">
-            <span className="text-sm font-medium text-gray-500">to</span>
+          {/* Input row */}
+          <div className="flex gap-1 sm:gap-2">
+            <select
+              value={slot.startHour}
+              onChange={(e) =>
+                onSlotChange(slot.id, "startHour", e.target.value)
+              }
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {hourOptions.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <span className="flex items-center text-gray-400">:</span>
+            <select
+              value={slot.startMinute}
+              onChange={(e) =>
+                onSlotChange(slot.id, "startMinute", e.target.value)
+              }
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {minuteOptions.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <select
+              value={slot.startPeriod}
+              onChange={(e) =>
+                onSlotChange(slot.id, "startPeriod", e.target.value)
+              }
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {periodOptions.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </div>
+        </div>
 
-          {/* --- END TIME BLOCK --- */}
-          <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
-            <span className="text-sm font-medium text-gray-600">End:</span>
-            <div className="flex gap-1 sm:gap-2">
-              <select
-                value={slot.endHour}
-                onChange={(e) =>
-                  onSlotChange(slot.id, "endHour", e.target.value)
-                }
-                className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                {hourOptions.map((h) => (
-                  <option key={h} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
-              <span className="flex items-center text-gray-400">:</span>
-              <select
-                value={slot.endMinute}
-                onChange={(e) =>
-                  onSlotChange(slot.id, "endMinute", e.target.value)
-                }
-                className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                {minuteOptions.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={slot.endPeriod}
-                onChange={(e) =>
-                  onSlotChange(slot.id, "endPeriod", e.target.value)
-                }
-                className="rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                {periodOptions.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* --- "to" SEPARATOR (desktop-only) --- */}
+        <div className="hidden items-center justify-center px-2 xl:flex">
+          <span className="text-sm font-medium text-gray-500">to</span>
+        </div>
+
+        {/* --- END TIME BLOCK --- */}
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
+          <span className="text-sm font-medium text-gray-600">End:</span>
+          <div className="flex gap-1 sm:gap-2">
+            <select
+              value={slot.endHour}
+              onChange={(e) => onSlotChange(slot.id, "endHour", e.target.value)}
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {hourOptions.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <span className="flex items-center text-gray-400">:</span>
+            <select
+              value={slot.endMinute}
+              onChange={(e) =>
+                onSlotChange(slot.id, "endMinute", e.target.value)
+              }
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {minuteOptions.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <select
+              value={slot.endPeriod}
+              onChange={(e) =>
+                onSlotChange(slot.id, "endPeriod", e.target.value)
+              }
+              className="flex-1 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              {periodOptions.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -584,7 +581,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   ];
 
   return (
-    <div className="mx-auto max-w-6xl p-3 sm:p-4">
+    <div className="mx-auto max-w-fit p-3 sm:p-4">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
         {/* Working Days Section */}
         <section className="flex flex-col rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-4 shadow-lg sm:p-6 lg:p-8">
@@ -744,7 +741,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                         e.target.checked,
                       )
                     }
-                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
+                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -768,7 +765,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                         e.target.checked,
                       )
                     }
-                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
+                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -783,7 +780,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                     onChange={(e) =>
                       handlePresetChange(allDays, e.target.checked)
                     }
-                    className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
+                    className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
                     style={{ width: "1.2em", height: "1.2em" }}
                   />
                   <span className="px-2 text-base font-medium text-gray-700">
@@ -813,7 +810,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                           type="checkbox"
                           checked={formData.availabilitySchedule.includes(day)}
                           onChange={() => handleDayToggle(day)}
-                          className="mb-1 mt-2 rounded text-blue-600 focus:ring-blue-500"
+                          className="mt-2 mb-1 rounded text-blue-600 focus:ring-blue-500"
                           style={{ width: "1.2em", height: "1.2em" }}
                         />
                         <span className="px-2 text-base font-medium text-gray-700">
@@ -854,16 +851,16 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             />
             <label
               htmlFor="useSameTimeForAllDays"
-              className="ml-2 text-sm font-medium leading-relaxed text-gray-700 sm:text-base"
+              className="ml-2 text-sm leading-relaxed font-medium text-gray-700 sm:text-base"
             >
               Use the same working hours for all selected days
             </label>
           </div>
 
           {formData.useSameTimeForAllDays ? (
-            <div className="space-y-2">
+            <div className="flex w-full flex-col space-y-2 md:w-full xl:w-fit">
               {formData.commonTimeSlots.length === 1 && (
-                <div className="mb-2 rounded-md bg-yellow-50 p-2 text-xs text-yellow-700">
+                <div className="mb-2 w-full rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-700">
                   At least one time slot is required
                 </div>
               )}
@@ -880,7 +877,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               <button
                 type="button"
                 onClick={() => addTimeSlot("common")}
-                className="mt-2 flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800"
+                className="mt-2 flex items-center gap-1 self-end text-sm font-semibold text-blue-600 hover:text-blue-800"
               >
                 <PlusCircleIcon className="h-5 w-5" />
                 Add Time Slot
@@ -898,7 +895,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               )}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-2 md:w-full xl:w-fit">
               {formData.availabilitySchedule.map((day) => {
                 const daySlots = formData.perDayTimeSlots[day] || [];
                 const isLastSlot = daySlots.length === 1;
