@@ -30,7 +30,7 @@ const ActiveServiceBanner: React.FC = () => {
     "Category";
   const clientName =
     booking.clientName || booking.clientProfile?.name || "Client";
-  const isFullPage = location.pathname.startsWith("/client/report/");
+  const isFullPage = location.pathname.startsWith("/provider/report/");
   return (
     <>
       <div
