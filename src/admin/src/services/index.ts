@@ -39,9 +39,11 @@ export const adminServiceCanister = {
 
   // Certificate Validation
   getServicesWithCertificates: certificateServices.getServicesWithCertificates,
-  getPendingCertificateValidations: certificateServices.getPendingCertificateValidations,
+  getPendingCertificateValidations:
+    certificateServices.getPendingCertificateValidations,
   validateCertificate: certificateServices.validateCertificate,
-  updateCertificateValidationStatus: certificateServices.updateCertificateValidationStatus,
+  updateCertificateValidationStatus:
+    certificateServices.updateCertificateValidationStatus,
   getValidatedCertificates: certificateServices.getValidatedCertificates,
   getRejectedCertificates: certificateServices.getRejectedCertificates,
 
@@ -93,4 +95,3 @@ export { updateAdminActor } from "./coreUtils";
 
 // Re-export all types
 export * from "./serviceTypes";
-

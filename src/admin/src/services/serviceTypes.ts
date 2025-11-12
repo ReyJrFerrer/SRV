@@ -142,4 +142,3 @@ export class AdminServiceError extends Error {
     this.details = options.details;
   }
 }
-

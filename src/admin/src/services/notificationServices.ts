@@ -16,7 +16,7 @@ export const sendTicketStatusNotification = async (
     const statusText = newStatus
       .replace("_", " ")
       .replace(/\b\w/g, (l) => l.toUpperCase());
-    
+
     const oldStatusText = oldStatus
       .replace("_", " ")
       .replace(/\b\w/g, (l) => l.toUpperCase());
@@ -288,4 +288,3 @@ export const sendTicketCommentNotificationToUser = async (
     return false;
   }
 };
-

@@ -124,4 +124,3 @@ export const getRejectedCertificates = async (): Promise<any[]> => {
     return [];
   }
 };
-

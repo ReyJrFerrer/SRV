@@ -38,7 +38,9 @@ export const getServicePackages = async (serviceId: string): Promise<any[]> => {
 };
 
 // Get service data from Firebase
-export const getServiceData = async (serviceId: string): Promise<ServiceData | null> => {
+export const getServiceData = async (
+  serviceId: string,
+): Promise<ServiceData | null> => {
   try {
     requireAuth();
 
@@ -60,9 +62,7 @@ export const getServiceData = async (serviceId: string): Promise<ServiceData | n
       location: service.location,
       scheduledDate: undefined,
       completedDate: undefined,
-      createdDate: service.createdAt
-        ? new Date(service.createdAt)
-        : new Date(),
+      createdDate: service.createdAt ? new Date(service.createdAt) : new Date(),
       clientId: undefined,
       clientName: undefined,
       providerId: service.providerId,
@@ -100,7 +100,9 @@ export const getServiceData = async (serviceId: string): Promise<ServiceData | n
 /**
  * Get all services and bookings for a specific user
  */
-export const getUserServicesAndBookings = async (userId: string): Promise<{
+export const getUserServicesAndBookings = async (
+  userId: string,
+): Promise<{
   offeredServices: any[];
   clientBookings: any[];
   providerBookings: any[];
@@ -143,4 +145,3 @@ export const getUserServiceCount = async (userId: string): Promise<number> => {
     return 0;
   }
 };
-

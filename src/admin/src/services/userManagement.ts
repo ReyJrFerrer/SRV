@@ -9,7 +9,10 @@ import reputationCanisterService from "../../../frontend/src/services/reputation
 /**
  * Assign admin role to a user
  */
-export const assignRole = async (userId: string, scope?: string): Promise<string> => {
+export const assignRole = async (
+  userId: string,
+  scope?: string,
+): Promise<string> => {
   try {
     requireAuth();
 
@@ -92,7 +95,9 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
 /**
  * List all user role assignments
  */
-export const listUserRoles = async (): Promise<FrontendUserRoleAssignment[]> => {
+export const listUserRoles = async (): Promise<
+  FrontendUserRoleAssignment[]
+> => {
   try {
     requireAuth();
 
@@ -179,7 +184,9 @@ export const lockUserAccount = async (
 /**
  * Get all user lock statuses from Firestore
  */
-export const getAllUserLockStatuses = async (): Promise<Record<string, boolean>> => {
+export const getAllUserLockStatuses = async (): Promise<
+  Record<string, boolean>
+> => {
   try {
     requireAuth();
 
@@ -231,7 +238,9 @@ export const updateUserReputation = async (
 /**
  * Get user analytics (real data from backend)
  */
-export const getUserAnalytics = async (userId: string): Promise<{
+export const getUserAnalytics = async (
+  userId: string,
+): Promise<{
   totalEarnings: number;
   completedJobs: number;
   cancelledJobs: number;
@@ -269,7 +278,9 @@ export const getUserAnalytics = async (userId: string): Promise<{
 /**
  * Get user reviews and rating
  */
-export const getUserReviews = async (userId: string): Promise<{
+export const getUserReviews = async (
+  userId: string,
+): Promise<{
   averageRating: number;
   totalReviews: number;
 }> => {
@@ -333,7 +344,9 @@ export const getUserReviews = async (userId: string): Promise<{
 /**
  * Get user reputation score (real data from backend)
  */
-export const getUserReputation = async (userId: string): Promise<{
+export const getUserReputation = async (
+  userId: string,
+): Promise<{
   reputationScore: number;
   trustLevel: string;
   completedBookings: number;
@@ -386,7 +399,9 @@ export const getUserReputation = async (userId: string): Promise<{
 /**
  * Get user bookings (for admin booking history view)
  */
-export const getUserBookings = async (userId: string): Promise<
+export const getUserBookings = async (
+  userId: string,
+): Promise<
   Array<{
     id: string;
     serviceId: string;
@@ -490,4 +505,3 @@ export const getUserBookings = async (userId: string): Promise<
     } as AdminServiceError);
   }
 };
-
