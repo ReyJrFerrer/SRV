@@ -179,9 +179,11 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
       >
         <IconComponent className="mr-2 h-5 w-5" />
-        {(trustLevel === "VeryHigh" ? "Premium" : trustLevel) || (trustLevel === "High" ? "Trusted" : trustLevel) 
-          || (trustLevel === "Medium" ? "Reliable" : trustLevel) || (trustLevel === "Low" ? "Building Trust" : trustLevel)
-        } User
+        {(trustLevel === "VeryHigh" ? "Premium" : trustLevel) ||
+          (trustLevel === "High" ? "Trusted" : trustLevel) ||
+          (trustLevel === "Medium" ? "Reliable" : trustLevel) ||
+          (trustLevel === "Low" ? "Building Trust" : trustLevel)}{" "}
+        User
         {/* Info button for all badges */}
         <button
           type="button"
