@@ -20,13 +20,16 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
 };
 
 // Layout Components
-import ClientLayout from "./src/components/layout/ClientLayout";
-import ProviderLayout from "./src/components/layout/ProviderLayout";
 import {
+  ClientLayout,
+  ProviderLayout,
   ClientRedirect,
   ProviderRedirect,
-} from "./src/components/layout/Redirects";
+  NotFound,
+} from "./src/components/layout";
+
 import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
+
 
 // Auth Pages
 const CreateProfile = lazy(() => import("./src/pages/create-profile"));
@@ -361,6 +364,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                   <Route path="report" element={<ProviderReportIssuePage />} />
                   <Route path="help" element={<ProviderHelpSupportPage />} />
                 </Route>
+
+                {/* Catch-all route for 404 - Must be last */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </BookingCacheProvider>
