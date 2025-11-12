@@ -150,15 +150,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [locationStore]);
 
-  // Listen to Firebase auth state changes
+  // Listen to Firebase auth state changes and auto-refresh if needed
   useEffect(() => {
     const auth = getFirebaseAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
+
+      // If Firebase session expired but IC session is still valid, refresh
+      if (!user && isAuthenticated && identity) {
+        try {
+          console.log("🔄 Firebase session expired, refreshing with IC delegation...");
+          const principal = identity.getPrincipal().toString();
+          const result = await signInWithInternetIdentity(principal);
+          setFirebaseUser(result.user);
+          console.log("✅ Firebase session refreshed successfully");
+        } catch (error) {
+          console.error("❌ Failed to refresh Firebase session:", error);
+          // Only logout if we truly can't refresh (IC delegation expired)
+          await logout();
+        }
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isAuthenticated, identity]);
 
   // Auto-enable push notifications when user authenticates
   useEffect(() => {
@@ -275,6 +290,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           process.env.DFX_NETWORK === "playground"
             ? `https://id.ai`
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
+        // Set session duration to 24 hours (in nanoseconds)
+        maxTimeToLive: BigInt(24 * 60 * 60 * 1000 * 1000 * 1000),
 
         onSuccess: async () => {
           const identity = authClient.getIdentity();
