@@ -733,7 +733,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   // --- Main Page Layout ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 ">
       {/* Decline Confirmation Dialog */}
       <DeclineConfirmDialog
         show={showDeclineConfirm}
@@ -810,10 +810,8 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 formatDateRange={formatDateRange}
               />
             </div>
-
             {/* Booking Progress Section */}
             <BookingProgressSection status={specificBooking?.status} />
-
             {/* Commission Validation Section for Cash Bookings */}
             <CommissionInfo
               show={Boolean(
@@ -822,7 +820,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
               )}
               commissionValidation={commissionValidation}
             />
-
             {/* Map Section */}
             <MapSection
               mapsReady={mapsReady}
@@ -838,7 +835,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
               showStreetView={showStreetView}
               setShowStreetView={setShowStreetView}
             />
-
             {/* Booking Notes Section */}
             <BookingNotes notes={(specificBooking as any)?.notes} />
 
