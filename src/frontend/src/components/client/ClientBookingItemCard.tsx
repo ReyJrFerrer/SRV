@@ -20,6 +20,7 @@ import { useProviderBookingManagement } from "../../hooks/useProviderBookingMana
 import ReputationScore from "./service-detail/ReputationScore";
 import ActionButtons from "./booking-details/ActionButtons";
 import { StarRatingDisplay } from "./service-detail/ReviewsSection";
+import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -413,6 +414,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     <Link
       to={`/client/booking/${booking.id}`}
       className="block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      onClick={() => {
+        // If this booking is Accepted we trigger interaction so badge decrements
+        if (booking.status === "Accepted") {
+          dispatchBookingInteracted(booking.id);
+        }
+      }}
     >
       <div className="md:flex">
         {fallbackImage && (

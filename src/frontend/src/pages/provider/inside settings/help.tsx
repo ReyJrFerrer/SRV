@@ -6,7 +6,7 @@ import BottomNavigation from "../../../components/provider/NavigationBar";
 const HelpSupportPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const goToReportPage = () => navigate("/client/report");
+  const goToReportPage = () => navigate("/provider/report");
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
       <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-6 shadow-2xl">
@@ -36,10 +36,10 @@ const HelpSupportPage: React.FC = () => {
               <span className="font-semibold">Contact Support:</span> Email us
               at{" "}
               <a
-                href="mailto:support@srvpinoy.com"
+                href="mailto:hello@srvpinoy.com"
                 className="text-blue-600 underline"
               >
-                support@srvpinoy.com
+                hello@srvpinoy.com
               </a>{" "}
               for personalized help.
             </li>

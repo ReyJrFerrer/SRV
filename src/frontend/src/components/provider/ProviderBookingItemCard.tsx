@@ -14,6 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
 import { useEffect, useState } from "react";
 import ActionButtons from "./booking-details/ActionButtons";
+import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -22,7 +23,6 @@ interface ProviderBookingItemCardProps {
   onDeclineClick: () => void;
   onCancelClick: (booking: ProviderEnhancedBooking) => void;
   isDeclining: boolean;
-
   acceptBookingById: any;
   isBookingActionInProgress: any;
   checkCommissionValidation: any;
@@ -247,6 +247,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     const scheduledDate = new Date(booking.scheduledDate);
     const success = await acceptBookingById(booking.id, scheduledDate);
     if (success) {
+      // Booking has transitioned from Requested to Accepted; mark interaction of original request notification
+      dispatchBookingInteracted(booking.id);
       navigate(`../../provider/booking/${booking.id}`);
     }
   };
@@ -326,9 +328,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       );
     }
   };
-
-  // contact removed; ActionButtons no longer supports contact action
-
   // --- Booking state checks for button logic ---
   const isInProgress = status === "InProgress";
 
@@ -489,6 +488,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             onCancel={() => onCancelClick(booking)}
             onStart={handleStartService}
             onComplete={handleMarkAsCompleted}
+            onReport={() =>
+              navigate(`/provider/report`, { state: { bookingId: booking.id } })
+            }
             canStartServiceNow={() => !isScheduledForFuture}
             isBookingActionInProgress={isBookingActionInProgress}
             commissionValidation={commissionValidation}

@@ -22,7 +22,22 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 }) => {
   const location = useLocation();
   const { unreadChatCount } = useChatNotifications();
-  const { unreadCount } = useProviderNotificationsWithPush();
+  const { notifications } = useProviderNotificationsWithPush();
+
+  // Provider: count new booking requests for Booking badge
+  const newBookingRequestCount = React.useMemo(
+    () =>
+      notifications.filter((n) => !n.read && n.type === "new_booking_request")
+        .length,
+    [notifications],
+  );
+
+  // Notifications badge should exclude chat messages only (include new booking requests now)
+  const filteredNotificationUnreadCount = React.useMemo(
+    () =>
+      notifications.filter((n) => !n.read && n.type !== "chat_message").length,
+    [notifications],
+  );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
 
@@ -89,7 +104,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       to: "/provider/bookings",
       label: "Booking",
       icon: null,
-      count: 0,
+      count: newBookingRequestCount,
     },
     {
       to: "/provider/chat",
@@ -193,7 +208,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         <div
                           className={
                             active
-                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
+                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
                               : ""
                           }
                         >
@@ -201,7 +216,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                             className={
                               active
                                 ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                                : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
+                                : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                             }
                           />
                         </div>
@@ -264,7 +279,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
                             : ""
                         }
                       >
@@ -272,7 +287,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             active
                               ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -287,16 +302,18 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     >
                       Notifications
                     </span>
-                    {unreadCount > 0 && (
+                    {filteredNotificationUnreadCount > 0 && (
                       <span
                         aria-label={
-                          unreadCount > 99
+                          filteredNotificationUnreadCount > 99
                             ? "99+ new notifications"
-                            : `${unreadCount} new notifications`
+                            : `${filteredNotificationUnreadCount} new notifications`
                         }
                         className="absolute -top-0 right-2 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
                       >
-                        {unreadCount > 99 ? "99+" : unreadCount}
+                        {filteredNotificationUnreadCount > 99
+                          ? "99+"
+                          : filteredNotificationUnreadCount}
                       </span>
                     )}
                   </Link>
@@ -335,7 +352,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 sm:h-11 sm:w-11"
+                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
                             : ""
                         }
                       >
@@ -343,7 +360,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             active
                               ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -405,7 +422,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       <div
                         className={
                           isActive
-                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
+                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
                             : ""
                         }
                       >
@@ -413,7 +430,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={
                             isActive
                               ? "h-6 w-6 text-yellow-300"
-                              : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
+                              : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
                           }
                         />
                       </div>
@@ -475,7 +492,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <div
               className={
                 location.pathname.startsWith("/provider/notifications")
-                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
+                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
                   : ""
               }
             >
@@ -483,23 +500,25 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 className={
                   location.pathname.startsWith("/provider/notifications")
                     ? "h-6 w-6 text-yellow-300"
-                    : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
+                    : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
                 }
               />
             </div>
             <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
               Notifications
             </span>
-            {unreadCount > 0 && (
+            {filteredNotificationUnreadCount > 0 && (
               <span
                 aria-label={
-                  unreadCount > 99
+                  filteredNotificationUnreadCount > 99
                     ? "99+ new notifications"
-                    : `${unreadCount} new notifications`
+                    : `${filteredNotificationUnreadCount} new notifications`
                 }
                 className="absolute right-3 top-1 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
               >
-                {unreadCount > 99 ? "99+" : unreadCount}
+                {filteredNotificationUnreadCount > 99
+                  ? "99+"
+                  : filteredNotificationUnreadCount}
               </span>
             )}
           </Link>
@@ -592,7 +611,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 <div
                   className={
                     isActive
-                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-500"
+                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
                       : ""
                   }
                 >
@@ -600,7 +619,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     className={
                       isActive
                         ? "h-6 w-6 text-yellow-300"
-                        : "h-6 w-6 text-blue-500 transition-colors duration-200 md:group-hover:text-yellow-400"
+                        : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
                     }
                   />
                 </div>

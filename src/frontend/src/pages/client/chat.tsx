@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
 import BottomNavigation from "../../components/client/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
+import { dispatchChatsRead } from "../../utils/interactionEvents";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -23,6 +24,8 @@ const ClientChatPage: React.FC = () => {
   ) => {
     try {
       await markAsRead(conversationId);
+      // Trigger a refresh of unread chat counts across the app
+      dispatchChatsRead();
       const imageToUse = otherUserImageUrl || DEFAULT_USER_IMAGE;
       navigate(`/client/chat/${conversationId}`, {
         state: {

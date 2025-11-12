@@ -82,6 +82,9 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     const [imageSrc, setImageSrc] = React.useState<string>(
       `/images/ai-sp/${service.category?.slug || "others"}.svg`,
     );
+    const [showContent, setShowContent] = React.useState(false);
+    const mountTimeRef = React.useRef<number>(Date.now());
+    const skeletonShownAtRef = React.useRef<number | null>(null);
 
     // Load service images using the hook
     const { images: serviceImages, isLoading: isLoadingServiceImages } =
@@ -252,8 +255,47 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       isLoadingImages,
     ]);
 
-    // Show skeleton while data is loading (after all hooks)
-    if (isLoadingImages) {
+    // Handle content display with anti-flicker logic
+    React.useEffect(() => {
+      // Don't do anything if content is already showing
+      if (showContent) return;
+
+      // Check if content is ready to display
+      const isContentReady = !isLoadingImages && imageLoaded;
+      if (!isContentReady) return;
+
+      const timeSinceMount = Date.now() - mountTimeRef.current;
+      const FAST_LOAD_THRESHOLD = 200; // If loads under 200ms, show immediately
+      const MIN_SKELETON_DURATION = 400; // If skeleton shown, keep it for at least 400ms
+
+      if (timeSinceMount < FAST_LOAD_THRESHOLD) {
+        setShowContent(true);
+        return;
+      }
+
+      // Mark that skeleton was shown
+      if (skeletonShownAtRef.current === null) {
+        skeletonShownAtRef.current = Date.now();
+      }
+
+      // Calculate how long skeleton has been visible
+      const skeletonDuration = Date.now() - skeletonShownAtRef.current;
+
+      // If skeleton hasn't been shown long enough, wait before showing content
+      if (skeletonDuration < MIN_SKELETON_DURATION) {
+        const remainingTime = MIN_SKELETON_DURATION - skeletonDuration;
+        const timer = setTimeout(() => {
+          setShowContent(true);
+        }, remainingTime);
+        return () => clearTimeout(timer);
+      } else {
+        // Skeleton shown long enough, show content now
+        setShowContent(true);
+      }
+    }, [isLoadingImages, imageLoaded, showContent]);
+
+    // Show skeleton while content is not ready
+    if (!showContent) {
       return <ServiceListingCardSkeleton />;
     }
 
@@ -266,18 +308,13 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           <div className="relative">
             {/* Image container */}
             <div className="aspect-video w-full bg-blue-50">
-              {!imageLoaded && (
-                <div className="h-full w-full animate-pulse rounded-t-2xl bg-gray-200" />
-              )}
+              {/* Persistent skeleton background that fades out */}
               <img
                 src={imageSrc}
                 alt={service.title}
-                className={`service-image h-full w-full rounded-t-2xl object-cover transition-opacity duration-300 ${
+                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity duration-500 ${
                   imageLoaded ? "opacity-100" : "opacity-0"
                 }`}
-                style={
-                  !imageLoaded ? { position: "absolute", top: 0, left: 0 } : {}
-                }
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/ai-sp/others.svg";

@@ -13,7 +13,6 @@ const TermsAndConditionsPage: React.FC = () => {
           className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
         >
           <ArrowLeftIcon className="h-5 w-5" />
-          <span className="font-medium">Back</span>
         </button>
         <div className="mb-8 flex flex-col items-center">
           <img src="/logo.svg" alt="SRV Logo" className="mb-2 h-16 w-16" />

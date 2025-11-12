@@ -28,6 +28,7 @@ const ActiveServicePage: React.FC = () => {
     null,
   );
   const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
+  const [isCancelling, setIsCancelling] = useState<boolean>(false);
   const [commissionValidation, setCommissionValidation] = useState<{
     estimatedCommission: number;
   }>({
@@ -48,16 +49,17 @@ const ActiveServicePage: React.FC = () => {
       return;
     }
 
-    // Wait for loading to complete before checking booking
     if (isLoadingBooking) {
       return;
     }
 
+    // Only redirect if loading is complete and booking is null
     if (!booking) {
       navigate("/provider/bookings", { replace: true });
       return;
     }
 
+    // Only check status after confirming booking exists
     if (booking.status !== "InProgress") {
       navigate("/provider/bookings", { replace: true });
       return;
@@ -125,6 +127,7 @@ const ActiveServicePage: React.FC = () => {
   // Special cancel: cancel booking (ticket is automatically created by cancelBooking)
   const handleCancelActiveService = async (reason: string) => {
     if (!booking) return;
+    setIsCancelling(true);
     try {
       // Cancel the booking - this automatically creates a ticket with structured data
       await bookingCanisterService.cancelBooking(booking.id, reason);
@@ -134,6 +137,8 @@ const ActiveServicePage: React.FC = () => {
     } catch (err) {
       toast.error("Unable to cancel active service. Please try again.");
       throw err;
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -190,7 +195,8 @@ const ActiveServicePage: React.FC = () => {
   };
 
   // Show loading state while booking is being fetched
-  if (!booking) {
+  // This must be first to prevent premature null checks
+  if (isLoadingBooking || !booking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
@@ -198,6 +204,7 @@ const ActiveServicePage: React.FC = () => {
     );
   }
 
+  // Now safe to check booking status since we know booking exists
   if (booking.status !== "InProgress") {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 text-center text-orange-500">
@@ -369,6 +376,7 @@ const ActiveServicePage: React.FC = () => {
         textareaLabel="Reason for cancellation"
         submitText="Submit"
         cancelText="Back"
+        isSubmitting={isCancelling}
       />
       <BottomNavigation />
     </div>

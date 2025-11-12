@@ -20,12 +20,14 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
 };
 
 // Layout Components
-import ClientLayout from "./src/components/layout/ClientLayout";
-import ProviderLayout from "./src/components/layout/ProviderLayout";
 import {
+  ClientLayout,
+  ProviderLayout,
   ClientRedirect,
   ProviderRedirect,
-} from "./src/components/layout/Redirects";
+  NotFound,
+} from "./src/components/layout";
+
 import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
 
 // Auth Pages
@@ -80,9 +82,7 @@ const ClientProfileReviews = lazy(
 const SettingsPageC = lazy(() => import("./src/pages/client/settings"));
 const TermsAndConditionsPage = lazy(() => import("./src/pages/terms"));
 const ReportIssuePage = lazy(() => import("./src/pages/report"));
-const HelpSupportPage = lazy(
-  () => import("./src/pages/provider/inside settings/help"),
-);
+const HelpSupportPage = lazy(() => import("./src/pages/client/help"));
 
 // Provider Pages
 const ProviderHome = lazy(() => import("./src/pages/provider/home"));
@@ -178,7 +178,9 @@ const ProviderTermsAndConditionsPage = lazy(
   () => import("./src/pages/provider/inside settings/terms"),
 );
 const ProviderReportIssuePage = lazy(() => import("./src/pages/report"));
-const ProviderHelpSupportPage = lazy(() => import("./src/pages/provider/help"));
+const ProviderHelpSupportPage = lazy(
+  () => import("./src/pages/provider/inside settings/help"),
+);
 
 // Payment
 import WalletPage from "./src/pages/provider/wallet";
@@ -361,6 +363,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                   <Route path="report" element={<ProviderReportIssuePage />} />
                   <Route path="help" element={<ProviderHelpSupportPage />} />
                 </Route>
+
+                {/* Catch-all route for 404 - Must be last */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </BookingCacheProvider>

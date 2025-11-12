@@ -1,21 +1,21 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/provider/NavigationBar";
+import BottomNavigation from "../../components/client/NavigationBar";
 
 const HelpSupportPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const goToReportPage = () => navigate("/provider/report");
+  const goToReportPage = () => navigate("/client/report");
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="mx-auto w-full max-w-xl flex-1 rounded-3xl border border-blue-100 bg-white p-4 shadow-2xl sm:p-10">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
+      <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-6 shadow-2xl">
         <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
         >
           <ArrowLeftIcon className="h-5 w-5" />
-          <span className="font-medium">Back</span>
+          <span className="font-medium"></span>
         </button>
         <div className="mb-8 flex flex-col items-center">
           <img src="/logo.svg" alt="SRV Logo" className="mb-2 h-16 w-16" />
@@ -36,10 +36,10 @@ const HelpSupportPage: React.FC = () => {
               <span className="font-semibold">Contact Support:</span> Email us
               at{" "}
               <a
-                href="mailto:support@srvpinoy.com"
+                href="mailto:hello@srvpinoy.com"
                 className="text-blue-600 underline"
               >
-                support@srvpinoy.com
+                hello@srvpinoy.com
               </a>{" "}
               for personalized help.
             </li>
