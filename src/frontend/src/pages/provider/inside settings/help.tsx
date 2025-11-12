@@ -39,7 +39,7 @@ const HelpSupportPage: React.FC = () => {
                 href="mailto:support@srvpinoy.com"
                 className="text-blue-600 underline"
               >
-                support@srvpinoy.com
+                hello@srvpinoy.com
               </a>{" "}
               for personalized help.
             </li>
