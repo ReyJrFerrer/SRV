@@ -242,9 +242,13 @@ const sendTicketStatusNotification = async (
     const statusText = newStatus
       .replace("_", " ")
       .replace(/\b\w/g, (l) => l.toUpperCase());
+    
+    const oldStatusText = oldStatus
+      .replace("_", " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase());
 
     const title = "Ticket Status Updated";
-    const message = `Your ticket "${ticketTitle}" status has been updated from ${oldStatus} to ${statusText}.`;
+    const message = `Your ticket "${ticketTitle}" status has been updated from ${oldStatusText} to ${statusText}.`;
 
     // Fetch the report to check if it's related to a booking and determine user type
     let relatedProviderId: string | undefined;
