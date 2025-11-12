@@ -28,7 +28,7 @@ function getAuthInfo(context, data) {
 const MIN_TITLE_LENGTH = 1;
 const MAX_TITLE_LENGTH = 40;
 const MIN_DESCRIPTION_LENGTH = 1;
-const MAX_DESCRIPTION_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 150;
 const MIN_PRICE = 1;
 const MAX_PRICE = 1000000;
 const MAX_SERVICE_IMAGES = 10;
