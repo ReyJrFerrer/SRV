@@ -127,66 +127,63 @@ const SettingsPage: React.FC = () => {
               </button>
             </div>
 
-            {/* SECTION: App settings */}
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
-              <div className="p-5">
-                <h2 className="mb-4 text-lg font-semibold text-blue-900">
-                  App Settings
-                </h2>
-                {/* SECTION: PWA install (collapsible) */}
-                <div className="mb-6">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <DevicePhoneMobileIcon className="mr-3 h-6 w-6 text-blue-400" />
-                      <h3 className="font-medium text-blue-900">Install App</h3>
-                    </div>
-                    <button
-                      onClick={() => setPwaOpen((v) => !v)}
-                      aria-expanded={pwaOpen}
-                      className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
-                    >
-                      <span className="mr-2 text-xs text-gray-500"></span>
-                      <ChevronRightIcon
-                        className={`h-5 w-5 transform transition-transform ${pwaOpen ? "rotate-90" : ""}`}
-                      />
-                    </button>
-                  </div>
-
-                  {pwaOpen && <PWAInstallDetailed />}
-                </div>
-                {/* SECTION: Notification settings (collapsible) */}
-                <div>
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <BellIcon className="mr-3 h-6 w-6 text-blue-400" />
-                      <h3 className="font-medium text-blue-900">
-                        Push Notifications
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setNotifOpen((v) => !v)}
-                      aria-expanded={notifOpen}
-                      className="flex items-center rounded-md px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
-                    >
-                      <span className="mr-2 text-xs text-gray-500"></span>
-                      <ChevronRightIcon
-                        className={`h-5 w-5 transform transition-transform ${notifOpen ? "rotate-90" : ""}`}
-                      />
-                    </button>
-                  </div>
-
-                  {notifOpen && <NotificationSettingsDetailed />}
-                </div>
-              </div>
-            </div>
-            {/* SECTION: Other menu items */}
+            {/* SECTION: Menu items including app settings */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
               <ul className="divide-y divide-gray-100">
+                {/* SECTION: PWA install (collapsible) */}
+                <li>
+                  <button
+                    onClick={() => setPwaOpen((v) => !v)}
+                    aria-expanded={pwaOpen}
+                    className="flex w-full items-center justify-between rounded-t-2xl p-5 text-left transition-all hover:bg-blue-50"
+                  >
+                    <div className="flex items-center">
+                      <DevicePhoneMobileIcon className="mr-4 h-7 w-7 text-blue-400" />
+                      <span className="text-lg font-medium text-blue-900">
+                        Install App
+                      </span>
+                    </div>
+                    <ChevronRightIcon
+                      className={`h-6 w-6 transform text-blue-400 transition-transform ${pwaOpen ? "rotate-90" : ""}`}
+                    />
+                  </button>
+                  {pwaOpen && (
+                    <div className="border-t border-gray-100 bg-blue-50 p-5">
+                      <PWAInstallDetailed />
+                    </div>
+                  )}
+                </li>
+
+                {/* SECTION: Notification settings (collapsible) */}
+                <li>
+                  <button
+                    onClick={() => setNotifOpen((v) => !v)}
+                    aria-expanded={notifOpen}
+                    className="flex w-full items-center justify-between p-5 text-left transition-all hover:bg-blue-50"
+                  >
+                    <div className="flex items-center">
+                      <BellIcon className="mr-4 h-7 w-7 text-blue-400" />
+                      <span className="text-lg font-medium text-blue-900">
+                        Push Notifications
+                      </span>
+                    </div>
+                    <ChevronRightIcon
+                      className={`h-6 w-6 transform text-blue-400 transition-transform ${pwaOpen ? "rotate-90" : ""}`}
+                    />
+                  </button>
+                  {notifOpen && (
+                    <div className="border-t border-gray-100 bg-blue-50 p-5">
+                      <NotificationSettingsDetailed />
+                    </div>
+                  )}
+                </li>
+
+                {/* SECTION: Other menu items */}
                 {menuItems.map((item) => (
                   <li key={item.name}>
                     <button
                       onClick={() => navigate(item.href)}
-                      className="flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-50"
+                      className="flex w-full items-center justify-between p-5 text-left transition-all hover:bg-blue-50"
                     >
                       <div className="flex items-center">
                         <item.icon className="mr-4 h-7 w-7 text-blue-400" />
