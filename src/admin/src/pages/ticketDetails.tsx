@@ -208,9 +208,7 @@ export const TicketDetailsPage: React.FC = () => {
         );
 
         // Show success feedback
-         newStatus
-          .replace("_", " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase());
+        newStatus.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
       } else {
         console.error("Failed to update status in backend");
       }

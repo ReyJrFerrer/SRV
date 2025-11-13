@@ -98,7 +98,6 @@ const ServiceDetailsPage: React.FC = () => {
         const serviceData = await serviceCanisterService.getService(serviceId);
 
         if (serviceData) {
-
           // Map provider's Service to admin's ServiceData format
           const mappedService: ServiceData = {
             id: serviceData.id,
