@@ -73,11 +73,7 @@ const ServiceDetailsPage: React.FC = () => {
 
   // Debug logging for images
   useEffect(() => {
-    if (serviceImages) {
-      console.log("Service images loaded:", serviceImages);
-      console.log("Image loading error:", imageError);
-      console.log("Is loading images:", isLoadingImages);
-    }
+    // Service images loaded
   }, [serviceImages, imageError, isLoadingImages]);
 
   // Load service certificates using the provider's useServiceCertificates hook
@@ -98,39 +94,10 @@ const ServiceDetailsPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log(
-          "Loading service data for serviceId:",
-          serviceId,
-          "userId:",
-          userId,
-        );
-
         // Use provider's serviceCanisterService.getService directly
         const serviceData = await serviceCanisterService.getService(serviceId);
 
         if (serviceData) {
-          console.log("Service data retrieved:", serviceData);
-          console.log("Service imageUrls:", serviceData.imageUrls);
-          console.log("Service certificateUrls:", serviceData.certificateUrls);
-          console.log("Service location:", serviceData.location);
-          console.log(
-            "Service location.address:",
-            serviceData.location?.address,
-          );
-          console.log("Service location.city:", serviceData.location?.city);
-          console.log("Service location.state:", serviceData.location?.state);
-          console.log(
-            "Service location.country:",
-            serviceData.location?.country,
-          );
-          console.log(
-            "Service imageUrls length:",
-            serviceData.imageUrls?.length,
-          );
-          console.log(
-            "Service certificateUrls length:",
-            serviceData.certificateUrls?.length,
-          );
 
           // Map provider's Service to admin's ServiceData format
           const mappedService: ServiceData = {
@@ -192,7 +159,6 @@ const ServiceDetailsPage: React.FC = () => {
           try {
             const servicePackages =
               await serviceCanisterService.getServicePackages(serviceId);
-            console.log("Service packages loaded:", servicePackages);
             setPackages(servicePackages || []);
           } catch (packageError) {
             console.error("Error loading packages:", packageError);

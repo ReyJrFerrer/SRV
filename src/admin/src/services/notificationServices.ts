@@ -85,10 +85,6 @@ export const sendTicketStatusNotification = async (
       },
     );
 
-    console.log(
-      `[sendTicketStatusNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
-    );
-
     // If ticket is related to a booking, send notification to the other party
     if (relatedProviderId && relatedClientId) {
       const otherPartyId =
@@ -113,9 +109,6 @@ export const sendTicketStatusNotification = async (
               newStatus,
               ticketTitle,
             },
-          );
-          console.log(
-            `[sendTicketStatusNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
           );
         } catch (otherPartyError) {
           console.error(
@@ -213,10 +206,6 @@ export const sendTicketCommentNotification = async (
       },
     );
 
-    console.log(
-      `[sendTicketCommentNotification] Notification sent to user ${userId} (${userType}) for ticket ${ticketId}`,
-    );
-
     // If ticket is related to a booking, send notification to the other party
     if (relatedProviderId && relatedClientId) {
       const otherPartyId =
@@ -241,9 +230,6 @@ export const sendTicketCommentNotification = async (
               commentText,
               isInternal,
             },
-          );
-          console.log(
-            `[sendTicketCommentNotification] Notification sent to related party ${otherPartyId} (${otherPartyType}) for ticket ${ticketId}`,
           );
         } catch (otherPartyError) {
           console.error(

@@ -112,8 +112,6 @@ export const TicketDetailsPage: React.FC = () => {
                 attachment.startsWith("http://") ||
                 attachment.startsWith("https://")
               ) {
-                console.log("Processing legacy URL attachment:", attachment);
-
                 // Query Firestore to find media document with this URL
                 const mediaCollection = collection(firestore, "media");
                 const q = query(
@@ -124,25 +122,15 @@ export const TicketDetailsPage: React.FC = () => {
 
                 if (!querySnapshot.empty) {
                   mediaId = querySnapshot.docs[0].id;
-                  console.log(
-                    "Found media ID for legacy URL:",
-                    mediaId,
-                    "URL:",
-                    attachment,
-                  );
                 } else {
-                  console.warn("No media found for URL:", attachment);
                   // Use URL directly as fallback
                   urls[attachment] = attachment;
                   continue;
                 }
-              } else {
-                console.log("Processing media ID:", mediaId);
               }
 
               // Get media item which contains the public URL
               const mediaItem = await getMediaItem(mediaId);
-              console.log("Got media item:", mediaItem);
 
               if (mediaItem && mediaItem.url) {
                 let imageUrl = mediaItem.url;
@@ -152,9 +140,7 @@ export const TicketDetailsPage: React.FC = () => {
                   imageUrl = `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
                 }
 
-                console.log("Final image URL:", imageUrl);
                 urls[attachment] = imageUrl;
-                console.log("Successfully loaded image URL for:", attachment);
               } else {
                 console.warn("Failed to get media item for:", attachment);
                 urls[attachment] =
@@ -221,15 +207,10 @@ export const TicketDetailsPage: React.FC = () => {
             : null,
         );
 
-        console.log(`Ticket ${ticket.id} status updated to: ${newStatus}`);
-
         // Show success feedback
         const statusText = newStatus
           .replace("_", " ")
           .replace(/\b\w/g, (l) => l.toUpperCase());
-        console.log(
-          `Status changed to "${statusText}" - persisted to backend and notification sent`,
-        );
       } else {
         console.error("Failed to update status in backend");
       }
@@ -274,10 +255,6 @@ export const TicketDetailsPage: React.FC = () => {
         ticket.title,
         newComment.trim(),
         isInternal,
-      );
-
-      console.log(
-        `Comment notification sent to user ${ticket.submittedById} for ticket ${ticket.id}`,
       );
     } catch (error) {
       console.error("Error sending comment notification:", error);
@@ -332,8 +309,6 @@ export const TicketDetailsPage: React.FC = () => {
       </div>
     );
   }
-
-  console.log("From ticketDetails", ticket);
 
   return (
     <div className="min-h-screen bg-gray-50">

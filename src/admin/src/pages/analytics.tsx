@@ -140,7 +140,7 @@ export const AnalyticsPage: React.FC = () => {
   }, [serviceProviders, bookings]);
 
   const loadProviderAnalytics = async (_providerId: string) => {
-    console.log("Provider analytics loading removed - was using mock data");
+    // Provider analytics loading removed - was using mock data
   };
 
   // Filter users based on selected filter

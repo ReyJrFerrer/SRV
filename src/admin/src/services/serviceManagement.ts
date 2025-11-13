@@ -9,7 +9,6 @@ export const deleteService = async (serviceId: string): Promise<void> => {
     requireAuth();
 
     await callFirebaseFunction("deleteService", { serviceId });
-    console.log(`Service ${serviceId} deleted successfully`);
   } catch (error) {
     if (error instanceof AdminServiceError) throw error;
     throw new AdminServiceError({

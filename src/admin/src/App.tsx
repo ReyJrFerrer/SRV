@@ -214,9 +214,6 @@ const NavigationGuard = () => {
               const isLocked = userData?.locked === true;
 
               if (isLocked) {
-                console.log(
-                  "[Admin Navigation Guard] Real-time listener detected suspension",
-                );
                 setIsSuspended(true);
                 setShowSuspensionModal(true);
 

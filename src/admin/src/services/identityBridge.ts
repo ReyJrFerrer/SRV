@@ -65,8 +65,6 @@ export async function signInWithInternetIdentity(
   principal: string,
 ): Promise<SignInResult> {
   try {
-    console.log("[Admin] Calling Identity Bridge for principal:", principal);
-
     // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
     const signInFn = httpsCallable<
@@ -76,12 +74,6 @@ export async function signInWithInternetIdentity(
 
     const result = await signInFn({ principal });
     const data = result.data;
-
-    console.log("[Admin] Identity Bridge response:", {
-      hasProfile: data.hasProfile,
-      needsProfile: data.needsProfile,
-      message: data.message,
-    });
 
     if (!data.success || !data.customToken) {
       throw new Error("Invalid response from Identity Bridge");
@@ -99,7 +91,6 @@ export async function signInWithInternetIdentity(
     await new Promise<void>((resolve) => {
       const unsubscribe = authInstance.onAuthStateChanged((user) => {
         if (user && user.uid === userCredential.user.uid) {
-          console.log("[Admin] Firebase auth state confirmed:", user.uid);
           unsubscribe();
           resolve();
         }
@@ -111,8 +102,6 @@ export async function signInWithInternetIdentity(
         resolve();
       }, 2000);
     });
-
-    console.log("[Admin] Firebase sign-in successful and auth state ready");
 
     return {
       user: userCredential.user,

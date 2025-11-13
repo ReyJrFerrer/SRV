@@ -40,17 +40,13 @@ export const getAllUsers = async (): Promise<any[]> => {
   try {
     requireAuth();
 
-    console.log("[getAllUsers] Calling Firebase function...");
     // Call Firebase function directly since callFirebaseFunction expects { success: true, data: [...] }
     // but getAllUsers returns { success: true, users: [...] }
     const callable = httpsCallable(functions, "getAllUsers");
     const result = await callable({ data: {} });
 
-    console.log("[getAllUsers] Firebase function result:", result.data);
-
     if ((result.data as any).success) {
       const users = (result.data as any).users || [];
-      console.log(`[getAllUsers] Successfully retrieved ${users.length} users`);
       return users;
     } else {
       const errorMsg = (result.data as any).message || "Failed to get users";
@@ -73,17 +69,12 @@ export const getBookingsData = async (): Promise<{
   commissionTransactions: any[];
 }> => {
   try {
-    console.log("[getBookingsData] Starting...");
     requireAuth();
-    console.log("[getBookingsData] Auth passed");
 
     const callable = httpsCallable(functions, "getBookingsData");
-    console.log("[getBookingsData] Calling Firebase function...");
     const result = await callable({ data: {} });
-    console.log("[getBookingsData] Firebase function result:", result.data);
 
     if ((result.data as any).success) {
-      console.log("[getBookingsData] Success response received");
       return {
         bookings: (result.data as any).bookings,
         commissionTransactions: (result.data as any).commissionTransactions,

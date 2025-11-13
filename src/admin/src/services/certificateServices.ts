@@ -80,11 +80,6 @@ export const updateCertificateValidationStatus = async (
       reason: reason || undefined,
     };
 
-    console.log(
-      "Calling updateCertificateValidationStatus with payload:",
-      payload,
-    );
-
     const result = await callFirebaseFunction(
       "updateCertificateValidationStatus",
       payload,

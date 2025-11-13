@@ -105,8 +105,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
       if (user) {
-        console.log("[Admin] Firebase user authenticated:", user.uid);
-
         // Clean up previous listener if exists
         if (firestoreUnsubscribe) {
           firestoreUnsubscribe();
@@ -121,7 +119,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const tokenResult = await user.getIdTokenResult(true);
           const isAdminUser = tokenResult.claims.isAdmin === true;
           setIsAdmin(isAdminUser);
-          console.log("[Admin] Admin status from token:", isAdminUser);
 
           // Set up real-time listener for Firestore locked status
           // Note: This is a backup listener - NavigationGuard also has one
@@ -137,9 +134,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 if (snapshot.exists()) {
                   const userData = snapshot.data();
                   if (userData?.locked === true) {
-                    console.log(
-                      "[Admin] User account is locked - showing suspension modal",
-                    );
                     // Suspension is handled by NavigationGuard, which shows the modal
                     // No automatic logout here
                   }
@@ -161,7 +155,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             error?.code === "auth/user-disabled" ||
             error?.message?.includes("disabled")
           ) {
-            console.log("[Admin] User is disabled - account suspended");
             // Suspension is handled by NavigationGuard, which shows the modal
             // No automatic logout here
             return;
@@ -170,7 +163,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAdmin(false);
         }
       } else {
-        console.log("[Admin] No Firebase user");
         setIsAdmin(false);
         // Clean up listener when user logs out
         if (firestoreUnsubscribe) {
@@ -234,26 +226,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setIdentity(identity);
             updateAllAdminActors(identity);
 
-            console.log(
-              "[Admin] Successfully authenticated with Internet Identity",
-            );
-            console.log(
-              "[Admin] Principal:",
-              identity.getPrincipal().toString(),
-            );
-
             // Get the principal and exchange for Firebase token
             try {
               const principal = identity.getPrincipal().toString();
-              console.log(
-                "[Admin] Attempting to authenticate with Firebase...",
-              );
 
               const result = await signInWithInternetIdentity(principal);
               setFirebaseUser(result.user);
-
-              console.log("[Admin] Successfully authenticated with Firebase!");
-              console.log("[Admin] Firebase UID:", result.user.uid);
 
               // Update user active status to true on successful login
               try {
@@ -269,10 +247,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Auto-grant admin role for testing (development only)
               // if (import.meta.env.DEV) {
               try {
-                console.log(
-                  "[Admin] Auto-creating admin profile and granting role...",
-                );
-
                 // Create admin profile with UID and principal
                 // Don't pass name - let the backend generate sequential admin name (admin00, admin01, etc.)
                 const adminResult = await createAdminProfile(
@@ -282,15 +256,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   "",
                 );
 
-                console.log("[Admin] Admin profile created successfully!");
-
                 // Force token refresh to get updated claims
                 if (adminResult.success) {
-                  console.log(
-                    "[Admin] Refreshing token to get admin claims...",
-                  );
                   await result.user.getIdToken(true); // Force refresh
-                  console.log("[Admin] Token refreshed with admin claims!");
 
                   // Update admin status immediately
                   setIsAdmin(true);
@@ -311,14 +279,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // }
 
               // Notify user if they need to create a profile
-              if (result.needsProfile) {
-                console.log(
-                  "[Admin] New user detected - profile creation required",
-                );
-                console.log("[Admin] Message:", result.message);
-              } else {
-                console.log("[Admin] User has existing profile");
-              }
+              // Profile creation handled by backend
             } catch (fbError) {
               console.error(
                 "[Admin] Failed to authenticate with Firebase:",

@@ -123,7 +123,6 @@ export const useAdmin = (): UseAdminReturn => {
 
   // Initial data loading
   useEffect(() => {
-    console.log("[useAdmin] Initial data loading...");
     refreshAll();
   }, []);
 
@@ -152,11 +151,9 @@ export const useAdmin = (): UseAdminReturn => {
   // System Statistics
   const refreshSystemStats = useCallback(
     async (showSuccessToast = false) => {
-      console.log("[refreshSystemStats] Starting system stats refresh...");
       updateLoadingState("systemStats", true);
       try {
         const stats = await adminServiceCanister.getSystemStats();
-        console.log("[refreshSystemStats] Received stats:", stats);
         setSystemStats(stats);
         if (showSuccessToast) {
           toast.success("System statistics updated successfully");
@@ -311,24 +308,7 @@ export const useAdmin = (): UseAdminReturn => {
     async (showSuccessToast = false) => {
       updateLoadingState("bookings", true);
       try {
-        console.log("[refreshBookings] Calling getBookingsData...");
         const data = await adminServiceCanister.getBookingsData();
-        console.log(
-          "[refreshBookings] Raw bookings data from service:",
-          data.bookings,
-        );
-        console.log(
-          "[refreshBookings] Raw commission transactions:",
-          data.commissionTransactions,
-        );
-        console.log(
-          "[refreshBookings] Bookings length:",
-          data.bookings?.length || 0,
-        );
-        console.log(
-          "[refreshBookings] Commission transactions length:",
-          data.commissionTransactions?.length || 0,
-        );
         setBookings(data.bookings);
         setCommissionTransactions(data.commissionTransactions);
         if (showSuccessToast) {
@@ -431,9 +411,6 @@ export const useAdmin = (): UseAdminReturn => {
   // Refresh system stats when bookings change
   useEffect(() => {
     if (bookings.length > 0 || commissionTransactions.length > 0) {
-      console.log(
-        "[useAdmin] Bookings or commission transactions changed, refreshing system stats...",
-      );
       refreshSystemStats();
     }
   }, [bookings, commissionTransactions, refreshSystemStats]);

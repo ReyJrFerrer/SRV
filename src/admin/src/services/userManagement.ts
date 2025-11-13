@@ -156,11 +156,6 @@ export const lockUserAccount = async (
   try {
     requireAuth();
 
-    console.log("lockUserAccount called with:", {
-      userId,
-      locked,
-      suspensionDurationDays,
-    });
     const result = await callFirebaseFunction("lockUserAccount", {
       userId,
       locked,

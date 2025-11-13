@@ -50,23 +50,6 @@ export const UserBookingsPage: React.FC = () => {
 
         // Fetch user bookings from admin canister
         const userBookings = await adminServiceCanister.getUserBookings(userId);
-        console.log("Fetched bookings:", userBookings);
-        console.log("First booking:", userBookings[0]);
-        console.log(
-          "First booking status:",
-          userBookings[0]?.status,
-          typeof userBookings[0]?.status,
-        );
-        console.log(
-          "First booking scheduledDate:",
-          userBookings[0]?.scheduledDate,
-          typeof userBookings[0]?.scheduledDate,
-        );
-        console.log(
-          "First booking createdAt:",
-          userBookings[0]?.createdAt,
-          typeof userBookings[0]?.createdAt,
-        );
         setBookings(userBookings);
       } catch (err) {
         console.error("Error fetching user bookings:", err);
@@ -128,7 +111,6 @@ export const UserBookingsPage: React.FC = () => {
       const date = new Date(dateString);
 
       if (isNaN(date.getTime())) {
-        console.log("Invalid date string:", dateString);
         return "Invalid Date";
       }
 
@@ -140,7 +122,6 @@ export const UserBookingsPage: React.FC = () => {
         minute: "2-digit",
       });
     } catch (error) {
-      console.log("Error formatting date:", dateString, error);
       return "Invalid Date";
     }
   };

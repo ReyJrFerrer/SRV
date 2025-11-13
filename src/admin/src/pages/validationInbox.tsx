@@ -334,13 +334,7 @@ export const ValidationInboxPage: React.FC = () => {
                 onViewCertificate={handleViewCertificate}
                 onUndo={handleUndoCertificate}
                 isApproved={true}
-                onCardClick={(service, certificateIndex, certificateUrl) => {
-                  console.log("Validated certificate card clicked:", {
-                    service,
-                    certificateIndex,
-                    certificateUrl,
-                  });
-                }}
+                onCardClick={() => {}}
               />
             ))}
           </CertificateSection>
@@ -365,13 +359,7 @@ export const ValidationInboxPage: React.FC = () => {
                 onViewCertificate={handleViewCertificate}
                 onUndo={handleUndoCertificate}
                 isApproved={false}
-                onCardClick={(service, certificateIndex, certificateUrl) => {
-                  console.log("Rejected certificate card clicked:", {
-                    service,
-                    certificateIndex,
-                    certificateUrl,
-                  });
-                }}
+                onCardClick={() => {}}
               />
             ))}
           </CertificateSection>

@@ -78,7 +78,6 @@ export const extractMediaIdFromUrl = async (
 
         if (!querySnapshot.empty) {
           mediaId = querySnapshot.docs[0].id;
-          console.log("Found mediaId by URL query:", mediaId);
         } else {
           console.error("No media document found with URL:", certificateUrl);
           throw new Error("Could not find media document for certificate URL");

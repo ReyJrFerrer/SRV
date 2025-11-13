@@ -231,8 +231,6 @@ export const updateReportStatus = async (
     });
 
     if (result) {
-      console.log(`Report ${reportId} status updated to: ${newStatus}`);
-
       // Send notification to user if userId and ticketTitle are provided
       if (userId && ticketTitle && oldStatus) {
         await sendTicketStatusNotification(

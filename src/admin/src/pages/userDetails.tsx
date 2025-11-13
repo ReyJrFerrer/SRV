@@ -67,7 +67,6 @@ export const UserDetailsPage: React.FC = () => {
       await adminServiceCanister.lockUserAccount(user.id, false);
       updateUserLockStatus(user.id, false);
       setUser((prev) => (prev ? { ...prev, isLocked: false } : null));
-      console.log("Account activated successfully");
       alert("Account activated successfully");
     } catch (error) {
       console.error("Failed to activate account:", error);
@@ -95,14 +94,6 @@ export const UserDetailsPage: React.FC = () => {
       suspensionDurationDays = parseInt(suspensionDuration);
     }
 
-    console.log("Attempting to lock account for user:", user.id);
-    console.log(
-      "Suspension duration:",
-      suspensionDurationDays === null
-        ? "indefinite"
-        : `${suspensionDurationDays} days`,
-    );
-
     setLockingAccount(true);
     try {
       await adminServiceCanister.lockUserAccount(
@@ -112,7 +103,6 @@ export const UserDetailsPage: React.FC = () => {
       );
       updateUserLockStatus(user.id, true);
       setUser((prev) => (prev ? { ...prev, isLocked: true } : null));
-      console.log("Account locked successfully");
       setShowLockConfirmation(false);
       setSuspensionDuration("7");
       setCustomDays(7);
@@ -139,10 +129,6 @@ export const UserDetailsPage: React.FC = () => {
         pendingReputationScore,
       );
       await loadUser();
-      console.log(
-        "Reputation updated successfully to:",
-        pendingReputationScore,
-      );
       alert("Reputation updated successfully!");
     } catch (error) {
       console.error("Failed to update reputation:", error);
