@@ -341,7 +341,7 @@ exports.switchUserRole = functions.https.onCall(async (data, context) => {
   }
 
   const profile = userDoc.data();
-  
+
   // Don't allow switching if user is Admin
   if (profile.role === "Admin" || profile.activeRole === "Admin") {
     throw new functions.https.HttpsError(
@@ -349,7 +349,7 @@ exports.switchUserRole = functions.https.onCall(async (data, context) => {
       "Admin role cannot be switched",
     );
   }
-  
+
   const newActiveRole = profile.activeRole === "Client" ? "ServiceProvider" : "Client";
 
   await userRef.update({
