@@ -208,7 +208,7 @@ export const TicketDetailsPage: React.FC = () => {
         );
 
         // Show success feedback
-        const statusText = newStatus
+         newStatus
           .replace("_", " ")
           .replace(/\b\w/g, (l) => l.toUpperCase());
       } else {
