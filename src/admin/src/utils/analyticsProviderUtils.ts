@@ -29,7 +29,9 @@ export const createFallbackProviderData = (
   });
 };
 
-export const extractProviderIdsFromBookings = (bookings: any[]): Set<string> => {
+export const extractProviderIdsFromBookings = (
+  bookings: any[],
+): Set<string> => {
   const providerIds = new Set<string>();
   bookings.forEach((booking) => {
     if (booking.serviceProviderId) {
@@ -120,4 +122,3 @@ export const processCommissionTransactions = (
     }
   });
 };
-

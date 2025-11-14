@@ -57,13 +57,10 @@ export const transformBooking = async (booking: any) => {
     price: Number(booking.price || 0),
     createdAt: booking.createdAt || new Date().toISOString(),
     scheduledDate:
-      booking.scheduledDate ||
-      booking.createdAt ||
-      new Date().toISOString(),
+      booking.scheduledDate || booking.createdAt || new Date().toISOString(),
     completedAt: booking.completedDate || undefined,
     rating: booking.rating ? Number(booking.rating) : undefined,
     review: booking.review || undefined,
     location: booking.location || undefined,
   };
 };
-

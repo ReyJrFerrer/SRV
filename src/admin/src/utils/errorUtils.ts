@@ -15,7 +15,10 @@ export const handleError = (
   context: string,
   toast: any,
 ): void => {
-  if (error instanceof AdminServiceError || error instanceof MediaServiceError) {
+  if (
+    error instanceof AdminServiceError ||
+    error instanceof MediaServiceError
+  ) {
     toast.error(`${context}: ${error.message}`);
   } else if (error instanceof Error) {
     toast.error(`${context}: ${error.message}`);
@@ -23,4 +26,3 @@ export const handleError = (
     toast.error(`${context}: An unexpected error occurred`);
   }
 };
-

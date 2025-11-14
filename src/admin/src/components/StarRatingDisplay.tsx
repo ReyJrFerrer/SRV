@@ -24,4 +24,3 @@ export const StarRatingDisplay: React.FC<StarRatingDisplayProps> = ({
     })}
   </div>
 );
-

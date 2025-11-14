@@ -19,4 +19,3 @@ export const isValidAmount = (amount: number): boolean => {
 };
 
 export const getMaxAmount = (): number => MAX_AMOUNT;
-

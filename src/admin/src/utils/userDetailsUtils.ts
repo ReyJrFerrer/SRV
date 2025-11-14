@@ -55,9 +55,9 @@ const extractUserData = (
     updatedAt,
     profilePicture: extractProfilePicture(profile.profilePicture),
     biography: extractBiography(
-      Array.isArray(profile.biography) 
-        ? profile.biography[0] 
-        : profile.biography
+      Array.isArray(profile.biography)
+        ? profile.biography[0]
+        : profile.biography,
     ),
     totalEarnings: analyticsData.totalEarnings,
     pendingCommission: 0,
@@ -92,9 +92,9 @@ const getDefaultUserData = (
     updatedAt,
     profilePicture: extractProfilePicture(profile.profilePicture),
     biography: extractBiography(
-      Array.isArray(profile.biography) 
-        ? profile.biography[0] 
-        : profile.biography
+      Array.isArray(profile.biography)
+        ? profile.biography[0]
+        : profile.biography,
     ),
     totalEarnings: 0,
     pendingCommission: 0,

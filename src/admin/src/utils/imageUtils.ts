@@ -50,7 +50,10 @@ export const loadTicketAttachmentImages = async (
       const foundMediaId = await findMediaIdFromUrl(attachment, firestore);
       if (foundMediaId) {
         mediaId = foundMediaId;
-      } else if (attachment.startsWith("http://") || attachment.startsWith("https://")) {
+      } else if (
+        attachment.startsWith("http://") ||
+        attachment.startsWith("https://")
+      ) {
         urls[attachment] = attachment;
         continue;
       }
@@ -71,4 +74,3 @@ export const loadTicketAttachmentImages = async (
 
   return urls;
 };
-

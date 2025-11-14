@@ -73,4 +73,3 @@ export const convertBackendServicesToServiceData = (
     convertBackendServiceToServiceData(service, userData),
   );
 };
-

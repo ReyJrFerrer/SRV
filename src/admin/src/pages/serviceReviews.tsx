@@ -20,7 +20,6 @@ import {
   handleRestoreReview,
 } from "../utils/reviewUtils";
 
-
 const ServiceReviewsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();

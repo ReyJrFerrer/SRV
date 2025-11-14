@@ -1,5 +1,9 @@
 import React from "react";
-import { EyeSlashIcon, TrashIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
+import {
+  EyeSlashIcon,
+  TrashIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/solid";
 import { useUserImage } from "../../../frontend/src/hooks/useMediaLoader";
 import { StarRatingDisplay } from "./StarRatingDisplay";
 
@@ -99,4 +103,3 @@ export const ServiceReviewItem: React.FC<ServiceReviewItemProps> = ({
     </div>
   );
 };
-

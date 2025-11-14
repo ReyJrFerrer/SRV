@@ -124,7 +124,9 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                     id="suspension-7"
                     name="suspensionDuration"
                     value={SUSPENSION_DURATION.SEVEN_DAYS}
-                    checked={suspensionDuration === SUSPENSION_DURATION.SEVEN_DAYS}
+                    checked={
+                      suspensionDuration === SUSPENSION_DURATION.SEVEN_DAYS
+                    }
                     onChange={(e) =>
                       onSuspensionDurationChange(
                         e.target.value as SuspensionDuration,
@@ -146,7 +148,9 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                     id="suspension-30"
                     name="suspensionDuration"
                     value={SUSPENSION_DURATION.THIRTY_DAYS}
-                    checked={suspensionDuration === SUSPENSION_DURATION.THIRTY_DAYS}
+                    checked={
+                      suspensionDuration === SUSPENSION_DURATION.THIRTY_DAYS
+                    }
                     onChange={(e) =>
                       onSuspensionDurationChange(
                         e.target.value as SuspensionDuration,
@@ -188,7 +192,9 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                       onChange={(e) =>
                         onCustomDaysChange(parseInt(e.target.value) || 1)
                       }
-                      disabled={suspensionDuration !== SUSPENSION_DURATION.CUSTOM}
+                      disabled={
+                        suspensionDuration !== SUSPENSION_DURATION.CUSTOM
+                      }
                       className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
                     />
                     days
@@ -201,7 +207,9 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                     id="suspension-indefinite"
                     name="suspensionDuration"
                     value={SUSPENSION_DURATION.INDEFINITE}
-                    checked={suspensionDuration === SUSPENSION_DURATION.INDEFINITE}
+                    checked={
+                      suspensionDuration === SUSPENSION_DURATION.INDEFINITE
+                    }
                     onChange={(e) =>
                       onSuspensionDurationChange(
                         e.target.value as SuspensionDuration,

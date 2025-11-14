@@ -1,6 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useAdmin } from "../hooks/useAdmin";
-import { formatCurrency, formatDate, formatRelativeTime } from "../utils/formatUtils";
+import {
+  formatCurrency,
+  formatDate,
+  formatRelativeTime,
+} from "../utils/formatUtils";
 import {
   ProviderManagementHeader,
   ProviderStatsOverview,
@@ -84,7 +88,6 @@ export const ProviderManagementPage: React.FC = () => {
         }
       });
   }, [serviceProviders, searchTerm, sortBy, sortOrder]);
-
 
   const handleViewProvider = async (provider: any) => {
     setSelectedProvider(provider);

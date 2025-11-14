@@ -11,4 +11,3 @@ const DAY_TO_NUMBER: Record<string, number> = {
 export const dayOfWeekToNumber = (day: string): number => {
   return DAY_TO_NUMBER[day] ?? 6;
 };
-

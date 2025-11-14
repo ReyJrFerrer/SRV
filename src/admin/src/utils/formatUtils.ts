@@ -68,4 +68,3 @@ export const formatTime = (time: string): string => {
   if (hour === 0) hour = 12;
   return `${hour}:${minute.padStart(2, "0")} ${ampm}`;
 };
-

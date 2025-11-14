@@ -68,7 +68,10 @@ export const UserChatsPage: React.FC = () => {
             const profile = await authCanisterService.getProfile(otherUserId);
             if (profile) {
               namesMap.set(otherUserId, profile.name);
-              imagesMap.set(otherUserId, getProfileImage(profile.profilePicture));
+              imagesMap.set(
+                otherUserId,
+                getProfileImage(profile.profilePicture),
+              );
             }
           } catch (e) {}
         }),
@@ -82,7 +85,6 @@ export const UserChatsPage: React.FC = () => {
       setLoading(false);
     }
   };
-
 
   const handleConversationClick = (conv: ConversationSummary) => {
     if (!userId) return;

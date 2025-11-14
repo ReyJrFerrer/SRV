@@ -181,7 +181,10 @@ export const generateRevenueChartData = (
       if (commissionTransactions && commissionTransactions.length > 0) {
         commission = commissionTransactions
           .filter((transaction) => {
-            if (!transaction.timestamp || typeof transaction.timestamp !== "string") {
+            if (
+              !transaction.timestamp ||
+              typeof transaction.timestamp !== "string"
+            ) {
               return false;
             }
             return transaction.timestamp.slice(0, 10) === dateStr;

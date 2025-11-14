@@ -95,7 +95,10 @@ export const UserDetailsPage: React.FC = () => {
     if (suspension.duration === SUSPENSION_DURATION.INDEFINITE) {
       suspensionDurationDays = null;
     } else if (suspension.duration === SUSPENSION_DURATION.CUSTOM) {
-      if (suspension.customDays <= 0 || !Number.isInteger(suspension.customDays)) {
+      if (
+        suspension.customDays <= 0 ||
+        !Number.isInteger(suspension.customDays)
+      ) {
         toast.error(
           "Please enter a valid number of days (must be a positive integer).",
         );
@@ -139,14 +142,14 @@ export const UserDetailsPage: React.FC = () => {
     setActionLoading((prev) => ({ ...prev, reputation: true }));
     try {
       await adminServiceCanister.updateUserReputation(
-          user.id,
-          pendingReputationScore,
-        );
-        await loadUser();
-        toast.success("Reputation updated successfully!");
-      } catch (error) {
-        console.error("Failed to update reputation:", error);
-        toast.error("Failed to update reputation. Please try again.");
+        user.id,
+        pendingReputationScore,
+      );
+      await loadUser();
+      toast.success("Reputation updated successfully!");
+    } catch (error) {
+      console.error("Failed to update reputation:", error);
+      toast.error("Failed to update reputation. Please try again.");
     } finally {
       setActionLoading((prev) => ({ ...prev, reputation: false }));
       setModals((prev) => ({ ...prev, reputation: false }));
@@ -326,7 +329,9 @@ export const UserDetailsPage: React.FC = () => {
         updatingReputation={actionLoading.reputation}
         lockingAccount={actionLoading.account}
         onReputationConfirm={confirmReputationUpdate}
-        onReputationCancel={() => setModals((prev) => ({ ...prev, reputation: false }))}
+        onReputationCancel={() =>
+          setModals((prev) => ({ ...prev, reputation: false }))
+        }
         onLockConfirm={confirmLockAccount}
         onLockCancel={() => {
           setModals((prev) => ({ ...prev, lock: false }));

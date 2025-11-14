@@ -5,7 +5,11 @@ import { authCanisterService } from "../../../frontend/src/services/authCanister
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 import { formatTimestamp } from "../utils/formatUtils";
-import { DEFAULT_USER_IMAGE, getProfileImage, shouldUseDefaultImage } from "../utils/profileUtils";
+import {
+  DEFAULT_USER_IMAGE,
+  getProfileImage,
+  shouldUseDefaultImage,
+} from "../utils/profileUtils";
 
 interface Message {
   id: string;
@@ -24,7 +28,6 @@ export const UserChatHistoryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -119,7 +122,6 @@ export const UserChatHistoryPage: React.FC = () => {
     } catch (e) {}
   };
 
-
   const isFromUser = (senderId: string): boolean => {
     return senderId === userId;
   };
@@ -147,7 +149,9 @@ export const UserChatHistoryPage: React.FC = () => {
             <div className="relative h-11 w-11">
               <ProfileImage
                 profilePictureUrl={
-                  !shouldUseDefaultImage(otherUserImage) ? otherUserImage : undefined
+                  !shouldUseDefaultImage(otherUserImage)
+                    ? otherUserImage
+                    : undefined
                 }
                 userName={otherUserName || "User"}
                 size="h-11 w-11"
@@ -225,7 +229,9 @@ export const UserChatHistoryPage: React.FC = () => {
                   <div className="relative h-9 w-9 flex-shrink-0">
                     <ProfileImage
                       profilePictureUrl={
-                        !shouldUseDefaultImage(userImage) ? userImage : undefined
+                        !shouldUseDefaultImage(userImage)
+                          ? userImage
+                          : undefined
                       }
                       userName={userName || "User"}
                       size="h-9 w-9"

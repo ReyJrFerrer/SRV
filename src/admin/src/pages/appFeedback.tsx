@@ -11,10 +11,7 @@ import {
 } from "../services/adminServiceCanister";
 import { StarRatingDisplay } from "../components/StarRatingDisplay";
 import { formatDate, formatRelativeTime } from "../utils/formatUtils";
-import {
-  sortReviews,
-  filterReviewsByRating,
-} from "../utils/reviewUtils";
+import { sortReviews, filterReviewsByRating } from "../utils/reviewUtils";
 import {
   calculateRatingDistribution,
   calculateAverageRating,

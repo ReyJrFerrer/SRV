@@ -67,10 +67,7 @@ export const convertReportsToTickets = (
 
     let ticket: Ticket;
     if (parsedData) {
-      const tags = buildTagsFromSource(
-        parsedData.source,
-        parsedData.category,
-      );
+      const tags = buildTagsFromSource(parsedData.source, parsedData.category);
 
       ticket = {
         id: `${REPORT_PREFIX}${report.id}`,

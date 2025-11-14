@@ -17,7 +17,11 @@ import {
   getCategoryColor,
   formatDate,
 } from "../utils/ticketUtils";
-import { REPORT_PREFIX, COMMENT_PREFIX, ADMIN_USER_ID } from "../utils/constants";
+import {
+  REPORT_PREFIX,
+  COMMENT_PREFIX,
+  ADMIN_USER_ID,
+} from "../utils/constants";
 
 export const TicketDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

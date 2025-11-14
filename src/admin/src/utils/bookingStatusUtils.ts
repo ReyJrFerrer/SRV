@@ -24,10 +24,7 @@ export const getBookingStatusColor = (status: any): string => {
   return colorMap[normalized] || "bg-gray-100 text-gray-800";
 };
 
-export const matchesStatusFilter = (
-  status: any,
-  filter: string,
-): boolean => {
+export const matchesStatusFilter = (status: any, filter: string): boolean => {
   if (filter === "all") return true;
 
   const normalized = normalizeBookingStatus(status);
@@ -42,4 +39,3 @@ export const matchesStatusFilter = (
 
   return normalized === filterValue;
 };
-

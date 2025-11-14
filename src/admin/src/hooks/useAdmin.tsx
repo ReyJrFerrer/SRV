@@ -108,12 +108,9 @@ export const useAdmin = (): UseAdminReturn => {
     [],
   );
 
-  const handleErrorCallback = useCallback(
-    (error: unknown, context: string) => {
-      handleError(error, context, toast);
-    },
-    [],
-  );
+  const handleErrorCallback = useCallback((error: unknown, context: string) => {
+    handleError(error, context, toast);
+  }, []);
 
   const refreshSystemStats = useCallback(
     async (showSuccessToast = false) => {
@@ -323,7 +320,10 @@ export const useAdmin = (): UseAdminReturn => {
       const reports = await getReportsFromFeedbackCanister();
       return reports;
     } catch (error) {
-      handleErrorCallback(error, "Failed to get reports from feedback canister");
+      handleErrorCallback(
+        error,
+        "Failed to get reports from feedback canister",
+      );
       return [];
     }
   }, [handleErrorCallback]);

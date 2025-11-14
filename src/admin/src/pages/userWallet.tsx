@@ -10,7 +10,11 @@ import WalletBalanceCard from "../components/WalletBalanceCard";
 import TransactionHistory from "../components/TransactionHistory";
 import UpdateWalletModal from "../components/UpdateWalletModal";
 import { formatCurrency } from "../utils/formatUtils";
-import { validateAmount, isValidAmount, getMaxAmount } from "../utils/walletUtils";
+import {
+  validateAmount,
+  isValidAmount,
+  getMaxAmount,
+} from "../utils/walletUtils";
 
 const UserWalletPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -125,7 +129,9 @@ const UserWalletPage: React.FC = () => {
 
     const amount = parseFloat(commissionAmount);
     if (!isValidAmount(amount)) {
-      toast.error(`Please enter a valid amount (max ₱${getMaxAmount().toLocaleString()})`);
+      toast.error(
+        `Please enter a valid amount (max ₱${getMaxAmount().toLocaleString()})`,
+      );
       return;
     }
 

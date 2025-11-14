@@ -22,7 +22,9 @@ export const extractProfilePicture = (
   return undefined;
 };
 
-export const extractBiography = (biography: string | undefined): string | undefined => {
+export const extractBiography = (
+  biography: string | undefined,
+): string | undefined => {
   return biography && biography.trim() ? biography.trim() : undefined;
 };
 

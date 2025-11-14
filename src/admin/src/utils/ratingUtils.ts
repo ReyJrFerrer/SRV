@@ -17,4 +17,3 @@ export const calculateAverageRating = (
   const sum = items.reduce((acc, item) => acc + (item.rating || 0), 0);
   return sum / items.length;
 };
-

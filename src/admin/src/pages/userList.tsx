@@ -224,7 +224,9 @@ export const UserListPage: React.FC = () => {
         ),
       );
 
-      toast.success(`Admin account ${suspend ? "locked" : "unlocked"} successfully`);
+      toast.success(
+        `Admin account ${suspend ? "locked" : "unlocked"} successfully`,
+      );
       setConfirmModal({ isOpen: false, user: null, suspend: false });
     } catch (error) {
       console.error("Failed to lock/unlock account:", error);
@@ -302,9 +304,15 @@ export const UserListPage: React.FC = () => {
         title={`${confirmModal.suspend ? "Lock" : "Unlock"} Admin Account`}
         message={`Are you sure you want to ${confirmModal.suspend ? "lock" : "unlock"} this admin account?`}
         confirmText={confirmModal.suspend ? "Lock" : "Unlock"}
-        confirmColor={confirmModal.suspend ? "bg-yellow-600 hover:bg-yellow-700" : "bg-green-600 hover:bg-green-700"}
+        confirmColor={
+          confirmModal.suspend
+            ? "bg-yellow-600 hover:bg-yellow-700"
+            : "bg-green-600 hover:bg-green-700"
+        }
         onConfirm={confirmSuspendUser}
-        onCancel={() => setConfirmModal({ isOpen: false, user: null, suspend: false })}
+        onCancel={() =>
+          setConfirmModal({ isOpen: false, user: null, suspend: false })
+        }
       />
     </div>
   );

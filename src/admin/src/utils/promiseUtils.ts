@@ -40,4 +40,3 @@ export const handlePromiseSettledArrayResults = <T>(
   );
   return fulfilled ? fulfilled.value : defaultValue;
 };
-

@@ -57,9 +57,7 @@ export const UserBookingsPage: React.FC = () => {
       setBookings(userBookings);
     } catch (err) {
       console.error("Error fetching user bookings:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to load bookings",
-      );
+      setError(err instanceof Error ? err.message : "Failed to load bookings");
     } finally {
       setLoading(false);
     }
@@ -68,8 +66,6 @@ export const UserBookingsPage: React.FC = () => {
   useEffect(() => {
     fetchUserAndBookings();
   }, [fetchUserAndBookings]);
-
-
 
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch =

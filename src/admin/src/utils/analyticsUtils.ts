@@ -207,10 +207,10 @@ export const processServiceProviderPerformance = (
   processBookingsForPerformance(bookings, performanceMap);
   processCommissionTransactions(commissionTransactions, performanceMap);
 
-  const values = Array.from(performanceMap.values()) as ServiceProviderPerformanceData[];
-  return values.sort(
-    (a, b) => b.totalRevenue - a.totalRevenue,
-  );
+  const values = Array.from(
+    performanceMap.values(),
+  ) as ServiceProviderPerformanceData[];
+  return values.sort((a, b) => b.totalRevenue - a.totalRevenue);
 };
 
 const getSortValue = (

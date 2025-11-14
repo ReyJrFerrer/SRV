@@ -18,4 +18,3 @@ export const SUSPENSION_DURATION = {
 } as const;
 
 export const DEFAULT_SUSPENSION_DAYS = 7;
-
