@@ -54,7 +54,7 @@ const ClientServiceReviews = lazy(
 
 // Client Booking Pages
 const ClientBookingIndex = lazy(
-  () => import("./src/pages/client/booking/index"),
+  () => import("./src/pages/client/booking/myBookingsPage"),
 );
 const ClientBookingDetails = lazy(
   () => import("./src/pages/client/booking/[id]"),
@@ -86,7 +86,9 @@ const HelpSupportPage = lazy(() => import("./src/pages/client/help"));
 
 // Provider Pages
 const ProviderHome = lazy(() => import("./src/pages/provider/home"));
-const ProviderBookings = lazy(() => import("./src/pages/provider/bookings"));
+const ProviderBookings = lazy(
+  () => import("./src/pages/provider/myBookingsPage"),
+);
 const ProviderChat = lazy(() => import("./src/pages/provider/chat"));
 const SettingsPageSP = lazy(() => import("./src/pages/provider/settings"));
 const ProviderProfilePage = lazy(

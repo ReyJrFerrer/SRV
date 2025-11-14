@@ -13,6 +13,7 @@ import {
   ProviderEnhancedBooking,
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
 import serviceCanisterService, {
   ServiceCategory,
 } from "../../services/serviceCanisterService";
@@ -392,6 +393,50 @@ const ProviderBookingsPage: React.FC = () => {
     selectedCategoryId,
   ]);
 
+  // Section: Separate Same Day vs Scheduled, based on date (scheduledDateTime || requestedDate || requestedDateTime || createdAt)
+  const { sameDayBookings, scheduledBookings } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sameDay: ProviderEnhancedBooking[] = [];
+    const scheduled: ProviderEnhancedBooking[] = [];
+
+    currentBookings.forEach((b) => {
+      const dateStr =
+        (b as any).scheduledDateTime ||
+        (b as any).requestedDate ||
+        (b as any).requestedDateTime ||
+        (b as any).createdAt;
+      if (!dateStr) return;
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return;
+      const day = new Date(d);
+      day.setHours(0, 0, 0, 0);
+      if (day.getTime() === today.getTime()) {
+        sameDay.push(b);
+      } else {
+        scheduled.push(b);
+      }
+    });
+
+    scheduled.sort((a, b) => {
+      const getTs = (x: ProviderEnhancedBooking) => {
+        try {
+          const s =
+            (x as any).scheduledDateTime ||
+            (x as any).requestedDate ||
+            (x as any).requestedDateTime ||
+            (x as any).createdAt;
+          return s ? new Date(s).getTime() : 0;
+        } catch {
+          return 0;
+        }
+      };
+      return getTs(a) - getTs(b);
+    });
+
+    return { sameDayBookings: sameDay, scheduledBookings: scheduled };
+  }, [currentBookings]);
+
   // Effect to fetch client data for all unique client IDs
   useEffect(() => {
     const fetchStatsForClients = async () => {
@@ -573,61 +618,157 @@ const ProviderBookingsPage: React.FC = () => {
             <div className="px-4 py-4">
               <BookingListSkeleton count={6} />
             </div>
-          ) : currentBookings.length > 0 ? (
-            <div className="space-y-4 px-4 py-4">
-              {currentBookings.map((booking, idx) => {
-                const clientId =
-                  booking.clientProfile?.id?.toString() ||
-                  booking.clientId?.toString();
-                const clientData =
-                  clientId && clientDataMap[clientId]
-                    ? clientDataMap[clientId]
-                    : { reviews: [], reputation: null };
+          ) : sameDayBookings.length > 0 || scheduledBookings.length > 0 ? (
+            <div className="space-y-10 px-4 py-4">
+              {sameDayBookings.length > 0 && (
+                <section>
+                  <div className="mb-3 flex items-center">
+                    <SparklesIcon className="mr-2 h-6 w-6 text-yellow-500" />
+                    <h2 className="text-lg font-bold tracking-wide text-yellow-600">
+                      Same Day Bookings
+                    </h2>
+                  </div>
+                  <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
+                    {sameDayBookings.map((booking, idx) => {
+                      const clientId =
+                        booking.clientProfile?.id?.toString() ||
+                        booking.clientId?.toString();
+                      const clientData =
+                        clientId && clientDataMap[clientId]
+                          ? clientDataMap[clientId]
+                          : { reviews: [], reputation: null };
+                      return (
+                        <Appear
+                          key={booking.id}
+                          delayMs={idx * 30}
+                          variant="fade-up"
+                        >
+                          <div
+                            onClick={() => {
+                              if (
+                                (activeTab === "IN PROGRESS" ||
+                                  booking.status?.toLowerCase() ===
+                                    "inprogress") &&
+                                booking.id
+                              ) {
+                                navigate(
+                                  `/provider/active-service/${booking.id}`,
+                                );
+                              } else if (booking.id) {
+                                if (booking.status === "Requested") {
+                                  dispatchBookingInteracted(booking.id);
+                                }
+                                navigate(`/provider/booking/${booking.id}`);
+                              }
+                            }}
+                            className="w-full cursor-pointer transition-shadow hover:shadow-lg"
+                          >
+                            <ProviderBookingItemCard
+                              booking={booking}
+                              review={clientData.reviews}
+                              reputation={clientData.reputation}
+                              onDeclineClick={() => {
+                                setDecliningBookingId(booking.id);
+                                setShowDeclineConfirm(true);
+                              }}
+                              onCancelClick={(
+                                booking: ProviderEnhancedBooking,
+                              ) => setCancellingBooking(booking)}
+                              isDeclining={isBookingActionInProgress(
+                                booking.id,
+                                "decline",
+                              )}
+                              acceptBookingById={acceptBookingById}
+                              isBookingActionInProgress={
+                                isBookingActionInProgress
+                              }
+                              checkCommissionValidation={
+                                checkCommissionValidation
+                              }
+                              startBookingById={startBookingById}
+                            />
+                          </div>
+                        </Appear>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
 
-                return (
-                  <Appear key={booking.id} delayMs={idx * 30} variant="fade-up">
-                    <div
-                      onClick={() => {
-                        // Make inprogress bookings viewable
-                        if (
-                          (activeTab === "IN PROGRESS" ||
-                            booking.status?.toLowerCase() === "inprogress") &&
-                          booking.id
-                        ) {
-                          navigate(`/provider/active-service/${booking.id}`);
-                        } else if (booking.id) {
-                          if (booking.status === "Requested") {
-                            dispatchBookingInteracted(booking.id);
-                          }
-                          navigate(`/provider/booking/${booking.id}`);
-                        }
-                      }}
-                      className={`w-full cursor-pointer transition-shadow hover:shadow-lg`}
-                    >
-                      <ProviderBookingItemCard
-                        booking={booking}
-                        review={clientData.reviews}
-                        reputation={clientData.reputation}
-                        onDeclineClick={() => {
-                          setDecliningBookingId(booking.id);
-                          setShowDeclineConfirm(true);
-                        }}
-                        onCancelClick={(booking: ProviderEnhancedBooking) =>
-                          setCancellingBooking(booking)
-                        }
-                        isDeclining={isBookingActionInProgress(
-                          booking.id,
-                          "decline",
-                        )}
-                        acceptBookingById={acceptBookingById}
-                        isBookingActionInProgress={isBookingActionInProgress}
-                        checkCommissionValidation={checkCommissionValidation}
-                        startBookingById={startBookingById}
-                      />
-                    </div>
-                  </Appear>
-                );
-              })}
+              {scheduledBookings.length > 0 && (
+                <section>
+                  <div className="mb-3 flex items-center">
+                    <CalendarDaysIcon className="mr-2 h-6 w-6 text-blue-500" />
+                    <h2 className="text-lg font-bold tracking-wide text-blue-700">
+                      Scheduled Bookings
+                    </h2>
+                  </div>
+                  <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
+                    {scheduledBookings.map((booking, idx) => {
+                      const clientId =
+                        booking.clientProfile?.id?.toString() ||
+                        booking.clientId?.toString();
+                      const clientData =
+                        clientId && clientDataMap[clientId]
+                          ? clientDataMap[clientId]
+                          : { reviews: [], reputation: null };
+                      return (
+                        <Appear
+                          key={booking.id}
+                          delayMs={idx * 30}
+                          variant="fade-up"
+                        >
+                          <div
+                            onClick={() => {
+                              if (
+                                (activeTab === "IN PROGRESS" ||
+                                  booking.status?.toLowerCase() ===
+                                    "inprogress") &&
+                                booking.id
+                              ) {
+                                navigate(
+                                  `/provider/active-service/${booking.id}`,
+                                );
+                              } else if (booking.id) {
+                                if (booking.status === "Requested") {
+                                  dispatchBookingInteracted(booking.id);
+                                }
+                                navigate(`/provider/booking/${booking.id}`);
+                              }
+                            }}
+                            className="w-full cursor-pointer transition-shadow hover:shadow-lg"
+                          >
+                            <ProviderBookingItemCard
+                              booking={booking}
+                              review={clientData.reviews}
+                              reputation={clientData.reputation}
+                              onDeclineClick={() => {
+                                setDecliningBookingId(booking.id);
+                                setShowDeclineConfirm(true);
+                              }}
+                              onCancelClick={(
+                                booking: ProviderEnhancedBooking,
+                              ) => setCancellingBooking(booking)}
+                              isDeclining={isBookingActionInProgress(
+                                booking.id,
+                                "decline",
+                              )}
+                              acceptBookingById={acceptBookingById}
+                              isBookingActionInProgress={
+                                isBookingActionInProgress
+                              }
+                              checkCommissionValidation={
+                                checkCommissionValidation
+                              }
+                              startBookingById={startBookingById}
+                            />
+                          </div>
+                        </Appear>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
             </div>
           ) : (
             <div className="flex h-[calc(100vh-250px)] flex-col items-center justify-center px-4 py-16 text-center">

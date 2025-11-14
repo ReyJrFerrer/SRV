@@ -47,7 +47,7 @@ const ActionButtons: React.FC<{
   bookAgainLabel = "Book Again",
   compact = false,
 }) => {
-  // Build list of visible buttons so we can render multiple layout patterns
+  // Section: Layout / Visible buttons
   const showChat = !chatLoading;
   const showCancel = !!canCancel;
   const showBookAgain = !!onBookAgain;
@@ -67,7 +67,7 @@ const ActionButtons: React.FC<{
   const baseContainer = compact ? containerCompact : containerDefault;
   const baseButtonClass = compact ? baseButtonCompact : baseButtonDefault;
 
-  // Helper to stop Link parent navigation when a button inside a Link is clicked
+  // Section: Helpers
   const stopAndRun = (fn?: () => void) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -161,7 +161,7 @@ const ActionButtons: React.FC<{
 
   const visibleCount = buttons.length;
 
-  // Layout rendering
+  // Section: Render
   if (visibleCount === 0) return <div className={baseContainer} />;
 
   // Single button: align right

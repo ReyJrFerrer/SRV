@@ -4,9 +4,11 @@ import { useLocationStore } from "../../../store/locationStore";
 import EnableLocationButton from "../locationAccessPermission/EnableLocationButton";
 import LocationBlockedModal from "../locationAccessPermission/LocationBlockedModal";
 
+// Constants
 const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_COMMON_V1";
-const ADDR_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const ADDR_CACHE_TTL_MS = 2 * 60 * 1000;
 
+// Component
 const MapFunctions: React.FC = () => {
   const {
     location: geoLocation,
@@ -17,6 +19,7 @@ const MapFunctions: React.FC = () => {
     addressMode,
   } = useLocationStore();
 
+  // State
   const [showMap, setShowMap] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [gmapsAddress, setGmapsAddress] = useState<string>(
@@ -28,27 +31,22 @@ const MapFunctions: React.FC = () => {
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
   const [lastRefreshTs, setLastRefreshTs] = useState<number>(0);
 
+  // Effects
   useEffect(() => {
-    // Refresh location when the page becomes visible again or on mount if stale.
-    const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+    const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 
     const tryRefresh = async (force = false) => {
       try {
-        // Only attempt refresh when permission is allowed.
         if (locationStatus !== "allowed") return;
 
         const now = Date.now();
         if (!force && now - lastRefreshTs < REFRESH_INTERVAL_MS) return;
 
-        // Force a fresh geolocation request (bypass cached early-return)
         await (useLocationStore.getState().requestLocation as any)(true);
         setLastRefreshTs(now);
-      } catch {
-        // ignore refresh errors
-      }
+      } catch {}
     };
 
-    // on mount try a refresh (non-forced)
     tryRefresh(false);
 
     const onVisibility = () => {
@@ -151,6 +149,7 @@ const MapFunctions: React.FC = () => {
     }
   }, [mapsApiLoaded, geoLocation, gmapsStatus]);
 
+  // Render
   return (
     <>
       <div className="flex w-full items-center justify-start">
@@ -193,9 +192,7 @@ const MapFunctions: React.FC = () => {
       </div>
       {(locationStatus === "denied" || locationStatus === "not_set") && (
         <div className="ml-3 flex items-center gap-2">
-          {/* Only show the enable button when permission is unknown (not_set).
-              If the permission is denied (blocked), hide the enable button and
-              keep the manual "Change location" action available. */}
+          {/* Controls */}
           {locationStatus === "not_set" && <EnableLocationButton />}
 
           {addressMode === "manual" && userAddress && userProvince && (

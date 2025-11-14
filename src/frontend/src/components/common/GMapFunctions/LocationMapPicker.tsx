@@ -1,9 +1,4 @@
-// Component: LocationMapPicker
-// Purpose: Pin/search control for selecting a precise map location with reverse geocoding.
-// Inputs: props.value (StructuredLocation | null), props.highlight, props.label, props.persistKey
-// Outputs: onChange(StructuredLocation) with lat/lng and a user-friendly address
-// Side effects: persists to localStorage when persistKey is provided
-// Dependencies: @vis.gl/react-google-maps Map/AdvancedMarker; Google Maps JS (Places + Geocoder)
+// Imports
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
@@ -13,7 +8,7 @@ const containerStyle: React.CSSProperties = {
   borderRadius: "0.75rem",
 };
 
-// Center of Baguio City for location biasing
+// Constants
 const baguioCenter = { lat: 16.4023, lng: 120.596 };
 
 interface StructuredLocation {
@@ -42,7 +37,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   highlight = false,
   persistKey,
 }) => {
-  // SECTION: State/Refs
+  // State/Refs
   const [internalPosition, setInternalPosition] = useState<{
     lat: number;
     lng: number;
@@ -62,16 +57,13 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const [isLoadingPred, setIsLoadingPred] = useState<boolean>(false);
   const debounceRef = useRef<number | null>(null);
 
-  // SECTION: Helpers
+  // Helpers
   const composeFormattedWithPlace = (
     rawName: string | undefined,
     formattedAddress: string | undefined,
   ): string => {
     let formatted = (formattedAddress || "").trim();
     if (!formatted) return rawName || "";
-
-    // Split into comma-separated components, trim, and filter out
-    // unwanted tokens like plus-codes (e.g. "2FH3+G4C") and "Unnamed Road".
     const parts = formatted
       .split(",")
       .map((p) => p.trim())
@@ -140,14 +132,13 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
       onChange(structured);
       persistLocation(structured);
 
-      // Only adjust camera on selection to focus the chosen place.
       mapRef.current?.panTo({ lat: structured.lat, lng: structured.lng });
       mapRef.current?.setZoom(17);
     },
     [onChange, persistLocation],
   );
 
-  // When the map becomes ready, ensure it is centered on the current internal position.
+  // Effects
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
     try {
@@ -184,7 +175,6 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
 
   const onMapClick = useCallback(
     (e: any) => {
-      // If user clicked a POI/landmark which provides a placeId, fetch full details
       const placeId = e?.placeId || e?.detail?.placeId;
       const g = (window as any).google;
 
@@ -196,11 +186,9 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
 
         if (placesServiceRef.current) {
           placesServiceRef.current.getDetails({ placeId }, (place, status) => {
-            // Use place details when available so the search input shows the landmark name/address
             if (status === "OK" && place) {
               processPlaceDetails(place);
             } else {
-              // Fallback to lat/lng behavior if details unavailable
               const ll = (e?.detail?.latLng || e?.latLng) as any;
               const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
               const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
@@ -215,7 +203,6 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         }
       }
 
-      // Default: click on map empty area — convert lat/lng to address
       const ll = (e?.detail?.latLng || e?.latLng) as any;
       const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
       const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;

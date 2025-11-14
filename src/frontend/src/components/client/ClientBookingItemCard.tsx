@@ -1,4 +1,4 @@
-// --- Client Booking Item Card ---
+// Section: Client Booking Item Card
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -44,7 +44,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const { conversations, createConversation } = useChat();
   const { identity } = useAuth();
 
-  // --- State: Review status ---
+  // Section: State
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
   const { userImageUrl, refetch } = useUserImage(
@@ -64,7 +64,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     estimatedCommission: 0,
   });
 
-  // --- Effect: Check commission validation for cash bookings ---
+  // Section: Effects
   useEffect(() => {
     const validateCommission = async () => {
       // Only validate commission for cash payment bookings
@@ -86,7 +86,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     validateCommission();
   }, [booking, checkCommissionValidation]);
 
-  // --- Effect: Check review status when booking is finished ---
+  // Section: Effects (review status)
   useEffect(() => {
     const checkReviewStatus = async () => {
       if (booking.status !== "Completed" || !booking.id) {
@@ -116,7 +116,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     checkReviewStatus();
   }, [booking.id, booking.status]);
 
-  // --- Extract booking data with fallbacks ---
+  // Section: Data extraction
   const serviceTitle = booking.serviceName;
 
   // Use provider profile image directly, do not use useMediaLoader for booking image
@@ -161,7 +161,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     reviewCount !== null &&
     reputation !== null;
 
-  // --- Format date function ---
+  // Section: Utilities
   const formatDate = (date: Date | string | number) => {
     try {
       const dateObj = new Date(date);
@@ -177,7 +177,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
-  // --- Date range formatting helper ---
+  // Section: Utilities (date helpers)
   const formatDateRange = (
     requestedDate: Date | string | number,
     scheduledDate: Date | string | number,
@@ -221,7 +221,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
-  // --- Status color mapping ---
+  // Section: Utilities (status)
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case "REQUESTED":
@@ -246,7 +246,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
-  // --- Event Handlers ---
+  // Section: Handlers
   const handleChat = useCallback(async () => {
     if (!booking.providerProfile?.id) {
       toast.error("Provider information is missing.");
@@ -306,7 +306,15 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   }, [booking, conversations, createConversation, identity, navigate]);
 
+  // Emit booking-interacted when user performs actions from the card
+  const emitInteraction = useCallback(() => {
+    try {
+      dispatchBookingInteracted(booking.id);
+    } catch {}
+  }, [booking.id]);
+
   const handleBookAgain = () => {
+    emitInteraction();
     if (booking.serviceId) {
       navigate(`/client/book/${booking.serviceId}`);
     } else {
@@ -317,6 +325,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   // Add handler for viewing reviews when already reviewed
   const handleViewReviews = () => {
+    emitInteraction();
     if (booking.serviceId) {
       navigate(`/client/service/reviews/${booking.serviceId}`);
     } else {
@@ -413,7 +422,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   const reviewButtonContent = getReviewButtonContent();
 
-  // --- Render: Booking Card Layout ---
+  // Section: Render
   return (
     <Link
       to={`/client/booking/${booking.id}`}
@@ -546,36 +555,73 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             {/* Map our existing reviewButtonContent to the shape ActionButtons expects */}
             <ActionButtons
               compact={true}
-              onChat={handleChat}
+              onChat={() => {
+                emitInteraction();
+                handleChat();
+              }}
               chatLoading={false}
-              onRequestCancel={() => onCancelClick(booking)}
+              onRequestCancel={() => {
+                emitInteraction();
+                onCancelClick(booking);
+              }}
               canCancel={canCancel}
               // provide Book Again handler so the shared component renders it
               onBookAgain={
-                isCompleted && booking.serviceId ? handleBookAgain : undefined
+                isCompleted && booking.serviceId
+                  ? () => {
+                      emitInteraction();
+                      handleBookAgain();
+                    }
+                  : undefined
               }
               bookAgainLabel={"Book Again"}
               reviewButtonContent={
                 reviewButtonContent
-                  ? {
-                      text: reviewButtonContent.text,
-                      icon: reviewButtonContent.icon,
-                      onClick: reviewButtonContent.onClick ?? undefined,
-                      to: reviewButtonContent.href
-                        ? reviewButtonContent.href.pathname
-                        : undefined,
-                      state: reviewButtonContent.href
-                        ? reviewButtonContent.href.query || { providerName }
-                        : undefined,
-                      disabled: reviewButtonContent.disabled,
-                      className: reviewButtonContent.className,
-                    }
+                  ? (() => {
+                      const r = reviewButtonContent as any;
+                      // If the original review content provided a navigation href, intercept
+                      // and navigate programmatically so we can emit interaction first.
+                      if (r.href) {
+                        return {
+                          text: r.text,
+                          icon: r.icon,
+                          onClick: () => {
+                            emitInteraction();
+                            navigate(r.href.pathname, {
+                              state: r.href.query || ({ providerName } as any),
+                            });
+                          },
+                          to: undefined,
+                          state: undefined,
+                          disabled: r.disabled,
+                          className: r.className,
+                        } as any;
+                      }
+
+                      return {
+                        text: r.text,
+                        icon: r.icon,
+                        onClick: () => {
+                          emitInteraction();
+                          if (r.onClick) r.onClick();
+                        },
+                        to: r.href ? r.href.pathname : undefined,
+                        state: r.href
+                          ? r.href.query || { providerName }
+                          : undefined,
+                        disabled: r.disabled,
+                        className: r.className,
+                      } as any;
+                    })()
                   : null
               }
               status={booking.status}
-              onReport={() =>
-                navigate(`/client/report`, { state: { bookingId: booking.id } })
-              }
+              onReport={() => {
+                emitInteraction();
+                navigate(`/client/report`, {
+                  state: { bookingId: booking.id },
+                });
+              }}
             />
           </div>
         </div>

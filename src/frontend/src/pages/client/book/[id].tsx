@@ -98,6 +98,22 @@ const BookingPage: React.FC = () => {
   const displayMunicipality = userAddress || "";
   const displayProvince = userProvince || "";
 
+  // Helper: strip plus-code tokens from addresses (e.g. "2CFX+WPX")
+  const stripPlusCodes = (addr: string) => {
+    if (!addr) return "";
+    try {
+      const plusCodeRegex = /^[A-Z0-9]{1,}\+[A-Z0-9]{1,}$/i;
+      const parts = addr
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      const filtered = parts.filter((p) => !plusCodeRegex.test(p));
+      return filtered.join(", ").trim();
+    } catch {
+      return addr;
+    }
+  };
+
   // Section: Hooks - service & bookings
   const {
     service,
@@ -173,9 +189,11 @@ const BookingPage: React.FC = () => {
   const draftKey = serviceId ? `${DRAFT_KEY_PREFIX}${serviceId}` : null;
   // Section: UX helpers
   const userTouchedRef = useRef<boolean>(false);
+  const suppressDraftSaveRef = useRef<boolean>(false);
   const pageContainerRef = useRef<HTMLDivElement | null>(null);
 
   const saveDraftImmediate = useCallback(() => {
+    if (suppressDraftSaveRef.current) return;
     if (!draftKey) return;
     try {
       const payload: BookingDraft = {
@@ -367,7 +385,13 @@ const BookingPage: React.FC = () => {
   };
 
   const handleDiscardDraft = () => {
-    if (draftKey) localStorage.removeItem(draftKey);
+    // prevent immediate re-save while removing the draft
+    suppressDraftSaveRef.current = true;
+    try {
+      if (draftKey) localStorage.removeItem(draftKey);
+    } catch {}
+    // allow saves again on next tick
+    setTimeout(() => (suppressDraftSaveRef.current = false), 50);
     setParsedDraft(null);
     setShowRestorePrompt(false);
   };
@@ -404,13 +428,14 @@ const BookingPage: React.FC = () => {
       geocoder.geocode({ location: loc }, (results: any, status: string) => {
         if (status === "OK" && results && results[0]) {
           const addr = results[0].formatted_address as string;
-          setDetectedAddress(addr);
+          const cleaned = stripPlusCodes(addr);
+          setDetectedAddress(cleaned);
           setDetectedStatus("ok");
           setMapLocation(
-            (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: addr },
+            (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: cleaned },
           );
-          if (!mapPreciseAddress) setMapPreciseAddress(addr);
-          if (!mapDisplayAddress) setMapDisplayAddress(addr);
+          if (!mapPreciseAddress) setMapPreciseAddress(cleaned);
+          if (!mapDisplayAddress) setMapDisplayAddress(cleaned);
         } else {
           setDetectedStatus("failed");
         }
@@ -1260,6 +1285,8 @@ const BookingPage: React.FC = () => {
         };
         // clear saved draft for this service now that booking succeeded
         try {
+          // prevent component-unmount autosave from recreating the draft
+          suppressDraftSaveRef.current = true;
           if (draftKey) localStorage.removeItem(draftKey);
         } catch (err) {
           // ignore
