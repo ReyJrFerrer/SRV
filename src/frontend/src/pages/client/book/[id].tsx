@@ -1,20 +1,11 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Toaster } from "sonner";
 import BookingDrafts from "../../../components/client/BookingDrafts";
 import { useParams, useNavigate } from "react-router-dom";
 import useBookRequest, { BookingRequest } from "../../../hooks/bookRequest";
 import useBookingManagement from "../../../hooks/bookingManagement";
 import phLocations from "../../../data/ph_locations.json";
-import {
-  createDirectPayment,
-  checkProviderOnboarding,
-} from "../../../services/firebase";
+import { createDirectPayment, checkProviderOnboarding } from "../../../services/firebase";
 import { useAuth } from "../../../context/AuthContext";
 import { useLocationStore } from "../../../store/locationStore";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
@@ -29,24 +20,18 @@ const BookingPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
 
-  // Set document title
+  // Section: Setup
   useEffect(() => {
     document.title = "Book Service | SRV";
   }, []);
 
-  // --- Auth context ---
+  // Section: Auth and stores
   const { identity } = useAuth();
 
-  // --- Zustand location store ---
-  const {
-    userAddress,
-    userProvince,
-    locationLoading,
-    requestLocation,
-    location: geoLocation,
-  } = useLocationStore();
+  // Section: Location store
+  const { userAddress, userProvince, locationLoading, requestLocation, location: geoLocation } = useLocationStore();
 
-  // --- Section refs ---
+  // Section: Refs
   const barangayRef = useRef<HTMLSelectElement>(null);
   const otherBarangayRef = useRef<HTMLInputElement>(null);
   const streetRef = useRef<HTMLInputElement>(null);
@@ -55,26 +40,20 @@ const BookingPage: React.FC = () => {
   const bookingSectionRef = useRef<HTMLDivElement>(null);
   const paymentSectionRef = useRef<HTMLDivElement>(null);
 
-  // --- Booking state ---
-  const [packages, setPackages] = useState<
-    {
-      id: string;
-      title: string;
-      description: string;
-      price: number;
-      commissionFee?: number;
-      checked: boolean;
-    }[]
-  >([]);
-  const [bookingOption, setBookingOption] = useState<
-    "sameday" | "scheduled" | null
-  >(null);
+  // Section: State
+  const [packages, setPackages] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    commissionFee?: number;
+    checked: boolean;
+  }[]>([]);
+  const [bookingOption, setBookingOption] = useState<"sameday" | "scheduled" | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const [slotAvailability, setSlotAvailability] = useState<
-    Record<string, boolean>
-  >({});
+  const [slotAvailability, setSlotAvailability] = useState<Record<string, boolean>>({});
   const [checkingSlots, setCheckingSlots] = useState(false);
   const [street, setStreet] = useState<string>("");
   const [houseNumber, setHouseNumber] = useState<string>("");
@@ -82,15 +61,12 @@ const BookingPage: React.FC = () => {
   const [notes, setNotes] = useState<string>("");
   const NOTES_CHAR_LIMIT = 50;
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<
-    "CashOnHand" | "GCash" | "SRVWallet"
-  >("CashOnHand");
+  const [paymentMethod, setPaymentMethod] = useState<"CashOnHand" | "GCash" | "SRVWallet">("CashOnHand");
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [isProviderOnboarded, setIsProviderOnboarded] =
-    useState<boolean>(false);
+  const [isProviderOnboarded, setIsProviderOnboarded] = useState<boolean>(false);
 
-  // Initialize location on mount
+  // Section: Effects - initialization
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
@@ -98,7 +74,7 @@ const BookingPage: React.FC = () => {
   const displayMunicipality = userAddress || "";
   const displayProvince = userProvince || "";
 
-  // --- Service and booking data (from hook) ---
+  // Section: Hooks - service & bookings
   const {
     service,
     packages: hookPackages,
@@ -116,34 +92,24 @@ const BookingPage: React.FC = () => {
 
   const { bookings: userBookings } = useBookingManagement();
 
-  // Barangay and manual location state
+  // Section: Location state
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
   const [selectedBarangay, setSelectedBarangay] = useState<string>("");
   const [otherBarangay, setOtherBarangay] = useState("");
-  const [locationInputMode, setLocationInputMode] = useState<
-    "detected" | "manual" | "hidden"
-  >("hidden");
+  const [locationInputMode, setLocationInputMode] = useState<"detected" | "manual" | "hidden">("hidden");
   const [manualProvince, setManualProvince] = useState<string>("");
   const [manualCity, setManualCity] = useState<string>("");
-  const [manualBarangayOptions, setManualBarangayOptions] = useState<string[]>(
-    [],
-  );
-  const [mapLocation, setMapLocation] = useState<{
-    lat: number;
-    lng: number;
-    address?: string;
-  } | null>(null);
+  const [manualBarangayOptions, setManualBarangayOptions] = useState<string[]>([]);
+  const [mapLocation, setMapLocation] = useState<{ lat: number; lng: number; address?: string } | null>(null);
   const [mapPreciseAddress, setMapPreciseAddress] = useState<string>("");
   const [mapDisplayAddress, setMapDisplayAddress] = useState<string>("");
   const [showFallbackForms, setShowFallbackForms] = useState<boolean>(false);
   const [mapMode, setMapMode] = useState<"detected" | "custom">("detected");
   const [detectedAddress, setDetectedAddress] = useState<string>("");
-  const [detectedStatus, setDetectedStatus] = useState<
-    "idle" | "loading" | "ok" | "failed" | "denied" | "na"
-  >("idle");
+  const [detectedStatus, setDetectedStatus] = useState<"idle" | "loading" | "ok" | "failed" | "denied" | "na">("idle");
   const [mapsReady, setMapsReady] = useState<boolean>(false);
 
-  // --- Booking draft (localStorage) ---
+  // Section: Drafts
   const DRAFT_KEY_PREFIX = "booking_draft_v1_";
   interface BookingDraft {
     packages: { id: string; checked: boolean }[];
@@ -171,8 +137,7 @@ const BookingPage: React.FC = () => {
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   const draftKey = serviceId ? `${DRAFT_KEY_PREFIX}${serviceId}` : null;
-  // Track whether the user actually interacted with the form (avoids autosaving
-  // when only auto-detected values are present).
+  // Section: UX helpers
   const userTouchedRef = useRef<boolean>(false);
   const pageContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -201,7 +166,6 @@ const BookingPage: React.FC = () => {
         timestamp: Date.now(),
       };
 
-      // Helper to determine if a draft contains meaningful user inputs
       const isMeaningfulDraft = (d: BookingDraft) => {
         try {
           if (d.packages && d.packages.some((p) => p.checked)) return true;
@@ -215,17 +179,13 @@ const BookingPage: React.FC = () => {
           if (d.amountPaid && d.amountPaid.trim()) return true;
           if (d.selectedBarangay && d.selectedBarangay.trim()) return true;
           if (d.otherBarangay && d.otherBarangay.trim()) return true;
-          // mapLocation and geocoded/display address are considered auto-detected
-          // and by themselves don't make a draft meaningful.
+        
           return false;
         } catch {
           return false;
         }
       };
 
-      // Persist if the user explicitly interacted OR the current state has
-      // meaningful inputs (covers controlled input changes that might not
-      // have bubbled DOM events to the page container).
       if (!userTouchedRef.current && !isMeaningfulDraft(payload)) return;
 
       localStorage.setItem(draftKey, JSON.stringify(payload));
@@ -255,23 +215,15 @@ const BookingPage: React.FC = () => {
     mapDisplayAddress,
   ]);
 
-  // Ensure we attempt to save a draft when the component unmounts (SPA
-  // navigation / route change). This will persist any meaningful inputs
-  // right before the booking page is torn down.
   useEffect(() => {
     return () => {
       try {
         saveDraftImmediate();
       } catch {
-        // ignore
+        //
       }
     };
   }, [saveDraftImmediate]);
-
-  // Mark the page as 'touched' when the user interacts with any input or
-  // interacts with UI inside the booking page. This is intentionally broad
-  // (input/change/click/touchstart) so child components don't need to notify
-  // us individually.
   useEffect(() => {
     const el = pageContainerRef.current;
     if (!el) return;
@@ -288,23 +240,20 @@ const BookingPage: React.FC = () => {
     };
   }, []);
 
-  // Debounced autosave when any form field changes
+  // Section: Effects - autosave
   useEffect(() => {
     if (!draftKey) return;
     const t = setTimeout(() => saveDraftImmediate(), 700);
     return () => clearTimeout(t);
   }, [saveDraftImmediate, draftKey]);
 
-  // Save before unload to cover abrupt navigations
   useEffect(() => {
     const onUnload = () => saveDraftImmediate();
     window.addEventListener("beforeunload", onUnload);
     return () => window.removeEventListener("beforeunload", onUnload);
   }, [saveDraftImmediate]);
 
-  // On mount, check for existing draft for this service. Only treat it as a
-  // draft if the user previously entered meaningful inputs (ignore drafts
-  // that only contain auto-detected values like reverse-geocoded addresses).
+  // Section: Effects - restore draft
   useEffect(() => {
     if (!draftKey) return;
     try {
@@ -312,11 +261,9 @@ const BookingPage: React.FC = () => {
       if (raw) {
         const parsed = JSON.parse(raw) as BookingDraft;
 
-        // Only consider this a saved draft if it contains meaningful user inputs.
         const hasInputs = (() => {
           try {
-            if (parsed.packages && parsed.packages.some((p) => p.checked))
-              return true;
+            if (parsed.packages && parsed.packages.some((p) => p.checked)) return true;
             if (parsed.bookingOption) return true;
             if (parsed.selectedDate) return true;
             if (parsed.selectedTime && parsed.selectedTime.trim()) return true;
@@ -325,12 +272,8 @@ const BookingPage: React.FC = () => {
             if (parsed.landmark && parsed.landmark.trim()) return true;
             if (parsed.notes && parsed.notes.trim()) return true;
             if (parsed.amountPaid && parsed.amountPaid.trim()) return true;
-            if (parsed.selectedBarangay && parsed.selectedBarangay.trim())
-              return true;
-            if (parsed.otherBarangay && parsed.otherBarangay.trim())
-              return true;
-            // mapLocation and geocoded/display address are treated as
-            // auto-detected values and do not by themselves make the draft meaningful.
+            if (parsed.selectedBarangay && parsed.selectedBarangay.trim()) return true;
+            if (parsed.otherBarangay && parsed.otherBarangay.trim()) return true;
             return false;
           } catch {
             return false;
@@ -341,31 +284,25 @@ const BookingPage: React.FC = () => {
           setParsedDraft(parsed);
           setShowRestorePrompt(true);
         } else {
-          // Remove trivially empty drafts to avoid false prompts later
           try {
             localStorage.removeItem(draftKey);
           } catch {}
         }
       }
     } catch (err) {
-      // ignore
+      //
     }
   }, [draftKey]);
 
   const handleUseDraft = () => {
     if (!parsedDraft) return setShowRestorePrompt(false);
     try {
-      // restore packages checked state
-      setPackages((prev) =>
-        prev.map((p) => {
-          const matched = parsedDraft.packages.find((x) => x.id === p.id);
-          return matched ? { ...p, checked: !!matched.checked } : p;
-        }),
-      );
+      setPackages((prev) => prev.map((p) => {
+        const matched = parsedDraft.packages.find((x) => x.id === p.id);
+        return matched ? { ...p, checked: !!matched.checked } : p;
+      }));
       setBookingOption(parsedDraft.bookingOption);
-      setSelectedDate(
-        parsedDraft.selectedDate ? new Date(parsedDraft.selectedDate) : null,
-      );
+      setSelectedDate(parsedDraft.selectedDate ? new Date(parsedDraft.selectedDate) : null);
       setSelectedTime(parsedDraft.selectedTime || "");
       setStreet(parsedDraft.street || "");
       setHouseNumber(parsedDraft.houseNumber || "");
@@ -382,7 +319,7 @@ const BookingPage: React.FC = () => {
       setMapPreciseAddress(parsedDraft.mapPreciseAddress || "");
       setMapDisplayAddress(parsedDraft.mapDisplayAddress || "");
     } catch (err) {
-      // ignore
+      //
     } finally {
       setShowRestorePrompt(false);
     }
@@ -394,7 +331,7 @@ const BookingPage: React.FC = () => {
     setShowRestorePrompt(false);
   };
 
-  // Google maps readiness
+  // Section: Effects - maps readiness
   useEffect(() => {
     if ((window as any).google?.maps) {
       setMapsReady(true);
@@ -412,7 +349,7 @@ const BookingPage: React.FC = () => {
     return () => clearInterval(iv);
   }, []);
 
-  // Reverse geocode detected coordinates
+  // Section: Effects - reverse geocode
   useEffect(() => {
     if (mapMode !== "detected") return;
     if (detectedStatus === "loading" || detectedStatus === "ok") return;
@@ -428,9 +365,7 @@ const BookingPage: React.FC = () => {
           const addr = results[0].formatted_address as string;
           setDetectedAddress(addr);
           setDetectedStatus("ok");
-          setMapLocation(
-            (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: addr },
-          );
+          setMapLocation((prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: addr });
           if (!mapPreciseAddress) setMapPreciseAddress(addr);
           if (!mapDisplayAddress) setMapDisplayAddress(addr);
         } else {
@@ -440,16 +375,9 @@ const BookingPage: React.FC = () => {
     } catch {
       setDetectedStatus("failed");
     }
-  }, [
-    mapMode,
-    geoLocation,
-    mapsReady,
-    detectedStatus,
-    mapPreciseAddress,
-    mapDisplayAddress,
-  ]);
+  }, [mapMode, geoLocation, mapsReady, detectedStatus, mapPreciseAddress, mapDisplayAddress]);
 
-  // Manual barangays when province/city changes
+  // Section: Effects - manual barangays
   useEffect(() => {
     try {
       if (!manualProvince) {
@@ -459,9 +387,7 @@ const BookingPage: React.FC = () => {
       }
 
       const provinceObj = (phLocations as any).provinces.find(
-        (prov: any) =>
-          prov.name.trim().toLowerCase() ===
-          manualProvince.trim().toLowerCase(),
+        (prov: any) => prov.name.trim().toLowerCase() === manualProvince.trim().toLowerCase(),
       );
 
       if (!provinceObj || !Array.isArray(provinceObj.municipalities)) {
@@ -470,37 +396,21 @@ const BookingPage: React.FC = () => {
         return;
       }
 
-      // Find municipality match for the current manualCity
       const muniObj = provinceObj.municipalities.find(
-        (muni: any) =>
-          muni.name.trim().toLowerCase() === manualCity.trim().toLowerCase(),
+        (muni: any) => muni.name.trim().toLowerCase() === manualCity.trim().toLowerCase(),
       );
 
       if (muniObj && Array.isArray(muniObj.barangays)) {
-        setManualBarangayOptions(
-          muniObj.barangays.filter(
-            (b: string) =>
-              b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
-          ),
-        );
+        setManualBarangayOptions(muniObj.barangays.filter((b: string) => b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others"));
         setSelectedBarangay("");
         return;
       }
 
-      // If the current manualCity is not a member of the selected province
-      // (e.g., user switched provinces but city stayed from previous province),
-      // pick a sensible default: select the first municipality for this
-      // province and populate its barangays so the UI shows correct options.
       const firstMuni = provinceObj.municipalities[0];
       if (firstMuni && firstMuni.name) {
         setManualCity(firstMuni.name);
         if (Array.isArray(firstMuni.barangays)) {
-          setManualBarangayOptions(
-            firstMuni.barangays.filter(
-              (b: string) =>
-                b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
-            ),
-          );
+          setManualBarangayOptions(firstMuni.barangays.filter((b: string) => b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others"));
         } else {
           setManualBarangayOptions([]);
         }
@@ -514,82 +424,38 @@ const BookingPage: React.FC = () => {
     }
   }, [manualProvince, manualCity]);
 
-  // Detected barangays from displayMunicipality/province
+  // Section: Effects - detected barangays
   useEffect(() => {
     let found: string[] = [];
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
     const provinceNorm = (displayProvince || "").trim().toLowerCase();
     const provinces = (phLocations as any).provinces;
 
-    if (
-      (cityNorm === "baguio" || cityNorm === "baguio city") &&
-      ["benguet", "cordillera administrative region", "car", "region"].includes(
-        provinceNorm,
-      )
-    ) {
-      const benguet = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
-      );
-      const baguio = benguet?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === "baguio city",
-      );
+    if ((cityNorm === "baguio" || cityNorm === "baguio city") && ["benguet", "cordillera administrative region", "car", "region"].includes(provinceNorm)) {
+      const benguet = provinces.find((prov: any) => prov.name.trim().toLowerCase() === "benguet");
+      const baguio = benguet?.municipalities.find((m: any) => m.name.trim().toLowerCase() === "baguio city");
       if (baguio?.barangays) found = baguio.barangays;
-    } else if (
-      (cityNorm === "la trinidad" || cityNorm === "latrinidad") &&
-      provinceNorm === "benguet"
-    ) {
-      const benguet = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
-      );
-      const laTrinidad = benguet?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === "la trinidad",
-      );
+    } else if ((cityNorm === "la trinidad" || cityNorm === "latrinidad") && provinceNorm === "benguet") {
+      const benguet = provinces.find((prov: any) => prov.name.trim().toLowerCase() === "benguet");
+      const laTrinidad = benguet?.municipalities.find((m: any) => m.name.trim().toLowerCase() === "la trinidad");
       if (laTrinidad?.barangays) found = laTrinidad.barangays;
     } else if (cityNorm === "itogon" && provinceNorm === "benguet") {
-      const benguet = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
-      );
-      const itogon = benguet?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === "itogon",
-      );
+      const benguet = provinces.find((prov: any) => prov.name.trim().toLowerCase() === "benguet");
+      const itogon = benguet?.municipalities.find((m: any) => m.name.trim().toLowerCase() === "itogon");
       if (itogon?.barangays) found = itogon.barangays;
     } else if (cityNorm === "tuba" && provinceNorm === "benguet") {
-      const benguet = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
-      );
-      const tuba = benguet?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === "tuba",
-      );
+      const benguet = provinces.find((prov: any) => prov.name.trim().toLowerCase() === "benguet");
+      const tuba = benguet?.municipalities.find((m: any) => m.name.trim().toLowerCase() === "tuba");
       if (tuba?.barangays) found = tuba.barangays;
-    } else if (
-      (provinceNorm === "pangasinan" &&
-        [
-          "mapandan",
-          "manaoag",
-          "san fabian",
-          "mangaldan",
-          "sta. barbara",
-          "san jacinto",
-          "calasiao",
-        ].includes(cityNorm)) ||
-      (cityNorm === "dagupan" && provinceNorm === "region 1")
-    ) {
-      const pangasinan = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "pangasinan",
-      );
-      const muni = pangasinan?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === cityNorm,
-      );
+    } else if ((provinceNorm === "pangasinan" && ["mapandan","manaoag","san fabian","mangaldan","sta. barbara","san jacinto","calasiao"].includes(cityNorm)) || (cityNorm === "dagupan" && provinceNorm === "region 1")) {
+      const pangasinan = provinces.find((prov: any) => prov.name.trim().toLowerCase() === "pangasinan");
+      const muni = pangasinan?.municipalities.find((m: any) => m.name.trim().toLowerCase() === cityNorm);
       if (muni?.barangays) found = muni.barangays;
     } else if (cityNorm) {
       let matched = false;
       for (const prov of provinces) {
         for (const muni of prov.municipalities) {
-          if (
-            typeof muni === "object" &&
-            muni.name.trim().toLowerCase() === cityNorm &&
-            Array.isArray(muni.barangays)
-          ) {
+          if (typeof muni === "object" && muni.name.trim().toLowerCase() === cityNorm && Array.isArray(muni.barangays)) {
             found = muni.barangays as string[];
             matched = true;
             break;
@@ -599,34 +465,26 @@ const BookingPage: React.FC = () => {
       }
     }
     if (found.length > 0) {
-      setBarangayOptions(
-        found.filter(
-          (b) => b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
-        ),
-      );
+      setBarangayOptions(found.filter((b) => b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others"));
     } else if (cityNorm) {
-      setBarangayOptions([
-        ...Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
-      ]);
+      setBarangayOptions([...Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`)]);
     } else {
       setBarangayOptions([]);
     }
     setSelectedBarangay("");
   }, [displayMunicipality, displayProvince]);
 
-  // Load service and packages
+  // Section: Effects - load service
   useEffect(() => {
     if (serviceId) loadServiceData(serviceId);
   }, [serviceId, loadServiceData]);
 
-  // Check provider onboarding
+  // Section: Effects - provider onboarding
   useEffect(() => {
     const run = async () => {
       if (service?.providerId) {
         try {
-          const onb = await checkProviderOnboarding(
-            service.providerId.toString(),
-          );
+          const onb = await checkProviderOnboarding(service.providerId.toString());
           setIsProviderOnboarded(onb);
         } catch {
           setIsProviderOnboarded(false);
@@ -637,11 +495,10 @@ const BookingPage: React.FC = () => {
   }, [service?.providerId]);
 
   useEffect(() => {
-    if (hookPackages.length > 0)
-      setPackages(hookPackages.map((p: any) => ({ ...p, checked: false })));
+    if (hookPackages.length > 0) setPackages(hookPackages.map((p: any) => ({ ...p, checked: false })));
   }, [hookPackages]);
 
-  // Load available slots when date/option changes
+  // Section: Effects - slots
   useEffect(() => {
     if (!service) return;
     if (bookingOption === "scheduled" && selectedDate) {
@@ -652,25 +509,14 @@ const BookingPage: React.FC = () => {
     }
   }, [service, selectedDate, bookingOption, getAvailableSlots]);
 
-  // Check all slot availability
+  // Section: Effects - check slot availability
   useEffect(() => {
     const checkAll = async () => {
       if (!service || availableSlots.length === 0) return;
       setCheckingSlots(true);
       const map: Record<string, boolean> = {};
       const today = new Date();
-      const dateToCheck =
-        bookingOption === "sameday"
-          ? new Date(
-              today.getFullYear(),
-              today.getMonth(),
-              today.getDate(),
-              9,
-              0,
-              0,
-              0,
-            )
-          : selectedDate;
+      const dateToCheck = bookingOption === "sameday" ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0, 0) : selectedDate;
       if (!dateToCheck) {
         setCheckingSlots(false);
         return;
@@ -685,18 +531,11 @@ const BookingPage: React.FC = () => {
       };
       for (const slot of availableSlots) {
         const key = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
-        const passed = isTimeSlotPassed(
-          slot.timeSlot.startTime,
-          slot.timeSlot.endTime,
-        );
+        const passed = isTimeSlotPassed(slot.timeSlot.startTime, slot.timeSlot.endTime);
         if (passed) map[key] = false;
         else {
           try {
-            const ok = await checkTimeSlotAvailability(
-              service.id,
-              dateToCheck,
-              slot.timeSlot.startTime,
-            );
+            const ok = await checkTimeSlotAvailability(service.id, dateToCheck, slot.timeSlot.startTime);
             map[key] = ok;
           } catch {
             map[key] = false;
@@ -706,70 +545,40 @@ const BookingPage: React.FC = () => {
       setSlotAvailability(map);
       setCheckingSlots(false);
     };
-    if (
-      availableSlots.length > 0 &&
-      ((bookingOption === "scheduled" && selectedDate) ||
-        bookingOption === "sameday")
-    ) {
+    if (availableSlots.length > 0 && ((bookingOption === "scheduled" && selectedDate) || bookingOption === "sameday")) {
       checkAll();
     }
-  }, [
-    availableSlots,
-    selectedDate,
-    bookingOption,
-    service,
-    checkTimeSlotAvailability,
-  ]);
+  }, [availableSlots, selectedDate, bookingOption, service, checkTimeSlotAvailability]);
 
-  const hasUserBookedTimeSlot = useCallback(
-    (timeSlot: string, dateToCheck: Date): boolean => {
-      if (!service) return false;
-      const [startTimeStr] = timeSlot.split("-");
-      const targetDay = dateToCheck.toDateString();
-      return userBookings.some((booking) => {
-        if (["Cancelled", "Declined", "Completed"].includes(booking.status))
-          return false;
-        if (booking.serviceId !== service.id) return false;
-        const bookingDate = new Date(booking.scheduledDate);
-        const bookingDay = bookingDate.toDateString();
-        if (bookingDay !== targetDay) return false;
-        const bookingRequestedDate = new Date(booking.requestedDate);
-        const bookingStartTime = `${String(bookingRequestedDate.getHours()).padStart(2, "0")}:${String(bookingRequestedDate.getMinutes()).padStart(2, "0")}`;
-        return bookingStartTime === startTimeStr.trim();
-      });
-    },
-    [service, userBookings],
-  );
+  const hasUserBookedTimeSlot = useCallback((timeSlot: string, dateToCheck: Date): boolean => {
+    if (!service) return false;
+    const [startTimeStr] = timeSlot.split("-");
+    const targetDay = dateToCheck.toDateString();
+    return userBookings.some((booking) => {
+      if (["Cancelled", "Declined", "Completed"].includes(booking.status)) return false;
+      if (booking.serviceId !== service.id) return false;
+      const bookingDate = new Date(booking.scheduledDate);
+      const bookingDay = bookingDate.toDateString();
+      if (bookingDay !== targetDay) return false;
+      const bookingRequestedDate = new Date(booking.requestedDate);
+      const bookingStartTime = `${String(bookingRequestedDate.getHours()).padStart(2, "0")}:${String(bookingRequestedDate.getMinutes()).padStart(2, "0")}`;
+      return bookingStartTime === startTimeStr.trim();
+    });
+  }, [service, userBookings]);
 
-  const totalPrice = useMemo(
-    () =>
-      packages
-        .filter((p: any) => p.checked)
-        .reduce(
-          (sum: number, pkg: any) => sum + pkg.price + (pkg.commissionFee || 0),
-          0,
-        ),
-    [packages, hookPackages, calculateTotalPrice],
-  );
+  const totalPrice = useMemo(() => packages.filter((p: any) => p.checked).reduce((sum: number, pkg: any) => sum + pkg.price + (pkg.commissionFee || 0), 0), [packages, hookPackages, calculateTotalPrice]);
 
   useEffect(() => {
-    if (
-      paymentMethod === "CashOnHand" &&
-      packages.some((p: any) => p.checked)
-    ) {
+    if (paymentMethod === "CashOnHand" && packages.some((p: any) => p.checked)) {
       const paidAmount = parseFloat(amountPaid);
-      if (amountPaid && (isNaN(paidAmount) || paidAmount < totalPrice))
-        setPaymentError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
+      if (amountPaid && (isNaN(paidAmount) || paidAmount < totalPrice)) setPaymentError(`Amount must be at least ₱${totalPrice.toFixed(2)}`);
       else setPaymentError(null);
     } else setPaymentError(null);
   }, [amountPaid, totalPrice, paymentMethod, packages]);
 
+  // Section: Handlers
   const handlePackageChange = (packageId: string) => {
-    setPackages((prev) =>
-      prev.map((pkg) =>
-        pkg.id === packageId ? { ...pkg, checked: !pkg.checked } : pkg,
-      ),
-    );
+    setPackages((prev) => prev.map((pkg) => (pkg.id === packageId ? { ...pkg, checked: !pkg.checked } : pkg)));
     setFormError(null);
   };
   const handleBookingOptionChange = (option: "sameday" | "scheduled") => {

@@ -262,6 +262,12 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               value={
                 mapLocation
                   ? { ...mapLocation, address: mapLocation.address ?? "" }
+                  : geoLocation
+                  ? {
+                      lat: geoLocation.latitude,
+                      lng: geoLocation.longitude,
+                      address: detectedAddress || "",
+                    }
                   : null
               }
               onChange={(loc: any) => {
