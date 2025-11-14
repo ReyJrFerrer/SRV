@@ -17,9 +17,9 @@ export const ServiceCardSkeleton: React.FC<ServiceCardSkeletonProps> = ({
       <div className="relative w-full">
         <div className="h-32 w-full animate-pulse rounded-xl bg-gray-200" />
         {/* category circle (top-left) */}
-        <div className="absolute left-2 top-2 h-10 w-10 animate-pulse rounded-full border-2 border-white bg-gray-200" />
+        <div className="absolute top-2 left-2 h-10 w-10 animate-pulse rounded-full border-2 border-white bg-gray-200" />
         {/* status badge (top-right) */}
-        <div className="absolute right-2 top-2 h-6 animate-pulse rounded-full bg-gray-200 px-3 py-1" />
+        <div className="absolute top-2 right-2 h-6 animate-pulse rounded-full bg-gray-200 px-3 py-1" />
       </div>
 
       {/* Content placeholder (title + rating) */}
@@ -88,10 +88,9 @@ export const NotificationListSkeleton: React.FC<{ count?: number }> = ({
 export const BookingCardSkeleton: React.FC = () => (
   <div className="pointer-events-none block w-full cursor-default overflow-hidden rounded-xl bg-white shadow-lg">
     <div className="md:flex">
-      {/* Image placeholder matches real card: md:flex-shrink-0, md:w-48, md:h-48 */}
       <div className="md:shrink-0">
         <div className="relative h-48 w-full md:w-48">
-          <div className="h-full w-full animate-pulse rounded-t-xl bg-gray-200 md:rounded-l-xl md:rounded-t-none" />
+          <div className="h-full w-full animate-pulse rounded-t-xl bg-gray-200 md:rounded-t-none md:rounded-l-xl" />
         </div>
       </div>
 
@@ -103,7 +102,8 @@ export const BookingCardSkeleton: React.FC = () => (
             <div className="h-6 w-20 animate-pulse rounded bg-gray-200" />
           </div>
 
-          <div className="mb-2 mt-2 h-5 w-2/3 animate-pulse rounded bg-gray-200" />
+          {/* Placeholder for title */}
+          <div className="mt-2 mb-2 h-5 w-2/3 animate-pulse rounded bg-gray-200" />
 
           <div className="mb-2 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
 
@@ -114,9 +114,10 @@ export const BookingCardSkeleton: React.FC = () => (
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
-          <div className="h-9 w-full animate-pulse rounded-lg bg-gray-200 sm:w-40" />
-          <div className="h-9 w-full animate-pulse rounded-lg bg-gray-200 sm:w-32" />
+        {/* Placeholder for buttons */}
+        <div className="mt-4 flex flex-col space-y-3 border-t border-gray-200 pt-3 sm:flex-row sm:gap-3 sm:space-y-0">
+          <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200" />
+          <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200" />
         </div>
       </div>
     </div>

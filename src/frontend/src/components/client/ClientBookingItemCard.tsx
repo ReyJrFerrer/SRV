@@ -13,13 +13,17 @@ import {
   StarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
+import {
+  PhoneIcon,
+  StarIcon as StarIconOutline,
+  UserIcon,
+} from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
 import { useChat } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 import ReputationScore from "./service-detail/ReputationScore";
 import ActionButtons from "./booking-details/ActionButtons";
-import { StarRatingDisplay } from "./service-detail/ReviewsSection";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 
 interface ClientBookingItemCardProps {
@@ -348,7 +352,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     if (isCancelled) {
       return {
         text: "Service Cancelled",
-        icon: <XCircleIcon className="mr-1.5 h-4 w-4" />,
+        icon: <XCircleIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />,
         className: "bg-gray-400 cursor-not-allowed",
         disabled: true,
         onClick: undefined,
@@ -379,7 +383,9 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       // User has already reviewed
       return {
         text: "View Reviews",
-        icon: <CheckCircleIcon className="mr-1.5 h-4 w-4" />,
+        icon: (
+          <CheckCircleIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
+        ),
         className: "bg-green-500 hover:bg-green-600",
         disabled: false,
         onClick: handleViewReviews,
@@ -409,7 +415,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     // Default state (null - still loading or error)
     return {
       text: "Rate Provider",
-      icon: <StarIcon className="mr-1.5 h-4 w-4" />,
+      icon: <StarIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />,
       className: "bg-yellow-500 hover:bg-yellow-600",
       disabled: false,
       onClick: undefined,
@@ -426,7 +432,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   return (
     <Link
       to={`/client/booking/${booking.id}`}
-      className="block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
       onClick={() => {
         // If this booking is Accepted we trigger interaction so badge decrements
         if (booking.status === "Accepted") {
@@ -453,7 +459,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
           <div>
             <div className="flex items-start justify-between">
-              <p className="break-words text-xs font-semibold uppercase tracking-wider text-indigo-500">
+              <p className="text-xs font-semibold tracking-wider break-words text-indigo-500 uppercase">
                 {serviceTitle}
               </p>
               <span
@@ -464,59 +470,70 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             </div>
 
             <h3
-              className="mt-1 break-words text-lg font-bold text-slate-800 md:text-xl"
+              className="mt-1 text-lg font-bold break-words text-slate-800 md:text-xl"
               title={serviceTitle}
             >
               {booking.packageName}
             </h3>
 
-            <p className="mt-1 text-xs text-gray-500">
-              Provided by: {providerName}
-            </p>
-            {/* Reputation + Rating (real frontend display using shared components) */}
-            {providerId && (
-              <div className="mb-1.5 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
-                {hasProviderData ? (
-                  <div className="flex w-full flex-col">
-                    <div className="flex-shrink-0">
-                      <ReputationScore reputation={reputation} />
-                    </div>
-
-                    <div className="flex items-center gap-2 rounded-full py-1 pr-3 text-sm font-semibold text-gray-800">
-                      <div className="flex items-center gap-2">
-                        <StarRatingDisplay rating={averageRating ?? 0} />
-                        <span className="ml-1 font-bold">
-                          {(averageRating as number).toFixed(1)}
-                        </span>
-                      </div>
-                      <span className="ml-2 text-xs text-gray-500">
-                        ({reviewCount})
-                      </span>
-                    </div>
+            {/* Reputation Score and Rating */}
+            {providerId && hasProviderData && (
+              <div className="mt-1.5">
+                <div>
+                  <ReputationScore reputation={reputation} />
+                </div>
+                <div className="flex items-center gap-2 py-1 text-sm font-semibold text-gray-800">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) =>
+                      i < Math.round(averageRating ?? 0) ? (
+                        <StarIcon
+                          key={i}
+                          className="h-4 w-4 text-yellow-400"
+                        />
+                      ) : (
+                        <StarIconOutline
+                          key={i}
+                          className="h-4 w-4 text-yellow-400"
+                        />
+                      ),
+                    )}
                   </div>
-                ) : (
-                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
-                    {/* Skeleton for Reputation Score */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-pulse rounded-full bg-gray-200"></div>
-                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
-                    </div>
-                    {/* Skeleton for Rating Summary */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
-                      <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
-                    </div>
-                  </div>
-                )}
+                  <span className="font-bold">
+                    {(averageRating as number).toFixed(1)}
+                  </span>
+                  <span className="text-xs text-gray-600">
+                    ({reviewCount})
+                  </span>
+                </div>
               </div>
             )}
-            <p className="mt-1 text-xs text-gray-500">
-              Contact: {booking.providerProfile?.phone}
+
+            {providerId && !hasProviderData && (
+              <div className="mt-1.5 space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-pulse rounded-full bg-gray-200"></div>
+                  <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
+                  <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                </div>
+              </div>
+            )}
+
+            {/* Provider Name */}
+            <p className="mt-2 flex items-center text-xs text-gray-600">
+              <UserIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
+              {providerName}
+            </p>
+            <p className="mt-2 flex text-xs text-gray-600">
+              <PhoneIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
+              {booking.providerProfile?.phone}
             </p>
 
-            <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+            <div className="mt-2 space-y-1.5 text-xs text-gray-600">
               <p className="flex items-start">
-                <CalendarDaysIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                <CalendarDaysIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
                 {booking.scheduledDate
                   ? formatDateRange(
                       booking.requestedDate || booking.createdAt,
@@ -526,13 +543,13 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               </p>
 
               <p className="flex items-start">
-                <MapPinIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-                <span className="break-words">{bookingLocation}</span>
+                <MapPinIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
+                <span className="wrap">{bookingLocation}</span>
               </p>
 
               {booking.price && (
                 <p className="flex items-start">
-                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
                   <span className="font-semibold text-green-600">
                     ₱
                     {(
@@ -545,13 +562,13 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
             {/* Booking Notes (if any) */}
             {notes && (
-              <div className="mt-2 break-words rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
+              <div className="wrap mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
                 <strong>Booking Notes:</strong> {notes}
               </div>
             )}
           </div>
 
-          <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
+          <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
             {/* Map our existing reviewButtonContent to the shape ActionButtons expects */}
             <ActionButtons
               compact={true}

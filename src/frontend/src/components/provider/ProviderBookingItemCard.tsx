@@ -391,32 +391,29 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           </h3>
           <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
 
+          {/* Rating below package name */}
+          {clientId && (
+            <div className="mt-1">
+              {hasClientData ? (
+                <ClientRatingSummary reviews={review} />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
+                  <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Client Reputation Score (inline with client name area) */}
+          {clientId && hasClientData && reputation && (
+            <div className="mt-1">
+              <ClientReputationScore reputation={reputation} />
+            </div>
+          )}
+
           {/* Details List */}
-          <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-            {/* REPUTATION AND RATING: Show skeleton while loading, then fade in data */}
-            {clientId && (
-              <div className="mb-1.5 flex flex-col items-start">
-                {hasClientData ? (
-                  <div className="flex w-full flex-col">
-                    <ClientReputationScore reputation={reputation} />
-                    <ClientRatingSummary reviews={review} />
-                  </div>
-                ) : (
-                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
-                    {/* Skeleton for Reputation Score */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-pulse rounded-full bg-gray-200"></div>
-                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
-                    </div>
-                    {/* Skeleton for Rating Summary */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
-                      <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+          <div className="mt-2 space-y-1.5 text-xs text-gray-600">
 
             {/* Date/Time */}
             <p className="flex items-center">
