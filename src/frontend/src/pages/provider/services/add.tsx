@@ -1037,7 +1037,7 @@ const AddServicePage: React.FC = () => {
       {/* Draft UI & logic moved into ServiceDrafts (renders modals and banner) */}
       {/* Main Content */}
       <main className="container mx-auto flex-grow px-4 pb-24 pt-4 sm:p-6">
-        <div className="mt-20 sm:rounded-xl sm:bg-w sm:p-8 sm:shadow-lg">
+        <div className="sm:bg-w mt-20 sm:rounded-xl sm:p-8 sm:shadow-lg">
           {renderStep()}
         </div>
         {/* Navigation Buttons */}

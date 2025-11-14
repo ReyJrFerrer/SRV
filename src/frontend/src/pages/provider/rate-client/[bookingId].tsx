@@ -189,7 +189,7 @@ const ProviderRateClientPage: React.FC = () => {
   if (isLoadingBooking || !booking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -292,7 +292,7 @@ const ProviderRateClientPage: React.FC = () => {
             </div>
             <textarea
               placeholder="Write your feedback... (optional, up to 500 characters)"
-              className="min-h-[96px] w-full resize-none rounded-xl border border-gray-300 p-3 text-base shadow focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:bg-gray-100 sm:min-h-[80px]"
+              className="min-h-[96px] w-full resize-none rounded-xl border border-gray-300 p-3 text-base shadow focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 sm:min-h-[80px]"
               rows={4}
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}

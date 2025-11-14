@@ -230,7 +230,7 @@ const CompleteServicePage: React.FC = () => {
   if (!booking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-blue-500"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -246,14 +246,14 @@ const CompleteServicePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight whitespace-nowrap text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-2xl font-extrabold tracking-tight text-black">
             Complete Service
           </h1>
         </div>
       </header>
 
       <main className="container mx-auto flex flex-grow items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-md mt-3 space-y-8 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+        <div className="mt-3 w-full max-w-md space-y-8 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
           <div className="flex flex-col items-center">
             <CheckCircleIcon className="mb-2 h-12 w-12 text-green-500" />
             <h2 className="mb-1 text-center text-2xl font-bold text-blue-900">
@@ -318,13 +318,13 @@ const CompleteServicePage: React.FC = () => {
                         name="cashReceived"
                         value={cashReceived}
                         onChange={handleCashReceivedChange}
-                        className="w-full rounded-lg border border-gray-300 py-3 pr-3 pl-10 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-3 text-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         placeholder="0.00"
                         inputMode="decimal"
                         required
                         maxLength={10}
                       />
-                      <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-gray-400">
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
                         Max: ₱{MAX_CASH_RECEIVED.toLocaleString()}
                       </span>
                     </div>
@@ -371,11 +371,11 @@ const CompleteServicePage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none disabled:bg-gray-400"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="h-5 w-5 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                    <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>
                     Processing...
                   </>
                 ) : (
