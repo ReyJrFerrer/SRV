@@ -98,6 +98,19 @@ const BookingPage: React.FC = () => {
   const displayMunicipality = userAddress || "";
   const displayProvince = userProvince || "";
 
+  // Helper: strip plus-code tokens from addresses (e.g. "2CFX+WPX")
+  const stripPlusCodes = (addr: string) => {
+    if (!addr) return "";
+    try {
+      const plusCodeRegex = /^[A-Z0-9]{1,}\+[A-Z0-9]{1,}$/i;
+      const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
+      const filtered = parts.filter((p) => !plusCodeRegex.test(p));
+      return filtered.join(", ").trim();
+    } catch {
+      return addr;
+    }
+  };
+
   // Section: Hooks - service & bookings
   const {
     service,
@@ -403,14 +416,15 @@ const BookingPage: React.FC = () => {
       const loc = { lat: geoLocation.latitude, lng: geoLocation.longitude };
       geocoder.geocode({ location: loc }, (results: any, status: string) => {
         if (status === "OK" && results && results[0]) {
-          const addr = results[0].formatted_address as string;
-          setDetectedAddress(addr);
-          setDetectedStatus("ok");
-          setMapLocation(
-            (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: addr },
-          );
-          if (!mapPreciseAddress) setMapPreciseAddress(addr);
-          if (!mapDisplayAddress) setMapDisplayAddress(addr);
+            const addr = results[0].formatted_address as string;
+            const cleaned = stripPlusCodes(addr);
+            setDetectedAddress(cleaned);
+            setDetectedStatus("ok");
+            setMapLocation(
+              (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: cleaned },
+            );
+            if (!mapPreciseAddress) setMapPreciseAddress(cleaned);
+            if (!mapDisplayAddress) setMapDisplayAddress(cleaned);
         } else {
           setDetectedStatus("failed");
         }

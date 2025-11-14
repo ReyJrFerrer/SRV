@@ -118,6 +118,20 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
     typeof rawAccuracy === "number" && rawAccuracy > 0
       ? Math.min(rawAccuracy * 0.25, 100)
       : undefined;
+
+  // Remove plus-code / geocode tokens from addresses (e.g. "2CFX+WPX")
+  const stripPlusCodes = (addr: string) => {
+    if (!addr) return "";
+    try {
+      const plusCodeRegex = /^[A-Z0-9]{1,}\+[A-Z0-9]{1,}$/i;
+      const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
+      const filtered = parts.filter((p) => !plusCodeRegex.test(p));
+      return filtered.join(", ").trim();
+    } catch {
+      return addr;
+    }
+  };
+  const cleanedDetectedAddress = stripPlusCodes(detectedAddress || "");
   return (
     <div
       className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -232,8 +246,8 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             </div>
           )}
           <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-2 text-[11px] text-blue-900">
-            {detectedStatus === "ok" && detectedAddress
-              ? detectedAddress
+            {detectedStatus === "ok" && cleanedDetectedAddress
+              ? cleanedDetectedAddress
               : detectedStatus === "failed"
                 ? "Unable to resolve address. You can switch to Pin / Search."
                 : detectedStatus === "loading" || locationLoading
@@ -260,22 +274,25 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   ? { ...mapLocation, address: mapLocation.address ?? "" }
                   : geoLocation
                     ? {
-                        lat: geoLocation.latitude,
-                        lng: geoLocation.longitude,
-                        address: detectedAddress || "",
+                          lat: geoLocation.latitude,
+                          lng: geoLocation.longitude,
+                          address: cleanedDetectedAddress,
                       }
                     : null
               }
               onChange={(loc: any) => {
-                setMapLocation(loc);
-                const preciseAddressForDB =
-                  loc.formatted_address || loc.address || "";
+                // Clean plus-code tokens from the address before passing down
+                const rawPrecise = loc.formatted_address || loc.address || "";
+                const cleanedPrecise = stripPlusCodes(rawPrecise);
+
                 const placeName = loc.rawName;
-                let displayAddress = preciseAddressForDB;
-                if (placeName && !preciseAddressForDB.startsWith(placeName)) {
-                  displayAddress = `${placeName}, ${preciseAddressForDB}`;
+                let displayAddress = cleanedPrecise;
+                if (placeName && !cleanedPrecise.startsWith(placeName)) {
+                  displayAddress = `${placeName}, ${cleanedPrecise}`;
                 }
-                setMapPreciseAddress(preciseAddressForDB);
+
+                setMapLocation({ ...loc, address: cleanedPrecise, formatted_address: cleanedPrecise });
+                setMapPreciseAddress(cleanedPrecise);
                 setMapDisplayAddress(displayAddress);
               }}
               persistKey="booking:lastLocation"
