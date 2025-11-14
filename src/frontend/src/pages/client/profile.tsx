@@ -249,7 +249,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           <li className="flex flex-col gap-1 rounded-lg border border-red-100 bg-red-50 p-3">
             <div className="flex items-center gap-3">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
-              <span className="font-semibold text-red-700">Low Trust</span>
+              <span className="font-semibold text-red-700">Building Trust</span>
               <span className="text-xs text-gray-500">Score: 0.0 - 20.0</span>
             </div>
             <span className="text-xs text-gray-700">
@@ -261,7 +261,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
             <div className="flex items-center gap-3">
               <StarIcon className="h-6 w-6 text-yellow-500" />
               <span className="font-semibold text-yellow-700">
-                Medium Trust
+                Reliable
               </span>
               <span className="text-xs text-gray-500">Score: 20.01 - 50.0</span>
             </div>
@@ -273,7 +273,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-100 p-3">
             <div className="flex items-center gap-3">
               <TrophyIcon className="h-6 w-6 text-blue-600" />
-              <span className="font-semibold text-blue-700">High Trust</span>
+              <span className="font-semibold text-blue-700">Trusted</span>
               <span className="text-xs text-gray-500">Score: 50.01 - 80.0</span>
             </div>
             <span className="text-xs text-gray-700">
@@ -285,7 +285,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
             <div className="flex items-center gap-3">
               <ShieldCheckIcon className="h-6 w-6 text-green-600" />
               <span className="font-semibold text-green-700">
-                Premium Trust
+                Premium
               </span>
               <span className="text-xs text-gray-500">
                 Score: 80.01 - 100.0
