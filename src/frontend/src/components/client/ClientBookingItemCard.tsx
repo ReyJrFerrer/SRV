@@ -432,7 +432,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   return (
     <Link
       to={`/client/booking/${booking.id}`}
-      className="focus:ring-opacity-50 block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      className="block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
       onClick={() => {
         // If this booking is Accepted we trigger interaction so badge decrements
         if (booking.status === "Accepted") {
@@ -459,7 +459,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
           <div>
             <div className="flex items-start justify-between">
-              <p className="text-xs font-semibold tracking-wider break-words text-indigo-500 uppercase">
+              <p className="break-words text-xs font-semibold uppercase tracking-wider text-indigo-500">
                 {serviceTitle}
               </p>
               <span
@@ -470,7 +470,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             </div>
 
             <h3
-              className="mt-1 text-lg font-bold break-words text-slate-800 md:text-xl"
+              className="mt-1 break-words text-lg font-bold text-slate-800 md:text-xl"
               title={serviceTitle}
             >
               {booking.packageName}
@@ -513,7 +513,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             )}
 
             {/* Provider Name + Reputation Score (side by side) */}
-            <div className="flex items-center lg:gap-3 gap-0 md:mb-0 mb-1 flex-wrap-reverse">
+            <div className="mb-1 flex flex-wrap-reverse items-center gap-0 md:mb-0 md:gap-3">
               <p className="flex items-center text-sm text-gray-600">
                 <UserIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
                 {providerName}
@@ -568,7 +568,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             )}
           </div>
 
-          <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
+          <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
             {/* Map our existing reviewButtonContent to the shape ActionButtons expects */}
             <ActionButtons
               compact={true}
