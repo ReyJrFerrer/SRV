@@ -1283,19 +1283,66 @@ exports.validateCertificate = functions.https.onCall(async (data, context) => {
   }
 });
 
-/**
- * Get bookings data for admin analytics
- */
-exports.getBookingsData = functions.https.onCall(async (data, context) => {
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can get bookings data",
-    );
+exports.getBookingsData = functions.https.onRequest(async (req, res) => {
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+    "https://srveadmin.web.app",
+    "https://srveadmin.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Access-Control-Max-Age", "3600");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).send();
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed",
+    });
   }
 
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: Missing or invalid authorization header",
+      });
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: Invalid token",
+      });
+    }
+
+    const isAdmin = decodedToken.isAdmin || false;
+    if (!isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: Only ADMIN users can get bookings data",
+      });
+    }
+
     const bookingsSnapshot = await db.collection("bookings").get();
 
     const bookings = bookingsSnapshot.docs.map((doc) => {
@@ -1307,7 +1354,6 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
       };
     });
 
-    // Get commission transactions for daily tracking
     const commissionTransactionsSnapshot = await db.collection("transactions")
       .where("transaction_type", "==", "Debit")
       .where("payment_channel", "==", "SRV_COMMISSION")
@@ -1319,14 +1365,16 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
       timestamp: new Date(doc.data().timestamp),
     }));
 
-    return {
+    return res.status(200).json({
       success: true,
       bookings: bookings,
       commissionTransactions: commissionTransactions,
-    };
+    });
   } catch (error) {
-    console.error("Error in getBookingsData:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+    });
   }
 });
 

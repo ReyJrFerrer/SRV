@@ -1,6 +1,7 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "./coreUtils";
 import { callFirebaseFunction, requireAuth } from "./coreUtils";
+import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 import { AdminServiceError, FrontendSystemStats } from "./serviceTypes";
 
 /**
@@ -71,25 +72,51 @@ export const getBookingsData = async (): Promise<{
   try {
     requireAuth();
 
-    const callable = httpsCallable(functions, "getBookingsData");
-    const result = await callable({ data: {} });
+    const auth = getFirebaseAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
 
-    if ((result.data as any).success) {
+    const idToken = await user.getIdToken();
+    const functionsInstance = getFirebaseFunctions();
+    const projectId = functionsInstance.app.options.projectId || "devsrv-rey";
+    const region = "us-central1";
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const baseUrl = isLocal 
+      ? `http://127.0.0.1:5001/${projectId}/${region}`
+      : `https://${region}-${projectId}.cloudfunctions.net`;
+    
+    const url = `${baseUrl}/getBookingsData`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ data: {} }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
       return {
-        bookings: (result.data as any).bookings,
-        commissionTransactions: (result.data as any).commissionTransactions,
+        bookings: result.bookings || [],
+        commissionTransactions: result.commissionTransactions || [],
       };
     } else {
-      console.error(
-        "[getBookingsData] Error response:",
-        (result.data as any).message,
-      );
       throw new Error(
-        (result.data as any).message || "Failed to get bookings data",
+        result.message || result.error || "Failed to get bookings data",
       );
     }
   } catch (error: any) {
-    // Suppress CORS errors in emulator - data gracefully falls back to systemStats
     const isNetworkError =
       error?.code === "ERR_FAILED" ||
       error?.message?.includes("CORS") ||

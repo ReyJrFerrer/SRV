@@ -804,6 +804,13 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         );
       }
 
+      let serviceRef = null;
+      let serviceSnap = null;
+      if (reviewCollection === "reviews" && existingReview.serviceId) {
+        serviceRef = db.collection("services").doc(existingReview.serviceId);
+        serviceSnap = await transaction.get(serviceRef);
+      }
+
       const isOwner = reviewCollection === "reviews" ? existingReview.clientId === authInfo.uid :
         existingReview.providerId === authInfo.uid;
 
@@ -830,29 +837,24 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
 
       transaction.update(reviewRef, updatedReview);
 
-      if (reviewCollection === "reviews" && existingReview.serviceId) {
-        const serviceRef = db.collection("services").doc(existingReview.serviceId);
-        const serviceSnap = await transaction.get(serviceRef);
+      if (reviewCollection === "reviews" && serviceSnap && serviceSnap.exists) {
+        const service = serviceSnap.data();
+        const currentRating = service.averageRating || 0;
+        const currentCount = service.reviewCount || 1;
+        const newCount = Math.max(0, currentCount - 1);
 
-        if (serviceSnap.exists) {
-          const service = serviceSnap.data();
-          const currentRating = service.averageRating || 0;
-          const currentCount = service.reviewCount || 1;
-          const newCount = Math.max(0, currentCount - 1);
-
-          let newAverageRating = 0;
-          if (newCount > 0) {
-            const oldTotal = currentRating * currentCount;
-            const newTotal = oldTotal - existingReview.rating;
-            newAverageRating = newTotal / newCount;
-          }
-
-          transaction.update(serviceRef, {
-            averageRating: newAverageRating,
-            reviewCount: newCount,
-            updatedAt: now,
-          });
+        let newAverageRating = 0;
+        if (newCount > 0) {
+          const oldTotal = currentRating * currentCount;
+          const newTotal = oldTotal - existingReview.rating;
+          newAverageRating = newTotal / newCount;
         }
+
+        transaction.update(serviceRef, {
+          averageRating: newAverageRating,
+          reviewCount: newCount,
+          updatedAt: now,
+        });
       }
 
       return {success: true, message: "Review hidden successfully"};
