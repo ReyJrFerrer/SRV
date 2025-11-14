@@ -4,9 +4,11 @@ import { useLocationStore } from "../../../store/locationStore";
 import EnableLocationButton from "../locationAccessPermission/EnableLocationButton";
 import LocationBlockedModal from "../locationAccessPermission/LocationBlockedModal";
 
+// Constants
 const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_COMMON_V1";
-const ADDR_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const ADDR_CACHE_TTL_MS = 2 * 60 * 1000;
 
+// Component
 const MapFunctions: React.FC = () => {
   const {
     location: geoLocation,
@@ -17,38 +19,32 @@ const MapFunctions: React.FC = () => {
     addressMode,
   } = useLocationStore();
 
+  // State
   const [showMap, setShowMap] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [gmapsAddress, setGmapsAddress] = useState<string>(
-    "Detecting location...",
-  );
+  const [gmapsAddress, setGmapsAddress] = useState<string>("Detecting location...");
   const [gmapsStatus, setGmapsStatus] = useState<
     "idle" | "loading" | "ok" | "denied" | "unsupported" | "failed"
   >("idle");
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
   const [lastRefreshTs, setLastRefreshTs] = useState<number>(0);
 
+  // Effects
   useEffect(() => {
-    // Refresh location when the page becomes visible again or on mount if stale.
-    const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+    const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 
     const tryRefresh = async (force = false) => {
       try {
-        // Only attempt refresh when permission is allowed.
         if (locationStatus !== "allowed") return;
 
         const now = Date.now();
         if (!force && now - lastRefreshTs < REFRESH_INTERVAL_MS) return;
 
-        // Force a fresh geolocation request (bypass cached early-return)
         await (useLocationStore.getState().requestLocation as any)(true);
         setLastRefreshTs(now);
-      } catch {
-        // ignore refresh errors
-      }
+      } catch {}
     };
 
-    // on mount try a refresh (non-forced)
     tryRefresh(false);
 
     const onVisibility = () => {
@@ -92,47 +88,27 @@ const MapFunctions: React.FC = () => {
           if (status === "OK" && results && results[0]) {
             const comps = results[0].address_components || [];
             const find = (type: string) => {
-              const c = comps.find(
-                (cc: any) => cc.types && cc.types.indexOf(type) !== -1,
-              );
+              const c = comps.find((cc: any) => cc.types && cc.types.indexOf(type) !== -1);
               return c ? c.long_name : undefined;
             };
 
             const premise =
-              find("premise") ||
-              find("subpremise") ||
-              find("establishment") ||
-              find("point_of_interest");
+              find("premise") || find("subpremise") || find("establishment") || find("point_of_interest");
             const streetNumber = find("street_number");
             const route = find("route");
-            const barangay =
-              find("sublocality_level_2") ||
-              find("sublocality") ||
-              find("neighborhood");
+            const barangay = find("sublocality_level_2") || find("sublocality") || find("neighborhood");
             const locality =
-              find("locality") ||
-              find("postal_town") ||
-              find("administrative_area_level_3") ||
-              find("administrative_area_level_2");
-            const province =
-              find("administrative_area_level_2") ||
-              find("administrative_area_level_1");
+              find("locality") || find("postal_town") || find("administrative_area_level_3") || find("administrative_area_level_2");
+            const province = find("administrative_area_level_2") || find("administrative_area_level_1");
 
-            const line1 =
-              premise ||
-              (streetNumber && route
-                ? `${streetNumber} ${route}`
-                : route || streetNumber);
+            const line1 = premise || (streetNumber && route ? `${streetNumber} ${route}` : route || streetNumber);
             const parts: string[] = [];
             if (line1) parts.push(line1);
             if (barangay) parts.push(barangay);
             if (locality) parts.push(locality);
             if (province) parts.push(province);
 
-            const displayAddress =
-              parts.length > 0
-                ? parts.join(", ")
-                : (results[0].formatted_address as string);
+            const displayAddress = parts.length > 0 ? parts.join(", ") : (results[0].formatted_address as string);
             setGmapsAddress(displayAddress);
             setGmapsStatus("ok");
             try {
@@ -151,6 +127,7 @@ const MapFunctions: React.FC = () => {
     }
   }, [mapsApiLoaded, geoLocation, gmapsStatus]);
 
+  // Render
   return (
     <>
       <div className="flex w-full items-center justify-start">
@@ -174,28 +151,19 @@ const MapFunctions: React.FC = () => {
               {userAddress}, {userProvince}
             </button>
           ) : (
-            <span
-              className="text-left text-sm font-medium text-blue-900"
-              title={`${userAddress}, ${userProvince}`}
-            >
+            <span className="text-left text-sm font-medium text-blue-900" title={`${userAddress}, ${userProvince}`}>
               {userAddress}, {userProvince}
             </span>
           )
         ) : locationLoading || gmapsStatus === "loading" ? (
-          <span className="animate-pulse text-sm text-gray-500">
-            Detecting location...
-          </span>
+          <span className="animate-pulse text-sm text-gray-500">Detecting location...</span>
         ) : (
-          <span className="text-left text-sm text-gray-500">
-            {gmapsAddress}
-          </span>
+          <span className="text-left text-sm text-gray-500">{gmapsAddress}</span>
         )}
       </div>
       {(locationStatus === "denied" || locationStatus === "not_set") && (
         <div className="ml-3 flex items-center gap-2">
-          {/* Only show the enable button when permission is unknown (not_set).
-              If the permission is denied (blocked), hide the enable button and
-              keep the manual "Change location" action available. */}
+          {/* Controls */}
           {locationStatus === "not_set" && <EnableLocationButton />}
 
           {addressMode === "manual" && userAddress && userProvince && (
@@ -230,10 +198,7 @@ const MapFunctions: React.FC = () => {
         </Suspense>
       )}
 
-      <LocationBlockedModal
-        visible={showLocationModal}
-        onClose={() => setShowLocationModal(false)}
-      />
+      <LocationBlockedModal visible={showLocationModal} onClose={() => setShowLocationModal(false)} />
     </>
   );
 };

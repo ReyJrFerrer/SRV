@@ -103,7 +103,8 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   houseNumberRef,
 }) => {
   const { locationStatus, location } = useLocationStore();
-  // If permission denied/not_set, default to showing manual forms to guide the user
+
+  // Effects
   useEffect(() => {
     if (locationStatus === "denied") {
       try {
@@ -113,12 +114,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
     }
   }, [locationStatus, setLocationInputMode, setShowFallbackForms]);
 
-  // Scale reported accuracy for UI (smaller visual circle than reported gps accuracy)
+  // Helpers
   const rawAccuracy = location?.accuracy;
-  const scaledAccuracy =
-    typeof rawAccuracy === "number" && rawAccuracy > 0
-      ? Math.min(rawAccuracy * 0.25, 100)
-      : undefined;
+  const scaledAccuracy = typeof rawAccuracy === "number" && rawAccuracy > 0 ? Math.min(rawAccuracy * 0.25, 100) : undefined;
   return (
     <div
       className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -132,10 +130,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         Service Location <span className="text-red-500">*</span>
       </h3>
 
-      {/* When browser location permission is denied, do not show the
-      detected / maps buttons. Show a short banner with a CTA to
-      re-enable location permission so the user can restore detected
-      / map-based selection. */}
+      {/* Controls */}
       {!showFallbackForms && locationStatus !== "denied" && (
         <div className="mb-4 flex gap-3 text-xs font-medium">
           <button
@@ -163,7 +158,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         </div>
       )}
 
-      {/* Inline banner shown when browser blocks location access */}
+      {/* Inline banner */}
       {locationStatus === "denied" && (
         <div className="mb-4 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           <div>
@@ -252,11 +247,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       {mapMode === "custom" && !showFallbackForms && (
         <div className="mb-4">
           <Suspense
-            fallback={
-              <div className="flex h-72 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500">
-                Loading map…
-              </div>
-            }
+            fallback={<div className="flex h-72 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500">Loading map…</div>}
           >
             <LocationMapPicker
               value={
@@ -272,8 +263,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               }
               onChange={(loc: any) => {
                 setMapLocation(loc);
-                const preciseAddressForDB =
-                  loc.formatted_address || loc.address || "";
+                const preciseAddressForDB = loc.formatted_address || loc.address || "";
                 const placeName = loc.rawName;
                 let displayAddress = preciseAddressForDB;
                 if (placeName && !preciseAddressForDB.startsWith(placeName)) {
@@ -305,24 +295,14 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   </span>
                 </div>
               )}
-              {mapPreciseAddress &&
-                mapDisplayAddress &&
-                mapDisplayAddress !== mapPreciseAddress && (
-                  <div className="flex items-start gap-1">
-                    <span
-                      className="truncate text-[10px] text-gray-500"
-                      title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
-                    >
-                      Provider reference: {mapPreciseAddress}
-                    </span>
-                    <span
-                      className="cursor-help text-[10px] text-blue-400"
-                      title="Used internally to help the provider navigate accurately."
-                    >
-                      (i)
-                    </span>
-                  </div>
-                )}
+              {mapPreciseAddress && mapDisplayAddress && mapDisplayAddress !== mapPreciseAddress && (
+                <div className="flex items-start gap-1">
+                  <span className="truncate text-[10px] text-gray-500" title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation.">
+                    Provider reference: {mapPreciseAddress}
+                  </span>
+                  <span className="cursor-help text-[10px] text-blue-400" title="Used internally to help the provider navigate accurately.">(i)</span>
+                </div>
+              )}
             </div>
           )}
         </div>
