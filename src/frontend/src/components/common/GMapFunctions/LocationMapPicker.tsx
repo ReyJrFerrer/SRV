@@ -330,7 +330,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         <Map
           style={containerStyle}
           defaultCenter={baguioCenter}
-          defaultZoom={16}
+          defaultZoom={18}
           onCameraChanged={(ev) => {
             mapRef.current = ev.map;
             setMapReady(true);
