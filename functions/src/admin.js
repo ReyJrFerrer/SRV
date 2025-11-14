@@ -1347,10 +1347,22 @@ exports.getBookingsData = functions.https.onRequest(async (req, res) => {
 
     const bookings = bookingsSnapshot.docs.map((doc) => {
       const data = doc.data();
+      const convertDate = (dateValue) => {
+        if (!dateValue) return null;
+        if (dateValue instanceof Date) return dateValue;
+        return new Date(dateValue);
+      };
+
       return {
         id: doc.id,
         ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
+        createdAt: convertDate(data.createdAt),
+        updatedAt: convertDate(data.updatedAt),
+        requestedDate: convertDate(data.requestedDate),
+        scheduledDate: convertDate(data.scheduledDate),
+        startedDate: convertDate(data.startedDate),
+        completedDate: convertDate(data.completedDate),
+        releasedAt: convertDate(data.releasedAt),
       };
     });
 

@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { BookingStatsCards } from "../components/BookingStatsCards";
 import { BookingFilters } from "../components/BookingFilters";
 import { BookingsList } from "../components/BookingsList";
+import {
+  normalizeBookingStatus,
+  getBookingStatusColor,
+  matchesStatusFilter,
+} from "../utils/bookingStatusUtils";
+import { formatDateTime } from "../utils/formatUtils";
 
 interface Booking {
   id: string;
@@ -35,137 +41,43 @@ export const UserBookingsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  useEffect(() => {
-    const fetchUserAndBookings = async () => {
-      if (!userId) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-        const validUsers = backendUsers.filter((u) => u && u.id);
-        const foundUser = validUsers.find((u) => u.id.toString() === userId);
-        if (foundUser) {
-          setUser(foundUser);
-        }
-
-        // Fetch user bookings from admin canister
-        const userBookings = await adminServiceCanister.getUserBookings(userId);
-        setBookings(userBookings);
-      } catch (err) {
-        console.error("Error fetching user bookings:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load bookings",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserAndBookings();
-  }, [userId, backendUsers]);
-
-  const getStatusColor = (status: any) => {
-    if (!status) return "bg-gray-100 text-gray-800";
-
-    // Handle object status
-    if (typeof status === "object") {
-      const statusKeys = Object.keys(status);
-      if (statusKeys.length > 0) {
-        const firstKey = statusKeys[0];
-        switch (firstKey.toLowerCase()) {
-          case "requested":
-            return "bg-yellow-100 text-yellow-800";
-          case "confirmed":
-            return "bg-blue-100 text-blue-800";
-          case "completed":
-            return "bg-green-100 text-green-800";
-          case "cancelled":
-            return "bg-red-100 text-red-800";
-          default:
-            return "bg-gray-100 text-gray-800";
-        }
-      }
-      return "bg-gray-100 text-gray-800";
-    }
-
-    // Handle string status
-    if (typeof status !== "string") return "bg-gray-100 text-gray-800";
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      case "in_progress":
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
+  const fetchUserAndBookings = useCallback(async () => {
+    if (!userId) return;
 
     try {
-      const date = new Date(dateString);
-
-      if (isNaN(date.getTime())) {
-        return "Invalid Date";
+      setLoading(true);
+      setError(null);
+      const validUsers = backendUsers.filter((u) => u && u.id);
+      const foundUser = validUsers.find((u) => u.id.toString() === userId);
+      if (foundUser) {
+        setUser(foundUser);
       }
 
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (error) {
-      return "Invalid Date";
+      const userBookings = await adminServiceCanister.getUserBookings(userId);
+      setBookings(userBookings);
+    } catch (err) {
+      console.error("Error fetching user bookings:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to load bookings",
+      );
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [userId, backendUsers]);
 
-  // Helper function to normalize booking status for filtering
-  const normalizeBookingStatus = (status: any): string => {
-    if (!status) return "unknown";
-    if (typeof status === "string") {
-      return status.toLowerCase();
-    }
-    if (typeof status === "object" && status !== null) {
-      const keys = Object.keys(status);
-      if (keys.length > 0) {
-        return keys[0].toLowerCase();
-      }
-    }
-    return "unknown";
-  };
+  useEffect(() => {
+    fetchUserAndBookings();
+  }, [fetchUserAndBookings]);
 
-  // Filter bookings based on search term and status
+
+
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch =
       searchTerm === "" ||
       booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.providerName.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Status filter
-    const normalizedStatus = normalizeBookingStatus(booking.status);
-    const filterValue = statusFilter.toLowerCase();
-    let matchesStatus = false;
-
-    if (statusFilter === "all") {
-      matchesStatus = true;
-    } else if (filterValue === "pending") {
-      matchesStatus =
-        normalizedStatus === "pending" || normalizedStatus === "requested";
-    } else if (filterValue === "inprogress") {
-      matchesStatus =
-        normalizedStatus === "inprogress" || normalizedStatus === "in_progress";
-    } else {
-      matchesStatus = normalizedStatus === filterValue;
-    }
-
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatusFilter(booking.status, statusFilter);
   });
 
   const handleSearchChange = (value: string) => {
@@ -219,7 +131,11 @@ export const UserBookingsPage: React.FC = () => {
           </h3>
           <p className="mb-4 text-gray-600">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              fetchUserAndBookings();
+            }}
             className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Try Again
@@ -286,8 +202,8 @@ export const UserBookingsPage: React.FC = () => {
           searchTerm={searchTerm}
           statusFilter={statusFilter}
           onPageChange={setCurrentPage}
-          getStatusColor={getStatusColor}
-          formatDate={formatDate}
+          getStatusColor={getBookingStatusColor}
+          formatDate={formatDateTime}
         />
       </div>
     </div>

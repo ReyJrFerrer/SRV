@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
@@ -103,7 +103,6 @@ export const TicketInboxPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Initialize canister references and refresh data
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -114,7 +113,7 @@ export const TicketInboxPage: React.FC = () => {
     };
 
     initializeData();
-  }, [, refreshUsers]);
+  }, [refreshUsers]);
 
   // Load reports from feedback canister
   const loadReportsAsTickets = async () => {
@@ -192,12 +191,15 @@ export const TicketInboxPage: React.FC = () => {
     navigate(`/ticket/${ticket.id}`);
   };
 
-  const stats = {
-    total: tickets.length,
-    open: tickets.filter((t) => t.status === "open").length,
-    inProgress: tickets.filter((t) => t.status === "in_progress").length,
-    resolved: tickets.filter((t) => t.status === "resolved").length,
-  };
+  const stats = useMemo(
+    () => ({
+      total: tickets.length,
+      open: tickets.filter((t) => t.status === "open").length,
+      inProgress: tickets.filter((t) => t.status === "in_progress").length,
+      resolved: tickets.filter((t) => t.status === "resolved").length,
+    }),
+    [tickets],
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">

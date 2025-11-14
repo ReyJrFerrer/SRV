@@ -1,3 +1,11 @@
+import {
+  createFallbackProviderData,
+  extractProviderIdsFromBookings,
+  buildProviderPerformanceMap,
+  processBookingsForPerformance,
+  processCommissionTransactions,
+} from "./analyticsProviderUtils";
+
 // Helper function to check if user is online
 export const isUserOnline = (user: any): boolean => {
   if (user.isActive !== undefined) {
@@ -136,6 +144,31 @@ export interface ServiceProviderPerformanceData {
   walletBalance: number;
 }
 
+const getProvidersFromUsers = (users: any[]): any[] => {
+  if (!users || users.length === 0) return [];
+
+  const serviceProviderUsers = users.filter((user) => {
+    if (typeof user.activeRole === "string") {
+      return user.activeRole === "ServiceProvider";
+    }
+    return false;
+  });
+
+  return serviceProviderUsers.map((user) => ({
+    id: user.id.toString(),
+    name: user.name,
+    phone: user.phone,
+    totalEarnings: 0,
+    pendingCommission: 0,
+    settledCommission: 0,
+    lastActivity: user.updatedAt
+      ? user.updatedAt instanceof Date
+        ? user.updatedAt
+        : new Date(user.updatedAt)
+      : new Date(),
+  }));
+};
+
 export const processServiceProviderPerformance = (
   bookings: any[],
   serviceProviders: any[],
@@ -144,153 +177,60 @@ export const processServiceProviderPerformance = (
   systemStats: any,
   walletBalances: Record<string, number>,
 ): ServiceProviderPerformanceData[] => {
-  if (!systemStats) {
-    return [];
-  }
+  if (!systemStats) return [];
 
   if (!bookings || bookings.length === 0) {
     let providersToShow = serviceProviders;
     if (!providersToShow || providersToShow.length === 0) {
-      if (users && users.length > 0) {
-        const serviceProviderUsers = users.filter((user) => {
-          if (typeof user.activeRole === "string") {
-            return user.activeRole === "ServiceProvider";
-          }
-          return false;
-        });
-
-        providersToShow = serviceProviderUsers.map((user) => ({
-          id: user.id.toString(),
-          name: user.name,
-          phone: user.phone,
-          totalEarnings: 0,
-          pendingCommission: 0,
-          settledCommission: 0,
-          lastActivity: user.updatedAt
-            ? user.updatedAt instanceof Date
-              ? user.updatedAt
-              : new Date(user.updatedAt)
-            : new Date(),
-        }));
-      }
-
-      if (!providersToShow || providersToShow.length === 0) {
-        return [];
-      }
+      providersToShow = getProvidersFromUsers(users);
     }
 
-    const totalRevenue = systemStats?.totalRevenue || 0;
-    const totalCommission = systemStats?.totalCommission || 0;
-    const totalBookings = systemStats?.totalBookings || 0;
-    const settledBookings = systemStats?.settledBookings || 0;
+    if (!providersToShow || providersToShow.length === 0) return [];
 
-    const fallbackData = providersToShow.map((provider, index) => {
-      const isOnlyProvider = providersToShow.length === 1;
-      const isFirstProvider = index === 0;
-      const shouldGetTotals = isOnlyProvider || isFirstProvider;
-      const providerId = provider.id?.toString() || provider.id;
-
-      return {
-        id: providerId,
-        name: provider.name || "Unknown",
-        phone: provider.phone || "N/A",
-        totalRevenue: shouldGetTotals ? totalRevenue : 0,
-        totalCommission: shouldGetTotals ? totalCommission : 0,
-        completedBookings: shouldGetTotals ? settledBookings : 0,
-        totalBookings: shouldGetTotals ? totalBookings : 0,
-        walletBalance: walletBalances[providerId] || 0,
-      };
-    });
-    return fallbackData;
+    return createFallbackProviderData(
+      providersToShow,
+      systemStats,
+      walletBalances,
+    );
   }
 
-  if (!users) {
-    return [];
-  }
+  if (!users) return [];
 
-  const performanceMap = new Map<string, ServiceProviderPerformanceData>();
-
-  // Find service provider users
-  const providerIds = new Set<string>();
-  bookings.forEach((booking) => {
-    if (booking.serviceProviderId) {
-      providerIds.add(booking.serviceProviderId);
-    }
-  });
-
-  providerIds.forEach((providerId) => {
-    const user = users.find((u) => u.id.toString() === providerId);
-    if (user) {
-      performanceMap.set(providerId, {
-        id: providerId,
-        name: user.name || "Unknown",
-        phone: user.phone || "N/A",
-        totalRevenue: 0,
-        totalCommission: 0,
-        completedBookings: 0,
-        totalBookings: 0,
-        walletBalance: walletBalances[providerId] || 0,
-      });
-    }
-  });
-
-  // Add current service providers
-  if (serviceProviders) {
-    serviceProviders.forEach((provider) => {
-      if (!performanceMap.has(provider.id)) {
-        performanceMap.set(provider.id, {
-          id: provider.id,
-          name: provider.name,
-          phone: provider.phone,
-          totalRevenue: 0,
-          totalCommission: 0,
-          completedBookings: 0,
-          totalBookings: 0,
-          walletBalance: walletBalances[provider.id] || 0,
-        });
-      } else {
-        const existing = performanceMap.get(provider.id);
-        if (existing) {
-          existing.walletBalance = walletBalances[provider.id] || 0;
-        }
-      }
-    });
-  }
-
-  // Process bookings for revenue and booking counts
-  bookings.forEach((booking) => {
-    const providerId = booking.serviceProviderId || booking.providerId;
-    if (providerId && performanceMap.has(providerId)) {
-      const performance = performanceMap.get(providerId)!;
-
-      performance.totalBookings++;
-
-      if (booking.status === "Completed" || booking.status === "Settled") {
-        performance.completedBookings++;
-        performance.totalRevenue += booking.price || 0;
-      }
-    }
-  });
-
-  // Process commission transactions for actual commission collected
-  if (commissionTransactions && commissionTransactions.length > 0) {
-    commissionTransactions.forEach((transaction) => {
-      const providerId = transaction.from;
-      if (providerId && performanceMap.has(providerId)) {
-        const performance = performanceMap.get(providerId)!;
-        performance.totalCommission += transaction.amount || 0;
-      }
-    });
-  }
-
-  const result = Array.from(performanceMap.values()).sort(
-    (a, b) => b.totalRevenue - a.totalRevenue,
+  const providerIds = extractProviderIdsFromBookings(bookings);
+  const performanceMap = buildProviderPerformanceMap(
+    providerIds,
+    users,
+    serviceProviders,
+    walletBalances,
   );
 
-  return result;
+  processBookingsForPerformance(bookings, performanceMap);
+  processCommissionTransactions(commissionTransactions, performanceMap);
+
+  const values = Array.from(performanceMap.values()) as ServiceProviderPerformanceData[];
+  return values.sort(
+    (a, b) => b.totalRevenue - a.totalRevenue,
+  );
 };
 
-// Filter and sort service provider data
+const getSortValue = (
+  provider: ServiceProviderPerformanceData,
+  sortBy: "name" | "totalRevenue" | "totalCommission" | "completedBookings",
+): any => {
+  switch (sortBy) {
+    case "name":
+      return provider.name.toLowerCase();
+    case "totalRevenue":
+      return provider.totalRevenue;
+    case "totalCommission":
+      return provider.totalCommission;
+    case "completedBookings":
+      return provider.completedBookings;
+    default:
+      return provider.totalRevenue;
+  }
+};
+
 export const filterAndSortProviders = (
   providers: ServiceProviderPerformanceData[],
   searchTerm: string,
@@ -299,47 +239,23 @@ export const filterAndSortProviders = (
 ): ServiceProviderPerformanceData[] => {
   let filtered = providers;
 
-  // Apply search filter
   if (searchTerm) {
+    const lowerSearch = searchTerm.toLowerCase();
     filtered = filtered.filter(
       (provider) =>
-        provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        provider.phone.toLowerCase().includes(searchTerm.toLowerCase()),
+        provider.name.toLowerCase().includes(lowerSearch) ||
+        provider.phone.toLowerCase().includes(lowerSearch),
     );
   }
 
-  // Apply sorting
-  filtered = [...filtered].sort((a, b) => {
-    let aValue: any, bValue: any;
-
-    switch (sortBy) {
-      case "name":
-        aValue = a.name.toLowerCase();
-        bValue = b.name.toLowerCase();
-        break;
-      case "totalRevenue":
-        aValue = a.totalRevenue;
-        bValue = b.totalRevenue;
-        break;
-      case "totalCommission":
-        aValue = a.totalCommission;
-        bValue = b.totalCommission;
-        break;
-      case "completedBookings":
-        aValue = a.completedBookings;
-        bValue = b.completedBookings;
-        break;
-      default:
-        aValue = a.totalRevenue;
-        bValue = b.totalRevenue;
-    }
+  return [...filtered].sort((a, b) => {
+    const aValue = getSortValue(a, sortBy);
+    const bValue = getSortValue(b, sortBy);
 
     if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
     if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
     return 0;
   });
-
-  return filtered;
 };
 
 // Process service category data for pie chart

@@ -1,4 +1,5 @@
-// Types for tickets
+import { REPORT_PREFIX } from "./constants";
+
 export interface Ticket {
   id: string;
   title: string;
@@ -40,7 +41,23 @@ export const parseReportData = (description: string) => {
   return null;
 };
 
-// Convert feedback reports to tickets
+const buildTagsFromSource = (source: string, category: string): string[] => {
+  const tags: string[] = [];
+
+  if (source === "provider_report" || source === "provider_cancellation") {
+    tags.push("provider");
+  } else if (source === "client_report" || source === "client_cancellation") {
+    tags.push("client");
+  }
+
+  if (category === "cancellation") {
+    tags.push("cancellation");
+  }
+
+  tags.push("user-report");
+  return tags;
+};
+
 export const convertReportsToTickets = (
   reports: any[],
   _users: any[],
@@ -50,29 +67,13 @@ export const convertReportsToTickets = (
 
     let ticket: Ticket;
     if (parsedData) {
-      // Build tags based on source and category
-      const tags = [];
-      if (
-        parsedData.source === "provider_report" ||
-        parsedData.source === "provider_cancellation"
-      ) {
-        tags.push("provider");
-      } else if (
-        parsedData.source === "client_report" ||
-        parsedData.source === "client_cancellation"
-      ) {
-        tags.push("client");
-      }
+      const tags = buildTagsFromSource(
+        parsedData.source,
+        parsedData.category,
+      );
 
-      if (parsedData.category === "cancellation") {
-        tags.push("cancellation");
-      }
-
-      tags.push("user-report");
-
-      // Structured report
       ticket = {
-        id: `REPORT-${report.id}`,
+        id: `${REPORT_PREFIX}${report.id}`,
         title: parsedData.title,
         description: parsedData.description,
         status: (report.status || "open") as Ticket["status"],
@@ -87,7 +88,7 @@ export const convertReportsToTickets = (
       };
     } else {
       ticket = {
-        id: `REPORT-${report.id}`,
+        id: `${REPORT_PREFIX}${report.id}`,
         title: "User Report",
         description: report.description,
         status: (report.status || "open") as Ticket["status"],

@@ -1,26 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import { adminServiceCanister } from "../services/adminServiceCanister";
-import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
 import {
   UserServicesHeader,
   UserServicesFilters,
   UserServicesList,
   type ServiceData,
 } from "../components";
-
-interface UserData {
-  id: string;
-  name: string;
-  phone: string;
-}
+import {
+  convertProfileToSimpleUserData,
+  convertBackendServicesToServiceData,
+  type SimpleUserData,
+} from "../utils/serviceUtils";
 
 const UserServicesPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { users: backendUsers, refreshUsers } = useAdmin();
-  const [user, setUser] = useState<UserData | null>(null);
+  const [user, setUser] = useState<SimpleUserData | null>(null);
   const [services, setServices] = useState<ServiceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,61 +27,6 @@ const UserServicesPage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-
-  const convertProfileToUserData = (profile: Profile): UserData => {
-    return {
-      id: profile.id.toString(),
-      name: profile.name,
-      phone: profile.phone,
-    };
-  };
-
-  const convertBackendDataToServiceData = (
-    offeredServices: any[],
-    _clientBookings: any[],
-    _providerBookings: any[],
-    userData: UserData,
-  ): ServiceData[] => {
-    const services: ServiceData[] = [];
-    offeredServices.forEach((service) => {
-      const serviceData: ServiceData = {
-        id: service.id,
-        title: service.title,
-        description: service.description,
-        category: service.category.name,
-        status: convertServiceStatus(service.status),
-        type: "offered",
-        price: Number(service.price) / 100,
-        currency: "PHP",
-        location: service.location.address,
-        createdDate: new Date(Number(service.createdAt) / 1000000),
-        rating: service.rating ? Number(service.rating) : undefined,
-        reviewCount: Number(service.reviewCount),
-        providerId: service.providerId.toString(),
-        providerName: userData.name,
-      };
-      services.push(serviceData);
-    });
-    return services;
-  };
-
-  const convertServiceStatus = (backendStatus: any): ServiceData["status"] => {
-    if (typeof backendStatus === "string") {
-      if (backendStatus === "Available") return "active";
-      if (backendStatus === "Unavailable") return "cancelled";
-      if (backendStatus === "Suspended") return "cancelled";
-      return "active";
-    }
-
-    // If it's an object (Motoko variant format), check for keys
-    if (typeof backendStatus === "object" && backendStatus !== null) {
-      if ("Available" in backendStatus) return "active";
-      if ("Unavailable" in backendStatus) return "cancelled";
-      if ("Suspended" in backendStatus) return "cancelled";
-    }
-
-    return "active";
-  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -109,20 +52,18 @@ const UserServicesPage: React.FC = () => {
         (profile) => profile && profile.id,
       );
 
-      // Find user from backend data
       const foundProfile = validUsers.find(
         (profile) => profile.id.toString() === id,
       );
       if (foundProfile) {
-        const userData = convertProfileToUserData(foundProfile);
+        const userData = convertProfileToSimpleUserData(foundProfile);
         setUser(userData);
 
-        // Load real services and bookings data
         try {
           const servicesAndBookings =
             await adminServiceCanister.getUserServicesAndBookings(id);
 
-          const combinedServices = convertBackendDataToServiceData(
+          const combinedServices = convertBackendServicesToServiceData(
             servicesAndBookings.offeredServices,
             servicesAndBookings.clientBookings,
             servicesAndBookings.providerBookings,
@@ -143,22 +84,23 @@ const UserServicesPage: React.FC = () => {
     loadUser();
   }, [id, backendUsers, navigate, refreshUsers]);
 
-  // Filter services
-  const filteredServices = services.filter((service) => {
-    const matchesSearch =
-      service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.category.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredServices = useMemo(() => {
+    return services.filter((service) => {
+      const matchesSearch =
+        service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        service.category.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "all" || service.status === statusFilter;
-    const matchesType = typeFilter === "all" || service.type === typeFilter;
-    const matchesCategory =
-      categoryFilter === "all" ||
-      service.category.toLowerCase() === categoryFilter.toLowerCase();
+      const matchesStatus =
+        statusFilter === "all" || service.status === statusFilter;
+      const matchesType = typeFilter === "all" || service.type === typeFilter;
+      const matchesCategory =
+        categoryFilter === "all" ||
+        service.category.toLowerCase() === categoryFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesType && matchesCategory;
-  });
+      return matchesSearch && matchesStatus && matchesType && matchesCategory;
+    });
+  }, [services, searchTerm, statusFilter, typeFilter, categoryFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredServices.length / itemsPerPage);

@@ -1,10 +1,17 @@
 import React from "react";
+import { SUSPENSION_DURATION } from "../utils/serviceStatusConstants";
+
+type SuspensionDuration =
+  | typeof SUSPENSION_DURATION.SEVEN_DAYS
+  | typeof SUSPENSION_DURATION.THIRTY_DAYS
+  | typeof SUSPENSION_DURATION.CUSTOM
+  | typeof SUSPENSION_DURATION.INDEFINITE;
 
 interface UserDetailsModalsProps {
   showReputationConfirmation: boolean;
   showLockConfirmation: boolean;
   pendingReputationScore: number;
-  suspensionDuration: "7" | "30" | "custom" | "indefinite";
+  suspensionDuration: SuspensionDuration;
   customDays: number;
   updatingReputation: boolean;
   lockingAccount: boolean;
@@ -12,9 +19,7 @@ interface UserDetailsModalsProps {
   onReputationCancel: () => void;
   onLockConfirm: () => void;
   onLockCancel: () => void;
-  onSuspensionDurationChange: (
-    duration: "7" | "30" | "custom" | "indefinite",
-  ) => void;
+  onSuspensionDurationChange: (duration: SuspensionDuration) => void;
   onCustomDaysChange: (days: number) => void;
 }
 
@@ -118,11 +123,11 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                     type="radio"
                     id="suspension-7"
                     name="suspensionDuration"
-                    value="7"
-                    checked={suspensionDuration === "7"}
+                    value={SUSPENSION_DURATION.SEVEN_DAYS}
+                    checked={suspensionDuration === SUSPENSION_DURATION.SEVEN_DAYS}
                     onChange={(e) =>
                       onSuspensionDurationChange(
-                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                        e.target.value as SuspensionDuration,
                       )
                     }
                     className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
@@ -140,11 +145,11 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                     type="radio"
                     id="suspension-30"
                     name="suspensionDuration"
-                    value="30"
-                    checked={suspensionDuration === "30"}
+                    value={SUSPENSION_DURATION.THIRTY_DAYS}
+                    checked={suspensionDuration === SUSPENSION_DURATION.THIRTY_DAYS}
                     onChange={(e) =>
                       onSuspensionDurationChange(
-                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                        e.target.value as SuspensionDuration,
                       )
                     }
                     className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
@@ -162,11 +167,11 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                     type="radio"
                     id="suspension-custom"
                     name="suspensionDuration"
-                    value="custom"
-                    checked={suspensionDuration === "custom"}
+                    value={SUSPENSION_DURATION.CUSTOM}
+                    checked={suspensionDuration === SUSPENSION_DURATION.CUSTOM}
                     onChange={(e) =>
                       onSuspensionDurationChange(
-                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                        e.target.value as SuspensionDuration,
                       )
                     }
                     className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"
@@ -183,7 +188,7 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                       onChange={(e) =>
                         onCustomDaysChange(parseInt(e.target.value) || 1)
                       }
-                      disabled={suspensionDuration !== "custom"}
+                      disabled={suspensionDuration !== SUSPENSION_DURATION.CUSTOM}
                       className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-500"
                     />
                     days
@@ -195,11 +200,11 @@ export const UserDetailsModals: React.FC<UserDetailsModalsProps> = ({
                     type="radio"
                     id="suspension-indefinite"
                     name="suspensionDuration"
-                    value="indefinite"
-                    checked={suspensionDuration === "indefinite"}
+                    value={SUSPENSION_DURATION.INDEFINITE}
+                    checked={suspensionDuration === SUSPENSION_DURATION.INDEFINITE}
                     onChange={(e) =>
                       onSuspensionDurationChange(
-                        e.target.value as "7" | "30" | "custom" | "indefinite",
+                        e.target.value as SuspensionDuration,
                       )
                     }
                     className="h-4 w-4 border-gray-300 text-yellow-600 focus:ring-yellow-500"

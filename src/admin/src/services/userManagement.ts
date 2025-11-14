@@ -3,6 +3,8 @@ import { functions } from "./coreUtils";
 import { callFirebaseFunction, requireAuth } from "./coreUtils";
 import { AdminServiceError, FrontendUserRoleAssignment } from "./serviceTypes";
 import reputationCanisterService from "../../../frontend/src/services/reputationCanisterService";
+import { mapTrustLevel } from "../utils/reputationUtils";
+import { extractFulfilledArrayResults } from "../utils/promiseUtils";
 
 // User Role Management
 
@@ -288,35 +290,22 @@ export const getUserReviews = async (
       callFirebaseFunction("getProviderReviews", { providerId: userId }),
     ]);
 
-    // Combine reviews from both sources
-    const allReviews = [];
-
-    if (
-      clientReviews.status === "fulfilled" &&
-      Array.isArray(clientReviews.value)
-    ) {
-      allReviews.push(...clientReviews.value);
-    }
-
-    if (
-      providerReviews.status === "fulfilled" &&
-      Array.isArray(providerReviews.value)
-    ) {
-      allReviews.push(...providerReviews.value);
-    }
+    const allReviews = extractFulfilledArrayResults([
+      clientReviews,
+      providerReviews,
+    ]);
 
     const totalReviews = allReviews.length;
 
-    // Calculate average rating from all reviews
     let averageRating = 0;
     if (totalReviews > 0) {
       const validReviews = allReviews.filter(
-        (review) =>
+        (review: any) =>
           review && typeof review.rating === "number" && review.rating > 0,
       );
       if (validReviews.length > 0) {
         const sum = validReviews.reduce(
-          (acc, review) => acc + review.rating,
+          (acc: number, review: any) => acc + review.rating,
           0,
         );
         averageRating = sum / validReviews.length;
@@ -352,20 +341,9 @@ export const getUserReputation = async (
       await reputationCanisterService.getReputationScore(userId);
 
     if (reputationData) {
-      // Convert the reputation data to match expected format
-      const trustLevel = reputationData.trustLevel?.hasOwnProperty("New")
-        ? "New"
-        : reputationData.trustLevel?.hasOwnProperty("Low")
-          ? "Low"
-          : reputationData.trustLevel?.hasOwnProperty("Medium")
-            ? "Medium"
-            : reputationData.trustLevel?.hasOwnProperty("High")
-              ? "High"
-              : "VeryHigh";
-
       return {
         reputationScore: Math.round(Number(reputationData.trustScore)),
-        trustLevel: trustLevel,
+        trustLevel: mapTrustLevel(reputationData.trustLevel),
         completedBookings: Number(reputationData.completedBookings || 0),
       };
     } else {
@@ -428,70 +406,8 @@ export const getUserBookings = async (
     // Combine both arrays
     const allBookings = [...clientBookings, ...providerBookings];
 
-    // Enrich bookings with provider and service names
-    const enrichedBookings = await Promise.all(
-      allBookings.map(async (booking) => {
-        let providerName = "Unknown Provider";
-        let serviceName = "Unknown Service";
-
-        // Get provider name from Firebase
-        if (booking.providerId) {
-          try {
-            const callable = httpsCallable(functions, "getProfile");
-            const providerResponse = await callable({
-              userId: booking.providerId,
-            });
-            if (
-              (providerResponse.data as any).success &&
-              (providerResponse.data as any).profile?.name
-            ) {
-              providerName = (providerResponse.data as any).profile.name;
-            }
-          } catch (error) {
-            console.error("Error fetching provider name:", error);
-          }
-        }
-
-        // Get service name from Firebase
-        if (booking.serviceId) {
-          try {
-            const callable = httpsCallable(functions, "getService");
-            const serviceResponse = await callable({
-              serviceId: booking.serviceId,
-            });
-            if (
-              (serviceResponse.data as any).success &&
-              (serviceResponse.data as any).service?.title
-            ) {
-              serviceName = (serviceResponse.data as any).service.title;
-            }
-          } catch (error) {
-            console.error("Error fetching service name:", error);
-          }
-        }
-
-        return {
-          id: booking.id || "",
-          serviceId: booking.serviceId || "",
-          serviceName: serviceName,
-          providerId: booking.providerId || "",
-          providerName: providerName,
-          status: booking.status || "Unknown",
-          price: Number(booking.price || 0),
-          createdAt: booking.createdAt || new Date().toISOString(),
-          scheduledDate:
-            booking.scheduledDate ||
-            booking.createdAt ||
-            new Date().toISOString(),
-          completedAt: booking.completedDate || undefined,
-          rating: booking.rating ? Number(booking.rating) : undefined,
-          review: booking.review || undefined,
-          location: booking.location || undefined,
-        };
-      }),
-    );
-
-    return enrichedBookings;
+    const { transformBooking } = await import("../utils/bookingUtils");
+    return Promise.all(allBookings.map(transformBooking));
   } catch (error) {
     console.error("Error fetching user bookings", error);
     throw new AdminServiceError({

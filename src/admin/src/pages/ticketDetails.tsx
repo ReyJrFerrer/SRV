@@ -17,6 +17,7 @@ import {
   getCategoryColor,
   formatDate,
 } from "../utils/ticketUtils";
+import { REPORT_PREFIX, COMMENT_PREFIX, ADMIN_USER_ID } from "../utils/constants";
 
 export const TicketDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +35,6 @@ export const TicketDetailsPage: React.FC = () => {
   const [loadingImages, setLoadingImages] = useState(false);
   const [modalImage, setModalImage] = useState<string | null>(null);
 
-  // Initialize firestore references and refresh data
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -45,7 +45,7 @@ export const TicketDetailsPage: React.FC = () => {
     };
 
     initializeData();
-  }, [, refreshUsers]);
+  }, [refreshUsers]);
 
   // Load reports from firestore
   const loadReportsAsTickets = async (): Promise<Ticket[]> => {
@@ -84,89 +84,37 @@ export const TicketDetailsPage: React.FC = () => {
     }
   }, [id, backendUsers]);
 
-  // Load images using the media service
   useEffect(() => {
-    if (ticket && ticket.attachments && ticket.attachments.length > 0) {
-      const loadImages = async () => {
-        setLoadingImages(true);
-        const urls: Record<string, string> = {};
+    if (!ticket?.attachments?.length) return;
 
-        try {
-          // Import Firestore utilities and media service
-          const { collection, query, where, getDocs } = await import(
-            "firebase/firestore"
-          );
-          const { getFirebaseFirestore } = await import(
-            "../services/firebaseApp"
-          );
-          const { getMediaItem } = await import(
-            "../services/mediaServiceCanister"
-          );
+    const loadImages = async () => {
+      setLoadingImages(true);
+      try {
+        const { getFirebaseFirestore } = await import(
+          "../services/firebaseApp"
+        );
+        const { getMediaItem } = await import(
+          "../services/mediaServiceCanister"
+        );
+        const { loadTicketAttachmentImages } = await import(
+          "../utils/imageUtils"
+        );
 
-          const firestore = getFirebaseFirestore();
-          for (const attachment of ticket.attachments!) {
-            try {
-              let mediaId = attachment;
+        const firestore = getFirebaseFirestore();
+        const urls = await loadTicketAttachmentImages(
+          ticket.attachments!,
+          firestore,
+          getMediaItem,
+        );
+        setImageDataUrls(urls);
+      } catch (error) {
+        console.error("Error in image loading process:", error);
+      } finally {
+        setLoadingImages(false);
+      }
+    };
 
-              if (
-                attachment.startsWith("http://") ||
-                attachment.startsWith("https://")
-              ) {
-                // Query Firestore to find media document with this URL
-                const mediaCollection = collection(firestore, "media");
-                const q = query(
-                  mediaCollection,
-                  where("url", "==", attachment),
-                );
-                const querySnapshot = await getDocs(q);
-
-                if (!querySnapshot.empty) {
-                  mediaId = querySnapshot.docs[0].id;
-                } else {
-                  // Use URL directly as fallback
-                  urls[attachment] = attachment;
-                  continue;
-                }
-              }
-
-              // Get media item which contains the public URL
-              const mediaItem = await getMediaItem(mediaId);
-
-              if (mediaItem && mediaItem.url) {
-                let imageUrl = mediaItem.url;
-
-                // Add timestamp to prevent caching issues
-                if (!imageUrl.includes("&token=")) {
-                  imageUrl = `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
-                }
-
-                urls[attachment] = imageUrl;
-              } else {
-                console.warn("Failed to get media item for:", attachment);
-                urls[attachment] =
-                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EError%3C/text%3E%3C/svg%3E";
-              }
-            } catch (error) {
-              console.error(
-                "Error loading image for attachment:",
-                attachment,
-                error,
-              );
-              urls[attachment] =
-                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ddd' width='100' height='100'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EError%3C/text%3E%3C/svg%3E";
-            }
-          }
-
-          setImageDataUrls(urls);
-        } catch (error) {
-          console.error("Error in image loading process:", error);
-        } finally {
-          setLoadingImages(false);
-        }
-      };
-
-      loadImages();
-    }
+    loadImages();
   }, [ticket]);
 
   const handleStatusChange = async (newStatus: string) => {
@@ -174,10 +122,9 @@ export const TicketDetailsPage: React.FC = () => {
 
     setUpdatingStatus(true);
     try {
-      const reportId = ticket.id.replace("REPORT-", "");
+      const reportId = ticket.id.replace(REPORT_PREFIX, "");
       const oldStatus = ticket.status;
 
-      // Call backend to update status with notification
       const { updateReportStatus } = await import(
         "../services/adminServiceCanister"
       );
@@ -190,7 +137,6 @@ export const TicketDetailsPage: React.FC = () => {
       );
 
       if (success) {
-        // Update local state
         setTicket((prev) =>
           prev
             ? {
@@ -199,16 +145,13 @@ export const TicketDetailsPage: React.FC = () => {
                 lastUpdated: new Date().toISOString(),
                 assignedTo:
                   newStatus === "in_progress"
-                    ? "Admin_001"
+                    ? ADMIN_USER_ID
                     : newStatus === "open"
                       ? undefined
                       : ticket.assignedTo,
               }
             : null,
         );
-
-        // Show success feedback
-        newStatus.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
       } else {
         console.error("Failed to update status in backend");
       }
@@ -223,8 +166,8 @@ export const TicketDetailsPage: React.FC = () => {
     if (!ticket || !newComment.trim()) return;
 
     const comment: Comment = {
-      id: `COMMENT-${Date.now()}`,
-      author: "Admin_001",
+      id: `${COMMENT_PREFIX}${Date.now()}`,
+      author: ADMIN_USER_ID,
       content: newComment.trim(),
       timestamp: new Date().toISOString(),
       isInternal,
@@ -245,7 +188,7 @@ export const TicketDetailsPage: React.FC = () => {
       const { sendTicketCommentNotificationToUser } = await import(
         "../services/adminServiceCanister"
       );
-      const reportId = ticket.id.replace("REPORT-", "");
+      const reportId = ticket.id.replace(REPORT_PREFIX, "");
 
       await sendTicketCommentNotificationToUser(
         ticket.submittedById,

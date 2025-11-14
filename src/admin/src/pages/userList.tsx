@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAdmin } from "../hooks/useAdmin";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import {
   UserListHeader,
@@ -8,6 +9,7 @@ import {
   UserListFilters,
   UserListTable,
 } from "../components";
+import { ConfirmModal } from "../components/ConfirmModal";
 import {
   UserData,
   convertProfileToUserData,
@@ -39,6 +41,15 @@ export const UserListPage: React.FC = () => {
   const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
   const [loadingAdminIds, setLoadingAdminIds] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    user: UserData | null;
+    suspend: boolean;
+  }>({
+    isOpen: false,
+    user: null,
+    suspend: false,
+  });
 
   // Load users from backend on component mount
   useEffect(() => {
@@ -83,55 +94,50 @@ export const UserListPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const convertAndSetUsers = async () => {
+    if (backendUsers.length === 0) {
+      setUsers([]);
+      setFilteredUsers([]);
+      setLoadingUsers(false);
+      return;
+    }
+
+    if (loadingAdminIds) {
+      setLoadingUsers(false);
+      return;
+    }
+
+    if (adminUserIds.size === 0 && backendUsers.length > 0 && !showOnlyAdmins) {
+      setLoadingUsers(false);
+      return;
+    }
+
+    setLoadingUsers(true);
+    try {
+      const validProfiles = filterProfilesByAdminStatus(
+        backendUsers,
+        adminUserIds,
+        showOnlyAdmins,
+      );
+
+      const convertedUsers = await Promise.all(
+        validProfiles.map((profile) =>
+          convertProfileToUserData(profile, getUserLockStatus),
+        ),
+      );
+      setUsers(convertedUsers);
+      setFilteredUsers(convertedUsers);
+    } catch (error) {
+      console.error("Failed to convert users:", error);
+      setUsers([]);
+      setFilteredUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
   useEffect(() => {
-    const convertUsers = async () => {
-      if (backendUsers.length > 0) {
-        setLoadingUsers(true);
-        try {
-          // Wait for adminUserIds to be loaded before filtering
-          if (loadingAdminIds) {
-            setLoadingUsers(false);
-            return;
-          }
-
-          if (
-            adminUserIds.size === 0 &&
-            backendUsers.length > 0 &&
-            !showOnlyAdmins
-          ) {
-            setLoadingUsers(false);
-            return;
-          }
-
-          // Filter profiles based on admin toggle
-          const validProfiles = filterProfilesByAdminStatus(
-            backendUsers,
-            adminUserIds,
-            showOnlyAdmins,
-          );
-
-          const convertedUsers = await Promise.all(
-            validProfiles.map((profile) =>
-              convertProfileToUserData(profile, getUserLockStatus),
-            ),
-          );
-          setUsers(convertedUsers);
-          setFilteredUsers(convertedUsers);
-        } catch (error) {
-          console.error("Failed to convert users:", error);
-          setUsers([]);
-          setFilteredUsers([]);
-        } finally {
-          setLoadingUsers(false);
-        }
-      } else {
-        setUsers([]);
-        setFilteredUsers([]);
-        setLoadingUsers(false);
-      }
-    };
-
-    convertUsers();
+    convertAndSetUsers();
   }, [
     backendUsers,
     getUserLockStatus,
@@ -141,25 +147,9 @@ export const UserListPage: React.FC = () => {
   ]);
 
   useEffect(() => {
-    const handleVisibilityChange = async () => {
+    const handleVisibilityChange = () => {
       if (!document.hidden && backendUsers.length > 0) {
-        try {
-          const validProfiles = filterProfilesByAdminStatus(
-            backendUsers,
-            adminUserIds,
-            showOnlyAdmins,
-          );
-
-          const convertedUsers = await Promise.all(
-            validProfiles.map((profile) =>
-              convertProfileToUserData(profile, getUserLockStatus),
-            ),
-          );
-          setUsers(convertedUsers);
-          setFilteredUsers(convertedUsers);
-        } catch (error) {
-          console.error("Failed to convert users on visibility change:", error);
-        }
+        convertAndSetUsers();
       }
     };
 
@@ -207,16 +197,14 @@ export const UserListPage: React.FC = () => {
     }
   };
 
-  // Handle lock/unlock user
-  const handleSuspendUser = async (user: UserData, suspend: boolean) => {
-    if (
-      !confirm(
-        `Are you sure you want to ${suspend ? "lock" : "unlock"} this admin account?`,
-      )
-    ) {
-      return;
-    }
+  const handleSuspendUser = (user: UserData, suspend: boolean) => {
+    setConfirmModal({ isOpen: true, user, suspend });
+  };
 
+  const confirmSuspendUser = async () => {
+    if (!confirmModal.user) return;
+
+    const { user, suspend } = confirmModal;
     try {
       await adminServiceCanister.lockUserAccount(
         user.id,
@@ -225,7 +213,6 @@ export const UserListPage: React.FC = () => {
       );
       updateUserLockStatus(user.id, suspend);
 
-      // Update local state
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
           u.id === user.id ? { ...u, isLocked: suspend } : u,
@@ -237,10 +224,11 @@ export const UserListPage: React.FC = () => {
         ),
       );
 
-      alert(`Admin account ${suspend ? "locked" : "unlocked"} successfully`);
+      toast.success(`Admin account ${suspend ? "locked" : "unlocked"} successfully`);
+      setConfirmModal({ isOpen: false, user: null, suspend: false });
     } catch (error) {
       console.error("Failed to lock/unlock account:", error);
-      alert(
+      toast.error(
         `Failed to ${suspend ? "lock" : "unlock"} account. Please try again.`,
       );
     }
@@ -308,6 +296,16 @@ export const UserListPage: React.FC = () => {
           />
         </div>
       </main>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={`${confirmModal.suspend ? "Lock" : "Unlock"} Admin Account`}
+        message={`Are you sure you want to ${confirmModal.suspend ? "lock" : "unlock"} this admin account?`}
+        confirmText={confirmModal.suspend ? "Lock" : "Unlock"}
+        confirmColor={confirmModal.suspend ? "bg-yellow-600 hover:bg-yellow-700" : "bg-green-600 hover:bg-green-700"}
+        onConfirm={confirmSuspendUser}
+        onCancel={() => setConfirmModal({ isOpen: false, user: null, suspend: false })}
+      />
     </div>
   );
 };
