@@ -17,7 +17,7 @@ const BottomNavigation: React.FC = () => {
   const { notifications } = useNotifications();
   const { unreadChatCount } = useChatNotifications();
 
-  // Derive booking accepted count (client perspective) from notifications excluding chat/provider messages
+  // Section: Derived notification counts
   const bookingAcceptedCount = React.useMemo(
     () =>
       notifications.filter((n) => !n.read && n.type === "booking_accepted")
@@ -25,7 +25,7 @@ const BottomNavigation: React.FC = () => {
     [notifications],
   );
 
-  // Notifications badge should exclude chat related items now hidden from page
+  // Section: Notification filters
   const filteredNotificationUnreadCount = React.useMemo(
     () =>
       notifications.filter(
@@ -37,7 +37,7 @@ const BottomNavigation: React.FC = () => {
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
 
-  // Keep a stable avatar src to avoid flashing default while new image loads
+  // Section: Avatar caching
   const defaultClientAvatar = "/default-client.svg";
   const clientAvatarCacheKey = "nav:client:avatar";
   const [stableProfileSrc, setStableProfileSrc] = React.useState<string>(() => {
@@ -53,7 +53,7 @@ const BottomNavigation: React.FC = () => {
   });
 
   React.useEffect(() => {
-    // While loading a new avatar, prefer showing previous or raw profile URL over default
+    // Section: Avatar loading behavior
     if (isImageLoading) {
       // If we have a raw profile URL, use it to avoid default flash
       const raw =
@@ -95,7 +95,7 @@ const BottomNavigation: React.FC = () => {
     } catch {}
   }, [stableProfileSrc]);
 
-  // Helper: determine if a nav item should be considered active for current path
+  // Section: Navigation helpers
   const isRouteActive = (label: string, to: string) => {
     // Profile should be active only on exact '/client/profile', not on nested pages like '/client/profile/reviews'
     if (label === "Profile") return location.pathname === to;
@@ -131,7 +131,7 @@ const BottomNavigation: React.FC = () => {
 
   // No image sprite swapping; color and "active ring" handled via classes
 
-  // Mark body so pages can offset content for the fixed left sidebar on desktop
+  // Section: Layout side-effect
   React.useEffect(() => {
     const apply = () => {
       if (window.matchMedia("(min-width: 768px)").matches) {
@@ -148,7 +148,7 @@ const BottomNavigation: React.FC = () => {
     };
   }, []);
 
-  // Define explicit order for the mobile bottom navigation
+  // Section: Mobile order
   // Requested: place Ratings between Chat and Notifications
   const mobileOrder = [
     "Home",
@@ -318,7 +318,7 @@ const BottomNavigation: React.FC = () => {
                       <div
                         className={
                           isActive
-                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-700"
+                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
                             : ""
                         }
                       >
@@ -390,15 +390,11 @@ const BottomNavigation: React.FC = () => {
                     }
                   />
                 </div>
-                <span
-                  className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                    isActive
-                      ? "font-bold"
-                      : "opacity-90 md:group-hover:text-yellow-400"
-                  }`}
-                >
-                  {item.label}
-                </span>
+                {!isActive && (
+                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
+                    {item.label}
+                  </span>
+                )}
               </Link>
             );
           })()}

@@ -1,5 +1,4 @@
 import React from "react";
-import { ServiceListingCardSkeleton } from "../../client/home page/ServiceListingCard";
 
 interface ServiceCardSkeletonProps {
   className?: string;
@@ -10,7 +9,9 @@ export const ServiceCardSkeleton: React.FC<ServiceCardSkeletonProps> = ({
 }) => {
   return (
     <div
-      className={`pointer-events-none relative flex w-full cursor-default flex-col items-center overflow-hidden rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg ${className ?? ""}`}
+      className={`pointer-events-none relative flex w-full cursor-default flex-col items-center overflow-hidden rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg ${
+        className ?? ""
+      }`}
     >
       {/* Image placeholder (matches ServiceCard image height & rounded corners) */}
       <div className="relative w-full">
@@ -43,7 +44,8 @@ export const ServiceGridSkeleton: React.FC<{ count?: number }> = ({
     <div className="pointer-events-none grid cursor-default grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i}>
-          <ServiceListingCardSkeleton />
+          {/* Changed this to use the component defined in this file */}
+          <ServiceCardSkeleton />
         </div>
       ))}
     </div>
@@ -87,14 +89,14 @@ export const BookingCardSkeleton: React.FC = () => (
   <div className="pointer-events-none block w-full cursor-default overflow-hidden rounded-xl bg-white shadow-lg">
     <div className="md:flex">
       {/* Image placeholder matches real card: md:flex-shrink-0, md:w-48, md:h-48 */}
-      <div className="md:flex-shrink-0">
+      <div className="md:shrink-0">
         <div className="relative h-48 w-full md:w-48">
           <div className="h-full w-full animate-pulse rounded-t-xl bg-gray-200 md:rounded-l-xl md:rounded-t-none" />
         </div>
       </div>
 
       {/* Content area mirrors real card padding and layout */}
-      <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
+      <div className="flex grow flex-col justify-between p-4 sm:p-5">
         <div>
           <div className="flex items-start justify-between">
             <div className="h-4 w-28 animate-pulse rounded bg-gray-200" />

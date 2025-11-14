@@ -52,7 +52,7 @@ const ActionButtons: React.FC<Props> = ({
   onBookAgain,
   bookAgainLabel = "Book Again",
 }) => {
-  // Compute visible buttons to adjust layout behavior:
+  // Section: Layout / Visible buttons
   const isRequested = booking?.status === "Requested";
   // If booking is still Requested, hide chat and other non-decision actions; only show Accept/Decline
   const showChat = typeof onChat === "function" && !isRequested;
@@ -101,6 +101,7 @@ const ActionButtons: React.FC<Props> = ({
   const baseContainer = containerDefault;
   const baseButtonClass = baseButtonDefault;
 
+  // Section: Helpers
   const stopAndRun = (fn?: () => void) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -336,7 +337,7 @@ const ActionButtons: React.FC<Props> = ({
     );
   }
 
-  // Layout rendering to match client ActionButtons
+  // Section: Render
   if (buttons.length === 0) return <div className={baseContainer} />;
 
   if (buttons.length === 1) {

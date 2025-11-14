@@ -29,15 +29,15 @@ const BookingPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
 
-  // Set document title
+  // Section: Setup
   useEffect(() => {
     document.title = "Book Service | SRV";
   }, []);
 
-  // --- Auth context ---
+  // Section: Auth and stores
   const { identity } = useAuth();
 
-  // --- Zustand location store ---
+  // Section: Location store
   const {
     userAddress,
     userProvince,
@@ -46,7 +46,7 @@ const BookingPage: React.FC = () => {
     location: geoLocation,
   } = useLocationStore();
 
-  // --- Section refs ---
+  // Section: Refs
   const barangayRef = useRef<HTMLSelectElement>(null);
   const otherBarangayRef = useRef<HTMLInputElement>(null);
   const streetRef = useRef<HTMLInputElement>(null);
@@ -55,7 +55,7 @@ const BookingPage: React.FC = () => {
   const bookingSectionRef = useRef<HTMLDivElement>(null);
   const paymentSectionRef = useRef<HTMLDivElement>(null);
 
-  // --- Booking state ---
+  // Section: State
   const [packages, setPackages] = useState<
     {
       id: string;
@@ -90,7 +90,7 @@ const BookingPage: React.FC = () => {
   const [isProviderOnboarded, setIsProviderOnboarded] =
     useState<boolean>(false);
 
-  // Initialize location on mount
+  // Section: Effects - initialization
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
@@ -98,7 +98,23 @@ const BookingPage: React.FC = () => {
   const displayMunicipality = userAddress || "";
   const displayProvince = userProvince || "";
 
-  // --- Service and booking data (from hook) ---
+  // Helper: strip plus-code tokens from addresses (e.g. "2CFX+WPX")
+  const stripPlusCodes = (addr: string) => {
+    if (!addr) return "";
+    try {
+      const plusCodeRegex = /^[A-Z0-9]{1,}\+[A-Z0-9]{1,}$/i;
+      const parts = addr
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      const filtered = parts.filter((p) => !plusCodeRegex.test(p));
+      return filtered.join(", ").trim();
+    } catch {
+      return addr;
+    }
+  };
+
+  // Section: Hooks - service & bookings
   const {
     service,
     packages: hookPackages,
@@ -116,7 +132,7 @@ const BookingPage: React.FC = () => {
 
   const { bookings: userBookings } = useBookingManagement();
 
-  // Barangay and manual location state
+  // Section: Location state
   const [barangayOptions, setBarangayOptions] = useState<string[]>([]);
   const [selectedBarangay, setSelectedBarangay] = useState<string>("");
   const [otherBarangay, setOtherBarangay] = useState("");
@@ -143,7 +159,7 @@ const BookingPage: React.FC = () => {
   >("idle");
   const [mapsReady, setMapsReady] = useState<boolean>(false);
 
-  // --- Booking draft (localStorage) ---
+  // Section: Drafts
   const DRAFT_KEY_PREFIX = "booking_draft_v1_";
   interface BookingDraft {
     packages: { id: string; checked: boolean }[];
@@ -171,12 +187,13 @@ const BookingPage: React.FC = () => {
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   const draftKey = serviceId ? `${DRAFT_KEY_PREFIX}${serviceId}` : null;
-  // Track whether the user actually interacted with the form (avoids autosaving
-  // when only auto-detected values are present).
+  // Section: UX helpers
   const userTouchedRef = useRef<boolean>(false);
+  const suppressDraftSaveRef = useRef<boolean>(false);
   const pageContainerRef = useRef<HTMLDivElement | null>(null);
 
   const saveDraftImmediate = useCallback(() => {
+    if (suppressDraftSaveRef.current) return;
     if (!draftKey) return;
     try {
       const payload: BookingDraft = {
@@ -201,7 +218,6 @@ const BookingPage: React.FC = () => {
         timestamp: Date.now(),
       };
 
-      // Helper to determine if a draft contains meaningful user inputs
       const isMeaningfulDraft = (d: BookingDraft) => {
         try {
           if (d.packages && d.packages.some((p) => p.checked)) return true;
@@ -215,17 +231,13 @@ const BookingPage: React.FC = () => {
           if (d.amountPaid && d.amountPaid.trim()) return true;
           if (d.selectedBarangay && d.selectedBarangay.trim()) return true;
           if (d.otherBarangay && d.otherBarangay.trim()) return true;
-          // mapLocation and geocoded/display address are considered auto-detected
-          // and by themselves don't make a draft meaningful.
+
           return false;
         } catch {
           return false;
         }
       };
 
-      // Persist if the user explicitly interacted OR the current state has
-      // meaningful inputs (covers controlled input changes that might not
-      // have bubbled DOM events to the page container).
       if (!userTouchedRef.current && !isMeaningfulDraft(payload)) return;
 
       localStorage.setItem(draftKey, JSON.stringify(payload));
@@ -255,23 +267,15 @@ const BookingPage: React.FC = () => {
     mapDisplayAddress,
   ]);
 
-  // Ensure we attempt to save a draft when the component unmounts (SPA
-  // navigation / route change). This will persist any meaningful inputs
-  // right before the booking page is torn down.
   useEffect(() => {
     return () => {
       try {
         saveDraftImmediate();
       } catch {
-        // ignore
+        //
       }
     };
   }, [saveDraftImmediate]);
-
-  // Mark the page as 'touched' when the user interacts with any input or
-  // interacts with UI inside the booking page. This is intentionally broad
-  // (input/change/click/touchstart) so child components don't need to notify
-  // us individually.
   useEffect(() => {
     const el = pageContainerRef.current;
     if (!el) return;
@@ -288,23 +292,20 @@ const BookingPage: React.FC = () => {
     };
   }, []);
 
-  // Debounced autosave when any form field changes
+  // Section: Effects - autosave
   useEffect(() => {
     if (!draftKey) return;
     const t = setTimeout(() => saveDraftImmediate(), 700);
     return () => clearTimeout(t);
   }, [saveDraftImmediate, draftKey]);
 
-  // Save before unload to cover abrupt navigations
   useEffect(() => {
     const onUnload = () => saveDraftImmediate();
     window.addEventListener("beforeunload", onUnload);
     return () => window.removeEventListener("beforeunload", onUnload);
   }, [saveDraftImmediate]);
 
-  // On mount, check for existing draft for this service. Only treat it as a
-  // draft if the user previously entered meaningful inputs (ignore drafts
-  // that only contain auto-detected values like reverse-geocoded addresses).
+  // Section: Effects - restore draft
   useEffect(() => {
     if (!draftKey) return;
     try {
@@ -312,7 +313,6 @@ const BookingPage: React.FC = () => {
       if (raw) {
         const parsed = JSON.parse(raw) as BookingDraft;
 
-        // Only consider this a saved draft if it contains meaningful user inputs.
         const hasInputs = (() => {
           try {
             if (parsed.packages && parsed.packages.some((p) => p.checked))
@@ -329,8 +329,6 @@ const BookingPage: React.FC = () => {
               return true;
             if (parsed.otherBarangay && parsed.otherBarangay.trim())
               return true;
-            // mapLocation and geocoded/display address are treated as
-            // auto-detected values and do not by themselves make the draft meaningful.
             return false;
           } catch {
             return false;
@@ -341,21 +339,19 @@ const BookingPage: React.FC = () => {
           setParsedDraft(parsed);
           setShowRestorePrompt(true);
         } else {
-          // Remove trivially empty drafts to avoid false prompts later
           try {
             localStorage.removeItem(draftKey);
           } catch {}
         }
       }
     } catch (err) {
-      // ignore
+      //
     }
   }, [draftKey]);
 
   const handleUseDraft = () => {
     if (!parsedDraft) return setShowRestorePrompt(false);
     try {
-      // restore packages checked state
       setPackages((prev) =>
         prev.map((p) => {
           const matched = parsedDraft.packages.find((x) => x.id === p.id);
@@ -382,19 +378,25 @@ const BookingPage: React.FC = () => {
       setMapPreciseAddress(parsedDraft.mapPreciseAddress || "");
       setMapDisplayAddress(parsedDraft.mapDisplayAddress || "");
     } catch (err) {
-      // ignore
+      //
     } finally {
       setShowRestorePrompt(false);
     }
   };
 
   const handleDiscardDraft = () => {
-    if (draftKey) localStorage.removeItem(draftKey);
+    // prevent immediate re-save while removing the draft
+    suppressDraftSaveRef.current = true;
+    try {
+      if (draftKey) localStorage.removeItem(draftKey);
+    } catch {}
+    // allow saves again on next tick
+    setTimeout(() => (suppressDraftSaveRef.current = false), 50);
     setParsedDraft(null);
     setShowRestorePrompt(false);
   };
 
-  // Google maps readiness
+  // Section: Effects - maps readiness
   useEffect(() => {
     if ((window as any).google?.maps) {
       setMapsReady(true);
@@ -412,7 +414,7 @@ const BookingPage: React.FC = () => {
     return () => clearInterval(iv);
   }, []);
 
-  // Reverse geocode detected coordinates
+  // Section: Effects - reverse geocode
   useEffect(() => {
     if (mapMode !== "detected") return;
     if (detectedStatus === "loading" || detectedStatus === "ok") return;
@@ -426,13 +428,14 @@ const BookingPage: React.FC = () => {
       geocoder.geocode({ location: loc }, (results: any, status: string) => {
         if (status === "OK" && results && results[0]) {
           const addr = results[0].formatted_address as string;
-          setDetectedAddress(addr);
+          const cleaned = stripPlusCodes(addr);
+          setDetectedAddress(cleaned);
           setDetectedStatus("ok");
           setMapLocation(
-            (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: addr },
+            (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: cleaned },
           );
-          if (!mapPreciseAddress) setMapPreciseAddress(addr);
-          if (!mapDisplayAddress) setMapDisplayAddress(addr);
+          if (!mapPreciseAddress) setMapPreciseAddress(cleaned);
+          if (!mapDisplayAddress) setMapDisplayAddress(cleaned);
         } else {
           setDetectedStatus("failed");
         }
@@ -449,7 +452,7 @@ const BookingPage: React.FC = () => {
     mapDisplayAddress,
   ]);
 
-  // Manual barangays when province/city changes
+  // Section: Effects - manual barangays
   useEffect(() => {
     try {
       if (!manualProvince) {
@@ -470,7 +473,6 @@ const BookingPage: React.FC = () => {
         return;
       }
 
-      // Find municipality match for the current manualCity
       const muniObj = provinceObj.municipalities.find(
         (muni: any) =>
           muni.name.trim().toLowerCase() === manualCity.trim().toLowerCase(),
@@ -487,10 +489,6 @@ const BookingPage: React.FC = () => {
         return;
       }
 
-      // If the current manualCity is not a member of the selected province
-      // (e.g., user switched provinces but city stayed from previous province),
-      // pick a sensible default: select the first municipality for this
-      // province and populate its barangays so the UI shows correct options.
       const firstMuni = provinceObj.municipalities[0];
       if (firstMuni && firstMuni.name) {
         setManualCity(firstMuni.name);
@@ -514,7 +512,7 @@ const BookingPage: React.FC = () => {
     }
   }, [manualProvince, manualCity]);
 
-  // Detected barangays from displayMunicipality/province
+  // Section: Effects - detected barangays
   useEffect(() => {
     let found: string[] = [];
     const cityNorm = (displayMunicipality || "").trim().toLowerCase();
@@ -614,12 +612,12 @@ const BookingPage: React.FC = () => {
     setSelectedBarangay("");
   }, [displayMunicipality, displayProvince]);
 
-  // Load service and packages
+  // Section: Effects - load service
   useEffect(() => {
     if (serviceId) loadServiceData(serviceId);
   }, [serviceId, loadServiceData]);
 
-  // Check provider onboarding
+  // Section: Effects - provider onboarding
   useEffect(() => {
     const run = async () => {
       if (service?.providerId) {
@@ -641,7 +639,7 @@ const BookingPage: React.FC = () => {
       setPackages(hookPackages.map((p: any) => ({ ...p, checked: false })));
   }, [hookPackages]);
 
-  // Load available slots when date/option changes
+  // Section: Effects - slots
   useEffect(() => {
     if (!service) return;
     if (bookingOption === "scheduled" && selectedDate) {
@@ -652,7 +650,7 @@ const BookingPage: React.FC = () => {
     }
   }, [service, selectedDate, bookingOption, getAvailableSlots]);
 
-  // Check all slot availability
+  // Section: Effects - check slot availability
   useEffect(() => {
     const checkAll = async () => {
       if (!service || availableSlots.length === 0) return;
@@ -764,6 +762,7 @@ const BookingPage: React.FC = () => {
     } else setPaymentError(null);
   }, [amountPaid, totalPrice, paymentMethod, packages]);
 
+  // Section: Handlers
   const handlePackageChange = (packageId: string) => {
     setPackages((prev) =>
       prev.map((pkg) =>
@@ -1286,6 +1285,8 @@ const BookingPage: React.FC = () => {
         };
         // clear saved draft for this service now that booking succeeded
         try {
+          // prevent component-unmount autosave from recreating the draft
+          suppressDraftSaveRef.current = true;
           if (draftKey) localStorage.removeItem(draftKey);
         } catch (err) {
           // ignore

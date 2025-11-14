@@ -1,9 +1,4 @@
-// Component: LocationMapPicker
-// Purpose: Pin/search control for selecting a precise map location with reverse geocoding.
-// Inputs: props.value (StructuredLocation | null), props.highlight, props.label, props.persistKey
-// Outputs: onChange(StructuredLocation) with lat/lng and a user-friendly address
-// Side effects: persists to localStorage when persistKey is provided
-// Dependencies: @vis.gl/react-google-maps Map/AdvancedMarker; Google Maps JS (Places + Geocoder)
+// Imports
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
@@ -13,7 +8,7 @@ const containerStyle: React.CSSProperties = {
   borderRadius: "0.75rem",
 };
 
-// Center of Baguio City for location biasing
+// Constants
 const baguioCenter = { lat: 16.4023, lng: 120.596 };
 
 interface StructuredLocation {
@@ -42,13 +37,14 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   highlight = false,
   persistKey,
 }) => {
-  // SECTION: State/Refs
+  // State/Refs
   const [internalPosition, setInternalPosition] = useState<{
     lat: number;
     lng: number;
   }>(value ? { lat: value.lat, lng: value.lng } : baguioCenter);
 
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(
     null,
   );
@@ -61,16 +57,13 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const [isLoadingPred, setIsLoadingPred] = useState<boolean>(false);
   const debounceRef = useRef<number | null>(null);
 
-  // SECTION: Helpers
+  // Helpers
   const composeFormattedWithPlace = (
     rawName: string | undefined,
     formattedAddress: string | undefined,
   ): string => {
     let formatted = (formattedAddress || "").trim();
     if (!formatted) return rawName || "";
-
-    // Split into comma-separated components, trim, and filter out
-    // unwanted tokens like plus-codes (e.g. "2FH3+G4C") and "Unnamed Road".
     const parts = formatted
       .split(",")
       .map((p) => p.trim())
@@ -139,12 +132,22 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
       onChange(structured);
       persistLocation(structured);
 
-      // Only adjust camera on selection to focus the chosen place.
       mapRef.current?.panTo({ lat: structured.lat, lng: structured.lng });
       mapRef.current?.setZoom(17);
     },
     [onChange, persistLocation],
   );
+
+  // Effects
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    try {
+      mapRef.current.panTo(internalPosition);
+      // Only bump zoom if the map is currently at a very low zoom
+      const currentZoom = mapRef.current.getZoom?.() ?? 0;
+      if ((currentZoom ?? 0) < 15) mapRef.current.setZoom(16);
+    } catch {}
+  }, [mapReady, internalPosition]);
 
   const reverseGeocodeAndUpdate = useCallback(
     (pos: { lat: number; lng: number }) => {
@@ -172,6 +175,34 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
 
   const onMapClick = useCallback(
     (e: any) => {
+      const placeId = e?.placeId || e?.detail?.placeId;
+      const g = (window as any).google;
+
+      if (placeId) {
+        if (!placesServiceRef.current && g?.maps?.places) {
+          const target = mapRef.current || document.createElement("div");
+          placesServiceRef.current = new g.maps.places.PlacesService(target);
+        }
+
+        if (placesServiceRef.current) {
+          placesServiceRef.current.getDetails({ placeId }, (place, status) => {
+            if (status === "OK" && place) {
+              processPlaceDetails(place);
+            } else {
+              const ll = (e?.detail?.latLng || e?.latLng) as any;
+              const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
+              const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
+              if (typeof lat === "number" && typeof lng === "number") {
+                const pos = { lat, lng };
+                setInternalPosition(pos);
+                reverseGeocodeAndUpdate(pos);
+              }
+            }
+          });
+          return;
+        }
+      }
+
       const ll = (e?.detail?.latLng || e?.latLng) as any;
       const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
       const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
@@ -181,7 +212,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         reverseGeocodeAndUpdate(pos);
       }
     },
-    [reverseGeocodeAndUpdate],
+    [reverseGeocodeAndUpdate, processPlaceDetails],
   );
 
   useEffect(() => {
@@ -318,9 +349,11 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         <Map
           style={containerStyle}
           defaultCenter={baguioCenter}
-          defaultZoom={12}
-          center={internalPosition}
-          onCameraChanged={(ev) => (mapRef.current = ev.map)}
+          defaultZoom={18}
+          onCameraChanged={(ev) => {
+            mapRef.current = ev.map;
+            setMapReady(true);
+          }}
           onClick={onMapClick}
           disableDefaultUI={true}
           zoomControl={true}
@@ -337,6 +370,10 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
               if (typeof lat === "number" && typeof lng === "number") {
                 const pos = { lat, lng };
                 setInternalPosition(pos);
+                // Pan the map to the new marker position without forcing zoom changes
+                try {
+                  mapRef.current?.panTo(pos);
+                } catch {}
                 reverseGeocodeAndUpdate(pos);
               }
             }}
