@@ -17,9 +17,9 @@ export const ServiceCardSkeleton: React.FC<ServiceCardSkeletonProps> = ({
       <div className="relative w-full">
         <div className="h-32 w-full animate-pulse rounded-xl bg-gray-200" />
         {/* category circle (top-left) */}
-        <div className="absolute top-2 left-2 h-10 w-10 animate-pulse rounded-full border-2 border-white bg-gray-200" />
+        <div className="absolute left-2 top-2 h-10 w-10 animate-pulse rounded-full border-2 border-white bg-gray-200" />
         {/* status badge (top-right) */}
-        <div className="absolute top-2 right-2 h-6 animate-pulse rounded-full bg-gray-200 px-3 py-1" />
+        <div className="absolute right-2 top-2 h-6 animate-pulse rounded-full bg-gray-200 px-3 py-1" />
       </div>
 
       {/* Content placeholder (title + rating) */}
@@ -90,7 +90,7 @@ export const BookingCardSkeleton: React.FC = () => (
     <div className="md:flex">
       <div className="md:shrink-0">
         <div className="relative h-48 w-full md:w-48">
-          <div className="h-full w-full animate-pulse rounded-t-xl bg-gray-200 md:rounded-t-none md:rounded-l-xl" />
+          <div className="h-full w-full animate-pulse rounded-t-xl bg-gray-200 md:rounded-l-xl md:rounded-t-none" />
         </div>
       </div>
 
@@ -103,7 +103,7 @@ export const BookingCardSkeleton: React.FC = () => (
           </div>
 
           {/* Placeholder for title */}
-          <div className="mt-2 mb-2 h-5 w-2/3 animate-pulse rounded bg-gray-200" />
+          <div className="mb-2 mt-2 h-5 w-2/3 animate-pulse rounded bg-gray-200" />
 
           <div className="mb-2 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
 

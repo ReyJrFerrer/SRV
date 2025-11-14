@@ -414,7 +414,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
           {/* Details List */}
           <div className="mt-2 space-y-1.5 text-xs text-gray-600">
-
             {/* Date/Time */}
             <p className="flex items-center">
               <CalendarDaysIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
