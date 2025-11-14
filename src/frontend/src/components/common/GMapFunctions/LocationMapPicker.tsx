@@ -184,6 +184,38 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
 
   const onMapClick = useCallback(
     (e: any) => {
+      // If user clicked a POI/landmark which provides a placeId, fetch full details
+      const placeId = e?.placeId || e?.detail?.placeId;
+      const g = (window as any).google;
+
+      if (placeId) {
+        if (!placesServiceRef.current && g?.maps?.places) {
+          const target = mapRef.current || document.createElement("div");
+          placesServiceRef.current = new g.maps.places.PlacesService(target);
+        }
+
+        if (placesServiceRef.current) {
+          placesServiceRef.current.getDetails({ placeId }, (place, status) => {
+            // Use place details when available so the search input shows the landmark name/address
+            if (status === "OK" && place) {
+              processPlaceDetails(place);
+            } else {
+              // Fallback to lat/lng behavior if details unavailable
+              const ll = (e?.detail?.latLng || e?.latLng) as any;
+              const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
+              const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
+              if (typeof lat === "number" && typeof lng === "number") {
+                const pos = { lat, lng };
+                setInternalPosition(pos);
+                reverseGeocodeAndUpdate(pos);
+              }
+            }
+          });
+          return;
+        }
+      }
+
+      // Default: click on map empty area — convert lat/lng to address
       const ll = (e?.detail?.latLng || e?.latLng) as any;
       const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
       const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
@@ -193,7 +225,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         reverseGeocodeAndUpdate(pos);
       }
     },
-    [reverseGeocodeAndUpdate],
+    [reverseGeocodeAndUpdate, processPlaceDetails],
   );
 
   useEffect(() => {
