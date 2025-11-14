@@ -24,7 +24,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const { unreadChatCount } = useChatNotifications();
   const { notifications } = useProviderNotificationsWithPush();
 
-  // Provider: count new booking requests for Booking badge
+  // Section: Derived notification counts
   const newBookingRequestCount = React.useMemo(
     () =>
       notifications.filter((n) => !n.read && n.type === "new_booking_request")
@@ -32,7 +32,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     [notifications],
   );
 
-  // Notifications badge should exclude chat messages only (include new booking requests now)
+  // Section: Notification filters
   const filteredNotificationUnreadCount = React.useMemo(
     () =>
       notifications.filter((n) => !n.read && n.type !== "chat_message").length,
@@ -41,7 +41,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
     useUserProfile();
 
-  // Keep a stable avatar src to avoid flashing default while new image loads
+  // Section: Avatar caching
   const defaultProviderAvatar = "/default-provider.svg";
   const providerAvatarCacheKey = "nav:provider:avatar";
   const [stableProfileSrc, setStableProfileSrc] = React.useState<string>(() => {
@@ -57,7 +57,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   });
 
   React.useEffect(() => {
-    // While loading a new avatar, prefer showing previous or raw profile URL over default
+    // Section: Avatar loading behavior
     if (isImageLoading) {
       const raw =
         (profile?.profilePicture?.imageUrl as string | undefined) || null;
@@ -142,7 +142,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     [location.pathname],
   );
 
-  // Mark body so pages can offset content for the fixed left sidebar on desktop
+  // Section: Layout side-effect
   React.useEffect(() => {
     const apply = () => {
       if (window.matchMedia("(min-width: 768px)").matches) {
@@ -159,6 +159,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     };
   }, []);
 
+  // Section: Render
   return (
     <>
       {!location.pathname.startsWith("/provider/chat/") && (

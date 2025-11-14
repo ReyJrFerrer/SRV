@@ -227,8 +227,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // --- Action handlers ---
+  // Section: Handlers
   const handleAccept = async () => {
+    // optimistic: emit interaction immediately so badges update in UI
+    emitInteraction();
     // Check commission validation for cash bookings before accepting
     if (booking.paymentMethod === "CashOnHand") {
       if (commissionValidation.loading) {
@@ -248,6 +250,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     const success = await acceptBookingById(booking.id, scheduledDate);
     if (success) {
       // Booking has transitioned from Requested to Accepted; mark interaction of original request notification
+      // ensure interaction is recorded (redundant if emitted earlier)
       dispatchBookingInteracted(booking.id);
       navigate(`../../provider/booking/${booking.id}`);
     }
@@ -281,7 +284,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // --- Chat handler: check for existing conversation, else create, then navigate ---
+  // Section: Handlers (chat)
   const handleChatClient = async () => {
     if (!booking.clientId || !identity) return;
     try {
@@ -328,7 +331,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       );
     }
   };
-  // --- Booking state checks for button logic ---
+  // Section: Interaction helpers
+  // Emit booking-interacted when provider performs actions from the card
+  const emitInteraction = () => {
+    try {
+      dispatchBookingInteracted(booking.id);
+    } catch {}
+  };
+  // Section: Booking state checks
   const isInProgress = status === "InProgress";
 
   // --- Helper: Check if booking is scheduled for a future date ---
@@ -339,7 +349,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     return bookingDate.getTime() > now.getTime();
   })();
 
-  // --- Reusable Booking Card Content Component ---
+  // Section: UI Components
   const BookingCardContent = ({ showDurationInDetails = true }) => (
     <div className="rounded-lg bg-white shadow-lg md:flex">
       {/* Provider Profile Image Section (Vertically Centered) */}
@@ -482,15 +492,33 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         <div className="mt-5 grid grid-cols-1 gap-2 border-t border-gray-200 pt-4 sm:auto-cols-fr sm:grid-flow-col">
           <ActionButtons
             booking={booking}
-            onChat={handleChatClient}
+            onChat={() => {
+              emitInteraction();
+              handleChatClient();
+            }}
             onAccept={handleAccept}
-            onDecline={onDeclineClick}
-            onCancel={() => onCancelClick(booking)}
-            onStart={handleStartService}
-            onComplete={handleMarkAsCompleted}
-            onReport={() =>
-              navigate(`/provider/report`, { state: { bookingId: booking.id } })
-            }
+            onDecline={() => {
+              emitInteraction();
+              onDeclineClick();
+            }}
+            onCancel={() => {
+              emitInteraction();
+              onCancelClick(booking);
+            }}
+            onStart={() => {
+              emitInteraction();
+              handleStartService();
+            }}
+            onComplete={() => {
+              emitInteraction();
+              handleMarkAsCompleted();
+            }}
+            onReport={() => {
+              emitInteraction();
+              navigate(`/provider/report`, {
+                state: { bookingId: booking.id },
+              });
+            }}
             canStartServiceNow={() => !isScheduledForFuture}
             isBookingActionInProgress={isBookingActionInProgress}
             commissionValidation={commissionValidation}
@@ -500,7 +528,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     </div>
   );
 
-  // --- Card Layout ---
+  // Section: Render
   return (
     <>
       {/* Booking Card */}
