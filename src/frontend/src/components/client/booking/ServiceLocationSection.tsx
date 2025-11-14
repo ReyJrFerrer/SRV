@@ -124,7 +124,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
     if (!addr) return "";
     try {
       const plusCodeRegex = /^[A-Z0-9]{1,}\+[A-Z0-9]{1,}$/i;
-      const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
+      const parts = addr
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
       const filtered = parts.filter((p) => !plusCodeRegex.test(p));
       return filtered.join(", ").trim();
     } catch {
@@ -274,9 +277,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   ? { ...mapLocation, address: mapLocation.address ?? "" }
                   : geoLocation
                     ? {
-                          lat: geoLocation.latitude,
-                          lng: geoLocation.longitude,
-                          address: cleanedDetectedAddress,
+                        lat: geoLocation.latitude,
+                        lng: geoLocation.longitude,
+                        address: cleanedDetectedAddress,
                       }
                     : null
               }
@@ -291,7 +294,11 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   displayAddress = `${placeName}, ${cleanedPrecise}`;
                 }
 
-                setMapLocation({ ...loc, address: cleanedPrecise, formatted_address: cleanedPrecise });
+                setMapLocation({
+                  ...loc,
+                  address: cleanedPrecise,
+                  formatted_address: cleanedPrecise,
+                });
                 setMapPreciseAddress(cleanedPrecise);
                 setMapDisplayAddress(displayAddress);
               }}

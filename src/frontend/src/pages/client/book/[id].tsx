@@ -103,7 +103,10 @@ const BookingPage: React.FC = () => {
     if (!addr) return "";
     try {
       const plusCodeRegex = /^[A-Z0-9]{1,}\+[A-Z0-9]{1,}$/i;
-      const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
+      const parts = addr
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
       const filtered = parts.filter((p) => !plusCodeRegex.test(p));
       return filtered.join(", ").trim();
     } catch {
@@ -416,15 +419,15 @@ const BookingPage: React.FC = () => {
       const loc = { lat: geoLocation.latitude, lng: geoLocation.longitude };
       geocoder.geocode({ location: loc }, (results: any, status: string) => {
         if (status === "OK" && results && results[0]) {
-            const addr = results[0].formatted_address as string;
-            const cleaned = stripPlusCodes(addr);
-            setDetectedAddress(cleaned);
-            setDetectedStatus("ok");
-            setMapLocation(
-              (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: cleaned },
-            );
-            if (!mapPreciseAddress) setMapPreciseAddress(cleaned);
-            if (!mapDisplayAddress) setMapDisplayAddress(cleaned);
+          const addr = results[0].formatted_address as string;
+          const cleaned = stripPlusCodes(addr);
+          setDetectedAddress(cleaned);
+          setDetectedStatus("ok");
+          setMapLocation(
+            (prev) => prev ?? { lat: loc.lat, lng: loc.lng, address: cleaned },
+          );
+          if (!mapPreciseAddress) setMapPreciseAddress(cleaned);
+          if (!mapDisplayAddress) setMapDisplayAddress(cleaned);
         } else {
           setDetectedStatus("failed");
         }
