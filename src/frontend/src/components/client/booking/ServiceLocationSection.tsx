@@ -116,7 +116,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
   // Helpers
   const rawAccuracy = location?.accuracy;
-  const scaledAccuracy = typeof rawAccuracy === "number" && rawAccuracy > 0 ? Math.min(rawAccuracy * 0.25, 100) : undefined;
+  const scaledAccuracy =
+    typeof rawAccuracy === "number" && rawAccuracy > 0
+      ? Math.min(rawAccuracy * 0.25, 100)
+      : undefined;
   return (
     <div
       className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -247,7 +250,11 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       {mapMode === "custom" && !showFallbackForms && (
         <div className="mb-4">
           <Suspense
-            fallback={<div className="flex h-72 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500">Loading map…</div>}
+            fallback={
+              <div className="flex h-72 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500">
+                Loading map…
+              </div>
+            }
           >
             <LocationMapPicker
               value={
@@ -263,7 +270,8 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               }
               onChange={(loc: any) => {
                 setMapLocation(loc);
-                const preciseAddressForDB = loc.formatted_address || loc.address || "";
+                const preciseAddressForDB =
+                  loc.formatted_address || loc.address || "";
                 const placeName = loc.rawName;
                 let displayAddress = preciseAddressForDB;
                 if (placeName && !preciseAddressForDB.startsWith(placeName)) {
@@ -295,14 +303,24 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   </span>
                 </div>
               )}
-              {mapPreciseAddress && mapDisplayAddress && mapDisplayAddress !== mapPreciseAddress && (
-                <div className="flex items-start gap-1">
-                  <span className="truncate text-[10px] text-gray-500" title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation.">
-                    Provider reference: {mapPreciseAddress}
-                  </span>
-                  <span className="cursor-help text-[10px] text-blue-400" title="Used internally to help the provider navigate accurately.">(i)</span>
-                </div>
-              )}
+              {mapPreciseAddress &&
+                mapDisplayAddress &&
+                mapDisplayAddress !== mapPreciseAddress && (
+                  <div className="flex items-start gap-1">
+                    <span
+                      className="truncate text-[10px] text-gray-500"
+                      title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
+                    >
+                      Provider reference: {mapPreciseAddress}
+                    </span>
+                    <span
+                      className="cursor-help text-[10px] text-blue-400"
+                      title="Used internally to help the provider navigate accurately."
+                    >
+                      (i)
+                    </span>
+                  </div>
+                )}
             </div>
           )}
         </div>
