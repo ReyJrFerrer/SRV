@@ -150,7 +150,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
       {/* Controls */}
       {!showFallbackForms && locationStatus !== "denied" && (
-        <div className="mb-4 flex gap-3 text-xs font-medium">
+        <div className="mb-4 flex flex-col sm:flex-row sm:gap-3 gap-2 text-xs font-medium">
           <button
             type="button"
             onClick={() => setMapMode("detected")}
@@ -172,6 +172,16 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             }`}
           >
             Pin / Search Location
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowFallbackForms(true);
+              setLocationInputMode("detected");
+            }}
+            className={`flex-1 rounded-lg border px-3 py-2 transition text-xs font-medium text-gray-700 hover:bg-gray-50`}
+          >
+            Use Manual Address Form
           </button>
         </div>
       )}
@@ -312,18 +322,6 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
       {/* Hide the quick 'Use Manual Address Form' toggle when permission is
           denied because we immediately show the manual city/province flow */}
-      {!showFallbackForms && locationStatus !== "denied" && (
-        <button
-          type="button"
-          onClick={() => {
-            setShowFallbackForms(true);
-            setLocationInputMode("detected");
-          }}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Use Manual Address Form
-        </button>
-      )}
 
       {showFallbackForms && (
         <div className="mb-4 flex flex-wrap gap-4">
