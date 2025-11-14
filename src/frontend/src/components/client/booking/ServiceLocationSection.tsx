@@ -207,8 +207,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       {mapMode === "detected" && !showFallbackForms && (
         <div className="mb-2.5">
           <div className="mb-2 text-[11px] font-medium text-gray-600">
-            Automatically detected via browser geolocation. Drop a custom pin if
-            this is inaccurate.
+            Automatically detected via browser geolocation.
           </div>
           {locationStatus === "allowed" ? (
             <div className="overflow-hidden rounded-xl border border-gray-200">
