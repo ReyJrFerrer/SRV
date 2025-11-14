@@ -50,3 +50,6 @@ export { ProcessedCertificateCard } from "./ProcessedCertificateCard";
 export { BookingStatsCards } from "./BookingStatsCards";
 export { BookingFilters } from "./BookingFilters";
 export { BookingsList } from "./BookingsList";
+export { StarRatingDisplay } from "./StarRatingDisplay";
+export { ServiceReviewItem } from "./ServiceReviewItem";
+export { ConfirmModal } from "./ConfirmModal";

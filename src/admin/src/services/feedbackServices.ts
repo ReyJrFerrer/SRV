@@ -1,5 +1,6 @@
 import { callFirebaseFunction, requireAuth } from "./coreUtils";
 import { sendTicketStatusNotification } from "./notificationServices";
+import { handlePromiseSettledArrayResults } from "../utils/promiseUtils";
 
 /**
  * Get detailed reviews for a user (received, given as client, given as provider)
@@ -32,24 +33,18 @@ export const getUserDetailedReviews = async (
         }),
       ]);
 
-    // callFirebaseFunction already extracts data from {success: true, data: [...]}
-    const receivedReviews =
-      receivedResult.status === "fulfilled" &&
-      Array.isArray(receivedResult.value)
-        ? receivedResult.value
-        : [];
-
-    const givenAsClientReviews =
-      givenAsClientResult.status === "fulfilled" &&
-      Array.isArray(givenAsClientResult.value)
-        ? givenAsClientResult.value
-        : [];
-
-    const givenAsProviderReviews =
-      givenAsProviderResult.status === "fulfilled" &&
-      Array.isArray(givenAsProviderResult.value)
-        ? givenAsProviderResult.value
-        : [];
+    const receivedReviews = handlePromiseSettledArrayResults(
+      [receivedResult],
+      [],
+    );
+    const givenAsClientReviews = handlePromiseSettledArrayResults(
+      [givenAsClientResult],
+      [],
+    );
+    const givenAsProviderReviews = handlePromiseSettledArrayResults(
+      [givenAsProviderResult],
+      [],
+    );
 
     return {
       receivedReviews,

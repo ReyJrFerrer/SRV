@@ -4,6 +4,8 @@ import { adminServiceCanister } from "../services/adminServiceCanister";
 import { authCanisterService } from "../../../frontend/src/services/authCanisterService";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
+import { formatTimestamp } from "../utils/formatUtils";
+import { DEFAULT_USER_IMAGE, getProfileImage, shouldUseDefaultImage } from "../utils/profileUtils";
 
 interface Message {
   id: string;
@@ -23,7 +25,6 @@ export const UserChatHistoryPage: React.FC = () => {
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const DEFAULT_USER_IMAGE = "/default-provider.svg";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,8 +42,9 @@ export const UserChatHistoryPage: React.FC = () => {
         setOtherUserName(location.state.otherUserName || "");
         setOtherUserId(location.state.otherUserId || "");
         const navImage = location.state.otherUserImage;
-        const isDefault = !navImage || navImage === DEFAULT_USER_IMAGE;
-        setOtherUserImage(isDefault ? DEFAULT_USER_IMAGE : navImage);
+        setOtherUserImage(
+          shouldUseDefaultImage(navImage) ? DEFAULT_USER_IMAGE : navImage,
+        );
       }
       loadMessages();
       loadOtherUserProfile();
@@ -99,10 +101,7 @@ export const UserChatHistoryPage: React.FC = () => {
           if (!otherUserName) {
             setOtherUserName(profile.name);
           }
-          // Only update if profilePicture exists
-          if (profile.profilePicture && profile.profilePicture.imageUrl) {
-            setOtherUserImage(profile.profilePicture.imageUrl);
-          }
+          setOtherUserImage(getProfileImage(profile.profilePicture));
         }
       }
     } catch (e) {}
@@ -115,33 +114,11 @@ export const UserChatHistoryPage: React.FC = () => {
       const profile = await authCanisterService.getProfile(userId);
       if (profile) {
         setUserName(profile.name);
-        if (profile.profilePicture && profile.profilePicture.imageUrl) {
-          setUserImage(profile.profilePicture.imageUrl);
-        }
+        setUserImage(getProfileImage(profile.profilePicture));
       }
     } catch (e) {}
   };
 
-  const formatTimestamp = (dateStr?: string | Date) => {
-    if (!dateStr) return "";
-    const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-    const diffDays = diffHours / 24;
-
-    if (diffHours < 1) return "Just now";
-    if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
-    if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
-    return (
-      date.toLocaleDateString() +
-      " " +
-      date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    );
-  };
 
   const isFromUser = (senderId: string): boolean => {
     return senderId === userId;
@@ -170,9 +147,7 @@ export const UserChatHistoryPage: React.FC = () => {
             <div className="relative h-11 w-11">
               <ProfileImage
                 profilePictureUrl={
-                  otherUserImage !== DEFAULT_USER_IMAGE
-                    ? otherUserImage
-                    : undefined
+                  !shouldUseDefaultImage(otherUserImage) ? otherUserImage : undefined
                 }
                 userName={otherUserName || "User"}
                 size="h-11 w-11"
@@ -250,7 +225,7 @@ export const UserChatHistoryPage: React.FC = () => {
                   <div className="relative h-9 w-9 flex-shrink-0">
                     <ProfileImage
                       profilePictureUrl={
-                        userImage !== DEFAULT_USER_IMAGE ? userImage : undefined
+                        !shouldUseDefaultImage(userImage) ? userImage : undefined
                       }
                       userName={userName || "User"}
                       size="h-9 w-9"

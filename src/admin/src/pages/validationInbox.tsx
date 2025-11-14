@@ -22,13 +22,11 @@ export const ValidationInboxPage: React.FC = () => {
   const [servicesWithCertificates, setServicesWithCertificates] = useState<
     any[]
   >([]);
-  const [certificateLoading, setCertificateLoading] = useState(false);
-  const [approvingCertificate, setApprovingCertificate] = useState<
-    string | null
-  >(null);
-  const [rejectingCertificate, setRejectingCertificate] = useState<
-    string | null
-  >(null);
+  const [loading, setLoading] = useState({
+    certificates: false,
+    approving: null as string | null,
+    rejecting: null as string | null,
+  });
 
   // Statistics state
   const [stats, setStats] = useState({
@@ -75,7 +73,7 @@ export const ValidationInboxPage: React.FC = () => {
 
   // Load services with certificates
   const loadServicesWithCertificates = async () => {
-    setCertificateLoading(true);
+    setLoading((prev) => ({ ...prev, certificates: true }));
     try {
       const { adminServiceCanister } = await import(
         "../services/adminServiceCanister"
@@ -85,7 +83,7 @@ export const ValidationInboxPage: React.FC = () => {
     } catch (error) {
       console.error("Error loading services with certificates:", error);
     } finally {
-      setCertificateLoading(false);
+      setLoading((prev) => ({ ...prev, certificates: false }));
     }
   };
 
@@ -138,7 +136,7 @@ export const ValidationInboxPage: React.FC = () => {
     certificateUrl: string,
   ) => {
     const certificateKey = `${service.serviceId}-${certificateIndex}`;
-    setApprovingCertificate(certificateKey);
+    setLoading((prev) => ({ ...prev, approving: certificateKey }));
     try {
       const mediaId = await extractMediaIdFromUrl(certificateUrl);
 
@@ -162,7 +160,7 @@ export const ValidationInboxPage: React.FC = () => {
     } catch (error) {
       console.error("Error approving certificate:", error);
     } finally {
-      setApprovingCertificate(null);
+      setLoading((prev) => ({ ...prev, approving: null }));
     }
   };
 
@@ -172,7 +170,7 @@ export const ValidationInboxPage: React.FC = () => {
     certificateUrl: string,
   ) => {
     const certificateKey = `${service.serviceId}-${certificateIndex}`;
-    setRejectingCertificate(certificateKey);
+    setLoading((prev) => ({ ...prev, rejecting: certificateKey }));
     try {
       const mediaId = await extractMediaIdFromUrl(certificateUrl);
 
@@ -196,7 +194,7 @@ export const ValidationInboxPage: React.FC = () => {
     } catch (error) {
       console.error("Error rejecting certificate:", error);
     } finally {
-      setRejectingCertificate(null);
+      setLoading((prev) => ({ ...prev, rejecting: null }));
     }
   };
   const handleUndoCertificate = async (certificate: any) => {
@@ -273,7 +271,7 @@ export const ValidationInboxPage: React.FC = () => {
                   }
                 : undefined
             }
-            loading={certificateLoading}
+            loading={loading.certificates}
             emptyMessage={{
               title: "All caught up!",
               description:
@@ -293,10 +291,10 @@ export const ValidationInboxPage: React.FC = () => {
                       onApprove={handleApproveCertificate}
                       onReject={handleRejectCertificate}
                       isApproving={
-                        approvingCertificate === `${service.serviceId}-${index}`
+                        loading.approving === `${service.serviceId}-${index}`
                       }
                       isRejecting={
-                        rejectingCertificate === `${service.serviceId}-${index}`
+                        loading.rejecting === `${service.serviceId}-${index}`
                       }
                       onCardClick={(
                         service,

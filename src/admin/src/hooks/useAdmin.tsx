@@ -2,18 +2,16 @@ import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import {
   adminServiceCanister,
-  AdminServiceError,
   FrontendSystemStats,
 } from "../services/adminServiceCanister";
 import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
-import { MediaServiceError } from "../services/mediaServiceCanister";
+import { handleError, isNetworkError } from "../utils/errorUtils";
 import {
   serviceCanister,
   ServiceData,
   CategoryData,
 } from "../services/serviceCanister";
 
-// Interface for service provider data
 export interface ServiceProviderData {
   id: string;
   name: string;
@@ -31,7 +29,6 @@ export interface ServiceProviderData {
   status?: string;
 }
 
-// Granular loading states interface
 interface AdminLoadingStates {
   systemStats: boolean;
   serviceProviders: boolean;
@@ -41,46 +38,29 @@ interface AdminLoadingStates {
   bookings: boolean;
 }
 
-// Admin hook return type
 interface UseAdminReturn {
-  // Loading states
   loading: AdminLoadingStates;
-
-  // Data states
   systemStats: FrontendSystemStats | null;
   serviceProviders: ServiceProviderData[];
   users: Profile[];
   bookings: any[];
   commissionTransactions: any[];
-
-  // Service data states
   services: ServiceData[];
   serviceCategories: CategoryData[];
-
-  // System Statistics
   refreshSystemStats: (showSuccessToast?: boolean) => Promise<void>;
-
-  // User Management
   refreshUsers: (showSuccessToast?: boolean) => Promise<void>;
   updateUserLockStatus: (userId: string, isLocked: boolean) => void;
   getUserLockStatus: (userId: string) => boolean;
-
-  // Service Provider Management
   refreshServiceProviders: (showSuccessToast?: boolean) => Promise<void>;
-
-  // Service Management
   refreshServices: (showSuccessToast?: boolean) => Promise<void>;
   refreshServiceCategories: (showSuccessToast?: boolean) => Promise<void>;
   refreshBookings: (showSuccessToast?: boolean) => Promise<void>;
   getServicesWithCertificates: () => Promise<any[]>;
   getReportsFromFeedbackCanister: () => Promise<any[]>;
-
-  // Utility functions
   refreshAll: () => Promise<void>;
 }
 
 export const useAdmin = (): UseAdminReturn => {
-  // Initialize loading states
   const [loading, setLoading] = useState<AdminLoadingStates>({
     systemStats: false,
     serviceProviders: false,
@@ -90,7 +70,6 @@ export const useAdmin = (): UseAdminReturn => {
     bookings: false,
   });
 
-  // Initialize data states
   const [systemStats, setSystemStats] = useState<FrontendSystemStats | null>(
     null,
   );
@@ -98,8 +77,6 @@ export const useAdmin = (): UseAdminReturn => {
     ServiceProviderData[]
   >([]);
   const [users, setUsers] = useState<Profile[]>([]);
-
-  // Service data states
   const [services, setServices] = useState<ServiceData[]>([]);
   const [serviceCategories, setServiceCategories] = useState<CategoryData[]>(
     [],
@@ -109,7 +86,6 @@ export const useAdmin = (): UseAdminReturn => {
     [],
   );
 
-  // Initialize userLockStatus from localStorage
   const [userLockStatus, setUserLockStatus] = useState<Record<string, boolean>>(
     () => {
       try {
@@ -121,12 +97,10 @@ export const useAdmin = (): UseAdminReturn => {
     },
   );
 
-  // Initial data loading
   useEffect(() => {
     refreshAll();
   }, []);
 
-  // Helper function to handle loading state updates
   const updateLoadingState = useCallback(
     (key: keyof AdminLoadingStates, value: boolean) => {
       setLoading((prev) => ({ ...prev, [key]: value }));
@@ -134,21 +108,13 @@ export const useAdmin = (): UseAdminReturn => {
     [],
   );
 
-  // Helper function to handle errors
-  const handleError = useCallback((error: unknown, context: string) => {
-    if (
-      error instanceof AdminServiceError ||
-      error instanceof MediaServiceError
-    ) {
-      toast.error(`${context}: ${error.message}`);
-    } else if (error instanceof Error) {
-      toast.error(`${context}: ${error.message}`);
-    } else {
-      toast.error(`${context}: An unexpected error occurred`);
-    }
-  }, []);
+  const handleErrorCallback = useCallback(
+    (error: unknown, context: string) => {
+      handleError(error, context, toast);
+    },
+    [],
+  );
 
-  // System Statistics
   const refreshSystemStats = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("systemStats", true);
@@ -160,15 +126,14 @@ export const useAdmin = (): UseAdminReturn => {
         }
       } catch (error) {
         console.error("[refreshSystemStats] Error:", error);
-        handleError(error, "Failed to refresh system statistics");
+        handleErrorCallback(error, "Failed to refresh system statistics");
       } finally {
         updateLoadingState("systemStats", false);
       }
     },
-    [updateLoadingState, handleError],
+    [updateLoadingState, handleErrorCallback],
   );
 
-  // User Management
   const refreshUsers = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("users", true);
@@ -176,11 +141,9 @@ export const useAdmin = (): UseAdminReturn => {
         const allUsers = await adminServiceCanister.getAllUsers();
         setUsers(allUsers);
 
-        // Also fetch and sync lock statuses from Firestore
         try {
           const lockStatuses =
             await adminServiceCanister.getAllUserLockStatuses();
-          // Batch update localStorage with lock statuses from Firestore
           setUserLockStatus((prevStatus) => {
             const newStatus = { ...prevStatus, ...lockStatuses };
             try {
@@ -197,7 +160,6 @@ export const useAdmin = (): UseAdminReturn => {
             return newStatus;
           });
         } catch (error) {
-          // If fetching lock statuses fails, log but don't fail the whole refresh
           console.warn(
             "Failed to fetch user lock statuses, continuing with cached data:",
             error,
@@ -208,20 +170,18 @@ export const useAdmin = (): UseAdminReturn => {
           toast.success("Users updated successfully");
         }
       } catch (error) {
-        handleError(error, "Failed to refresh users");
+        handleErrorCallback(error, "Failed to refresh users");
       } finally {
         updateLoadingState("users", false);
       }
     },
-    [updateLoadingState, handleError],
+    [updateLoadingState, handleErrorCallback],
   );
 
-  // Service Provider Management
   const refreshServiceProviders = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("serviceProviders", true);
       try {
-        // Get service providers from users with ServiceProvider role
         const allUsers = await adminServiceCanister.getAllUsers();
         const providers = allUsers
           .filter((user) => {
@@ -248,15 +208,14 @@ export const useAdmin = (): UseAdminReturn => {
           toast.success("Service provider data updated successfully");
         }
       } catch (error) {
-        handleError(error, "Failed to refresh service providers");
+        handleErrorCallback(error, "Failed to refresh service providers");
       } finally {
         updateLoadingState("serviceProviders", false);
       }
     },
-    [updateLoadingState, handleError],
+    [updateLoadingState, handleErrorCallback],
   );
 
-  // Update user lock status in local state and localStorage
   const updateUserLockStatus = useCallback(
     (userId: string, isLocked: boolean) => {
       setUserLockStatus((prevStatus) => {
@@ -277,7 +236,6 @@ export const useAdmin = (): UseAdminReturn => {
     [],
   );
 
-  // Get user lock status
   const getUserLockStatus = useCallback(
     (userId: string): boolean => {
       return userLockStatus[userId] || false;
@@ -285,7 +243,6 @@ export const useAdmin = (): UseAdminReturn => {
     [userLockStatus],
   );
 
-  // Service Management Functions
   const refreshServices = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("services", true);
@@ -296,12 +253,12 @@ export const useAdmin = (): UseAdminReturn => {
           toast.success(`Successfully loaded ${services.length} services`);
         }
       } catch (error) {
-        handleError(error, "Failed to refresh services");
+        handleErrorCallback(error, "Failed to refresh services");
       } finally {
         updateLoadingState("services", false);
       }
     },
-    [updateLoadingState, handleError],
+    [updateLoadingState, handleErrorCallback],
   );
 
   const refreshBookings = useCallback(
@@ -317,23 +274,15 @@ export const useAdmin = (): UseAdminReturn => {
           );
         }
       } catch (error: any) {
-        // Suppress CORS/network errors - they're already handled gracefully in getBookingsData
-        const isNetworkError =
-          error?.code === "ERR_FAILED" ||
-          error?.message?.includes("CORS") ||
-          error?.name === "FirebaseError" ||
-          (error?.code && String(error.code).includes("internal"));
-
-        if (!isNetworkError) {
+        if (!isNetworkError(error)) {
           console.error("[refreshBookings] Error refreshing bookings:", error);
-          handleError(error, "Failed to refresh bookings");
+          handleErrorCallback(error, "Failed to refresh bookings");
         }
-        // Data gracefully falls back to systemStats, so no action needed
       } finally {
         updateLoadingState("bookings", false);
       }
     },
-    [updateLoadingState, handleError],
+    [updateLoadingState, handleErrorCallback],
   );
 
   const refreshServiceCategories = useCallback(
@@ -348,12 +297,12 @@ export const useAdmin = (): UseAdminReturn => {
           );
         }
       } catch (error) {
-        handleError(error, "Failed to refresh service categories");
+        handleErrorCallback(error, "Failed to refresh service categories");
       } finally {
         updateLoadingState("serviceCategories", false);
       }
     },
-    [updateLoadingState, handleError],
+    [updateLoadingState, handleErrorCallback],
   );
 
   const getServicesWithCertificates = useCallback(async () => {
@@ -361,10 +310,10 @@ export const useAdmin = (): UseAdminReturn => {
       const services = await adminServiceCanister.getServicesWithCertificates();
       return services;
     } catch (error) {
-      handleError(error, "Failed to get services with certificates");
+      handleErrorCallback(error, "Failed to get services with certificates");
       return [];
     }
-  }, [handleError]);
+  }, [handleErrorCallback]);
 
   const getReportsFromFeedbackCanister = useCallback(async () => {
     try {
@@ -374,15 +323,13 @@ export const useAdmin = (): UseAdminReturn => {
       const reports = await getReportsFromFeedbackCanister();
       return reports;
     } catch (error) {
-      handleError(error, "Failed to get reports from feedback canister");
+      handleErrorCallback(error, "Failed to get reports from feedback canister");
       return [];
     }
-  }, [handleError]);
+  }, [handleErrorCallback]);
 
-  // Utility function to refresh all data
   const refreshAll = useCallback(async () => {
     try {
-      // First, refresh all data in parallel (except system stats)
       const refreshPromises = [
         refreshUsers(),
         refreshServiceProviders(),
@@ -396,7 +343,7 @@ export const useAdmin = (): UseAdminReturn => {
 
       toast.success("All admin data refreshed successfully");
     } catch (error) {
-      handleError(error, "Failed to refresh all data");
+      handleErrorCallback(error, "Failed to refresh all data");
     }
   }, [
     refreshSystemStats,
@@ -405,10 +352,9 @@ export const useAdmin = (): UseAdminReturn => {
     refreshServices,
     refreshServiceCategories,
     refreshBookings,
-    handleError,
+    handleErrorCallback,
   ]);
 
-  // Refresh system stats when bookings change
   useEffect(() => {
     if (bookings.length > 0 || commissionTransactions.length > 0) {
       refreshSystemStats();
@@ -416,39 +362,24 @@ export const useAdmin = (): UseAdminReturn => {
   }, [bookings, commissionTransactions, refreshSystemStats]);
 
   return {
-    // Loading states
     loading,
-
-    // Data states
     systemStats,
     serviceProviders,
     users,
-
-    // Service data states
     services,
     serviceCategories,
     bookings,
     commissionTransactions,
-
-    // System Statistics
     refreshSystemStats,
-
-    // User Management
     refreshUsers,
     updateUserLockStatus,
     getUserLockStatus,
-
-    // Service Provider Management
     refreshServiceProviders,
-
-    // Service Management
     refreshServices,
     refreshServiceCategories,
     refreshBookings,
     getServicesWithCertificates,
     getReportsFromFeedbackCanister,
-
-    // Utility functions
     refreshAll,
   };
 };
