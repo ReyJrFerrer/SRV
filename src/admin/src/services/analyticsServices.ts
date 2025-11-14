@@ -83,25 +83,31 @@ export const getBookingsData = async (): Promise<{
     const projectId = functionsInstance.app.options.projectId || "devsrv-rey";
     const region = "us-central1";
 
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const baseUrl = isLocal 
+    const isLocal =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    const baseUrl = isLocal
       ? `http://127.0.0.1:5001/${projectId}/${region}`
       : `https://${region}-${projectId}.cloudfunctions.net`;
-    
+
     const url = `${baseUrl}/getBookingsData`;
 
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${idToken}`,
+        Authorization: `Bearer ${idToken}`,
       },
       body: JSON.stringify({ data: {} }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: "Unknown error" }));
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`,
+      );
     }
 
     const result = await response.json();
