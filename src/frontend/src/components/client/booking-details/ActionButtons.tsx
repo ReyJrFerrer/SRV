@@ -15,7 +15,7 @@ import {
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 type ReviewButtonContent = {
-  text: string;
+  text: string | React.ReactNode;
   icon?: React.ReactNode;
   onClick?: () => void;
   to?: string;

@@ -381,8 +381,13 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     if (canUserReview === true) {
       // User can submit a review
       return {
-        text: "Rate Provider",
-        icon: <StarIcon className="mr-1.5 h-4 w-4" />,
+        text: (
+          <>
+            <span className="sm:hidden">Rate</span>
+            <span className="hidden sm:inline">Rate Provider</span>
+          </>
+        ),
+        icon: <StarIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />,
         className: "bg-yellow-500 hover:bg-yellow-600",
         disabled: false,
         onClick: undefined,
@@ -392,7 +397,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         },
       };
     }
-
     // Default state (null - still loading or error)
     return {
       text: "Rate Provider",

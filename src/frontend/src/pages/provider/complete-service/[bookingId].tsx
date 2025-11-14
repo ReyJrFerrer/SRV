@@ -246,14 +246,14 @@ const CompleteServicePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-2xl font-extrabold tracking-tight text-black">
             Complete Service
           </h1>
         </div>
       </header>
 
       <main className="container mx-auto flex flex-grow items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+        <div className="mt-3 w-full max-w-md space-y-8 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
           <div className="flex flex-col items-center">
             <CheckCircleIcon className="mb-2 h-12 w-12 text-green-500" />
             <h2 className="mb-1 text-center text-2xl font-bold text-blue-900">
@@ -382,7 +382,7 @@ const CompleteServicePage: React.FC = () => {
                   <>
                     <CheckCircleIcon className="h-5 w-5" />
                     {booking!.paymentMethod === "CashOnHand"
-                      ? "Confirm Payment & Complete"
+                      ? "Confirm Payment"
                       : "Complete Service & Release Payment"}
                   </>
                 )}
