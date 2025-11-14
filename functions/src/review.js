@@ -1404,10 +1404,7 @@ exports.getProviderReviews = functions.https.onCall(async (data, _context) => {
   const {providerId, limit = 20, offset = 0} = payload;
 
   if (!providerId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Provider ID is required",
-    );
+    return {success: true, data: []};
   }
 
   // Convert limit and offset to integers

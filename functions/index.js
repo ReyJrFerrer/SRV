@@ -84,6 +84,7 @@ const {
   validateCertificate,
   updateCertificateValidationStatus,
   autoReactivateSuspendedAccounts,
+  getBookingsData,
 } = require("./src/admin");
 
 // Import Commission functions
@@ -458,6 +459,7 @@ exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
 exports.validateCertificate = validateCertificate;
 exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
+exports.getBookingsData = getBookingsData;
 
 // Export Scheduled Admin Functions
 exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;

@@ -120,6 +120,8 @@ export const getBookingsData = async (): Promise<{
     const isNetworkError =
       error?.code === "ERR_FAILED" ||
       error?.message?.includes("CORS") ||
+      error?.message === "Failed to fetch" ||
+      error?.name === "TypeError" ||
       error?.name === "FirebaseError" ||
       (error?.code && error.code.includes("internal"));
 
