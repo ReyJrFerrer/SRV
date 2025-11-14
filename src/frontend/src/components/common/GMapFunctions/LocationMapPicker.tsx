@@ -49,6 +49,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   }>(value ? { lat: value.lat, lng: value.lng } : baguioCenter);
 
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(
     null,
   );
@@ -146,6 +147,17 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     [onChange, persistLocation],
   );
 
+  // When the map becomes ready, ensure it is centered on the current internal position.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    try {
+      mapRef.current.panTo(internalPosition);
+      // Only bump zoom if the map is currently at a very low zoom
+      const currentZoom = mapRef.current.getZoom?.() ?? 0;
+      if ((currentZoom ?? 0) < 15) mapRef.current.setZoom(16);
+    } catch {}
+  }, [mapReady, internalPosition]);
+
   const reverseGeocodeAndUpdate = useCallback(
     (pos: { lat: number; lng: number }) => {
       if (!geocoderRef.current && (window as any).google) {
@@ -172,6 +184,38 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
 
   const onMapClick = useCallback(
     (e: any) => {
+      // If user clicked a POI/landmark which provides a placeId, fetch full details
+      const placeId = e?.placeId || e?.detail?.placeId;
+      const g = (window as any).google;
+
+      if (placeId) {
+        if (!placesServiceRef.current && g?.maps?.places) {
+          const target = mapRef.current || document.createElement("div");
+          placesServiceRef.current = new g.maps.places.PlacesService(target);
+        }
+
+        if (placesServiceRef.current) {
+          placesServiceRef.current.getDetails({ placeId }, (place, status) => {
+            // Use place details when available so the search input shows the landmark name/address
+            if (status === "OK" && place) {
+              processPlaceDetails(place);
+            } else {
+              // Fallback to lat/lng behavior if details unavailable
+              const ll = (e?.detail?.latLng || e?.latLng) as any;
+              const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
+              const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
+              if (typeof lat === "number" && typeof lng === "number") {
+                const pos = { lat, lng };
+                setInternalPosition(pos);
+                reverseGeocodeAndUpdate(pos);
+              }
+            }
+          });
+          return;
+        }
+      }
+
+      // Default: click on map empty area — convert lat/lng to address
       const ll = (e?.detail?.latLng || e?.latLng) as any;
       const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
       const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
@@ -181,7 +225,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         reverseGeocodeAndUpdate(pos);
       }
     },
-    [reverseGeocodeAndUpdate],
+    [reverseGeocodeAndUpdate, processPlaceDetails],
   );
 
   useEffect(() => {
@@ -318,9 +362,11 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         <Map
           style={containerStyle}
           defaultCenter={baguioCenter}
-          defaultZoom={12}
-          center={internalPosition}
-          onCameraChanged={(ev) => (mapRef.current = ev.map)}
+          defaultZoom={18}
+          onCameraChanged={(ev) => {
+            mapRef.current = ev.map;
+            setMapReady(true);
+          }}
           onClick={onMapClick}
           disableDefaultUI={true}
           zoomControl={true}
@@ -337,6 +383,10 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
               if (typeof lat === "number" && typeof lng === "number") {
                 const pos = { lat, lng };
                 setInternalPosition(pos);
+                // Pan the map to the new marker position without forcing zoom changes
+                try {
+                  mapRef.current?.panTo(pos);
+                } catch {}
                 reverseGeocodeAndUpdate(pos);
               }
             }}
