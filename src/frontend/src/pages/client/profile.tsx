@@ -260,9 +260,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           <li className="flex flex-col gap-1 rounded-lg border border-yellow-100 bg-yellow-50 p-3">
             <div className="flex items-center gap-3">
               <StarIcon className="h-6 w-6 text-yellow-500" />
-              <span className="font-semibold text-yellow-700">
-                Reliable
-              </span>
+              <span className="font-semibold text-yellow-700">Reliable</span>
               <span className="text-xs text-gray-500">Score: 20.01 - 50.0</span>
             </div>
             <span className="text-xs text-gray-700">
@@ -284,9 +282,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           <li className="flex flex-col gap-1 rounded-lg border border-green-200 bg-green-50 p-3">
             <div className="flex items-center gap-3">
               <ShieldCheckIcon className="h-6 w-6 text-green-600" />
-              <span className="font-semibold text-green-700">
-                Premium
-              </span>
+              <span className="font-semibold text-green-700">Premium</span>
               <span className="text-xs text-gray-500">
                 Score: 80.01 - 100.0
               </span>
