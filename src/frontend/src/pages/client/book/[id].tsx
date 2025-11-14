@@ -189,9 +189,11 @@ const BookingPage: React.FC = () => {
   const draftKey = serviceId ? `${DRAFT_KEY_PREFIX}${serviceId}` : null;
   // Section: UX helpers
   const userTouchedRef = useRef<boolean>(false);
+  const suppressDraftSaveRef = useRef<boolean>(false);
   const pageContainerRef = useRef<HTMLDivElement | null>(null);
 
   const saveDraftImmediate = useCallback(() => {
+    if (suppressDraftSaveRef.current) return;
     if (!draftKey) return;
     try {
       const payload: BookingDraft = {
@@ -383,7 +385,13 @@ const BookingPage: React.FC = () => {
   };
 
   const handleDiscardDraft = () => {
-    if (draftKey) localStorage.removeItem(draftKey);
+    // prevent immediate re-save while removing the draft
+    suppressDraftSaveRef.current = true;
+    try {
+      if (draftKey) localStorage.removeItem(draftKey);
+    } catch {}
+    // allow saves again on next tick
+    setTimeout(() => (suppressDraftSaveRef.current = false), 50);
     setParsedDraft(null);
     setShowRestorePrompt(false);
   };
@@ -1277,6 +1285,8 @@ const BookingPage: React.FC = () => {
         };
         // clear saved draft for this service now that booking succeeded
         try {
+          // prevent component-unmount autosave from recreating the draft
+          suppressDraftSaveRef.current = true;
           if (draftKey) localStorage.removeItem(draftKey);
         } catch (err) {
           // ignore
