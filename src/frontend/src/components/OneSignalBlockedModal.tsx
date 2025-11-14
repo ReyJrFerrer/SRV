@@ -94,9 +94,30 @@ export const OneSignalBlockedModal: React.FC<OneSignalBlockedModalProps> = ({
           </p>
         </div>
 
+        {/* Brave-specific guidance */}
+        <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 sm:mb-6 sm:p-4">
+          <p className="text-xs text-orange-800 sm:text-sm">
+            <strong>Important for Brave users:</strong> The Brave browser
+            frequently blocks third-party push notification services and may
+            prevent SRV from delivering notifications even after you allow them.
+            If you rely on real-time alerts, consider using Chrome, Edge, or
+            Firefox for the best experience. If you prefer to stay on Brave, try
+            disabling <em>Shields</em> for this site or temporarily disabling
+            any privacy extensions, then refresh the page.
+          </p>
+        </div>
+
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            try {
+              localStorage.setItem(
+                "oneSignalBlockedModalDismissedAt",
+                String(Date.now()),
+              );
+            } catch (e) {}
+            onClose();
+          }}
           className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:px-6 sm:py-3 sm:text-base"
         >
           I Understand
@@ -105,3 +126,18 @@ export const OneSignalBlockedModal: React.FC<OneSignalBlockedModalProps> = ({
     </div>
   );
 };
+
+// Helper: parent components can use this to avoid re-showing the modal for a period
+export function isOneSignalBlockedModalDismissed(
+  maxAgeMs = 24 * 60 * 60 * 1000,
+) {
+  try {
+    const v = localStorage.getItem("oneSignalBlockedModalDismissedAt");
+    if (!v) return false;
+    const ts = Number(v);
+    if (Number.isNaN(ts)) return false;
+    return Date.now() - ts < maxAgeMs;
+  } catch (e) {
+    return false;
+  }
+}
