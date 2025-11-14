@@ -11,7 +11,7 @@ import { useProviderReviews } from "../../hooks/reviewManagement";
 import SPHeader from "../../components/provider/home page/SPHeader";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
 import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
-import { OneSignalBlockedModal } from "../../components/OneSignalBlockedModal";
+import { OneSignalBlockedModal, isOneSignalBlockedModalDismissed } from "../../components/OneSignalBlockedModal";
 import { useAuth } from "../../context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -59,14 +59,14 @@ const ProviderHomePage: React.FC = () => {
       );
       if (oneSignalScript) {
         oneSignalScript.addEventListener("error", () => {
-          setShowOneSignalBlockedModal(true);
+          if (!isOneSignalBlockedModalDismissed()) setShowOneSignalBlockedModal(true);
         });
       }
 
       // Also check if window.OneSignal is undefined after a delay
       setTimeout(() => {
         if (typeof window.OneSignal === "undefined") {
-          setShowOneSignalBlockedModal(true);
+          if (!isOneSignalBlockedModalDismissed()) setShowOneSignalBlockedModal(true);
         }
       }, 5000); // Give it 5 seconds to load
     };
