@@ -249,8 +249,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     const scheduledDate = new Date(booking.scheduledDate);
     const success = await acceptBookingById(booking.id, scheduledDate);
     if (success) {
-      // Booking has transitioned from Requested to Accepted; mark interaction of original request notification
-      // ensure interaction is recorded (redundant if emitted earlier)
+      
       dispatchBookingInteracted(booking.id);
       navigate(`../../provider/booking/${booking.id}`);
     }
@@ -260,14 +259,11 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     navigate(`/provider/complete-service/${booking.id}`);
   };
 
-  // Handle cancel button click
-
-  // Handle complete confirmation
+  
   const handleCompleteConfirm = () => {
     navigate(`/provider/complete-service/${booking.id}`);
   };
 
-  // Navigate to directions page first; actual start initiated from there
   const handleStartService = async () => {
     if (!booking) return;
 

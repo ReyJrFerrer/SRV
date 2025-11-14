@@ -86,7 +86,9 @@ const HelpSupportPage = lazy(() => import("./src/pages/client/help"));
 
 // Provider Pages
 const ProviderHome = lazy(() => import("./src/pages/provider/home"));
-const ProviderBookings = lazy(() => import("./src/pages/provider/myBookingsPage"));
+const ProviderBookings = lazy(
+  () => import("./src/pages/provider/myBookingsPage"),
+);
 const ProviderChat = lazy(() => import("./src/pages/provider/chat"));
 const SettingsPageSP = lazy(() => import("./src/pages/provider/settings"));
 const ProviderProfilePage = lazy(

@@ -671,9 +671,9 @@ const ProviderBookingsPage: React.FC = () => {
                                 setDecliningBookingId(booking.id);
                                 setShowDeclineConfirm(true);
                               }}
-                              onCancelClick={(booking: ProviderEnhancedBooking) =>
-                                setCancellingBooking(booking)
-                              }
+                              onCancelClick={(
+                                booking: ProviderEnhancedBooking,
+                              ) => setCancellingBooking(booking)}
                               isDeclining={isBookingActionInProgress(
                                 booking.id,
                                 "decline",
@@ -746,9 +746,9 @@ const ProviderBookingsPage: React.FC = () => {
                                 setDecliningBookingId(booking.id);
                                 setShowDeclineConfirm(true);
                               }}
-                              onCancelClick={(booking: ProviderEnhancedBooking) =>
-                                setCancellingBooking(booking)
-                              }
+                              onCancelClick={(
+                                booking: ProviderEnhancedBooking,
+                              ) => setCancellingBooking(booking)}
                               isDeclining={isBookingActionInProgress(
                                 booking.id,
                                 "decline",
