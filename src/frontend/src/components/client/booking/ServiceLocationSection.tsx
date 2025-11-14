@@ -72,9 +72,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   detectedAddress,
   mapLocation,
   setMapLocation,
-  mapPreciseAddress,
   setMapPreciseAddress,
-  mapDisplayAddress,
   setMapDisplayAddress,
   locationInputMode,
   setLocationInputMode,
@@ -285,44 +283,6 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               label="Pin / Search Location"
             />
           </Suspense>
-          {(mapDisplayAddress || mapPreciseAddress) && (
-            <div className="mt-2 space-y-1">
-              {mapDisplayAddress && (
-                <div className="flex items-start gap-1">
-                  <span
-                    className="truncate text-xs font-medium text-gray-700"
-                    title={mapDisplayAddress}
-                  >
-                    {mapDisplayAddress}
-                  </span>
-                  <span
-                    className="cursor-help text-[10px] text-blue-500"
-                    title="Display Address: Readable version (place/building, street, barangay, city)."
-                  >
-                    (?)
-                  </span>
-                </div>
-              )}
-              {mapPreciseAddress &&
-                mapDisplayAddress &&
-                mapDisplayAddress !== mapPreciseAddress && (
-                  <div className="flex items-start gap-1">
-                    <span
-                      className="truncate text-[10px] text-gray-500"
-                      title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
-                    >
-                      Provider reference: {mapPreciseAddress}
-                    </span>
-                    <span
-                      className="cursor-help text-[10px] text-blue-400"
-                      title="Used internally to help the provider navigate accurately."
-                    >
-                      (i)
-                    </span>
-                  </div>
-                )}
-            </div>
-          )}
         </div>
       )}
 
