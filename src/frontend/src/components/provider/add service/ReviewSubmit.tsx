@@ -112,7 +112,7 @@ const ReviewSubmit: React.FC<Props> = ({
                   return (
                     <div
                       key={pkg.id}
-                      className="flex flex-col break-words rounded border bg-gray-50 p-3 md:flex-row md:items-start md:justify-between"
+                      className="flex flex-col break-words rounded border border-gray-400 bg-gray-50 p-3 md:flex-row md:items-start md:justify-between"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-blue-900">{pkg.name}</p>

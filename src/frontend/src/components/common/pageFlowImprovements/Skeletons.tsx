@@ -88,7 +88,6 @@ export const NotificationListSkeleton: React.FC<{ count?: number }> = ({
 export const BookingCardSkeleton: React.FC = () => (
   <div className="pointer-events-none block w-full cursor-default overflow-hidden rounded-xl bg-white shadow-lg">
     <div className="md:flex">
-      {/* Image placeholder matches real card: md:flex-shrink-0, md:w-48, md:h-48 */}
       <div className="md:shrink-0">
         <div className="relative h-48 w-full md:w-48">
           <div className="h-full w-full animate-pulse rounded-t-xl bg-gray-200 md:rounded-l-xl md:rounded-t-none" />
@@ -103,6 +102,7 @@ export const BookingCardSkeleton: React.FC = () => (
             <div className="h-6 w-20 animate-pulse rounded bg-gray-200" />
           </div>
 
+          {/* Placeholder for title */}
           <div className="mb-2 mt-2 h-5 w-2/3 animate-pulse rounded bg-gray-200" />
 
           <div className="mb-2 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
@@ -114,9 +114,10 @@ export const BookingCardSkeleton: React.FC = () => (
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
-          <div className="h-9 w-full animate-pulse rounded-lg bg-gray-200 sm:w-40" />
-          <div className="h-9 w-full animate-pulse rounded-lg bg-gray-200 sm:w-32" />
+        {/* Placeholder for buttons */}
+        <div className="mt-4 flex flex-col space-y-3 border-t border-gray-200 pt-3 sm:flex-row sm:gap-3 sm:space-y-0">
+          <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200" />
+          <div className="h-10 w-full animate-pulse rounded-lg bg-gray-200" />
         </div>
       </div>
     </div>
