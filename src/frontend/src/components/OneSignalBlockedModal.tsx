@@ -99,11 +99,11 @@ export const OneSignalBlockedModal: React.FC<OneSignalBlockedModalProps> = ({
           <p className="text-xs text-orange-800 sm:text-sm">
             <strong>Important for Brave users:</strong> The Brave browser
             frequently blocks third-party push notification services and may
-            prevent SRV from delivering notifications even after you allow
-            them. If you rely on real-time alerts, consider using Chrome,
-            Edge, or Firefox for the best experience. If you prefer to stay on
-            Brave, try disabling <em>Shields</em> for this site or temporarily
-            disabling any privacy extensions, then refresh the page.
+            prevent SRV from delivering notifications even after you allow them.
+            If you rely on real-time alerts, consider using Chrome, Edge, or
+            Firefox for the best experience. If you prefer to stay on Brave, try
+            disabling <em>Shields</em> for this site or temporarily disabling
+            any privacy extensions, then refresh the page.
           </p>
         </div>
 
@@ -128,7 +128,9 @@ export const OneSignalBlockedModal: React.FC<OneSignalBlockedModalProps> = ({
 };
 
 // Helper: parent components can use this to avoid re-showing the modal for a period
-export function isOneSignalBlockedModalDismissed(maxAgeMs = 24 * 60 * 60 * 1000) {
+export function isOneSignalBlockedModalDismissed(
+  maxAgeMs = 24 * 60 * 60 * 1000,
+) {
   try {
     const v = localStorage.getItem("oneSignalBlockedModalDismissedAt");
     if (!v) return false;
