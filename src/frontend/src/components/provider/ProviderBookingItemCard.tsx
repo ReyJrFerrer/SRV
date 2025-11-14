@@ -249,7 +249,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     const scheduledDate = new Date(booking.scheduledDate);
     const success = await acceptBookingById(booking.id, scheduledDate);
     if (success) {
-      
       dispatchBookingInteracted(booking.id);
       navigate(`../../provider/booking/${booking.id}`);
     }
@@ -259,7 +258,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     navigate(`/provider/complete-service/${booking.id}`);
   };
 
-  
   const handleCompleteConfirm = () => {
     navigate(`/provider/complete-service/${booking.id}`);
   };
