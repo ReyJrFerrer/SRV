@@ -318,7 +318,7 @@ const BottomNavigation: React.FC = () => {
                       <div
                         className={
                           isActive
-                            ? "flex h-12 w-12 items-center justify-center rounded-full bg-blue-700"
+                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
                             : ""
                         }
                       >
@@ -390,15 +390,11 @@ const BottomNavigation: React.FC = () => {
                     }
                   />
                 </div>
-                <span
-                  className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                    isActive
-                      ? "font-bold"
-                      : "opacity-90 md:group-hover:text-yellow-400"
-                  }`}
-                >
-                  {item.label}
-                </span>
+                {!isActive && (
+                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
+                    {item.label}
+                  </span>
+                )}
               </Link>
             );
           })()}

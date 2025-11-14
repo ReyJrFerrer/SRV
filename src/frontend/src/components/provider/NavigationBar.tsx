@@ -221,16 +221,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           />
                         </div>
                       </div>
-                      <span
-                        className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                          active
-                            ? "scale-105 font-bold text-blue-900"
-                            : "text-blue-900 md:group-hover:scale-105 md:group-hover:text-yellow-400"
-                        }`}
-                        style={{ opacity: active ? 1 : 0.9 }}
-                      >
-                        {item.label}
-                      </span>
+                      {!active && (
+                        <span
+                          className="hidden text-xs text-blue-900 transition duration-300 ease-in-out sm:block md:group-hover:scale-105 md:group-hover:text-yellow-400"
+                          style={{ opacity: 0.9 }}
+                        >
+                          {item.label}
+                        </span>
+                      )}
                       {item.count > 0 && (
                         <span
                           aria-label={
@@ -292,16 +290,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         />
                       </div>
                     </div>
-                    <span
-                      className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                        active
-                          ? "scale-105 font-bold text-blue-900"
-                          : "text-blue-900 md:group-hover:scale-105 md:group-hover:text-yellow-400"
-                      }`}
-                      style={{ opacity: active ? 1 : 0.9 }}
-                    >
-                      Notifications
-                    </span>
+                    {!active && (
+                      <span
+                        className="hidden text-xs text-blue-900 transition duration-300 ease-in-out sm:block md:group-hover:scale-105 md:group-hover:text-yellow-400"
+                        style={{ opacity: 0.9 }}
+                      >
+                        Notifications
+                      </span>
+                    )}
                     {filteredNotificationUnreadCount > 0 && (
                       <span
                         aria-label={
@@ -322,7 +318,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               {/* Mobile: Settings button (replaces Profile on mobile) */}
               {(() => {
                 const to = settingsItem.to;
-                const active = isActivePath(to);
+                const active = location.pathname.startsWith(to);
                 const onClick = async (e: React.MouseEvent) => {
                   e.preventDefault();
                   if (active) {
@@ -365,16 +361,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         />
                       </div>
                     </div>
-                    <span
-                      className={`hidden text-xs transition duration-300 ease-in-out sm:block ${
-                        active
-                          ? "scale-105 font-bold text-blue-900"
-                          : "text-blue-900 md:group-hover:scale-105 md:group-hover:text-yellow-400"
-                      }`}
-                      style={{ opacity: active ? 1 : 0.9 }}
-                    >
-                      Settings
-                    </span>
+                    {!active && (
+                      <span
+                        className="hidden text-xs text-blue-900 transition duration-300 ease-in-out sm:block md:group-hover:scale-105 md:group-hover:text-yellow-400"
+                        style={{ opacity: 0.9 }}
+                      >
+                        Settings
+                      </span>
+                    )}
                   </Link>
                 );
               })()}
@@ -436,15 +430,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       </div>
                     );
                   })()}
-                  <span
-                    className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                      isActive
-                        ? "font-bold"
-                        : "opacity-90 md:group-hover:text-yellow-400"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
+                  {!isActive && (
+                    <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
+                      {item.label}
+                    </span>
+                  )}
                   {item.count > 0 && (
                     <span
                       aria-label={
@@ -504,9 +494,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               />
             </div>
-            <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
-              Notifications
-            </span>
+            {!location.pathname.startsWith("/provider/notifications") && (
+              <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
+                Notifications
+              </span>
+            )}
             {filteredNotificationUnreadCount > 0 && (
               <span
                 aria-label={
@@ -570,9 +562,13 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               }`}
               draggable={false}
             />
-            <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
-              Profile
-            </span>
+            {!location.pathname.startsWith(
+              navItems.find((i) => i.label === "Profile")!.to,
+            ) && (
+              <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
+                Profile
+              </span>
+            )}
           </Link>
         </div>
 
@@ -623,15 +619,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     }
                   />
                 </div>
-                <span
-                  className={`mt-1 hidden text-[10px] leading-tight text-blue-900 md:block ${
-                    isActive
-                      ? "font-bold"
-                      : "opacity-90 md:group-hover:text-yellow-400"
-                  }`}
-                >
-                  {item.label}
-                </span>
+                {!isActive && (
+                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
+                    {item.label}
+                  </span>
+                )}
               </Link>
             );
           })()}
