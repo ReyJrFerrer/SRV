@@ -173,14 +173,15 @@ const PayoutSettingsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-gray-100">
         <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-          <div className="relative flex w-full items-center px-4 py-4">
+          <div className="relative flex w-full items-center px-4 py-3">
             <button
-              onClick={() => navigate("/provider/home")}
-              className="rounded-full hover:bg-gray-100"
+              onClick={() => navigate(-1)}
+              className="rounded-full p-1 transition-colors hover:bg-gray-100 lg:p-1.5"
+              aria-label="Go back"
             >
-              <ArrowLeftIcon className="mr-2 h-5 w-6 lg:h-6 lg:w-6" />
+              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
             </button>
-            <h1 className="absolute left-1/2 -translate-x-1/2 text-sm font-extrabold tracking-tight text-black lg:text-2xl">
+            <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-xl font-extrabold tracking-tight text-black lg:text-2xl">
               Complete Onboarding
             </h1>
           </div>
@@ -218,21 +219,22 @@ const PayoutSettingsPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
-      <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+        <div className="relative flex w-full items-center px-4 py-3">
           <button
-            onClick={() => navigate("/provider/home")}
-            className="flex items-center text-gray-600 hover:text-blue-700"
+            onClick={() => navigate(-1)}
+            className="rounded-full p-1 transition-colors hover:bg-gray-100 lg:p-1.5"
+            aria-label="Go back"
           >
-            <ArrowLeftIcon className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-sm font-extrabold tracking-tight text-black lg:text-2xl">
+          <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Complete Onboarding
           </h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-md p-4 pt-20">
+      <main className="mx-auto max-w-md p-4 pt-10">
         <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
           <div className="p-6">
             <div className="mb-6 text-center">

@@ -260,13 +260,13 @@ const BookingDetailsPage: React.FC = () => {
     if (canUserReview === false)
       return {
         text: "View Your Review",
-        icon: <CheckCircleIcon className="mr-2 h-5 w-5" />,
+        icon: <CheckCircleIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />,
         onClick: handleViewReviews,
         className: "bg-green-500 hover:bg-green-600",
       };
     return {
       text: "Rate Provider",
-      icon: <StarIcon className="mr-2 h-5 w-5" />,
+      icon: <StarIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />,
       to: `/client/review/${specificBooking.id}`,
       state: { providerName: specificBooking.providerProfile?.name },
       className: "bg-yellow-500 hover:bg-yellow-600",

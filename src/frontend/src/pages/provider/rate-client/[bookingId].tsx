@@ -8,6 +8,7 @@ import {
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import useClientRating from "../../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 const quickFeedbackOptions = [
   "Paid on Time",
@@ -201,19 +202,7 @@ const ProviderRateClientPage: React.FC = () => {
             onClick={() => navigate("/provider/home")}
             className="rounded-full p-2 hover:bg-gray-100"
           >
-            <svg
-              className="h-6 w-6 text-gray-700"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Rate Client
@@ -256,7 +245,7 @@ const ProviderRateClientPage: React.FC = () => {
           </div>
 
           {/* Star Rating Section */}
-          <div className="mb-8 flex flex-col items-center px-8 py-6">
+          <div className="flex flex-col items-center px-8 py-6">
             <h2 className="mb-3 text-center text-lg font-bold tracking-tight text-blue-800">
               How was your experience with this client?
             </h2>
@@ -273,7 +262,7 @@ const ProviderRateClientPage: React.FC = () => {
                   disabled={submitting}
                 >
                   <StarIcon
-                    className={`h-12 w-12 drop-shadow transition-colors ${(hovered ?? rating) >= star ? "text-yellow-500" : "text-gray-200"}`}
+                    className={`h-10 w-10 drop-shadow transition-colors lg:h-12 lg:w-12 ${(hovered ?? rating) >= star ? "text-yellow-500" : "text-gray-200"}`}
                     fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
                   />
                 </button>
@@ -324,23 +313,23 @@ const ProviderRateClientPage: React.FC = () => {
             </div>
           )}
 
-          <div className="mt-6 flex justify-end space-x-3">
+          <div className="mt-6 flex justify-center space-x-3">
             <button
               onClick={() => navigate("/")}
               disabled={submitting}
-              className="rounded-lg bg-gray-100 px-4 py-2 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+              className="w-full rounded-lg bg-gray-100 px-4 py-2 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={!isFormValid || submitting}
-              className="flex items-center rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               {submitting && (
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
               )}
-              {submitting ? "Submitting..." : "Submit Rating"}
+              {submitting ? "Submitting..." : "Submit"}
             </button>
           </div>
         </div>
