@@ -1,5 +1,4 @@
 import React from "react";
-import { ServiceListingCardSkeleton } from "../../client/home page/ServiceListingCard";
 
 interface ServiceCardSkeletonProps {
   className?: string;
