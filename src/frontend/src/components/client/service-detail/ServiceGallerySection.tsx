@@ -1,5 +1,9 @@
 import React from "react";
-import { CameraIcon } from "@heroicons/react/24/outline";
+import {
+  CameraIcon,
+  XMarkIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import { useServiceImages } from "../../../hooks/useMediaLoader";
 
 export const ServiceImageModal: React.FC<{
@@ -24,20 +28,7 @@ export const ServiceImageModal: React.FC<{
         onClick={onClose}
         aria-label="Close"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-          className="h-6 w-6"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
+        <XMarkIcon className="h-6 w-6" />
       </button>
     </div>
   </div>
@@ -107,13 +98,7 @@ const ServiceGallerySection: React.FC<{
                     }}
                   />
                   <span className="absolute bottom-2 right-2 rounded-full bg-white/80 p-1 text-blue-700 shadow transition-transform group-hover:scale-110 group-focus:scale-110">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                      <path
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"
-                      />
-                    </svg>
+                    <MagnifyingGlassIcon className="h-5 w-5" />
                   </span>
                 </div>
               ) : (

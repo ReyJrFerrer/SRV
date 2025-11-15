@@ -14,6 +14,7 @@ import {
   TrophyIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../../components/provider/NavigationBar"; // Changed to provider bottom nav
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
@@ -79,20 +80,7 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
           onClick={onClose}
           aria-label="Close"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <XMarkIcon className="h-6 w-6" />
         </button>
       </div>
     </div>
@@ -291,20 +279,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           onClick={onClose}
           aria-label="Close"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <XMarkIcon className="h-6 w-6" />
         </button>
       </div>
     </div>
@@ -386,20 +361,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
               onClick={() => setShowModal(false)}
               aria-label="Close"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="h-6 w-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
         </div>

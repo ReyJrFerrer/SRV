@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { StarIcon } from "@heroicons/react/24/solid";
+import { ChatBubbleLeftEllipsisIcon } from "@heroicons/react/24/outline";
 
 export const StarRatingDisplay: React.FC<{
   rating: number;
@@ -93,28 +94,13 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   const visibleReviews = (reviews || []).filter((r) => r.status === "Visible");
   const totalReviews = visibleReviews.length;
 
-  const ChatBubbleIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      className={"h-7 w-7 text-yellow-400 " + (props.className || "")}
-    >
-      <path
-        d="M21 12c0 3.866-3.582 7-8 7-1.07 0-2.09-.154-3-.438V21l-4.197-2.799C3.32 16.97 3 16.495 3 16V7c0-.552.448-1 1-1h16c.552 0 1 .448 1 1v5z"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  // Using Heroicons for chat bubble icon
 
   return (
     <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ChatBubbleIcon />
+          <ChatBubbleLeftEllipsisIcon className="h-7 w-7 text-yellow-400" />
           <h3 className="text-lg font-semibold text-gray-800">
             Reviews{" "}
             <span className="ml-1 text-base font-semibold text-gray-500">
@@ -178,7 +164,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-12">
-          <ChatBubbleIcon className="mb-4 h-12 w-12 text-gray-300" />
+          <ChatBubbleLeftEllipsisIcon className="mb-4 h-12 w-12 text-gray-300" />
           <p className="text-lg font-semibold text-gray-400">
             No reviews yet for this service.
           </p>

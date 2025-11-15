@@ -5,6 +5,7 @@ import {
   ChartBarIcon,
   BanknotesIcon,
   ChartPieIcon,
+  WalletIcon,
 } from "@heroicons/react/24/solid";
 // Import your new chart components
 const BookingStatusPieChart = React.lazy(
@@ -308,15 +309,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         onClick={handleWalletClick}
         className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
       >
-        <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-          <path
-            stroke="currentColor"
-            strokeWidth="2"
-            d="M17 9V7a5 5 0 00-10 0v2M5 12h14m-1 9H6a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012-2z"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <WalletIcon className="h-5 w-5 text-white" />
         View Wallet
       </button>
     </div>

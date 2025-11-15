@@ -2,7 +2,7 @@ import React from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import GStreetView from "../../common/GMapFunctions/GStreetView";
 import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
-import { MapPinIcon } from "@heroicons/react/24/solid";
+import { MapPinIcon, EyeIcon } from "@heroicons/react/24/solid";
 
 interface Props {
   mapsReady: boolean;
@@ -124,17 +124,7 @@ const MapSection: React.FC<Props> = ({
                   title="Open Street View"
                   aria-label="Open Street View"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="h-4 w-4"
-                  >
-                    <path d="M2 12c2.5-4 6.5-6 10-6s7.5 2 10 6c-2.5 4-6.5 6-10 6s-7.5-2-10-6z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
+                  <EyeIcon className="h-4 w-4" />
                 </button>
               </div>
             </div>

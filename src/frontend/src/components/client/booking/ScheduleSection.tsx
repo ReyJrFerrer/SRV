@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 // Lazy-load react-datepicker and its CSS only when needed
 const LazyDatePicker = React.lazy(async () => {
   const mod = await import("react-datepicker");
@@ -230,19 +231,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                       type="button"
                       aria-label="Previous Month"
                     >
-                      <svg
-                        className="h-5 w-5 text-gray-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
+                      <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
                     </button>
                     <span className="text-base font-semibold text-gray-800">
                       {date.toLocaleString("default", { month: "long" })}{" "}
@@ -255,19 +244,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                       type="button"
                       aria-label="Next Month"
                     >
-                      <svg
-                        className="h-5 w-5 text-gray-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                      <ChevronRightIcon className="h-5 w-5 text-gray-600" />
                     </button>
                   </div>
                 )}
