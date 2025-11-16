@@ -201,28 +201,37 @@ const ClientServiceDetailsPage: React.FC = () => {
       const resolveHeroImage = (): string | undefined => {
         const firstImage = heroImages?.[0]?.dataUrl;
         const isValidUrl = (url?: string | null): url is string =>
-          !!url && (url.startsWith("data:") || url.startsWith("http") || url.startsWith("/")) && url.length > 20;
+          !!url &&
+          (url.startsWith("data:") ||
+            url.startsWith("http") ||
+            url.startsWith("/")) &&
+          url.length > 20;
         if (isValidUrl(firstImage)) return firstImage;
-        if (service?.category?.slug) return `/images/ai-sp/${service.category.slug}.svg`;
+        if (service?.category?.slug)
+          return `/images/ai-sp/${service.category.slug}.svg`;
         return "/default-provider.svg";
       };
       const preview = {
         id: service.id,
         name: service.name,
         imageUrl: resolveHeroImage(),
-        price: Array.isArray(packages) && packages.length > 0
-          ? Math.min(
-              ...packages
-                .map((p: any) => (typeof p?.price === "number" ? p.price : Number(p?.price)))
-                .filter((n: number) => !isNaN(n)),
-            )
-          : undefined,
+        price:
+          Array.isArray(packages) && packages.length > 0
+            ? Math.min(
+                ...packages
+                  .map((p: any) =>
+                    typeof p?.price === "number" ? p.price : Number(p?.price),
+                  )
+                  .filter((n: number) => !isNaN(n)),
+              )
+            : undefined,
       } as { id: string; name: string; imageUrl?: string; price?: number };
       // Fetch provider bookings count for this specific service (best-effort)
       try {
-        const providerBookings = await bookingCanisterService.getProviderBookings(
-          service.providerId as any,
-        );
+        const providerBookings =
+          await bookingCanisterService.getProviderBookings(
+            service.providerId as any,
+          );
         const serviceBookingsCount = (providerBookings || []).filter(
           (b) => b.serviceId === service.id,
         ).length;

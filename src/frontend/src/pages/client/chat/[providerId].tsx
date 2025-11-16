@@ -29,12 +29,18 @@ const ConversationPage: React.FC = () => {
   const [otherUserName, setOtherUserName] = useState<string>("");
   const [otherUserImage, setOtherUserImage] =
     useState<string>(DEFAULT_USER_IMAGE);
-  const servicePreview = (location.state?.servicePreview as
-    | { id: string; name: string; imageUrl?: string; price?: number; bookingsCount?: number }
-    | undefined) ?? undefined;
-  const [showServicePreview, setShowServicePreview] = useState<boolean>(
-    !!servicePreview,
-  );
+  const servicePreview =
+    (location.state?.servicePreview as
+      | {
+          id: string;
+          name: string;
+          imageUrl?: string;
+          price?: number;
+          bookingsCount?: number;
+        }
+      | undefined) ?? undefined;
+  const [showServicePreview, setShowServicePreview] =
+    useState<boolean>(!!servicePreview);
 
   useEffect(() => {
     let isMounted = true;
@@ -258,14 +264,16 @@ const ConversationPage: React.FC = () => {
               <p className="truncate text-sm font-semibold text-gray-900">
                 {servicePreview.name}
               </p>
-              {typeof servicePreview.price === "number" && !isNaN(servicePreview.price) && (
-                <p className="mt-0.5 text-sm font-bold text-blue-700">
-                  ₱{servicePreview.price.toLocaleString()}
-                </p>
-              )}
+              {typeof servicePreview.price === "number" &&
+                !isNaN(servicePreview.price) && (
+                  <p className="mt-0.5 text-sm font-bold text-blue-700">
+                    ₱{servicePreview.price.toLocaleString()}
+                  </p>
+                )}
               {typeof servicePreview.bookingsCount === "number" && (
                 <p className="mt-0.5 text-xs text-gray-500">
-                  {servicePreview.bookingsCount} booking{servicePreview.bookingsCount !== 1 ? "s" : ""}
+                  {servicePreview.bookingsCount} booking
+                  {servicePreview.bookingsCount !== 1 ? "s" : ""}
                 </p>
               )}
             </div>
