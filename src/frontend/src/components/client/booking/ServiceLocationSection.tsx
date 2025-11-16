@@ -676,7 +676,11 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       )}
 
       {showFullScreenMap && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70"
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="relative h-[88vh] w-full max-w-5xl overflow-hidden rounded-xl bg-white shadow-2xl">
             <button
               type="button"
@@ -708,7 +712,8 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                         : null
                   }
                   onChange={(loc: any) => {
-                    const rawPrecise = loc.formatted_address || loc.address || "";
+                    const rawPrecise =
+                      loc.formatted_address || loc.address || "";
                     const cleanedPrecise = stripPlusCodes(rawPrecise);
                     const placeName = loc.rawName;
                     let displayAddress = cleanedPrecise;
