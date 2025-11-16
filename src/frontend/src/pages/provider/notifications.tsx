@@ -77,7 +77,6 @@ const NotificationsPageSP = () => {
     }
   }, [notifications, loading]);
 
-  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
   // Tabs for categorizing notifications
