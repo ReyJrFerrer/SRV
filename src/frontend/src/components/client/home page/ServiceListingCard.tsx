@@ -1,3 +1,4 @@
+// Imports
 import React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -5,15 +6,17 @@ import {
   MapPinIcon,
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
+import ReputationBadge from "../../../components/common/ReputationBadge";
 import { EnrichedService } from "../../../hooks/serviceInformation";
 import { useServiceImages, useUserImage } from "../../../hooks/useMediaLoader";
 
-// Enhanced service data interface with all fetched information
+// Types
 export interface EnhancedServiceData {
   isVerified?: boolean;
   averageRating: number;
   totalReviews: number;
-  mediaUrls: string[]; // URLs to load
+  mediaUrls: string[];
+  reputationScore?: number;
 }
 
 interface ServiceListItemProps {
@@ -24,7 +27,7 @@ interface ServiceListItemProps {
   retainMobileLayout?: boolean;
 }
 
-// Skeleton that mirrors the ServiceListItem layout
+// Skeleton
 export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
   className = "",
 }) => {
@@ -69,7 +72,7 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
   );
 };
 
-// ===================== ServiceListItem Component =====================
+// Component
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
   ({
     service,
@@ -77,7 +80,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     retainMobileLayout = false,
     isGridItem = false,
   }) => {
-    // Track image loading state to prevent flash of default image
     const [imageLoaded, setImageLoaded] = React.useState(false);
     const [imageSrc, setImageSrc] = React.useState<string>(
       `/images/ai-sp/${service.category?.slug || "others"}.svg`,
@@ -86,13 +88,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     const mountTimeRef = React.useRef<number>(Date.now());
     const skeletonShownAtRef = React.useRef<number | null>(null);
 
-    // Load service images using the hook
     const { images: serviceImages, isLoading: isLoadingServiceImages } =
       useServiceImages(service.id, serviceData.mediaUrls, {
         enabled: !!service.id && serviceData.mediaUrls.length > 0,
       });
 
-    // Load provider avatar using the hook
     const { userImageUrl, isLoading: isLoadingUserImage } = useUserImage(
       service.providerAvatar,
       {
@@ -100,16 +100,13 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       },
     );
 
-    // Determine if images are still loading
     const isLoadingImages = isLoadingServiceImages || isLoadingUserImage;
 
-    // Extract loaded image data URLs
     const loadedServiceImages =
       serviceImages
         ?.map((img) => img.dataUrl)
         .filter((url): url is string => !!url && url.length > 0) || [];
 
-    // Use the passed service data
     const { isVerified, averageRating, totalReviews } = serviceData;
 
     const serviceRating = {
@@ -118,12 +115,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       loading: false,
     };
 
-    // Define layout classes based on props
     const itemWidthClass = isGridItem ? "w-full" : "w-full";
-
-    // Determine availability status
-    const isAvailable = service.availability?.isAvailable ?? false;
-    const availabilityText = isAvailable ? "Available Now" : "Not Available";
 
     const priceLocationContainerClass = retainMobileLayout
       ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100"
@@ -131,7 +123,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     const priceMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
 
-    // Helper function to render rating stars
     const renderRatingStars = (rating: number, size: string = "h-3 w-3") => {
       const fullStars = Math.floor(rating);
       const hasHalfStar = rating % 1 >= 0.5;
@@ -139,12 +130,9 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
       return (
         <div className="flex items-center">
-          {/* Full stars */}
           {Array.from({ length: fullStars }, (_, i) => (
             <StarIcon key={`full-${i}`} className={`${size} text-yellow-400`} />
           ))}
-
-          {/* Half star */}
           {hasHalfStar && (
             <div className="relative">
               <StarIcon className={`${size} text-gray-300`} />
@@ -153,8 +141,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               </div>
             </div>
           )}
-
-          {/* Empty stars */}
           {Array.from({ length: emptyStars }, (_, i) => (
             <StarIcon key={`empty-${i}`} className={`${size} text-gray-300`} />
           ))}
@@ -162,7 +148,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       );
     };
 
-    // Category icon mapping
     const categoryIconMap: Record<string, string> = {
       "gadget-technicians": "gadget-technicians.svg",
       "beauty-services": "beauty-services.svg",
@@ -176,7 +161,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       others: "others.svg",
     };
 
-    // Normalize slug for mapping
     const getCategoryIcon = (slug: string | undefined): string => {
       if (!slug) return "/images/categories/others.svg";
       if (categoryIconMap[slug]) {
@@ -186,21 +170,17 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       return fallback;
     };
 
-    // Helper function to determine the image source with proper priority
     const getImageSource = (): string => {
-      // Accept any valid image URL (data:, http(s) or local path)
       const isValidImageUrl = (u?: string | null): u is string =>
         !!u &&
         u.length > 20 &&
         (u.startsWith("data:") || u.startsWith("http") || u.startsWith("/"));
 
-      // Priority 1: Service images (if loaded and valid)
       const firstImage = loadedServiceImages[0];
       if (isValidImageUrl(firstImage)) {
         return firstImage;
       }
 
-      // Priority 2: User avatar (if loaded and valid)
       if (
         !isLoadingImages &&
         isValidImageUrl(userImageUrl) &&
@@ -209,36 +189,29 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         return userImageUrl;
       }
 
-      // Priority 3: Category-specific fallback
       if (service.category?.slug) {
         return `/images/ai-sp/${service.category.slug}.svg`;
       }
 
-      // Priority 4: Default fallback
       return "/images/ai-sp/others.svg";
     };
 
-    // Effect to preload image and update state when ready
     React.useEffect(() => {
       const imageSource = getImageSource();
 
-      // Reset loading state when image source changes
       setImageLoaded(false);
       setImageSrc(imageSource);
 
-      // For SVG or already loaded images, mark as loaded immediately
       if (imageSource.endsWith(".svg") || imageSource.startsWith("data:")) {
         setImageLoaded(true);
         return;
       }
 
-      // Preload the image
       const img = new Image();
       img.onload = () => {
         setImageLoaded(true);
       };
       img.onerror = () => {
-        // On error, use fallback and mark as loaded
         setImageSrc("/images/ai-sp/others.svg");
         setImageLoaded(true);
       };
@@ -255,33 +228,24 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       isLoadingImages,
     ]);
 
-    // Handle content display with anti-flicker logic
     React.useEffect(() => {
-      // Don't do anything if content is already showing
       if (showContent) return;
-
-      // Check if content is ready to display
       const isContentReady = !isLoadingImages && imageLoaded;
       if (!isContentReady) return;
 
       const timeSinceMount = Date.now() - mountTimeRef.current;
-      const FAST_LOAD_THRESHOLD = 200; // If loads under 200ms, show immediately
-      const MIN_SKELETON_DURATION = 400; // If skeleton shown, keep it for at least 400ms
+      const FAST_LOAD_THRESHOLD = 200;
+      const MIN_SKELETON_DURATION = 400;
 
       if (timeSinceMount < FAST_LOAD_THRESHOLD) {
         setShowContent(true);
         return;
       }
 
-      // Mark that skeleton was shown
       if (skeletonShownAtRef.current === null) {
         skeletonShownAtRef.current = Date.now();
       }
-
-      // Calculate how long skeleton has been visible
       const skeletonDuration = Date.now() - skeletonShownAtRef.current;
-
-      // If skeleton hasn't been shown long enough, wait before showing content
       if (skeletonDuration < MIN_SKELETON_DURATION) {
         const remainingTime = MIN_SKELETON_DURATION - skeletonDuration;
         const timer = setTimeout(() => {
@@ -289,7 +253,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         }, remainingTime);
         return () => clearTimeout(timer);
       } else {
-        // Skeleton shown long enough, show content now
         setShowContent(true);
       }
     }, [isLoadingImages, imageLoaded, showContent]);
@@ -306,9 +269,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
         >
           <div className="relative">
-            {/* Image container */}
             <div className="aspect-video w-full bg-blue-50">
-              {/* Persistent skeleton background that fades out */}
               <img
                 src={imageSrc}
                 alt={service.title}
@@ -322,16 +283,13 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 }}
               />
             </div>
-            {/* Category icon and availability badge row */}
-            <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
-              {/* Category icon as an action button (small yellow circle with icon) */}
+            <div className="absolute left-2 right-2 top-2 z-20 flex items-center justify-between">
               {service.category?.slug && (
                 <button
                   aria-label={service.category.name || "Category"}
                   title={service.category.name}
                   className="relative z-10 flex items-center justify-center rounded-full"
                   onClick={(e) => {
-                    // stop propagation so clicking the category icon doesn't navigate the card link
                     e.stopPropagation();
                   }}
                 >
@@ -346,23 +304,19 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 </button>
               )}
 
-              {/* Availability badge */}
-              <div
-                className={`rounded-full px-3 py-0.5 text-xs font-semibold text-white shadow ${isAvailable ? "bg-green-500" : "bg-red-500"}`}
-                style={{ marginLeft: "auto" }}
-              >
-                {availabilityText}
+              <div className="flex items-center gap-2">
+                {typeof serviceData.reputationScore === "number" && (
+                  <ReputationBadge score={serviceData.reputationScore} />
+                )}
               </div>
             </div>
           </div>
 
           <div className="service-content relative flex flex-grow flex-col p-4">
             <div className="flex-grow">
-              {/* Service title */}
               <p className="mb-1 mt-2 truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
                 {service.title}
               </p>
-              {/* Provider name with verification badge */}
               <p className="mb-2 flex items-center gap-1 truncate text-base font-bold text-blue-700">
                 {service.providerName}
                 {isVerified && (
@@ -372,8 +326,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   />
                 )}
               </p>
-
-              {/* Location info */}
               {service.location &&
                 (service.location.city || service.location.address) && (
                   <div className="mb-2 flex items-center text-sm text-blue-700">
@@ -420,7 +372,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             </div>
           </div>
 
-          {/* Check service banner with smooth expand animation */}
           <div className="mt-2 h-0 overflow-hidden transition-all duration-300 ease-in-out group-hover:mt-3 group-hover:h-10">
             <div className="flex h-10 items-center justify-center rounded-xl border border-yellow-300 bg-yellow-200 px-2 shadow-sm">
               <span className="text-base font-bold tracking-wide text-blue-800">
@@ -434,5 +385,4 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
   },
 );
 
-// ===================== End ServiceListItem Component =====================
 export default ServiceListItem;
