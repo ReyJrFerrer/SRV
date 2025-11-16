@@ -19,6 +19,7 @@ import {
   TrophyIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../components/client/NavigationBar";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { useLogout } from "../../hooks/logout";
@@ -86,20 +87,7 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
           onClick={onClose}
           aria-label="Close"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <XMarkIcon className="h-6 w-6" />
         </button>
       </div>
     </div>
@@ -298,20 +286,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           onClick={onClose}
           aria-label="Close"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <XMarkIcon className="h-6 w-6" />
         </button>
       </div>
     </div>
@@ -501,20 +476,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
               onClick={() => setShowModal(false)}
               aria-label="Close"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="h-6 w-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
         </div>
@@ -890,19 +852,7 @@ const ClientProfilePage: React.FC = () => {
                     <div className="flex h-48 w-48 items-center justify-center">
                       <div className="text-center">
                         <div className="mb-4 text-red-500">
-                          <svg
-                            className="mx-auto h-16 w-16"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
-                            />
-                          </svg>
+                          <ExclamationTriangleIcon className="mx-auto h-16 w-16" />
                         </div>
                         <p className="text-sm font-medium text-red-600">
                           {reputationError}

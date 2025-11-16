@@ -1,5 +1,6 @@
 import React from "react";
 import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 
 interface MapViewProps {
   mapApiKey: string;
@@ -70,20 +71,7 @@ const MapView: React.FC<MapViewProps> = ({
           <AdvancedMarker position={providerLocation}>
             {isInNavigationMode ? (
               <div style={{ transform: `rotate(${deviceHeading ?? 0}deg)` }}>
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="#1D4ED8"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 2L2.5 21.5L12 17L21.5 21.5L12 2Z"
-                    stroke="#FFFFFF"
-                    strokeWidth="1.5"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <PaperAirplaneIcon className="h-7 w-7 text-blue-700" />
               </div>
             ) : (
               <div

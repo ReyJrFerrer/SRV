@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import AccuracyCircle from "./AccuracyCircle";
 
 export interface LocationMapModalProps {
@@ -76,18 +77,7 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
             aria-label="Recenter map"
             title="Re-center map"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="h-5 w-5"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 3v3m0 12v3M3 12h3m12 0h3" />
-              <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
-            </svg>
+            <ArrowPathIcon className="h-5 w-5" />
           </button>
           {mapsApiLoaded ? (
             <Map

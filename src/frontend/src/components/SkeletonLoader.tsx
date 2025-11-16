@@ -79,12 +79,25 @@ export const ProfilePictureSkeleton: React.FC<{
       className={`animate-pulse rounded-full border-4 bg-gray-200 shadow-lg ${borderColor} ${sizeClasses[size]}`}
     >
       <div className="flex h-full w-full items-center justify-center">
+        {/* Use Heroicons UserIcon for skeleton placeholder */}
         <svg
           className="h-1/2 w-1/2 text-gray-300"
-          fill="currentColor"
           viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
         >
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+          <path
+            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M6 20c0-2.21 3.58-4 6-4s6 1.79 6 4"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </div>
     </div>

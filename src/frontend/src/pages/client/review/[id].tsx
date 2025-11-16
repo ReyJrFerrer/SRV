@@ -4,6 +4,7 @@ import {
   StarIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
+  ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 import { useBookingRating } from "../../../hooks/reviewManagement"; // Adjust path as needed
 import { useBookingManagement } from "../../../hooks/bookingManagement"; // Adjust path as needed
@@ -276,19 +277,7 @@ export const BookingReviewPage: React.FC = () => {
             onClick={() => navigate("/client/home")}
             className="rounded-full p-2 hover:bg-gray-100"
           >
-            <svg
-              className="h-6 w-6 text-gray-700"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Rate Provider

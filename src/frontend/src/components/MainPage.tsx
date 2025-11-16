@@ -1,4 +1,9 @@
 import { FingerPrintIcon } from "@heroicons/react/24/solid";
+import {
+  ShieldCheckIcon,
+  UsersIcon,
+  GlobeAltIcon,
+} from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { SiteHeader } from "./layout/SiteHeader";
 import { SiteFooter } from "./layout/SiteFooter";
@@ -530,19 +535,7 @@ export default function MainPage({
               <div className="reasons-grid">
                 <div className="reason-item">
                   <div className="reason-icon">
-                    <svg
-                      className="icon-svg"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      ></path>
-                    </svg>
+                    <ShieldCheckIcon className="icon-svg h-6 w-6" />
                   </div>
                   <h3 className="reason-title">Beripikado at Maaasahan</h3>
                   <p className="reason-description">
@@ -553,19 +546,7 @@ export default function MainPage({
 
                 <div className="reason-item">
                   <div className="reason-icon">
-                    <svg
-                      className="icon-svg"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      ></path>
-                    </svg>
+                    <UsersIcon className="icon-svg h-6 w-6" />
                   </div>
                   <h3 className="reason-title">
                     Platform na Nakatuon sa Kliyente
@@ -578,25 +559,7 @@ export default function MainPage({
 
                 <div className="reason-item">
                   <div className="reason-icon">
-                    <svg
-                      className="icon-svg"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"
-                      ></path>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z"
-                      ></path>
-                    </svg>
+                    <GlobeAltIcon className="icon-svg h-6 w-6" />
                   </div>
                   <h3 className="reason-title">Nagpapalakas sa mga Provider</h3>
                   <p className="reason-description">
