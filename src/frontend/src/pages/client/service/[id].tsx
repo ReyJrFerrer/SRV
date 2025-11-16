@@ -81,6 +81,7 @@ const ClientServiceDetailsPage: React.FC = () => {
   const [isCheckingReputation, setIsCheckingReputation] = useState(false);
   const [reputationError, setReputationError] = useState<string | null>(null);
   const [hasSufficientReputation, setHasSufficientReputation] = useState(true);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
   const { fetchUserReputation } = useReputation();
   const [providerRep, setProviderRep] = useState<any | null>(null);
 
@@ -184,7 +185,10 @@ const ClientServiceDetailsPage: React.FC = () => {
       return;
     }
 
+    if (isCreatingChat) return;
+
     setChatErrorMessage(null);
+    setIsCreatingChat(true);
 
     try {
       const currentUserId = identity.getPrincipal().toString();
@@ -197,7 +201,6 @@ const ClientServiceDetailsPage: React.FC = () => {
             conv.conversation.clientId === service.providerId),
       );
 
-      // Prepare a lightweight service preview to show in chat
       const resolveHeroImage = (): string | undefined => {
         const firstImage = heroImages?.[0]?.dataUrl;
         const isValidUrl = (url?: string | null): url is string =>
@@ -211,6 +214,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           return `/images/ai-sp/${service.category.slug}.svg`;
         return "/default-provider.svg";
       };
+      
       const preview = {
         id: service.id,
         name: service.name,
@@ -226,7 +230,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               )
             : undefined,
       } as { id: string; name: string; imageUrl?: string; price?: number };
-      // Fetch provider bookings count for this specific service (best-effort)
+
       try {
         const providerBookings =
           await bookingCanisterService.getProviderBookings(
@@ -249,22 +253,24 @@ const ClientServiceDetailsPage: React.FC = () => {
             servicePreview: preview,
           },
         });
-      } else {
-        const newConversation = await createConversation(
-          currentUserId,
-          service.providerId,
-        );
+        return;
+      }
 
-        if (newConversation) {
-          navigate(`/client/chat/${service.providerId}`, {
-            state: {
-              conversationId: newConversation.id,
-              otherUserName: service.providerName,
-              otherUserImage: service.providerAvatar,
-              servicePreview: preview,
-            },
-          });
-        }
+      // Create new conversation if none exists
+      const newConversation = await createConversation(
+        currentUserId,
+        service.providerId,
+      );
+
+      if (newConversation) {
+        navigate(`/client/chat/${service.providerId}`, {
+          state: {
+            conversationId: newConversation.id,
+            otherUserName: service.providerName,
+            otherUserImage: service.providerAvatar,
+            servicePreview: preview,
+          },
+        });
       }
     } catch (error) {
       setChatErrorMessage(
@@ -272,6 +278,8 @@ const ClientServiceDetailsPage: React.FC = () => {
           ? error.message
           : "Could not start conversation. Please try again.",
       );
+    } finally {
+      setIsCreatingChat(false);
     }
   };
 
@@ -607,7 +615,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           <button
             onClick={handleChatProviderClick}
             disabled={
-              isOwnService || !hasSufficientReputation || isCheckingReputation
+              isOwnService || !hasSufficientReputation || isCheckingReputation || isCreatingChat
             }
             className="group relative flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
             style={{ minWidth: 0, flexBasis: "32%" }}
@@ -615,7 +623,7 @@ const ClientServiceDetailsPage: React.FC = () => {
             {chatLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
-                <span className="text-base font-semibold">Creating Chat</span>
+                <span className="text-base font-semibold">Creating Chat...</span>
               </>
             ) : (
               <span className="text-sm font-semibold md:text-lg lg:text-xl">
