@@ -29,6 +29,12 @@ const ConversationPage: React.FC = () => {
   const [otherUserName, setOtherUserName] = useState<string>("");
   const [otherUserImage, setOtherUserImage] =
     useState<string>(DEFAULT_USER_IMAGE);
+  const servicePreview = (location.state?.servicePreview as
+    | { id: string; name: string; imageUrl?: string; price?: number; bookingsCount?: number }
+    | undefined) ?? undefined;
+  const [showServicePreview, setShowServicePreview] = useState<boolean>(
+    !!servicePreview,
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -231,6 +237,64 @@ const ConversationPage: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {showServicePreview && servicePreview && (
+        <div className="z-10 border-b border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur">
+          <div
+            role="button"
+            onClick={() => navigate(`/client/service/${servicePreview.id}`)}
+            className="relative flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50"
+          >
+            <img
+              src={servicePreview.imageUrl || "/default-provider.svg"}
+              alt={servicePreview.name}
+              className="h-14 w-14 rounded-lg object-cover"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/default-provider.svg";
+              }}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-gray-900">
+                {servicePreview.name}
+              </p>
+              {typeof servicePreview.price === "number" && !isNaN(servicePreview.price) && (
+                <p className="mt-0.5 text-sm font-bold text-blue-700">
+                  ₱{servicePreview.price.toLocaleString()}
+                </p>
+              )}
+              {typeof servicePreview.bookingsCount === "number" && (
+                <p className="mt-0.5 text-xs text-gray-500">
+                  {servicePreview.bookingsCount} booking{servicePreview.bookingsCount !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/client/book/${servicePreview.id}`);
+                }}
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow hover:bg-blue-700"
+              >
+                Book Now
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowServicePreview(false);
+                }}
+                aria-label="Close"
+                className="rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 space-y-4 overflow-y-auto p-4 pb-32">
         {messages.length === 0 ? (

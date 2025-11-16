@@ -22,6 +22,7 @@ import {
   serviceCanisterService,
 } from "../../../services/serviceCanisterService";
 import { useUserImage } from "../../../hooks/useMediaLoader";
+import bookingCanisterService from "../../../services/bookingCanisterService";
 import ReputationScore from "../../../components/client/service-detail/ReputationScore";
 import ReviewsSection from "../../../components/client/service-detail/ReviewsSection";
 import ServiceGallerySection from "../../../components/client/service-detail/ServiceGallerySection";
@@ -196,12 +197,47 @@ const ClientServiceDetailsPage: React.FC = () => {
             conv.conversation.clientId === service.providerId),
       );
 
+      // Prepare a lightweight service preview to show in chat
+      const resolveHeroImage = (): string | undefined => {
+        const firstImage = heroImages?.[0]?.dataUrl;
+        const isValidUrl = (url?: string | null): url is string =>
+          !!url && (url.startsWith("data:") || url.startsWith("http") || url.startsWith("/")) && url.length > 20;
+        if (isValidUrl(firstImage)) return firstImage;
+        if (service?.category?.slug) return `/images/ai-sp/${service.category.slug}.svg`;
+        return "/default-provider.svg";
+      };
+      const preview = {
+        id: service.id,
+        name: service.name,
+        imageUrl: resolveHeroImage(),
+        price: Array.isArray(packages) && packages.length > 0
+          ? Math.min(
+              ...packages
+                .map((p: any) => (typeof p?.price === "number" ? p.price : Number(p?.price)))
+                .filter((n: number) => !isNaN(n)),
+            )
+          : undefined,
+      } as { id: string; name: string; imageUrl?: string; price?: number };
+      // Fetch provider bookings count for this specific service (best-effort)
+      try {
+        const providerBookings = await bookingCanisterService.getProviderBookings(
+          service.providerId as any,
+        );
+        const serviceBookingsCount = (providerBookings || []).filter(
+          (b) => b.serviceId === service.id,
+        ).length;
+        (preview as any).bookingsCount = serviceBookingsCount;
+      } catch {
+        // ignore errors and leave bookingsCount undefined
+      }
+
       if (existingConversation) {
         navigate(`/client/chat/${service.providerId}`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
             otherUserImage: service.providerAvatar,
+            servicePreview: preview,
           },
         });
       } else {
@@ -216,6 +252,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               conversationId: newConversation.id,
               otherUserName: service.providerName,
               otherUserImage: service.providerAvatar,
+              servicePreview: preview,
             },
           });
         }
