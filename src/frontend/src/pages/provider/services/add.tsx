@@ -53,6 +53,13 @@ interface ValidationErrors {
   locationMunicipalityCity?: string;
   general?: string;
   profanity?: string;
+  packageFields?: {
+    [pkgId: string]: {
+      name?: string;
+      price?: string;
+      description?: string;
+    };
+  };
 }
 
 // Backend validation constants
@@ -361,65 +368,95 @@ const AddServicePage: React.FC = () => {
             errors.servicePackages =
               "At least one complete package with valid price is required";
           }
-          formData.servicePackages.forEach((pkg, index) => {
+
+          const packageErrors: ValidationErrors["packageFields"] = {};
+
+          formData.servicePackages.forEach((pkg) => {
+            const pkgErrors: {
+              name?: string;
+              price?: string;
+              description?: string;
+            } = {};
+
             if (pkg.name.trim() || pkg.description.trim() || pkg.price) {
               if (!pkg.name.trim()) {
-                errors.servicePackages = `Package ${index + 1}: Name is required`;
+                pkgErrors.name = "Name is required";
               } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${index + 1}: Name must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
+                pkgErrors.name = `Must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} characters`;
               } else if (pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${index + 1}: Name must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
+                pkgErrors.name = `Must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
               } else if (filter.isProfane(pkg.name)) {
-                errors.servicePackages = `Package ${index + 1}: Name contains inappropriate language.`;
+                pkgErrors.name = "Name contains inappropriate language.";
               }
+
               if (!pkg.description.trim()) {
-                errors.servicePackages = `Package ${index + 1}: Description is required`;
+                pkgErrors.description = "Description is required";
               } else if (
                 pkg.description.length <
                 VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${index + 1}: Description must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} character`;
+                pkgErrors.description = `Must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} characters`;
               } else if (
                 pkg.description.length >
                 VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${index + 1}: Description must be no more than ${VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH} characters`;
+                pkgErrors.description = `Must be no more than ${VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH} characters`;
               } else if (filter.isProfane(pkg.description)) {
-                errors.servicePackages = `Package ${index + 1}: Description contains inappropriate language.`;
+                pkgErrors.description =
+                  "Description contains inappropriate language.";
               }
+
               if (
                 !pkg.price ||
                 Number(pkg.price) < VALIDATION_LIMITS.MIN_PRICE
               ) {
-                errors.servicePackages = `Package ${index + 1}: Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
+                pkgErrors.price = `Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
               } else if (Number(pkg.price) > VALIDATION_LIMITS.MAX_PRICE) {
-                errors.servicePackages = `Package ${index + 1}: Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
+                pkgErrors.price = `Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
               }
+            }
+
+            if (Object.keys(pkgErrors).length > 0) {
+              packageErrors[pkg.id] = pkgErrors;
             }
           });
 
-          // Check for duplicate package names
-          const packageNames = formData.servicePackages
-            .filter((pkg) => pkg.name.trim())
-            .map((pkg) => pkg.name.trim().toLowerCase());
-
-          const duplicateNames = packageNames.filter(
-            (name, index) => packageNames.indexOf(name) !== index,
-          );
-
-          if (duplicateNames.length > 0) {
-            const duplicateName = duplicateNames[0];
-            const duplicateIndices = formData.servicePackages
-              .map((pkg, index) =>
-                pkg.name.trim().toLowerCase() === duplicateName
-                  ? index + 1
-                  : null,
-              )
-              .filter((index) => index !== null);
-
-            errors.servicePackages = `Package names must be unique. "${formData.servicePackages.find((pkg) => pkg.name.trim().toLowerCase() === duplicateName)?.name.trim()}" is used in packages ${duplicateIndices.join(", ")}.`;
+          if (Object.keys(packageErrors).length > 0) {
+            errors.packageFields = packageErrors;
+            // Add a general message if there isn't one already
+            if (!errors.servicePackages) {
+              errors.servicePackages =
+                "Please fix the errors in the packages below.";
+            }
           }
         }
+
+        const packageNames = formData.servicePackages
+          .filter((pkg) => pkg.name.trim())
+          .map((pkg) => ({ id: pkg.id, name: pkg.name.trim().toLowerCase() }));
+
+        const nameCounts = packageNames.reduce((acc, { name }) => {
+          acc[name] = (acc[name] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        const duplicateNames = Object.keys(nameCounts).filter(
+          (name) => nameCounts[name] > 1,
+        );
+
+        duplicateNames.forEach((dupName) => {
+          const packagesWithDupName = packageNames.filter((p) => p.name === dupName);
+          packagesWithDupName.forEach(({ id }) => {
+            if (errors.packageFields && errors.packageFields[id]) {
+              if (!errors.packageFields[id]!.name) {
+                errors.packageFields[id]!.name = "Package name must be unique.";
+              }
+            } else {
+              if (!errors.packageFields) errors.packageFields = {};
+              errors.packageFields[id] = { name: "Package name must be unique." };
+            }
+          });
+        });
         break;
       case 2: // Availability
         if (formData.availabilitySchedule.length === 0) {
