@@ -2,12 +2,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
-const containerStyle: React.CSSProperties = {
-  width: "100%",
-  height: "300px",
-  borderRadius: "0.75rem",
-};
-
 // Constants
 const baguioCenter = { lat: 16.4023, lng: 120.596 };
 
@@ -28,6 +22,7 @@ interface LocationMapPickerProps {
   label?: string;
   highlight?: boolean;
   persistKey?: string;
+  mapHeight?: number; // optional override height (px)
 }
 const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   value,
@@ -35,6 +30,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   label = "Map Location",
   highlight = false,
   persistKey,
+  mapHeight = 300,
 }) => {
   // State/Refs
   const [internalPosition, setInternalPosition] = useState<{
@@ -433,7 +429,11 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         style={{ overflow: "hidden" }}
       >
         <Map
-          style={containerStyle}
+          style={{
+            width: "100%",
+            height: `${mapHeight}px`,
+            borderRadius: "0.75rem",
+          }}
           defaultCenter={baguioCenter}
           defaultZoom={18}
           onCameraChanged={(ev) => {
