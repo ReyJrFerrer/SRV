@@ -1,9 +1,9 @@
+// Imports
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
-import reputationCanisterService, {
-  updateReputationActor,
-} from "../services/reputationCanisterService";
+import reputationCanisterService, { updateReputationActor } from "../services/reputationCanisterService";
 
+// Types
 export interface ReputationScore {
   userId: string;
   trustScore: number;
@@ -13,11 +13,7 @@ export interface ReputationScore {
   detectionFlags: string[];
   lastUpdated: number;
 }
-
-/**
- * Custom hook to manage user's reputation data with separate fetching for modularization
- * Provides reputation score, loading states, and error handling as requested
- */
+// Hook
 export const useReputation = () => {
   const { isAuthenticated, identity } = useAuth();
 
@@ -25,28 +21,16 @@ export const useReputation = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Fetch any user's reputation score by userId
-   * @param userId - The Principal ID of the user whose reputation to fetch
-   * @returns Promise<ReputationScore | null> The user's reputation or null if not found
-   */
   const fetchUserReputation = useMemo(
     () =>
       async (userId: string): Promise<ReputationScore | null> => {
-        if (!isAuthenticated || !identity) {
-          return null;
-        }
-
         try {
-          // Update the actor with current identity
-          updateReputationActor(identity);
+          updateReputationActor(identity || null);
 
           try {
-            // Try to fetch existing reputation for the specified user
             const reputationData =
               await reputationCanisterService.getReputationScore(userId);
 
-            // Convert the reputation data to match our interface
             const formattedReputation: ReputationScore = {
               userId: reputationData.userId.toString(),
               trustScore: Number(reputationData.trustScore),
@@ -71,7 +55,6 @@ export const useReputation = () => {
 
             return formattedReputation;
           } catch (fetchError: any) {
-            // If reputation doesn't exist, return default score of 50
             if (
               fetchError.message.includes("No reputation score found") ||
               fetchError.message.includes("not found")
@@ -83,14 +66,13 @@ export const useReputation = () => {
                 completedBookings: 0,
                 averageRating: undefined,
                 detectionFlags: [],
-                lastUpdated: Date.now() * 1_000_000, // Convert to nanoseconds
+                lastUpdated: Date.now() * 1_000_000,
               };
             } else {
               throw fetchError;
             }
           }
         } catch (err: any) {
-          // For network errors, still return default score to not break UI
           if (
             err.message.includes("Network error") ||
             err.message.includes("fetch")
@@ -112,10 +94,6 @@ export const useReputation = () => {
     [isAuthenticated, identity],
   );
 
-  /**
-   * Fetch the current user's reputation score
-   * If reputation doesn't exist, try to initialize it
-   */
   const fetchReputation = useCallback(async () => {
     if (!isAuthenticated || !identity) {
       setLoading(false);
@@ -127,15 +105,12 @@ export const useReputation = () => {
     setError(null);
 
     try {
-      // Update the actor with current identity
       updateReputationActor(identity);
 
       try {
-        // Try to fetch existing reputation
         const reputationData =
           await reputationCanisterService.getMyReputationScore();
 
-        // Convert the reputation data to match our interface
         const formattedReputation: ReputationScore = {
           userId: reputationData.userId.toString(),
           trustScore: Number(reputationData.trustScore),
@@ -160,7 +135,6 @@ export const useReputation = () => {
 
         setReputation(formattedReputation);
       } catch (fetchError: any) {
-        // If reputation doesn't exist, try to initialize it
         if (fetchError.message.includes("No reputation score found")) {
           const initialReputation =
             await reputationCanisterService.initializeMyReputation();
@@ -181,7 +155,6 @@ export const useReputation = () => {
         }
       }
     } catch (err: any) {
-      // Display network error as requested
       if (
         err.message.includes("Network error") ||
         err.message.includes("fetch")
@@ -195,16 +168,10 @@ export const useReputation = () => {
     }
   }, [isAuthenticated, identity]);
 
-  /**
-   * Refresh reputation data
-   */
   const refreshReputation = useCallback(async () => {
     await fetchReputation();
   }, [fetchReputation]);
 
-  /**
-   * Force refresh reputation data (clears cache and refetches)
-   */
   const forceRefreshReputation = useCallback(async () => {
     setReputation(null);
     setLoading(true);
@@ -212,9 +179,6 @@ export const useReputation = () => {
     await fetchReputation();
   }, [fetchReputation]);
 
-  /**
-   * Get simplified reputation score for display
-   */
   const getReputationDisplay = useCallback(() => {
     if (!reputation) return null;
 
@@ -226,7 +190,6 @@ export const useReputation = () => {
     };
   }, [reputation]);
 
-  // Fetch reputation when component mounts or authentication changes
   useEffect(() => {
     fetchReputation();
   }, [fetchReputation]);
