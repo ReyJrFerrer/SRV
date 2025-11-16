@@ -106,6 +106,13 @@ const MapSection: React.FC<Props> = ({
               style={{ width: "100%", height: "100%" }}
               disableDefaultUI={true}
               zoomControl={true}
+              onClick={(e: any) => {
+                try {
+                  if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+                    e.stop();
+                  }
+                } catch {}
+              }}
             >
               <AdvancedMarker position={resolvedCoords || clientLocation} />
               {typeof effectiveRadius === "number" && effectiveRadius > 0 && (

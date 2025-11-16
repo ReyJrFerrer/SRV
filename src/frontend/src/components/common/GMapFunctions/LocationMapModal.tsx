@@ -100,6 +100,13 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
               zoomControl={true}
               streetViewControl={false}
               gestureHandling={"greedy"}
+              onClick={(e: any) => {
+                try {
+                  if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+                    e.stop();
+                  }
+                } catch {}
+              }}
               onCameraChanged={(ev: any) => {
                 try {
                   const next = ev?.detail;

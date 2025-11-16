@@ -222,6 +222,13 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   style={{ width: "100%", height: 260 }}
                   disableDefaultUI={true}
                   zoomControl={true}
+                  onClick={(e: any) => {
+                    try {
+                      if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+                        e.stop();
+                      }
+                    } catch {}
+                  }}
                 >
                   <AdvancedMarker
                     position={{

@@ -55,6 +55,13 @@ const MapView: React.FC<MapViewProps> = ({
         // Hide built-in +/- zoom controls but keep programmatic zooming intact
         zoomControl={false}
         mapId={"6922634ff75ae05ac38cc473"}
+        onClick={(e: any) => {
+          try {
+            if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+              e.stop();
+            }
+          } catch {}
+        }}
       >
         {providerLocation && (
           <AdvancedMarker position={providerLocation}>

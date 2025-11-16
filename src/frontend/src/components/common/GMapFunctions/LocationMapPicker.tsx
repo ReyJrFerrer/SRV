@@ -29,7 +29,6 @@ interface LocationMapPickerProps {
   highlight?: boolean;
   persistKey?: string;
 }
-
 const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   value,
   onChange,
@@ -45,19 +44,52 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
 
   const mapRef = useRef<google.maps.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(
-    null,
-  );
+  // Legacy PlacesService removed to avoid console warnings for new customers
+  const autocompleteRef = useRef<
+    google.maps.places.AutocompleteService | null
+  >(null);
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const [searchText, setSearchText] = useState<string>("");
   const [predictions, setPredictions] = useState<
-    google.maps.places.PlaceResult[]
+    (google.maps.places.PlaceResult | google.maps.places.AutocompletePrediction)[]
   >([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [isLoadingPred, setIsLoadingPred] = useState<boolean>(false);
   const debounceRef = useRef<number | null>(null);
 
   // Helpers
+  const normalizePlace = (place: any) => {
+    if (!place) return null;
+    const g = (window as any).google;
+    const hasOld = place.geometry?.location;
+    const hasNew = place.location;
+    const location = hasOld
+      ? place.geometry.location
+      : hasNew && g
+        ? {
+            lat: () => (typeof place.location.lat === "function" ? place.location.lat() : place.location.lat),
+            lng: () => (typeof place.location.lng === "function" ? place.location.lng() : place.location.lng),
+          }
+        : null;
+
+    const address_components = place.address_components
+      ? place.address_components
+      : Array.isArray(place.addressComponents)
+        ? place.addressComponents.map((c: any) => ({
+            long_name: c.longText || c.long_name || c.name || "",
+            short_name: c.shortText || c.short_name || c.name || "",
+            types: c.types || [],
+          }))
+        : undefined;
+
+    return {
+      ...place,
+      name: place.name || place.displayName?.text || place.displayName || place.primaryText?.text,
+      formatted_address: place.formatted_address || place.formattedAddress || place.secondaryText?.text,
+      address_components,
+      geometry: location ? { location } : place.geometry,
+    };
+  };
   const composeFormattedWithPlace = (
     rawName: string | undefined,
     formattedAddress: string | undefined,
@@ -173,32 +205,39 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     [onChange, persistLocation, processPlaceDetails],
   );
 
+  const fetchPlaceById = useCallback(async (placeId: string): Promise<any | null> => {
+    const g = (window as any).google;
+    try {
+      if (g?.maps?.places?.Place) {
+        const place = new g.maps.places.Place({ id: placeId });
+        await place.fetchFields({
+          fields: [
+            "id",
+            "displayName",
+            "formattedAddress",
+            "location",
+            "addressComponents",
+          ],
+        });
+        return normalizePlace(place);
+      }
+    } catch {}
+    // If new Place API is unavailable, fall back to reverse geocode only
+    return null;
+  }, []);
+
   const onMapClick = useCallback(
-    (e: any) => {
-      const placeId = e?.placeId || e?.detail?.placeId;
-      const g = (window as any).google;
-
-      if (placeId) {
-        if (!placesServiceRef.current && g?.maps?.places) {
-          const target = mapRef.current || document.createElement("div");
-          placesServiceRef.current = new g.maps.places.PlacesService(target);
+    async (e: any) => {
+      try {
+        if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+          e.stop();
         }
-
-        if (placesServiceRef.current) {
-          placesServiceRef.current.getDetails({ placeId }, (place, status) => {
-            if (status === "OK" && place) {
-              processPlaceDetails(place);
-            } else {
-              const ll = (e?.detail?.latLng || e?.latLng) as any;
-              const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
-              const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
-              if (typeof lat === "number" && typeof lng === "number") {
-                const pos = { lat, lng };
-                setInternalPosition(pos);
-                reverseGeocodeAndUpdate(pos);
-              }
-            }
-          });
+      } catch {}
+      const placeId = e?.placeId || e?.detail?.placeId;
+      if (placeId) {
+        const detailed = await fetchPlaceById(placeId);
+        if (detailed) {
+          processPlaceDetails(detailed);
           return;
         }
       }
@@ -212,7 +251,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         reverseGeocodeAndUpdate(pos);
       }
     },
-    [reverseGeocodeAndUpdate, processPlaceDetails],
+    [reverseGeocodeAndUpdate, processPlaceDetails, fetchPlaceById],
   );
 
   useEffect(() => {
@@ -233,45 +272,62 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
       return;
     }
 
-    if (!placesServiceRef.current) {
-      const target = mapRef.current || document.createElement("div");
-      placesServiceRef.current = new g.maps.places.PlacesService(target);
+    // Prefer AutocompleteService
+    if (!autocompleteRef.current && g?.maps?.places?.AutocompleteService) {
+      autocompleteRef.current = new g.maps.places.AutocompleteService();
     }
-    if (!placesServiceRef.current) return;
 
     setIsLoadingPred(true);
-    const request: google.maps.places.TextSearchRequest = {
-      query: query,
-      location: new g.maps.LatLng(baguioCenter.lat, baguioCenter.lng),
-      radius: 15000, // 15km radius around Baguio
-      region: "ph",
-    };
 
-    placesServiceRef.current.textSearch(
-      request,
-      (
-        results: google.maps.places.PlaceResult[] | null,
-        status: google.maps.places.PlacesServiceStatus,
-      ) => {
-        if (status === g.maps.places.PlacesServiceStatus.OK && results) {
-          setPredictions(results);
-          setShowDropdown(true);
-        } else {
-          setPredictions([]);
-          setShowDropdown(false);
-        }
-        setIsLoadingPred(false);
-      },
-    );
+    if (autocompleteRef.current?.getPlacePredictions) {
+      const bias: any = {
+        center: new g.maps.LatLng(baguioCenter.lat, baguioCenter.lng),
+        radius: 15000,
+      };
+      try {
+        autocompleteRef.current.getPlacePredictions(
+          { input: query, locationBias: bias },
+          (preds: any[] | null) => {
+            setIsLoadingPred(false);
+            if (preds && preds.length) {
+              setPredictions(preds as any);
+              setShowDropdown(true);
+            } else {
+              setPredictions([]);
+              setShowDropdown(false);
+            }
+          },
+        );
+        return;
+      } catch {}
+    }
+
+    // No legacy fallback: if Autocomplete is unavailable, clear results
+    setIsLoadingPred(false);
+    setPredictions([]);
+    setShowDropdown(false);
   }, []);
 
   const onSelectPrediction = useCallback(
-    (place: google.maps.places.PlaceResult) => {
+    async (
+      pred:
+        | google.maps.places.PlaceResult
+        | google.maps.places.AutocompletePrediction
+        | any,
+    ) => {
       setShowDropdown(false);
       setPredictions([]);
-      processPlaceDetails(place);
+
+      if (pred && (pred as any).place_id && !(pred as any).geometry) {
+        const detailed = await fetchPlaceById((pred as any).place_id);
+        if (detailed) {
+          processPlaceDetails(detailed);
+          return;
+        }
+      }
+      processPlaceDetails(normalizePlace(pred));
     },
-    [processPlaceDetails],
+    [processPlaceDetails, fetchPlaceById],
   );
 
   useEffect(() => {
@@ -334,8 +390,12 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
                   onClick={() => onSelectPrediction(p)}
                   className="block w-full cursor-pointer px-3 py-2 text-left hover:bg-gray-50"
                 >
-                  <p className="font-medium text-gray-800">{p.name}</p>
-                  <p className="text-xs text-gray-500">{p.formatted_address}</p>
+                  <p className="font-medium text-gray-800">
+                    {(p as any).name || (p as any).structured_formatting?.main_text || (p as any).description}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(p as any).formatted_address || (p as any).structured_formatting?.secondary_text || ""}
+                  </p>
                 </button>
               ))}
           </div>
