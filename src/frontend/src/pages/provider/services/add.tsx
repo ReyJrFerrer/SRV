@@ -435,17 +435,22 @@ const AddServicePage: React.FC = () => {
           .filter((pkg) => pkg.name.trim())
           .map((pkg) => ({ id: pkg.id, name: pkg.name.trim().toLowerCase() }));
 
-        const nameCounts = packageNames.reduce((acc, { name }) => {
-          acc[name] = (acc[name] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
+        const nameCounts = packageNames.reduce(
+          (acc, { name }) => {
+            acc[name] = (acc[name] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>,
+        );
 
         const duplicateNames = Object.keys(nameCounts).filter(
           (name) => nameCounts[name] > 1,
         );
 
         duplicateNames.forEach((dupName) => {
-          const packagesWithDupName = packageNames.filter((p) => p.name === dupName);
+          const packagesWithDupName = packageNames.filter(
+            (p) => p.name === dupName,
+          );
           packagesWithDupName.forEach(({ id }) => {
             if (errors.packageFields && errors.packageFields[id]) {
               if (!errors.packageFields[id]!.name) {
@@ -453,7 +458,9 @@ const AddServicePage: React.FC = () => {
               }
             } else {
               if (!errors.packageFields) errors.packageFields = {};
-              errors.packageFields[id] = { name: "Package name must be unique." };
+              errors.packageFields[id] = {
+                name: "Package name must be unique.",
+              };
             }
           });
         });

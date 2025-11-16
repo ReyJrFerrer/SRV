@@ -638,7 +638,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             pkgError.description &&
                             !hidePackageFieldError[pkg.id]?.description && (
                               <p className="text-xs text-red-600">
-                                {pkgError.description.replace("Package 1: ", "")}
+                                {pkgError.description.replace(
+                                  "Package 1: ",
+                                  "",
+                                )}
                               </p>
                             )}
                         </div>
