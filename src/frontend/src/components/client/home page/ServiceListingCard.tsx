@@ -1,7 +1,11 @@
 // Imports
 import React from "react";
 import { Link } from "react-router-dom";
-import { StarIcon, MapPinIcon, CheckBadgeIcon } from "@heroicons/react/24/solid";
+import {
+  StarIcon,
+  MapPinIcon,
+  CheckBadgeIcon,
+} from "@heroicons/react/24/solid";
 import ReputationBadge from "../../../components/common/ReputationBadge";
 import { EnrichedService } from "../../../hooks/serviceInformation";
 import { useServiceImages, useUserImage } from "../../../hooks/useMediaLoader";
@@ -279,7 +283,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 }}
               />
             </div>
-            <div className="absolute left-2 right-2 top-2 flex items-center justify-between z-20">
+            <div className="absolute left-2 right-2 top-2 z-20 flex items-center justify-between">
               {service.category?.slug && (
                 <button
                   aria-label={service.category.name || "Category"}
@@ -300,11 +304,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 </button>
               )}
 
-                <div className="flex items-center gap-2">
-                  {typeof serviceData.reputationScore === "number" && (
-                    <ReputationBadge score={serviceData.reputationScore} />
-                  )}
-                </div>
+              <div className="flex items-center gap-2">
+                {typeof serviceData.reputationScore === "number" && (
+                  <ReputationBadge score={serviceData.reputationScore} />
+                )}
+              </div>
             </div>
           </div>
 

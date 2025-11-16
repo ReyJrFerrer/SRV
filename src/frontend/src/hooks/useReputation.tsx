@@ -1,7 +1,9 @@
 // Imports
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
-import reputationCanisterService, { updateReputationActor } from "../services/reputationCanisterService";
+import reputationCanisterService, {
+  updateReputationActor,
+} from "../services/reputationCanisterService";
 
 // Types
 export interface ReputationScore {
