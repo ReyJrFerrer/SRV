@@ -214,7 +214,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           return `/images/ai-sp/${service.category.slug}.svg`;
         return "/default-provider.svg";
       };
-      
+
       const preview = {
         id: service.id,
         name: service.name,
@@ -615,7 +615,10 @@ const ClientServiceDetailsPage: React.FC = () => {
           <button
             onClick={handleChatProviderClick}
             disabled={
-              isOwnService || !hasSufficientReputation || isCheckingReputation || isCreatingChat
+              isOwnService ||
+              !hasSufficientReputation ||
+              isCheckingReputation ||
+              isCreatingChat
             }
             className="group relative flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
             style={{ minWidth: 0, flexBasis: "32%" }}
@@ -623,7 +626,9 @@ const ClientServiceDetailsPage: React.FC = () => {
             {chatLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
-                <span className="text-base font-semibold">Creating Chat...</span>
+                <span className="text-base font-semibold">
+                  Creating Chat...
+                </span>
               </>
             ) : (
               <span className="text-sm font-semibold md:text-lg lg:text-xl">
