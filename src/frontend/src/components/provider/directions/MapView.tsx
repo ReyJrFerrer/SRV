@@ -57,7 +57,10 @@ const MapView: React.FC<MapViewProps> = ({
         mapId={"6922634ff75ae05ac38cc473"}
         onClick={(e: any) => {
           try {
-            if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+            if (
+              (e?.placeId || e?.detail?.placeId) &&
+              typeof e?.stop === "function"
+            ) {
               e.stop();
             }
           } catch {}

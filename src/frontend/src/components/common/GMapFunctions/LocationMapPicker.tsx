@@ -45,13 +45,16 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const mapRef = useRef<google.maps.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
   // Legacy PlacesService removed to avoid console warnings for new customers
-  const autocompleteRef = useRef<
-    google.maps.places.AutocompleteService | null
-  >(null);
+  const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(
+    null,
+  );
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const [searchText, setSearchText] = useState<string>("");
   const [predictions, setPredictions] = useState<
-    (google.maps.places.PlaceResult | google.maps.places.AutocompletePrediction)[]
+    (
+      | google.maps.places.PlaceResult
+      | google.maps.places.AutocompletePrediction
+    )[]
   >([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [isLoadingPred, setIsLoadingPred] = useState<boolean>(false);
@@ -67,8 +70,14 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
       ? place.geometry.location
       : hasNew && g
         ? {
-            lat: () => (typeof place.location.lat === "function" ? place.location.lat() : place.location.lat),
-            lng: () => (typeof place.location.lng === "function" ? place.location.lng() : place.location.lng),
+            lat: () =>
+              typeof place.location.lat === "function"
+                ? place.location.lat()
+                : place.location.lat,
+            lng: () =>
+              typeof place.location.lng === "function"
+                ? place.location.lng()
+                : place.location.lng,
           }
         : null;
 
@@ -84,8 +93,15 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
 
     return {
       ...place,
-      name: place.name || place.displayName?.text || place.displayName || place.primaryText?.text,
-      formatted_address: place.formatted_address || place.formattedAddress || place.secondaryText?.text,
+      name:
+        place.name ||
+        place.displayName?.text ||
+        place.displayName ||
+        place.primaryText?.text,
+      formatted_address:
+        place.formatted_address ||
+        place.formattedAddress ||
+        place.secondaryText?.text,
       address_components,
       geometry: location ? { location } : place.geometry,
     };
@@ -205,31 +221,37 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     [onChange, persistLocation, processPlaceDetails],
   );
 
-  const fetchPlaceById = useCallback(async (placeId: string): Promise<any | null> => {
-    const g = (window as any).google;
-    try {
-      if (g?.maps?.places?.Place) {
-        const place = new g.maps.places.Place({ id: placeId });
-        await place.fetchFields({
-          fields: [
-            "id",
-            "displayName",
-            "formattedAddress",
-            "location",
-            "addressComponents",
-          ],
-        });
-        return normalizePlace(place);
-      }
-    } catch {}
-    // If new Place API is unavailable, fall back to reverse geocode only
-    return null;
-  }, []);
+  const fetchPlaceById = useCallback(
+    async (placeId: string): Promise<any | null> => {
+      const g = (window as any).google;
+      try {
+        if (g?.maps?.places?.Place) {
+          const place = new g.maps.places.Place({ id: placeId });
+          await place.fetchFields({
+            fields: [
+              "id",
+              "displayName",
+              "formattedAddress",
+              "location",
+              "addressComponents",
+            ],
+          });
+          return normalizePlace(place);
+        }
+      } catch {}
+      // If new Place API is unavailable, fall back to reverse geocode only
+      return null;
+    },
+    [],
+  );
 
   const onMapClick = useCallback(
     async (e: any) => {
       try {
-        if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+        if (
+          (e?.placeId || e?.detail?.placeId) &&
+          typeof e?.stop === "function"
+        ) {
           e.stop();
         }
       } catch {}
@@ -391,10 +413,14 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
                   className="block w-full cursor-pointer px-3 py-2 text-left hover:bg-gray-50"
                 >
                   <p className="font-medium text-gray-800">
-                    {(p as any).name || (p as any).structured_formatting?.main_text || (p as any).description}
+                    {(p as any).name ||
+                      (p as any).structured_formatting?.main_text ||
+                      (p as any).description}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {(p as any).formatted_address || (p as any).structured_formatting?.secondary_text || ""}
+                    {(p as any).formatted_address ||
+                      (p as any).structured_formatting?.secondary_text ||
+                      ""}
                   </p>
                 </button>
               ))}

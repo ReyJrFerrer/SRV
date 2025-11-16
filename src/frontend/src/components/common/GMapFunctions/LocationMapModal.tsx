@@ -102,7 +102,10 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
               gestureHandling={"greedy"}
               onClick={(e: any) => {
                 try {
-                  if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+                  if (
+                    (e?.placeId || e?.detail?.placeId) &&
+                    typeof e?.stop === "function"
+                  ) {
                     e.stop();
                   }
                 } catch {}

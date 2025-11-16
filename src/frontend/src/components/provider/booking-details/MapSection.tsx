@@ -108,7 +108,10 @@ const MapSection: React.FC<Props> = ({
               zoomControl={true}
               onClick={(e: any) => {
                 try {
-                  if ((e?.placeId || e?.detail?.placeId) && typeof e?.stop === "function") {
+                  if (
+                    (e?.placeId || e?.detail?.placeId) &&
+                    typeof e?.stop === "function"
+                  ) {
                     e.stop();
                   }
                 } catch {}
