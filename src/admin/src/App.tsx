@@ -113,7 +113,7 @@ const AdminSuspensionModal: React.FC<{
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-75"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.preventDefault()}
       style={{ pointerEvents: "auto" }}

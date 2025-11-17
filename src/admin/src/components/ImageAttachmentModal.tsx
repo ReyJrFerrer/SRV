@@ -11,7 +11,7 @@ export const ImageAttachmentModal: React.FC<ImageAttachmentModalProps> = ({
   onClose,
 }) => (
   <div
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
     onClick={onClose}
   >
     <div className="relative" onClick={(e) => e.stopPropagation()}>

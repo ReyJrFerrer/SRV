@@ -18,7 +18,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   if (!isOpen || !reviewId) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
         <h3 className="mb-2 text-lg font-bold text-red-700">Delete Review?</h3>
         <p className="mb-4 text-sm text-gray-700">
