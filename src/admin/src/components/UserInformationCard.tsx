@@ -9,17 +9,26 @@ interface UserInformationCardProps {
     servicesCount: number;
   };
   formatDate: (date: Date) => string;
+  onEditPhoneNumber?: () => void;
 }
 
 export const UserInformationCard: React.FC<UserInformationCardProps> = ({
   user,
   formatDate,
+  onEditPhoneNumber,
 }) => {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h3 className="mb-4 text-lg font-semibold text-gray-900">
-        User Information
-      </h3>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-gray-900">User Information</h3>
+        <button
+          type="button"
+          onClick={onEditPhoneNumber}
+          className="inline-flex items-center rounded-md border border-indigo-600 px-3 py-1 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          Edit Phone Number
+        </button>
+      </div>
       <div className="space-y-4">
         <div>
           <dt className="text-sm font-medium text-gray-500">Phone Number</dt>

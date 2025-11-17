@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { httpsCallable } from "firebase/functions";
 import { useAdmin } from "../hooks/useAdmin";
 import {
   AnalyticsHeader,
@@ -8,7 +9,7 @@ import {
   ServiceProviderRecords,
   ProviderDetailsModal,
 } from "../components";
-import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
+import { getFirebaseFunctions } from "../services/firebaseApp";
 import {
   formatCurrency,
   filterUsers,
@@ -52,6 +53,7 @@ export const AnalyticsPage: React.FC = () => {
   const [walletBalances, setWalletBalances] = useState<Record<string, number>>(
     {},
   );
+  const [walletProviderIds, setWalletProviderIds] = useState<string[]>([]);
   const [loadingWalletBalances, setLoadingWalletBalances] = useState(false);
 
   useEffect(() => {
@@ -84,48 +86,34 @@ export const AnalyticsPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const providerIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (serviceProviders?.length > 0) {
-      serviceProviders.forEach((provider) => ids.add(provider.id));
-    }
-    if (bookings?.length > 0) {
-      bookings.forEach((booking) => {
-        const providerId = booking.serviceProviderId || booking.providerId;
-        if (providerId) ids.add(providerId);
-      });
-    }
-    return Array.from(ids);
-  }, [serviceProviders, bookings]);
-
   useEffect(() => {
-    if (providerIds.length === 0) return;
-
     let cancelled = false;
     setLoadingWalletBalances(true);
 
-    const fetchWalletBalances = async () => {
+    const fetchWalletProviders = async () => {
       try {
-        const balancePromises = providerIds.map(async (id) => {
-          try {
-            const balance = await walletCanisterService.getBalanceOf(id);
-            return { id, balance };
-          } catch (error) {
-            console.error(`Failed to fetch wallet balance for ${id}:`, error);
-            return { id, balance: 0 };
-          }
-        });
+        const functions = getFirebaseFunctions();
+        const getAllWalletsFn = httpsCallable(functions, "getAllWallets");
+        const result = await getAllWalletsFn({});
+        const responseData = result.data as {
+          success: boolean;
+          wallets: Record<string, { balance: number }>;
+        };
 
-        const results = await Promise.all(balancePromises);
         if (cancelled) return;
 
         const balancesMap: Record<string, number> = {};
-        results.forEach(({ id, balance }) => {
-          balancesMap[id] = balance;
+        const ids: string[] = [];
+
+        Object.entries(responseData.wallets).forEach(([userId, wallet]) => {
+          balancesMap[userId] = wallet.balance || 0;
+          ids.push(userId);
         });
+
         setWalletBalances(balancesMap);
+        setWalletProviderIds(ids);
       } catch (error) {
-        console.error("Error fetching wallet balances:", error);
+        console.error("Error fetching wallet providers:", error);
       } finally {
         if (!cancelled) {
           setLoadingWalletBalances(false);
@@ -133,12 +121,12 @@ export const AnalyticsPage: React.FC = () => {
       }
     };
 
-    fetchWalletBalances();
+    fetchWalletProviders();
 
     return () => {
       cancelled = true;
     };
-  }, [providerIds]);
+  }, []);
 
   const loadProviderAnalytics = async (_providerId: string) => {};
 
@@ -177,6 +165,7 @@ export const AnalyticsPage: React.FC = () => {
       users || [],
       systemStats,
       walletBalances,
+      walletProviderIds,
     );
   }, [
     bookings,
@@ -185,6 +174,7 @@ export const AnalyticsPage: React.FC = () => {
     users,
     systemStats,
     walletBalances,
+    walletProviderIds,
   ]);
 
   const filteredServiceProviderData = useMemo(() => {

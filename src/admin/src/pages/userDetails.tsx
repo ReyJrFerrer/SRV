@@ -40,6 +40,7 @@ export const UserDetailsPage: React.FC = () => {
   const [modals, setModals] = useState({
     reputation: false,
     lock: false,
+    editPhone: false,
   });
   const [pendingReputationScore, setPendingReputationScore] = useState(50);
   const [suspension, setSuspension] = useState({
@@ -53,7 +54,10 @@ export const UserDetailsPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState({
     reputation: false,
     account: false,
+    phone: false,
   });
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const handleUpdateCommission = (newAmount: number) => {
     // Update local balance when refreshed from ProviderStats
@@ -64,6 +68,53 @@ export const UserDetailsPage: React.FC = () => {
 
   const handleReputationChange = (newScore: number) => {
     setPendingReputationScore(newScore);
+  };
+
+  const handleEditPhoneClick = () => {
+    if (!user) return;
+    setPhoneInput(user.phone || "");
+    setPhoneError(null);
+    setModals((prev) => ({ ...prev, editPhone: true }));
+  };
+
+  const closeEditPhoneModal = () => {
+    setModals((prev) => ({ ...prev, editPhone: false }));
+    setPhoneError(null);
+  };
+
+  const handleUpdatePhoneNumber = async () => {
+    if (!user) return;
+    const normalizedPhone = phoneInput.replace(/\s+/g, "");
+    if (!normalizedPhone || !/^\+?\d{7,15}$/.test(normalizedPhone)) {
+      toast.error("Enter a valid phone number.");
+      return;
+    }
+
+    setActionLoading((prev) => ({ ...prev, phone: true }));
+    setPhoneError(null);
+    try {
+      await adminServiceCanister.updateUserPhoneNumber(
+        user.id,
+        normalizedPhone,
+      );
+      setUser((prev) => (prev ? { ...prev, phone: normalizedPhone } : prev));
+      toast.success("Phone number updated successfully");
+      setModals((prev) => ({ ...prev, editPhone: false }));
+      setPhoneError(null);
+    } catch (error: any) {
+      const errorCode =
+        error?.code || error?.details?.code || error?.details?.details?.code;
+      if (
+        errorCode === "already-exists" ||
+        errorCode === "functions/already-exists"
+      ) {
+        setPhoneError("This phone number is already registered.");
+      } else {
+        toast.error("Failed to update phone number. Please try again.");
+      }
+    } finally {
+      setActionLoading((prev) => ({ ...prev, phone: false }));
+    }
   };
 
   // Account management functions
@@ -308,7 +359,11 @@ export const UserDetailsPage: React.FC = () => {
 
           {/* Provider Details */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <UserInformationCard user={user} formatDate={formatDate} />
+            <UserInformationCard
+              user={user}
+              formatDate={formatDate}
+              onEditPhoneNumber={handleEditPhoneClick}
+            />
 
             <ReputationSummaryCard
               pendingReputationScore={pendingReputationScore}
@@ -347,6 +402,74 @@ export const UserDetailsPage: React.FC = () => {
           setSuspension((prev) => ({ ...prev, customDays }))
         }
       />
+      {modals.editPhone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Edit Phone Number
+              </h3>
+            </div>
+            <div className="px-6 py-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <input
+                type="text"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                placeholder="Enter phone number"
+              />
+              {phoneError && (
+                <p className="mt-2 text-sm text-red-600">{phoneError}</p>
+              )}
+            </div>
+            <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
+              <button
+                onClick={closeEditPhoneModal}
+                disabled={actionLoading.phone}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdatePhoneNumber}
+                disabled={actionLoading.phone}
+                className="flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {actionLoading.phone ? (
+                  <>
+                    <svg
+                      className="-ml-1 mr-2 h-4 w-4 animate-spin text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  "Update"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

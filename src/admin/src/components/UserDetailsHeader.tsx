@@ -175,6 +175,9 @@ const SpinnerIcon: React.FC<{ className?: string }> = ({
   </svg>
 );
 
+const truncateName = (name: string) =>
+  name.length > 10 ? `${name.slice(0, 10)}...` : name;
+
 // BackLink Component
 const BackLink: React.FC<{ fromTicket: boolean; ticketId: string | null }> = ({
   fromTicket,
@@ -389,7 +392,8 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
                   <div className="flex flex-col space-y-2">
                     <div className="flex items-baseline gap-3">
                       <h1 className="text-3xl font-bold leading-tight text-gray-900">
-                        {user.name}
+                        <span className="lg:hidden">{truncateName(user.name)}</span>
+                        <span className="hidden lg:inline">{user.name}</span>
                       </h1>
                     </div>
                     {user.isLocked && (

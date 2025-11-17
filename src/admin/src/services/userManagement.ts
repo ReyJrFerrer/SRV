@@ -232,6 +232,27 @@ export const updateUserReputation = async (
   }
 };
 
+export const updateUserPhoneNumber = async (
+  userId: string,
+  phone: string,
+): Promise<string> => {
+  try {
+    requireAuth();
+    const result = await callFirebaseFunction("updateUserPhoneNumber", {
+      userId,
+      phone,
+    });
+    return result || "User phone number updated successfully";
+  } catch (error) {
+    if (error instanceof AdminServiceError) throw error;
+    throw new AdminServiceError({
+      message: `Failed to update user phone number: ${error}`,
+      code: "UPDATE_USER_PHONE_ERROR",
+      details: error,
+    });
+  }
+};
+
 /**
  * Get user analytics (real data from backend)
  */

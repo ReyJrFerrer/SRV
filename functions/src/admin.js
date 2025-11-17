@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
+const {isPhoneTaken} = require("./account");
 
 const db = admin.firestore();
 
@@ -910,6 +911,57 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
     }
   } catch (error) {
     console.error("Error in updateUserReputation:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+exports.updateUserPhoneNumber = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId, phone} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can update phone numbers",
+    );
+  }
+
+  if (!userId || typeof userId !== "string") {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "User ID is required",
+    );
+  }
+
+  const normalizedPhone = typeof phone === "string" ? phone.replace(/\s+/g, "") : "";
+  if (!normalizedPhone || !/^\+?\d{7,15}$/.test(normalizedPhone)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid phone number format",
+    );
+  }
+
+  if (await isPhoneTaken(normalizedPhone, userId)) {
+    throw new functions.https.HttpsError(
+      "already-exists",
+      "Phone number is already registered to another user",
+    );
+  }
+
+  try {
+    await db.collection("users").doc(userId).update({
+      phone: normalizedPhone,
+      updatedAt: new Date().toISOString(),
+      updatedBy: authInfo.uid,
+    });
+
+    return {
+      success: true,
+      message: "Phone number updated successfully",
+    };
+  } catch (error) {
+    console.error("Error in updateUserPhoneNumber:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });

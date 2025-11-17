@@ -176,10 +176,20 @@ export const processServiceProviderPerformance = (
   users: any[],
   systemStats: any,
   walletBalances: Record<string, number>,
+  walletProviderIds: string[] = [],
 ): ServiceProviderPerformanceData[] => {
   if (!systemStats) return [];
 
-  if (!bookings || bookings.length === 0) {
+  if (!users) return [];
+
+  const providerIds =
+    walletProviderIds.length > 0
+      ? new Set(walletProviderIds)
+      : bookings && bookings.length > 0
+        ? extractProviderIdsFromBookings(bookings)
+        : new Set<string>();
+
+  if (providerIds.size === 0) {
     let providersToShow = serviceProviders;
     if (!providersToShow || providersToShow.length === 0) {
       providersToShow = getProvidersFromUsers(users);
@@ -194,9 +204,6 @@ export const processServiceProviderPerformance = (
     );
   }
 
-  if (!users) return [];
-
-  const providerIds = extractProviderIdsFromBookings(bookings);
   const performanceMap = buildProviderPerformanceMap(
     providerIds,
     users,
@@ -204,7 +211,9 @@ export const processServiceProviderPerformance = (
     walletBalances,
   );
 
-  processBookingsForPerformance(bookings, performanceMap);
+  if (bookings && bookings.length > 0) {
+    processBookingsForPerformance(bookings, performanceMap);
+  }
   processCommissionTransactions(commissionTransactions, performanceMap);
 
   const values = Array.from(
