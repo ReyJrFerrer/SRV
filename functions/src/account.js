@@ -94,6 +94,8 @@ async function isPhoneTaken(phone, excludePrincipal = null) {
 
   return true;
 }
+
+exports.isPhoneTaken = isPhoneTaken;
 /**
  * Validates phone number if it exists
  * HTTPS onCall Cloud Function

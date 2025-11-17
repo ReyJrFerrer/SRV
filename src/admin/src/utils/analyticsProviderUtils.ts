@@ -50,19 +50,20 @@ export const buildProviderPerformanceMap = (
   const performanceMap = new Map<string, ServiceProviderPerformanceData>();
 
   providerIds.forEach((providerId) => {
-    const user = users.find((u) => u.id.toString() === providerId);
-    if (user) {
-      performanceMap.set(providerId, {
-        id: providerId,
-        name: user.name || "Unknown",
-        phone: user.phone || "N/A",
-        totalRevenue: 0,
-        totalCommission: 0,
-        completedBookings: 0,
-        totalBookings: 0,
-        walletBalance: walletBalances[providerId] || 0,
-      });
+    const user = users.find((u) => u.id && u.id.toString() === providerId);
+    if (!user) {
+      return;
     }
+    performanceMap.set(providerId, {
+      id: providerId,
+      name: user.name,
+      phone: user.phone,
+      totalRevenue: 0,
+      totalCommission: 0,
+      completedBookings: 0,
+      totalBookings: 0,
+      walletBalance: walletBalances[providerId] || 0,
+    });
   });
 
   if (serviceProviders) {

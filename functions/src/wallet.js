@@ -1114,3 +1114,32 @@ exports.getWalletDetails = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
+
+exports.getAllWallets = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only admins can view all wallets",
+    );
+  }
+
+  try {
+    const walletsSnapshot = await db.collection("wallets").get();
+    const wallets = {};
+
+    walletsSnapshot.forEach((doc) => {
+      const walletData = doc.data();
+      wallets[doc.id] = {
+        balance: walletData.balance || 0,
+        heldBalance: walletData.heldBalance || 0,
+        availableBalance: (walletData.balance || 0) - (walletData.heldBalance || 0),
+      };
+    });
+
+    return { success: true, wallets };
+  } catch (error) {
+    console.error("Error in getAllWallets:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});

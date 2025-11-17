@@ -85,6 +85,7 @@ const {
   updateCertificateValidationStatus,
   autoReactivateSuspendedAccounts,
   getBookingsData,
+  updateUserPhoneNumber,
 } = require("./src/admin");
 
 // Import Commission functions
@@ -173,6 +174,7 @@ const {
   getAuthorizedControllers,
   releaseHold,
   getWalletDetails,
+  getAllWallets,
 } = require("./src/wallet");
 
 // Import Review Management functions
@@ -359,6 +361,7 @@ exports.removeAuthorizedController = removeAuthorizedController;
 exports.getAuthorizedControllers = getAuthorizedControllers;
 exports.releaseHold = releaseHold;
 exports.getWalletDetails = getWalletDetails;
+exports.getAllWallets = getAllWallets;
 
 // Export Review Management Functions
 exports.submitReview = submitReview;
@@ -453,6 +456,7 @@ exports.getUserServiceCount = getUserServiceCount;
 exports.getAllUserLockStatuses = getAllUserLockStatuses;
 exports.lockUserAccount = lockUserAccount;
 exports.updateUserReputation = updateUserReputation;
+exports.updateUserPhoneNumber = updateUserPhoneNumber;
 exports.getValidatedCertificates = getValidatedCertificates;
 exports.getRejectedCertificates = getRejectedCertificates;
 exports.getServicesWithCertificates = getServicesWithCertificates;
