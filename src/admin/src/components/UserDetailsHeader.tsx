@@ -392,7 +392,9 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
                   <div className="flex flex-col space-y-2">
                     <div className="flex items-baseline gap-3">
                       <h1 className="text-3xl font-bold leading-tight text-gray-900">
-                        <span className="lg:hidden">{truncateName(user.name)}</span>
+                        <span className="lg:hidden">
+                          {truncateName(user.name)}
+                        </span>
                         <span className="hidden lg:inline">{user.name}</span>
                       </h1>
                     </div>

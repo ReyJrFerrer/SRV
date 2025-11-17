@@ -981,7 +981,7 @@ exports.getAllWallets = functions.https.onCall(async (data, context) => {
       };
     });
 
-    return { success: true, wallets };
+    return {success: true, wallets};
   } catch (error) {
     console.error("Error in getAllWallets:", error);
     throw new functions.https.HttpsError("internal", error.message);
