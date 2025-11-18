@@ -141,7 +141,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
           <span className="text-xl font-bold text-blue-700">
             Service Images
           </span>
-          <span className="text-xs font-normal text-blue-400">(Optional)</span>
+          <span className="text-xs font-normal text-gray-600">(Optional)</span>
         </div>
         <p className="mb-4 text-sm text-gray-600">
           Upload images of your past work. High-quality images help attract more
@@ -204,9 +204,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
           <span className="text-xl font-bold text-yellow-700">
             Certifications
           </span>
-          <span className="text-xs font-normal text-yellow-400">
-            (Optional)
-          </span>
+          <span className="text-xs font-normal text-gray-600">(Optional)</span>
         </div>
         <p className="mb-4 text-sm text-gray-600">
           Upload images of your certifications or credentials. This helps build
