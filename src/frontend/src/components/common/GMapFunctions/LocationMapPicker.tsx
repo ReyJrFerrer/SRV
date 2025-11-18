@@ -383,7 +383,10 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
             const val = e.target.value;
             setSearchText(val);
             if (debounceRef.current) window.clearTimeout(debounceRef.current);
-            debounceRef.current = window.setTimeout(() => fetchPredictions(val), 300);
+            debounceRef.current = window.setTimeout(
+              () => fetchPredictions(val),
+              300,
+            );
             setShowDropdown(true);
           }}
           onFocus={() => searchText && setShowDropdown(true)}
@@ -397,7 +400,9 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
 
         {showDropdown && (predictions.length > 0 || isLoadingPred) && (
           <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-gray-200 bg-white text-sm shadow-lg">
-            {isLoadingPred && <div className="px-3 py-2 text-gray-500">Searching…</div>}
+            {isLoadingPred && (
+              <div className="px-3 py-2 text-gray-500">Searching…</div>
+            )}
             {!isLoadingPred &&
               predictions.map((p) => (
                 <button
@@ -408,10 +413,14 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
                   className="block w-full cursor-pointer px-3 py-2 text-left hover:bg-gray-50"
                 >
                   <p className="font-medium text-gray-800">
-                    {(p as any).name || (p as any).structured_formatting?.main_text || (p as any).description}
+                    {(p as any).name ||
+                      (p as any).structured_formatting?.main_text ||
+                      (p as any).description}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {(p as any).formatted_address || (p as any).structured_formatting?.secondary_text || ""}
+                    {(p as any).formatted_address ||
+                      (p as any).structured_formatting?.secondary_text ||
+                      ""}
                   </p>
                 </button>
               ))}
@@ -419,23 +428,41 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         )}
       </div>
 
-      <div className={`rounded-xl ${highlight ? "border-2 border-red-500 ring-2 ring-red-200" : "border border-gray-200"}`} style={{ overflow: "hidden" }}>
+      <div
+        className={`rounded-xl ${highlight ? "border-2 border-red-500 ring-2 ring-red-200" : "border border-gray-200"}`}
+        style={{ overflow: "hidden" }}
+      >
         <div className="relative">
           {onOpenFullScreen && (
             <button
               aria-label="Open full screen map"
               type="button"
               onClick={onOpenFullScreen}
-              className="absolute right-3 top-3 z-30 flex items-center justify-center h-10 w-10 rounded-full bg-white shadow-md border border-gray-200 hover:bg-gray-50"
+              className="absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md hover:bg-gray-50"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5 text-gray-700">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-5 w-5 text-gray-700"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"
+                />
               </svg>
             </button>
           )}
 
           <Map
-            style={{ width: "100%", height: `${mapHeight}px`, borderRadius: "0.75rem" }}
+            style={{
+              width: "100%",
+              height: `${mapHeight}px`,
+              borderRadius: "0.75rem",
+            }}
             defaultCenter={baguioCenter}
             defaultZoom={18}
             onCameraChanged={(ev) => {
@@ -469,7 +496,9 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         </div>
       </div>
 
-      <p className="text-[10px] text-gray-400">Click map or drag marker to refine. Powered by Google Maps.</p>
+      <p className="text-[10px] text-gray-400">
+        Click map or drag marker to refine. Powered by Google Maps.
+      </p>
     </div>
   );
 };

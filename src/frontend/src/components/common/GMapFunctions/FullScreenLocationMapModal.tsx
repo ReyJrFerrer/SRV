@@ -1,9 +1,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-const LocationMapPicker = React.lazy(
-  () => import("./LocationMapPicker"),
-);
+const LocationMapPicker = React.lazy(() => import("./LocationMapPicker"));
 
 // Lightweight type compatible with LocationMapPicker's expected value
 export interface StructuredLocationLike {
@@ -41,7 +39,12 @@ const FullScreenLocationMapModal: React.FC<FullScreenLocationMapModalProps> = ({
       stroke="currentColor"
       className="inline h-4 w-4 text-gray-700"
     >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"
+      />
     </svg>
   ),
   highlight = false,
@@ -53,7 +56,9 @@ const FullScreenLocationMapModal: React.FC<FullScreenLocationMapModalProps> = ({
     const compute = () => {
       if (typeof window === "undefined") return;
       const isDesktop = window.innerWidth >= 1024; // Tailwind lg
-      const h = isDesktop ? window.innerHeight : Math.min(window.innerHeight - 120, 1200);
+      const h = isDesktop
+        ? window.innerHeight
+        : Math.min(window.innerHeight - 120, 1200);
       setHeight(Math.max(480, h - (isDesktop ? 0 : 0)));
     };
     compute();
@@ -120,7 +125,7 @@ const FullScreenLocationMapModal: React.FC<FullScreenLocationMapModalProps> = ({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 
