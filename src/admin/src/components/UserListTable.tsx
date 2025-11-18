@@ -6,6 +6,7 @@ import {
   LockClosedIcon,
 } from "@heroicons/react/24/outline";
 import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
+import { useAuth } from "../context/AuthContext";
 
 interface UserData {
   id: string;
@@ -65,6 +66,10 @@ export const UserListTable: React.FC<UserListTableProps> = ({
   onPageChange,
 }) => {
   const navigate = useNavigate();
+  const { firebaseUser } = useAuth();
+  const currentUserId = firebaseUser?.uid;
+  
+  const columnCount = showOnlyAdmins ? 5 : 7;
 
   return (
     <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
@@ -112,12 +117,16 @@ export const UserListTable: React.FC<UserListTableProps> = ({
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 User
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Phone
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Services
-              </th>
+              {!showOnlyAdmins && (
+                <>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Phone
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Services
+                  </th>
+                </>
+              )}
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 Member Since
               </th>
@@ -136,7 +145,7 @@ export const UserListTable: React.FC<UserListTableProps> = ({
           <tbody className="divide-y divide-gray-200 bg-white">
             {loading || loadingUsers || loadingAdminIds ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center">
+                <td colSpan={columnCount} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div>
                     <span className="text-sm text-gray-500">
@@ -152,7 +161,7 @@ export const UserListTable: React.FC<UserListTableProps> = ({
             ) : filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={columnCount}
                   className="px-6 py-12 text-center text-sm text-gray-500"
                 >
                   <div className="flex flex-col items-center space-y-2">
@@ -222,16 +231,20 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                       <ChevronRightIcon className="ml-3 h-5 w-5 text-gray-300 sm:hidden" />
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                    {user.phone}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                    <div className="flex items-center">
-                      <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
-                        {user.servicesCount || 0}
-                      </span>
-                    </div>
-                  </td>
+                  {!showOnlyAdmins && (
+                    <>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                        {user.phone}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                        <div className="flex items-center">
+                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                            {user.servicesCount || 0}
+                          </span>
+                        </div>
+                      </td>
+                    </>
+                  )}
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                     {formatDate(user.createdAt)}
                   </td>
@@ -241,12 +254,18 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                   <td className="whitespace-nowrap px-6 py-4">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        isUserOnline(user)
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
+                        user.id === currentUserId
+                          ? "bg-blue-100 text-blue-800"
+                          : isUserOnline(user)
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {isUserOnline(user) ? "Online" : "Offline"}
+                      {user.id === currentUserId
+                        ? "You"
+                        : isUserOnline(user)
+                          ? "Online"
+                          : "Offline"}
                     </span>
                   </td>
                   {/* Actions cell */}
