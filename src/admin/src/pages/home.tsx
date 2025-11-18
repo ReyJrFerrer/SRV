@@ -321,19 +321,21 @@ export const AdminHomePage: React.FC = () => {
           {/* Security Settings Section */}
           <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
             <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Security Settings</h2>
-                  <p className="mt-1 text-sm text-gray-500">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-4 mb-1">
+                    <h2 className="text-lg font-semibold text-gray-900">Security Settings</h2>
+                    <button
+                      onClick={logout}
+                      className="flex-shrink-0 inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-500">
                     Control admin access and security policies
                   </p>
                 </div>
-                <button
-                  onClick={logout}
-                  className="inline-flex items-center justify-center self-end rounded-md border border-red-200 bg-red-50 px-4 py-1.5 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 sm:self-auto"
-                >
-                  Sign Out
-                </button>
               </div>
             </div>
             <div className="p-6">
