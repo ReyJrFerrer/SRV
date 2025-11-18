@@ -172,7 +172,10 @@ const CategoryPage: React.FC = () => {
         toFetch.map(async (s) => {
           try {
             const rep = await fetchUserReputation(s.providerId);
-            const score = rep && typeof rep.trustScore === "number" ? Math.round(rep.trustScore) : undefined;
+            const score =
+              rep && typeof rep.trustScore === "number"
+                ? Math.round(rep.trustScore)
+                : undefined;
             return { id: s.id, reputationScore: score };
           } catch {
             return { id: s.id, reputationScore: undefined };
