@@ -6,8 +6,8 @@ import {
 } from "@heroicons/react/24/solid";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { adminServiceCanister } from "../services/adminServiceCanister";
-import { ReviewItem } from "../components/ReviewItem";
-import { ReviewStats } from "../components/ReviewStats";
+import { ReviewItem } from "../components/analytics/ReviewItem";
+import { ReviewStats } from "../components/analytics/ReviewStats";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ConfirmModal } from "../components/ConfirmModal";
 import {

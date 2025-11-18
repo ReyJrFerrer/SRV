@@ -13,7 +13,7 @@ import { AnalyticsPage } from "./pages/analytics";
 import UserWalletPage from "./pages/userWallet";
 import { UserChatsPage } from "./pages/userChats";
 import { UserChatHistoryPage } from "./pages/userChatHistory";
-import AdminServiceDetailsWrapper from "./components/AdminServiceDetailsWrapper";
+import AdminServiceDetailsWrapper from "./components/serviceManagement/AdminServiceDetailsWrapper";
 import ServiceReviewsPage from "./pages/serviceReviews";
 import UserReviewsPage from "./pages/userReviews";
 import AppFeedbackPage from "./pages/appFeedback";

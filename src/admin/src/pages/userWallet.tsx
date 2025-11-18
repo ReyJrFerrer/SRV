@@ -6,9 +6,9 @@ import {
   Transaction,
 } from "../../../frontend/src/services/walletCanisterService";
 import { Toaster, toast } from "sonner";
-import WalletBalanceCard from "../components/WalletBalanceCard";
-import TransactionHistory from "../components/TransactionHistory";
-import UpdateWalletModal from "../components/UpdateWalletModal";
+import WalletBalanceCard from "../components/wallet/WalletBalanceCard";
+import TransactionHistory from "../components/wallet/TransactionHistory";
+import UpdateWalletModal from "../components/wallet/UpdateWalletModal";
 import { formatCurrency } from "../utils/formatUtils";
 import {
   validateAmount,

@@ -5,8 +5,8 @@ import {
   ChevronRightIcon,
   LockClosedIcon,
 } from "@heroicons/react/24/outline";
-import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
-import { useAuth } from "../context/AuthContext";
+import { ProfileImage } from "../../../../frontend/src/components/common/ProfileImage";
+import { useAuth } from "../../context/AuthContext";
 
 interface UserData {
   id: string;

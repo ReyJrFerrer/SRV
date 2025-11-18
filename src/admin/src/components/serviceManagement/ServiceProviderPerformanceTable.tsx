@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
+import { ProfileImage } from "../../../../frontend/src/components/common/ProfileImage";
 
 interface ServiceProviderPerformanceData {
   id: string;

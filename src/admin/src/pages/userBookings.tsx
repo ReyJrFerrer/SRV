@@ -3,9 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import { ArrowLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { adminServiceCanister } from "../services/adminServiceCanister";
-import { BookingStatsCards } from "../components/BookingStatsCards";
-import { BookingFilters } from "../components/BookingFilters";
-import { BookingsList } from "../components/BookingsList";
+import { BookingStatsCards } from "../components/serviceManagement/BookingStatsCards";
+import { BookingFilters } from "../components/serviceManagement/BookingFilters";
+import { BookingsList } from "../components/serviceManagement/BookingsList";
 import {
   normalizeBookingStatus,
   getBookingStatusColor,

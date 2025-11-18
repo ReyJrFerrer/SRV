@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, Navigate } from "react-router-dom";
-import ServiceDetailsPage from "../pages/serviceDetails";
+import ServiceDetailsPage from "../../pages/serviceDetails";
 
 const AdminServiceDetailsWrapper: React.FC = () => {
   const { id: serviceId, userId } = useParams<{
