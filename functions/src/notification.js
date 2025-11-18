@@ -304,16 +304,6 @@ async function sendOneSignalNotification(userId, notification) {
  */
 exports.createNotification = functions.https.onCall(async (data, context) => {
   console.log("createNotification called");
-  const safeDataForLog = {
-    targetUserId: data.data?.targetUserId,
-    userType: data.data?.userType,
-    notificationType: data.data?.notificationType,
-    title: data.data?.title,
-    message: data.data?.message,
-    relatedEntityId: data.data?.relatedEntityId,
-    metadata: data.data?.metadata ? "Present" : "Missing",
-  };
-
   // Extract payload from data.data
   const payload = data.data || data;
   const {
@@ -450,10 +440,6 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
  */
 exports.getUserNotifications = functions.https.onCall(async (data, context) => {
   console.log("getUserNotifications called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    filter: data.data?.filter,
-  };
   // Extract payload from data.data
   const payload = data.data || data;
   const {userId, filter} = payload;
@@ -532,7 +518,6 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
 exports.markNotificationAsRead = functions.https.onCall(
   async (data, context) => {
     console.log("markNotificationAsRead called");
-    const safeDataForLog = {notificationId: data.data?.notificationId};
 
     // Extract payload from data.data
     const payload = data.data || data;
@@ -614,7 +599,6 @@ exports.markNotificationAsRead = functions.https.onCall(
 exports.markNotificationAsPushSent = functions.https.onCall(
   async (data, context) => {
     console.log("markNotificationAsPushSent called");
-    const safeDataForLog = {notificationId: data.data?.notificationId};
 
     // Extract payload from data.data
     const payload = data.data || data;
@@ -695,7 +679,6 @@ exports.markNotificationAsPushSent = functions.https.onCall(
 exports.getNotificationsForPush = functions.https.onCall(
   async (data, context) => {
     console.log("getNotificationsForPush called");
-    const safeDataForLog = {userId: data.data?.userId};
 
     // Extract payload from data.data
     const payload = data.data || data;
@@ -757,7 +740,6 @@ exports.getNotificationsForPush = functions.https.onCall(
  */
 exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) => {
   console.log("storeOneSignalPlayerId called");
-  const safeDataForLog = {playerId: data.data?.playerId ? "Present" : "Missing"};
 
   // Extract payload from data.data
   const payload = data.data || data;
@@ -836,7 +818,6 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
  */
 exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) => {
   console.log("removeOneSignalPlayerId called");
-  const safeDataForLog = {playerId: data.data?.playerId};
 
   // Extract payload from data.data
   const payload = data.data || data;
@@ -883,8 +864,6 @@ exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) =
  */
 exports.getNotificationStats = functions.https.onCall(async (data, context) => {
   console.log("getNotificationStats called");
-  const safeDataForLog = {userId: data.data?.userId};
-
   // Extract payload from data.data
   const payload = data.data || data;
   const {userId} = payload;
@@ -1005,8 +984,6 @@ exports.markAllNotificationsAsRead = functions.https.onCall(
 exports.canReceiveNotification = functions.https.onCall(
   async (data, context) => {
     console.log("canReceiveNotification called");
-    const safeDataForLog = {userId: data.data?.userId,
-      notificationType: data.data?.notificationType};
 
     // Extract payload from data.data
     const payload = data.data || data;
@@ -1045,8 +1022,6 @@ exports.canReceiveNotification = functions.https.onCall(
  * HTTPS Callable Function
  */
 exports.deleteNotification = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {notificationId: data.data?.notificationId};
-
   // Extract payload from data.data
   const payload = data.data || data;
   const {notificationId} = payload;

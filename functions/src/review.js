@@ -531,7 +531,7 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
   // Use authenticated user's ID if no userId provided
   const targetUserId = userId || authInfo.uid;
   const showAll = includeHidden && authInfo.isAdmin;
-  
+
   try {
     if (showAll) {
       const allReviewsSnap = await db
