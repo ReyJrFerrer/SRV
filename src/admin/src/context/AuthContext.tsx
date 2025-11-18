@@ -197,12 +197,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   );
                   setIsAdmin(true);
                 }
-              } catch (adminError) {
-                console.warn(
-                  "[Admin] Could not auto-create admin profile:",
-                  adminError,
-                );
-                setIsAdmin(true);
+              } catch (adminError: any) {
+                if (adminError?.code === "permission-denied") {
+                  setError(adminError.message || "You are not authorized for admin access.");
+                  setIsAdmin(false);
+                  try {
+                    await authClient.logout();
+                    setFirebaseUser(null);
+                    setIsAuthenticated(false);
+                  } catch (logoutError) {
+                  }
+                } else {
+                  console.warn(
+                    "[Admin] Could not auto-create admin profile:",
+                    adminError,
+                  );
+                  setIsAdmin(false);
+                }
               }
             } catch (fbError) {
               console.error(

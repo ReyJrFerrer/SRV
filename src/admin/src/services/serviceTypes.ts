@@ -93,6 +93,7 @@ export interface FrontendSystemSettings {
   maxCommissionRateBps: number;
   minOrderAmount: number;
   maxOrderAmount: number;
+  restrictNewAdminLogins: boolean;
   updatedAt: Date;
   updatedBy: string;
 }

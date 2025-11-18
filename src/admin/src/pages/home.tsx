@@ -21,6 +21,9 @@ import {
   type Period,
 } from "../utils/homeUtils";
 import { getFeedbackStats } from "../services/adminServiceCanister";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "../services/firebaseApp";
+import { FrontendSystemSettings } from "../services/serviceTypes";
 
 export const AdminHomePage: React.FC = () => {
   const {
@@ -51,6 +54,9 @@ export const AdminHomePage: React.FC = () => {
     averageRating: number;
     totalFeedback: number;
   } | null>(null);
+
+  const [settings, setSettings] = useState<FrontendSystemSettings | null>(null);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
 
   // Calculate active service providers count from users with ServiceProvider role
   const activeServiceProvidersCount = useMemo(() => {
@@ -137,7 +143,45 @@ export const AdminHomePage: React.FC = () => {
     loadFeedbackStats();
   }, []);
 
-  // Toggle mobile bottom bar
+  const loadSettings = async () => {
+    try {
+      const functions = getFirebaseFunctions();
+      const getSettingsFn = httpsCallable(functions, "getSettings");
+      const result = await getSettingsFn();
+      const data = result.data as { success: boolean; data: FrontendSystemSettings };
+      if (data.success) {
+        const settingsData = data.data;
+        if (settingsData.updatedAt) {
+          settingsData.updatedAt = new Date(settingsData.updatedAt as any);
+        }
+        setSettings(settingsData);
+      }
+    } catch (error) {
+    }
+  };
+
+  const toggleRestrictNewLogins = async (enabled: boolean) => {
+    if (!settings) return;
+    
+    setUpdatingSettings(true);
+    try {
+      const functions = getFirebaseFunctions();
+      const updateSettingsFn = httpsCallable(functions, "setSettings");
+      await updateSettingsFn({
+        ...settings,
+        restrictNewAdminLogins: enabled,
+      });
+      setSettings({ ...settings, restrictNewAdminLogins: enabled });
+    } catch (error) {
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
   useEffect(() => {
     const onScroll = () => {
       setShowMobileBar(window.scrollY > 80);
@@ -201,6 +245,49 @@ export const AdminHomePage: React.FC = () => {
             stats={dashboardStats}
             loading={loading.systemStats}
           />
+
+          {/* Security Settings Section */}
+          <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
+              <h2 className="text-lg font-semibold text-gray-900">Security Settings</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Control admin access and security policies
+              </p>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-gray-900">
+                    Restrict New Admin Logins
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    When enabled, only existing users in Firestore can access the admin panel. 
+                    New Internet Identity accounts will be blocked.
+                  </p>
+                </div>
+                <button
+                  onClick={() => toggleRestrictNewLogins(!settings?.restrictNewAdminLogins)}
+                  disabled={updatingSettings || !settings}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    settings?.restrictNewAdminLogins ? "bg-blue-600" : "bg-gray-200"
+                  } ${updatingSettings ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      settings?.restrictNewAdminLogins ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+              {settings?.restrictNewAdminLogins && (
+                <div className="mt-3 rounded-md bg-yellow-50 p-3">
+                  <p className="text-sm text-yellow-800">
+                    New Internet Identity accounts will be blocked from admin access.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
 
           {/* Charts Section */}
           <section className="rounded-lg border border-blue-100 bg-white shadow-sm">

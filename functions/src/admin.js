@@ -409,6 +409,7 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
     maxCommissionRateBps,
     minOrderAmount,
     maxOrderAmount,
+    restrictNewAdminLogins,
   } = payload;
 
   const authInfo = getAuthInfo(context, data);
@@ -421,12 +422,16 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
 
   try {
     const now = new Date().toISOString();
+    const currentSettingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const currentSettings = currentSettingsDoc.exists ? currentSettingsDoc.data() : {};
+    
     const settings = {
       corporateGcashAccount: corporateGcashAccount || DEFAULT_GCASH_ACCOUNT,
       settlementDeadlineHours: settlementDeadlineHours || DEFAULT_SETTLEMENT_HOURS,
       maxCommissionRateBps: maxCommissionRateBps || MAX_COMMISSION_BPS,
       minOrderAmount: minOrderAmount || MIN_ORDER_CENTAVOS,
       maxOrderAmount: maxOrderAmount || MAX_ORDER_CENTAVOS,
+      restrictNewAdminLogins: restrictNewAdminLogins !== undefined ? restrictNewAdminLogins : (currentSettings.restrictNewAdminLogins || false),
       updatedAt: now,
       updatedBy: authInfo.uid,
     };
@@ -456,13 +461,13 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
     const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
 
     if (!settingsDoc.exists) {
-      // Return default settings
       const defaultSettings = {
         corporateGcashAccount: DEFAULT_GCASH_ACCOUNT,
         settlementDeadlineHours: DEFAULT_SETTLEMENT_HOURS,
         maxCommissionRateBps: MAX_COMMISSION_BPS,
         minOrderAmount: MIN_ORDER_CENTAVOS,
         maxOrderAmount: MAX_ORDER_CENTAVOS,
+        restrictNewAdminLogins: false,
         updatedAt: new Date().toISOString(),
         updatedBy: "system",
       };
@@ -471,7 +476,12 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
       return {success: true, data: defaultSettings};
     }
 
-    return {success: true, data: settingsDoc.data()};
+    const settingsData = settingsDoc.data();
+    if (settingsData.restrictNewAdminLogins === undefined) {
+      settingsData.restrictNewAdminLogins = false;
+    }
+
+    return {success: true, data: settingsData};
   } catch (error) {
     console.error("Error in getSettings:", error);
     throw new functions.https.HttpsError("internal", error.message);
