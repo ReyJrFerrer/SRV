@@ -1,4 +1,5 @@
 import { ServiceProviderPerformanceData } from "./analyticsUtils";
+import { extractProfilePicture } from "./profileUtils";
 
 export const createFallbackProviderData = (
   providersToShow: any[],
@@ -25,6 +26,7 @@ export const createFallbackProviderData = (
       completedBookings: shouldGetTotals ? settledBookings : 0,
       totalBookings: shouldGetTotals ? totalBookings : 0,
       walletBalance: walletBalances[providerId] || 0,
+      profilePicture: extractProfilePicture(provider.profilePicture),
     };
   });
 };
@@ -63,6 +65,7 @@ export const buildProviderPerformanceMap = (
       completedBookings: 0,
       totalBookings: 0,
       walletBalance: walletBalances[providerId] || 0,
+      profilePicture: extractProfilePicture(user.profilePicture),
     });
   });
 
@@ -78,11 +81,16 @@ export const buildProviderPerformanceMap = (
           completedBookings: 0,
           totalBookings: 0,
           walletBalance: walletBalances[provider.id] || 0,
+          profilePicture: extractProfilePicture(provider.profilePicture),
         });
       } else {
         const existing = performanceMap.get(provider.id);
         if (existing) {
           existing.walletBalance = walletBalances[provider.id] || 0;
+          // Update profile picture if not already set
+          if (!existing.profilePicture) {
+            existing.profilePicture = extractProfilePicture(provider.profilePicture);
+          }
         }
       }
     });
