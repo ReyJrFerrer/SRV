@@ -94,39 +94,35 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     return () => document.body.classList.remove("has-mini-header");
   }, [isMini]);
 
-  // Measure header height and keep it as a minHeight when the mini overlay is shown
-  // React.useLayoutEffect(() => {
-  //   const measure = () => {
-  //     if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
-  //   };
-  //   // Measure once after mount
-  //   measure();
-  //   window.addEventListener("resize", measure);
-  //   return () => window.removeEventListener("resize", measure);
-  // }, []);
-
   // maps logic has been extracted into MapFunctions component
   const mapsApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // --- Handler: Search input change ---
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
     if (value.trim().length > 0) {
-      // Only use service names for suggestions, not categories
+      // Combine service names and provider names for suggestions
       const serviceNames = Array.from(
         new Set(
           services.map((service) => service.title).filter((name) => !!name),
         ),
       );
-      const filtered = serviceNames.filter((suggestion) =>
-        suggestion.toLowerCase().includes(value.toLowerCase()),
+      const providerNames = Array.from(
+        new Set(
+          services.map((service) => service.providerName).filter((name) => !!name),
+        ),
       );
+      const allSuggestions = [...serviceNames, ...providerNames];
+      const filtered = allSuggestions
+        .filter((suggestion): suggestion is string => !!suggestion)
+        .filter((suggestion) =>
+          suggestion.toLowerCase().includes(value.toLowerCase()),
+        );
       setFilteredSuggestions(filtered);
       setShowSuggestions(filtered.length > 0);
     } else {
@@ -178,15 +174,14 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion);
     setShowSuggestions(false);
+    // Redirect to search results page with the selected suggestion
+    navigate(
+      `/client/search-results?query=${encodeURIComponent(suggestion)}`,
+    );
   };
 
   // --- Display name for welcome message ---
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
-
-  // MapModal moved outside the component to avoid re-creation on each render
-
-  // --- Handler: search input change ---
-  // Only one handler should exist. The correct handler is defined above with dynamicSuggestions.
 
   // --- Render: Header layout ---
   return (
