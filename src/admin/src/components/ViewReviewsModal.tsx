@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { adminServiceCanister } from "../services/adminServiceCanister";
-import { StarIcon } from "@heroicons/react/24/solid";
+import { StarIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
 interface Review {
   id: string;
@@ -115,19 +115,7 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 focus:outline-none"
           >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 

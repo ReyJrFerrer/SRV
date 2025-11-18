@@ -34,5 +34,5 @@ if (!fs.existsSync(distPath)) {
 // Write version file
 fs.writeFileSync(versionFilePath, JSON.stringify(versionInfo, null, 2));
 
-console.log("✅ Generated version.json:");
+console.log("Generated version.json:");
 console.log(JSON.stringify(versionInfo, null, 2));

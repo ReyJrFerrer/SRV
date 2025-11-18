@@ -92,7 +92,7 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
 exports.uploadMedia = functions.https.onCall(async (data, context) => {
   const {fileName, contentType, mediaType, fileData} = data.data;
   // Log incoming data
-  console.log("📥 uploadMedia called with:", {
+  console.log("uploadMedia called with:", {
     fileName: fileName,
     fileNameType: typeof fileName,
     fileNameLength: fileName?.length,
@@ -113,7 +113,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
 
   // Validate file name
   if (!fileName || fileName.length === 0 || fileName.length > 255) {
-    console.error("❌ Invalid fileName:", {
+    console.error("Invalid fileName:", {
       fileName,
       fileNameType: typeof fileName,
       fileNameLength: fileName?.length,
@@ -525,7 +525,6 @@ exports.updateMediaMetadata = functions.https.onCall(async (data, context) => {
  * Mirrors getStorageStats function from media.mo canister
  */
 exports.getStorageStats = functions.https.onCall(async (data, context) => {
-  // Authentication - only admins can view stats
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
@@ -629,56 +628,13 @@ exports.validateMediaItems = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Get remittance media items (for admin/remittance system)
- * Mirrors getRemittanceMediaItems function from media.mo canister
- */
-exports.getRemittanceMediaItems = functions.https.onCall(
-  async (data, context) => {
-    const {mediaIds} = data;
-
-    // Authentication - only admins or system can access
-    const authInfo = getAuthInfo(context, data);
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
-      );
-    }
-
-    if (!mediaIds || !Array.isArray(mediaIds)) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Media IDs array is required",
-      );
-    }
-
-    try {
-      const mediaItems = [];
-
-      for (const mediaId of mediaIds) {
-        const mediaDoc = await db.collection("media").doc(mediaId).get();
-        if (mediaDoc.exists) {
-          mediaItems.push(mediaDoc.data());
-        }
-      }
-
-      return {success: true, data: mediaItems};
-    } catch (error) {
-      console.error("Error getting remittance media items:", error);
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
-);
-
-/**
- * Update certificate validation status (admin only)
+ * Update certificate validation status
  * Mirrors updateCertificateValidationStatus function from media.mo canister
  */
 exports.updateCertificateValidationStatus = functions.https.onCall(
   async (data, context) => {
     const {mediaId, newStatus} = data;
 
-    // Authentication - admin only
     const authInfo = getAuthInfo(context, data);
     if (!authInfo.hasAuth || !authInfo.isAdmin) {
       throw new functions.https.HttpsError(
@@ -738,14 +694,13 @@ exports.updateCertificateValidationStatus = functions.https.onCall(
 );
 
 /**
- * Get certificates by validation status (admin only)
+ * Get certificates by validation status
  * Mirrors getCertificatesByValidationStatus function from media.mo canister
  */
 exports.getCertificatesByValidationStatus = functions.https.onCall(
   async (data, context) => {
     const {status} = data;
 
-    // Authentication - admin only
     const authInfo = getAuthInfo(context, data);
     if (!authInfo.hasAuth || !authInfo.isAdmin) {
       throw new functions.https.HttpsError(

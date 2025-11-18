@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminDashboardStats } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
-import { UserIcon } from "@heroicons/react/24/outline";
+import { PresentationChartLineIcon, UserIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import {
   ResponsiveContainer,
@@ -21,6 +21,9 @@ import {
   type Period,
 } from "../utils/homeUtils";
 import { getFeedbackStats } from "../services/adminServiceCanister";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "../services/firebaseApp";
+import { FrontendSystemSettings } from "../services/serviceTypes";
 
 export const AdminHomePage: React.FC = () => {
   const {
@@ -51,6 +54,9 @@ export const AdminHomePage: React.FC = () => {
     averageRating: number;
     totalFeedback: number;
   } | null>(null);
+
+  const [settings, setSettings] = useState<FrontendSystemSettings | null>(null);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
 
   // Calculate active service providers count from users with ServiceProvider role
   const activeServiceProvidersCount = useMemo(() => {
@@ -137,7 +143,45 @@ export const AdminHomePage: React.FC = () => {
     loadFeedbackStats();
   }, []);
 
-  // Toggle mobile bottom bar
+  const loadSettings = async () => {
+    try {
+      const functions = getFirebaseFunctions();
+      const getSettingsFn = httpsCallable(functions, "getSettings");
+      const result = await getSettingsFn();
+      const data = result.data as { success: boolean; data: FrontendSystemSettings };
+      if (data.success) {
+        const settingsData = data.data;
+        if (settingsData.updatedAt) {
+          settingsData.updatedAt = new Date(settingsData.updatedAt as any);
+        }
+        setSettings(settingsData);
+      }
+    } catch (error) {
+    }
+  };
+
+  const toggleRestrictNewLogins = async (enabled: boolean) => {
+    if (!settings) return;
+    
+    setUpdatingSettings(true);
+    try {
+      const functions = getFirebaseFunctions();
+      const updateSettingsFn = httpsCallable(functions, "setSettings");
+      await updateSettingsFn({
+        ...settings,
+        restrictNewAdminLogins: enabled,
+      });
+      setSettings({ ...settings, restrictNewAdminLogins: enabled });
+    } catch (error) {
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
   useEffect(() => {
     const onScroll = () => {
       setShowMobileBar(window.scrollY > 80);
@@ -177,19 +221,7 @@ export const AdminHomePage: React.FC = () => {
                   to="/analytics"
                   className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
                 >
-                  <svg
-                    className="mr-2 h-4 w-4 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
+                  <PresentationChartLineIcon className="mr-2 h-4 w-4 text-white" />
                   Analytics
                 </Link>
                 <Link
@@ -213,6 +245,49 @@ export const AdminHomePage: React.FC = () => {
             stats={dashboardStats}
             loading={loading.systemStats}
           />
+
+          {/* Security Settings Section */}
+          <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
+              <h2 className="text-lg font-semibold text-gray-900">Security Settings</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Control admin access and security policies
+              </p>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-gray-900">
+                    Restrict New Admin Logins
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    When enabled, only existing users in Firestore can access the admin panel. 
+                    New Internet Identity accounts will be blocked.
+                  </p>
+                </div>
+                <button
+                  onClick={() => toggleRestrictNewLogins(!settings?.restrictNewAdminLogins)}
+                  disabled={updatingSettings || !settings}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    settings?.restrictNewAdminLogins ? "bg-blue-600" : "bg-gray-200"
+                  } ${updatingSettings ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      settings?.restrictNewAdminLogins ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+              {settings?.restrictNewAdminLogins && (
+                <div className="mt-3 rounded-md bg-yellow-50 p-3">
+                  <p className="text-sm text-yellow-800">
+                    New Internet Identity accounts will be blocked from admin access.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
 
           {/* Charts Section */}
           <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
@@ -395,38 +470,14 @@ export const AdminHomePage: React.FC = () => {
               to="/analytics"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
             >
-              <svg
-                className="mr-2 h-4 w-4 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
+              <PresentationChartLineIcon className="mr-2 h-4 w-4 text-white" />
               Analytics
             </Link>
             <Link
               to="/users"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
-              <svg
-                className="mr-2 h-4 w-4 text-blue-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                />
-              </svg>
+              <UserIcon className="mr-2 h-4 w-4 text-blue-700" />
               View Users
             </Link>
           </div>

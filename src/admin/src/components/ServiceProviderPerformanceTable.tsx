@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 
 interface ServiceProviderPerformanceData {
   id: string;
@@ -10,6 +11,10 @@ interface ServiceProviderPerformanceData {
   completedBookings: number;
   totalBookings: number;
   walletBalance: number;
+  profilePicture?: {
+    imageUrl: string;
+    thumbnailUrl: string;
+  };
 }
 
 interface ServiceProviderPerformanceTableProps {
@@ -103,11 +108,15 @@ const ServiceProviderPerformanceTable: React.FC<
                   <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                          <span className="text-sm font-medium text-blue-600">
-                            {provider.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
+                        <ProfileImage
+                          profilePictureUrl={
+                            provider.profilePicture?.thumbnailUrl ||
+                            provider.profilePicture?.imageUrl
+                          }
+                          userName={provider.name}
+                          size="h-10 w-10"
+                          className="shadow-sm ring-2 ring-white"
+                        />
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">

@@ -3,21 +3,15 @@ import React, {
   useContext,
   useState,
   useEffect,
-  useCallback,
   ReactNode,
 } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Identity } from "@dfinity/agent";
-import {
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  User as FirebaseUser,
-} from "firebase/auth";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseFirestore } from "../services/firebaseApp";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import { updateAdminActor } from "../services/adminServiceCanister";
 import { createAdminProfile } from "../services/adminAuthHelper";
-import authCanisterService from "../../../frontend/src/services/authCanisterService";
 import { updateReputationActor } from "../../../frontend/src/services/reputationCanisterService";
 
 interface AuthContextType {
@@ -26,7 +20,6 @@ interface AuthContextType {
   identity: Identity | null;
   firebaseUser: FirebaseUser | null;
   login: () => Promise<void>;
-  logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
   isAdmin: boolean;
@@ -34,6 +27,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Updates all canister actors with the current admin identity
 const updateAllAdminActors = (identity: Identity | null) => {
   updateAdminActor(identity);
   updateReputationActor(identity);
@@ -60,36 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const logout = useCallback(async () => {
-    const currentAuthClient = authClient;
-    if (!currentAuthClient) return;
-
-    try {
-      await authCanisterService.updateUserActiveStatus(false);
-    } catch (error) {
-      console.error(
-        "[Admin] Error updating user active status on logout:",
-        error,
-      );
-    }
-
-    const auth = getFirebaseAuth();
-    try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      console.error("[Admin] Error signing out from Firebase:", error);
-    }
-
-    if (currentAuthClient) {
-      await currentAuthClient.logout();
-    }
-    setIsAuthenticated(false);
-    setIdentity(null);
-    setFirebaseUser(null);
-    setIsAdmin(false);
-    updateAllAdminActors(null);
-  }, [authClient]);
-
+  // Listen to Firebase auth state changes and check admin status
   useEffect(() => {
     const auth = getFirebaseAuth();
     let firestoreUnsubscribe: (() => void) | null = null;
@@ -158,8 +123,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         firestoreUnsubscribe();
       }
     };
-  }, [logout]);
+  }, []);
 
+  // Initialize IC auth client on mount and check if already authenticated
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -185,6 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  // Login: authenticates with Internet Identity, then bridges to Firebase
   const login = async () => {
     if (!authClient) return;
 
@@ -213,15 +180,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setFirebaseUser(result.user);
 
               try {
-                await authCanisterService.updateUserActiveStatus(true);
-              } catch (error) {
-                console.error(
-                  "[Admin] Error updating user active status on login:",
-                  error,
-                );
-              }
-
-              try {
                 const adminResult = await createAdminProfile(
                   result.user.uid,
                   principal,
@@ -239,12 +197,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   );
                   setIsAdmin(true);
                 }
-              } catch (adminError) {
-                console.warn(
-                  "[Admin] Could not auto-create admin profile:",
-                  adminError,
-                );
-                setIsAdmin(true);
+              } catch (adminError: any) {
+                if (adminError?.code === "permission-denied") {
+                  setError(adminError.message || "You are not authorized for admin access.");
+                  setIsAdmin(false);
+                  try {
+                    await authClient.logout();
+                    setFirebaseUser(null);
+                    setIsAuthenticated(false);
+                  } catch (logoutError) {
+                  }
+                } else {
+                  console.warn(
+                    "[Admin] Could not auto-create admin profile:",
+                    adminError,
+                  );
+                  setIsAdmin(false);
+                }
               }
             } catch (fbError) {
               console.error(
@@ -286,7 +255,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     identity,
     firebaseUser,
     login,
-    logout,
     isLoading,
     error,
     isAdmin,

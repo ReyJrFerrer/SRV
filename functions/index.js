@@ -64,8 +64,6 @@ const {
   deactivateRule,
   listRules,
   getRule,
-  assignRole,
-  removeRole,
   getUserRole,
   listUserRoles,
   hasRole,
@@ -256,7 +254,6 @@ const {
   updateMediaMetadata,
   getStorageStats,
   validateMediaItems,
-  getRemittanceMediaItems,
   getCertificatesByValidationStatus,
 } = require("./src/media");
 
@@ -434,7 +431,6 @@ exports.deleteMedia = deleteMedia;
 exports.updateMediaMetadata = updateMediaMetadata;
 exports.getStorageStats = getStorageStats;
 exports.validateMediaItems = validateMediaItems;
-exports.getRemittanceMediaItems = getRemittanceMediaItems;
 exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
 
 // Export Admin Management Functions
@@ -443,8 +439,6 @@ exports.activateRule = activateRule;
 exports.deactivateRule = deactivateRule;
 exports.listRules = listRules;
 exports.getRule = getRule;
-exports.assignRole = assignRole;
-exports.removeRole = removeRole;
 exports.getUserRole = getUserRole;
 exports.listUserRoles = listUserRoles;
 exports.hasRole = hasRole;

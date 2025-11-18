@@ -78,7 +78,7 @@ const ActiveService: React.FC<ActiveServiceProps> = ({ className = "" }) => {
 
               {/* Location */}
               <p className="line-clamp-1 text-sm text-gray-600">
-                📍 {activeBooking.formattedLocation || "Location not specified"}
+                {activeBooking.formattedLocation || "Location not specified"}
               </p>
 
               {/* Status Badge */}

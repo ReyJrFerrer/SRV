@@ -42,18 +42,13 @@ function loadAuthIdlFactory() {
 
     if (fs.existsSync(declarationsPath)) {
       const {idlFactory} = require(declarationsPath);
-      console.log("✅ Auth IDL factory loaded from declarations");
       return idlFactory;
     }
 
     // Fallback to manual IDL definition if declarations not found
-    console.warn("⚠️ Auth declarations not found, using manual IDL definition");
     return getManualAuthIdl();
   } catch (error) {
-    console.warn(
-      "⚠️ Failed to load auth declarations, using manual IDL:",
-      error.message,
-    );
+    console.error("Failed to load auth declarations, using manual IDL:", error.message);
     return getManualAuthIdl();
   }
 }
@@ -102,7 +97,7 @@ function getManualAuthIdl() {
 function detectEnvironment() {
   // Check explicit environment variable first
   if (process.env.ICP_ENVIRONMENT) {
-    console.log(`🔧 Using ICP_ENVIRONMENT: ${process.env.ICP_ENVIRONMENT}`);
+    console.log(`Using ICP_ENVIRONMENT: ${process.env.ICP_ENVIRONMENT}`);
     return process.env.ICP_ENVIRONMENT;
   }
 
@@ -133,12 +128,12 @@ function detectEnvironment() {
   // If deployed to Firebase (not in emulator) but no environment set, default to playground
   // This is the case when functions are deployed to Firebase Cloud Functions
   if (process.env.FUNCTION_NAME || process.env.K_SERVICE) {
-    console.log("⚠️ No ICP_ENVIRONMENT set, defaulting to playground for deployed functions");
+    console.log("No environment detected, defaulting to playground");
     return "playground";
   }
 
   // Default to local for development
-  console.log("⚠️ No environment detected, defaulting to local");
+  console.log("No environment detected, defaulting to local");
   return "local";
 }
 
@@ -176,7 +171,7 @@ function getCanisterConfig() {
     fetchRootKey: environment === "local",
   };
 
-  console.log(`🔧 Canister config for environment: ${environment}`, {
+  console.log(`Canister config for environment: ${environment}`, {
     host: config.host,
     authCanisterId: config.canisterIds.auth,
     fetchRootKey: config.fetchRootKey,
@@ -200,9 +195,9 @@ async function createAuthActor() {
   if (config.fetchRootKey) {
     try {
       await agent.fetchRootKey();
-      console.log("✅ Root key fetched successfully for local development");
+      console.log("Root key fetched successfully for local development");
     } catch (err) {
-      console.warn("⚠️ Unable to fetch root key. Check if the IC local replica is running.");
+      console.error("Failed to fetch root key:", err.message);
       throw err;
     }
   }
@@ -215,7 +210,7 @@ async function createAuthActor() {
     );
   }
 
-  console.log(`🔗 Creating auth actor for canister: ${canisterId}`);
+  console.log(`Creating auth actor for canister: ${canisterId}`);
 
   return Actor.createActor(authIdlFactory, {
     agent,
@@ -243,7 +238,7 @@ async function checkPrincipal(principal) {
     // This is still valid - they just need to create a profile
     return {isValid: true, hasProfile: false};
   } catch (error) {
-    console.error("❌ Error checking principal:", error);
+    console.error("Error checking principal:", error);
     // Even on error, allow the user through - they might be new
     // or the canister might be temporarily unavailable
     return {isValid: true, hasProfile: false};
@@ -297,11 +292,6 @@ exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
     // Check the principal with IC canister
     const {isValid, hasProfile} = await checkPrincipal(principal);
 
-    console.log(`🔍 Principal check result:`, {
-      principal: principalText,
-      isValid,
-      hasProfile,
-    });
 
     if (!isValid) {
       throw new functions.https.HttpsError(
@@ -314,11 +304,6 @@ exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
     const profile = await getUserProfile(principalText);
     const hasFirestoreProfile = !!profile;
 
-    console.log(`✅ Authentication check complete:`, {
-      principal: principalText,
-      hasProfile: hasFirestoreProfile,
-      needsProfile: !hasFirestoreProfile,
-    });
 
     // Create Firebase custom token
     const customToken = await admin.auth().createCustomToken(principalText, {

@@ -1,20 +1,17 @@
 import { callFirebaseFunction, requireAuth } from "./coreUtils";
 
 /**
- * Get conversations for a specific user (admin function)
+ * Get conversations for a specific user
  */
 export const getUserConversations = async (userId: string): Promise<any[]> => {
   try {
     requireAuth();
 
-    // Use the chat function but with admin override
-    // callFirebaseFunction already extracts the data property from {success: true, data: [...]}
+    // Chat function with admin override
     const result = await callFirebaseFunction("getMyConversations", {
-      userId, // Pass userId for admin override in backend
+      userId,
     });
 
-    // The result is already the data array (or message if no data)
-    // If result is an array, return it; otherwise return empty array
     return Array.isArray(result) ? result : [];
   } catch (error) {
     console.error("Error fetching user conversations", error);
@@ -23,7 +20,7 @@ export const getUserConversations = async (userId: string): Promise<any[]> => {
 };
 
 /**
- * Get messages for a specific conversation (admin function)
+ * Get messages for a specific conversation
  */
 export const getConversationMessages = async (
   conversationId: string,
@@ -39,11 +36,7 @@ export const getConversationMessages = async (
       offset,
     });
 
-    // The result is already the data object { messages, hasMore, nextPageToken }
-    // Extract and adapt messages array
     const messages = result?.messages || [];
-
-    // Adapt messages to extract content from encrypted format
     return messages.map((msg: any) => ({
       ...msg,
       content:

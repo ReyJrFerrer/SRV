@@ -40,18 +40,15 @@ function loadReputationIdlFactory() {
     );
 
     if (fs.existsSync(declarationsPath)) {
+      console.log("Reputation declarations found, loading IDL factory...");
       const {idlFactory} = require(declarationsPath);
-      console.log("✅ Reputation IDL factory loaded from declarations");
       return idlFactory;
     }
 
-    console.warn("⚠️ Reputation declarations not found, using manual IDL definition");
+    console.log("Reputation declarations not found, using manual IDL...");
     return getManualReputationIdl();
   } catch (error) {
-    console.warn(
-      "⚠️ Failed to load reputation declarations, using manual IDL:",
-      error.message,
-    );
+    console.error("Failed to load reputation declarations, using manual IDL:", error.message);
     return getManualReputationIdl();
   }
 }
@@ -169,7 +166,7 @@ function getManualReputationIdl() {
 function detectEnvironment() {
   // Check explicit environment variable first
   if (process.env.ICP_ENVIRONMENT) {
-    console.log(`🔧 Using ICP_ENVIRONMENT: ${process.env.ICP_ENVIRONMENT}`);
+    console.log(`Using ICP_ENVIRONMENT: ${process.env.ICP_ENVIRONMENT}`);
     return process.env.ICP_ENVIRONMENT;
   }
 
@@ -200,12 +197,12 @@ function detectEnvironment() {
   // If deployed to Firebase (not in emulator) but no environment set, default to playground
   // This is the case when functions are deployed to Firebase Cloud Functions
   if (process.env.FUNCTION_NAME || process.env.K_SERVICE) {
-    console.log("⚠️ No ICP_ENVIRONMENT set, defaulting to playground for deployed functions");
+    console.log("No environment detected, defaulting to playground");
     return "playground";
   }
 
   // Default to local for development
-  console.log("⚠️ No environment detected, defaulting to local");
+  console.log("No environment detected, defaulting to local");
   return "local";
 }
 
@@ -243,7 +240,7 @@ function getCanisterConfig() {
     fetchRootKey: environment === "local",
   };
 
-  console.log(`🔧 Canister config for environment: ${environment}`, {
+  console.log(`Canister config for environment: ${environment}`, {
     host: config.host,
     reputationCanisterId: config.canisterIds.reputation,
     fetchRootKey: config.fetchRootKey,
@@ -267,9 +264,9 @@ async function createReputationActor() {
   if (config.fetchRootKey) {
     try {
       await agent.fetchRootKey();
-      console.log("✅ Root key fetched successfully for local development");
+      console.log("Root key fetched successfully for local development");
     } catch (err) {
-      console.warn("⚠️ Unable to fetch root key. Check if the IC local replica is running.");
+      console.error("Failed to fetch root key:", err.message);
       throw err;
     }
   }
@@ -282,7 +279,7 @@ async function createReputationActor() {
     );
   }
 
-  console.log(`🔗 Creating reputation actor for canister: ${canisterId}`);
+  console.log(`Creating reputation actor for canister: ${canisterId}`);
 
   return Actor.createActor(reputationIdlFactory, {
     agent,
@@ -418,8 +415,7 @@ async function fetchProviderData(providerId) {
  * @return {Promise<Object>} Result object
  */
 async function initializeReputationInternal(userId, creationTime) {
-  console.log("🔄 Initialize Reputation Internal:", {userId, creationTime});
-
+  console.log("initializeReputationInternal called");
   if (!userId) {
     throw new Error("User ID is required");
   }
@@ -433,22 +429,21 @@ async function initializeReputationInternal(userId, creationTime) {
       isoToNanoseconds(creationTime) :
       BigInt(Date.now()) * BigInt(1000000);
 
-    console.log(`📞 Calling reputation canister to initialize for ${userId}`);
-
+    console.log("Creating reputation actor...");
     const result = await reputationActor.initializeReputation(
       principal,
       creationTimeNs,
     );
 
     if ("ok" in result) {
-      console.log(`✅ Reputation initialized successfully for ${userId}`);
+      console.log("Reputation initialized successfully");
       return {
         success: true,
         data: result.ok,
         message: "Reputation initialized successfully",
       };
     } else {
-      console.error(`❌ Error from canister: ${result.err}`);
+      console.error("Failed to initialize reputation:", result.err);
       throw new Error(result.err);
     }
   } catch (error) {
@@ -465,8 +460,6 @@ exports.initializeReputation = functions.https.onCall(async (data, _context) => 
   // Extract payload
   const payload = data.data || data;
   const {userId, creationTime} = payload;
-
-  console.log("🔄 Initialize Reputation Payload:", {userId, creationTime});
 
   if (!userId) {
     throw new functions.https.HttpsError(
@@ -494,25 +487,17 @@ exports.initializeReputationInternal = initializeReputationInternal;
  * @return {Promise<Object>} Result object
  */
 async function updateUserReputationInternal(userId) {
-  console.log("🔄 Update User Reputation Internal:", {userId});
-
   if (!userId) {
     throw new Error("User ID is required");
   }
 
   try {
     // 1. Fetch all necessary data from Firestore
-    console.log(`📊 Fetching user data for ${userId}`);
     const userData = await fetchUserData(userId);
 
     // 2. Get the reputation actor
     const reputationActor = await createReputationActor();
     const principal = Principal.fromText(userId);
-
-    console.log(`📞 Calling reputation canister to update user ${userId}`, {
-      completedBookings: userData.completedBookings,
-      averageRating: userData.averageRating,
-    });
 
     // 3. Call canister with fetched data
     const result = await reputationActor.updateUserReputation(
@@ -523,14 +508,14 @@ async function updateUserReputationInternal(userId) {
     );
 
     if ("ok" in result) {
-      console.log(`✅ User reputation updated successfully for ${userId}`);
+      console.log("User reputation updated successfully");
       return {
         success: true,
         data: result.ok,
         message: "User reputation updated successfully",
       };
     } else {
-      console.error(`❌ Error from canister: ${result.err}`);
+      console.error("Failed to update user reputation:", result.err);
       throw new Error(result.err);
     }
   } catch (error) {
@@ -546,25 +531,18 @@ async function updateUserReputationInternal(userId) {
  * @return {Promise<Object>} Result object
  */
 async function updateProviderReputationInternal(providerId) {
-  console.log("🔄 Update Provider Reputation Internal:", {providerId});
-
+  console.log("updateProviderReputationInternal called");
   if (!providerId) {
     throw new Error("Provider ID is required");
   }
 
   try {
     // 1. Fetch all necessary data from Firestore
-    console.log(`📊 Fetching provider data for ${providerId}`);
     const providerData = await fetchProviderData(providerId);
 
     // 2. Get the reputation actor
     const reputationActor = await createReputationActor();
     const principal = Principal.fromText(providerId);
-
-    console.log(`📞 Calling reputation canister to update provider ${providerId}`, {
-      completedBookings: providerData.completedBookings,
-      averageRating: providerData.averageRating,
-    });
 
     // 3. Call canister with fetched data
     const result = await reputationActor.updateProviderReputation(
@@ -575,14 +553,12 @@ async function updateProviderReputationInternal(providerId) {
     );
 
     if ("ok" in result) {
-      console.log(`✅ Provider reputation updated successfully for ${providerId}`);
       return {
         success: true,
         data: result.ok,
         message: "Provider reputation updated successfully",
       };
     } else {
-      console.error(`❌ Error from canister: ${result.err}`);
       throw new Error(result.err);
     }
   } catch (error) {
@@ -599,11 +575,6 @@ async function updateProviderReputationInternal(providerId) {
  * @return {Promise<Object>} Result object
  */
 async function processReviewForReputationInternal(review, useLLM = false) {
-  console.log("🔄 Process Review For Reputation Internal:", {
-    reviewId: review?.id,
-    useLLM,
-  });
-
   if (!review || !review.id) {
     throw new Error("Review object with ID is required");
   }
@@ -686,14 +657,11 @@ async function processReviewForReputationInternal(review, useLLM = false) {
     }
 
     if ("ok" in result) {
-      console.log("✅ Review processed successfully:", result.ok);
       return {success: true, data: result.ok};
     } else {
-      console.error("❌ Review processing failed:", result.err);
       throw new Error(`Failed to process review: ${result.err}`);
     }
   } catch (error) {
-    console.error("❌ Error in processReviewForReputationInternal:", error);
     throw error;
   }
 }
@@ -706,8 +674,6 @@ exports.updateUserReputation = functions.https.onCall(async (data, _context) => 
   // Extract payload
   const payload = data.data || data;
   const {userId} = payload;
-
-  console.log("🔄 Update User Reputation Payload:", {userId});
 
   if (!userId) {
     throw new functions.https.HttpsError(
@@ -736,8 +702,6 @@ exports.updateProviderReputation = functions.https.onCall(async (data, _context)
   // Extract payload
   const payload = data.data || data;
   const {providerId} = payload;
-
-  console.log("🔄 Update Provider Reputation Payload:", {providerId});
 
   if (!providerId) {
     throw new functions.https.HttpsError(
@@ -828,11 +792,6 @@ exports.processReviewForReputation = functions.https.onCall(async (data, _contex
   const payload = data.data || data;
   const {review, useLLM = false} = payload;
 
-  console.log("🔄 Process Review For Reputation Payload:", {
-    reviewId: review?.id,
-    useLLM,
-  });
-
   if (!review || !review.id) {
     throw new functions.https.HttpsError(
       "invalid-argument",
@@ -861,8 +820,7 @@ exports.processReviewForReputationInternal = processReviewForReputationInternal;
 async function checkUserReputationInternal(userId) {
   try {
     // Check in IC canister
-    console.log(`📞 [checkUserReputationInternal] Checking User Reputation 
-      for ${userId}`);
+    console.log("Checking user reputation...");
     const reputationActor = await createReputationActor();
     const principal = Principal.fromText(userId);
 
@@ -871,7 +829,7 @@ async function checkUserReputationInternal(userId) {
     console.log("Reputation result", result);
 
     if ("ok" in result) {
-      console.log(`✅ Reputation score retrieved from IC for ${userId}`);
+      console.log("User reputation checked successfully");
       return {
         success: true,
         data: {
@@ -881,7 +839,7 @@ async function checkUserReputationInternal(userId) {
         },
       };
     } else {
-      console.error(`❌ Error from canister: ${result.err}`);
+      console.error("Failed to get reputation from canister:", result.err);
       return {
         success: false,
         error: result.err || "Failed to get reputation from canister",
