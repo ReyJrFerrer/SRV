@@ -45,18 +45,56 @@ const ReviewSubmit: React.FC<Props> = ({
             Please review your service details before submitting.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <div className="rounded-lg bg-white p-5 shadow-sm">
-            <div className="mb-2 flex items-center gap-2">
-              <DocumentCheckIcon className="h-5 w-5 text-blue-400" />
-              <h3 className="font-semibold text-gray-800">Category</h3>
+
+        {/* --- Main wrapper: Stacks the top row and bottom row vertically --- */}
+        <div className="flex flex-col gap-8">
+          {/* --- Top Row: Stacks vertically on mobile, horizontally on desktop --- */}
+          <div className="flex flex-col gap-8 md:flex-row">
+            {/* Category Card: Takes 1/3 of the width on desktop */}
+            <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
+              <div className="mb-2 flex items-center gap-2">
+                <DocumentCheckIcon className="h-5 w-5 text-blue-400" />
+                <h3 className="font-semibold text-gray-800">Category</h3>
+              </div>
+              <p className="text-lg font-semibold break-words text-blue-800">
+                {categories.find((cat) => cat.id === formData.categoryId)
+                  ?.name || "Unknown"}
+              </p>
             </div>
-            <p className="break-words text-lg font-semibold text-blue-800">
-              {categories.find((cat) => cat.id === formData.categoryId)?.name ||
-                "Unknown"}
-            </p>
+
+            {/* Location Card: Takes 1/3 of the width on desktop */}
+            <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
+              <div className="mb-4 flex items-center gap-2">
+                <MapPinIcon className="h-5 w-5 text-blue-400" />
+                <h3 className="font-semibold text-gray-800">Location</h3>
+              </div>
+              <div className="font-medium break-words text-blue-900">
+                {[formData.locationMunicipalityCity, formData.locationProvince]
+                  .filter(Boolean)
+                  .join(", ")}
+              </div>
+            </div>
+
+            {/* Availability Card: Takes 1/3 of the width on desktop */}
+            <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
+              <div className="mb-4 flex items-center gap-2">
+                <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
+                <h3 className="font-semibold text-gray-800">Availability</h3>
+              </div>
+              <div className="font-medium text-blue-900">
+                {formData.availabilitySchedule.join(", ")}
+              </div>
+              {formData.availabilitySchedule.length > 0 && (
+                <span className="mt-1 block text-sm text-gray-500">
+                  {formData.useSameTimeForAllDays
+                    ? `Same hours for all days (${formData.commonTimeSlots.length} time slot${formData.commonTimeSlots.length > 1 ? "s" : ""})`
+                    : "Custom hours per day"}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="rounded-lg bg-white p-5 shadow-sm md:col-span-2">
+
+          <div className="rounded-lg bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
               <h3 className="font-semibold text-gray-800">Packages</h3>
@@ -72,15 +110,16 @@ const ReviewSubmit: React.FC<Props> = ({
                   return (
                     <div
                       key={pkg.id}
-                      className="flex flex-col break-words rounded border border-gray-400 bg-gray-50 p-3 md:flex-row md:items-start md:justify-between"
+                      className="flex flex-col items-start justify-between gap-2 rounded border border-blue-400 bg-blue-50 p-3 md:flex-row md:items-start md:gap-4"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-blue-900">{pkg.name}</p>
-                        <p className="break-words text-sm text-gray-600">
+                        <p className="text-sm break-words text-gray-600">
                           {pkg.description}
                         </p>
                       </div>
-                      <div className="mt-2 text-right md:mt-0">
+
+                      <div className="flex-shrink-0 text-left md:text-right">
                         <p className="text-lg font-semibold text-green-600">
                           ₱{Number(pkg.price).toLocaleString()}
                         </p>
@@ -108,33 +147,6 @@ const ReviewSubmit: React.FC<Props> = ({
                     </div>
                   );
                 })}
-            </div>
-          </div>
-          <div className="rounded-lg bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
-              <h3 className="font-semibold text-gray-800">Availability</h3>
-            </div>
-            <div className="font-medium text-blue-900">
-              {formData.availabilitySchedule.join(", ")}
-            </div>
-            {formData.availabilitySchedule.length > 0 && (
-              <span className="mt-1 block text-sm text-gray-500">
-                {formData.useSameTimeForAllDays
-                  ? `Same hours for all days (${formData.commonTimeSlots.length} time slot${formData.commonTimeSlots.length > 1 ? "s" : ""})`
-                  : "Custom hours per day"}
-              </span>
-            )}
-          </div>
-          <div className="rounded-lg bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <MapPinIcon className="h-5 w-5 text-blue-400" />
-              <h3 className="font-semibold text-gray-800">Location</h3>
-            </div>
-            <div className="break-words font-medium text-blue-900">
-              {[formData.locationMunicipalityCity, formData.locationProvince]
-                .filter(Boolean)
-                .join(", ")}
             </div>
           </div>
         </div>

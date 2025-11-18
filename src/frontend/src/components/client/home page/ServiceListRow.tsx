@@ -193,7 +193,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {servicesWithData.map(({ service, serviceData }) => (
           <div key={service.id}>
             <ServiceListItem service={service} serviceData={serviceData} />

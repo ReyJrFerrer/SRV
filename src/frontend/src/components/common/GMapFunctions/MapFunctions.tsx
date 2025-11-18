@@ -1,4 +1,9 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, {
+  Suspense,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 const LocationMapModal = React.lazy(() => import("./LocationMapModal"));
 import { useLocationStore } from "../../../store/locationStore";
 import EnableLocationButton from "../locationAccessPermission/EnableLocationButton";
@@ -8,15 +13,19 @@ import LocationBlockedModal from "../locationAccessPermission/LocationBlockedMod
 const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_COMMON_V1";
 const ADDR_CACHE_TTL_MS = 2 * 60 * 1000;
 
+export type MapFunctionsHandle = {
+  openMap: () => void;
+  openChangeLocation: () => void;
+};
+
 // Component
-const MapFunctions: React.FC = () => {
+const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
   const {
     location: geoLocation,
     userAddress,
     userProvince,
     locationLoading,
     locationStatus,
-    addressMode,
   } = useLocationStore();
 
   // State
@@ -149,6 +158,27 @@ const MapFunctions: React.FC = () => {
     }
   }, [mapsApiLoaded, geoLocation, gmapsStatus]);
 
+  const openMap = () => {
+    if (mapsApiLoaded && geoLocation) {
+      setShowMap(true);
+    } else if (locationStatus === "denied" || locationStatus === "not_set") {
+      setShowLocationModal(true);
+    }
+  };
+
+  const openChangeLocation = () => {
+    setShowLocationModal(true);
+  };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openMap,
+      openChangeLocation,
+    }),
+    [mapsApiLoaded, geoLocation, locationStatus],
+  );
+
   // Render
   return (
     <>
@@ -157,7 +187,7 @@ const MapFunctions: React.FC = () => {
           <button
             type="button"
             className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-            onClick={() => setShowMap(true)}
+            onClick={openMap}
             title={gmapsAddress}
           >
             {gmapsAddress}
@@ -167,7 +197,7 @@ const MapFunctions: React.FC = () => {
             <button
               type="button"
               className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-              onClick={() => setShowMap(true)}
+              onClick={openMap}
               title={`${userAddress}, ${userProvince}`}
             >
               {userAddress}, {userProvince}
@@ -195,15 +225,6 @@ const MapFunctions: React.FC = () => {
           {/* Controls */}
           {locationStatus === "not_set" && <EnableLocationButton />}
 
-          {addressMode === "manual" && userAddress && userProvince && (
-            <button
-              type="button"
-              className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50"
-              onClick={() => setShowLocationModal(true)}
-            >
-              Change location
-            </button>
-          )}
         </div>
       )}
 
@@ -233,6 +254,8 @@ const MapFunctions: React.FC = () => {
       />
     </>
   );
-};
+});
+
+MapFunctions.displayName = "MapFunctions";
 
 export default MapFunctions;

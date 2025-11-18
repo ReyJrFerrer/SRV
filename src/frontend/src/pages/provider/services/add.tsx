@@ -1033,7 +1033,7 @@ const AddServicePage: React.FC = () => {
 
   // --- Main Page Layout ---
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100 pb-12">
+    <div className="bg-white-100 flex min-h-screen flex-col pt-20">
       <Toaster position="top-center" />
 
       <ServiceDrafts
@@ -1069,12 +1069,10 @@ const AddServicePage: React.FC = () => {
       </header>
       {/* Draft UI & logic moved into ServiceDrafts (renders modals and banner) */}
       {/* Main Content */}
-      <main className="container mx-auto flex-grow px-4 pb-24 pt-4 sm:p-6">
-        <div className="sm:bg-w mt-20 sm:rounded-xl sm:p-8 sm:shadow-lg">
-          {renderStep()}
-        </div>
+      <main className="container mx-auto flex-grow px-4 pt-4 sm:p-6">
+        {renderStep()}
         {/* Navigation Buttons */}
-        <div className="mb-8 mt-6 flex justify-between">
+        <div className="mt-6 mb-20 flex justify-between lg:mb-8">
           {currentStep > 1 && (
             <button
               onClick={handleBack}
@@ -1100,7 +1098,7 @@ const AddServicePage: React.FC = () => {
             >
               {isSubmitting ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
                   Creating Service...
                 </>
               ) : isProcessingImages ? (

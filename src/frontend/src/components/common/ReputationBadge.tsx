@@ -46,7 +46,7 @@ const ReputationBadge: React.FC<ReputationBadgeProps> = ({ score }) => {
       title={
         typeof display === "number" ? `Reputation ${display}` : "No reputation"
       }
-      className={`relative z-30 flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold ${classes.bg} ${classes.text} ${classes.border}`}
+      className={`relative z-30 flex h-8 w-8 items-center justify-center rounded-full border text-sm font-bold ${classes.bg} ${classes.text} ${classes.border}`}
       aria-hidden={score == null}
     >
       {display}
