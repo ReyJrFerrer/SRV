@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminDashboardStats } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
-import { PresentationChartLineIcon, UserIcon } from "@heroicons/react/24/outline";
+import {
+  PresentationChartLineIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import {
   ResponsiveContainer,
@@ -148,7 +151,10 @@ export const AdminHomePage: React.FC = () => {
       const functions = getFirebaseFunctions();
       const getSettingsFn = httpsCallable(functions, "getSettings");
       const result = await getSettingsFn();
-      const data = result.data as { success: boolean; data: FrontendSystemSettings };
+      const data = result.data as {
+        success: boolean;
+        data: FrontendSystemSettings;
+      };
       if (data.success) {
         const settingsData = data.data;
         if (settingsData.updatedAt) {
@@ -156,13 +162,12 @@ export const AdminHomePage: React.FC = () => {
         }
         setSettings(settingsData);
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const toggleRestrictNewLogins = async (enabled: boolean) => {
     if (!settings) return;
-    
+
     setUpdatingSettings(true);
     try {
       const functions = getFirebaseFunctions();
@@ -249,7 +254,9 @@ export const AdminHomePage: React.FC = () => {
           {/* Security Settings Section */}
           <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
             <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-900">Security Settings</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Security Settings
+              </h2>
               <p className="mt-1 text-sm text-gray-500">
                 Control admin access and security policies
               </p>
@@ -261,20 +268,27 @@ export const AdminHomePage: React.FC = () => {
                     Restrict New Admin Logins
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    When enabled, only existing users in Firestore can access the admin panel. 
-                    New Internet Identity accounts will be blocked.
+                    When enabled, only existing users in Firestore can access
+                    the admin panel. New Internet Identity accounts will be
+                    blocked.
                   </p>
                 </div>
                 <button
-                  onClick={() => toggleRestrictNewLogins(!settings?.restrictNewAdminLogins)}
+                  onClick={() =>
+                    toggleRestrictNewLogins(!settings?.restrictNewAdminLogins)
+                  }
                   disabled={updatingSettings || !settings}
                   className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    settings?.restrictNewAdminLogins ? "bg-blue-600" : "bg-gray-200"
-                  } ${updatingSettings ? "opacity-50 cursor-not-allowed" : ""}`}
+                    settings?.restrictNewAdminLogins
+                      ? "bg-blue-600"
+                      : "bg-gray-200"
+                  } ${updatingSettings ? "cursor-not-allowed opacity-50" : ""}`}
                 >
                   <span
                     className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      settings?.restrictNewAdminLogins ? "translate-x-5" : "translate-x-0"
+                      settings?.restrictNewAdminLogins
+                        ? "translate-x-5"
+                        : "translate-x-0"
                     }`}
                   />
                 </button>
@@ -282,7 +296,8 @@ export const AdminHomePage: React.FC = () => {
               {settings?.restrictNewAdminLogins && (
                 <div className="mt-3 rounded-md bg-yellow-50 p-3">
                   <p className="text-sm text-yellow-800">
-                    New Internet Identity accounts will be blocked from admin access.
+                    New Internet Identity accounts will be blocked from admin
+                    access.
                   </p>
                 </div>
               )}

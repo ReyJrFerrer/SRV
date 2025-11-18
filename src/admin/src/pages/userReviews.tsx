@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import {
-  TrashIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/24/solid";
+import { TrashIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { ReviewItem } from "../components/ReviewItem";

@@ -240,19 +240,17 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
                       <span className="font-medium">Rating:</span>
                       <div className="flex items-center">
                         {Array.from({ length: 5 }, (_, i) =>
-                          i < Math.floor(service.rating!)
-                            ? (
-                                <StarIconSolid
-                                  key={`star-solid-${service.id}-${i}`}
-                                  className="h-4 w-4 text-yellow-400"
-                                />
-                              )
-                            : (
-                                <StarIconOutline
-                                  key={`star-outline-${service.id}-${i}`}
-                                  className="h-4 w-4 text-gray-300"
-                                />
-                              ),
+                          i < Math.floor(service.rating!) ? (
+                            <StarIconSolid
+                              key={`star-solid-${service.id}-${i}`}
+                              className="h-4 w-4 text-yellow-400"
+                            />
+                          ) : (
+                            <StarIconOutline
+                              key={`star-outline-${service.id}-${i}`}
+                              className="h-4 w-4 text-gray-300"
+                            />
+                          ),
                         )}
                         <span className="ml-1 text-gray-600">
                           {service.rating} ({service.reviewCount} reviews)

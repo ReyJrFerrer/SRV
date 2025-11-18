@@ -122,7 +122,7 @@ export const getFileData = async (mediaId: string): Promise<Uint8Array> => {
   }
 };
 
-    // Handle media URLs
+// Handle media URLs
 export const extractMediaIdFromUrl = (url: string): string | null => {
   try {
     if (url.startsWith("media://")) {

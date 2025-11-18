@@ -1,7 +1,6 @@
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 
-
 const auth = getFirebaseAuth();
 const functions = getFirebaseFunctions();
 

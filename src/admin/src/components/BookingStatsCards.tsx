@@ -80,7 +80,7 @@ export const BookingStatsCards: React.FC<BookingStatsCardsProps> = ({
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-                <CheckBadgeIcon className="h-6 w-6 text-green-400" />
+              <CheckBadgeIcon className="h-6 w-6 text-green-400" />
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
@@ -100,7 +100,7 @@ export const BookingStatsCards: React.FC<BookingStatsCardsProps> = ({
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-                <ClockIcon className="h-6 w-6 text-yellow-400" />
+              <ClockIcon className="h-6 w-6 text-yellow-400" />
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
@@ -120,7 +120,7 @@ export const BookingStatsCards: React.FC<BookingStatsCardsProps> = ({
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-                <XCircleIcon className="h-6 w-6 text-red-400" />
+              <XCircleIcon className="h-6 w-6 text-red-400" />
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>

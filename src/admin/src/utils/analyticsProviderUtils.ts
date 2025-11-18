@@ -89,7 +89,9 @@ export const buildProviderPerformanceMap = (
           existing.walletBalance = walletBalances[provider.id] || 0;
           // Update profile picture if not already set
           if (!existing.profilePicture) {
-            existing.profilePicture = extractProfilePicture(provider.profilePicture);
+            existing.profilePicture = extractProfilePicture(
+              provider.profilePicture,
+            );
           }
         }
       }

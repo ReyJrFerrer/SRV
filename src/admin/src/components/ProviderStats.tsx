@@ -161,7 +161,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     </div>
   );
 
- 
   const StatCard = ({
     icon,
     value,

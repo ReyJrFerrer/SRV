@@ -5,9 +5,7 @@ import { callFirebaseFunction } from "./coreUtils";
  * Helper function to format status text (e.g., "in_progress" -> "In Progress")
  */
 const formatStatusText = (status: string): string => {
-  return status
-    .replace("_", " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase());
+  return status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
 };
 
 /**

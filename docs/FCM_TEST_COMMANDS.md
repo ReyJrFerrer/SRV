@@ -275,7 +275,10 @@ console.log("FCM metadata cleared");
 console.log("=== FULL SYSTEM CHECK ===\n");
 
 console.log("1. Browser:", navigator.userAgent);
-console.log("2. Notification support:", "Notification" in window ? "Yes" : "No");
+console.log(
+  "2. Notification support:",
+  "Notification" in window ? "Yes" : "No",
+);
 console.log(
   "3. Service Worker support:",
   "serviceWorker" in navigator ? "Yes" : "No",
