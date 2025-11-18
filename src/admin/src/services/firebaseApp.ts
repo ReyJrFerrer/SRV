@@ -125,7 +125,7 @@ export function initializeFirebase(): {
     }
 
     firebaseAuth.languageCode = "en";
-    
+
     return {
       app: firebaseApp,
       auth: firebaseAuth,

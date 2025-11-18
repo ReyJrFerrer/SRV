@@ -75,7 +75,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
       }
 
       if (parts.length > 0) return parts.join(", ");
-      
+
       try {
         return JSON.stringify(location);
       } catch {
