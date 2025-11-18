@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const {isPhoneTaken} = require("./account");
+const bcrypt = require("bcryptjs");
 
 const db = admin.firestore();
 
@@ -484,6 +485,137 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
     return {success: true, data: settingsData};
   } catch (error) {
     console.error("Error in getSettings:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Change admin access password
+ */
+exports.changeAdminPassword = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {oldPassword, newPassword, confirmPassword} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can change the admin password",
+    );
+  }
+
+  if (!newPassword || !confirmPassword) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password and confirmation are required",
+    );
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password and confirmation do not match",
+    );
+  }
+
+  if (newPassword.length < 8) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password must be at least 8 characters long",
+    );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    const isInitialPassword = !settings.adminPasswordHash;
+
+    if (!isInitialPassword) {
+      if (!oldPassword) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Old password is required when changing an existing password",
+        );
+      }
+
+      const isOldPasswordValid = await bcrypt.compare(oldPassword, settings.adminPasswordHash);
+      if (!isOldPasswordValid) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Old password is incorrect",
+        );
+      }
+    }
+
+    const saltRounds = 10;
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    await db.collection("systemSettings").doc(SETTINGS_KEY).update({
+      adminPasswordHash: newPasswordHash,
+      passwordUpdatedAt: new Date().toISOString(),
+      passwordUpdatedBy: authInfo.uid,
+    });
+
+    return {success: true, message: "Password changed successfully"};
+  } catch (error) {
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    console.error("Error in changeAdminPassword:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Check if admin password is set
+ */
+exports.isAdminPasswordSet = functions.https.onCall(async (data, context) => {
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+    
+    return {
+      success: true,
+      isSet: !!settings.adminPasswordHash,
+    };
+  } catch (error) {
+    console.error("Error in isAdminPasswordSet:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Verify admin password
+ */
+exports.verifyAdminPassword = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {password} = payload;
+
+  if (!password) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Password is required",
+    );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    if (!settings.adminPasswordHash) {
+      return {success: true, verified: true, message: "No password set"};
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, settings.adminPasswordHash);
+    
+    return {
+      success: true,
+      verified: isPasswordValid,
+      message: isPasswordValid ? "Password verified" : "Incorrect password",
+    };
+  } catch (error) {
+    console.error("Error in verifyAdminPassword:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });

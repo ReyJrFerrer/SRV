@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AdminHomePage } from "./pages/home";
@@ -22,39 +22,112 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 // Login component
 const LoginPage = () => {
-  const { login, isLoading, error } = useAuth();
+  const { login, isLoading, error, showPasswordPrompt, verifyPasswordAndProceed, cancelPasswordPrompt } = useAuth();
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     await login();
   };
 
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    
+    if (!password) {
+      setPasswordError("Password is required");
+      return;
+    }
+
+    await verifyPasswordAndProceed(password);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Admin Dashboard
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in with Internet Identity to access the admin panel
-          </p>
-        </div>
-        <div className="mt-8 space-y-6">
-          {error && (
-            <div className="rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-              {error}
-            </div>
-          )}
-          <button
-            onClick={handleLogin}
-            disabled={isLoading}
-            className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {isLoading ? "Connecting..." : "Sign in with Internet Identity"}
-          </button>
+    <>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="w-full max-w-md space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Admin Dashboard
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Sign in with Internet Identity to access the admin panel
+            </p>
+          </div>
+          <div className="mt-8 space-y-6">
+            {error && (
+              <div className="rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+                {error}
+              </div>
+            )}
+            <button
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+            >
+              {isLoading ? "Connecting..." : "Sign in with Internet Identity"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {showPasswordPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Admin Access Password Required
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please enter the admin access password to continue.
+            </p>
+            {passwordError && (
+              <div className="mb-4 rounded-md bg-red-50 p-3">
+                <p className="text-sm text-red-800">{passwordError}</p>
+              </div>
+            )}
+            {error && (
+              <div className="mb-4 rounded-md bg-red-50 p-3">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            )}
+            <form onSubmit={handlePasswordSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setPasswordError(null);
+                  }}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="Enter admin password"
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={cancelPasswordPrompt}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? "Verifying..." : "Continue"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

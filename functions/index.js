@@ -466,6 +466,16 @@ exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;
 const {createAdminProfile} = require("./src/adminAuth");
 exports.createAdminProfile = createAdminProfile;
 
+// Export Admin Password Functions
+const {
+  changeAdminPassword,
+  verifyAdminPassword,
+  isAdminPasswordSet,
+} = require("./src/admin");
+exports.changeAdminPassword = changeAdminPassword;
+exports.verifyAdminPassword = verifyAdminPassword;
+exports.isAdminPasswordSet = isAdminPasswordSet;
+
 // Export Contact Form Handler
 const {sendContactEmail} = require("./sendContactEmail");
 exports.sendContactEmail = sendContactEmail;

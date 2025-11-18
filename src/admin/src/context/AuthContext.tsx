@@ -3,16 +3,23 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Identity } from "@dfinity/agent";
-import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  User as FirebaseUser,
+  signOut as firebaseSignOut,
+} from "firebase/auth";
 import { getFirebaseAuth, getFirebaseFirestore } from "../services/firebaseApp";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import { updateAdminActor } from "../services/adminServiceCanister";
 import { createAdminProfile } from "../services/adminAuthHelper";
 import { updateReputationActor } from "../../../frontend/src/services/reputationCanisterService";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "../services/firebaseApp";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -20,9 +27,13 @@ interface AuthContextType {
   identity: Identity | null;
   firebaseUser: FirebaseUser | null;
   login: () => Promise<void>;
+  logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
   isAdmin: boolean;
+  showPasswordPrompt: boolean;
+  verifyPasswordAndProceed: (password: string) => Promise<void>;
+  cancelPasswordPrompt: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +64,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [hasAdminClaim, setHasAdminClaim] = useState(false);
+  const [hasVerifiedPassword, setHasVerifiedPassword] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [pendingAuthState, setPendingAuthState] = useState<{
+    identity: Identity;
+    firebaseUser: FirebaseUser;
+    principal: string;
+  } | null>(null);
+
+  const logout = useCallback(async () => {
+    if (authClient) {
+      try {
+        await authClient.logout();
+      } catch (error) {}
+    }
+    try {
+      const auth = getFirebaseAuth();
+      await firebaseSignOut(auth);
+    } catch (error) {}
+
+    setIsAuthenticated(false);
+    setIdentity(null);
+    setFirebaseUser(null);
+    setIsAdmin(false);
+    setHasAdminClaim(false);
+    setHasVerifiedPassword(false);
+    updateAllAdminActors(null);
+  }, [authClient]);
 
   // Listen to Firebase auth state changes and check admin status
   useEffect(() => {
@@ -61,6 +100,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
+
+       if (!user && isAuthenticated && identity) {
+         try {
+           const principal = identity.getPrincipal().toString();
+           const result = await signInWithInternetIdentity(principal);
+           setFirebaseUser(result.user);
+           await result.user.getIdToken(true);
+         } catch (refreshError) {
+           await logout();
+           return;
+         }
+       }
+
       if (user) {
         if (firestoreUnsubscribe) {
           firestoreUnsubscribe();
@@ -72,7 +124,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           const tokenResult = await user.getIdTokenResult(true);
           const isAdminUser = tokenResult.claims.isAdmin === true;
-          setIsAdmin(isAdminUser);
+          setHasAdminClaim(isAdminUser);
 
           try {
             const db = getFirebaseFirestore();
@@ -109,7 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAdmin(false);
         }
       } else {
-        setIsAdmin(false);
+        setHasAdminClaim(false);
         if (firestoreUnsubscribe) {
           firestoreUnsubscribe();
           firestoreUnsubscribe = null;
@@ -123,7 +175,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         firestoreUnsubscribe();
       }
     };
-  }, []);
+  }, [identity, isAuthenticated, logout]);
 
   // Initialize IC auth client on mount and check if already authenticated
   useEffect(() => {
@@ -151,12 +203,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  useEffect(() => {
+    setIsAdmin(hasAdminClaim && hasVerifiedPassword);
+  }, [hasAdminClaim, hasVerifiedPassword]);
+
   // Login: authenticates with Internet Identity, then bridges to Firebase
   const login = async () => {
     if (!authClient) return;
 
     setIsLoading(true);
     setError(null);
+    setHasVerifiedPassword(false);
 
     try {
       await authClient.login({
@@ -180,40 +237,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setFirebaseUser(result.user);
 
               try {
-                const adminResult = await createAdminProfile(
-                  result.user.uid,
-                  principal,
-                  undefined,
-                  "",
-                );
+                const functions = getFirebaseFunctions();
+                const isPasswordSetFn = httpsCallable(functions, "isAdminPasswordSet");
+                const passwordCheckResult = await isPasswordSetFn();
+                const passwordData = passwordCheckResult.data as { success: boolean; isSet: boolean };
 
-                if (adminResult.success) {
-                  await result.user.getIdToken(true);
-                  setIsAdmin(true);
-                } else {
-                  console.warn(
-                    "[Admin] Admin profile creation failed:",
-                    adminResult.message,
-                  );
-                  setIsAdmin(true);
+                if (passwordData.isSet) {
+                  setPendingAuthState({
+                    identity,
+                    firebaseUser: result.user,
+                    principal,
+                  });
+                  setShowPasswordPrompt(true);
+                  setIsLoading(false);
+                  return;
                 }
-              } catch (adminError: any) {
-                if (adminError?.code === "permission-denied") {
-                  setError(adminError.message || "You are not authorized for admin access.");
-                  setIsAdmin(false);
-                  try {
-                    await authClient.logout();
-                    setFirebaseUser(null);
-                    setIsAuthenticated(false);
-                  } catch (logoutError) {
-                  }
-                } else {
-                  console.warn(
-                    "[Admin] Could not auto-create admin profile:",
-                    adminError,
-                  );
-                  setIsAdmin(false);
-                }
+
+                setHasVerifiedPassword(true);
+                await proceedWithAdminProfileCreation(result.user, principal);
+              } catch (checkError: any) {
+                setHasVerifiedPassword(true);
+                await proceedWithAdminProfileCreation(result.user, principal);
               }
             } catch (fbError) {
               console.error(
@@ -249,15 +293,98 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const verifyPasswordAndProceed = async (password: string) => {
+    if (!pendingAuthState) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const functions = getFirebaseFunctions();
+      const verifyPasswordFn = httpsCallable(functions, "verifyAdminPassword");
+      const verifyResult = await verifyPasswordFn({ password });
+      const verifyData = verifyResult.data as { success: boolean; verified: boolean; message: string };
+
+      if (!verifyData.verified) {
+        setError("Incorrect password. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      setShowPasswordPrompt(false);
+      setHasVerifiedPassword(true);
+      await proceedWithAdminProfileCreation(
+        pendingAuthState.firebaseUser,
+        pendingAuthState.principal,
+      );
+      setPendingAuthState(null);
+    } catch (error: any) {
+      setError(error?.message || "Failed to verify password");
+      setIsLoading(false);
+    }
+  };
+
+  const proceedWithAdminProfileCreation = async (
+    firebaseUser: FirebaseUser,
+    principal: string,
+  ) => {
+    try {
+      const adminResult = await createAdminProfile(
+        firebaseUser.uid,
+        principal,
+        undefined,
+        "",
+      );
+
+      if (adminResult.success) {
+        await firebaseUser.getIdToken(true);
+      } else {
+        console.warn(
+          "[Admin] Admin profile creation failed:",
+          adminResult.message,
+        );
+      }
+    } catch (adminError: any) {
+      if (adminError?.code === "permission-denied") {
+        setError(adminError.message || "You are not authorized for admin access.");
+        try {
+          if (authClient) {
+            await authClient.logout();
+          }
+          setFirebaseUser(null);
+          setIsAuthenticated(false);
+        } catch (logoutError) {
+        }
+        setHasVerifiedPassword(false);
+        setHasAdminClaim(false);
+      } else {
+        console.warn(
+          "[Admin] Could not auto-create admin profile:",
+          adminError,
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     authClient,
     isAuthenticated,
     identity,
     firebaseUser,
     login,
+    logout,
     isLoading,
     error,
     isAdmin,
+    showPasswordPrompt,
+    verifyPasswordAndProceed,
+    cancelPasswordPrompt: () => {
+      setShowPasswordPrompt(false);
+      setPendingAuthState(null);
+      logout();
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

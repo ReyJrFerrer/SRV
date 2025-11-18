@@ -38,7 +38,7 @@ export const MediaViewModal: React.FC<MediaViewModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
