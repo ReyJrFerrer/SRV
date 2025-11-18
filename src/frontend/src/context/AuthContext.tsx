@@ -175,48 +175,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Auto-enable push notifications when user authenticates
   useEffect(() => {
     const autoEnablePushNotifications = async () => {
-      // Only attempt auto-enable if:
-      // 1. User is authenticated
-      // 2. PWA state is loaded (not loading)
-      // 3. Push notifications are supported
-      // 4. User hasn't explicitly denied permissions
-      // 5. Not already subscribed
       if (
+        !isLoading &&
         isAuthenticated &&
         identity &&
-        !pwaState.pushSubscribed &&
         pwaState.pushNotificationSupported &&
         pwaState.pushPermission !== "denied" &&
-        pwaState.browserInfo.canReceivePushNotifications
+        !pwaState.pushSubscribed
       ) {
         try {
-          const userId = identity.getPrincipal().toString();
+          const userId = identity.getPrincipal().toString() || "anonymous";
           await enablePushNotificationsPWA(userId);
-        } catch (error) {
-          // Silently fail auto-enable - user can still enable manually if desired
-        }
+        } catch (error) {}
       }
     };
 
-    // Only run auto-enable after initial PWA state is loaded
-    if (!isLoading && isAuthenticated) {
-      autoEnablePushNotifications();
-    }
+    autoEnablePushNotifications();
   }, [
+    isLoading,
     isAuthenticated,
     identity,
-    pwaState.pushSubscribed,
     pwaState.pushNotificationSupported,
     pwaState.pushPermission,
-    pwaState.browserInfo.canReceivePushNotifications,
-
-    isLoading,
+    pwaState.pushSubscribed,
     enablePushNotificationsPWA,
   ]);
 
-  // After login, show a friendly modal asking to enable location access (once per session)
-  // Only show the prompt when the permission state is truly unknown ("not_set").
-  // If permission is already "allowed", "denied" or "unsupported", do not prompt.
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) return;
