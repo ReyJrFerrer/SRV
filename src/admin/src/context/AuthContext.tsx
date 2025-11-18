@@ -101,17 +101,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
 
-       if (!user && isAuthenticated && identity) {
-         try {
-           const principal = identity.getPrincipal().toString();
-           const result = await signInWithInternetIdentity(principal);
-           setFirebaseUser(result.user);
-           await result.user.getIdToken(true);
-         } catch (refreshError) {
-           await logout();
-           return;
-         }
-       }
+      if (!user && isAuthenticated && identity) {
+        try {
+          const principal = identity.getPrincipal().toString();
+          const result = await signInWithInternetIdentity(principal);
+          setFirebaseUser(result.user);
+          await result.user.getIdToken(true);
+        } catch (refreshError) {
+          await logout();
+          return;
+        }
+      }
 
       if (user) {
         if (firestoreUnsubscribe) {
@@ -238,9 +238,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
               try {
                 const functions = getFirebaseFunctions();
-                const isPasswordSetFn = httpsCallable(functions, "isAdminPasswordSet");
+                const isPasswordSetFn = httpsCallable(
+                  functions,
+                  "isAdminPasswordSet",
+                );
                 const passwordCheckResult = await isPasswordSetFn();
-                const passwordData = passwordCheckResult.data as { success: boolean; isSet: boolean };
+                const passwordData = passwordCheckResult.data as {
+                  success: boolean;
+                  isSet: boolean;
+                };
 
                 if (passwordData.isSet) {
                   setPendingAuthState({
@@ -303,7 +309,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const functions = getFirebaseFunctions();
       const verifyPasswordFn = httpsCallable(functions, "verifyAdminPassword");
       const verifyResult = await verifyPasswordFn({ password });
-      const verifyData = verifyResult.data as { success: boolean; verified: boolean; message: string };
+      const verifyData = verifyResult.data as {
+        success: boolean;
+        verified: boolean;
+        message: string;
+      };
 
       if (!verifyData.verified) {
         setError("Incorrect password. Please try again.");
@@ -346,15 +356,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (adminError: any) {
       if (adminError?.code === "permission-denied") {
-        setError(adminError.message || "You are not authorized for admin access.");
+        setError(
+          adminError.message || "You are not authorized for admin access.",
+        );
         try {
           if (authClient) {
             await authClient.logout();
           }
           setFirebaseUser(null);
           setIsAuthenticated(false);
-        } catch (logoutError) {
-        }
+        } catch (logoutError) {}
         setHasVerifiedPassword(false);
         setHasAdminClaim(false);
       } else {

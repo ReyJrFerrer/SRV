@@ -181,12 +181,14 @@ export const AdminHomePage: React.FC = () => {
 
       const isPasswordSetFn = httpsCallable(functions, "isAdminPasswordSet");
       const passwordCheckResult = await isPasswordSetFn();
-      const passwordData = passwordCheckResult.data as { success: boolean; isSet: boolean };
+      const passwordData = passwordCheckResult.data as {
+        success: boolean;
+        isSet: boolean;
+      };
       if (passwordData.success) {
         setIsPasswordSet(passwordData.isSet);
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const toggleRestrictNewLogins = async (enabled: boolean) => {
@@ -209,9 +211,11 @@ export const AdminHomePage: React.FC = () => {
 
   const handlePasswordChange = async () => {
     setPasswordErrors({});
-    
+
     if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
-      setPasswordErrors({ general: "New password and confirmation are required" });
+      setPasswordErrors({
+        general: "New password and confirmation are required",
+      });
       return;
     }
 
@@ -226,7 +230,9 @@ export const AdminHomePage: React.FC = () => {
     }
 
     if (passwordForm.newPassword.length < 8) {
-      setPasswordErrors({ newPassword: "Password must be at least 8 characters long" });
+      setPasswordErrors({
+        newPassword: "Password must be at least 8 characters long",
+      });
       return;
     }
 
@@ -240,7 +246,11 @@ export const AdminHomePage: React.FC = () => {
         confirmPassword: passwordForm.confirmPassword,
       });
       setShowPasswordModal(false);
-      setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordForm({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
       setPasswordErrors({});
       setIsPasswordSet(true);
       await loadSettings();
@@ -329,7 +339,9 @@ export const AdminHomePage: React.FC = () => {
             <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Security Settings</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Security Settings
+                  </h2>
                   <p className="mt-1 text-sm text-gray-500">
                     Control admin access and security policies
                   </p>
@@ -404,82 +416,115 @@ export const AdminHomePage: React.FC = () => {
           {showPasswordModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
               <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
                   Change Admin Password
                 </h3>
                 {passwordErrors.general && (
                   <div className="mb-4 rounded-md bg-red-50 p-3">
-                    <p className="text-sm text-red-800">{passwordErrors.general}</p>
+                    <p className="text-sm text-red-800">
+                      {passwordErrors.general}
+                    </p>
                   </div>
                 )}
                 <div className="space-y-4">
                   {isPasswordSet && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
                         Old Password
                       </label>
                       <input
                         type="password"
                         value={passwordForm.oldPassword}
                         onChange={(e) => {
-                          setPasswordForm({ ...passwordForm, oldPassword: e.target.value });
-                          setPasswordErrors({ ...passwordErrors, oldPassword: undefined });
+                          setPasswordForm({
+                            ...passwordForm,
+                            oldPassword: e.target.value,
+                          });
+                          setPasswordErrors({
+                            ...passwordErrors,
+                            oldPassword: undefined,
+                          });
                         }}
                         className={`w-full rounded-md border ${
-                          passwordErrors.oldPassword ? "border-red-300" : "border-gray-300"
+                          passwordErrors.oldPassword
+                            ? "border-red-300"
+                            : "border-gray-300"
                         } px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
                         placeholder="Enter old password"
                       />
                       {passwordErrors.oldPassword && (
-                        <p className="mt-1 text-sm text-red-600">{passwordErrors.oldPassword}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {passwordErrors.oldPassword}
+                        </p>
                       )}
                     </div>
                   )}
                   {!isPasswordSet && (
                     <div className="rounded-md bg-blue-50 p-3">
                       <p className="text-sm text-blue-800">
-                        No password is currently set. Please set an initial password.
+                        No password is currently set. Please set an initial
+                        password.
                       </p>
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
                       New Password
                     </label>
                     <input
                       type="password"
                       value={passwordForm.newPassword}
                       onChange={(e) => {
-                        setPasswordForm({ ...passwordForm, newPassword: e.target.value });
-                        setPasswordErrors({ ...passwordErrors, newPassword: undefined });
+                        setPasswordForm({
+                          ...passwordForm,
+                          newPassword: e.target.value,
+                        });
+                        setPasswordErrors({
+                          ...passwordErrors,
+                          newPassword: undefined,
+                        });
                       }}
                       className={`w-full rounded-md border ${
-                        passwordErrors.newPassword ? "border-red-300" : "border-gray-300"
+                        passwordErrors.newPassword
+                          ? "border-red-300"
+                          : "border-gray-300"
                       } px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
                       placeholder="Enter new password (min 8 characters)"
                     />
                     {passwordErrors.newPassword && (
-                      <p className="mt-1 text-sm text-red-600">{passwordErrors.newPassword}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {passwordErrors.newPassword}
+                      </p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
                       Confirm New Password
                     </label>
                     <input
                       type="password"
                       value={passwordForm.confirmPassword}
                       onChange={(e) => {
-                        setPasswordForm({ ...passwordForm, confirmPassword: e.target.value });
-                        setPasswordErrors({ ...passwordErrors, confirmPassword: undefined });
+                        setPasswordForm({
+                          ...passwordForm,
+                          confirmPassword: e.target.value,
+                        });
+                        setPasswordErrors({
+                          ...passwordErrors,
+                          confirmPassword: undefined,
+                        });
                       }}
                       className={`w-full rounded-md border ${
-                        passwordErrors.confirmPassword ? "border-red-300" : "border-gray-300"
+                        passwordErrors.confirmPassword
+                          ? "border-red-300"
+                          : "border-gray-300"
                       } px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
                       placeholder="Confirm new password"
                     />
                     {passwordErrors.confirmPassword && (
-                      <p className="mt-1 text-sm text-red-600">{passwordErrors.confirmPassword}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {passwordErrors.confirmPassword}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -487,7 +532,11 @@ export const AdminHomePage: React.FC = () => {
                   <button
                     onClick={() => {
                       setShowPasswordModal(false);
-                      setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                      setPasswordForm({
+                        oldPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                      });
                       setPasswordErrors({});
                     }}
                     className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -497,7 +546,7 @@ export const AdminHomePage: React.FC = () => {
                   <button
                     onClick={handlePasswordChange}
                     disabled={changingPassword}
-                    className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {changingPassword ? "Changing..." : "Change Password"}
                   </button>
@@ -672,7 +721,6 @@ export const AdminHomePage: React.FC = () => {
             </div>
           </section>
         </div>
-
       </main>
       {/* Mobile bottom actions bar */}
       <div
