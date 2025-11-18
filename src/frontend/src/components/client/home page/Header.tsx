@@ -95,8 +95,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   }, [isMini]);
 
   // maps logic has been extracted into MapFunctions component
-  const mapsApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -114,7 +113,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       );
       const providerNames = Array.from(
         new Set(
-          services.map((service) => service.providerName).filter((name) => !!name),
+          services
+            .map((service) => service.providerName)
+            .filter((name) => !!name),
         ),
       );
       const allSuggestions = [...serviceNames, ...providerNames];
@@ -175,9 +176,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     setSearchQuery(suggestion);
     setShowSuggestions(false);
     // Redirect to search results page with the selected suggestion
-    navigate(
-      `/client/search-results?query=${encodeURIComponent(suggestion)}`,
-    );
+    navigate(`/client/search-results?query=${encodeURIComponent(suggestion)}`);
   };
 
   // --- Display name for welcome message ---

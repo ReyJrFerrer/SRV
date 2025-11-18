@@ -25,7 +25,6 @@ import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import authCanisterService from "../services/authCanisterService";
 
-
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
 
@@ -187,8 +186,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const userId = identity.getPrincipal().toString() || "anonymous";
           await enablePushNotificationsPWA(userId);
-        } catch (error) {
-        }
+        } catch (error) {}
       }
     };
 
