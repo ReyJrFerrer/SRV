@@ -1,62 +1,62 @@
-# 🫡 This repository uses the ULTIMATE IC VIBE CODING TEMPLATE from the github repository link https://github.com/pt-icp-hub/IC-Vibe-Coding-Template-Motoko
+# This repository uses the ULTIMATE IC VIBE CODING TEMPLATE from the github repository link https://github.com/pt-icp-hub/IC-Vibe-Coding-Template-Motoko
 
-# 🏪 SRV A Local Service Marketplace
+# SRV A Local Service Marketplace
 
 A decentralized service marketplace built on the Internet Computer Protocol (ICP) that connects users with local service providers through secure, transparent, and AI-enhanced booking experiences.
 
-## 🌟 What We're Building
+## What We're Building
 
 Our platform revolutionizes local service booking by leveraging ICP's unique capabilities to create a trustworthy marketplace where users can discover, book, and rate local service providers with confidence.
 
-### 🎯 Unique Value Proposition
+### Unique Value Proposition
 
-**🤖 AI-Powered Reputation System**
+**AI-Powered Reputation System**
 
 - Intelligent monitoring of user activities including booking patterns and review behaviors
 - Advanced review sentiment analysis for authentic feedback verification
 - Machine learning algorithms that detect fraudulent reviews and suspicious activity patterns
 
-**📋 Smart Work Verification**
+**Smart Work Verification**
 
 - AI-powered validation of completed work through document and media analysis
 - Automated quality assessment of service provider deliverables
 - Proof-of-work verification system ensuring service completion standards
 
-**🔒 Decentralized Trust & Security**
+**Decentralized Trust & Security**
 
 - Leverages ICP's tamper-proof infrastructure for transparent reputation scoring
 - Immutable booking history and review records
 - Secure identity management without compromising user privacy
 
-### 🚀 Current Features
+### Current Features
 
-#### **🎯 Core Marketplace Features**
+#### **Core Marketplace Features**
 
 - **Service Discovery**: Browse and search local service providers by category and location
 - **Advanced Booking System**: Multi-package bookings, instant booking, conflict detection, and GPS-based distance calculation
 - **Ratings & Reviews**: Community-driven feedback system with AI-powered sentiment analysis
 - **Progressive Web App (PWA)**: Native app-like experience with offline support and push notifications
 
-#### **💰 Payment & Financial System**
+#### **Payment & Financial System**
 
 - **Multiple Payment Methods**: Cash-on-Hand
 - **Hybrid Commission Model**: Dynamic tiered commission structure (3.5%-7%) based on service categories
 - **Digital Wallet System**: Real-time balance tracking, transaction history, and automatic commission deduction
 
-#### **🛡️ Trust & Security**
+#### **Trust & Security**
 
 - **AI-Enhanced Reputation System**: Machine learning algorithms for fraud detection and sentiment analysis
 - **Service-Level Verification**: Certificate-based verification system with PDF/image uploads
 - **Decentralized Identity**: Secure authentication using Internet Computer's tamper-proof infrastructure
 - **Multi-Role Support**: Seamless switching between Client and Service Provider roles
 
-#### **📱 Real-Time Communication**
+#### **Real-Time Communication**
 
 - **Encrypted Chat System**: Direct messaging between clients and providers after booking completion
 - **Push Notifications**: Real-time notifications for bookings, payments, and system updates
 - **Cross-Platform PWA**: Works seamlessly across desktop, mobile, and tablet devices
 
-#### **👑 Admin & Analytics**
+#### **Admin & Analytics**
 
 - **Comprehensive Admin Dashboard**: User management, booking oversight, and commission tracking
 - **Remittance System**: Cash collection and settlement management for service providers
@@ -64,11 +64,11 @@ Our platform revolutionizes local service booking by leveraging ICP's unique cap
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 Our platform leverages a microservices architecture built on the Internet Computer Protocol (ICP), integrated with Firebase Cloud Functions for external payment processing.
 
-### **🔧 Architecture Overview**
+### **Architecture Overview**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
@@ -134,7 +134,7 @@ Our platform leverages a microservices architecture built on the Internet Comput
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### **🔄 Inter-Canister Communication Flow**
+### **Inter-Canister Communication Flow**
 
 The platform uses a sophisticated inter-canister communication pattern where each canister maintains references to others for seamless data flow:
 
@@ -144,7 +144,7 @@ The platform uses a sophisticated inter-canister communication pattern where eac
 4. **Chat System**: `Chat` → `Auth` → `Booking` (post-completion messaging)
 5. **Admin Operations**: `Admin` → All Canisters (system-wide management)
 
-### **💾 Data Architecture**
+### **Data Architecture**
 
 - **Stable Memory**: Critical data persistence across canister upgrades
 - **Trie Data Structures**: Efficient key-value storage for scalable operations
@@ -153,11 +153,11 @@ The platform uses a sophisticated inter-canister communication pattern where eac
 
 ---
 
-## 🚧 Technical Challenges & Solutions
+## Technical Challenges & Solutions
 
 Throughout the development of this decentralized marketplace, we encountered and solved numerous complex technical challenges:
 
-### **🔐 Challenge 1: Cross-Platform Payment Integration**
+### **Challenge 1: Cross-Platform Payment Integration**
 
 **Problem**: Integrating traditional payment systems (Xendit) with decentralized ICP infrastructure while maintaining security and reliability.
 
@@ -168,7 +168,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - Developed comprehensive webhook handling for real-time payment status synchronization
 - Built fallback mechanisms using Firestore for payment tracking when APIs are unavailable
 
-### **🎯 Challenge 2: Dynamic Commission Calculation**
+### **Challenge 2: Dynamic Commission Calculation**
 
 **Problem**: Creating a fair, transparent commission system that adapts to different service categories and price ranges.
 
@@ -179,7 +179,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - Pre-calculated commission fees during service creation for faster booking acceptance
 - Integrated commission validation to prevent providers from accepting bookings without sufficient wallet balance
 
-### **🔄 Challenge 3: Real-Time Canister Communication**
+### **Challenge 3: Real-Time Canister Communication**
 
 **Problem**: Ensuring seamless data flow between 13+ independent canisters without creating circular dependencies.
 
@@ -190,7 +190,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - Designed async inter-canister calls with proper error handling and fallback mechanisms
 - Established clear data flow patterns: Auth → Service → Booking → Payment → Notification
 
-### **📱 Challenge 4: Progressive Web App Implementation**
+### **Challenge 4: Progressive Web App Implementation**
 
 **Problem**: Creating a native app-like experience while maintaining cross-platform compatibility and offline functionality.
 
@@ -201,7 +201,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - Integrated Firebase Cloud Messaging for cross-platform push notifications
 - Developed browser capability detection with limitation warnings for optimal UX
 
-### **🤖 Challenge 5: AI-Powered Reputation System**
+### **Challenge 5: AI-Powered Reputation System**
 
 **Problem**: Implementing trustworthy reputation scoring while preventing gaming and fraud.
 
@@ -212,7 +212,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - Implemented fraud detection patterns for suspicious review activities
 - Created transparent trust level badges with explanatory descriptions
 
-### **💰 Challenge 6: Multi-Payment Method Support**
+### **Challenge 6: Multi-Payment Method Support**
 
 **Problem**: Supporting Cash-on-Hand, digital payments (GCash), and platform wallets with different validation requirements.
 
@@ -223,7 +223,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - Developed payment holding and release mechanisms for digital payments
 - Built automatic commission deduction systems with detailed transaction logging
 
-### **🔧 Challenge 7: Development Environment Consistency**
+### **Challenge 7: Development Environment Consistency**
 
 **Problem**: Ensuring consistent development experience across different environments (local, emulator, production).
 
@@ -234,7 +234,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - Developed mock payment systems for development when API access is restricted
 - Built automated testing infrastructure with PocketIC for canister integration testing
 
-### **📊 Challenge 8: State Management & Data Persistence**
+### **Challenge 8: State Management & Data Persistence**
 
 **Problem**: Managing complex application state across multiple canisters while ensuring data consistency and persistence.
 
@@ -247,9 +247,9 @@ Throughout the development of this decentralized marketplace, we encountered and
 
 ---
 
-## 🔧 Advanced Features & Improvements
+## Advanced Features & Improvements
 
-### **🎯 Recent Major Enhancements**
+### **Recent Major Enhancements**
 
 #### **Payment Integration System (Features 1.0 - 3.4)**
 
@@ -279,7 +279,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - **Role-Based Access Control**: Granular permissions with multi-role user support
 - **Audit Trail System**: Complete tracking of payments, commissions, and platform activities
 
-### **🚀 Performance Optimizations**
+### **Performance Optimizations**
 
 #### **Canister Architecture Improvements**
 
@@ -295,7 +295,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - **Caching Strategies**: Intelligent service worker caching for offline functionality
 - **Bundle Optimization**: Vite-based build system with optimized dependency bundling
 
-### **🔒 Security Enhancements**
+### **Security Enhancements**
 
 #### **Authentication & Authorization**
 
@@ -311,7 +311,7 @@ Throughout the development of this decentralized marketplace, we encountered and
 - **Audit Logging**: Comprehensive transaction tracking for financial transparency
 - **Fraud Prevention**: AI-powered detection of suspicious activities and patterns
 
-### **📱 Cross-Platform Compatibility**
+### **Cross-Platform Compatibility**
 
 #### **Progressive Web App Features**
 
@@ -329,9 +329,9 @@ Throughout the development of this decentralized marketplace, we encountered and
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### 🧑‍💻 1. Development Environment Setup
+### 1. Development Environment Setup
 
 This project uses a **devcontainer** for consistent development environthements:
 
@@ -406,11 +406,11 @@ npm test tests/src/backend.test.ts    # individual test
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 SRV-WCHL/
-├── 🔧 Configuration & Setup
+├── Configuration & Setup
 │   ├── .devcontainer/devcontainer.json       # Container config for development
 │   ├── .github/
 │   │   ├── instructions/                     # AI Copilot context and guidance
@@ -421,7 +421,7 @@ SRV-WCHL/
 │   ├── firebase.json                         # Firebase services configuration
 │   └── firestore.rules                       # Firestore security rules
 │
-├── 🖥️ Frontend Applications
+├── Frontend Applications
 │   ├── src/frontend/                         # Main React + TypeScript PWA
 │   │   ├── src/
 │   │   │   ├── App.tsx                       # Main application component
@@ -434,7 +434,7 @@ SRV-WCHL/
 │   └── src/admin/                            # Admin dashboard PWA
 │       └── src/                              # Admin-specific components and services
 │
-├── ⚙️ Backend Canisters (Motoko)
+├── Backend Canisters (Motoko)
 │   └── src/backend/function/
 │       ├── auth.mo                           # Authentication & user management
 │       ├── service.mo                        # Service catalog & provider management
@@ -450,7 +450,7 @@ SRV-WCHL/
 │       ├── admin.mo                          # System administration
 │       └── feedback.mo                       # Platform feedback system
 │
-├── 🌐 External Services Integration
+├── External Services Integration
 │   └── functions/                            # Firebase Cloud Functions
 │       ├── onboardProvider.js                # Xendit customer creation
 │       ├── createDirectPayment.js            # Payment invoice generation
@@ -462,27 +462,27 @@ SRV-WCHL/
 │       ├── getPaymentData.js                 # Payment data retrieval
 │       └── utils/canisterConfig.js           # Multi-environment canister communication
 │
-├── 🔗 Generated Interfaces
+├── Generated Interfaces
 │   └── src/declarations/                     # Auto-generated canister interfaces
 │       ├── auth/                            # Authentication canister types
 │       ├── booking/                         # Booking canister types
 │       ├── service/                         # Service canister types
 │       └── [other-canisters]/               # Additional canister type definitions
 │
-├── 🧪 Testing Infrastructure
+├── Testing Infrastructure
 │   ├── tests/
 │   │   ├── src/                             # Backend integration tests (PocketIC)
 │   │   └── vitest.config.ts                 # Test configuration
 │   └── src/frontend/tests/                  # Frontend unit tests (Vitest)
 │
-└── 📚 Documentation
+└── Documentation
     ├── README.md                            # This comprehensive guide
     ├── CHANGELOG.md                         # Detailed version history
     └── docs/                                # Additional documentation
         └── phone-verification-setup.md      # Setup guides
 ```
 
-### **🏗️ Architecture Highlights**
+### **Architecture Highlights**
 
 #### **Frontend Layer**
 
@@ -507,7 +507,7 @@ SRV-WCHL/
 
 ---
 
-## ✅ Testing Patterns
+## Testing Patterns
 
 The project uses a comprehensive testing approach:
 
@@ -525,13 +525,13 @@ npm test src/frontend/tests/              # Frontend only
 
 ---
 
-## 🔄 CI/CD Workflow
+## CI/CD Workflow
 
 Automated workflows in `.github/workflows/` include:
 
-- **🧪 Test Automation**: Full test suite execution on pull requests
-- **📦 Build Verification**: Ensures deployable builds
-- **🔍 Code Quality**: Linting and formatting checks
+- **Test Automation**: Full test suite execution on pull requests
+- **Build Verification**: Ensures deployable builds
+- **Code Quality**: Linting and formatting checks
 
 Future enhancements:
 
@@ -541,11 +541,11 @@ Future enhancements:
 
 ---
 
-## 🧠 GitHub Copilot Integration
+## GitHub Copilot Integration
 
 This project includes AI-assisted development through customized instructions and prompts:
 
-### 📝 Instructions (`.github/instructions/`)
+### Instructions (`.github/instructions/`)
 
 Provide context for AI assistance:
 
@@ -553,7 +553,7 @@ Provide context for AI assistance:
 - **motoko.instructions.md**: Motoko-specific coding standards
 - **test.instructions.md**: Testing patterns and practices
 
-### 🛠️ Prompts (`.github/prompts/`)
+### Prompts (`.github/prompts/`)
 
 Structured workflows for common tasks:
 
@@ -584,7 +584,7 @@ Analyzes git diffs and provides comprehensive code review covering:
 
 ---
 
-## 📚 Learning Resources
+## Learning Resources
 
 - [Internet Computer Documentation](https://internetcomputer.org/docs)
 - [Motoko Programming Language](https://internetcomputer.org/docs/motoko/home)
@@ -594,7 +594,7 @@ Analyzes git diffs and provides comprehensive code review covering:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions to improve the marketplace! Please:
 
@@ -608,4 +608,4 @@ For bugs or feature requests, please open an issue with detailed information.
 
 ---
 
-**Build the future of local services with decentralized trust 🚀**
+**Build the future of local services with decentralized trust**

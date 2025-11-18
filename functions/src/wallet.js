@@ -741,7 +741,7 @@ exports.getTransactionHistory = functions.https.onCall(async (data, context) => 
 });
 
 /**
- * Add authorized controller (Admin function)
+ * Add authorized controller
  * Cloud Function: addAuthorizedController
  */
 exports.addAuthorizedController = functions.https.onCall(async (data, context) => {
@@ -790,7 +790,7 @@ exports.addAuthorizedController = functions.https.onCall(async (data, context) =
 });
 
 /**
- * Remove authorized controller (Admin function)
+ * Remove authorized controller
  * Cloud Function: removeAuthorizedController
  */
 exports.removeAuthorizedController = functions.https.onCall(async (data, context) => {
@@ -835,7 +835,7 @@ exports.removeAuthorizedController = functions.https.onCall(async (data, context
 });
 
 /**
- * Get all authorized controllers (Admin function)
+ * Get all authorized controllers
  * Cloud Function: getAuthorizedControllers
  */
 exports.getAuthorizedControllers = functions.https.onCall(async (data, context) => {
@@ -863,7 +863,7 @@ exports.getAuthorizedControllers = functions.https.onCall(async (data, context) 
 });
 
 /**
- * Release a held balance manually (Admin function)
+ * Release a held balance manually
  * Cloud Function: releaseHold
  * Used for dispute resolution or manual intervention
  */
@@ -897,7 +897,7 @@ exports.releaseHold = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Get wallet details including holds (Admin function)
+ * Get wallet details including holds
  * Cloud Function: getWalletDetails
  */
 exports.getWalletDetails = functions.https.onCall(async (data, context) => {
@@ -912,7 +912,7 @@ exports.getWalletDetails = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // Authorization - only the user or admin can view wallet details
+  // Only the user or admin can view wallet details
   if (userId !== authInfo.uid && !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",

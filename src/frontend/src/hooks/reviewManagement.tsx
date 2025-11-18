@@ -67,7 +67,7 @@ export interface UseReviewManagementOptions {
   autoRefresh?: boolean;
   refreshInterval?: number;
   enableProfileCaching?: boolean;
-  autoLoadUserReviews?: boolean; // ✅ Add this new option
+  autoLoadUserReviews?: boolean;
 }
 
 export interface ReviewFormData {
@@ -158,7 +158,7 @@ export const useReviewManagement = (
     autoRefresh = false,
     refreshInterval = 30000,
     enableProfileCaching = true,
-    autoLoadUserReviews = true, // ✅ Default to true for backward compatibility
+    autoLoadUserReviews = true,
   } = options;
 
   // Core state management
@@ -1037,7 +1037,6 @@ export const useReviewManagement = (
     loadUserProfile();
   }, [loadUserProfile]);
 
-  // ✅ Fix the auto-loading effect to be conditional
   useEffect(() => {
     if (autoLoadUserReviews && isUserAuthenticated()) {
       loadUserReviews();
@@ -1110,14 +1109,14 @@ export const useReviewManagement = (
 export const useServiceReviews = (serviceId: string | null) => {
   const reviewManagement = useReviewManagement({
     autoRefresh: true,
-    autoLoadUserReviews: false, // ✅ Disable auto-loading of user reviews
+    autoLoadUserReviews: false,
   });
 
   useEffect(() => {
     if (serviceId) {
       reviewManagement.getServiceReviews(serviceId);
     }
-  }, [serviceId, reviewManagement.getServiceReviews]); // ✅ Add dependency
+  }, [serviceId, reviewManagement.getServiceReviews]);
 
   return reviewManagement;
 };
@@ -1126,7 +1125,7 @@ export const useServiceReviews = (serviceId: string | null) => {
 export const useProviderReviews = (providerId?: string) => {
   const reviewManagement = useReviewManagement({
     autoRefresh: true,
-    autoLoadUserReviews: false, // ✅ Disable auto-loading
+    autoLoadUserReviews: false,
   });
 
   useEffect(() => {
@@ -1139,7 +1138,7 @@ export const useProviderReviews = (providerId?: string) => {
 // Hook for booking rating
 export const useBookingRating = (bookingId: string | null) => {
   const reviewManagement = useReviewManagement({
-    autoLoadUserReviews: true, // ✅ Keep auto-loading for authenticated scenarios
+    autoLoadUserReviews: true,
   });
   const [canReview, setCanReview] = useState<boolean | null>(null);
 

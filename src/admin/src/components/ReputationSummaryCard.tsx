@@ -1,5 +1,11 @@
 import React from "react";
 import { ReputationScore } from "./ReputationScore";
+import {
+  ArrowPathIcon,
+  CheckIcon,
+  MinusIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 
 interface ReputationSummaryCardProps {
   pendingReputationScore: number;
@@ -27,43 +33,12 @@ export const ReputationSummaryCard: React.FC<ReputationSummaryCardProps> = ({
         >
           {updatingReputation ? (
             <>
-              <svg
-                className="mr-2 h-4 w-4 animate-spin"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
+              <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
               Saving...
             </>
           ) : (
             <>
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              <CheckIcon className="mr-2 h-4 w-4" />
               Save Reputation
             </>
           )}
@@ -81,19 +56,7 @@ export const ReputationSummaryCard: React.FC<ReputationSummaryCardProps> = ({
             }
             className="inline-flex items-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
-            <svg
-              className="mr-1 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 12H4"
-              />
-            </svg>
+            <MinusIcon className="mr-1 h-4 w-4" />
             10
           </button>
 
@@ -101,19 +64,7 @@ export const ReputationSummaryCard: React.FC<ReputationSummaryCardProps> = ({
             onClick={() => onReputationChange(50)}
             className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
-            <svg
-              className="mr-1 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
+            <ArrowPathIcon className="mr-1 h-4 w-4" />
             Reset
           </button>
 
@@ -123,19 +74,7 @@ export const ReputationSummaryCard: React.FC<ReputationSummaryCardProps> = ({
             }
             className="inline-flex items-center rounded-md border border-green-300 bg-white px-4 py-2 text-sm font-medium text-green-700 shadow-sm transition-colors hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
-            <svg
-              className="mr-1 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
+            <PlusIcon className="mr-1 h-4 w-4" />
             10
           </button>
         </div>

@@ -2,7 +2,6 @@ import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 import { AdminServiceError } from "./serviceTypes";
 
-// Get Firebase instances from singleton
 const auth = getFirebaseAuth();
 const functions = getFirebaseFunctions();
 
@@ -35,17 +34,16 @@ export const requireAuth = () => {
 
 /**
  * Helper function to call Firebase Cloud Functions
- * Follows the established pattern of wrapping payload in data object
  */
 export const callFirebaseFunction = async (
   functionName: string,
   payload: any,
 ) => {
   try {
-    requireAuth(); // Ensure user is authenticated
+    requireAuth();
     const callable = httpsCallable(functions, functionName);
 
-    // Call the function with data directly (admin.js expects: data.data || data)
+    // Call the function with data directly
     const result = await callable(payload);
 
     if ((result.data as any).success) {
@@ -64,12 +62,10 @@ export const callFirebaseFunction = async (
 };
 
 /**
- * Updates the current identity (compatibility function)
- * Note: Admin service uses Firebase auth, not IC identity
+ * Updates the current identity
  */
 export const updateAdminActor = (_identity: any) => {
-  // Admin service uses Firebase authentication, not IC identity
-  return null; // Firebase doesn't use actors
+  return null;
 };
 
 // Export functions for direct use

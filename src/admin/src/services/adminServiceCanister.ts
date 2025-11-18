@@ -1,8 +1,6 @@
 // Admin Service Firebase Interface
 export {
   adminServiceCanister,
-  assignRole,
-  removeRole,
   getUserRole,
   checkAdminRole,
   listUserRoles,

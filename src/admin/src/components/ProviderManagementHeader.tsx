@@ -47,7 +47,7 @@ export const ProviderManagementHeader: React.FC<
         </div>
       </header>
 
-      {/* Mobile bottom actions bar (appears when header is scrolled out) */}
+      {/* Mobile bottom actions bar */}
       <div
         className={`fixed inset-x-0 bottom-0 z-40 border-t border-yellow-100 px-4 py-3 backdrop-blur transition-all duration-300 ease-out supports-[backdrop-filter]:bg-white/80 sm:hidden ${
           showMobileBar

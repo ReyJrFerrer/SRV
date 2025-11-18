@@ -6,9 +6,6 @@ const db = admin.firestore();
 
 /**
  * Auto-create admin profile and assign role for development
- * This function creates a profile for the user if it doesn't exist
- * and then assigns admin role - useful for testing
- * Can be called with either authenticated context OR with a customToken
  */
 exports.createAdminProfile = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
@@ -27,6 +24,30 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       "invalid-argument",
       "Either authenticate or provide UID",
     );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc("system_settings").get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+    
+    if (settings.restrictNewAdminLogins === true) {
+      const userDoc = await db.collection("users").doc(uid).get();
+      const userRoleDoc = await db.collection("userRoles").doc(uid).get();
+      
+      const userExists = userDoc.exists;
+      const hasAdminRole = userRoleDoc.exists && userRoleDoc.data()?.role === "ADMIN";
+      
+      if (!userExists || !hasAdminRole) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "New accounts are not allowed to access the admin panel. Please contact an administrator.",
+        );
+      }
+    }
+  } catch (error) {
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
   }
 
   try {
@@ -50,7 +71,6 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
         name: adminName, // Always use generated sequential admin name
         phone: phone || "",
         role: "Admin",
-        // Note: Admin role is stored separately in userRoles collection
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
         isAdmin: true,
@@ -58,17 +78,12 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
 
       await profileRef.set(newProfile);
     } else {
-      // If profile exists but doesn't have a numbered admin name, update it
       const existingData = profileDoc.data();
       if (existingData.isAdmin || existingData.name === "Admin User") {
-        // Check if already has a numbered admin name
         if (!existingData.name.match(/^admin\d{2}$/)) {
-          // Find the correct admin number by checking if this user already has a role
           const existingRole = await db.collection("userRoles").doc(uid).get();
 
           if (existingRole.exists) {
-            // User already has admin role - find their position in the ordered list
-            // Get all admin roles ordered by assignedAt
             const allAdminRoles = await db.collection("userRoles")
               .where("role", "==", "ADMIN")
               .orderBy("assignedAt", "asc")
@@ -91,7 +106,6 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
               updatedAt: FieldValue.serverTimestamp(),
             });
           } else {
-            // No role yet, will be assigned below - use the calculated name
             await profileRef.update({
               name: adminName,
               updatedAt: FieldValue.serverTimestamp(),
@@ -118,7 +132,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       success: true,
       message: "Admin profile created and role assigned successfully",
       uid: uid,
-      needsSignOut: false, // Token refresh is handled automatically in the frontend
+      needsSignOut: false,
     };
   } catch (error) {
     console.error("Error in createAdminProfile:", error);

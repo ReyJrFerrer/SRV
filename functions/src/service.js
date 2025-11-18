@@ -69,7 +69,6 @@ function validateTitle(title) {
     title.length <= MAX_TITLE_LENGTH
   );
 
-  console.log("🔍 validateTitle result:", result);
   return result;
 }
 
@@ -213,11 +212,7 @@ async function deleteImagesFromStorage(mediaItems) {
  * Create a new service listing
  */
 exports.createService = functions.https.onCall(async (data, context) => {
-  console.log("🚀 createService called");
-  console.log("🔍 Raw data type:", typeof data);
-  console.log("🔍 Raw data keys:", data ? Object.keys(data) : "No data");
-  console.log("🔍 Raw data:", data);
-
+  console.log("createService called");
   // Extract the actual payload from data.data FIRST
   const payload = data.data || data;
 
@@ -239,15 +234,12 @@ exports.createService = functions.https.onCall(async (data, context) => {
     auth: data.auth ? "Present" : "Missing",
   };
   console.log("� Safe data received:", JSON.stringify(safeData, null, 2));
-  console.log("🔐 Context auth:", context.auth ? "Present" : "Missing");
 
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
-  console.log("👤 Auth info:", JSON.stringify(authInfo, null, 2));
 
   // Authentication check
   if (!authInfo.hasAuth) {
-    console.log("❌ Authentication failed");
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated to create a service",
@@ -295,9 +287,7 @@ exports.createService = functions.https.onCall(async (data, context) => {
   }
 
   const locationValid = validateLocation(location);
-  console.log("📍 Location validation result:", locationValid);
   if (!locationValid) {
-    console.log("❌ Location validation failed for:", location);
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Invalid location data");
@@ -608,7 +598,6 @@ exports.searchServicesByLocation = functions.https.onCall(
  * Update service
  */
 exports.updateService = functions.https.onCall(async (data, context) => {
-  console.log("🔍 Raw data:", data);
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -865,7 +854,6 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
     }
 
     // Delete all associated bookings for this service
-    console.log(`🗑️ [deleteService] Deleting bookings for service ${serviceId}...`);
     const bookingsSnapshot = await db.collection("bookings")
       .where("serviceId", "==", serviceId)
       .get();
@@ -886,12 +874,9 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
         await batch.commit();
       }
 
-      console.log(`✅ [deleteService] Deleted ${bookingsSnapshot.size}
-        bookings for service ${serviceId}`);
     }
 
     // Delete all associated reviews for this service (client reviews)
-    console.log(`🗑️ [deleteService] Deleting reviews for service ${serviceId}...`);
     const reviewsSnapshot = await db.collection("reviews")
       .where("serviceId", "==", serviceId)
       .get();
@@ -912,12 +897,9 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
         await batch.commit();
       }
 
-      console.log(`✅ [deleteService] Deleted ${reviewsSnapshot.size}
-        reviews for service ${serviceId}`);
     }
 
     // Delete all associated provider reviews for this service
-    console.log(`🗑️ [deleteService] Deleting provider reviews for service ${serviceId}...`);
     const providerReviewsSnapshot = await db.collection("providerReviews")
       .where("serviceId", "==", serviceId)
       .get();
@@ -938,8 +920,6 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
         await batch.commit();
       }
 
-      console.log(`✅ [deleteService] Deleted ${providerReviewsSnapshot.size}
-        provider reviews for service ${serviceId}`);
     }
 
     // Delete the service document
@@ -1359,7 +1339,7 @@ exports.removeServiceCertificate = functions.https.onCall(
 );
 
 /**
- * Verify service manually (admin function)
+ * Verify service manually
  */
 exports.verifyService = functions.https.onCall(async (data, context) => {
   // Get authentication info
@@ -1664,14 +1644,11 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
     }
 
     // Validate input
-    console.log("🔍 Starting validation...");
-    console.log("🔍 Title validation - Min:", MIN_PACKAGE_TITLE_LENGTH, "Max:",
+    console.log("Starting validation...");
+    console.log("Title validation - Min:", MIN_PACKAGE_TITLE_LENGTH, "Max:",
       MAX_PACKAGE_TITLE_LENGTH);
-
     const titleValid = validatePackageTitle(title);
-    console.log("📝 Package validation result:", titleValid);
     if (!titleValid) {
-      console.log("❌ Title validation failed for:", title);
       throw new functions.https.HttpsError(
         "invalid-argument",
         `Package title must be between ${MIN_PACKAGE_TITLE_LENGTH} and 
@@ -1679,9 +1656,7 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
     }
 
     const descValid = validateDescription(description);
-    console.log("📝 Description validation result:", descValid);
     if (!descValid) {
-      console.log("❌ Description validation failed for:", description);
       throw new functions.https.HttpsError(
         "invalid-argument",
         `Package description must be between 

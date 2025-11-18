@@ -3,31 +3,29 @@ import { sendTicketStatusNotification } from "./notificationServices";
 import { handlePromiseSettledArrayResults } from "../utils/promiseUtils";
 
 /**
- * Get detailed reviews for a user (received, given as client, given as provider)
+ * Get detailed reviews for a user
  */
 export const getUserDetailedReviews = async (
   userId: string,
 ): Promise<{
-  receivedReviews: any[]; // Reviews RECEIVED (what providers wrote about this user)
-  givenAsClientReviews: any[]; // Reviews GIVEN as client (what user wrote about providers/services)
-  givenAsProviderReviews: any[]; // Reviews GIVEN as provider (what user wrote about clients)
+  receivedReviews: any[];
+  givenAsClientReviews: any[];
+  givenAsProviderReviews: any[];
 }> => {
   try {
     requireAuth();
 
-    // Get all review types in parallel (including hidden reviews for admin)
-    // Note: Payload must be wrapped in { data: {...} } to match client format
+    // Get all review types in parallel
     const [receivedResult, givenAsClientResult, givenAsProviderResult] =
       await Promise.allSettled([
-        // Reviews RECEIVED: what providers wrote about this user (as client)
         callFirebaseFunction("getClientProviderReviews", {
           data: { clientId: userId, includeHidden: true },
         }),
-        // Reviews GIVEN as CLIENT: what this user wrote about providers/services
+
         callFirebaseFunction("getUserReviews", {
           data: { userId: userId, includeHidden: true },
         }),
-        // Reviews GIVEN as PROVIDER: what this user wrote about clients
+
         callFirebaseFunction("getProviderReviewsByProvider", {
           data: { providerId: userId, includeHidden: true },
         }),
@@ -62,7 +60,7 @@ export const getUserDetailedReviews = async (
 };
 
 /**
- * Delete a review (admin only - hides the review)
+ * Delete a review
  */
 export const deleteReview = async (reviewId: string): Promise<void> => {
   try {
@@ -77,7 +75,7 @@ export const deleteReview = async (reviewId: string): Promise<void> => {
 };
 
 /**
- * Restore a review (admin only - makes hidden review visible)
+ * Restore a review
  */
 export const restoreReview = async (reviewId: string): Promise<void> => {
   try {
@@ -92,7 +90,7 @@ export const restoreReview = async (reviewId: string): Promise<void> => {
 };
 
 /**
- * Bulk update review status (admin only)
+ * Bulk update review status
  */
 export const bulkUpdateReviewStatus = async (
   reviewIds: string[],
@@ -116,7 +114,7 @@ export const bulkUpdateReviewStatus = async (
   }
 };
 
-// Report/Feedback integration - separate export
+// Report/Feedback integration
 export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
   try {
     requireAuth();
@@ -183,7 +181,7 @@ export const getFeedbackStats = async (): Promise<{
   }
 };
 
-// Get all feedback (admin function)
+// Get all feedback
 export const getAllFeedback = async (): Promise<any[]> => {
   try {
     requireAuth();
@@ -226,7 +224,6 @@ export const updateReportStatus = async (
     });
 
     if (result) {
-      // Send notification to user if userId and ticketTitle are provided
       if (userId && ticketTitle && oldStatus) {
         await sendTicketStatusNotification(
           userId,

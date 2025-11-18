@@ -422,14 +422,10 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
       if (parsedDesc && typeof parsedDesc === "object") {
         // Override source field to match user's actual role
         parsedDesc.source = correctSource;
-        console.log(`✅ [submitReport] Corrected source from "${parsedDesc.source || "missing"}"
-          to "${correctSource}" for user ${authInfo.uid} (activeRole: ${userActiveRole})`);
         finalDescription = JSON.stringify(parsedDesc);
       }
     } catch (e) {
       // Description is not JSON, create structured format with correct source
-      console.log(`⚠️ [submitReport] Description is not JSON,
-        creating structured format with correct source: ${correctSource}`);
       finalDescription = JSON.stringify({
         title: "User Report",
         description: String(description),
