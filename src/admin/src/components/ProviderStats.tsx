@@ -41,12 +41,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   const [newCommissionAmount, setNewCommissionAmount] = useState("");
   const [balance, setBalance] = useState(outstandingCommission);
 
-  // Update balance when outstandingCommission changes
-  useEffect(() => {
-    setBalance(outstandingCommission);
-  }, [outstandingCommission]);
-
-  // Initialize commission amount when modal opens
+  // Initialize commission amount
   useEffect(() => {
     if (showCommissionModal) {
       setNewCommissionAmount(balance.toFixed(2));
@@ -59,6 +54,11 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     }
   };
 
+  // Update balance
+  useEffect(() => {
+    setBalance(outstandingCommission);
+  }, [outstandingCommission]);
+
   const handleUpdateCommission = () => {
     const amount = parseFloat(newCommissionAmount);
     if (!isNaN(amount) && amount >= 0 && onUpdateCommission) {
@@ -66,10 +66,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       setShowCommissionModal(false);
     }
   };
-
-  // const handleOpenModal = () => {
-  //   setShowCommissionModal(true);
-  // };
 
   const handleCloseModal = () => {
     setShowCommissionModal(false);
@@ -172,7 +168,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     </div>
   );
 
-  // --- Stat Card ---
+ 
   const StatCard = ({
     icon,
     value,
@@ -197,7 +193,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     </div>
   );
 
-  // --- Mobile Stat Cards Layout ---
   const renderCards = () => (
     <div className="flex gap-4 overflow-x-auto pb-4">
       {externalLoading
@@ -231,7 +226,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     </div>
   );
 
-  // --- Desktop Stats Layout ---
   const renderStats = () => (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
       {externalLoading

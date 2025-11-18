@@ -60,6 +60,7 @@ interface UseAdminReturn {
   refreshAll: () => Promise<void>;
 }
 
+// Main admin hook to manage system stats, users, providers, services, bookings, and categories
 export const useAdmin = (): UseAdminReturn => {
   const [loading, setLoading] = useState<AdminLoadingStates>({
     systemStats: false,
@@ -97,6 +98,7 @@ export const useAdmin = (): UseAdminReturn => {
     },
   );
 
+  // Load all data on mount
   useEffect(() => {
     refreshAll();
   }, []);
@@ -112,6 +114,7 @@ export const useAdmin = (): UseAdminReturn => {
     handleError(error, context, toast);
   }, []);
 
+  // Fetches system-wide statistics (users, bookings, revenue, etc.)
   const refreshSystemStats = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("systemStats", true);
@@ -131,6 +134,7 @@ export const useAdmin = (): UseAdminReturn => {
     [updateLoadingState, handleErrorCallback],
   );
 
+  // Fetches all users and their lock statuses
   const refreshUsers = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("users", true);
@@ -175,6 +179,7 @@ export const useAdmin = (): UseAdminReturn => {
     [updateLoadingState, handleErrorCallback],
   );
 
+  // Fetches all service providers with their earnings data
   const refreshServiceProviders = useCallback(
     async (showSuccessToast = false) => {
       updateLoadingState("serviceProviders", true);
@@ -213,6 +218,7 @@ export const useAdmin = (): UseAdminReturn => {
     [updateLoadingState, handleErrorCallback],
   );
 
+  // Updates user lock status in local state and localStorage
   const updateUserLockStatus = useCallback(
     (userId: string, isLocked: boolean) => {
       setUserLockStatus((prevStatus) => {
@@ -328,6 +334,7 @@ export const useAdmin = (): UseAdminReturn => {
     }
   }, [handleErrorCallback]);
 
+  // Refreshes data
   const refreshAll = useCallback(async () => {
     try {
       const refreshPromises = [

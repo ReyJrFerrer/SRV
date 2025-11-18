@@ -235,6 +235,7 @@ const useDebounce = <F extends (...args: any[]) => any>(
   );
 };
 
+// Provider booking management: handles bookings, client profiles, services, packages, analytics, and booking operations
 export const useProviderBookingManagement =
   (): ProviderBookingManagementHook => {
     // Core state management

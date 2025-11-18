@@ -54,14 +54,11 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   const endIndex = startIndex + itemsPerPage;
   const currentBookings = bookings.slice(startIndex, endIndex);
 
-  // Helper function to format location (handles both string and object)
+  // Helper function to format location
   const formatLocation = (location: any): string => {
     if (!location) return "No location provided";
 
-    // Handle string locations
     if (typeof location === "string") return location;
-
-    // Handle object locations with address fields
     if (typeof location === "object") {
       const parts = [];
 
@@ -77,8 +74,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
       }
 
       if (parts.length > 0) return parts.join(", ");
-
-      // If no standard address fields, try to JSON stringify but handle circular refs
+      
       try {
         return JSON.stringify(location);
       } catch {

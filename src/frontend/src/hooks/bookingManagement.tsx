@@ -125,6 +125,7 @@ interface BookingManagementHook {
   hasServiceDetails: (booking: EnhancedBooking) => boolean;
 }
 
+// Client booking management: handles user bookings, provider profiles, services, packages, and booking operations
 export const useBookingManagement = (): BookingManagementHook => {
   // Core state management
   const [userBookings, setUserBookings] = useState<EnhancedBooking[]>([]);

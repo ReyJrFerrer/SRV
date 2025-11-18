@@ -12,9 +12,9 @@ This error typically occurs due to Firebase/Google Cloud configuration issues.
 2. Select your Firebase project: **devsrv-rey**
 3. Navigate to **APIs & Services** > **Library**
 4. Search and enable the following APIs:
-   - ✅ **Firebase Cloud Messaging API** (v1)
-   - ✅ **Cloud Messaging** (Legacy)
-   - ✅ **FCM Registration API**
+   - **Firebase Cloud Messaging API** (v1)
+   - **Cloud Messaging** (Legacy)
+   - **FCM Registration API**
 
 **How to check if enabled:**
 
@@ -30,9 +30,9 @@ This error typically occurs due to Firebase/Google Cloud configuration issues.
 
 **Required Configuration:**
 
-- ✅ Server key (auto-generated)
-- ✅ Sender ID: `851522429469`
-- ✅ Web Push certificates (VAPID key pair)
+- Server key (auto-generated)
+- Sender ID: `851522429469`
+- Web Push certificates (VAPID key pair)
 
 ### 3. Verify/Regenerate VAPID Key
 
@@ -101,13 +101,13 @@ Run this in your browser console to test FCM:
 async function testFCM() {
   try {
     const registration = await navigator.serviceWorker.ready;
-    console.log("✅ Service Worker ready:", registration.scope);
+    console.log("Service Worker ready:", registration.scope);
 
     const permission = await Notification.requestPermission();
-    console.log("✅ Permission:", permission);
+    console.log("Permission:", permission);
 
     if (permission !== "granted") {
-      console.error("❌ Permission denied");
+      console.error("Permission denied");
       return;
     }
 
@@ -121,9 +121,9 @@ async function testFCM() {
       serviceWorkerRegistration: registration,
     });
 
-    console.log("✅ Token obtained:", token);
+    console.log("Token obtained:", token);
   } catch (error) {
-    console.error("❌ Test failed:", error);
+    console.error("Test failed:", error);
   }
 }
 
@@ -229,15 +229,15 @@ If all else fails:
 
 Before asking for help, verify:
 
-- ✅ FCM API enabled in Google Cloud
-- ✅ VAPID key is correct and in .env files
-- ✅ Browser notification permission granted
-- ✅ Service workers registered and active
-- ✅ No console errors about missing imports
-- ✅ Tried in incognito/private mode
-- ✅ Tested in multiple browsers
-- ✅ Network requests to FCM endpoints succeed
-- ✅ Firebase project has billing enabled
+- FCM API enabled in Google Cloud
+- VAPID key is correct and in .env files
+- Browser notification permission granted
+- Service workers registered and active
+- No console errors about missing imports
+- Tried in incognito/private mode
+- Tested in multiple browsers
+- Network requests to FCM endpoints succeed
+- Firebase project has billing enabled
 
 ## Working Configuration
 

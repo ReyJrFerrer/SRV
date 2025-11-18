@@ -322,73 +322,6 @@ exports.getRule = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ===== ROLE MANAGEMENT =====
-
-/**
- * Assign role to user
- */
-exports.assignRole = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {userId, role = "ADMIN", scope} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can assign roles",
-    );
-  }
-
-  try {
-    const now = new Date().toISOString();
-    const roleAssignment = {
-      userId: userId,
-      role: role,
-      scope: scope || null,
-      assignedBy: authInfo.uid,
-      assignedAt: now,
-    };
-
-    await db.collection("userRoles").doc(userId).set(roleAssignment);
-
-    // Set custom claims for Firebase Auth
-    await admin.auth().setCustomUserClaims(userId, {isAdmin: role === "ADMIN"});
-
-    return {success: true, message: `Role ${role} assigned to user ${userId}`};
-  } catch (error) {
-    console.error("Error in assignRole:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
-/**
- * Remove user role
- */
-exports.removeRole = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {userId} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can remove roles",
-    );
-  }
-
-  try {
-    await db.collection("userRoles").doc(userId).delete();
-
-    // Remove custom claims
-    await admin.auth().setCustomUserClaims(userId, {isAdmin: false});
-
-    return {success: true, message: `Role removed from user ${userId}`};
-  } catch (error) {
-    console.error("Error in removeRole:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
 /**
  * Get user role
  */
@@ -545,8 +478,6 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ===== ANALYTICS AND REPORTING =====
-
 /**
  * Get system statistics
  */
@@ -620,7 +551,6 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       const paymentChannel = data.payment_channel || "";
       const amount = parseFloat(data.amount) || 0;
 
-      // Only include transactions with "topup" in description but exclude admin updates
       if (
         (description.includes("topup") || description.includes("top-up")) &&
         paymentChannel !== "ADMIN_UPDATE"
@@ -650,8 +580,6 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ===== USER MANAGEMENT =====
-
 /**
  * Get all users
  */
@@ -665,13 +593,11 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Query both "profiles" and "users" collections to get all users
     const [profilesSnapshot, usersSnapshot] = await Promise.all([
       db.collection("profiles").get(),
       db.collection("users").get(),
     ]);
 
-    // Combine users from both collections
     const profiles = profilesSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -681,7 +607,6 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
       ...doc.data(),
     }));
 
-    // Merge and deduplicate by id (users collection takes precedence if duplicate)
     const userMap = new Map();
     profiles.forEach((user) => {
       const userId = user.id || user.uid || user.principal;
@@ -890,7 +815,6 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Use helper functions from reputation module
     const {createReputationActor} = require("./reputation");
     const {Principal} = require("@dfinity/principal");
 
@@ -966,13 +890,8 @@ exports.updateUserPhoneNumber = functions.https.onCall(async (data, context) => 
   }
 });
 
-
-// ===== CERTIFICATE VALIDATION =====
-
 /**
  * Update certificate validation status
- * Simple function that updates the media collection validationStatus field
- * This updates the provider pill and client indicator
  */
 exports.updateCertificateValidationStatus = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
@@ -1021,7 +940,7 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
       );
     }
 
-    // Update the validation status - this updates the provider pill and client indicator
+    // Update the validation status
     await db.collection("media").doc(certificateId).update({
       validationStatus: status,
       updatedAt: new Date().toISOString(),
@@ -1162,11 +1081,8 @@ exports.getRejectedCertificates = functions.https.onCall(async (data, context) =
   }
 });
 
-// ===== CERTIFICATE VALIDATION FUNCTIONS (NEW) =====
-
 /**
  * Get all services with certificates for validation
- * Matches getServicesWithCertificates from admin.mo
  */
 exports.getServicesWithCertificates = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
@@ -1235,7 +1151,6 @@ exports.getServicesWithCertificates = functions.https.onCall(async (data, contex
 
 /**
  * Get pending certificate validations
- * Matches getPendingCertificateValidations from admin.mo
  */
 exports.getPendingCertificateValidations = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
@@ -1264,8 +1179,7 @@ exports.getPendingCertificateValidations = functions.https.onCall(async (data, c
 });
 
 /**
- * Validate certificate (approve or reject)
- * Matches validateCertificate from admin.mo
+ * Validate certificate
  */
 exports.validateCertificate = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;

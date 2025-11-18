@@ -76,7 +76,6 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
 }) => {
   if (!isOpen || !provider) return null;
 
-  // Default formatDate if not provided
   const defaultFormatDate =
     formatDate ||
     ((date: Date) => {
@@ -89,7 +88,6 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
       }).format(date);
     });
 
-  // Default status helpers if not provided
   const defaultGetStatusColor =
     getStatusColor ||
     ((overdueOrders: number, pendingOrders: number) => {
@@ -187,7 +185,7 @@ export const ProviderDetailsModal: React.FC<ProviderDetailsModalProps> = ({
             </div>
           </div>
 
-          {/* Mode switch - only show if onModeChange is provided */}
+          {/* Mode switch */}
           {onModeChange && (
             <div className="mb-4 flex items-center gap-2">
               <button

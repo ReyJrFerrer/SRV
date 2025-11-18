@@ -1,4 +1,4 @@
-// Service data conversion functions (matching provider implementation)
+// Service data conversion functions
 export interface ServiceData {
   id: string;
   title: string;
@@ -48,7 +48,7 @@ export interface ServiceData {
   }>;
 }
 
-// Frontend-adapted types for better usability
+// Frontend-adapted types
 export interface FrontendCommissionRule {
   id: string;
   serviceTypes: string[];
@@ -56,8 +56,8 @@ export interface FrontendCommissionRule {
   formula: {
     type: "Flat" | "Percentage" | "Tiered" | "Hybrid";
     value: number;
-    base?: number; // for Hybrid
-    tiers?: Array<{ threshold: number; rate: number }>; // for Tiered
+    base?: number;
+    tiers?: Array<{ threshold: number; rate: number }>;
   };
   minCommission?: number;
   maxCommission?: number;
@@ -114,7 +114,7 @@ export interface FrontendMediaItem {
   mediaType: "ServiceImage" | "UserProfile" | "ServiceCertificate";
   fileSize: number;
   ownerId: string;
-  validationStatus?: "Pending" | "Validated" | "Rejected"; // Only for ServiceCertificate
+  validationStatus?: "Pending" | "Validated" | "Rejected";
   createdAt: Date;
   updatedAt: Date;
 }

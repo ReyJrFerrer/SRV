@@ -28,7 +28,7 @@ try {
 if (admin.apps.length === 0) {
   // Check if we're in the emulator environment
   if (process.env.FUNCTIONS_EMULATOR) {
-    console.log("🔥 Running in emulator mode");
+    console.log("Running in emulator mode");
     admin.initializeApp({
       projectId: "devsrv-rey",
     });
@@ -59,7 +59,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
       throw new Error("Invoice ID is required");
     }
 
-    console.log(`🔍 Checking status for invoice: ${invoiceId}`);
+    console.log(`Checking status for invoice: ${invoiceId}`);
 
     // Check if Xendit client is initialized
     if (!xendit) {
@@ -89,7 +89,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
           const description = `Wallet Topup. Transfer from ${paymentChannel}`;
 
           console.log(
-            `💰 Auto-crediting wallet (Firestore) for provider ${providerId}: ₱${amount}`,
+            `Auto-crediting wallet (Firestore) for provider ${providerId}: ₱${amount}`,
           );
 
           await creditWalletInternal(
@@ -104,7 +104,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
             creditedAt: new Date().toISOString(),
           });
 
-          console.log(`✅ Wallet credited successfully for invoice ${invoiceId}`);
+          console.log(`Wallet credited successfully for invoice ${invoiceId}`);
 
           return {
             success: true,
@@ -116,7 +116,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
             source: "firestore_cache",
           };
         } catch (creditError) {
-          console.error(`❌ Failed to credit wallet:`, creditError);
+          console.error(`Failed to credit wallet:`, creditError);
           return {
             success: true,
             status: paymentData.status || "PENDING",
@@ -165,7 +165,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
             const description = `Wallet Topup. Transfer from ${paymentChannel}`;
 
             console.log(
-              `💰 Auto-crediting wallet (Mock) for provider ${providerId}: ₱${amount}`,
+              `Auto-crediting wallet (Mock) for provider ${providerId}: ₱${amount}`,
             );
 
             await creditWalletInternal(
@@ -180,7 +180,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
               creditedAt: new Date().toISOString(),
             });
 
-            console.log(`✅ Wallet credited successfully for mock invoice ${invoiceId}`);
+            console.log(`Wallet credited successfully for mock invoice ${invoiceId}`);
 
             return {
               success: true,
@@ -192,7 +192,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
               source: "mock_development",
             };
           } catch (creditError) {
-            console.error(`❌ Failed to credit wallet:`, creditError);
+            console.error(`Failed to credit wallet:`, creditError);
             return {
               success: true,
               status: paymentData.status || "PENDING",
@@ -227,7 +227,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
         invoiceId: invoiceId,
       });
 
-      console.log(`✅ Invoice status fetched: ${invoice.status}`);
+      console.log(`Invoice status fetched: ${invoice.status}`);
     } catch (xenditError) {
       console.error("Error fetching invoice from Xendit:", xenditError);
 
@@ -255,16 +255,16 @@ exports.checkInvoiceStatus = onCall(async (request) => {
     const db = admin.firestore();
     const paymentDoc = await db.collection("payments").doc(invoiceId).get();
 
-    console.log(`📄 Payment document exists: ${paymentDoc.exists}`);
+    console.log(`Payment document exists: ${paymentDoc.exists}`);
 
     // Check if payment is completed and needs crediting
     if (invoice.status === "PAID" || invoice.status === "SETTLED") {
-      console.log(`💳 Invoice is ${invoice.status}, checking credit status...`);
+      console.log(`Invoice is ${invoice.status}, checking credit status...`);
 
       const paymentData = paymentDoc.exists ? paymentDoc.data() : null;
       const alreadyCredited = paymentData?.credited || false;
 
-      console.log(`🔍 Already credited: ${alreadyCredited}`);
+      console.log(`Already credited: ${alreadyCredited}`);
 
       // Only credit if not already credited
       if (!alreadyCredited) {
@@ -315,7 +315,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
           const description = `Wallet Topup. Transfer from ${paymentChannel}`;
 
           console.log(
-            `💰 Auto-crediting wallet for provider ${providerId}: ₱${amount}`,
+            `Auto-crediting wallet for provider ${providerId}: ₱${amount}`,
           );
 
           // Credit the wallet using the internal function
@@ -346,7 +346,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
             });
           }
 
-          console.log(`✅ Wallet credited successfully for invoice ${invoiceId}`);
+          console.log(`Wallet credited successfully for invoice ${invoiceId}`);
 
           return {
             success: true,
@@ -363,7 +363,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
           };
         } catch (creditError) {
           console.error(
-            `❌ Failed to credit wallet for invoice ${invoiceId}:`,
+            `Failed to credit wallet for invoice ${invoiceId}:`,
             creditError,
           );
           // Return status but indicate credit failed
@@ -383,7 +383,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
           };
         }
       } else {
-        console.log(`ℹ️ Invoice ${invoiceId} already credited, skipping`);
+        console.log(`Invoice ${invoiceId} already credited, skipping`);
         return {
           success: true,
           status: invoice.status,
@@ -415,7 +415,7 @@ exports.checkInvoiceStatus = onCall(async (request) => {
       source: "xendit_api",
     };
   } catch (error) {
-    console.error("❌ Error checking invoice status:", error);
+    console.error("Error checking invoice status:", error);
     throw new Error(error.message || "Internal server error");
   }
 });

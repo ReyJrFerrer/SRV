@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/solid";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface MediaViewModalProps {
   isOpen: boolean;
@@ -22,25 +22,10 @@ export const MediaViewModal: React.FC<MediaViewModalProps> = ({
   error = null,
 }) => {
   const [imageError, setImageError] = useState(false);
-
-  // Reset image error when modal opens with new media
   useEffect(() => {
     setImageError(false);
   }, [mediaItem?.id]);
 
-  // Handle download
-  const handleDownload = () => {
-    if (mediaItem?.url && mediaItem?.fileName) {
-      const link = document.createElement("a");
-      link.href = mediaItem.url;
-      link.download = mediaItem.fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
-  // Handle image load error
   const handleImageError = () => {
     setImageError(true);
   };
@@ -56,21 +41,12 @@ export const MediaViewModal: React.FC<MediaViewModalProps> = ({
         className="relative max-h-[90vh] max-w-[90vw] rounded-lg bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with close and download buttons */}
+        {/* Header with close button */}
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
           <h3 className="text-lg font-semibold text-gray-900">
             {mediaItem?.fileName || "Media Viewer"}
           </h3>
           <div className="flex items-center space-x-2">
-            {mediaItem && !loading && !error && (
-              <button
-                onClick={handleDownload}
-                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                title="Download"
-              >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-              </button>
-            )}
             <button
               onClick={onClose}
               className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"

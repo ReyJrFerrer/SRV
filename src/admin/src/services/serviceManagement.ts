@@ -46,8 +46,6 @@ export const getServiceData = async (
     const service = await callFirebaseFunction("getService", { serviceId });
 
     if (!service) return null;
-
-    // Convert Firebase service to ServiceData format
     const serviceData: ServiceData = {
       id: service.id,
       title: service.title,
@@ -71,7 +69,7 @@ export const getServiceData = async (
       imageUrls: service.imageUrls || [],
       certificateUrls: service.certificateUrls || [],
       weeklySchedule: service.weeklySchedule || [],
-      packages: [], // Will be populated separately
+      packages: [],
     };
 
     // Get service packages

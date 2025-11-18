@@ -73,7 +73,6 @@ export const updateCertificateValidationStatus = async (
       } as AdminServiceError);
     }
 
-    // Pass payload directly - backend handles both data.data || data formats
     const payload = {
       certificateId: certificateId.trim(),
       status,

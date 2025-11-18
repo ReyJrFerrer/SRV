@@ -63,6 +63,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Updates all canister actors with the current user identity
 const updateAllActors = (identity: Identity | null) => {
   try {
     updateReputationActor(identity);
@@ -110,6 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     locationStore.initialize();
   }, [locationStore]);
 
+  // Auto-request location if permission already granted
   useEffect(() => {
     let mounted = true;
     if (typeof navigator !== "undefined" && (navigator as any).permissions) {
@@ -150,7 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [locationStore]);
 
-  // Listen to Firebase auth state changes and auto-refresh if needed
+  // Listen to Firebase auth state changes and auto-refresh token if IC session still valid
   useEffect(() => {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -172,7 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => unsubscribe();
   }, [isAuthenticated, identity]);
 
-  // Auto-enable push notifications when user authenticates
+  // Auto-enable push notifications on login if supported and not denied
   useEffect(() => {
     const autoEnablePushNotifications = async () => {
       // Only attempt auto-enable if:
@@ -250,6 +252,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [postLoginLocationPromptVisible, locationStore.locationStatus]);
 
+  // Initialize IC auth client on mount and check if already authenticated
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -274,6 +277,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  // Login: authenticates with Internet Identity, bridges to Firebase, updates online status
   const login = async () => {
     if (!authClient) return;
 
@@ -320,6 +324,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Logout: updates online status, clears Firebase/IC sessions, resets state
   const logout = async () => {
     if (!authClient) return;
 

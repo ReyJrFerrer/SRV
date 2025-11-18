@@ -5,7 +5,7 @@ const admin = require("firebase-admin");
 if (admin.apps.length === 0) {
   // Check if we're in the emulator environment
   if (process.env.FUNCTIONS_EMULATOR) {
-    console.log("🔥 Running in emulator mode");
+    console.log("Running in emulator mode");
     admin.initializeApp({
       projectId: "devsrv-rey",
     });
@@ -73,7 +73,7 @@ exports.getPaymentData = functions.https.onRequest(async (req, res) => {
       });
     }
 
-    console.log(`🔍 Fetching payment data for invoice: ${invoiceId}`);
+    console.log(`Fetching payment data for invoice: ${invoiceId}`);
 
     const db = admin.firestore();
 
@@ -81,7 +81,7 @@ exports.getPaymentData = functions.https.onRequest(async (req, res) => {
     const paymentDoc = await db.collection("payments").doc(invoiceId).get();
 
     if (!paymentDoc.exists) {
-      console.log(`❌ Payment document not found for invoice: ${invoiceId}`);
+      console.log(`Payment document not found for invoice: ${invoiceId}`);
       return res.status(404).json({
         success: false,
         error: "Payment data not found",
@@ -89,7 +89,7 @@ exports.getPaymentData = functions.https.onRequest(async (req, res) => {
     }
 
     const paymentData = paymentDoc.data();
-    console.log(`✅ Payment data found for invoice: ${invoiceId}`);
+    console.log(`Payment data found for invoice: ${invoiceId}`);
 
     // Extract and format the booking data
     const bookingData = {
@@ -112,7 +112,7 @@ exports.getPaymentData = functions.https.onRequest(async (req, res) => {
       bookingData,
     });
   } catch (error) {
-    console.error("❌ Error fetching payment data:", error);
+    console.error("Error fetching payment data:", error);
     return res.status(500).json({
       success: false,
       error: error.message || "Internal server error",

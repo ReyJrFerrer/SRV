@@ -26,7 +26,7 @@ try {
 if (admin.apps.length === 0) {
   // Check if we're in the emulator environment
   if (process.env.FUNCTIONS_EMULATOR) {
-    console.log("🔥 Running in emulator mode");
+    console.log("Running in emulator mode");
     admin.initializeApp({
       projectId: "devsrv-rey",
     });
@@ -49,7 +49,7 @@ if (admin.apps.length === 0) {
  */
 async function getPaymentDataByInvoiceId(invoiceId) {
   try {
-    console.log(`🔍 Fetching payment data for invoice: ${invoiceId}`);
+    console.log(`Fetching payment data for invoice: ${invoiceId}`);
 
     const db = admin.firestore();
 
@@ -57,19 +57,19 @@ async function getPaymentDataByInvoiceId(invoiceId) {
     const paymentDoc = await db.collection("payments").doc(invoiceId).get();
 
     if (!paymentDoc.exists) {
-      console.log(`❌ Payment document not found for invoice: ${invoiceId}`);
+      console.log(`Payment document not found for invoice: ${invoiceId}`);
       return null;
     }
 
     const paymentData = paymentDoc.data();
-    console.log(`✅ Payment data found for invoice: ${invoiceId}`);
+    console.log(`Payment data found for invoice: ${invoiceId}`);
 
     return {
       id: paymentDoc.id,
       ...paymentData,
     };
   } catch (error) {
-    console.error("❌ Error fetching payment data:", error);
+    console.error("Error fetching payment data:", error);
     return null;
   }
 }
@@ -81,7 +81,7 @@ async function getPaymentDataByInvoiceId(invoiceId) {
  */
 async function checkInvoiceStatus(invoiceId) {
   try {
-    console.log(`🔍 Checking status for invoice: ${invoiceId}`);
+    console.log(`Checking status for invoice: ${invoiceId}`);
 
     // Check if Xendit client is initialized
     if (!xendit) {
@@ -140,7 +140,7 @@ async function checkInvoiceStatus(invoiceId) {
         invoiceId: invoiceId,
       });
 
-      console.log(`✅ Invoice status fetched: ${invoice.status}`);
+      console.log(`Invoice status fetched: ${invoice.status}`);
     } catch (xenditError) {
       console.error("Error fetching invoice from Xendit:", xenditError);
 
@@ -179,7 +179,7 @@ async function checkInvoiceStatus(invoiceId) {
       source: "xendit_api",
     };
   } catch (error) {
-    console.error("❌ Error checking invoice status:", error);
+    console.error("Error checking invoice status:", error);
     return {
       success: false,
       error: error.message || "Internal server error",
@@ -235,32 +235,32 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
     const requestData = req.body.data || req.body;
     const {invoiceId, reason = "Booking completed"} = requestData;
 
-    console.log("📦 Request received:", {
+    console.log("Request received:", {
       invoiceId,
       reason,
     });
 
     if (!invoiceId) {
-      console.error("❌ Missing invoiceId in request");
+      console.error("Missing invoiceId in request");
       return res.status(400).json({
         success: false,
         error: "Missing required field: invoiceId",
       });
     }
 
-    console.log(`🔄 Processing payment release for invoice: ${invoiceId}`);
+    console.log(`Processing payment release for invoice: ${invoiceId}`);
 
     // Get payment data directly using invoiceId
     const paymentData = await getPaymentDataByInvoiceId(invoiceId);
     if (!paymentData) {
-      console.log(`❌ No payment data found for invoice: ${invoiceId}`);
+      console.log(`No payment data found for invoice: ${invoiceId}`);
       return res.status(404).json({
         success: false,
         error: "Payment data not found for this invoice",
       });
     }
 
-    console.log("💳 Payment data found:", {
+    console.log("Payment data found:", {
       invoiceId: paymentData.id,
       bookingId: paymentData.bookingId,
       amount: paymentData.amount,
@@ -274,7 +274,7 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
       !invoiceStatus.success ||
       (invoiceStatus.status !== "PAID" && invoiceStatus.status !== "SETTLED")
     ) {
-      console.error("❌ Payment not eligible for release:", {
+      console.error("Payment not eligible for release:", {
         success: invoiceStatus.success,
         status: invoiceStatus.status,
       });
@@ -285,13 +285,13 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
       });
     }
 
-    console.log("✅ Payment status verified:", invoiceStatus.status);
+    console.log("Payment status verified:", invoiceStatus.status);
 
     // Process payment release
     const releaseResult = await processPaymentRelease(paymentData, reason);
 
     if (releaseResult.success) {
-      console.log("✅ Payment release successful");
+      console.log("Payment release successful");
 
       res.status(200).json({
         success: true,
@@ -304,7 +304,7 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
         payoutId: releaseResult.payoutId,
       });
     } else {
-      console.error("❌ Payment release failed:", releaseResult.error);
+      console.error("Payment release failed:", releaseResult.error);
       res.status(500).json({
         success: false,
         error: "Failed to release payment",
@@ -312,7 +312,7 @@ exports.releaseHeldPayment = functions.https.onRequest(async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("❌ Error in releaseHeldPayment function:", error);
+    console.error("Error in releaseHeldPayment function:", error);
     res.status(500).json({
       success: false,
       error: "Internal Server Error",

@@ -17,7 +17,7 @@ function initializeFirebaseAdmin() {
 
   // Check if running in emulator environment
   if (process.env.FUNCTIONS_EMULATOR === "true") {
-    console.log("🔥 Initializing for emulator environment");
+    console.log("Initializing for emulator environment");
 
     // Initialize with emulator settings
     admin.initializeApp({
@@ -31,9 +31,9 @@ function initializeFirebaseAdmin() {
       ssl: false,
     });
 
-    console.log("✅ Firebase Admin initialized for emulator environment");
+    console.log("Firebase Admin initialized for emulator environment");
   } else {
-    console.log("☁️ Initializing for production environment");
+    console.log("Initializing for production environment");
 
     // Initialize for production with explicit project configuration
     const projectId = process.env.GCLOUD_PROJECT || "devsrv-rey";
@@ -48,9 +48,9 @@ function initializeFirebaseAdmin() {
     const db = admin.firestore();
 
     // Verify the configuration
-    console.log(`✅ Firebase Admin initialized for production`);
-    console.log(`📋 Project ID: ${projectId}`);
-    console.log(`🔗 Firestore App: ${db.app.name}`);
+    console.log(`Firebase Admin initialized for production`);
+    console.log(`Project ID: ${projectId}`);
+    console.log(`Firestore App: ${db.app.name}`);
   }
 
   isInitialized = true;

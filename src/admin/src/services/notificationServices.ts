@@ -2,8 +2,127 @@ import { notificationCanisterService } from "../../../frontend/src/services/noti
 import { callFirebaseFunction } from "./coreUtils";
 
 /**
+ * Helper function to format status text (e.g., "in_progress" -> "In Progress")
+ */
+const formatStatusText = (status: string): string => {
+  return status
+    .replace("_", " ")
+    .replace(/\b\w/g, (l) => l.toUpperCase());
+};
+
+/**
+ * Interface for report data extracted from ticket
+ */
+interface TicketReportData {
+  userType: "client" | "provider";
+  relatedProviderId?: string;
+  relatedClientId?: string;
+}
+
+/**
+ * Helper function to fetch and parse report data for a ticket
+ * Returns user type and related party IDs if ticket is related to a booking
+ */
+const getTicketReportData = async (
+  ticketId: string,
+): Promise<TicketReportData> => {
+  const defaultData: TicketReportData = {
+    userType: "client",
+  };
+
+  try {
+    const result = await callFirebaseFunction("getReportById", {
+      data: { reportId: ticketId },
+    });
+
+    if (!result) {
+      return defaultData;
+    }
+
+    const report = result as any;
+    try {
+      const parsedData = JSON.parse(report.description || "{}");
+
+      const data: TicketReportData = {
+        userType: "client",
+      };
+
+      // Determine user type based on source
+      if (
+        parsedData.source === "provider_report" ||
+        parsedData.source === "provider_cancellation"
+      ) {
+        data.userType = "provider";
+      } else if (
+        parsedData.source === "client_report" ||
+        parsedData.source === "client_cancellation"
+      ) {
+        data.userType = "client";
+      }
+
+      // If ticket is related to a booking, get both users
+      if (parsedData.bookingId) {
+        data.relatedProviderId = parsedData.providerId;
+        data.relatedClientId = parsedData.clientId;
+      }
+
+      return data;
+    } catch (e) {
+      console.warn("Could not parse report description:", e);
+      return defaultData;
+    }
+  } catch (e) {
+    console.warn("Could not fetch report data for notification:", e);
+    return defaultData;
+  }
+};
+
+/**
+ * Helper function to send notification to the other party in a booking-related ticket
+ */
+const sendNotificationToOtherParty = async (
+  userId: string,
+  relatedProviderId: string | undefined,
+  relatedClientId: string | undefined,
+  title: string,
+  message: string,
+  metadata: Record<string, any>,
+  functionName: string,
+): Promise<void> => {
+  if (!relatedProviderId || !relatedClientId) {
+    return;
+  }
+
+  const otherPartyId =
+    userId === relatedClientId ? relatedProviderId : relatedClientId;
+  const otherPartyType = userId === relatedClientId ? "provider" : "client";
+
+  if (!otherPartyId || otherPartyId === userId) {
+    return;
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  try {
+    await notificationCanisterService.createNotification(
+      otherPartyId,
+      otherPartyType,
+      "generic",
+      title,
+      message,
+      undefined,
+      metadata,
+    );
+  } catch (otherPartyError) {
+    console.error(
+      `[${functionName}] Failed to notify related party ${otherPartyId}:`,
+      otherPartyError,
+    );
+  }
+};
+
+/**
  * Helper function to send ticket status update notification
- * Sends to both client and provider if ticket is related to a booking
  */
 export const sendTicketStatusNotification = async (
   userId: string,
@@ -13,61 +132,22 @@ export const sendTicketStatusNotification = async (
   ticketTitle: string,
 ) => {
   try {
-    const statusText = newStatus
-      .replace("_", " ")
-      .replace(/\b\w/g, (l) => l.toUpperCase());
-
-    const oldStatusText = oldStatus
-      .replace("_", " ")
-      .replace(/\b\w/g, (l) => l.toUpperCase());
+    const statusText = formatStatusText(newStatus);
+    const oldStatusText = formatStatusText(oldStatus);
 
     const title = "Ticket Status Updated";
     const message = `Your ticket "${ticketTitle}" status has been updated from ${oldStatusText} to ${statusText}.`;
 
     // Fetch the report to check if it's related to a booking and determine user type
-    let relatedProviderId: string | undefined;
-    let relatedClientId: string | undefined;
-    let userType: "client" | "provider" = "client";
+    const reportData = await getTicketReportData(ticketId);
+    const { userType, relatedProviderId, relatedClientId } = reportData;
 
-    try {
-      // Use getReportById instead of getAllReports for better performance
-      // The Firebase function expects: data.data.data || data, so we wrap in data
-      const result = await callFirebaseFunction("getReportById", {
-        data: { reportId: ticketId },
-      });
-      if (result) {
-        const report = result as any;
-        // Parse the description to check for booking-related data and source
-        try {
-          const parsedData = JSON.parse(report.description || "{}");
-
-          // Determine user type based on source (always check this)
-          if (
-            parsedData.source === "provider_report" ||
-            parsedData.source === "provider_cancellation"
-          ) {
-            userType = "provider";
-          } else if (
-            parsedData.source === "client_report" ||
-            parsedData.source === "client_cancellation"
-          ) {
-            userType = "client";
-          }
-
-          // If ticket is related to a booking, get the related parties
-          if (parsedData.bookingId) {
-            relatedProviderId = parsedData.providerId;
-            relatedClientId = parsedData.clientId;
-          }
-        } catch (e) {
-          // Description might not be JSON, default to client
-          console.warn("Could not parse report description:", e);
-        }
-      }
-    } catch (e) {
-      console.warn("Could not fetch report data for notification:", e);
-      // Continue with default userType if we can't fetch the report
-    }
+    const metadata = {
+      ticketId,
+      oldStatus,
+      newStatus,
+      ticketTitle,
+    };
 
     // Send notification to the ticket submitter
     await notificationCanisterService.createNotification(
@@ -76,55 +156,25 @@ export const sendTicketStatusNotification = async (
       "generic",
       title,
       message,
-      undefined, // No related entity ID to prevent navigation
-      {
-        ticketId,
-        oldStatus,
-        newStatus,
-        ticketTitle,
-      },
+      undefined,
+      metadata,
     );
 
-    // If ticket is related to a booking, send notification to the other party
-    if (relatedProviderId && relatedClientId) {
-      const otherPartyId =
-        userId === relatedClientId ? relatedProviderId : relatedClientId;
-      const otherPartyType = userId === relatedClientId ? "provider" : "client";
-
-      if (otherPartyId && otherPartyId !== userId) {
-        // Add a small delay to avoid rate limiting when sending multiple notifications
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        try {
-          await notificationCanisterService.createNotification(
-            otherPartyId,
-            otherPartyType,
-            "generic",
-            title,
-            message,
-            undefined,
-            {
-              ticketId,
-              oldStatus,
-              newStatus,
-              ticketTitle,
-            },
-          );
-        } catch (otherPartyError) {
-          console.error(
-            `[sendTicketStatusNotification] Failed to notify related party ${otherPartyId}:`,
-            otherPartyError,
-          );
-          // Don't throw - the main notification was sent successfully
-        }
-      }
-    }
+    // If ticket is related to a booking, send notification to other
+    await sendNotificationToOtherParty(
+      userId,
+      relatedProviderId,
+      relatedClientId,
+      title,
+      message,
+      metadata,
+      "sendTicketStatusNotification",
+    );
   } catch (error) {
     console.error(
       "[sendTicketStatusNotification] Error sending notification:",
       error,
     );
-    // Don't throw error to avoid breaking the main flow
   }
 };
 
@@ -146,49 +196,15 @@ export const sendTicketCommentNotification = async (
       : `A new comment has been added to your ticket "${ticketTitle}": "${commentText.substring(0, 100)}${commentText.length > 100 ? "..." : ""}"`;
 
     // Fetch the report to check if it's related to a booking and determine user type
-    let relatedProviderId: string | undefined;
-    let relatedClientId: string | undefined;
-    let userType: "client" | "provider" = "client";
+    const reportData = await getTicketReportData(ticketId);
+    const { userType, relatedProviderId, relatedClientId } = reportData;
 
-    try {
-      // Use getReportById instead of getAllReports for better performance
-      // The Firebase function expects: data.data.data || data, so we wrap in data
-      const result = await callFirebaseFunction("getReportById", {
-        data: { reportId: ticketId },
-      });
-      if (result) {
-        const report = result as any;
-        // Parse the description to check for booking-related data and source
-        try {
-          const parsedData = JSON.parse(report.description || "{}");
-
-          // Determine user type based on source (always check this)
-          if (
-            parsedData.source === "provider_report" ||
-            parsedData.source === "provider_cancellation"
-          ) {
-            userType = "provider";
-          } else if (
-            parsedData.source === "client_report" ||
-            parsedData.source === "client_cancellation"
-          ) {
-            userType = "client";
-          }
-
-          // If ticket is related to a booking, get the related parties
-          if (parsedData.bookingId) {
-            relatedProviderId = parsedData.providerId;
-            relatedClientId = parsedData.clientId;
-          }
-        } catch (e) {
-          // Description might not be JSON, default to client
-          console.warn("Could not parse report description:", e);
-        }
-      }
-    } catch (e) {
-      console.warn("Could not fetch report data for notification:", e);
-      // Continue with default userType if we can't fetch the report
-    }
+    const metadata = {
+      ticketId,
+      ticketTitle,
+      commentText,
+      isInternal,
+    };
 
     // Send notification to the ticket submitter
     await notificationCanisterService.createNotification(
@@ -198,59 +214,29 @@ export const sendTicketCommentNotification = async (
       title,
       message,
       undefined, // No related entity ID to prevent navigation
-      {
-        ticketId,
-        ticketTitle,
-        commentText,
-        isInternal,
-      },
+      metadata,
     );
 
-    // If ticket is related to a booking, send notification to the other party
-    if (relatedProviderId && relatedClientId) {
-      const otherPartyId =
-        userId === relatedClientId ? relatedProviderId : relatedClientId;
-      const otherPartyType = userId === relatedClientId ? "provider" : "client";
-
-      if (otherPartyId && otherPartyId !== userId) {
-        // Add a small delay to avoid rate limiting when sending multiple notifications
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        try {
-          await notificationCanisterService.createNotification(
-            otherPartyId,
-            otherPartyType,
-            "generic",
-            title,
-            message,
-            undefined,
-            {
-              ticketId,
-              ticketTitle,
-              commentText,
-              isInternal,
-            },
-          );
-        } catch (otherPartyError) {
-          console.error(
-            `[sendTicketCommentNotification] Failed to notify related party ${otherPartyId}:`,
-            otherPartyError,
-          );
-          // Don't throw - the main notification was sent successfully
-        }
-      }
-    }
+    // If ticket is related to a booking, send notification to other
+    await sendNotificationToOtherParty(
+      userId,
+      relatedProviderId,
+      relatedClientId,
+      title,
+      message,
+      metadata,
+      "sendTicketCommentNotification",
+    );
   } catch (error) {
     console.error(
       "[sendTicketCommentNotification] Error sending notification:",
       error,
     );
-    // Don't throw error to avoid breaking the main flow
   }
 };
 
 /**
- * Send ticket comment notification (exported function)
+ * Send ticket comment notification
  */
 export const sendTicketCommentNotificationToUser = async (
   userId: string,

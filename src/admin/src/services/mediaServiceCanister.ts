@@ -2,7 +2,6 @@
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseFunctions } from "./firebaseApp";
 
-// Get Firebase Functions instance from singleton
 const functions = getFirebaseFunctions();
 
 // Frontend-adapted types
@@ -123,9 +122,9 @@ export const getFileData = async (mediaId: string): Promise<Uint8Array> => {
   }
 };
 
+    // Handle media URLs
 export const extractMediaIdFromUrl = (url: string): string | null => {
   try {
-    // Handle URLs in format: /media/{mediaId} or media://{mediaId}
     if (url.startsWith("media://")) {
       return url.replace("media://", "").split("/").pop() || null;
     }
@@ -189,17 +188,14 @@ export const getImageDataUrl = async (
       return opts.fallbackImageUrl;
     }
 
-    // Get file data from Firebase
+    // Get file data and media item
     const fileData = await getFileData(mediaId);
-
-    // Get media item for content type
     const mediaItem = await getMediaItem(mediaId);
 
     if (!mediaItem) {
       return opts.fallbackImageUrl;
     }
 
-    // Convert Uint8Array to data URL
     const contentType = mediaItem.contentType;
     const dataUrl = await convertBlobToDataUrl(fileData, contentType);
 

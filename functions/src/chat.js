@@ -296,7 +296,7 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
 
         await db.collection("notifications").doc(notificationId).set(notificationData);
 
-        console.log(`✅ Chat notification created in Firestore:`, {
+        console.log(`Chat notification created in Firestore:`, {
           notificationId,
           userId: receiverId,
           userType: receiverUserType,

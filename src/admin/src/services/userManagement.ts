@@ -6,53 +6,6 @@ import reputationCanisterService from "../../../frontend/src/services/reputation
 import { mapTrustLevel } from "../utils/reputationUtils";
 import { extractFulfilledArrayResults } from "../utils/promiseUtils";
 
-// User Role Management
-
-/**
- * Assign admin role to a user
- */
-export const assignRole = async (
-  userId: string,
-  scope?: string,
-): Promise<string> => {
-  try {
-    requireAuth();
-
-    const result = await callFirebaseFunction("assignRole", {
-      userId,
-      role: "ADMIN",
-      scope,
-    });
-    return result.message || "Role assigned successfully";
-  } catch (error) {
-    if (error instanceof AdminServiceError) throw error;
-    throw new AdminServiceError({
-      message: `Failed to assign admin role: ${error}`,
-      code: "ASSIGN_ROLE_ERROR",
-      details: error,
-    });
-  }
-};
-
-/**
- * Remove user role
- */
-export const removeRole = async (userId: string): Promise<string> => {
-  try {
-    requireAuth();
-
-    const result = await callFirebaseFunction("removeRole", { userId });
-    return result.message || "Role removed successfully";
-  } catch (error) {
-    if (error instanceof AdminServiceError) throw error;
-    throw new AdminServiceError({
-      message: `Failed to remove user role: ${error}`,
-      code: "REMOVE_ROLE_ERROR",
-      details: error,
-    } as AdminServiceError);
-  }
-};
-
 /**
  * Get user role assignment
  */
@@ -108,7 +61,6 @@ export const listUserRoles = async (): Promise<
     if (!result || !Array.isArray(result)) return [];
 
     return result.map((assignment: any) => ({
-      // Handle both userId field and id field (id is the document ID)
       userId: assignment.userId || assignment.id,
       role: "ADMIN" as const,
       scope: assignment.scope,
@@ -141,8 +93,6 @@ export const hasAdminRole = async (userId: string): Promise<boolean> => {
     return false;
   }
 };
-
-// User Management Functions
 
 /**
  * Lock or unlock a user account with optional time-based suspension
@@ -304,8 +254,6 @@ export const getUserReviews = async (
 }> => {
   try {
     requireAuth();
-
-    // Try to get reviews as both client and provider
     const [clientReviews, providerReviews] = await Promise.allSettled([
       callFirebaseFunction("getUserReviews", { userId }),
       callFirebaseFunction("getProviderReviews", { providerId: userId }),
@@ -357,7 +305,6 @@ export const getUserReputation = async (
   completedBookings: number;
 }> => {
   try {
-    // Call IC canister directly using frontend service (same as clients/providers)
     const reputationData =
       await reputationCanisterService.getReputationScore(userId);
 
@@ -368,22 +315,16 @@ export const getUserReputation = async (
         completedBookings: Number(reputationData.completedBookings || 0),
       };
     } else {
-      // Fallback to default values if data is invalid
-      console.warn(
-        `Invalid reputation data for user ${userId}:`,
-        reputationData,
-      );
       return {
-        reputationScore: 50, // Default score
+        reputationScore: 50,
         trustLevel: "New",
         completedBookings: 0,
       };
     }
   } catch (error) {
     console.error("Error fetching user reputation", error);
-    // Return default reputation on error
     return {
-      reputationScore: 50, // Default score
+      reputationScore: 50,
       trustLevel: "New",
       completedBookings: 0,
     };
