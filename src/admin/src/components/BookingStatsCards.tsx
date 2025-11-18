@@ -1,4 +1,10 @@
 import React from "react";
+import {
+  CheckBadgeIcon,
+  ClipboardDocumentListIcon,
+  ClockIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 
 interface Booking {
   status: any;
@@ -54,19 +60,7 @@ export const BookingStatsCards: React.FC<BookingStatsCardsProps> = ({
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg
-                className="h-6 w-6 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
+              <ClipboardDocumentListIcon className="h-6 w-6 text-gray-400" />
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
@@ -86,19 +80,7 @@ export const BookingStatsCards: React.FC<BookingStatsCardsProps> = ({
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg
-                className="h-6 w-6 text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <CheckBadgeIcon className="h-6 w-6 text-green-400" />
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
@@ -118,19 +100,7 @@ export const BookingStatsCards: React.FC<BookingStatsCardsProps> = ({
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg
-                className="h-6 w-6 text-yellow-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <ClockIcon className="h-6 w-6 text-yellow-400" />
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>
@@ -150,19 +120,7 @@ export const BookingStatsCards: React.FC<BookingStatsCardsProps> = ({
         <div className="p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg
-                className="h-6 w-6 text-red-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <XCircleIcon className="h-6 w-6 text-red-400" />
             </div>
             <div className="ml-5 w-0 flex-1">
               <dl>

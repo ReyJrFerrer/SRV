@@ -9,8 +9,6 @@ import * as chatServices from "./chatServices";
 // Main service object that combines all services
 export const adminServiceCanister = {
   // User Role Management
-  assignRole: userManagement.assignRole,
-  removeRole: userManagement.removeRole,
   getUserRole: userManagement.getUserRole,
   checkAdminRole: userManagement.checkAdminRole,
   listUserRoles: userManagement.listUserRoles,
@@ -59,10 +57,8 @@ export const adminServiceCanister = {
   getConversationMessages: chatServices.getConversationMessages,
 };
 
-// Export individual functions for direct use (maintaining backward compatibility)
+// Export individual functions for direct use
 export const {
-  assignRole,
-  removeRole,
   getUserRole,
   checkAdminRole,
   listUserRoles,

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { TrashIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { ReviewItem } from "../components/ReviewItem";
 import { ReviewStats } from "../components/ReviewStats";
@@ -221,19 +222,7 @@ const UserReviewsPage: React.FC = () => {
             onClick={handleBackClick}
             className="rounded-full p-2 hover:bg-gray-100"
           >
-            <svg
-              className="h-5 w-5 text-gray-700"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
           <h1 className="ml-3 text-lg font-semibold text-slate-800">
             My Reviews

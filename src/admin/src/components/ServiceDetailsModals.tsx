@@ -29,7 +29,7 @@ export const ServiceDetailsModals: React.FC<ServiceDetailsModalsProps> = ({
     <>
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
             <h3 className="mb-2 text-lg font-bold text-red-700">
               Delete Service?
@@ -66,7 +66,7 @@ export const ServiceDetailsModals: React.FC<ServiceDetailsModalsProps> = ({
         className="fixed inset-0 z-[100] flex items-center justify-center"
       >
         <div
-          className="fixed inset-0 bg-black/60"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
           aria-hidden="true"
           onClick={onPreviewClose}
         />

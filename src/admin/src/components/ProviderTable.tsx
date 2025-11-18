@@ -106,7 +106,6 @@ export const ProviderTable: React.FC<ProviderTableProps> = ({
                   key={provider.id}
                   className="cursor-pointer hover:bg-gray-50 sm:cursor-default sm:hover:bg-transparent"
                   onClick={() => {
-                    // On mobile, tapping the row opens details; on desktop, do nothing
                     if (isMobileViewport) onViewProvider(provider);
                   }}
                   role={isMobileViewport ? "button" : undefined}

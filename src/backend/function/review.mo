@@ -198,7 +198,7 @@ persistent actor ReviewCanister {
                                         switch (reputationCanisterId) {
                                             case (?reputationId) {
                                                 let reputationCanister = actor(Principal.toText(reputationId)) : actor {
-                                                    processReviewWithLLM : (Review) -> async Result<Review>;  // ✅ Use LLM-enhanced method
+                                                    processReviewWithLLM : (Review) -> async Result<Review>;  // Use LLM-enhanced method
                                                 };
                                                 switch (await reputationCanister.processReviewWithLLM(newReview)) {
                                                     case (#ok(_)) {
@@ -353,7 +353,7 @@ persistent actor ReviewCanister {
                 switch (reputationCanisterId) {
                     case (?reputationId) {
                         let reputationCanister = actor(Principal.toText(reputationId)) : actor {
-                            processReviewWithLLM : (Review) -> async Result<Review>;  // ✅ Use LLM-enhanced method
+                            processReviewWithLLM : (Review) -> async Result<Review>;  // Use LLM-enhanced method
                         };
                         switch (await reputationCanister.processReviewWithLLM(updatedReview)) {
                             case (#ok(_)) {

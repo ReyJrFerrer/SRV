@@ -35,6 +35,7 @@ const BookingCacheContext = createContext<BookingCacheContextValue | undefined>(
   undefined,
 );
 
+// Provides cached booking data for both provider and client views
 export const BookingCacheProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -131,7 +132,7 @@ export const BookingCacheProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [clientBookings]);
 
-  // Provider booking fetcher
+  // Fetches provider booking: checks cache, dedupes requests, then fetches from backend
   const getProviderBooking = useCallback(
     async (bookingId: string): Promise<ProviderEnhancedBooking | null> => {
       // 1. Check cache first (use ref to avoid dependency)
@@ -179,7 +180,7 @@ export const BookingCacheProvider: React.FC<{ children: React.ReactNode }> = ({
     [getProviderBookingById], // Removed providerBookingCache from deps
   );
 
-  // Client booking fetcher
+  // Fetches client booking: checks cache, dedupes requests, then fetches from backend
   const getClientBooking = useCallback(
     async (bookingId: string): Promise<EnhancedBooking | null> => {
       // 1. Check cache first (use ref to avoid dependency)
@@ -242,7 +243,7 @@ export const BookingCacheProvider: React.FC<{ children: React.ReactNode }> = ({
     [clientLoadingIds],
   );
 
-  // Cache management
+  // Removes a booking from both provider and client caches
   const invalidateBooking = useCallback((bookingId: string) => {
     setProviderBookingCache((prev) => {
       const newCache = new Map(prev);
@@ -256,6 +257,7 @@ export const BookingCacheProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
+  // Clears all cached bookings
   const clearCache = useCallback(() => {
     setProviderBookingCache(new Map());
     setClientBookingCache(new Map());

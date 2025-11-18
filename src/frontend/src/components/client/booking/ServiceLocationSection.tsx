@@ -7,6 +7,7 @@ import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import phLocations from "../../../data/ph_locations.json";
 import EnableLocationButton from "../../common/locationAccessPermission/EnableLocationButton";
 import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
+import FullScreenLocationMapModal from "../../common/GMapFunctions/FullScreenLocationMapModal";
 
 export type ServiceLocationProps = {
   highlight?: boolean;
@@ -136,6 +137,15 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
     }
   };
   const cleanedDetectedAddress = stripPlusCodes(detectedAddress || "");
+  // Close modal on Escape key when open
+  useEffect(() => {
+    if (!showFullScreenMap) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") setShowFullScreenMap(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showFullScreenMap]);
   return (
     <div
       className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -303,6 +313,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                       }
                     : null
               }
+              onOpenFullScreen={() => setShowFullScreenMap(true)}
               onChange={(loc: any) => {
                 // Clean plus-code tokens from the address before passing down
                 const rawPrecise = loc.formatted_address || loc.address || "";
@@ -327,15 +338,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               label="Pin / Search Location"
             />
           </Suspense>
-          <div className="mt-3 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowFullScreenMap(true)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-            >
-              Full Screen Map
-            </button>
-          </div>
+          {/* Full screen control moved inside the map picker */}
         </div>
       )}
 
@@ -676,66 +679,40 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       )}
 
       {showFullScreenMap && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="relative h-[88vh] w-full max-w-5xl overflow-hidden rounded-xl bg-white shadow-2xl">
-            <button
-              type="button"
-              aria-label="Close full screen map"
-              onClick={() => setShowFullScreenMap(false)}
-              className="absolute right-3 top-3 z-10 rounded-full border border-gray-300 bg-gray-200 px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-300"
-            >
-              ×
-            </button>
-            <div className="h-full w-full p-4">
-              <Suspense
-                fallback={
-                  <div className="flex h-full items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-500">
-                    Loading map…
-                  </div>
-                }
-              >
-                <LocationMapPicker
-                  mapHeight={window.innerHeight > 900 ? 720 : 600}
-                  value={
-                    mapLocation
-                      ? { ...mapLocation, address: mapLocation.address ?? "" }
-                      : geoLocation
-                        ? {
-                            lat: geoLocation.latitude,
-                            lng: geoLocation.longitude,
-                            address: cleanedDetectedAddress,
-                          }
-                        : null
+        <FullScreenLocationMapModal
+          open={showFullScreenMap}
+          onClose={() => setShowFullScreenMap(false)}
+          value={
+            mapLocation
+              ? { ...mapLocation, address: mapLocation.address ?? "" }
+              : geoLocation
+                ? {
+                    lat: geoLocation.latitude,
+                    lng: geoLocation.longitude,
+                    address: cleanedDetectedAddress,
                   }
-                  onChange={(loc: any) => {
-                    const rawPrecise =
-                      loc.formatted_address || loc.address || "";
-                    const cleanedPrecise = stripPlusCodes(rawPrecise);
-                    const placeName = loc.rawName;
-                    let displayAddress = cleanedPrecise;
-                    if (placeName && !cleanedPrecise.startsWith(placeName)) {
-                      displayAddress = `${placeName}, ${cleanedPrecise}`;
-                    }
-                    setMapLocation({
-                      ...loc,
-                      address: cleanedPrecise,
-                      formatted_address: cleanedPrecise,
-                    });
-                    setMapPreciseAddress(cleanedPrecise);
-                    setMapDisplayAddress(displayAddress);
-                  }}
-                  persistKey="booking:lastLocation"
-                  highlight={highlight}
-                  label="Full Screen Location Picker"
-                />
-              </Suspense>
-            </div>
-          </div>
-        </div>
+                : null
+          }
+          onChange={(loc: any) => {
+            const rawPrecise = loc.formatted_address || loc.address || "";
+            const cleanedPrecise = stripPlusCodes(rawPrecise);
+            const placeName = loc.rawName;
+            let displayAddress = cleanedPrecise;
+            if (placeName && !cleanedPrecise.startsWith(placeName)) {
+              displayAddress = `${placeName}, ${cleanedPrecise}`;
+            }
+            setMapLocation({
+              ...loc,
+              address: cleanedPrecise,
+              formatted_address: cleanedPrecise,
+            });
+            setMapPreciseAddress(cleanedPrecise);
+            setMapDisplayAddress(displayAddress);
+          }}
+          persistKey="booking:lastLocation"
+          highlight={highlight}
+          label="Full Screen Location Picker"
+        />
       )}
     </div>
   );

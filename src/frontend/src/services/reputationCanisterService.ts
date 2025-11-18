@@ -79,7 +79,7 @@ class ReputationCanisterService {
         error?.message?.includes("Invalid signature") ||
         error?.message?.includes("signature could not be verified")
       ) {
-        console.error("❌ IC delegation expired, please re-authenticate");
+        console.error("IC delegation expired, please re-authenticate");
         throw new Error(
           "Session expired: Please refresh the page and log in again",
         );
@@ -132,11 +132,11 @@ class ReputationCanisterService {
         console.log("From reputation score", result);
         return result.ok;
       } else {
-        console.error("❌ Failed to initialize reputation:", result.err);
+        console.error("Failed to initialize reputation:", result.err);
         throw new Error(`Failed to initialize reputation: ${result.err}`);
       }
     } catch (error) {
-      console.error("❌ Error initializing reputation:", error);
+      console.error("Error initializing reputation:", error);
       // throw new Error("Network error: Could not initialize reputation");
     }
   }

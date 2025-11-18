@@ -1,8 +1,6 @@
-// Service Management Firebase Interface for Admin
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 
-// Get Firebase instances
 const auth = getFirebaseAuth();
 const functions = getFirebaseFunctions();
 

@@ -41,8 +41,7 @@ export const getAllUsers = async (): Promise<any[]> => {
   try {
     requireAuth();
 
-    // Call Firebase function directly since callFirebaseFunction expects { success: true, data: [...] }
-    // but getAllUsers returns { success: true, users: [...] }
+    // Call Firebase function directly
     const callable = httpsCallable(functions, "getAllUsers");
     const result = await callable({ data: {} });
 

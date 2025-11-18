@@ -1,5 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import {
+  BriefcaseIcon,
+  ComputerDesktopIcon,
+  HeartIcon,
+  InboxIcon,
+  SparklesIcon,
+  SunIcon,
+  WrenchScrewdriverIcon,
+} from "@heroicons/react/24/outline";
+import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
+import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
 
 export interface ServiceData {
   id: string;
@@ -68,104 +79,38 @@ const getTypeColor = (type: string) => {
 };
 
 const getCategoryIcon = (category: string) => {
-  switch (category.toLowerCase()) {
-    case "cleaning":
-      return (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
-        </svg>
-      );
-    case "landscaping":
-      return (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"
-          />
-        </svg>
-      );
-    case "home repair":
-      return (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-          />
-        </svg>
-      );
-    case "pet care":
-      return (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-          />
-        </svg>
-      );
-    case "technology":
-      return (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-          />
-        </svg>
-      );
-    default:
-      return (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6"
-          />
-        </svg>
-      );
+  const normalized = category.toLowerCase();
+  const iconClass = "h-4 w-4";
+
+  if (normalized.includes("clean")) {
+    return <SparklesIcon className={iconClass} />;
   }
+
+  if (normalized.includes("landscape") || normalized.includes("garden")) {
+    return <SunIcon className={iconClass} />;
+  }
+
+  if (
+    normalized.includes("home repair") ||
+    normalized.includes("repair") ||
+    normalized.includes("maintenance")
+  ) {
+    return <WrenchScrewdriverIcon className={iconClass} />;
+  }
+
+  if (normalized.includes("pet")) {
+    return <HeartIcon className={iconClass} />;
+  }
+
+  if (
+    normalized.includes("tech") ||
+    normalized.includes("technology") ||
+    normalized.includes("computer")
+  ) {
+    return <ComputerDesktopIcon className={iconClass} />;
+  }
+
+  return <BriefcaseIcon className={iconClass} />;
 };
 
 const formatCurrency = (amount: number, currency: string) => {
@@ -294,16 +239,19 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
                     <div className="flex items-center space-x-1">
                       <span className="font-medium">Rating:</span>
                       <div className="flex items-center">
-                        {Array.from({ length: 5 }, (_, i) => (
-                          <svg
-                            key={i}
-                            className={`h-4 w-4 ${i < Math.floor(service.rating!) ? "text-yellow-400" : "text-gray-300"}`}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
+                        {Array.from({ length: 5 }, (_, i) =>
+                          i < Math.floor(service.rating!) ? (
+                            <StarIconSolid
+                              key={`star-solid-${service.id}-${i}`}
+                              className="h-4 w-4 text-yellow-400"
+                            />
+                          ) : (
+                            <StarIconOutline
+                              key={`star-outline-${service.id}-${i}`}
+                              className="h-4 w-4 text-gray-300"
+                            />
+                          ),
+                        )}
                         <span className="ml-1 text-gray-600">
                           {service.rating} ({service.reviewCount} reviews)
                         </span>
@@ -331,19 +279,7 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
       {/* Empty State */}
       {filteredServices.length === 0 && (
         <div className="py-12 text-center">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6"
-            />
-          </svg>
+          <InboxIcon className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">
             No services found
           </h3>

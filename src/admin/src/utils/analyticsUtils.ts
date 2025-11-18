@@ -142,6 +142,10 @@ export interface ServiceProviderPerformanceData {
   completedBookings: number;
   totalBookings: number;
   walletBalance: number;
+  profilePicture?: {
+    imageUrl: string;
+    thumbnailUrl: string;
+  };
 }
 
 const getProvidersFromUsers = (users: any[]): any[] => {

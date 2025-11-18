@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const {isPhoneTaken} = require("./account");
+const bcrypt = require("bcryptjs");
 
 const db = admin.firestore();
 
@@ -322,73 +323,6 @@ exports.getRule = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ===== ROLE MANAGEMENT =====
-
-/**
- * Assign role to user
- */
-exports.assignRole = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {userId, role = "ADMIN", scope} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can assign roles",
-    );
-  }
-
-  try {
-    const now = new Date().toISOString();
-    const roleAssignment = {
-      userId: userId,
-      role: role,
-      scope: scope || null,
-      assignedBy: authInfo.uid,
-      assignedAt: now,
-    };
-
-    await db.collection("userRoles").doc(userId).set(roleAssignment);
-
-    // Set custom claims for Firebase Auth
-    await admin.auth().setCustomUserClaims(userId, {isAdmin: role === "ADMIN"});
-
-    return {success: true, message: `Role ${role} assigned to user ${userId}`};
-  } catch (error) {
-    console.error("Error in assignRole:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
-/**
- * Remove user role
- */
-exports.removeRole = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {userId} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can remove roles",
-    );
-  }
-
-  try {
-    await db.collection("userRoles").doc(userId).delete();
-
-    // Remove custom claims
-    await admin.auth().setCustomUserClaims(userId, {isAdmin: false});
-
-    return {success: true, message: `Role removed from user ${userId}`};
-  } catch (error) {
-    console.error("Error in removeRole:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
 /**
  * Get user role
  */
@@ -471,11 +405,7 @@ exports.hasRole = functions.https.onCall(async (data, _context) => {
 exports.setSettings = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
   const {
-    corporateGcashAccount,
-    settlementDeadlineHours,
-    maxCommissionRateBps,
-    minOrderAmount,
-    maxOrderAmount,
+    restrictNewAdminLogins,
   } = payload;
 
   const authInfo = getAuthInfo(context, data);
@@ -488,12 +418,11 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
 
   try {
     const now = new Date().toISOString();
+    const currentSettingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const currentSettings = currentSettingsDoc.exists ? currentSettingsDoc.data() : {};
+    
     const settings = {
-      corporateGcashAccount: corporateGcashAccount || DEFAULT_GCASH_ACCOUNT,
-      settlementDeadlineHours: settlementDeadlineHours || DEFAULT_SETTLEMENT_HOURS,
-      maxCommissionRateBps: maxCommissionRateBps || MAX_COMMISSION_BPS,
-      minOrderAmount: minOrderAmount || MIN_ORDER_CENTAVOS,
-      maxOrderAmount: maxOrderAmount || MAX_ORDER_CENTAVOS,
+      restrictNewAdminLogins: restrictNewAdminLogins !== undefined ? restrictNewAdminLogins : (currentSettings.restrictNewAdminLogins || false),
       updatedAt: now,
       updatedBy: authInfo.uid,
     };
@@ -523,13 +452,8 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
     const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
 
     if (!settingsDoc.exists) {
-      // Return default settings
       const defaultSettings = {
-        corporateGcashAccount: DEFAULT_GCASH_ACCOUNT,
-        settlementDeadlineHours: DEFAULT_SETTLEMENT_HOURS,
-        maxCommissionRateBps: MAX_COMMISSION_BPS,
-        minOrderAmount: MIN_ORDER_CENTAVOS,
-        maxOrderAmount: MAX_ORDER_CENTAVOS,
+        restrictNewAdminLogins: false,
         updatedAt: new Date().toISOString(),
         updatedBy: "system",
       };
@@ -538,14 +462,148 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
       return {success: true, data: defaultSettings};
     }
 
-    return {success: true, data: settingsDoc.data()};
+    const settingsData = settingsDoc.data();
+    if (settingsData.restrictNewAdminLogins === undefined) {
+      settingsData.restrictNewAdminLogins = false;
+    }
+
+    return {success: true, data: settingsData};
   } catch (error) {
     console.error("Error in getSettings:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
 
-// ===== ANALYTICS AND REPORTING =====
+/**
+ * Change admin access password
+ */
+exports.changeAdminPassword = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {oldPassword, newPassword, confirmPassword} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can change the admin password",
+    );
+  }
+
+  if (!newPassword || !confirmPassword) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password and confirmation are required",
+    );
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password and confirmation do not match",
+    );
+  }
+
+  if (newPassword.length < 8) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password must be at least 8 characters long",
+    );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    const isInitialPassword = !settings.adminPasswordHash;
+
+    if (!isInitialPassword) {
+      if (!oldPassword) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Old password is required when changing an existing password",
+        );
+      }
+
+      const isOldPasswordValid = await bcrypt.compare(oldPassword, settings.adminPasswordHash);
+      if (!isOldPasswordValid) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Old password is incorrect",
+        );
+      }
+    }
+
+    const saltRounds = 10;
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    await db.collection("systemSettings").doc(SETTINGS_KEY).update({
+      adminPasswordHash: newPasswordHash,
+      passwordUpdatedAt: new Date().toISOString(),
+      passwordUpdatedBy: authInfo.uid,
+    });
+
+    return {success: true, message: "Password changed successfully"};
+  } catch (error) {
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    console.error("Error in changeAdminPassword:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Check if admin password is set
+ */
+exports.isAdminPasswordSet = functions.https.onCall(async (data, context) => {
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+    
+    return {
+      success: true,
+      isSet: !!settings.adminPasswordHash,
+    };
+  } catch (error) {
+    console.error("Error in isAdminPasswordSet:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Verify admin password
+ */
+exports.verifyAdminPassword = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {password} = payload;
+
+  if (!password) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Password is required",
+    );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    if (!settings.adminPasswordHash) {
+      return {success: true, verified: true, message: "No password set"};
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, settings.adminPasswordHash);
+    
+    return {
+      success: true,
+      verified: isPasswordValid,
+      message: isPasswordValid ? "Password verified" : "Incorrect password",
+    };
+  } catch (error) {
+    console.error("Error in verifyAdminPassword:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
 
 /**
  * Get system statistics
@@ -620,7 +678,6 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       const paymentChannel = data.payment_channel || "";
       const amount = parseFloat(data.amount) || 0;
 
-      // Only include transactions with "topup" in description but exclude admin updates
       if (
         (description.includes("topup") || description.includes("top-up")) &&
         paymentChannel !== "ADMIN_UPDATE"
@@ -650,8 +707,6 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ===== USER MANAGEMENT =====
-
 /**
  * Get all users
  */
@@ -665,13 +720,11 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Query both "profiles" and "users" collections to get all users
     const [profilesSnapshot, usersSnapshot] = await Promise.all([
       db.collection("profiles").get(),
       db.collection("users").get(),
     ]);
 
-    // Combine users from both collections
     const profiles = profilesSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -681,7 +734,6 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
       ...doc.data(),
     }));
 
-    // Merge and deduplicate by id (users collection takes precedence if duplicate)
     const userMap = new Map();
     profiles.forEach((user) => {
       const userId = user.id || user.uid || user.principal;
@@ -890,7 +942,6 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Use helper functions from reputation module
     const {createReputationActor} = require("./reputation");
     const {Principal} = require("@dfinity/principal");
 
@@ -966,13 +1017,8 @@ exports.updateUserPhoneNumber = functions.https.onCall(async (data, context) => 
   }
 });
 
-
-// ===== CERTIFICATE VALIDATION =====
-
 /**
  * Update certificate validation status
- * Simple function that updates the media collection validationStatus field
- * This updates the provider pill and client indicator
  */
 exports.updateCertificateValidationStatus = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
@@ -1021,7 +1067,7 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
       );
     }
 
-    // Update the validation status - this updates the provider pill and client indicator
+    // Update the validation status
     await db.collection("media").doc(certificateId).update({
       validationStatus: status,
       updatedAt: new Date().toISOString(),
@@ -1162,11 +1208,8 @@ exports.getRejectedCertificates = functions.https.onCall(async (data, context) =
   }
 });
 
-// ===== CERTIFICATE VALIDATION FUNCTIONS (NEW) =====
-
 /**
  * Get all services with certificates for validation
- * Matches getServicesWithCertificates from admin.mo
  */
 exports.getServicesWithCertificates = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
@@ -1235,7 +1278,6 @@ exports.getServicesWithCertificates = functions.https.onCall(async (data, contex
 
 /**
  * Get pending certificate validations
- * Matches getPendingCertificateValidations from admin.mo
  */
 exports.getPendingCertificateValidations = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
@@ -1264,8 +1306,7 @@ exports.getPendingCertificateValidations = functions.https.onCall(async (data, c
 });
 
 /**
- * Validate certificate (approve or reject)
- * Matches validateCertificate from admin.mo
+ * Validate certificate
  */
 exports.validateCertificate = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;

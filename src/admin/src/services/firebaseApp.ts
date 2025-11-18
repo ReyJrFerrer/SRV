@@ -73,7 +73,7 @@ export function initializeFirebase(): {
           connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
           emulatorsConnected = true;
         } catch (emulatorError) {
-          // Emulator connection skipped (may already be connected)
+          // Emulator connection skipped
         }
       }
       return {
@@ -124,8 +124,8 @@ export function initializeFirebase(): {
       }
     }
 
-    // Set language code for auth (optional)
     firebaseAuth.languageCode = "en";
+
     return {
       app: firebaseApp,
       auth: firebaseAuth,

@@ -1,4 +1,5 @@
 import React from "react";
+import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 
 interface Booking {
   id: string;
@@ -54,14 +55,11 @@ export const BookingsList: React.FC<BookingsListProps> = ({
   const endIndex = startIndex + itemsPerPage;
   const currentBookings = bookings.slice(startIndex, endIndex);
 
-  // Helper function to format location (handles both string and object)
+  // Helper function to format location
   const formatLocation = (location: any): string => {
     if (!location) return "No location provided";
 
-    // Handle string locations
     if (typeof location === "string") return location;
-
-    // Handle object locations with address fields
     if (typeof location === "object") {
       const parts = [];
 
@@ -78,7 +76,6 @@ export const BookingsList: React.FC<BookingsListProps> = ({
 
       if (parts.length > 0) return parts.join(", ");
 
-      // If no standard address fields, try to JSON stringify but handle circular refs
       try {
         return JSON.stringify(location);
       } catch {
@@ -103,19 +100,7 @@ export const BookingsList: React.FC<BookingsListProps> = ({
         {bookings.length === 0 ? (
           <li className="px-4 py-5 sm:px-6">
             <div className="py-8 text-center">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
+              <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">
                 No bookings found
               </h3>
