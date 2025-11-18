@@ -88,11 +88,6 @@ export interface FrontendCommissionRuleDraft {
 }
 
 export interface FrontendSystemSettings {
-  corporateGcashAccount: string;
-  settlementDeadlineHours: number;
-  maxCommissionRateBps: number;
-  minOrderAmount: number;
-  maxOrderAmount: number;
   restrictNewAdminLogins: boolean;
   updatedAt: Date;
   updatedBy: string;

@@ -405,11 +405,6 @@ exports.hasRole = functions.https.onCall(async (data, _context) => {
 exports.setSettings = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
   const {
-    corporateGcashAccount,
-    settlementDeadlineHours,
-    maxCommissionRateBps,
-    minOrderAmount,
-    maxOrderAmount,
     restrictNewAdminLogins,
   } = payload;
 
@@ -427,11 +422,6 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
     const currentSettings = currentSettingsDoc.exists ? currentSettingsDoc.data() : {};
     
     const settings = {
-      corporateGcashAccount: corporateGcashAccount || DEFAULT_GCASH_ACCOUNT,
-      settlementDeadlineHours: settlementDeadlineHours || DEFAULT_SETTLEMENT_HOURS,
-      maxCommissionRateBps: maxCommissionRateBps || MAX_COMMISSION_BPS,
-      minOrderAmount: minOrderAmount || MIN_ORDER_CENTAVOS,
-      maxOrderAmount: maxOrderAmount || MAX_ORDER_CENTAVOS,
       restrictNewAdminLogins: restrictNewAdminLogins !== undefined ? restrictNewAdminLogins : (currentSettings.restrictNewAdminLogins || false),
       updatedAt: now,
       updatedBy: authInfo.uid,
@@ -463,11 +453,6 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
 
     if (!settingsDoc.exists) {
       const defaultSettings = {
-        corporateGcashAccount: DEFAULT_GCASH_ACCOUNT,
-        settlementDeadlineHours: DEFAULT_SETTLEMENT_HOURS,
-        maxCommissionRateBps: MAX_COMMISSION_BPS,
-        minOrderAmount: MIN_ORDER_CENTAVOS,
-        maxOrderAmount: MAX_ORDER_CENTAVOS,
         restrictNewAdminLogins: false,
         updatedAt: new Date().toISOString(),
         updatedBy: "system",
