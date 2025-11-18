@@ -1072,7 +1072,7 @@ const AddServicePage: React.FC = () => {
       <main className="container mx-auto flex-grow px-4 pt-4 sm:p-6">
         {renderStep()}
         {/* Navigation Buttons */}
-        <div className="mt-6 mb-20 flex justify-between lg:mb-8">
+        <div className="mb-20 mt-6 flex justify-between lg:mb-8">
           {currentStep > 1 && (
             <button
               onClick={handleBack}
@@ -1098,7 +1098,7 @@ const AddServicePage: React.FC = () => {
             >
               {isSubmitting ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-t-2 border-white"></div>
                   Creating Service...
                 </>
               ) : isProcessingImages ? (

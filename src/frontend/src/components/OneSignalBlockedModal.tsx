@@ -10,7 +10,7 @@ export const OneSignalBlockedModal: React.FC<OneSignalBlockedModalProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4 py-8 sm:p-4">
-      <div className="my-auto w-full max-w-2xl rounded-xl bg-white p-6 mb-12 shadow-2xl sm:p-8">
+      <div className="my-auto mb-12 w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl sm:p-8">
         {/* Icon */}
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 sm:mb-6 sm:h-20 sm:w-20">
           <ExclamationTriangleIcon className="h-8 w-8 text-orange-600 sm:h-10 sm:w-10" />

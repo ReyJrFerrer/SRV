@@ -224,7 +224,6 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
         <div className="ml-3 flex items-center gap-2">
           {/* Controls */}
           {locationStatus === "not_set" && <EnableLocationButton />}
-
         </div>
       )}
 
