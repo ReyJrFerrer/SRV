@@ -24,7 +24,6 @@ import { useLocationStore } from "../../store/locationStore";
 
 // SECTION: ClientHomePage — main page component rendering header, categories, services, and provider CTA
 const ClientHomePage: React.FC = () => {
-  // SECTION: Navigation and state
   const navigate = useNavigate();
   const { error } = useServiceManagement();
   const { locationStatus } = useLocationStore();
