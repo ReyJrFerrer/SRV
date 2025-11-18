@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminDashboardStats } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
-import { UserIcon } from "@heroicons/react/24/outline";
+import { PresentationChartLineIcon, UserIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import {
   ResponsiveContainer,
@@ -177,19 +177,7 @@ export const AdminHomePage: React.FC = () => {
                   to="/analytics"
                   className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
                 >
-                  <svg
-                    className="mr-2 h-4 w-4 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
+                  <PresentationChartLineIcon className="mr-2 h-4 w-4 text-white" />
                   Analytics
                 </Link>
                 <Link
@@ -395,38 +383,14 @@ export const AdminHomePage: React.FC = () => {
               to="/analytics"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
             >
-              <svg
-                className="mr-2 h-4 w-4 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
+              <PresentationChartLineIcon className="mr-2 h-4 w-4 text-white" />
               Analytics
             </Link>
             <Link
               to="/users"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
-              <svg
-                className="mr-2 h-4 w-4 text-blue-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                />
-              </svg>
+              <UserIcon className="mr-2 h-4 w-4 text-blue-700" />
               View Users
             </Link>
           </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
+import { ArrowLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { BookingStatsCards } from "../components/BookingStatsCards";
 import { BookingFilters } from "../components/BookingFilters";
@@ -108,19 +109,7 @@ export const UserBookingsPage: React.FC = () => {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="mb-4 text-red-600">
-            <svg
-              className="mx-auto h-12 w-12"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <ExclamationTriangleIcon className="mx-auto h-12 w-12" />
           </div>
           <h3 className="mb-2 text-lg font-medium text-gray-900">
             Error Loading Bookings
@@ -152,19 +141,7 @@ export const UserBookingsPage: React.FC = () => {
                 onClick={() => navigate(-1)}
                 className="mr-4 rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
               >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                <ArrowLeftIcon className="h-6 w-6" />
               </button>
               <h1 className="text-xl font-semibold text-gray-900">
                 {user

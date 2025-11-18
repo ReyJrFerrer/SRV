@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { XCircleIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import {
   walletCanisterService,
   Transaction,
@@ -199,19 +199,7 @@ const UserWalletPage: React.FC = () => {
                 }}
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <h1 className="text-2xl font-bold text-gray-900">User Wallet</h1>
             </div>
