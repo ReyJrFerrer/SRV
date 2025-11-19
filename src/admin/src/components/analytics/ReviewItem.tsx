@@ -5,7 +5,7 @@ import {
   ArrowPathIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/solid";
-import { Review } from "../utils/userReviewsUtils";
+import { Review } from "../../utils/userReviewsUtils";
 
 interface ReviewItemProps {
   review: Review;

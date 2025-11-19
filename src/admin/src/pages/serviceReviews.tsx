@@ -11,7 +11,7 @@ import { useUserImage } from "../../../frontend/src/hooks/useMediaLoader";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { StarRatingDisplay } from "../components/StarRatingDisplay";
-import { ServiceReviewItem } from "../components/ServiceReviewItem";
+import { ServiceReviewItem } from "../components/analytics/ServiceReviewItem";
 import {
   sortReviews,
   filterReviewsByRating,

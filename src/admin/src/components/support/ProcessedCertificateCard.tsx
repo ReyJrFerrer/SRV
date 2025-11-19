@@ -1,6 +1,6 @@
 import React from "react";
 import { DocumentIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
-import { useServiceCertificates } from "../../../frontend/src/hooks/useMediaLoader";
+import { useServiceCertificates } from "../../../../frontend/src/hooks/useMediaLoader";
 
 interface ProcessedCertificateCardProps {
   certificate: any;

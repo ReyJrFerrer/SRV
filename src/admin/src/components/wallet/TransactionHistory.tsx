@@ -6,12 +6,12 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import { CurrencyDollarIcon } from "@heroicons/react/24/solid";
-import { Transaction } from "../../../frontend/src/services/walletCanisterService";
+import { Transaction } from "../../../../frontend/src/services/walletCanisterService";
 import {
   getTransactionDisplay,
   formatTransactionDate,
   groupTransactionsByDate,
-} from "../utils/transactionHistoryUtils";
+} from "../../utils/transactionHistoryUtils";
 
 interface TransactionHistoryProps {
   transactions: Transaction[];

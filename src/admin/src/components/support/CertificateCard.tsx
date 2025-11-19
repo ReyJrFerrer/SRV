@@ -1,7 +1,7 @@
 import React from "react";
 import { DocumentIcon } from "@heroicons/react/24/solid";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { useServiceCertificates } from "../../../frontend/src/hooks/useMediaLoader";
+import { useServiceCertificates } from "../../../../frontend/src/hooks/useMediaLoader";
 
 interface CertificateCardProps {
   service: {

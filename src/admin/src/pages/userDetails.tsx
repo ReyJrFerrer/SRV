@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAdmin } from "../hooks/useAdmin";
-import ProviderStats from "../components/ProviderStats";
+import ProviderStats from "../components/userManagement/ProviderStats";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import {
   UserDetailsHeader,

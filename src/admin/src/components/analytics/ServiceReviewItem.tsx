@@ -4,8 +4,8 @@ import {
   TrashIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/solid";
-import { useUserImage } from "../../../frontend/src/hooks/useMediaLoader";
-import { StarRatingDisplay } from "./StarRatingDisplay";
+import { useUserImage } from "../../../../frontend/src/hooks/useMediaLoader";
+import { StarRatingDisplay } from "../StarRatingDisplay";
 
 interface ServiceReviewItemProps {
   review: any;
