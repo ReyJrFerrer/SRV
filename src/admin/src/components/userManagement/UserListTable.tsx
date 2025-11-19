@@ -68,7 +68,7 @@ export const UserListTable: React.FC<UserListTableProps> = ({
   const navigate = useNavigate();
   const { firebaseUser } = useAuth();
   const currentUserId = firebaseUser?.uid;
-  
+
   const columnCount = showOnlyAdmins ? 5 : 7;
 
   return (

@@ -16,7 +16,10 @@ export { UserInformationCard } from "./userManagement/UserInformationCard";
 export { UserDetailsModals } from "./userManagement/UserDetailsModals";
 export { UserServicesHeader } from "./userManagement/UserServicesHeader";
 export { UserServicesFilters } from "./userManagement/UserServicesFilters";
-export { UserServicesList, type ServiceData } from "./userManagement/UserServicesList";
+export {
+  UserServicesList,
+  type ServiceData,
+} from "./userManagement/UserServicesList";
 export { default as ProviderStats } from "./userManagement/ProviderStats";
 export { ProviderDetailsModal } from "./userManagement/ProviderDetailsModal";
 export { ProviderManagementHeader } from "./userManagement/ProviderManagementHeader";
