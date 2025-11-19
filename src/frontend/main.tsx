@@ -31,7 +31,7 @@ import {
 import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
 
 // Auth Pages
-const CreateProfile = lazy(() => import("./src/pages/create-profile"));
+const CreateProfile = lazy(() => import("./src/pages/createProfile"));
 
 // Client Pages
 const ClientHome = lazy(() => import("./src/pages/client/home"));
@@ -186,7 +186,7 @@ const ProviderHelpSupportPage = lazy(
 
 // Payment
 import WalletPage from "./src/pages/provider/wallet";
-import PayoutSettingsPage from "./src/pages/provider/payout-settings";
+import PayoutSettingsPage from "./src/pages/provider/payoutSettings";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
