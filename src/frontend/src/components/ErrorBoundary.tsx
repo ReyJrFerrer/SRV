@@ -12,7 +12,7 @@ interface ErrorBoundaryState {
 
 /**
  * ErrorBoundary Component
- * 
+ *
  * Catches JavaScript errors anywhere in the component tree and displays
  * a fallback UI instead of a white screen.
  */
@@ -34,7 +34,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log the error to console for debugging
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
-    
+
     // You can also log to an error reporting service here
     this.setState({
       error,
@@ -75,7 +75,8 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 Oops! Something went wrong
               </h1>
               <p className="text-gray-600">
-                We encountered an unexpected error. Please try one of the options below.
+                We encountered an unexpected error. Please try one of the
+                options below.
               </p>
             </div>
 
