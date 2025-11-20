@@ -195,7 +195,6 @@ const ActiveServicePage: React.FC = () => {
   };
 
   // Show loading state while booking is being fetched
-  // This must be first to prevent premature null checks
   if (isLoadingBooking || !booking) {
     return (
       <div className="flex min-h-screen items-center justify-center">

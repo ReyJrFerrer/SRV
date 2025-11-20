@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./src/App";
 import "./src/index.css";
 import ScrollToTop from "./src/components/ScrollToTop";
+import ErrorBoundary from "./src/components/ErrorBoundary";
+import HashRouterFix from "./src/components/HashRouterFix";
 // Local wrapper to provide Google Maps context only where needed
 import { APIProvider } from "@vis.gl/react-google-maps";
 const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
@@ -203,13 +205,15 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <HashRouter>
-        <ScrollToTop />
-        <AuthProvider>
-          <BookingCacheProvider>
-            <Suspense fallback={null}>
-              <Routes>
+    <ErrorBoundary>
+      <HashRouterFix />
+      <QueryClientProvider client={queryClient}>
+        <HashRouter>
+          <ScrollToTop />
+          <AuthProvider>
+            <BookingCacheProvider>
+              <Suspense fallback={null}>
+                <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<App />} />
                 <Route
@@ -374,6 +378,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         </AuthProvider>
       </HashRouter>
     </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 );
 
