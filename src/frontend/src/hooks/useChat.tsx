@@ -8,7 +8,11 @@ import chatCanisterService, {
   AsyncUnsubscribe,
 } from "../services/chatCanisterService";
 import { authCanisterService } from "../services/authCanisterService";
-import { dispatchConversationsUpdated, dispatchMessagesUpdated, dispatchChatsRead } from "../utils/interactionEvents";
+import {
+  dispatchConversationsUpdated,
+  dispatchMessagesUpdated,
+  dispatchChatsRead,
+} from "../utils/interactionEvents";
 
 /**
  * Custom hook to track if component is still mounted
@@ -234,12 +238,19 @@ export const useChat = () => {
                 // compute number of conversations that have unread messages for current user
                 try {
                   const currentUserId = identity?.getPrincipal().toString();
-                  const unreadConversations = enhancedConversations.reduce((acc, c) => {
-                    if (!currentUserId) return acc;
-                    const unreadForUser = c.conversation.unreadCount?.[currentUserId] || 0;
-                    return acc + (unreadForUser > 0 ? 1 : 0);
-                  }, 0);
-                  dispatchConversationsUpdated({ count: enhancedConversations.length, unreadConversations });
+                  const unreadConversations = enhancedConversations.reduce(
+                    (acc, c) => {
+                      if (!currentUserId) return acc;
+                      const unreadForUser =
+                        c.conversation.unreadCount?.[currentUserId] || 0;
+                      return acc + (unreadForUser > 0 ? 1 : 0);
+                    },
+                    0,
+                  );
+                  dispatchConversationsUpdated({
+                    count: enhancedConversations.length,
+                    unreadConversations,
+                  });
                 } catch (e) {}
                 setLoading(false);
               }

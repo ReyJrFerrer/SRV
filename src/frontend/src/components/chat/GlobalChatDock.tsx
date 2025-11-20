@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { ProfileImage } from "../common/ProfileImage";
+import { ChatBubbleOvalLeftEllipsisIcon } from "@heroicons/react/24/solid";
 import { useLocation } from "react-router-dom";
 
 type ViewMode = "list" | "conversation";
@@ -32,14 +33,18 @@ const GlobalChatDock: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false); // open vs closed (bubble hidden)
   const [isMinimized, setIsMinimized] = useState(false); // popup minimized to bubble
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [activeConversation, setActiveConversation] = useState<ActiveConversationState | null>(null);
+  const [activeConversation, setActiveConversation] =
+    useState<ActiveConversationState | null>(null);
   const [messageInput, setMessageInput] = useState("");
-  const [isDesktop, setIsDesktop] = useState<boolean>(window.innerWidth >= DESKTOP_MIN_WIDTH);
+  const [isDesktop, setIsDesktop] = useState<boolean>(
+    window.innerWidth >= DESKTOP_MIN_WIDTH,
+  );
   const prevUnreadRef = useRef<number>(0);
   const [sending, setSending] = useState(false);
   const location = useLocation();
   const path = location.pathname;
-  const shouldHide = /\/client\/chat(\/|$)/.test(path) || /\/provider\/chat(\/|$)/.test(path);
+  const shouldHide =
+    /\/client\/chat(\/|$)/.test(path) || /\/provider\/chat(\/|$)/.test(path);
 
   // Track window resize to disable on mobile
   useEffect(() => {
@@ -88,12 +93,15 @@ const GlobalChatDock: React.FC = () => {
       if (!prevConversationIdsRef.current.has(id)) newlyAdded.push(id);
     });
     if (newlyAdded.length > 0 && !isMinimized) {
-      const newSummary = conversations.find((s) => newlyAdded.includes(s.conversation.id));
+      const newSummary = conversations.find((s) =>
+        newlyAdded.includes(s.conversation.id),
+      );
       if (newSummary) {
         openConversation({
           conversationId: newSummary.conversation.id,
           otherUserId: newSummary.otherUserId,
-          otherUserName: newSummary.otherUserName || newSummary.otherUserId.slice(0, 8),
+          otherUserName:
+            newSummary.otherUserName || newSummary.otherUserId.slice(0, 8),
           otherUserImageUrl: newSummary.otherUserImageUrl,
         });
       } else {
@@ -121,7 +129,6 @@ const GlobalChatDock: React.FC = () => {
     prevUnreadRef.current = getUnreadCount();
   }, [getUnreadCount]);
 
-
   const handleSend = async () => {
     if (!activeConversation || !messageInput.trim() || sending) return;
     const content = messageInput.trim();
@@ -147,9 +154,10 @@ const GlobalChatDock: React.FC = () => {
   // Determine unread totals and header style based on active conversation and overall unseen conversations
   const unreadTotal = getUnreadCount();
 
-  const headerClass = unreadTotal > 0
-    ? "flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-2 text-white"
-    : "flex items-center justify-between bg-gray-200 px-3 py-2 text-gray-900";
+  const headerClass =
+    unreadTotal > 0
+      ? "flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-2 text-white"
+      : "flex items-center justify-between bg-gray-200 px-3 py-2 text-gray-900";
 
   const headerUsesDarkText = unreadTotal === 0; // true => use dark text/icon styles
 
@@ -164,11 +172,13 @@ const GlobalChatDock: React.FC = () => {
             setIsVisible(true);
             setIsMinimized(false);
           }}
-          className={`pointer-events-auto relative flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-lg transition-colors ${unreadTotal > 0 ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-600 hover:bg-gray-500"}`}
+          className={`pointer-events-auto relative flex items-center justify-center h-12 w-12 rounded-full text-white shadow-lg transition-colors ${unreadTotal > 0 ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-600 hover:bg-gray-500"}`}
+          aria-label="Open messages"
         >
-          <span>Messages</span>
+          <span className="sr-only">Open messages</span>
+          <ChatBubbleOvalLeftEllipsisIcon className="h-6 w-6" />
           {unreadTotal > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-600">
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-600">
               {unreadTotal}
             </span>
           )}
@@ -177,7 +187,7 @@ const GlobalChatDock: React.FC = () => {
 
       {/* Popup Panel */}
       {isVisible && !isMinimized && (
-        <div className="pointer-events-auto flex h-[420px] w-80 flex-col overflow-hidden rounded-xl border border-blue-200 bg-white shadow-2xl min-h-0">
+        <div className="pointer-events-auto flex h-[420px] min-h-0 w-80 flex-col overflow-hidden rounded-xl border border-blue-200 bg-white shadow-2xl">
           {/* Header */}
           <div className={headerClass}>
             <div className="flex items-center gap-2">
@@ -185,7 +195,11 @@ const GlobalChatDock: React.FC = () => {
                 <button
                   onClick={handleBackToList}
                   aria-label="Back to conversations"
-                  className={headerUsesDarkText ? "rounded p-1 text-gray-600 hover:bg-gray-200" : "rounded p-1 text-white/90 hover:bg-blue-500"}
+                  className={
+                    headerUsesDarkText
+                      ? "rounded p-1 text-gray-600 hover:bg-gray-200"
+                      : "rounded p-1 text-white/90 hover:bg-blue-500"
+                  }
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -210,7 +224,7 @@ const GlobalChatDock: React.FC = () => {
                       className="h-6 w-6 rounded-full border border-white object-cover"
                     />
                   )}
-                  <span className="text-sm font-semibold truncate max-w-[120px]">
+                  <span className="max-w-[120px] truncate text-sm font-semibold">
                     {activeConversation.otherUserName}
                   </span>
                 </div>
@@ -222,7 +236,11 @@ const GlobalChatDock: React.FC = () => {
               <button
                 onClick={() => setIsMinimized(true)}
                 aria-label="Minimize chat"
-                className={headerUsesDarkText ? "rounded p-1 text-gray-600 hover:bg-gray-200" : "rounded p-1 text-white/90 hover:bg-blue-500"}
+                className={
+                  headerUsesDarkText
+                    ? "rounded p-1 text-gray-600 hover:bg-gray-200"
+                    : "rounded p-1 text-white/90 hover:bg-blue-500"
+                }
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -237,9 +255,11 @@ const GlobalChatDock: React.FC = () => {
           </div>
           {/* Body */}
           {viewMode === "list" && (
-            <div className="flex-1 min-h-0 overflow-y-auto bg-white">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white">
               {conversations.length === 0 ? (
-                <div className="p-4 text-center text-sm text-gray-500">No conversations yet.</div>
+                <div className="p-4 text-center text-sm text-gray-500">
+                  No conversations yet.
+                </div>
               ) : (
                 <ul className="divide-y divide-gray-100">
                   {conversations
@@ -256,7 +276,10 @@ const GlobalChatDock: React.FC = () => {
                     .map((summary) => {
                       const conversation = summary.conversation;
                       const last = summary.lastMessage?.[0];
-                      const unreadForUser = conversation.unreadCount[conversation.clientId] || conversation.unreadCount[conversation.providerId] || 0;
+                      const unreadForUser =
+                        conversation.unreadCount[conversation.clientId] ||
+                        conversation.unreadCount[conversation.providerId] ||
+                        0;
                       return (
                         <li
                           key={conversation.id}
@@ -264,7 +287,9 @@ const GlobalChatDock: React.FC = () => {
                             openConversation({
                               conversationId: conversation.id,
                               otherUserId: summary.otherUserId,
-                              otherUserName: summary.otherUserName || summary.otherUserId.slice(0, 8),
+                              otherUserName:
+                                summary.otherUserName ||
+                                summary.otherUserId.slice(0, 8),
                               otherUserImageUrl: summary.otherUserImageUrl,
                             })
                           }
@@ -273,14 +298,18 @@ const GlobalChatDock: React.FC = () => {
                           <div className="mt-0.5 flex-shrink-0">
                             <ProfileImage
                               profilePictureUrl={summary.otherUserImageUrl}
-                              userName={summary.otherUserName || summary.otherUserId.slice(0, 8)}
+                              userName={
+                                summary.otherUserName ||
+                                summary.otherUserId.slice(0, 8)
+                              }
                               size="h-8 w-8"
                             />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
                               <span className="truncate font-medium text-gray-900 group-hover:text-blue-700">
-                                {summary.otherUserName || summary.otherUserId.slice(0, 12)}
+                                {summary.otherUserName ||
+                                  summary.otherUserId.slice(0, 12)}
                               </span>
                               {unreadForUser > 0 && (
                                 <span className="ml-2 rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">
@@ -300,10 +329,12 @@ const GlobalChatDock: React.FC = () => {
             </div>
           )}
           {viewMode === "conversation" && activeConversation && (
-            <div className="flex flex-1 flex-col bg-white min-h-0">
-              <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
+            <div className="flex min-h-0 flex-1 flex-col bg-white">
+              <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
                 {messages.length === 0 ? (
-                  <div className="text-center text-xs text-gray-500">No messages yet.</div>
+                  <div className="text-center text-xs text-gray-500">
+                    No messages yet.
+                  </div>
                 ) : (
                   <ul className="space-y-2">
                     {messages.map((m) => {
@@ -317,7 +348,9 @@ const GlobalChatDock: React.FC = () => {
                           <span
                             className={`max-w-[70%] rounded-lg px-2 py-1 text-xs shadow ${isMine ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"}`}
                           >
-                            {typeof m.content === "string" ? m.content : (m.content?.encryptedText || "")}
+                            {typeof m.content === "string"
+                              ? m.content
+                              : m.content?.encryptedText || ""}
                           </span>
                         </li>
                       );
@@ -327,7 +360,9 @@ const GlobalChatDock: React.FC = () => {
               </div>
               <div className="border-t border-gray-200 p-2">
                 {error && (
-                  <div className="mb-1 rounded bg-red-50 px-2 py-1 text-[10px] text-red-600">{error}</div>
+                  <div className="mb-1 rounded bg-red-50 px-2 py-1 text-[10px] text-red-600">
+                    {error}
+                  </div>
                 )}
                 <div className="flex items-center gap-2">
                   <input
