@@ -28,7 +28,9 @@ import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
-import MonthlyBookingsCalendar, { CalendarItem } from "../../components/common/calendar/MonthlyBookingsCalendar";
+import MonthlyBookingsCalendar, {
+  CalendarItem,
+} from "../../components/common/calendar/MonthlyBookingsCalendar";
 
 type BookingStatusTab =
   | "ALL"
@@ -762,7 +764,9 @@ const ProviderBookingsPage: React.FC = () => {
                         items={toCalendarItems(scheduledBookings)}
                         initialMonth={new Date()}
                         onItemClick={(id) => {
-                          const booking = scheduledBookings.find((b) => b.id === id);
+                          const booking = scheduledBookings.find(
+                            (b) => b.id === id,
+                          );
                           if (!booking) return;
                           if (booking.status === "Requested") {
                             dispatchBookingInteracted(booking.id);

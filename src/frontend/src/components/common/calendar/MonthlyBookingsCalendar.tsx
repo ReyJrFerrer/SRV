@@ -29,12 +29,14 @@ function getGridRange(baseMonth: Date, weekStartsOn: 0 | 1) {
   const end = endOfMonth(baseMonth);
 
   const startDay = start.getDay(); // 0 Sun ... 6 Sat
-  const diffToStart = weekStartsOn === 1 ? (startDay === 0 ? 6 : startDay - 1) : startDay;
+  const diffToStart =
+    weekStartsOn === 1 ? (startDay === 0 ? 6 : startDay - 1) : startDay;
   const gridStart = new Date(start);
   gridStart.setDate(start.getDate() - diffToStart);
 
   const endDay = end.getDay();
-  const diffToEnd = weekStartsOn === 1 ? (endDay === 0 ? 0 : 7 - endDay) : 6 - endDay;
+  const diffToEnd =
+    weekStartsOn === 1 ? (endDay === 0 ? 0 : 7 - endDay) : 6 - endDay;
   const gridEnd = new Date(end);
   gridEnd.setDate(end.getDate() + diffToEnd);
 
@@ -56,7 +58,9 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
   const [currentMonth, setCurrentMonth] = React.useState<Date>(
     initialMonth ? new Date(initialMonth) : new Date(),
   );
-  const [detailDayItems, setDetailDayItems] = React.useState<CalendarItem[] | null>(null);
+  const [detailDayItems, setDetailDayItems] = React.useState<
+    CalendarItem[] | null
+  >(null);
 
   // Group items by day key (YYYY-MM-DD)
   const grouped = React.useMemo(() => {
@@ -117,7 +121,9 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
   };
 
   const openDetailForDay = (items: CalendarItem[]) => {
-    setDetailDayItems(items.sort((a, b) => a.date.getTime() - b.date.getTime()));
+    setDetailDayItems(
+      items.sort((a, b) => a.date.getTime() - b.date.getTime()),
+    );
   };
 
   const closeDetail = () => setDetailDayItems(null);
@@ -129,7 +135,9 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
           type="button"
           className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
           onClick={() =>
-            setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))
+            setCurrentMonth(
+              (m) => new Date(m.getFullYear(), m.getMonth() - 1, 1),
+            )
           }
           aria-label="Previous month"
         >
@@ -140,7 +148,9 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
           type="button"
           className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
           onClick={() =>
-            setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
+            setCurrentMonth(
+              (m) => new Date(m.getFullYear(), m.getMonth() + 1, 1),
+            )
           }
           aria-label="Next month"
         >
@@ -150,7 +160,10 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
 
       <div className="hidden grid-cols-7 gap-1 rounded-lg bg-white p-2 shadow sm:grid">
         {dayNames(weekStartsOn).map((d) => (
-          <div key={d} className="px-2 py-1 text-center text-xs font-semibold text-gray-500">
+          <div
+            key={d}
+            className="px-2 py-1 text-center text-xs font-semibold text-gray-500"
+          >
             {d}
           </div>
         ))}
@@ -166,7 +179,9 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
               }`}
             >
               <div className="mb-1 flex items-center justify-between">
-                <div className="text-xs font-semibold text-gray-700">{d.getDate()}</div>
+                <div className="text-xs font-semibold text-gray-700">
+                  {d.getDate()}
+                </div>
                 {dayItems.length > 0 && (
                   <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
                     {dayItems.length}
@@ -183,11 +198,17 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
                     title={`${formatTime(it.date)} • ${it.title}${it.subtitle ? ` — ${it.subtitle}` : ""}`}
                   >
                     <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-semibold">{formatTime(it.date)}</span>
-                      <span className="truncate text-[10px] font-medium">{it.title}</span>
+                      <span className="text-[10px] font-semibold">
+                        {formatTime(it.date)}
+                      </span>
+                      <span className="truncate text-[10px] font-medium">
+                        {it.title}
+                      </span>
                     </div>
                     {it.subtitle && (
-                      <div className="truncate text-[9px] opacity-80">{it.subtitle}</div>
+                      <div className="truncate text-[9px] opacity-80">
+                        {it.subtitle}
+                      </div>
                     )}
                   </button>
                 ))}
@@ -209,7 +230,10 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
       {/* Mobile: compact grid */}
       <div className="grid grid-cols-7 gap-0.5 rounded-lg border border-gray-200 sm:hidden">
         {dayNames(weekStartsOn).map((d) => (
-          <div key={d} className="bg-gray-50 py-1 text-center text-[10px] font-medium text-gray-500">
+          <div
+            key={d}
+            className="bg-gray-50 py-1 text-center text-[10px] font-medium text-gray-500"
+          >
             {d}
           </div>
         ))}
@@ -218,9 +242,14 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
           const dayItems = grouped[key] || [];
           const faded = !isSameMonth(d, currentMonth);
           return (
-            <div key={key} className={`min-h-12 p-0.5 ${faded ? "bg-gray-50 opacity-60" : "bg-white"}`}>
+            <div
+              key={key}
+              className={`min-h-12 p-0.5 ${faded ? "bg-gray-50 opacity-60" : "bg-white"}`}
+            >
               <div className="flex items-center justify-between">
-                <div className="pl-0.5 text-[10px] font-semibold text-gray-700">{d.getDate()}</div>
+                <div className="pl-0.5 text-[10px] font-semibold text-gray-700">
+                  {d.getDate()}
+                </div>
                 {dayItems.length > 0 && (
                   <span className="mr-0.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">
                     {dayItems.length}
@@ -235,7 +264,8 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
                   className={`mt-0.5 w-full truncate rounded border px-1.5 py-0.5 text-left text-[9px] hover:brightness-95 ${statusClasses(it.status)}`}
                   title={`${formatTime(it.date)} • ${it.title}${it.subtitle ? ` — ${it.subtitle}` : ""}`}
                 >
-                  <span className="font-semibold">{formatTime(it.date)}</span> {it.title}
+                  <span className="font-semibold">{formatTime(it.date)}</span>{" "}
+                  {it.title}
                 </button>
               ))}
               {dayItems.length > 1 && (
@@ -267,7 +297,7 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
                 Close
               </button>
             </div>
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+            <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
               {detailDayItems.map((it) => (
                 <button
                   key={it.id}
@@ -280,11 +310,15 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
                   title={`${formatTime(it.date)} • ${it.title}${it.subtitle ? ` — ${it.subtitle}` : ""}`}
                 >
                   <div className="mb-0.5 flex items-center gap-2">
-                    <span className="whitespace-nowrap font-semibold">{formatTime(it.date)}</span>
+                    <span className="whitespace-nowrap font-semibold">
+                      {formatTime(it.date)}
+                    </span>
                     <span className="truncate font-medium">{it.title}</span>
                   </div>
                   {it.subtitle && (
-                    <div className="truncate text-[11px] opacity-80">{it.subtitle}</div>
+                    <div className="truncate text-[11px] opacity-80">
+                      {it.subtitle}
+                    </div>
                   )}
                   {it.status && (
                     <div className="mt-0.5 text-[10px] uppercase tracking-wide opacity-70">

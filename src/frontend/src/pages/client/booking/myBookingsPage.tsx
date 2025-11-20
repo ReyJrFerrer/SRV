@@ -21,7 +21,9 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
 } from "@heroicons/react/24/solid";
-import MonthlyBookingsCalendar, { CalendarItem } from "../../../components/common/calendar/MonthlyBookingsCalendar";
+import MonthlyBookingsCalendar, {
+  CalendarItem,
+} from "../../../components/common/calendar/MonthlyBookingsCalendar";
 
 type BookingStatusTab =
   | "ALL"
@@ -553,9 +555,14 @@ const MyBookingsPage: React.FC = () => {
                         items={toCalendarItems(scheduledBookings)}
                         initialMonth={new Date()}
                         onItemClick={(id) => {
-                          const booking = scheduledBookings.find((b) => b.id === id);
+                          const booking = scheduledBookings.find(
+                            (b) => b.id === id,
+                          );
                           if (!booking) return;
-                          if (booking.status === "Accepted" || booking.status === "Requested") {
+                          if (
+                            booking.status === "Accepted" ||
+                            booking.status === "Requested"
+                          ) {
                             if (booking.status === "Accepted") {
                             }
                           }
@@ -586,7 +593,8 @@ const MyBookingsPage: React.FC = () => {
                               serviceStatsMap[booking.serviceId || ""]?.reviews
                             }
                             reputation={
-                              serviceStatsMap[booking.serviceId || ""]?.reputation
+                              serviceStatsMap[booking.serviceId || ""]
+                                ?.reputation
                             }
                           />
                         </Appear>
