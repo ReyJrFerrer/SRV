@@ -16,17 +16,19 @@ const HashRouterFix: React.FC = () => {
   useEffect(() => {
     const pathname = window.location.pathname;
     const search = window.location.search;
+    const hash = window.location.hash;
 
-    // If we have a path other than "/" and we're using HashRouter
-    // This means the URL is malformed (path should be in hash, not pathname)
-    if (pathname !== "/" && pathname !== "/index.html") {
+    // Only redirect if hash is missing or empty
+    if (
+      pathname !== "/" &&
+      pathname !== "/index.html" &&
+      (!hash || hash === "#")
+    ) {
       // Build the correct hash URL
-      // Move the pathname and search to the hash
       const correctHash = `#${pathname}${search}`;
-
-      // Replace the URL with the correct format
       window.location.replace(correctHash);
     }
+    // If hash is present, do nothing (let HashRouter handle it)
   }, []);
 
   return null;
