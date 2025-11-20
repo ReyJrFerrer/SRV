@@ -50,16 +50,20 @@ const ReviewSubmit: React.FC<Props> = ({
         <div className="flex flex-col gap-8">
           {/* --- Top Row: Stacks vertically on mobile, horizontally on desktop --- */}
           <div className="flex flex-col gap-8 md:flex-row">
-            {/* Category Card: Takes 1/3 of the width on desktop */}
+            {/* Service Name + Category Card */}
             <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
               <div className="mb-2 flex items-center gap-2">
                 <DocumentCheckIcon className="h-5 w-5 text-blue-400" />
-                <h3 className="font-semibold text-gray-800">Category</h3>
+                <h3 className="font-semibold text-gray-800">Service Name & Category</h3>
               </div>
-              <p className="break-words text-lg font-semibold text-blue-800">
-                {categories.find((cat) => cat.id === formData.categoryId)
-                  ?.name || "Unknown"}
-              </p>
+              <div className="space-y-1">
+                <p className="break-words text-xl font-bold text-blue-900">
+                  {formData.serviceOfferingTitle?.trim() || "(No title provided)"}
+                </p>
+                <p className="break-words text-sm text-gray-700">
+                  Category: <span className="font-semibold text-blue-800">{categories.find((cat) => cat.id === formData.categoryId)?.name || "Unknown"}</span>
+                </p>
+              </div>
             </div>
 
             {/* Location Card: Takes 1/3 of the width on desktop */}
