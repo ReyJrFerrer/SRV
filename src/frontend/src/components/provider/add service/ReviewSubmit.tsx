@@ -54,14 +54,21 @@ const ReviewSubmit: React.FC<Props> = ({
             <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
               <div className="mb-2 flex items-center gap-2">
                 <DocumentCheckIcon className="h-5 w-5 text-blue-400" />
-                <h3 className="font-semibold text-gray-800">Service Name & Category</h3>
+                <h3 className="font-semibold text-gray-800">
+                  Service Name & Category
+                </h3>
               </div>
               <div className="space-y-1">
                 <p className="break-words text-xl font-bold text-blue-900">
-                  {formData.serviceOfferingTitle?.trim() || "(No title provided)"}
+                  {formData.serviceOfferingTitle?.trim() ||
+                    "(No title provided)"}
                 </p>
                 <p className="break-words text-sm text-gray-700">
-                  Category: <span className="font-semibold text-blue-800">{categories.find((cat) => cat.id === formData.categoryId)?.name || "Unknown"}</span>
+                  Category:{" "}
+                  <span className="font-semibold text-blue-800">
+                    {categories.find((cat) => cat.id === formData.categoryId)
+                      ?.name || "Unknown"}
+                  </span>
                 </p>
               </div>
             </div>

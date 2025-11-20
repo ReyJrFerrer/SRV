@@ -6,7 +6,7 @@ import {
   MapPinIcon,
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
-import ReputationBadge from "../../../components/common/ReputationBadge";
+// ReputationBadge removed per request; use local color mapping for the top-right badge
 import { EnrichedService } from "../../../hooks/serviceInformation";
 import { useServiceImages, useUserImage } from "../../../hooks/useMediaLoader";
 
@@ -284,25 +284,54 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               />
             </div>
             <div className="absolute left-2 right-2 top-2 z-20 flex items-center justify-between">
-              {service.category?.slug && (
-                <button
-                  aria-label={service.category.name || "Category"}
-                  title={service.category.name}
-                  className="relative z-10 flex items-center justify-center rounded-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <img
-                    src={getCategoryIcon(service.category.slug)}
-                    alt={service.category.name || "Category"}
-                    className="h-10 w-10 object-contain"
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/categories/others.svg";
+              <div className="flex items-center">
+                {service.category?.slug && (
+                  <button
+                    aria-label={service.category.name || "Category"}
+                    title={service.category.name}
+                    className="relative z-10 flex items-center justify-center rounded-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
                     }}
-                  />
-                </button>
-              )}
+                  >
+                    <img
+                      src={getCategoryIcon(service.category.slug)}
+                      alt={service.category.name || "Category"}
+                      className="h-10 w-10 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/categories/others.svg";
+                      }}
+                    />
+                  </button>
+                )}
+              </div>
+
+              {typeof serviceData.reputationScore === "number" &&
+                (() => {
+                  const score = Math.round(serviceData.reputationScore || 0);
+                  // Color mapping based on reputation ranges:
+                  // 0.00 - 20.00 => Building Trust (red)
+                  // 20.01 - 50.00 => Reliable (yellow)
+                  // 50.01 - 80.00 => Trusted (light blue)
+                  // 80.01 - 100.00 => Premium (green)
+                  const strongBg =
+                    score > 80
+                      ? "bg-green-600"
+                      : score > 50
+                        ? "bg-sky-500"
+                        : score > 20
+                          ? "bg-yellow-500"
+                          : "bg-red-600";
+
+                  return (
+                    <div
+                      title={`Reputation: ${score}`}
+                      className={`z-10 flex items-center justify-center ${strongBg} rounded-full px-3 py-1 text-sm font-semibold text-white`}
+                    >
+                      {`Reputation: ${score}`}
+                    </div>
+                  );
+                })()}
             </div>
           </div>
 
@@ -321,18 +350,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                     />
                   )}
                 </p>
-                {typeof serviceData.reputationScore === "number" && (
-                  <span className="flex items-center whitespace-nowrap text-sm font-medium">
-                    <span className="mr-1 text-gray-500">
-                      <span className="font-bold text-blue-600">
-                        Reputation Score:
-                      </span>
-                    </span>
-                    <span>
-                      <ReputationBadge score={serviceData.reputationScore} />
-                    </span>
-                  </span>
-                )}
+                {/* Reputation shown in top-right badge; removed inline score below name per UX request */}
               </div>
               {service.location &&
                 (service.location.city || service.location.address) && (
