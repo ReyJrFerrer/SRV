@@ -68,12 +68,12 @@ const MobileChartsCarousel: React.FC<{
 
   const slides = isLoading
     ? [0, 1, 2, 3].map((k) => (
-        <div key={`skeleton-${k}`} className="snap-center w-full shrink-0 px-1">
+        <div key={`skeleton-${k}`} className="w-full shrink-0 snap-center px-1">
           <div className="h-72 w-full animate-pulse rounded-2xl bg-gray-200" />
         </div>
       ))
     : [
-        <div key="pie" className="snap-center w-full shrink-0 px-1">
+        <div key="pie" className="w-full shrink-0 snap-center px-1">
           <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
             <Suspense
               fallback={
@@ -84,7 +84,7 @@ const MobileChartsCarousel: React.FC<{
             </Suspense>
           </div>
         </div>,
-        <div key="line" className="snap-center w-full shrink-0 px-1">
+        <div key="line" className="w-full shrink-0 snap-center px-1">
           <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
             <Suspense
               fallback={
@@ -98,18 +98,20 @@ const MobileChartsCarousel: React.FC<{
             </Suspense>
           </div>
         </div>,
-        <div key="bar" className="snap-center w-full shrink-0 px-1">
+        <div key="bar" className="w-full shrink-0 snap-center px-1">
           <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
             <Suspense
               fallback={
                 <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
               }
             >
-              <DailyBookingsBarChart getBookingCountByDay={getBookingCountByDay} />
+              <DailyBookingsBarChart
+                getBookingCountByDay={getBookingCountByDay}
+              />
             </Suspense>
           </div>
         </div>,
-        <div key="rating" className="snap-center w-full shrink-0 px-1">
+        <div key="rating" className="w-full shrink-0 snap-center px-1">
           <div className="flex h-72 items-center justify-center rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
             <CustomerRatingStars analytics={ratingData} />
           </div>
@@ -340,7 +342,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
       )}
     </div>
   );
-
 
   // --- Improved Outstanding Commission Card ---
   const WalletCard = () => (
