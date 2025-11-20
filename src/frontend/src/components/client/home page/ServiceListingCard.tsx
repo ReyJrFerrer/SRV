@@ -306,7 +306,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 )}
               </div>
 
-              {typeof serviceData.reputationScore === "number" && (
+              {typeof serviceData.reputationScore === "number" &&
                 (() => {
                   const score = Math.round(serviceData.reputationScore || 0);
                   // Color mapping based on reputation ranges:
@@ -318,21 +318,20 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                     score > 80
                       ? "bg-green-600"
                       : score > 50
-                      ? "bg-sky-500"
-                      : score > 20
-                      ? "bg-yellow-500"
-                      : "bg-red-600";
+                        ? "bg-sky-500"
+                        : score > 20
+                          ? "bg-yellow-500"
+                          : "bg-red-600";
 
                   return (
                     <div
                       title={`Reputation: ${score}`}
-                      className={`z-10 flex items-center justify-center ${strongBg} rounded-full px-3 py-1 text-white text-sm font-semibold`}
+                      className={`z-10 flex items-center justify-center ${strongBg} rounded-full px-3 py-1 text-sm font-semibold text-white`}
                     >
                       {`Reputation: ${score}`}
                     </div>
                   );
-                })()
-              )}
+                })()}
             </div>
           </div>
 
