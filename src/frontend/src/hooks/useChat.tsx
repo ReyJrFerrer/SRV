@@ -8,6 +8,7 @@ import chatCanisterService, {
   AsyncUnsubscribe,
 } from "../services/chatCanisterService";
 import { authCanisterService } from "../services/authCanisterService";
+import { dispatchConversationsUpdated, dispatchMessagesUpdated, dispatchChatsRead } from "../utils/interactionEvents";
 
 /**
  * Custom hook to track if component is still mounted
@@ -230,6 +231,16 @@ export const useChat = () => {
 
               if (isMountedRef.current) {
                 setConversations(enhancedConversations);
+                // compute number of conversations that have unread messages for current user
+                try {
+                  const currentUserId = identity?.getPrincipal().toString();
+                  const unreadConversations = enhancedConversations.reduce((acc, c) => {
+                    if (!currentUserId) return acc;
+                    const unreadForUser = c.conversation.unreadCount?.[currentUserId] || 0;
+                    return acc + (unreadForUser > 0 ? 1 : 0);
+                  }, 0);
+                  dispatchConversationsUpdated({ count: enhancedConversations.length, unreadConversations });
+                } catch (e) {}
                 setLoading(false);
               }
             } catch (error) {
@@ -326,6 +337,11 @@ export const useChat = () => {
                 const adaptedMessages = rawMessages.map(adaptBackendMessage);
                 if (isMountedRef.current) {
                   setMessages(adaptedMessages);
+                  // notify global listeners messages updated for this conversation
+                  try {
+                    // conversationId is available via closure
+                    dispatchMessagesUpdated(conversationId);
+                  } catch (e) {}
                   setLoading(false);
                 }
               } catch (error) {
@@ -385,6 +401,9 @@ export const useChat = () => {
         // Mark messages as read
         if (isMountedRef.current) {
           await chatCanisterService.markMessagesAsRead(conversationId);
+          try {
+            dispatchChatsRead();
+          } catch (e) {}
         }
       } catch (err) {
         if (isMountedRef.current) {
@@ -507,10 +526,10 @@ export const useChat = () => {
 
     const currentUserId = identity.getPrincipal().toString();
 
+    // Return the NUMBER of conversations that have unread messages for the current user
     return conversations.reduce((total, convoSummary) => {
-      // unreadCount is now an object: { [userId: string]: number }
-      const count = convoSummary.conversation.unreadCount[currentUserId] || 0;
-      return total + count;
+      const count = convoSummary.conversation.unreadCount?.[currentUserId] || 0;
+      return total + (count > 0 ? 1 : 0);
     }, 0);
   }, [conversations, identity]);
 

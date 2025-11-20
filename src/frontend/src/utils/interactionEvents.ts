@@ -11,3 +11,16 @@ export function dispatchChatsRead() {
     window.dispatchEvent(new CustomEvent("chats-read"));
   } catch {}
 }
+
+export function dispatchConversationsUpdated(detail?: any) {
+  try {
+    window.dispatchEvent(new CustomEvent("conversations-updated", { detail }));
+  } catch {}
+}
+
+export function dispatchMessagesUpdated(conversationId?: string) {
+  try {
+    const detail = conversationId ? { conversationId } : {};
+    window.dispatchEvent(new CustomEvent("messages-updated", { detail }));
+  } catch {}
+}

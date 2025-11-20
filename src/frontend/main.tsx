@@ -137,6 +137,7 @@ import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
+import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 
 // Initialize version checker for automatic cache clearing on new deployments
 initVersionChecker();
@@ -369,6 +370,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 {/* Catch-all route for 404 - Must be last */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              {/* Desktop floating chat dock (persistent across routes) */}
+              <GlobalChatDock />
             </Suspense>
           </BookingCacheProvider>
         </AuthProvider>

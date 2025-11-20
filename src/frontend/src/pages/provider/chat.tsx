@@ -10,8 +10,20 @@ import { dispatchChatsRead } from "../../utils/interactionEvents";
 
 const ProviderChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
+  const [, setTick] = React.useState(0);
   const navigate = useNavigate();
   const { conversations, loading, error, markAsRead } = useChat();
+
+  useEffect(() => {
+    const onConv = () => setTick((t) => t + 1);
+    const onMsg = () => setTick((t) => t + 1);
+    window.addEventListener("conversations-updated", onConv);
+    window.addEventListener("messages-updated", onMsg);
+    return () => {
+      window.removeEventListener("conversations-updated", onConv);
+      window.removeEventListener("messages-updated", onMsg);
+    };
+  }, []);
 
   useEffect(() => {
     document.title = "Messages | SRV";
