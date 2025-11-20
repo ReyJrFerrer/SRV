@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import {
   CheckCircleIcon,
   StarIcon,
@@ -34,6 +34,115 @@ interface ProviderStatsProps {
   reviewsLoading: any;
   reviewsError: any;
 }
+
+// Dedicated mobile carousel component so hooks aren't called conditionally
+const MobileChartsCarousel: React.FC<{
+  className?: string;
+  isLoading: boolean;
+  analytics: any;
+  getMonthlyRevenue: any;
+  getBookingCountByDay: any;
+  ratingData: { averageRating: number; totalReviews: number };
+}> = ({
+  className = "",
+  isLoading,
+  analytics,
+  getMonthlyRevenue,
+  getBookingCountByDay,
+  ratingData,
+}) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const w = el.clientWidth || 1;
+      const i = Math.round(el.scrollLeft / w);
+      setIndex(i);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true } as any);
+    return () => el.removeEventListener("scroll", onScroll as any);
+  }, []);
+
+  const slides = isLoading
+    ? [0, 1, 2, 3].map((k) => (
+        <div key={`skeleton-${k}`} className="snap-center w-full shrink-0 px-1">
+          <div className="h-72 w-full animate-pulse rounded-2xl bg-gray-200" />
+        </div>
+      ))
+    : [
+        <div key="pie" className="snap-center w-full shrink-0 px-1">
+          <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
+              <BookingStatusPieChart analytics={analytics} />
+            </Suspense>
+          </div>
+        </div>,
+        <div key="line" className="snap-center w-full shrink-0 px-1">
+          <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
+              <MonthlyRevenueLineChart
+                analytics={analytics}
+                getMonthlyRevenue={getMonthlyRevenue}
+              />
+            </Suspense>
+          </div>
+        </div>,
+        <div key="bar" className="snap-center w-full shrink-0 px-1">
+          <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
+            <Suspense
+              fallback={
+                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+              }
+            >
+              <DailyBookingsBarChart getBookingCountByDay={getBookingCountByDay} />
+            </Suspense>
+          </div>
+        </div>,
+        <div key="rating" className="snap-center w-full shrink-0 px-1">
+          <div className="flex h-72 items-center justify-center rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
+            <CustomerRatingStars analytics={ratingData} />
+          </div>
+        </div>,
+      ];
+
+  const dots = slides.map((_, i) => (
+    <button
+      key={`dot-${i}`}
+      aria-label={`Go to slide ${i + 1}`}
+      onClick={() => {
+        const el = containerRef.current;
+        if (!el) return;
+        el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+        setIndex(i);
+      }}
+      className={`${i === index ? "bg-blue-600" : "bg-gray-300"} h-2 w-2 rounded-full transition-colors`}
+    />
+  ));
+
+  return (
+    <div className={className}>
+      <div
+        ref={containerRef}
+        className="-mx-4 flex snap-x snap-mandatory overflow-x-auto scroll-smooth px-4 pb-3"
+        style={{ scrollSnapType: "x mandatory" }}
+      >
+        {slides}
+      </div>
+      <div className="mt-1 flex items-center justify-center gap-2">{dots}</div>
+    </div>
+  );
+};
 
 const ProviderStats: React.FC<ProviderStatsProps> = ({
   className = "",
@@ -178,65 +287,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     statPairs.push(stats.slice(i, i + 2));
   }
 
-  // --- Improved Stat Card ---
-  const StatCard = ({
-    icon,
-    value,
-    title,
-    bgColor,
-  }: {
-    icon: React.ReactNode;
-    value: string;
-    title: string;
-    bgColor: string;
-  }) => (
-    <div className="flex min-w-[210px] items-center gap-4 rounded-2xl border border-blue-50 bg-white/90 p-5 shadow-md">
-      <div
-        className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${bgColor} shadow`}
-      >
-        {icon}
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        <p className="text-sm text-gray-500">{title}</p>
-      </div>
-    </div>
-  );
-
-  // --- Improved Mobile Stat Cards Layout ---
-  const renderCards = () => (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {isLoading
-        ? Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="flex w-64 flex-shrink-0 flex-col gap-4">
-              <div className="flex animate-pulse items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-                <div className="h-10 w-10 rounded-full bg-gray-300"></div>
-                <div className="flex-1">
-                  <div className="mb-2 h-6 w-3/4 rounded bg-gray-200"></div>
-                  <div className="h-4 w-1/2 rounded bg-gray-200"></div>
-                </div>
-              </div>
-              <div className="flex animate-pulse items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-                <div className="h-10 w-10 rounded-full bg-gray-300"></div>
-                <div className="flex-1">
-                  <div className="mb-2 h-6 w-3/4 rounded bg-gray-200"></div>
-                  <div className="h-4 w-1/2 rounded bg-gray-200"></div>
-                </div>
-              </div>
-            </div>
-          ))
-        : stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              icon={stat.icon}
-              value={stat.value}
-              title={stat.title}
-              bgColor={stat.bgColor}
-            />
-          ))}
-    </div>
-  );
-
   // --- Improved Desktop Charts Layout ---
   const renderCharts = () => (
     <div
@@ -291,6 +341,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     </div>
   );
 
+
   // --- Improved Outstanding Commission Card ---
   const WalletCard = () => (
     <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-lg md:flex-row">
@@ -341,7 +392,18 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         <WalletCard />
       </div>
 
-      {isMobile ? renderCards() : renderCharts()}
+      {isMobile ? (
+        <MobileChartsCarousel
+          className={className}
+          isLoading={isLoading}
+          analytics={analytics}
+          getMonthlyRevenue={getMonthlyRevenue}
+          getBookingCountByDay={getBookingCountByDay}
+          ratingData={ratingData}
+        />
+      ) : (
+        renderCharts()
+      )}
     </div>
   );
 };
