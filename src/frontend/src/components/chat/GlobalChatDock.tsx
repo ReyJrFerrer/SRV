@@ -172,7 +172,7 @@ const GlobalChatDock: React.FC = () => {
             setIsVisible(true);
             setIsMinimized(false);
           }}
-          className={`pointer-events-auto relative flex items-center justify-center h-12 w-12 rounded-full text-white shadow-lg transition-colors ${unreadTotal > 0 ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-600 hover:bg-gray-500"}`}
+          className={`pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-colors ${unreadTotal > 0 ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-600 hover:bg-gray-500"}`}
           aria-label="Open messages"
         >
           <span className="sr-only">Open messages</span>
