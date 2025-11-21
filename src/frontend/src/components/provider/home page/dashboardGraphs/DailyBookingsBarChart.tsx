@@ -17,7 +17,6 @@ interface DailyBookingsBarChartProps {
   getBookingCountByDay: any;
 }
 
-
 const TIME_RANGES = [
   { key: "7days", label: "Last 7 days" },
   { key: "30days", label: "Last 30 days" },
@@ -27,13 +26,21 @@ const TIME_RANGES = [
   { key: "custom", label: "Custom Range" },
 ];
 
-type TimeRange = "7days" | "30days" | "3months" | "6months" | "12months" | "custom";
+type TimeRange =
+  | "7days"
+  | "30days"
+  | "3months"
+  | "6months"
+  | "12months"
+  | "custom";
 
 const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
   getBookingCountByDay,
 }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("30days");
-  const [customStartDate, setCustomStartDate] = useState<Date>(subDays(new Date(), 30));
+  const [customStartDate, setCustomStartDate] = useState<Date>(
+    subDays(new Date(), 30),
+  );
   const [customEndDate, setCustomEndDate] = useState<Date>(new Date());
   const [data, setData] = useState<any[]>([]);
   const [totalBookings, setTotalBookings] = useState(0);
@@ -52,7 +59,10 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
     if (timeRange === "custom") {
       startDate = customStartDate;
       endDate = customEndDate;
-      const diffDays = Math.ceil(Math.abs(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil(
+        Math.abs(endDate.getTime() - startDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
       groupBy = diffDays > 30 ? "week" : "day";
     } else {
       switch (timeRange) {
@@ -90,7 +100,11 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
       let d = new Date(startDate);
       while (d <= endDate) {
         filledData.push({
-          name: d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+          name: d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
           value: 0,
         });
         d.setDate(d.getDate() + 1);
@@ -111,7 +125,10 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
       const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
       while (d <= endMonth) {
         filledData.push({
-          name: d.toLocaleDateString("en-US", { year: "numeric", month: "short" }),
+          name: d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+          }),
           value: 0,
         });
         d.setMonth(d.getMonth() + 1);
@@ -120,11 +137,16 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
 
     const actualData = getBookingCountByDay(startDate, endDate, groupBy);
     const mergedData = filledData.map((item) => {
-      const found = actualData.find((d: { name: string; value: number }) => d.name === item.name);
+      const found = actualData.find(
+        (d: { name: string; value: number }) => d.name === item.name,
+      );
       return found ? { ...item, value: found.value } : item;
     });
 
-    const total = mergedData.reduce((sum: number, item: { value: number }) => sum + (item.value || 0), 0);
+    const total = mergedData.reduce(
+      (sum: number, item: { value: number }) => sum + (item.value || 0),
+      0,
+    );
     setData(mergedData);
     setTotalBookings(total);
   };
@@ -194,7 +216,9 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
                 {timeRange === "custom" && (
                   <div className="border-t border-gray-100 p-4">
                     <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-700">From:</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                        From:
+                      </label>
                       <input
                         type="date"
                         value={format(customStartDate, "yyyy-MM-dd")}
@@ -206,7 +230,9 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
                       />
                     </div>
                     <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-700">To:</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                        To:
+                      </label>
                       <input
                         type="date"
                         value={format(customEndDate, "yyyy-MM-dd")}
