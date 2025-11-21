@@ -59,11 +59,11 @@ const ReviewSubmit: React.FC<Props> = ({
                 </h3>
               </div>
               <div className="space-y-1">
-                <p className="text-xl font-bold break-words text-blue-900">
+                <p className="break-words text-xl font-bold text-blue-900">
                   {formData.serviceOfferingTitle?.trim() ||
                     "(No title provided)"}
                 </p>
-                <p className="text-sm break-words text-gray-700">
+                <p className="break-words text-sm text-gray-700">
                   Category:{" "}
                   <span className="font-semibold text-blue-800">
                     {categories.find((cat) => cat.id === formData.categoryId)
@@ -79,7 +79,7 @@ const ReviewSubmit: React.FC<Props> = ({
                 <MapPinIcon className="h-5 w-5 shrink-0 text-blue-400" />
                 <h3 className="font-semibold text-gray-800">Location</h3>
               </div>
-              <div className="font-medium break-words text-blue-900">
+              <div className="break-words font-medium text-blue-900">
                 {[formData.locationMunicipalityCity, formData.locationProvince]
                   .filter(Boolean)
                   .join(", ")}
@@ -125,7 +125,7 @@ const ReviewSubmit: React.FC<Props> = ({
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-blue-900">{pkg.name}</p>
-                        <p className="text-sm break-words text-gray-600">
+                        <p className="break-words text-sm text-gray-600">
                           {pkg.description}
                         </p>
                       </div>
