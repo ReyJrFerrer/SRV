@@ -50,7 +50,6 @@ const ActiveServicePage: React.FC = () => {
       return;
     }
 
-   
     if (isLoadingBooking) {
       return;
     }
