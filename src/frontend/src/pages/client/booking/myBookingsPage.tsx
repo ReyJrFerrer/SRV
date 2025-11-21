@@ -1,5 +1,5 @@
 // SECTION: Imports — dependencies for this page
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
@@ -47,7 +47,17 @@ const MyBookingsPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  // Provider-style filter states
+  type BookingTimingFilter = "All" | "Same Day" | "Scheduled";
+  const TIMING_FILTERS: BookingTimingFilter[] = [
+    "All",
+    "Same Day",
+    "Scheduled",
+  ];
+  const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
+  const [isTimingDropdownOpen, setIsTimingDropdownOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const timingDropdownRef = useRef<HTMLDivElement>(null);
   const [cancellingBooking, setCancellingBooking] =
     useState<EnhancedBooking | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -72,23 +82,26 @@ const MyBookingsPage: React.FC = () => {
     document.title = "My Bookings | SRV";
   }, []);
 
+  // Provider-style: categories derived from bookings
   const bookingCategories = useMemo(() => {
     if (!Array.isArray(bookingManagement.bookings)) return [];
-    const categories = new Set(
-      bookingManagement.bookings
-        .map((b) => b.serviceDetails?.category?.name)
-        .filter(Boolean),
-    );
-    return ["All Categories", ...Array.from(categories)];
+    const map = new Map<string, { name: string }>();
+    bookingManagement.bookings.forEach((b) => {
+      const cat = b.serviceDetails?.category;
+      if (cat && cat.name) {
+        if (!map.has(cat.name)) {
+          map.set(cat.name, { name: cat.name });
+        }
+      }
+    });
+    return Array.from(map.values());
   }, [bookingManagement.bookings]);
 
   const filteredBookings = useMemo(() => {
     if (!Array.isArray(bookingManagement.bookings)) return [];
-
     let processedBookings = bookingManagement.bookings.filter(
       (booking) => booking && typeof booking.status === "string",
     );
-
     if (activeTab !== "ALL") {
       const statusMapping: Record<BookingStatusTab, string[]> = {
         ALL: [],
@@ -105,42 +118,44 @@ const MyBookingsPage: React.FC = () => {
         ),
       );
     }
-
-    if (searchTerm) {
+    if (timingFilter !== "All") {
+      processedBookings = processedBookings.filter((booking) => {
+        const bookingDate = new Date(
+          booking.requestedDate || booking.createdAt,
+        );
+        if (isNaN(bookingDate.getTime())) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        bookingDate.setHours(0, 0, 0, 0);
+        const isSameDay = bookingDate.getTime() === today.getTime();
+        if (timingFilter === "Same Day") return isSameDay;
+        if (timingFilter === "Scheduled") return !isSameDay;
+        return false;
+      });
+    }
+    if (selectedCategory) {
       processedBookings = processedBookings.filter(
         (booking) =>
-          booking.serviceName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          booking.packageName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          booking.providerProfile?.name
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()),
+          booking.serviceDetails?.category?.name === selectedCategory,
       );
     }
-
-    if (filterType !== "all" && filterType !== "All Categories") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
       processedBookings = processedBookings.filter((booking) => {
-        if (filterType === "sameDay") {
-          const bookingDate = new Date(
-            booking.requestedDate || booking.createdAt,
-          );
-          bookingDate.setHours(0, 0, 0, 0);
-          return bookingDate.getTime() === today.getTime();
-        }
-        if (filterType === "scheduled") {
-          const bookingDate = new Date(
-            booking.requestedDate || booking.createdAt,
-          );
-          bookingDate.setHours(0, 0, 0, 0);
-          return bookingDate.getTime() > today.getTime();
-        }
-        return booking.serviceDetails?.category?.name === filterType;
+        const serviceName = (booking.serviceName || "").toString();
+        const providerName = (booking.providerProfile?.name || "").toString();
+        const categoryName = (
+          booking.serviceDetails?.category?.name || ""
+        ).toString();
+        const packageName = (booking.packageName || "").toString();
+        const id = (booking.id || "").toString();
+        return (
+          serviceName.toLowerCase().includes(q) ||
+          providerName.toLowerCase().includes(q) ||
+          categoryName.toLowerCase().includes(q) ||
+          packageName.toLowerCase().includes(q) ||
+          id.toLowerCase().includes(q)
+        );
       });
     }
 
@@ -216,7 +231,13 @@ const MyBookingsPage: React.FC = () => {
     }
 
     return processedBookings;
-  }, [activeTab, bookingManagement.bookings, searchTerm, filterType]);
+  }, [
+    activeTab,
+    bookingManagement.bookings,
+    searchTerm,
+    timingFilter,
+    selectedCategory,
+  ]);
 
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
     const today = new Date();
@@ -328,9 +349,7 @@ const MyBookingsPage: React.FC = () => {
     if (filteredBookings.length > 0) fetchStatsForServices();
   }, [filteredBookings]);
 
-  const getBookingCountForTab = (tab: BookingStatusTab) => {
-    if (!bookingManagement.bookings) return 0;
-    if (tab === "ALL") return bookingManagement.bookings.length;
+  const tabCounts = useMemo(() => {
     const statusMapping: Record<BookingStatusTab, string[]> = {
       ALL: [],
       PENDING: ["Requested", "Pending"],
@@ -339,16 +358,36 @@ const MyBookingsPage: React.FC = () => {
       COMPLETED: ["Completed"],
       CANCELLED: ["Cancelled", "Declined"],
     };
-    const statusesToMatch = statusMapping[tab] || [];
-    return bookingManagement.bookings.filter(
-      (booking) =>
-        booking &&
-        booking.status &&
-        statusesToMatch.some(
-          (status) => booking.status.toLowerCase() === status.toLowerCase(),
+    const all = bookingManagement.bookings || [];
+    return {
+      ALL: all.length,
+      PENDING: all.filter((b) =>
+        statusMapping.PENDING.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
         ),
-    ).length;
-  };
+      ).length,
+      CONFIRMED: all.filter((b) =>
+        statusMapping.CONFIRMED.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
+      IN_PROGRESS: all.filter((b) =>
+        statusMapping.IN_PROGRESS.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
+      COMPLETED: all.filter((b) =>
+        statusMapping.COMPLETED.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
+      CANCELLED: all.filter((b) =>
+        statusMapping.CANCELLED.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
+    };
+  }, [bookingManagement.bookings]);
 
   const handleCancelBooking = async (reason: string) => {
     if (!cancellingBooking) return;
@@ -370,67 +409,131 @@ const MyBookingsPage: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
-            My Bookings
-          </h1>
-        </div>
-      </header>
-
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100 pb-[120px]">
-        {/* SECTION: Search and filter bar */}
-        <div className="mb-5 border-gray-200 bg-white">
-          <div className="flex justify-start overflow-x-auto whitespace-nowrap sm:justify-center">
-            <nav className="flex space-x-4 overflow-x-auto border-b border-gray-200 px-4 py-3">
-              {TAB_ITEMS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() =>
-                    setSearchParams({
-                      tab: tab.toLowerCase().replace("_", "-"),
-                    })
-                  }
-                  className={`flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold sm:text-sm ${activeTab === tab ? "bg-blue-600 text-white shadow" : "text-gray-600 hover:bg-yellow-200"}`}
-                >
-                  {tab.replace("_", " ")} ({getBookingCountForTab(tab)})
-                </button>
-              ))}
-            </nav>
+      <div className="flex min-h-screen flex-col bg-gray-100">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+          <div className="flex w-full items-center justify-center px-4 py-3">
+            <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+              My Bookings
+            </h1>
           </div>
+        </header>
 
-          <div className="container mx-auto px-4 pb-3 pt-2">
-            <div className="mb-4 mt-4 flex flex-col gap-3 sm:flex-row">
-              <div className="relative w-full sm:flex-grow">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search bookings..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:ring-blue-500"
-                />
+        <div className="sticky z-10 bg-white px-4 pt-4">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="relative mr-2 flex-grow">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
               </div>
-              <div className="relative w-full sm:w-auto">
-                <FunnelIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-gray-300 py-2 pl-10 pr-10 text-sm focus:border-blue-500 focus:ring-blue-500"
+              <input
+                type="text"
+                placeholder="Search bookings..."
+                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            {/* Filters: Timing + Category */}
+            <div className="flex gap-2">
+              {/* Timing & Category Filter Dropdown (Provider-style) */}
+              <div className="relative" ref={timingDropdownRef}>
+                <button
+                  className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
                 >
-                  <optgroup label="Categories">
-                    <option value="all">All Types</option>
-                    <option value="sameDay">Same Day</option>
-                    <option value="scheduled">Scheduled</option>
-                    {bookingCategories.slice(1).map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                  <FunnelIcon className="mr-1 h-5 w-5" />
+                  <span className="hidden md:inline">{timingFilter}</span>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {selectedCategory ? `| ${selectedCategory}` : ""}
+                  </span>
+                  <svg
+                    className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${isTimingDropdownOpen ? "rotate-180" : "rotate-0"}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {isTimingDropdownOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      {/* Timing filters */}
+                      {TIMING_FILTERS.map((filter) => (
+                        <button
+                          key={filter}
+                          onClick={() => {
+                            setTimingFilter(filter);
+                            setIsTimingDropdownOpen(false);
+                          }}
+                          className={`${timingFilter === filter ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                          role="menuitem"
+                        >
+                          {filter}
+                        </button>
+                      ))}
+                      {/* Border between timing and categories */}
+                      <div className="border-t px-2 pt-2">
+                        <div className="px-4 pb-1 text-xs font-medium text-gray-500">
+                          Categories
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedCategory(null);
+                            setIsTimingDropdownOpen(false);
+                          }}
+                          className={`${selectedCategory === null ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                        >
+                          All Categories
+                        </button>
+                        {bookingCategories.map((cat) => (
+                          <button
+                            key={cat.name}
+                            onClick={() => {
+                              setSelectedCategory(cat.name);
+                              setIsTimingDropdownOpen(false);
+                            }}
+                            className={`${selectedCategory === cat.name ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
+          </div>
+          <div className="w-full overflow-x-auto">
+            <nav className="flex px-4 pb-4 text-sm">
+              <div className="flex w-full min-w-max justify-between space-x-2">
+                {TAB_ITEMS.map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setActiveTab(tab);
+                    }}
+                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${
+                      activeTab === tab
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-600 hover:bg-yellow-200"
+                    }`}
+                  >
+                    {tab} ({tabCounts[tab as keyof typeof tabCounts]})
+                  </button>
+                ))}
+              </div>
+            </nav>
           </div>
         </div>
 

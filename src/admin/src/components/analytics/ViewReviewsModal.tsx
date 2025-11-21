@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { adminServiceCanister } from "../services/adminServiceCanister";
+import { adminServiceCanister } from "../../services/adminServiceCanister";
 import { StarIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
 interface Review {

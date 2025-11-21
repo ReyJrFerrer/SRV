@@ -23,12 +23,6 @@ function getAuthInfo(context, data) {
 
 // Constants
 const SETTINGS_KEY = "system_settings";
-const DEFAULT_SETTLEMENT_HOURS = 24;
-const DEFAULT_GCASH_ACCOUNT = "09694405454";
-const MAX_COMMISSION_BPS = 1500; // 15% max
-const MIN_ORDER_CENTAVOS = 100; // 1 PHP
-const MAX_ORDER_CENTAVOS = 100000000; // 1M PHP
-
 /**
  * Generate a unique rule ID
  * @return {String} returns a rule based on the date and a random number
@@ -420,9 +414,10 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
     const now = new Date().toISOString();
     const currentSettingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
     const currentSettings = currentSettingsDoc.exists ? currentSettingsDoc.data() : {};
-    
+
     const settings = {
-      restrictNewAdminLogins: restrictNewAdminLogins !== undefined ? restrictNewAdminLogins : (currentSettings.restrictNewAdminLogins || false),
+      restrictNewAdminLogins: restrictNewAdminLogins !== undefined ? restrictNewAdminLogins :
+        (currentSettings.restrictNewAdminLogins || false),
       updatedAt: now,
       updatedBy: authInfo.uid,
     };
@@ -555,11 +550,11 @@ exports.changeAdminPassword = functions.https.onCall(async (data, context) => {
 /**
  * Check if admin password is set
  */
-exports.isAdminPasswordSet = functions.https.onCall(async (data, context) => {
+exports.isAdminPasswordSet = functions.https.onCall(async () => {
   try {
     const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
     const settings = settingsDoc.exists ? settingsDoc.data() : {};
-    
+
     return {
       success: true,
       isSet: !!settings.adminPasswordHash,
@@ -573,7 +568,7 @@ exports.isAdminPasswordSet = functions.https.onCall(async (data, context) => {
 /**
  * Verify admin password
  */
-exports.verifyAdminPassword = functions.https.onCall(async (data, context) => {
+exports.verifyAdminPassword = functions.https.onCall(async (data) => {
   const payload = data.data || data;
   const {password} = payload;
 
@@ -593,7 +588,7 @@ exports.verifyAdminPassword = functions.https.onCall(async (data, context) => {
     }
 
     const isPasswordValid = await bcrypt.compare(password, settings.adminPasswordHash);
-    
+
     return {
       success: true,
       verified: isPasswordValid,

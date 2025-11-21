@@ -1,5 +1,5 @@
 import React from "react";
-import { SUSPENSION_DURATION } from "../utils/serviceStatusConstants";
+import { SUSPENSION_DURATION } from "../../utils/serviceStatusConstants";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 type SuspensionDuration =

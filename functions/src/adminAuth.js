@@ -29,18 +29,19 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
   try {
     const settingsDoc = await db.collection("systemSettings").doc("system_settings").get();
     const settings = settingsDoc.exists ? settingsDoc.data() : {};
-    
+
     if (settings.restrictNewAdminLogins === true) {
       const userDoc = await db.collection("users").doc(uid).get();
       const userRoleDoc = await db.collection("userRoles").doc(uid).get();
-      
+
       const userExists = userDoc.exists;
       const hasAdminRole = userRoleDoc.exists && userRoleDoc.data()?.role === "ADMIN";
-      
+
       if (!userExists || !hasAdminRole) {
         throw new functions.https.HttpsError(
           "permission-denied",
-          "New accounts are not allowed to access the admin panel. Please contact an administrator.",
+          `New accounts are not allowed to access the admin panel. 
+            Please contact an administrator.`,
         );
       }
     }

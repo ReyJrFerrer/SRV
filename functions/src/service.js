@@ -873,7 +873,6 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
 
         await batch.commit();
       }
-
     }
 
     // Delete all associated reviews for this service (client reviews)
@@ -896,7 +895,6 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
 
         await batch.commit();
       }
-
     }
 
     // Delete all associated provider reviews for this service
@@ -919,7 +917,6 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
 
         await batch.commit();
       }
-
     }
 
     // Delete the service document

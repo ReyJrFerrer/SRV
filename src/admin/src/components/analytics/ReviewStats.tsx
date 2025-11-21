@@ -1,6 +1,6 @@
 import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { StarBar } from "./StarBar";
+import { StarBar } from "../StarBar";
 
 interface ReviewStatsProps {
   stats: {

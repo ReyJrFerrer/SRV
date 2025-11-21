@@ -298,7 +298,6 @@ async function createNotification(
     }).catch((error) => {
       console.error("Failed to send OneSignal notification:", error);
     });
-
   } catch (error) {
     console.error("Error creating notification:", error);
     // Don't throw - notifications are not critical
@@ -494,7 +493,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     }
 
     if (providerReputation.data.trustScore <= 5) {
-      console.error("[createBooking] Provider reputation too low:", providerReputation.data.trustScore);
+      console.error("[createBooking] Provider reputation too low:",
+        providerReputation.data.trustScore);
       throw new functions.https.HttpsError(
         "failed-precondition",
         "This provider is currently not accepting new bookings due to " +
@@ -511,7 +511,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     const service = serviceDoc.data();
 
     if (service.providerId !== providerId) {
-      console.error("[createBooking] Service does not belong to the specified provider:", service.providerId, providerId);
+      console.error("[createBooking] Service does not belong to the specified provider:",
+        service.providerId, providerId);
       throw new functions.https.HttpsError(
         "permission-denied",
         "Service does not belong to the specified provider",
@@ -543,7 +544,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
 
         const packageData = packageDoc.data();
         if (packageData.serviceId !== serviceId) {
-          console.error("[createBooking] Package belongs to wrong service:", packageId, packageData.serviceId, serviceId);
+          console.error("[createBooking] Package belongs to wrong service:",
+            packageId, packageData.serviceId, serviceId);
           const errorMsg =
            `Package ${packageId} belongs to service ${packageData.serviceId}, 
            but booking is for service ${serviceId}.`;
@@ -653,10 +655,6 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
  * Accept a booking request (provider only)
  */
 exports.acceptBooking = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {
-    bookingId: data.data?.bookingId,
-    scheduledDate: data.data?.scheduledDate,
-  };
   const payload = data.data || data;
   const {bookingId, scheduledDate} = payload;
 
@@ -687,7 +685,8 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
 
     // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[acceptBooking] Not authorized to update this booking:", booking.providerId, authInfo.uid);
+      console.error("[acceptBooking] Not authorized to update this booking:",
+        booking.providerId, authInfo.uid);
       throw new functions.https.HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
@@ -731,7 +730,6 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
 
     // Hold commission for cash jobs to prevent over-acceptance
     if (booking.paymentMethod === "CashOnHand") {
-
       // Calculate commission amount
       const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
       if (!serviceDoc.exists) {
@@ -831,7 +829,6 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
  */
 exports.declineBooking = functions.https.onCall(async (data, context) => {
   console.log("[declineBooking] called");
-  const safeDataForLog = {bookingId: data.data?.bookingId};
   const payload = data.data || data;
   const {bookingId} = payload;
 
@@ -863,7 +860,8 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
 
     // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[declineBooking] Not authorized to update this booking:", booking.providerId, authInfo.uid);
+      console.error("[declineBooking] Not authorized to update this booking:",
+        booking.providerId, authInfo.uid);
       throw new functions.https.HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
@@ -930,7 +928,6 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
  */
 exports.startBooking = functions.https.onCall(async (data, context) => {
   console.log("[startBooking] called");
-  const safeDataForLog = {bookingId: data.data?.bookingId};
   const payload = data.data || data;
   const {bookingId} = payload;
 
@@ -962,7 +959,8 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
 
     // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[startBooking] Not authorized to update this booking:", booking.providerId, authInfo.uid);
+      console.error("[startBooking] Not authorized to update this booking:",
+        booking.providerId, authInfo.uid);
       throw new functions.https.HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
@@ -1052,10 +1050,6 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
  */
 exports.completeBooking = functions.https.onCall(async (data, context) => {
   console.log("[completeBooking] called");
-  const safeDataForLog = {
-    bookingId: data.data?.bookingId,
-    amountPaid: data.data?.amountPaid,
-  };
   const payload = data.data || data;
   const {bookingId, amountPaid} = payload;
 
@@ -1087,7 +1081,8 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
 
     // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[completeBooking] Not authorized to update this booking:", booking.providerId, authInfo.uid);
+      console.error("[completeBooking] Not authorized to update this booking:",
+        booking.providerId, authInfo.uid);
       throw new functions.https.HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
@@ -1159,13 +1154,12 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
 
         try {
           // Convert hold to debit - this releases the hold and creates transaction
-          const debitResult = await convertHoldToDebitInternal(
+          await convertHoldToDebitInternal(
             booking.providerId,
             bookingId,
             commissionDescription,
             "SRV_COMMISSION",
           );
-
         } catch (debitError) {
           // If conversion fails, try to release the hold
           try {
@@ -1268,7 +1262,6 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
  * Cancel a booking - client or provider
  */
 exports.cancelBooking = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {bookingId: data.data?.bookingId};
   const payload = data.data || data;
   const {bookingId, cancelReason} = payload;
 
@@ -1355,6 +1348,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       try {
         await releaseHoldInternal(booking.providerId, bookingId);
       } catch (releaseError) {
+        // caputre holding
       }
     }
 
@@ -1438,7 +1432,6 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
  * Get booking by ID
  */
 exports.getBooking = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {bookingId: data.data?.bookingId};
   const payload = data.data || data;
   const {bookingId} = payload;
 
@@ -1488,10 +1481,6 @@ exports.getBooking = functions.https.onCall(async (data, context) => {
  * Get bookings for a client
  */
 exports.getClientBookings = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {
-    clientId: data.data?.clientId,
-    limit: data.data?.limit,
-  };
   const payload = data.data || data;
   const {clientId, limit = 50} = payload;
 
@@ -1531,10 +1520,6 @@ exports.getClientBookings = functions.https.onCall(async (data, context) => {
  * Get bookings for a provider
  */
 exports.getProviderBookings = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {
-    providerId: data.data?.providerId,
-    limit: data.data?.limit,
-  };
   const payload = data.data || data;
   const {providerId, limit = 50} = payload;
 
@@ -1574,10 +1559,6 @@ exports.getProviderBookings = functions.https.onCall(async (data, context) => {
  * Get bookings by status
  */
 exports.getBookingsByStatus = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {
-    status: data.data?.status,
-    limit: data.data?.limit,
-  };
   const payload = data.data || data;
   const {status, limit = 50} = payload;
 
@@ -1616,7 +1597,6 @@ exports.getBookingsByStatus = functions.https.onCall(async (data, context) => {
  * Dispute a booking - client or provider
  */
 exports.disputeBooking = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {bookingId: data.data?.bookingId};
   const payload = data.data || data;
   const {bookingId} = payload;
 
@@ -1708,10 +1688,6 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
  * Check if service is available for booking at specific date/time
  */
 exports.checkServiceAvailability = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {
-    serviceId: data.data?.serviceId,
-    requestedDateTime: data.data?.requestedDateTime,
-  };
   const payload = data.data || data;
   const {serviceId, requestedDateTime} = payload;
 
@@ -1822,10 +1798,6 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
  * Get service's available time slots for a specific date
  */
 exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {
-    serviceId: data.data?.serviceId,
-    date: data.data?.date,
-  };
   const payload = data.data || data;
   const {serviceId, date} = payload;
 
@@ -1953,11 +1925,6 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
  * Get client analytics (spending, booking patterns)
  */
 exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {
-    clientId: data.data?.clientId,
-    startDate: data.data?.startDate,
-    endDate: data.data?.endDate,
-  };
   const payload = data.data || data;
   const {clientId, startDate, endDate} = payload;
 
@@ -2187,13 +2154,6 @@ exports.getProviderAnalytics = functions.https.onCall(async (data, context) => {
  * This function is called by authorized backend services to release payments
  */
 exports.releasePayment = functions.https.onCall(async (data, context) => {
-  const safeDataForLog = {
-    bookingId: data.data?.bookingId,
-    paymentId: data.data?.paymentId,
-    releasedAmount: data.data?.releasedAmount,
-    commissionRetained: data.data?.commissionRetained,
-    payoutId: data.data?.payoutId,
-  };
   const payload = data.data || data;
   const {bookingId, paymentId, releasedAmount, commissionRetained, payoutId} = payload;
 
@@ -2427,6 +2387,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
           db.collection("reports").doc(reportId).set(newReport).catch(() => {}),
         );
       } catch (ticketError) {
+        // Capture errors
       }
 
       cancelledAcceptedCount++;

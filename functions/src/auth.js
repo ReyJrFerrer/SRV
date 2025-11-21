@@ -290,7 +290,7 @@ exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
     }
 
     // Check the principal with IC canister
-    const {isValid, hasProfile} = await checkPrincipal(principal);
+    const {isValid} = await checkPrincipal(principal);
 
 
     if (!isValid) {

@@ -662,6 +662,7 @@ async function processReviewForReputationInternal(review, useLLM = false) {
       throw new Error(`Failed to process review: ${result.err}`);
     }
   } catch (error) {
+    console.error("Error in processReviewForReputationInternal:", error);
     throw error;
   }
 }

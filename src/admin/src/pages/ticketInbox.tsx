@@ -16,7 +16,7 @@ import {
   getCategoryColor,
   formatDateShort,
 } from "../utils/ticketUtils";
-import { TicketFilters } from "../components/TicketFilters";
+import { TicketFilters } from "../components/support/TicketFilters";
 
 // Ticket card component
 const TicketCard: React.FC<{

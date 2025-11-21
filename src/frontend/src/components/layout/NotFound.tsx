@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import authCanisterService from "../../services/authCanisterService";
 
@@ -11,9 +11,21 @@ import authCanisterService from "../../services/authCanisterService";
  */
 const NotFound: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, identity, firebaseUser } = useAuth();
+  const [debugInfo, setDebugInfo] = useState<string>("");
 
   useEffect(() => {
+    // Log the current path for debugging
+    const currentPath = location.pathname + location.search + location.hash;
+    setDebugInfo(currentPath);
+    console.warn("[NotFound] Page not found:", {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      fullPath: currentPath,
+    });
+
     const redirectUser = async () => {
       // Wait a moment to show the message
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -49,7 +61,7 @@ const NotFound: React.FC = () => {
     };
 
     redirectUser();
-  }, [isAuthenticated, identity, firebaseUser, navigate]);
+  }, [isAuthenticated, identity, firebaseUser, navigate, location]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -61,6 +73,9 @@ const NotFound: React.FC = () => {
         <p className="mb-6 text-gray-600">
           The page you're looking for doesn't exist.
         </p>
+        {debugInfo && (
+          <p className="mb-4 text-xs text-gray-400">Path: {debugInfo}</p>
+        )}
         <div className="flex items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-600"></div>
           <span className="ml-3 text-gray-700">Redirecting...</span>
