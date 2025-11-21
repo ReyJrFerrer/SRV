@@ -14,9 +14,7 @@ import {
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
-import {
-  ServiceCategory,
-} from "../../services/serviceCanisterService";
+import { ServiceCategory } from "../../services/serviceCanisterService";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import useClientRating from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
@@ -258,7 +256,6 @@ const ProviderBookingsPage: React.FC = () => {
 
     if (timingFilter !== "All") {
       filteredBookings = filteredBookings.filter((booking) => {
-        
         const bookingDateString =
           (booking as any).scheduledDateTime ||
           (booking as any).requestedDate ||
@@ -292,20 +289,20 @@ const ProviderBookingsPage: React.FC = () => {
       filteredBookings = filteredBookings.filter((booking) => {
         const serviceName = (booking.serviceName || "").toString();
         const clientName = (
-          booking.clientName || booking.clientProfile?.name || ""
+          booking.clientName ||
+          booking.clientProfile?.name ||
+          ""
         ).toString();
         const categoryName = (
           booking.serviceDetails?.category?.name || ""
         ).toString();
         const packageName = ((booking as any).packageName || "").toString();
-        const id = (booking.id || "").toString();
 
         return (
           serviceName.toLowerCase().includes(q) ||
           clientName.toLowerCase().includes(q) ||
           categoryName.toLowerCase().includes(q) ||
-          packageName.toLowerCase().includes(q) ||
-          id.toLowerCase().includes(q)
+          packageName.toLowerCase().includes(q) 
         );
       });
     }
