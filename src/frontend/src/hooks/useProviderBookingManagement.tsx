@@ -1558,31 +1558,55 @@ export const useProviderBookingManagement =
       [providerBookings],
     );
 
-    const getBookingCountByDay = useCallback((): {
-      name: string;
-      value: number;
-    }[] => {
-      const days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ];
-      const bookingCounts = new Map<string, number>(
-        days.map((day) => [day, 0]),
-      );
-
-      providerBookings.forEach((booking) => {
-        const createdDate = new Date(booking.createdAt);
-        const dayName = days[createdDate.getDay()];
-        bookingCounts.set(dayName, (bookingCounts.get(dayName) || 0) + 1);
-      });
-
-      return Array.from(bookingCounts, ([name, value]) => ({ name, value }));
-    }, [providerBookings]);
+    const getBookingCountByDay = useCallback(
+      (
+        startDate?: Date,
+        endDate?: Date,
+        groupBy: "day" | "week" | "month" = "day"
+      ): { name: string; value: number }[] => {
+        if (!startDate || !endDate) return [];
+        let result: { name: string; value: number }[] = [];
+        if (groupBy === "day") {
+          let d = new Date(startDate);
+          while (d <= endDate) {
+            const dayStr = d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+            const count = providerBookings.filter(b => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return bookingDate.getFullYear() === d.getFullYear() && bookingDate.getMonth() === d.getMonth() && bookingDate.getDate() === d.getDate();
+            }).length;
+            result.push({ name: dayStr, value: count });
+            d.setDate(d.getDate() + 1);
+          }
+        } else if (groupBy === "week") {
+          let d = new Date(startDate);
+          while (d <= endDate) {
+            const weekStart = new Date(d);
+            weekStart.setDate(d.getDate() - d.getDay());
+            const weekStr = `Week of ${weekStart.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`;
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            const count = providerBookings.filter(b => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return bookingDate >= weekStart && bookingDate <= weekEnd;
+            }).length;
+            result.push({ name: weekStr, value: count });
+            d.setDate(d.getDate() + 7);
+          }
+        } else if (groupBy === "month") {
+          let d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+          const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+          while (d <= endMonth) {
+            const monthStr = d.toLocaleDateString("en-US", { year: "numeric", month: "short" });
+            const count = providerBookings.filter(b => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return bookingDate.getFullYear() === d.getFullYear() && bookingDate.getMonth() === d.getMonth();
+            }).length;
+            result.push({ name: monthStr, value: count });
+            d.setMonth(d.getMonth() + 1);
+          }
+        }
+        return result;
+      }, [providerBookings]);
 
     // Return hook interface with enhanced data
     return {

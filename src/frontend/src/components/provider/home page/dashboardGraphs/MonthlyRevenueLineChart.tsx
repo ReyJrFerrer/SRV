@@ -125,10 +125,11 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
       }
     }
 
-
     const actualData = getMonthlyRevenue(startDate, endDate, groupBy);
     const mergedData = filledData.map((item) => {
-      const found = actualData.find((d: { name: string; value: number }) => d.name === item.name);
+      const found = actualData.find(
+        (d: { name: string; value: number }) => d.name === item.name,
+      );
       return found ? { ...item, value: found.value } : item;
     });
 
