@@ -137,11 +137,15 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
     }
   };
   const cleanedDetectedAddress = stripPlusCodes(detectedAddress || "");
-  
+
   useEffect(() => {
     if (mapMode === "detected") {
       try {
-        if (geoLocation && typeof geoLocation.latitude === "number" && typeof geoLocation.longitude === "number") {
+        if (
+          geoLocation &&
+          typeof geoLocation.latitude === "number" &&
+          typeof geoLocation.longitude === "number"
+        ) {
           setMapLocation({
             lat: geoLocation.latitude,
             lng: geoLocation.longitude,
@@ -161,7 +165,14 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         }
       } catch {}
     }
-  }, [mapMode, geoLocation, cleanedDetectedAddress, setMapLocation, setMapPreciseAddress, setMapDisplayAddress]);
+  }, [
+    mapMode,
+    geoLocation,
+    cleanedDetectedAddress,
+    setMapLocation,
+    setMapPreciseAddress,
+    setMapDisplayAddress,
+  ]);
   // Close modal on Escape key when open
   useEffect(() => {
     if (!showFullScreenMap) return;
