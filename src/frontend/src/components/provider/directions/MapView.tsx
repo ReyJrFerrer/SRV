@@ -35,11 +35,9 @@ const MapView: React.FC<MapViewProps> = ({
         style={containerStyle}
         defaultZoom={isInNavigationMode ? 20 : 15}
         defaultCenter={providerLocation}
-    
         onIdle={(ev) => setMapRef(ev.map)}
         onTilesLoaded={(ev) => setMapRef(ev.map)}
         onCameraChanged={(ev) => setMapRef(ev.map)}
-       
         gestureHandling={
           isInNavigationMode
             ? "none"
@@ -85,7 +83,6 @@ const MapView: React.FC<MapViewProps> = ({
 
         {destinationCoords && (
           <AdvancedMarker position={destinationCoords}>
-           
             <div
               style={{
                 display: "flex",
