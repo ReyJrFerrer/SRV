@@ -219,7 +219,10 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
               {gmapsAddress}
             </button>
           ) : (
-            <span className="text-sm text-gray-500" title="Resolving detected location">
+            <span
+              className="text-sm text-gray-500"
+              title="Resolving detected location"
+            >
               Resolving detected location...
             </span>
           )
