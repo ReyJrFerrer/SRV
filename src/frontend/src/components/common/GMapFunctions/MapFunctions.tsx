@@ -26,6 +26,7 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
     userProvince,
     locationLoading,
     locationStatus,
+    isInitialized,
   } = useLocationStore();
 
   // State
@@ -248,7 +249,7 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
       )}
 
       <LocationBlockedModal
-        visible={showLocationModal}
+        visible={showLocationModal && locationStatus === "denied" && !userProvince && !userAddress && isInitialized}
         onClose={() => setShowLocationModal(false)}
       />
     </>

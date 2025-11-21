@@ -19,6 +19,53 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
 
   const [province, setProvince] = useState<string>("");
   const [city, setCity] = useState<string>("");
+  const [geoPermission, setGeoPermission] = useState<string>("unknown");
+  const [suppressed, setSuppressed] = useState<boolean>(false);
+
+  // Load suppression flag (avoid flashing after success within same session)
+  useEffect(() => {
+    try {
+      const sup = localStorage.getItem("loc_block_modal_suppress");
+      if (sup === "1") setSuppressed(true);
+    } catch {}
+  }, []);
+
+  // Observe geolocation permission; auto-dismiss when not denied
+  useEffect(() => {
+    let isMounted = true;
+    const checkPermission = async () => {
+      if (typeof navigator === "undefined" || !(navigator as any).permissions) return;
+      try {
+        const status: PermissionStatus = await (navigator as any).permissions.query({ name: "geolocation" });
+        if (!isMounted) return;
+        setGeoPermission(status.state);
+        const handleChange = () => {
+          if (!isMounted) return;
+          setGeoPermission(status.state);
+          if (status.state !== "denied") {
+            // Close and suppress modal when user allows or reverts permission
+            try { localStorage.setItem("loc_block_modal_suppress", "1"); } catch {}
+            if (visible) onClose();
+          }
+        };
+        status.onchange = handleChange;
+      } catch {
+        // Ignore errors (older browsers)
+      }
+    };
+    checkPermission();
+    return () => { isMounted = false; };
+  }, [visible, onClose]);
+
+  // Auto-dismiss if store already has a derived address & permission not explicitly denied
+  useEffect(() => {
+    if (!visible) return;
+    const hasContextLocation = !!userAddress && !!userProvince;
+    if (hasContextLocation && geoPermission !== "denied") {
+      try { localStorage.setItem("loc_block_modal_suppress", "1"); } catch {}
+      onClose();
+    }
+  }, [visible, userAddress, userProvince, geoPermission, onClose]);
 
   // Prefill from any existing values
   useEffect(() => {
@@ -46,7 +93,15 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
     onClose();
   };
 
-  if (!visible) return null;
+  // Guard: Only show when explicitly visible prop, permission denied, no existing context/manual address, and not suppressed.
+  const shouldShow =
+    visible &&
+    !suppressed &&
+    (geoPermission === "denied" || geoPermission === "unknown") &&
+    !userProvince &&
+    !userAddress;
+
+  if (!shouldShow) return null;
 
   const modalContent = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">

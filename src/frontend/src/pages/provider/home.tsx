@@ -37,7 +37,7 @@ const ProviderHomePage: React.FC = () => {
   const navigate = useNavigate();
 
   // --- Use Zustand location store for location status ---
-  const { locationStatus } = useLocationStore();
+  const { locationStatus, userProvince, userAddress, isInitialized } = useLocationStore();
 
   // --- Dismissible location overlay state (must be declared unconditionally) ---
   const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
@@ -289,30 +289,25 @@ const ProviderHomePage: React.FC = () => {
 
       {/* Single blocked modal for both denied state and post-login flow */}
       {(() => {
+        // Only show the blocked modal when we have a real denial and no resolved manual/context address
+        const realDenied =
+          locationStatus === "denied" && !userProvince && !userAddress && isInitialized;
         const visible =
-          (locationStatus === "denied" && !dismissedLocationBlock) ||
-          (permissionApiDenied && !dismissedLocationBlock) ||
-          postLoginBlockedModalVisible;
+          (realDenied && !dismissedLocationBlock) ||
+          (permissionApiDenied && !dismissedLocationBlock && !userProvince && !userAddress && isInitialized) ||
+          (postLoginBlockedModalVisible && realDenied);
 
         const handleBlockedClose = () => {
-          // Always mark dismissed for provider as well so the modal doesn't
-          // immediately reappear after manual save/close.
           setDismissedLocationBlock(true);
           try {
             sessionStorage.setItem("providerDismissedLocationBlock", "1");
           } catch {}
-
           if (postLoginBlockedModalVisible) {
             acknowledgePostLoginBlockedModal();
           }
         };
 
-        return (
-          <LocationBlockedModal
-            visible={visible}
-            onClose={handleBlockedClose}
-          />
-        );
+        return <LocationBlockedModal visible={visible} onClose={handleBlockedClose} />;
       })()}
 
       {/* OneSignal Blocked Modal */}
