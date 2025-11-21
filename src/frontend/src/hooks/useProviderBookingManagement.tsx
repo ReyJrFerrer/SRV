@@ -1505,7 +1505,7 @@ export const useProviderBookingManagement =
       (
         startDate?: Date,
         endDate?: Date,
-        groupBy: "day" | "month" = "month"
+        groupBy: "day" | "month" = "month",
       ): { name: string; value: number }[] => {
         const revenueMap = new Map<string, number>();
         let filteredBookings = providerBookings;
@@ -1519,7 +1519,7 @@ export const useProviderBookingManagement =
           });
         } else {
           filteredBookings = providerBookings.filter(
-            (booking) => booking.isCompleted && booking.completedDate
+            (booking) => booking.isCompleted && booking.completedDate,
           );
         }
 
@@ -1540,7 +1540,10 @@ export const useProviderBookingManagement =
               month: "short",
             });
           }
-          revenueMap.set(key, (revenueMap.get(key) || 0) + (booking.actualRevenue || 0));
+          revenueMap.set(
+            key,
+            (revenueMap.get(key) || 0) + (booking.actualRevenue || 0),
+          );
         });
 
         // Sort keys chronologically
@@ -1551,7 +1554,9 @@ export const useProviderBookingManagement =
         });
 
         return sorted.map(([name, value]) => ({ name, value }));
-      }, [providerBookings]);
+      },
+      [providerBookings],
+    );
 
     const getBookingCountByDay = useCallback((): {
       name: string;

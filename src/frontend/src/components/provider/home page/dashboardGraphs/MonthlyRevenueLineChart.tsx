@@ -18,7 +18,6 @@ interface MonthlyRevenueLineChartProps {
   getMonthlyRevenue: any;
 }
 
-
 const TIME_RANGES = [
   { key: "7days", label: "Last 7 days" },
   { key: "30days", label: "Last 30 days" },
@@ -28,13 +27,21 @@ const TIME_RANGES = [
   { key: "custom", label: "Custom Range" },
 ];
 
-type TimeRange = "7days" | "30days" | "3months" | "6months" | "12months" | "custom";
+type TimeRange =
+  | "7days"
+  | "30days"
+  | "3months"
+  | "6months"
+  | "12months"
+  | "custom";
 
 const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
   getMonthlyRevenue,
 }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("12months");
-  const [customStartDate, setCustomStartDate] = useState<Date>(subMonths(new Date(), 12));
+  const [customStartDate, setCustomStartDate] = useState<Date>(
+    subMonths(new Date(), 12),
+  );
   const [customEndDate, setCustomEndDate] = useState<Date>(new Date());
   // showDatePicker is not used, remove
   const [data, setData] = useState<any[]>([]);
@@ -53,7 +60,10 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
     if (timeRange === "custom") {
       startDate = customStartDate;
       endDate = customEndDate;
-      const diffDays = Math.ceil(Math.abs(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil(
+        Math.abs(endDate.getTime() - startDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
       groupBy = diffDays > 60 ? "month" : "day";
     } else {
       switch (timeRange) {
@@ -86,9 +96,47 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
       }
     }
 
-    const chartData = getMonthlyRevenue(startDate, endDate, groupBy);
-    const total = chartData.reduce((sum: number, item: { value: number }) => sum + (item.value || 0), 0);
-    setData(chartData);
+    // Pre-fill data for the range
+    let filledData: { name: string; value: number }[] = [];
+    if (groupBy === "month" && startDate && endDate) {
+      let d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      while (d <= endDate) {
+        filledData.push({
+          name: d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+          }),
+          value: 0,
+        });
+        d.setMonth(d.getMonth() + 1);
+      }
+    } else if (groupBy === "day" && startDate && endDate) {
+      let d = new Date(startDate);
+      while (d <= endDate) {
+        filledData.push({
+          name: d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+          value: 0,
+        });
+        d.setDate(d.getDate() + 1);
+      }
+    }
+
+
+    const actualData = getMonthlyRevenue(startDate, endDate, groupBy);
+    const mergedData = filledData.map((item) => {
+      const found = actualData.find((d: { name: string; value: number }) => d.name === item.name);
+      return found ? { ...item, value: found.value } : item;
+    });
+
+    const total = mergedData.reduce(
+      (sum: number, item: { value: number }) => sum + (item.value || 0),
+      0,
+    );
+    setData(mergedData);
     setTotalRevenue(total);
   };
 
@@ -140,7 +188,9 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
                         } block w-full px-4 py-2 text-left text-sm`}
                       >
                         {range.label}
-                        {range.key === "custom" && <CalendarIcon className="ml-2 h-4 w-4 inline" />}
+                        {range.key === "custom" && (
+                          <CalendarIcon className="ml-2 inline h-4 w-4" />
+                        )}
                       </button>
                     )}
                   </Menu.Item>
@@ -148,7 +198,9 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
                 {timeRange === "custom" && (
                   <div className="border-t border-gray-100 p-4">
                     <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-700">From:</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                        From:
+                      </label>
                       <input
                         type="date"
                         value={format(customStartDate, "yyyy-MM-dd")}
@@ -160,7 +212,9 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
                       />
                     </div>
                     <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-700">To:</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                        To:
+                      </label>
                       <input
                         type="date"
                         value={format(customEndDate, "yyyy-MM-dd")}
