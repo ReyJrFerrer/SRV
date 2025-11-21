@@ -137,6 +137,31 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
     }
   };
   const cleanedDetectedAddress = stripPlusCodes(detectedAddress || "");
+  
+  useEffect(() => {
+    if (mapMode === "detected") {
+      try {
+        if (geoLocation && typeof geoLocation.latitude === "number" && typeof geoLocation.longitude === "number") {
+          setMapLocation({
+            lat: geoLocation.latitude,
+            lng: geoLocation.longitude,
+            address: cleanedDetectedAddress,
+            formatted_address: cleanedDetectedAddress,
+            __detected: true,
+          });
+        } else {
+          setMapLocation(null);
+        }
+        if (cleanedDetectedAddress) {
+          setMapPreciseAddress(cleanedDetectedAddress);
+          setMapDisplayAddress(cleanedDetectedAddress);
+        } else {
+          setMapPreciseAddress("");
+          setMapDisplayAddress("");
+        }
+      } catch {}
+    }
+  }, [mapMode, geoLocation, cleanedDetectedAddress, setMapLocation, setMapPreciseAddress, setMapDisplayAddress]);
   // Close modal on Escape key when open
   useEffect(() => {
     if (!showFullScreenMap) return;
