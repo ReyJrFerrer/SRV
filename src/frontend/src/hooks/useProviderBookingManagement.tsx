@@ -1501,39 +1501,57 @@ export const useProviderBookingManagement =
     }, [providerBookings, calculateAnalytics, setLoadingState]);
 
     // New chart data functions
-    const getMonthlyRevenue = useCallback((): {
-      name: string;
-      value: number;
-    }[] => {
-      const monthlyRevenueMap = new Map<string, number>();
-      const now = new Date();
+    const getMonthlyRevenue = useCallback(
+      (
+        startDate?: Date,
+        endDate?: Date,
+        groupBy: "day" | "month" = "month"
+      ): { name: string; value: number }[] => {
+        const revenueMap = new Map<string, number>();
+        let filteredBookings = providerBookings;
 
-      // Initialize map for the last 12 months with 0 revenue
-      for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthName = d.toLocaleString("default", { month: "short" });
-        monthlyRevenueMap.set(monthName, 0);
-      }
-
-      providerBookings.forEach((booking) => {
-        if (booking.isCompleted && booking.completedDate) {
-          const completedDate = new Date(booking.completedDate);
-          const monthName = completedDate.toLocaleString("default", {
-            month: "short",
+        // Filter by date range if provided
+        if (startDate && endDate) {
+          filteredBookings = providerBookings.filter((booking) => {
+            if (!booking.isCompleted || !booking.completedDate) return false;
+            const completedDate = new Date(booking.completedDate);
+            return completedDate >= startDate && completedDate <= endDate;
           });
-          const currentRevenue = monthlyRevenueMap.get(monthName) || 0;
-          monthlyRevenueMap.set(
-            monthName,
-            currentRevenue + (booking.actualRevenue || 0),
+        } else {
+          filteredBookings = providerBookings.filter(
+            (booking) => booking.isCompleted && booking.completedDate
           );
         }
-      });
 
-      return Array.from(monthlyRevenueMap, ([name, value]) => ({
-        name,
-        value,
-      }));
-    }, [providerBookings]);
+        // Aggregate by day or month
+        filteredBookings.forEach((booking) => {
+          if (!booking.completedDate) return;
+          const completedDate = new Date(booking.completedDate);
+          let key = "";
+          if (groupBy === "day") {
+            key = completedDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+          } else {
+            key = completedDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+            });
+          }
+          revenueMap.set(key, (revenueMap.get(key) || 0) + (booking.actualRevenue || 0));
+        });
+
+        // Sort keys chronologically
+        const sorted = Array.from(revenueMap.entries()).sort((a, b) => {
+          const aDate = new Date(a[0]);
+          const bDate = new Date(b[0]);
+          return aDate.getTime() - bDate.getTime();
+        });
+
+        return sorted.map(([name, value]) => ({ name, value }));
+      }, [providerBookings]);
 
     const getBookingCountByDay = useCallback((): {
       name: string;
