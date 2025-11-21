@@ -24,8 +24,12 @@ const ClientActiveServiceBanner: React.FC = () => {
     getServiceDisplayName(booking) || booking.serviceName || "Service";
   const packageName =
     getPackageDisplayName(booking) || booking.packageName || "Package";
-  const clientVisibleName =
+  const providerName =
     booking.providerName || booking.providerProfile?.name || "Provider";
+
+    const categoryName =
+    booking.serviceDetails?.category?.name ||
+    booking.serviceDetails?.category?.slug || "Category"
 
   const isFullPage =
     location.pathname.startsWith("/client/book/") ||
@@ -60,7 +64,7 @@ const ClientActiveServiceBanner: React.FC = () => {
                 </span>
               </p>
               <p className="truncate text-[11px] opacity-90">
-                {clientVisibleName}
+                {categoryName} <span className= "mx-2">•</span>{providerName}
               </p>
             </div>
             <ChevronRightIcon className="h-5 w-5 flex-shrink-0 opacity-90" />

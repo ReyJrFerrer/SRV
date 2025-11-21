@@ -14,7 +14,7 @@ import {
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
-import serviceCanisterService, {
+import {
   ServiceCategory,
 } from "../../services/serviceCanisterService";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
@@ -62,7 +62,8 @@ const ProviderBookingsPage: React.FC = () => {
   const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] =
     useState<boolean>(false);
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  // Categories derived from bookings (only categories present in bookings)
+  // We compute this via a memo below instead of fetching all categories.
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
@@ -188,23 +189,29 @@ const ProviderBookingsPage: React.FC = () => {
     };
   }, []);
 
-  // Load service categories for filtering
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const cats = await serviceCanisterService.getAllCategories();
-        if (!mounted) return;
-        setCategories(cats || []);
-      } catch (err) {
-        // ignore
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  // Derive categories that actually appear in the current bookings list
+  const categories = useMemo((): ServiceCategory[] => {
+    try {
+      const map = new Map<string, ServiceCategory>();
+      (bookings || []).forEach((b) => {
+        const cat = b?.serviceDetails?.category;
+        if (cat && cat.id) {
+          if (!map.has(cat.id)) {
+            map.set(cat.id, {
+              id: cat.id,
+              name: cat.name,
+              slug: cat.slug ?? "",
+              description: cat.description ?? "",
+              imageUrl: cat.imageUrl ?? "",
+            });
+          }
+        }
+      });
+      return Array.from(map.values());
+    } catch {
+      return [];
+    }
+  }, [bookings]);
 
   const categorizedBookings = useMemo(() => {
     const cancelledBookings = getBookingsByStatus("Cancelled");
@@ -251,18 +258,7 @@ const ProviderBookingsPage: React.FC = () => {
 
     if (timingFilter !== "All") {
       filteredBookings = filteredBookings.filter((booking) => {
-        const status = (booking.status || "").toString().toLowerCase();
-
-        const statusNorm = status.replace(/[^a-z]/g, "");
-
-        if (
-          statusNorm.includes("complete") ||
-          statusNorm.includes("cancel") ||
-          statusNorm.includes("declined")
-        ) {
-          return false;
-        }
-
+        
         const bookingDateString =
           (booking as any).scheduledDateTime ||
           (booking as any).requestedDate ||
@@ -292,17 +288,26 @@ const ProviderBookingsPage: React.FC = () => {
     }
 
     if (searchTerm) {
-      filteredBookings = filteredBookings.filter(
-        (booking) =>
-          (booking.serviceName &&
-            booking.serviceName
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase())) ||
-          booking.clientName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          booking.id.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
+      const q = searchTerm.toLowerCase();
+      filteredBookings = filteredBookings.filter((booking) => {
+        const serviceName = (booking.serviceName || "").toString();
+        const clientName = (
+          booking.clientName || booking.clientProfile?.name || ""
+        ).toString();
+        const categoryName = (
+          booking.serviceDetails?.category?.name || ""
+        ).toString();
+        const packageName = ((booking as any).packageName || "").toString();
+        const id = (booking.id || "").toString();
+
+        return (
+          serviceName.toLowerCase().includes(q) ||
+          clientName.toLowerCase().includes(q) ||
+          categoryName.toLowerCase().includes(q) ||
+          packageName.toLowerCase().includes(q) ||
+          id.toLowerCase().includes(q)
+        );
+      });
     }
 
     // Category filter (if selected, filter by the booking's serviceDetails.category.id)
