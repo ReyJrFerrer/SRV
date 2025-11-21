@@ -33,17 +33,13 @@ const MapView: React.FC<MapViewProps> = ({
     <APIProvider apiKey={mapApiKey}>
       <Map
         style={containerStyle}
-        defaultZoom={isInNavigationMode ? 23 : 15}
+        defaultZoom={isInNavigationMode ? 20 : 15}
         defaultCenter={providerLocation}
-        // Primary map-ready hooks: use onIdle and onTilesLoaded which tend to
-        // fire reliably across desktop and mobile. Keep onCameraChanged as a
-        // fallback for cases where camera movement is the earliest signal.
+    
         onIdle={(ev) => setMapRef(ev.map)}
         onTilesLoaded={(ev) => setMapRef(ev.map)}
         onCameraChanged={(ev) => setMapRef(ev.map)}
-        // On touch devices prefer 'cooperative' so users can pinch-to-zoom
-        // with two fingers while preserving single-finger page scroll.
-        // Keep 'none' during navigation mode to avoid accidental interactions.
+       
         gestureHandling={
           isInNavigationMode
             ? "none"
@@ -89,11 +85,7 @@ const MapView: React.FC<MapViewProps> = ({
 
         {destinationCoords && (
           <AdvancedMarker position={destinationCoords}>
-            {/**
-             * Render a small label above the destination marker showing the
-             * destination name when available. Keep styling minimal so it
-             * works on mobile and desktop.
-             */}
+           
             <div
               style={{
                 display: "flex",
