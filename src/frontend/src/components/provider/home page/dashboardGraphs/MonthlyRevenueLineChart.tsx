@@ -47,44 +47,39 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
     let total = 0;
 
     // Filter data based on selected time range
-    if (timeRange === "custom") {
-      filteredData = filteredData.filter((item: any) => {
-        const itemDate = new Date(item.date || item.name);
-        return itemDate >= customStartDate && itemDate <= customEndDate;
-      });
-    } else {
-      const now = new Date();
-      let startDate: Date;
+    const now = new Date();
+    let startDate: Date | null = null;
+    let endDate: Date = now;
 
+    if (timeRange === "custom") {
+      startDate = customStartDate;
+      endDate = customEndDate;
+    } else {
       switch (timeRange) {
         case "7days":
           startDate = subDays(now, 7);
-          filteredData = filteredData.filter(
-            (item: any) => new Date(item.date || item.name) >= startDate,
-          );
           break;
         case "30days":
           startDate = subDays(now, 30);
-          filteredData = filteredData.filter(
-            (item: any) => new Date(item.date || item.name) >= startDate,
-          );
           break;
         case "3months":
           startDate = subMonths(now, 3);
-          filteredData = filteredData.filter(
-            (item: any) => new Date(item.date || item.name) >= startDate,
-          );
           break;
         case "6months":
           startDate = subMonths(now, 6);
-          filteredData = filteredData.filter(
-            (item: any) => new Date(item.date || item.name) >= startDate,
-          );
           break;
         case "12months":
         default:
+          startDate = null;
           break;
       }
+    }
+
+    if (startDate) {
+      filteredData = filteredData.filter((item: any) => {
+        const itemDate = new Date(item.date || item.name);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
     }
 
     // Calculate total revenue for the filtered data
