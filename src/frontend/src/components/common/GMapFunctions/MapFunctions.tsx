@@ -171,6 +171,20 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
     setShowLocationModal(true);
   };
 
+  // Auto-show blocked modal immediately on transition to denied
+  const [prevStatus, setPrevStatus] = useState(locationStatus);
+  useEffect(() => {
+    if (
+      isInitialized &&
+      locationStatus === "denied" &&
+      prevStatus !== "denied" &&
+      !showLocationModal
+    ) {
+      setShowLocationModal(true);
+    }
+    if (prevStatus !== locationStatus) setPrevStatus(locationStatus);
+  }, [locationStatus, prevStatus, isInitialized, showLocationModal]);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -249,13 +263,7 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
       )}
 
       <LocationBlockedModal
-        visible={
-          showLocationModal &&
-          locationStatus === "denied" &&
-          !userProvince &&
-          !userAddress &&
-          isInitialized
-        }
+        visible={showLocationModal && locationStatus === "denied" && isInitialized}
         onClose={() => setShowLocationModal(false)}
       />
     </>

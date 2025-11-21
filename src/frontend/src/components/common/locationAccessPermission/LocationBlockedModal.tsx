@@ -12,6 +12,7 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
   const {
     userAddress,
     userProvince,
+    locationStatus,
     setAddress,
     setAddressMode,
     setDisplayAddress,
@@ -102,13 +103,10 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
     onClose();
   };
 
-  // Guard: Only show when explicitly visible prop, permission denied, no existing context/manual address, and not suppressed.
-  const shouldShow =
-    visible &&
-    !suppressed &&
-    (geoPermission === "denied" || geoPermission === "unknown") &&
-    !userProvince &&
-    !userAddress;
+  // Guard: show whenever explicitly requested and underlying geolocation permission is denied.
+  const permissionDenied =
+    geoPermission === "denied" || locationStatus === "denied";
+  const shouldShow = visible && !suppressed && permissionDenied;
 
   if (!shouldShow) return null;
 
