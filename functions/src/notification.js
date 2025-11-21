@@ -10,7 +10,7 @@ const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "6ca84c57-1e6b-466d-b79
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "";
 
 // Base URL for building absolute push URLs (used only for push payloads)
-const APP_BASE_URL = process.env.APP_BASE_URL || "https://srvepinoy.web.app";
+const APP_BASE_URL = process.env.APP_BASE_URL || "https://srvpinoy.com";
 
 /**
  * Helper function to safely get user authentication info
