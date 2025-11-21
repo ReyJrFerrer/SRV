@@ -40,7 +40,7 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
       >
         <div className="relative">
           <div className="h-32 w-full animate-pulse rounded-t-2xl bg-gray-200" />
-          <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
+          <div className="absolute top-2 right-2 left-2 flex items-center justify-between">
             <div className="h-8 w-8 animate-pulse rounded-full border border-gray-200 bg-white shadow" />
             <div className="h-6 w-20 animate-pulse rounded-full bg-gray-200" />
           </div>
@@ -266,7 +266,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       <div className="group relative flex flex-col items-center transition-all duration-300">
         <Link
           to={`/client/service/${service.id}`}
-          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
+          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out group-hover:pb-2 hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl`}
         >
           <div className="relative">
             <div className="aspect-video w-full bg-blue-50">
@@ -283,7 +283,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 }}
               />
             </div>
-            <div className="absolute left-2 right-2 top-2 z-20 flex items-center justify-between">
+            <div className="absolute top-2 right-2 left-2 z-20 flex items-center justify-between">
               {service.category?.slug && (
                 <button
                   aria-label={service.category.name || "Category"}
@@ -319,14 +319,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   )}
                 </p>
                 {typeof serviceData.reputationScore === "number" && (
-                  <span className="flex items-center whitespace-nowrap text-sm font-medium">
+                  <span className="flex items-center text-sm font-medium whitespace-nowrap">
                     <span className="mr-1 text-gray-500">
                       <span className="font-bold text-blue-600">
                         Reputation Score:
                       </span>
                     </span>
                     <span>
-                      <ReputationBadge score={90} />
+                      <ReputationBadge score={serviceData.reputationScore} />
                     </span>
                   </span>
                 )}
