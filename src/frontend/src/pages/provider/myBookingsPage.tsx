@@ -302,7 +302,7 @@ const ProviderBookingsPage: React.FC = () => {
           serviceName.toLowerCase().includes(q) ||
           clientName.toLowerCase().includes(q) ||
           categoryName.toLowerCase().includes(q) ||
-          packageName.toLowerCase().includes(q) 
+          packageName.toLowerCase().includes(q)
         );
       });
     }

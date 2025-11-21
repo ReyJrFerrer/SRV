@@ -49,7 +49,11 @@ const MyBookingsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   // Provider-style filter states
   type BookingTimingFilter = "All" | "Same Day" | "Scheduled";
-  const TIMING_FILTERS: BookingTimingFilter[] = ["All", "Same Day", "Scheduled"];
+  const TIMING_FILTERS: BookingTimingFilter[] = [
+    "All",
+    "Same Day",
+    "Scheduled",
+  ];
   const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -116,7 +120,9 @@ const MyBookingsPage: React.FC = () => {
     }
     if (timingFilter !== "All") {
       processedBookings = processedBookings.filter((booking) => {
-        const bookingDate = new Date(booking.requestedDate || booking.createdAt);
+        const bookingDate = new Date(
+          booking.requestedDate || booking.createdAt,
+        );
         if (isNaN(bookingDate.getTime())) return false;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -129,7 +135,8 @@ const MyBookingsPage: React.FC = () => {
     }
     if (selectedCategory) {
       processedBookings = processedBookings.filter(
-        (booking) => booking.serviceDetails?.category?.name === selectedCategory,
+        (booking) =>
+          booking.serviceDetails?.category?.name === selectedCategory,
       );
     }
     if (searchTerm) {
@@ -137,7 +144,9 @@ const MyBookingsPage: React.FC = () => {
       processedBookings = processedBookings.filter((booking) => {
         const serviceName = (booking.serviceName || "").toString();
         const providerName = (booking.providerProfile?.name || "").toString();
-        const categoryName = (booking.serviceDetails?.category?.name || "").toString();
+        const categoryName = (
+          booking.serviceDetails?.category?.name || ""
+        ).toString();
         const packageName = (booking.packageName || "").toString();
         const id = (booking.id || "").toString();
         return (
@@ -222,7 +231,13 @@ const MyBookingsPage: React.FC = () => {
     }
 
     return processedBookings;
-  }, [activeTab, bookingManagement.bookings, searchTerm, timingFilter, selectedCategory]);
+  }, [
+    activeTab,
+    bookingManagement.bookings,
+    searchTerm,
+    timingFilter,
+    selectedCategory,
+  ]);
 
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
     const today = new Date();
@@ -346,11 +361,31 @@ const MyBookingsPage: React.FC = () => {
     const all = bookingManagement.bookings || [];
     return {
       ALL: all.length,
-      PENDING: all.filter((b) => statusMapping.PENDING.some((s) => b.status?.toLowerCase() === s.toLowerCase())).length,
-      CONFIRMED: all.filter((b) => statusMapping.CONFIRMED.some((s) => b.status?.toLowerCase() === s.toLowerCase())).length,
-      IN_PROGRESS: all.filter((b) => statusMapping.IN_PROGRESS.some((s) => b.status?.toLowerCase() === s.toLowerCase())).length,
-      COMPLETED: all.filter((b) => statusMapping.COMPLETED.some((s) => b.status?.toLowerCase() === s.toLowerCase())).length,
-      CANCELLED: all.filter((b) => statusMapping.CANCELLED.some((s) => b.status?.toLowerCase() === s.toLowerCase())).length,
+      PENDING: all.filter((b) =>
+        statusMapping.PENDING.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
+      CONFIRMED: all.filter((b) =>
+        statusMapping.CONFIRMED.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
+      IN_PROGRESS: all.filter((b) =>
+        statusMapping.IN_PROGRESS.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
+      COMPLETED: all.filter((b) =>
+        statusMapping.COMPLETED.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
+      CANCELLED: all.filter((b) =>
+        statusMapping.CANCELLED.some(
+          (s) => b.status?.toLowerCase() === s.toLowerCase(),
+        ),
+      ).length,
     };
   }, [bookingManagement.bookings]);
 
@@ -407,12 +442,31 @@ const MyBookingsPage: React.FC = () => {
                 >
                   <FunnelIcon className="mr-1 h-5 w-5" />
                   <span className="hidden md:inline">{timingFilter}</span>
-                  <span className="ml-2 text-xs text-gray-400">{selectedCategory ? `| ${selectedCategory}` : ""}</span>
-                  <svg className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${isTimingDropdownOpen ? "rotate-180" : "rotate-0"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {selectedCategory ? `| ${selectedCategory}` : ""}
+                  </span>
+                  <svg
+                    className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${isTimingDropdownOpen ? "rotate-180" : "rotate-0"}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
                 </button>
                 {isTimingDropdownOpen && (
                   <div className="absolute right-0 z-50 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
                       {/* Timing filters */}
                       {TIMING_FILTERS.map((filter) => (
                         <button
@@ -429,7 +483,9 @@ const MyBookingsPage: React.FC = () => {
                       ))}
                       {/* Border between timing and categories */}
                       <div className="border-t px-2 pt-2">
-                        <div className="px-4 pb-1 text-xs font-medium text-gray-500">Categories</div>
+                        <div className="px-4 pb-1 text-xs font-medium text-gray-500">
+                          Categories
+                        </div>
                         <button
                           onClick={() => {
                             setSelectedCategory(null);
