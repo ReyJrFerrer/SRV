@@ -182,6 +182,16 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
     ) {
       setShowLocationModal(true);
     }
+    // When permission transitions to allowed, force a fresh reverse geocode
+    // and prefer detected location over any previously manually chosen address.
+    if (
+      isInitialized &&
+      prevStatus !== "allowed" &&
+      (prevStatus === "denied" || prevStatus === "not_set") &&
+      locationStatus === "allowed"
+    ) {
+      setGmapsStatus("idle"); // trigger geocode effect
+    }
     if (prevStatus !== locationStatus) setPrevStatus(locationStatus);
   }, [locationStatus, prevStatus, isInitialized, showLocationModal]);
 
@@ -198,33 +208,28 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
   return (
     <>
       <div className="flex w-full items-center justify-start">
-        {mapsApiLoaded && geoLocation && gmapsStatus === "ok" ? (
-          <button
-            type="button"
-            className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-            onClick={openMap}
-            title={gmapsAddress}
-          >
-            {gmapsAddress}
-          </button>
-        ) : userAddress && userProvince ? (
-          geoLocation ? (
+        {locationStatus === "allowed" && geoLocation ? (
+          mapsApiLoaded && gmapsStatus === "ok" ? (
             <button
               type="button"
-              className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+              className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
               onClick={openMap}
-              title={`${userAddress}, ${userProvince}`}
+              title={gmapsAddress}
             >
-              {userAddress}, {userProvince}
+              {gmapsAddress}
             </button>
           ) : (
-            <span
-              className="text-left text-sm font-medium text-blue-900"
-              title={`${userAddress}, ${userProvince}`}
-            >
-              {userAddress}, {userProvince}
+            <span className="text-sm text-gray-500" title="Resolving detected location">
+              Resolving detected location...
             </span>
           )
+        ) : userAddress && userProvince ? (
+          <span
+            className="text-left text-sm font-medium text-blue-900"
+            title={`${userAddress}, ${userProvince}`}
+          >
+            {userAddress}, {userProvince}
+          </span>
         ) : locationLoading || gmapsStatus === "loading" ? (
           <span className="animate-pulse text-sm text-gray-500">
             Detecting location...
