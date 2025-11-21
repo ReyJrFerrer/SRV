@@ -8,6 +8,11 @@ import phLocations from "../../../data/ph_locations.json";
 import EnableLocationButton from "../../common/locationAccessPermission/EnableLocationButton";
 import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
 import FullScreenLocationMapModal from "../../common/GMapFunctions/FullScreenLocationMapModal";
+import {
+  MapPinIcon,
+  PencilSquareIcon,
+  MapIcon,
+} from "@heroicons/react/24/outline";
 
 export type ServiceLocationProps = {
   highlight?: boolean;
@@ -159,41 +164,42 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         Service Location <span className="text-red-500">*</span>
       </h3>
 
-      {/* Controls */}
       {!showFallbackForms && locationStatus !== "denied" && (
         <div className="mb-4 flex flex-col gap-2 text-xs font-medium sm:flex-row sm:gap-3">
-          <button
-            type="button"
+          <div
             onClick={() => setMapMode("detected")}
-            className={`flex-1 rounded-lg border px-3 py-2 transition ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition md:border-none ${
               mapMode === "detected"
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"
+                ? "bg-blue-600 text-white"
+                : "border-gray-300 text-gray-700"
             }`}
           >
-            Use Detected Location
-          </button>
-          <button
-            type="button"
+            <MapPinIcon className="h-4 w-4 shrink-0" />
+            <span>Use Detected Location</span>
+          </div>
+
+          <div
             onClick={() => setMapMode("custom")}
-            className={`flex-1 rounded-lg border px-3 py-2 transition ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition md:border-none ${
               mapMode === "custom"
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-300 bg-gray-50 text-gray-700 hover:bg-blue-50"
+                ? "bg-blue-600 text-white"
+                : "border-gray-300 text-gray-700"
             }`}
           >
-            Pin / Search Location
-          </button>
-          <button
-            type="button"
+            <MapIcon className="hrink-0 h-4 w-4" />
+            <span>Pin / Search Location</span>
+          </div>
+
+          <div
             onClick={() => {
               setShowFallbackForms(true);
               setLocationInputMode("detected");
             }}
-            className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50`}
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 md:border-none"
           >
-            Use Manual Address Form
-          </button>
+            <PencilSquareIcon className="h-4 w-4 shrink-0" />
+            <span>Use Manual Address Form</span>
+          </div>
         </div>
       )}
 
@@ -338,17 +344,12 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               label="Pin / Search Location"
             />
           </Suspense>
-          {/* Full screen control moved inside the map picker */}
         </div>
       )}
-
-      {/* Hide the quick 'Use Manual Address Form' toggle when permission is
-          denied because we immediately show the manual city/province flow */}
 
       {showFallbackForms && (
         <div className="mb-4 flex flex-wrap gap-4">
           {locationStatus === "denied" ? (
-            // When denied, only show the manual city/province flow option
             <label className="flex items-center gap-2 text-xs">
               <input
                 type="radio"
@@ -373,6 +374,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 />
                 <span className="text-gray-700">Use Detected</span>
               </label>
+
               <label className="flex items-center gap-2 text-xs">
                 <input
                   type="radio"
@@ -384,15 +386,17 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                 />
                 <span className="text-gray-700">Choose City/Province</span>
               </label>
+
               <button
                 type="button"
                 onClick={() => {
                   setShowFallbackForms(false);
                   setLocationInputMode("hidden");
                 }}
-                className="ml-auto text-xs text-blue-600 underline"
+                className="flex items-center justify-center lg:w-fit lg:ml-auto gap-1 rounded-lg border bg-blue-700 px-3 py-2 text-xs text-white md:w-full sm:w-auto w-full"
               >
-                Use Maps
+                <MapPinIcon className="h-4 w-4 shrink-0" />
+                <span>Use Maps</span>
               </button>
             </>
           )}
@@ -414,7 +418,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   type="text"
                   value={displayMunicipality || ""}
                   readOnly
-                  className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                  className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
                   placeholder="Municipality/City"
                 />
               </div>
@@ -426,7 +430,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   type="text"
                   value={displayProvince || ""}
                   readOnly
-                  className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                  className="w-full border-none bg-blue-50 font-semibold text-blue-900 capitalize"
                   placeholder="Province"
                 />
               </div>
@@ -464,7 +468,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               placeholder="Enter your Barangay *"
               value={otherBarangay}
               onChange={(e) => setOtherBarangay(e.target.value)}
-              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+              className={`w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
                 highlightInput === "otherBarangay" ||
                 (otherBarangay &&
                   (otherBarangay.trim().length < 3 ||
@@ -614,7 +618,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               placeholder="Enter your Barangay *"
               value={otherBarangay}
               onChange={(e) => setOtherBarangay(e.target.value)}
-              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+              className={`w-full rounded-xl border bg-white p-3 text-sm text-gray-700 capitalize ${
                 highlightInput === "otherBarangay" ||
                 (otherBarangay &&
                   (otherBarangay.trim().length < 3 ||

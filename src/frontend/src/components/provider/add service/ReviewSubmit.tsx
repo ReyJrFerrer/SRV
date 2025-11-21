@@ -52,18 +52,18 @@ const ReviewSubmit: React.FC<Props> = ({
           <div className="flex flex-col gap-8 md:flex-row">
             {/* Service Name + Category Card */}
             <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-2 flex items-center gap-2">
-                <DocumentCheckIcon className="h-5 w-5 text-blue-400" />
+              <div className="mb-2 flex items-start gap-2">
+                <DocumentCheckIcon className="h-5 w-5 shrink-0 text-blue-400" />
                 <h3 className="font-semibold text-gray-800">
                   Service Name & Category
                 </h3>
               </div>
               <div className="space-y-1">
-                <p className="break-words text-xl font-bold text-blue-900">
+                <p className="text-xl font-bold break-words text-blue-900">
                   {formData.serviceOfferingTitle?.trim() ||
                     "(No title provided)"}
                 </p>
-                <p className="break-words text-sm text-gray-700">
+                <p className="text-sm break-words text-gray-700">
                   Category:{" "}
                   <span className="font-semibold text-blue-800">
                     {categories.find((cat) => cat.id === formData.categoryId)
@@ -75,11 +75,11 @@ const ReviewSubmit: React.FC<Props> = ({
 
             {/* Location Card: Takes 1/3 of the width on desktop */}
             <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-4 flex items-center gap-2">
-                <MapPinIcon className="h-5 w-5 text-blue-400" />
+              <div className="mb-4 flex items-start gap-2">
+                <MapPinIcon className="h-5 w-5 shrink-0 text-blue-400" />
                 <h3 className="font-semibold text-gray-800">Location</h3>
               </div>
-              <div className="break-words font-medium text-blue-900">
+              <div className="font-medium break-words text-blue-900">
                 {[formData.locationMunicipalityCity, formData.locationProvince]
                   .filter(Boolean)
                   .join(", ")}
@@ -88,8 +88,8 @@ const ReviewSubmit: React.FC<Props> = ({
 
             {/* Availability Card: Takes 1/3 of the width on desktop */}
             <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-4 flex items-center gap-2">
-                <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
+              <div className="mb-4 flex items-start gap-2">
+                <CalendarDaysIcon className="h-5 w-5 shrink-0 text-blue-400" />
                 <h3 className="font-semibold text-gray-800">Availability</h3>
               </div>
               <div className="font-medium text-blue-900">
@@ -106,8 +106,8 @@ const ReviewSubmit: React.FC<Props> = ({
           </div>
 
           <div className="rounded-lg bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
+            <div className="mb-4 flex items-start gap-2">
+              <CalendarDaysIcon className="h-5 w-5 shrink-0 text-blue-400" />
               <h3 className="font-semibold text-gray-800">Packages</h3>
             </div>
             <div className="space-y-2">
@@ -125,7 +125,7 @@ const ReviewSubmit: React.FC<Props> = ({
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-blue-900">{pkg.name}</p>
-                        <p className="break-words text-sm text-gray-600">
+                        <p className="text-sm break-words text-gray-600">
                           {pkg.description}
                         </p>
                       </div>
