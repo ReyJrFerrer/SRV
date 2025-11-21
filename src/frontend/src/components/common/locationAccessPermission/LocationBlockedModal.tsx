@@ -34,9 +34,12 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
   useEffect(() => {
     let isMounted = true;
     const checkPermission = async () => {
-      if (typeof navigator === "undefined" || !(navigator as any).permissions) return;
+      if (typeof navigator === "undefined" || !(navigator as any).permissions)
+        return;
       try {
-        const status: PermissionStatus = await (navigator as any).permissions.query({ name: "geolocation" });
+        const status: PermissionStatus = await (
+          navigator as any
+        ).permissions.query({ name: "geolocation" });
         if (!isMounted) return;
         setGeoPermission(status.state);
         const handleChange = () => {
@@ -44,7 +47,9 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
           setGeoPermission(status.state);
           if (status.state !== "denied") {
             // Close and suppress modal when user allows or reverts permission
-            try { localStorage.setItem("loc_block_modal_suppress", "1"); } catch {}
+            try {
+              localStorage.setItem("loc_block_modal_suppress", "1");
+            } catch {}
             if (visible) onClose();
           }
         };
@@ -54,7 +59,9 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
       }
     };
     checkPermission();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [visible, onClose]);
 
   // Auto-dismiss if store already has a derived address & permission not explicitly denied
@@ -62,7 +69,9 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
     if (!visible) return;
     const hasContextLocation = !!userAddress && !!userProvince;
     if (hasContextLocation && geoPermission !== "denied") {
-      try { localStorage.setItem("loc_block_modal_suppress", "1"); } catch {}
+      try {
+        localStorage.setItem("loc_block_modal_suppress", "1");
+      } catch {}
       onClose();
     }
   }, [visible, userAddress, userProvince, geoPermission, onClose]);

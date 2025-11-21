@@ -26,7 +26,8 @@ import { useLocationStore } from "../../store/locationStore";
 const ClientHomePage: React.FC = () => {
   const navigate = useNavigate();
   const { error } = useServiceManagement();
-  const { locationStatus, userProvince, userAddress, isInitialized } = useLocationStore();
+  const { locationStatus, userProvince, userAddress, isInitialized } =
+    useLocationStore();
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
   const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
@@ -136,10 +137,17 @@ const ClientHomePage: React.FC = () => {
       {/* SECTION: Location blocked modal */}
       {(() => {
         const realDenied =
-          locationStatus === "denied" && !userProvince && !userAddress && isInitialized;
+          locationStatus === "denied" &&
+          !userProvince &&
+          !userAddress &&
+          isInitialized;
         const visible =
           (realDenied && !dismissedLocationBlock) ||
-          (permissionApiDenied && !dismissedLocationBlock && !userProvince && !userAddress && isInitialized) ||
+          (permissionApiDenied &&
+            !dismissedLocationBlock &&
+            !userProvince &&
+            !userAddress &&
+            isInitialized) ||
           (postLoginBlockedModalVisible && realDenied);
 
         const handleBlockedClose = () => {
@@ -152,7 +160,12 @@ const ClientHomePage: React.FC = () => {
           }
         };
 
-        return <LocationBlockedModal visible={visible} onClose={handleBlockedClose} />;
+        return (
+          <LocationBlockedModal
+            visible={visible}
+            onClose={handleBlockedClose}
+          />
+        );
       })()}
 
       {/* SECTION: OneSignal Blocked Modal */}

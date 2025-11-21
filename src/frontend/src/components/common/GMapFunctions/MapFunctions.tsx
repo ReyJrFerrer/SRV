@@ -249,7 +249,13 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
       )}
 
       <LocationBlockedModal
-        visible={showLocationModal && locationStatus === "denied" && !userProvince && !userAddress && isInitialized}
+        visible={
+          showLocationModal &&
+          locationStatus === "denied" &&
+          !userProvince &&
+          !userAddress &&
+          isInitialized
+        }
         onClose={() => setShowLocationModal(false)}
       />
     </>
