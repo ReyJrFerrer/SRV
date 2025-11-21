@@ -9,31 +9,17 @@ import {
   getAllFeedback,
   getFeedbackStats,
 } from "../services/adminServiceCanister";
-
-const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
-  rating,
-  maxStars = 5,
-}) => (
-  <div className="flex items-center">
-    {[...Array(maxStars)].map((_, index) => {
-      const starValue = index + 1;
-      return (
-        <StarSolid
-          key={index}
-          className={`h-5 w-5 ${
-            starValue <= rating ? "text-yellow-400" : "text-gray-300"
-          }`}
-        />
-      );
-    })}
-  </div>
-);
+import { StarRatingDisplay } from "../components/StarRatingDisplay";
+import { formatDate, formatRelativeTime } from "../utils/formatUtils";
+import { sortReviews, filterReviewsByRating } from "../utils/reviewUtils";
+import {
+  calculateRatingDistribution,
+  calculateAverageRating,
+} from "../utils/ratingUtils";
 
 const FeedbackItem: React.FC<{
   feedback: any;
-  formatFeedbackDate: (date: string) => string;
-  getRelativeTime: (date: string) => string;
-}> = ({ feedback, formatFeedbackDate, getRelativeTime }) => {
+}> = ({ feedback }) => {
   return (
     <div className="rounded-2xl border border-blue-100 bg-white/95 p-6 shadow-md transition">
       <div className="mb-3 flex items-start">
@@ -50,11 +36,11 @@ const FeedbackItem: React.FC<{
           </div>
           <div className="flex items-center space-x-2">
             <p className="text-xs text-gray-500">
-              {formatFeedbackDate(feedback.createdAt)}
+              {formatDate(feedback.createdAt)}
             </p>
             <span className="text-xs text-gray-400">•</span>
             <p className="text-xs text-gray-500">
-              {getRelativeTime(feedback.createdAt)}
+              {formatRelativeTime(feedback.createdAt)}
             </p>
           </div>
         </div>
@@ -111,80 +97,20 @@ const AppFeedbackPage: React.FC = () => {
     }
   };
 
-  const formatFeedbackDate = (date: string): string => {
-    try {
-      const d = new Date(date);
-      return d.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return "Unknown date";
-    }
-  };
-
-  const getRelativeTime = (date: string): string => {
-    try {
-      const d = new Date(date);
-      const now = new Date();
-      const diffMs = now.getTime() - d.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
-
-      if (diffMins < 1) return "just now";
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return formatFeedbackDate(date);
-    } catch {
-      return "Unknown";
-    }
-  };
-
   const sortedAndFilteredFeedback = useMemo(() => {
-    let filtered = feedback;
-    if (filterRating) {
-      filtered = filtered.filter((f) => f.rating === filterRating);
-    }
-    return filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        case "oldest":
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        case "highest":
-          return b.rating - a.rating;
-        case "lowest":
-          return a.rating - b.rating;
-        default:
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-      }
-    });
+    const filtered = filterReviewsByRating(feedback, filterRating);
+    return sortReviews(filtered, sortBy);
   }, [feedback, sortBy, filterRating]);
 
-  const ratingDistribution = useMemo(() => {
-    const dist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    feedback.forEach((f) => {
-      if (f.rating >= 1 && f.rating <= 5) {
-        dist[f.rating] = (dist[f.rating] || 0) + 1;
-      }
-    });
-    return dist;
-  }, [feedback]);
+  const ratingDistribution = useMemo(
+    () => calculateRatingDistribution(feedback),
+    [feedback],
+  );
 
-  const averageRating = useMemo(() => {
-    if (feedback.length === 0) return 0;
-    const sum = feedback.reduce((acc, f) => acc + (f.rating || 0), 0);
-    return sum / feedback.length;
-  }, [feedback]);
+  const averageRating = useMemo(
+    () => calculateAverageRating(feedback),
+    [feedback],
+  );
 
   if (loading) {
     return (
@@ -364,12 +290,7 @@ const AppFeedbackPage: React.FC = () => {
         {sortedAndFilteredFeedback.length > 0 ? (
           <div className="space-y-6">
             {sortedAndFilteredFeedback.map((item) => (
-              <FeedbackItem
-                key={item.id}
-                feedback={item}
-                formatFeedbackDate={formatFeedbackDate}
-                getRelativeTime={getRelativeTime}
-              />
+              <FeedbackItem key={item.id} feedback={item} />
             ))}
           </div>
         ) : (

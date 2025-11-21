@@ -609,7 +609,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             htmlFor={`pkgDesc-${pkg.id}`}
                             className="block text-xs font-medium text-gray-600"
                           >
-                            Description<span className="text-red-500">*</span>
+                            Brief Description
+                            <span className="text-red-500">*</span>
                           </label>
                           <textarea
                             id={`pkgDesc-${pkg.id}`}
@@ -630,14 +631,17 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 ? "border-red-400 bg-red-50 focus:border-red-500"
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
-                            placeholder="Describe what's included in this package."
-                            maxLength={100}
+                            placeholder="Describe what's included in this package. 150 words maximum"
+                            maxLength={150}
                           />
                           {pkgError &&
                             pkgError.description &&
                             !hidePackageFieldError[pkg.id]?.description && (
                               <p className="text-xs text-red-600">
-                                {pkgError.description}
+                                {pkgError.description.replace(
+                                  "Package 1: ",
+                                  "",
+                                )}
                               </p>
                             )}
                         </div>

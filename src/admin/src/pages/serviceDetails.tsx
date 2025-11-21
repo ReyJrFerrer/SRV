@@ -18,17 +18,8 @@ import {
   MediaGallery,
   ServiceDetailsModals,
 } from "../components";
-
-// Helper to format time (e.g., "09:00" -> "9:00 AM")
-const formatTime = (time: string) => {
-  const [hourStr, minuteStr] = time.split(":");
-  let hour = parseInt(hourStr, 10);
-  const minute = minuteStr || "00";
-  const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12;
-  if (hour === 0) hour = 12;
-  return `${hour}:${minute.padStart(2, "0")} ${ampm}`;
-};
+import { dayOfWeekToNumber } from "../utils/dayOfWeekUtils";
+import { formatTime } from "../utils/formatUtils";
 
 const ServiceDetailsPage: React.FC = () => {
   const params = useParams<{
@@ -73,11 +64,7 @@ const ServiceDetailsPage: React.FC = () => {
 
   // Debug logging for images
   useEffect(() => {
-    if (serviceImages) {
-      console.log("Service images loaded:", serviceImages);
-      console.log("Image loading error:", imageError);
-      console.log("Is loading images:", isLoadingImages);
-    }
+    // Service images loaded
   }, [serviceImages, imageError, isLoadingImages]);
 
   // Load service certificates using the provider's useServiceCertificates hook
@@ -98,40 +85,10 @@ const ServiceDetailsPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log(
-          "Loading service data for serviceId:",
-          serviceId,
-          "userId:",
-          userId,
-        );
-
         // Use provider's serviceCanisterService.getService directly
         const serviceData = await serviceCanisterService.getService(serviceId);
 
         if (serviceData) {
-          console.log("Service data retrieved:", serviceData);
-          console.log("Service imageUrls:", serviceData.imageUrls);
-          console.log("Service certificateUrls:", serviceData.certificateUrls);
-          console.log("Service location:", serviceData.location);
-          console.log(
-            "Service location.address:",
-            serviceData.location?.address,
-          );
-          console.log("Service location.city:", serviceData.location?.city);
-          console.log("Service location.state:", serviceData.location?.state);
-          console.log(
-            "Service location.country:",
-            serviceData.location?.country,
-          );
-          console.log(
-            "Service imageUrls length:",
-            serviceData.imageUrls?.length,
-          );
-          console.log(
-            "Service certificateUrls length:",
-            serviceData.certificateUrls?.length,
-          );
-
           // Map provider's Service to admin's ServiceData format
           const mappedService: ServiceData = {
             id: serviceData.id,
@@ -165,20 +122,7 @@ const ServiceDetailsPage: React.FC = () => {
             certificateUrls: serviceData.certificateUrls || [],
             weeklySchedule:
               serviceData.weeklySchedule?.map((schedule) => ({
-                dayOfWeek:
-                  schedule.day === "Monday"
-                    ? 0
-                    : schedule.day === "Tuesday"
-                      ? 1
-                      : schedule.day === "Wednesday"
-                        ? 2
-                        : schedule.day === "Thursday"
-                          ? 3
-                          : schedule.day === "Friday"
-                            ? 4
-                            : schedule.day === "Saturday"
-                              ? 5
-                              : 6,
+                dayOfWeek: dayOfWeekToNumber(schedule.day),
                 availability: {
                   isAvailable: schedule.availability.isAvailable,
                   slots: schedule.availability.slots || [],
@@ -192,7 +136,6 @@ const ServiceDetailsPage: React.FC = () => {
           try {
             const servicePackages =
               await serviceCanisterService.getServicePackages(serviceId);
-            console.log("Service packages loaded:", servicePackages);
             setPackages(servicePackages || []);
           } catch (packageError) {
             console.error("Error loading packages:", packageError);

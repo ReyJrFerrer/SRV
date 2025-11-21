@@ -109,7 +109,6 @@ async function checkConsecutiveBadReviews(
       return false;
     }
 
-    console.log(`📊 Checking for consecutive bad reviews ${scenarioType} by ${userType} ${userId}`);
 
     let recentReviewsSnap;
     try {
@@ -123,7 +122,6 @@ async function checkConsecutiveBadReviews(
     } catch (queryError) {
       // If query fails due to missing index, try fallback approach
       if (queryError.code === 8 || queryError.message?.includes("index")) {
-        console.log(`⚠️ Query failed due to index, using fallback approach`);
         // Fallback: get all reviews and filter/sort client-side
         const allReviewsSnap = await db
           .collection(collectionName)
@@ -173,8 +171,6 @@ async function checkConsecutiveBadReviews(
         const userName = userType === "provider" ? "Provider" : "Client";
         const action = scenarioType === "received" ? "received" : "given";
 
-        console.log(`⚠️ Detected ${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} consecutive bad reviews ` +
-          `${action} by ${userType} ${userId}. Creating auto-report.`);
 
         // Get user profile for report details
         const userDoc = await db.collection("users").doc(userId).get();
@@ -228,16 +224,12 @@ async function checkConsecutiveBadReviews(
 
         // Save report to Firestore
         await db.collection("reports").doc(reportId).set(newReport);
-        console.log(`✅ Automatically created ticket ${reportId} for ` +
-          `${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} consecutive bad reviews.`);
         return true;
       }
     }
     return false;
   } catch (error) {
     // Don't fail the review submission if report creation fails - just log it
-    console.error(`⚠️ Failed to check/create auto-report for consecutive bad reviews: ` +
-      `${error.message}`);
     return false;
   }
 }
@@ -392,9 +384,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
     // Process review for reputation with AI sentiment analysis
     // This is done outside the transaction to avoid long-running operations
-    console.log(`🌟 [submitReview] Processing review for reputation with AI`);
     await processReviewForReputationInternal(result.data, true);
-    console.log(`✅ [submitReview] Review processed for reputation successfully`);
 
     // Check for consecutive bad reviews and auto-create report if needed
     // This is done outside the transaction to avoid long-running operations
@@ -406,7 +396,6 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
       const providerId = newReview.providerId;
       const clientId = newReview.clientId;
 
-      console.log(`📊 [submitReview] Checking for consecutive bad reviews...`);
 
       // Scenario 1: Provider receives consecutive bad reviews
       await checkConsecutiveBadReviews(
@@ -429,8 +418,6 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
       );
     } catch (reportError) {
       // Don't fail the review submission if report creation fails - just log it
-      console.error(`⚠️ [submitReview] Failed to check/create auto-report
-        for consecutive bad reviews: ${reportError.message}`);
     }
 
     return result;
@@ -543,18 +530,10 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
 
   // Use authenticated user's ID if no userId provided
   const targetUserId = userId || authInfo.uid;
-
-
-  // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;
 
-  console.log("[getUserReviews] includeHidden:", includeHidden,
-    "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
-
   try {
-    // When showing all (including hidden), fetch all and filter client-side to avoid index issues
     if (showAll) {
-      console.log("[getUserReviews] Fetching all reviews (including hidden) for admin");
       const allReviewsSnap = await db
         .collection("reviews")
         .where("clientId", "==", targetUserId)
@@ -804,6 +783,13 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         );
       }
 
+      let serviceRef = null;
+      let serviceSnap = null;
+      if (reviewCollection === "reviews" && existingReview.serviceId) {
+        serviceRef = db.collection("services").doc(existingReview.serviceId);
+        serviceSnap = await transaction.get(serviceRef);
+      }
+
       const isOwner = reviewCollection === "reviews" ? existingReview.clientId === authInfo.uid :
         existingReview.providerId === authInfo.uid;
 
@@ -830,29 +816,24 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
 
       transaction.update(reviewRef, updatedReview);
 
-      if (reviewCollection === "reviews" && existingReview.serviceId) {
-        const serviceRef = db.collection("services").doc(existingReview.serviceId);
-        const serviceSnap = await transaction.get(serviceRef);
+      if (reviewCollection === "reviews" && serviceSnap && serviceSnap.exists) {
+        const service = serviceSnap.data();
+        const currentRating = service.averageRating || 0;
+        const currentCount = service.reviewCount || 1;
+        const newCount = Math.max(0, currentCount - 1);
 
-        if (serviceSnap.exists) {
-          const service = serviceSnap.data();
-          const currentRating = service.averageRating || 0;
-          const currentCount = service.reviewCount || 1;
-          const newCount = Math.max(0, currentCount - 1);
-
-          let newAverageRating = 0;
-          if (newCount > 0) {
-            const oldTotal = currentRating * currentCount;
-            const newTotal = oldTotal - existingReview.rating;
-            newAverageRating = newTotal / newCount;
-          }
-
-          transaction.update(serviceRef, {
-            averageRating: newAverageRating,
-            reviewCount: newCount,
-            updatedAt: now,
-          });
+        let newAverageRating = 0;
+        if (newCount > 0) {
+          const oldTotal = currentRating * currentCount;
+          const newTotal = oldTotal - existingReview.rating;
+          newAverageRating = newTotal / newCount;
         }
+
+        transaction.update(serviceRef, {
+          averageRating: newAverageRating,
+          reviewCount: newCount,
+          updatedAt: now,
+        });
       }
 
       return {success: true, message: "Review hidden successfully"};
@@ -978,7 +959,7 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Bulk update review status (admin only)
+ * Bulk update review status
  */
 exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) => {
   // Extract payload
@@ -1251,10 +1232,9 @@ exports.calculateUserAverageRating = functions.https.onCall(async (data, context
 });
 
 /**
- * Get all reviews (admin function)
+ * Get all reviews
  */
 exports.getAllReviews = functions.https.onCall(async (data, context) => {
-  // Authentication - Admin only
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
@@ -1295,12 +1275,10 @@ exports.getAllReviews = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Get review statistics (admin function)
+ * Get review statistics
  */
 exports.getReviewStatistics = functions.https.onCall(async (data, context) => {
-  // Authentication - Admin only
   const authInfo = getAuthInfo(context, data);
-  // Removed the is not an admin
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -1333,15 +1311,13 @@ exports.getReviewStatistics = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Flag a review for moderation (admin function)
+ * Flag a review for moderation
  */
 exports.flagReview = functions.https.onCall(async (data, context) => {
-  // Extract payload
   const payload = data.data.data || data;
   const {reviewId, reason} = payload;
-
-  // Authentication - Admin only
   const authInfo = getAuthInfo(context, data);
+
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -1402,10 +1378,7 @@ exports.getProviderReviews = functions.https.onCall(async (data, _context) => {
   const {providerId, limit = 20, offset = 0} = payload;
 
   if (!providerId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Provider ID is required",
-    );
+    return {success: true, data: []};
   }
 
   // Convert limit and offset to integers
@@ -1609,15 +1582,7 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
     });
 
     // Process review for client reputation with AI sentiment analysis
-    console.log(
-      `🌟 [submitProviderReview] Processing provider review for ` +
-      `client reputation with AI`,
-    );
     await processReviewForReputationInternal(result.data, true);
-    console.log(
-      `✅ [submitProviderReview] Provider review processed ` +
-      `for reputation successfully`,
-    );
 
     // Check for consecutive bad reviews and auto-create report if needed
     // This is done outside the transaction to avoid long-running operations
@@ -1629,7 +1594,6 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
       const providerId = newReview.providerId;
       const clientId = newReview.clientId;
 
-      console.log(`📊 [submitProviderReview] Checking for consecutive bad reviews...`);
 
       // Scenario 1: Provider gives consecutive bad reviews
       await checkConsecutiveBadReviews(
@@ -1652,8 +1616,6 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
       );
     } catch (reportError) {
       // Don't fail the review submission if report creation fails - just log it
-      console.error(`⚠️ [submitProviderReview] Failed to check/create auto-report
-        for consecutive bad reviews: ${reportError.message}`);
     }
 
     return result;
@@ -1686,21 +1648,15 @@ exports.getClientProviderReviews = functions.https.onCall(async (data, context) 
   const limitInt = parseInt(limit) || 20;
   const offsetInt = parseInt(offset) || 0;
 
-  // Authentication check
   const authInfo = getAuthInfo(context, data);
-
-  // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;
-
-  console.log("[getClientProviderReviews] includeHidden:",
-    includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
 
   try {
     let query = db
       .collection("providerReviews")
       .where("clientId", "==", clientId);
 
-    // Only filter by status if not showing all (admin only)
+    // Only filter by status if not showing all
     if (!showAll) {
       query = query.where("status", "==", "Visible");
     }
@@ -1774,10 +1730,7 @@ exports.getProviderReviewsByProvider = functions.https.onCall(async (data, conte
   const limitInt = parseInt(limit) || 20;
   const offsetInt = parseInt(offset) || 0;
 
-  // Authentication check
   const authInfo = getAuthInfo(context, data);
-
-  // Only admins can request hidden reviews
   const showAll = includeHidden && authInfo.isAdmin;
 
   console.log("[getProviderReviewsByProvider] includeHidden:",
@@ -1788,7 +1741,7 @@ exports.getProviderReviewsByProvider = functions.https.onCall(async (data, conte
       .collection("providerReviews")
       .where("providerId", "==", providerId);
 
-    // Only filter by status if not showing all (admin only)
+    // Only filter by status if not showing all
     if (!showAll) {
       query = query.where("status", "==", "Visible");
     }

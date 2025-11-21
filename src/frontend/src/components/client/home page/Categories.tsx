@@ -145,7 +145,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
     const imageSize = 50; // Fixed size for category images
     const textClass = useMemo(
       () =>
-        "text-xs md:text-lg font-semibold text-gray-700 h-12 items-center text-center transition-all duration-150",
+        "text-xs md:text-lg font-semibold text-gray-700 h-15 items-center text-center transition-all duration-150",
       [],
     );
 

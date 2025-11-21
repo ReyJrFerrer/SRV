@@ -12,6 +12,7 @@ module {
     public type UserRole = {
         #Client;
         #ServiceProvider;
+        #Admin;
     };
 
     public type ProfileImage = {

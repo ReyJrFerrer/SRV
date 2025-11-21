@@ -1,132 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
-  StarIcon as StarSolid,
   EyeSlashIcon,
   ChartBarIcon,
-  TrashIcon,
-  ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../frontend/src/hooks/reviewManagement";
 import { useServiceById } from "../../../frontend/src/hooks/serviceInformation";
 import { useUserImage } from "../../../frontend/src/hooks/useMediaLoader";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
-
-const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
-  rating,
-  maxStars = 5,
-}) => (
-  <div className="flex items-center">
-    {[...Array(maxStars)].map((_, index) => {
-      const starValue = index + 1;
-      return (
-        <StarSolid
-          key={index}
-          className={`h-5 w-5 ${
-            starValue <= rating ? "text-yellow-400" : "text-gray-300"
-          }`}
-        />
-      );
-    })}
-  </div>
-);
-
-const ReviewItem: React.FC<{
-  review: any;
-  formatReviewDate: (date: string) => string;
-  getRelativeTime: (date: string) => string;
-  isDeleting: boolean;
-  onRestore: (reviewId: string) => void;
-  onShowDeleteConfirm: (reviewId: string) => void;
-}> = ({
-  review,
-  formatReviewDate,
-  getRelativeTime,
-  isDeleting,
-  onRestore,
-  onShowDeleteConfirm,
-}) => {
-  const { userImageUrl: clientImageUrl } = useUserImage(
-    review.clientProfile?.profilePicture?.imageUrl,
-  );
-  const isHidden = review.status === "Hidden";
-
-  return (
-    <div
-      className={`rounded-2xl border bg-white/95 p-6 shadow-md transition ${
-        review.status !== "Visible"
-          ? "border-l-8 border-yellow-300"
-          : "border border-blue-100"
-      }`}
-    >
-      <div className="mb-3 flex items-start">
-        <div className="relative mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-blue-100 bg-blue-50">
-          <img
-            src={clientImageUrl || "/default-client.svg"}
-            alt={review.clientName || "Client"}
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div className="flex-grow">
-          <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-blue-900">
-              {review.clientName || "Anonymous User"}
-            </h4>
-            <div className="flex items-center gap-2">
-              {review.status !== "Visible" && (
-                <div className="flex items-center text-xs text-yellow-600">
-                  <EyeSlashIcon className="mr-1 h-4 w-4" />
-                  {review.status}
-                </div>
-              )}
-              {isHidden ? (
-                <button
-                  onClick={() => onRestore(review.id)}
-                  disabled={isDeleting}
-                  className="rounded-full p-1.5 text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
-                  title="Restore review"
-                >
-                  <ArrowPathIcon className="h-5 w-5" />
-                </button>
-              ) : (
-                <button
-                  onClick={() => onShowDeleteConfirm(review.id)}
-                  disabled={isDeleting}
-                  className="rounded-full p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
-                  title="Delete review"
-                >
-                  <TrashIcon className="h-5 w-5" />
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <p className="text-xs text-gray-500">
-              {formatReviewDate(review.createdAt)}
-            </p>
-            <span className="text-xs text-gray-400">•</span>
-            <p className="text-xs text-gray-500">
-              {getRelativeTime(review.createdAt)}
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="mb-2">
-        <StarRatingDisplay rating={review.rating} />
-      </div>
-      <p className="mb-3 text-base leading-relaxed text-gray-800">
-        {review.comment}
-      </p>
-      {review.qualityScore && (
-        <div className="mb-2 flex items-center text-xs text-blue-700">
-          <span>Quality Score: {(review.qualityScore * 100).toFixed(0)}%</span>
-        </div>
-      )}
-    </div>
-  );
-};
+import { StarRatingDisplay } from "../components/StarRatingDisplay";
+import { ServiceReviewItem } from "../components/analytics/ServiceReviewItem";
+import {
+  sortReviews,
+  filterReviewsByRating,
+  filterReviewsByVisibility,
+  handleDeleteReview,
+  handleRestoreReview,
+} from "../utils/reviewUtils";
 
 const ServiceReviewsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -149,6 +41,7 @@ const ServiceReviewsPage: React.FC = () => {
     }
   }, [service]);
 
+  const reviewHook = useServiceReviews(serviceId as string);
   const {
     reviews,
     loading: reviewsLoading,
@@ -158,7 +51,8 @@ const ServiceReviewsPage: React.FC = () => {
     getRatingDistribution,
     formatReviewDate,
     getRelativeTime,
-  } = useServiceReviews(serviceId as string);
+    refreshReviews,
+  } = reviewHook;
 
   const [sortBy, setSortBy] = useState<
     "newest" | "oldest" | "highest" | "lowest"
@@ -171,34 +65,10 @@ const ServiceReviewsPage: React.FC = () => {
   );
   const [error, setError] = useState<string | null>(null);
 
-  const sortedAndFilteredReviews = React.useMemo(() => {
-    let filtered = reviews;
-    if (!showHiddenReviews) {
-      filtered = reviews.filter((review) => review.status === "Visible");
-    }
-    if (filterRating) {
-      filtered = filtered.filter((review) => review.rating === filterRating);
-    }
-    return filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        case "oldest":
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        case "highest":
-          return b.rating - a.rating;
-        case "lowest":
-          return a.rating - b.rating;
-        default:
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-      }
-    });
+  const sortedAndFilteredReviews = useMemo(() => {
+    let filtered = filterReviewsByVisibility(reviews, showHiddenReviews);
+    filtered = filterReviewsByRating(filtered, filterRating);
+    return sortReviews(filtered, sortBy);
   }, [reviews, sortBy, filterRating, showHiddenReviews]);
 
   const ratingDistribution = getRatingDistribution(reviews);
@@ -211,37 +81,37 @@ const ServiceReviewsPage: React.FC = () => {
     (review) => review.status === "Flagged",
   );
 
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!reviewId) return;
-
-    setDeletingReviewId(reviewId);
-    setError(null);
-    try {
-      await adminServiceCanister.deleteReview(reviewId);
-      window.location.reload();
-    } catch (e) {
-      console.error("Error deleting review:", e);
-      setError("Failed to delete review.");
-    } finally {
-      setDeletingReviewId(null);
-      setShowDeleteConfirm(null);
+  const onDeleteSuccess = async () => {
+    setShowDeleteConfirm(null);
+    if (refreshReviews) {
+      await refreshReviews();
     }
   };
 
-  const handleRestoreReview = async (reviewId: string) => {
-    if (!reviewId) return;
-
-    setDeletingReviewId(reviewId);
-    setError(null);
-    try {
-      await adminServiceCanister.restoreReview(reviewId);
-      window.location.reload();
-    } catch (e) {
-      console.error("Error restoring review:", e);
-      setError("Failed to restore review.");
-    } finally {
-      setDeletingReviewId(null);
+  const onRestoreSuccess = async () => {
+    if (refreshReviews) {
+      await refreshReviews();
     }
+  };
+
+  const handleDelete = async (reviewId: string) => {
+    await handleDeleteReview(
+      reviewId,
+      (id) => adminServiceCanister.deleteReview(id),
+      onDeleteSuccess,
+      (err) => setError(err),
+      setDeletingReviewId,
+    );
+  };
+
+  const handleRestore = async (reviewId: string) => {
+    await handleRestoreReview(
+      reviewId,
+      (id) => adminServiceCanister.restoreReview(id),
+      onRestoreSuccess,
+      (err) => setError(err),
+      setDeletingReviewId,
+    );
   };
 
   if (serviceLoading || reviewsLoading) {
@@ -498,13 +368,13 @@ const ServiceReviewsPage: React.FC = () => {
         {sortedAndFilteredReviews.length > 0 ? (
           <div className="space-y-6">
             {sortedAndFilteredReviews.map((review) => (
-              <ReviewItem
+              <ServiceReviewItem
                 key={review.id}
                 review={review}
                 formatReviewDate={formatReviewDate}
                 getRelativeTime={getRelativeTime}
                 isDeleting={deletingReviewId === review.id}
-                onRestore={handleRestoreReview}
+                onRestore={handleRestore}
                 onShowDeleteConfirm={setShowDeleteConfirm}
               />
             ))}
@@ -532,7 +402,7 @@ const ServiceReviewsPage: React.FC = () => {
         isOpen={showDeleteConfirm !== null}
         reviewId={showDeleteConfirm}
         isDeleting={deletingReviewId !== null}
-        onConfirm={handleDeleteReview}
+        onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(null)}
       />
     </div>

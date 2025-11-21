@@ -21,7 +21,6 @@ export async function initVersionChecker(): Promise<void> {
   try {
     // Get initial version
     currentVersion = await fetchVersion();
-    console.log("App version:", currentVersion);
 
     // Start periodic checks
     startVersionCheck();
@@ -68,10 +67,6 @@ function startVersionCheck(): void {
       const latestVersion = await fetchVersion();
 
       if (currentVersion && latestVersion !== currentVersion) {
-        console.log("New version detected!");
-        console.log("Current:", currentVersion);
-        console.log("Latest:", latestVersion);
-
         // Notify user about new version
         showUpdateNotification();
       }
@@ -187,7 +182,6 @@ async function clearAllCaches(): Promise<void> {
       await Promise.all(
         cacheNames.map((cacheName) => caches.delete(cacheName)),
       );
-      console.log("Cleared Cache API");
     }
 
     // Unregister service workers
@@ -196,13 +190,10 @@ async function clearAllCaches(): Promise<void> {
       await Promise.all(
         registrations.map((registration) => registration.unregister()),
       );
-      console.log("Unregistered service workers");
     }
 
     // Clear localStorage version marker
     localStorage.removeItem("app-version");
-
-    console.log("All caches cleared");
   } catch (error) {
     console.error("Failed to clear caches:", error);
   }

@@ -7,6 +7,7 @@ import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import phLocations from "../../../data/ph_locations.json";
 import EnableLocationButton from "../../common/locationAccessPermission/EnableLocationButton";
 import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
+import FullScreenLocationMapModal from "../../common/GMapFunctions/FullScreenLocationMapModal";
 
 export type ServiceLocationProps = {
   highlight?: boolean;
@@ -72,9 +73,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   detectedAddress,
   mapLocation,
   setMapLocation,
-  mapPreciseAddress,
   setMapPreciseAddress,
-  mapDisplayAddress,
   setMapDisplayAddress,
   locationInputMode,
   setLocationInputMode,
@@ -103,7 +102,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   houseNumberRef,
 }) => {
   const { locationStatus, location } = useLocationStore();
-  // If permission denied/not_set, default to showing manual forms to guide the user
+  const [showFullScreenMap, setShowFullScreenMap] = React.useState(false);
+
+  // Effects
   useEffect(() => {
     if (locationStatus === "denied") {
       try {
@@ -113,12 +114,74 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
     }
   }, [locationStatus, setLocationInputMode, setShowFallbackForms]);
 
-  // Scale reported accuracy for UI (smaller visual circle than reported gps accuracy)
+  // Helpers
   const rawAccuracy = location?.accuracy;
   const scaledAccuracy =
     typeof rawAccuracy === "number" && rawAccuracy > 0
       ? Math.min(rawAccuracy * 0.25, 100)
       : undefined;
+
+  // Remove plus-code / geocode tokens from addresses (e.g. "2CFX+WPX")
+  const stripPlusCodes = (addr: string) => {
+    if (!addr) return "";
+    try {
+      const plusCodeRegex = /^[A-Z0-9]{1,}\+[A-Z0-9]{1,}$/i;
+      const parts = addr
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      const filtered = parts.filter((p) => !plusCodeRegex.test(p));
+      return filtered.join(", ").trim();
+    } catch {
+      return addr;
+    }
+  };
+  const cleanedDetectedAddress = stripPlusCodes(detectedAddress || "");
+
+  useEffect(() => {
+    if (mapMode === "detected") {
+      try {
+        if (
+          geoLocation &&
+          typeof geoLocation.latitude === "number" &&
+          typeof geoLocation.longitude === "number"
+        ) {
+          setMapLocation({
+            lat: geoLocation.latitude,
+            lng: geoLocation.longitude,
+            address: cleanedDetectedAddress,
+            formatted_address: cleanedDetectedAddress,
+            __detected: true,
+          });
+        } else {
+          setMapLocation(null);
+        }
+        if (cleanedDetectedAddress) {
+          setMapPreciseAddress(cleanedDetectedAddress);
+          setMapDisplayAddress(cleanedDetectedAddress);
+        } else {
+          setMapPreciseAddress("");
+          setMapDisplayAddress("");
+        }
+      } catch {}
+    }
+  }, [
+    mapMode,
+    geoLocation,
+    cleanedDetectedAddress,
+    setMapLocation,
+    setMapPreciseAddress,
+    setMapDisplayAddress,
+  ]);
+  // Close modal on Escape key when open
+  useEffect(() => {
+    if (!showFullScreenMap) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") setShowFullScreenMap(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showFullScreenMap]);
   return (
     <div
       className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
@@ -132,12 +195,9 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         Service Location <span className="text-red-500">*</span>
       </h3>
 
-      {/* When browser location permission is denied, do not show the
-      detected / maps buttons. Show a short banner with a CTA to
-      re-enable location permission so the user can restore detected
-      / map-based selection. */}
+      {/* Controls */}
       {!showFallbackForms && locationStatus !== "denied" && (
-        <div className="mb-4 flex gap-3 text-xs font-medium">
+        <div className="mb-4 flex flex-col gap-2 text-xs font-medium sm:flex-row sm:gap-3">
           <button
             type="button"
             onClick={() => setMapMode("detected")}
@@ -160,10 +220,20 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
           >
             Pin / Search Location
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowFallbackForms(true);
+              setLocationInputMode("detected");
+            }}
+            className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50`}
+          >
+            Use Manual Address Form
+          </button>
         </div>
       )}
 
-      {/* Inline banner shown when browser blocks location access */}
+      {/* Inline banner */}
       {locationStatus === "denied" && (
         <div className="mb-4 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           <div>
@@ -184,8 +254,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       {mapMode === "detected" && !showFallbackForms && (
         <div className="mb-2.5">
           <div className="mb-2 text-[11px] font-medium text-gray-600">
-            Automatically detected via browser geolocation. Drop a custom pin if
-            this is inaccurate.
+            Automatically detected via browser geolocation.
           </div>
           {locationStatus === "allowed" ? (
             <div className="overflow-hidden rounded-xl border border-gray-200">
@@ -200,6 +269,16 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   style={{ width: "100%", height: 260 }}
                   disableDefaultUI={true}
                   zoomControl={true}
+                  onClick={(e: any) => {
+                    try {
+                      if (
+                        (e?.placeId || e?.detail?.placeId) &&
+                        typeof e?.stop === "function"
+                      ) {
+                        e.stop();
+                      }
+                    } catch {}
+                  }}
                 >
                   <AdvancedMarker
                     position={{
@@ -236,8 +315,8 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             </div>
           )}
           <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 p-2 text-[11px] text-blue-900">
-            {detectedStatus === "ok" && detectedAddress
-              ? detectedAddress
+            {detectedStatus === "ok" && cleanedDetectedAddress
+              ? cleanedDetectedAddress
               : detectedStatus === "failed"
                 ? "Unable to resolve address. You can switch to Pin / Search."
                 : detectedStatus === "loading" || locationLoading
@@ -262,18 +341,32 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               value={
                 mapLocation
                   ? { ...mapLocation, address: mapLocation.address ?? "" }
-                  : null
+                  : geoLocation
+                    ? {
+                        lat: geoLocation.latitude,
+                        lng: geoLocation.longitude,
+                        address: cleanedDetectedAddress,
+                      }
+                    : null
               }
+              onOpenFullScreen={() => setShowFullScreenMap(true)}
               onChange={(loc: any) => {
-                setMapLocation(loc);
-                const preciseAddressForDB =
-                  loc.formatted_address || loc.address || "";
+                // Clean plus-code tokens from the address before passing down
+                const rawPrecise = loc.formatted_address || loc.address || "";
+                const cleanedPrecise = stripPlusCodes(rawPrecise);
+
                 const placeName = loc.rawName;
-                let displayAddress = preciseAddressForDB;
-                if (placeName && !preciseAddressForDB.startsWith(placeName)) {
-                  displayAddress = `${placeName}, ${preciseAddressForDB}`;
+                let displayAddress = cleanedPrecise;
+                if (placeName && !cleanedPrecise.startsWith(placeName)) {
+                  displayAddress = `${placeName}, ${cleanedPrecise}`;
                 }
-                setMapPreciseAddress(preciseAddressForDB);
+
+                setMapLocation({
+                  ...loc,
+                  address: cleanedPrecise,
+                  formatted_address: cleanedPrecise,
+                });
+                setMapPreciseAddress(cleanedPrecise);
                 setMapDisplayAddress(displayAddress);
               }}
               persistKey="booking:lastLocation"
@@ -281,61 +374,12 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               label="Pin / Search Location"
             />
           </Suspense>
-          {(mapDisplayAddress || mapPreciseAddress) && (
-            <div className="mt-2 space-y-1">
-              {mapDisplayAddress && (
-                <div className="flex items-start gap-1">
-                  <span
-                    className="truncate text-xs font-medium text-gray-700"
-                    title={mapDisplayAddress}
-                  >
-                    {mapDisplayAddress}
-                  </span>
-                  <span
-                    className="cursor-help text-[10px] text-blue-500"
-                    title="Display Address: Readable version (place/building, street, barangay, city)."
-                  >
-                    (?)
-                  </span>
-                </div>
-              )}
-              {mapPreciseAddress &&
-                mapDisplayAddress &&
-                mapDisplayAddress !== mapPreciseAddress && (
-                  <div className="flex items-start gap-1">
-                    <span
-                      className="truncate text-[10px] text-gray-500"
-                      title="Precise Address: Full Google formatted address (may include plus code) stored for provider navigation."
-                    >
-                      Provider reference: {mapPreciseAddress}
-                    </span>
-                    <span
-                      className="cursor-help text-[10px] text-blue-400"
-                      title="Used internally to help the provider navigate accurately."
-                    >
-                      (i)
-                    </span>
-                  </div>
-                )}
-            </div>
-          )}
+          {/* Full screen control moved inside the map picker */}
         </div>
       )}
 
       {/* Hide the quick 'Use Manual Address Form' toggle when permission is
           denied because we immediately show the manual city/province flow */}
-      {!showFallbackForms && locationStatus !== "denied" && (
-        <button
-          type="button"
-          onClick={() => {
-            setShowFallbackForms(true);
-            setLocationInputMode("detected");
-          }}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Use Manual Address Form
-        </button>
-      )}
 
       {showFallbackForms && (
         <div className="mb-4 flex flex-wrap gap-4">
@@ -668,6 +712,43 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
           />
         </div>
+      )}
+
+      {showFullScreenMap && (
+        <FullScreenLocationMapModal
+          open={showFullScreenMap}
+          onClose={() => setShowFullScreenMap(false)}
+          value={
+            mapLocation
+              ? { ...mapLocation, address: mapLocation.address ?? "" }
+              : geoLocation
+                ? {
+                    lat: geoLocation.latitude,
+                    lng: geoLocation.longitude,
+                    address: cleanedDetectedAddress,
+                  }
+                : null
+          }
+          onChange={(loc: any) => {
+            const rawPrecise = loc.formatted_address || loc.address || "";
+            const cleanedPrecise = stripPlusCodes(rawPrecise);
+            const placeName = loc.rawName;
+            let displayAddress = cleanedPrecise;
+            if (placeName && !cleanedPrecise.startsWith(placeName)) {
+              displayAddress = `${placeName}, ${cleanedPrecise}`;
+            }
+            setMapLocation({
+              ...loc,
+              address: cleanedPrecise,
+              formatted_address: cleanedPrecise,
+            });
+            setMapPreciseAddress(cleanedPrecise);
+            setMapDisplayAddress(displayAddress);
+          }}
+          persistKey="booking:lastLocation"
+          highlight={highlight}
+          label="Full Screen Location Picker"
+        />
       )}
     </div>
   );

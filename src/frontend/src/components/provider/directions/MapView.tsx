@@ -1,5 +1,6 @@
 import React from "react";
 import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 
 interface MapViewProps {
   mapApiKey: string;
@@ -32,17 +33,11 @@ const MapView: React.FC<MapViewProps> = ({
     <APIProvider apiKey={mapApiKey}>
       <Map
         style={containerStyle}
-        defaultZoom={isInNavigationMode ? 23 : 15}
+        defaultZoom={isInNavigationMode ? 20 : 15}
         defaultCenter={providerLocation}
-        // Primary map-ready hooks: use onIdle and onTilesLoaded which tend to
-        // fire reliably across desktop and mobile. Keep onCameraChanged as a
-        // fallback for cases where camera movement is the earliest signal.
         onIdle={(ev) => setMapRef(ev.map)}
         onTilesLoaded={(ev) => setMapRef(ev.map)}
         onCameraChanged={(ev) => setMapRef(ev.map)}
-        // On touch devices prefer 'cooperative' so users can pinch-to-zoom
-        // with two fingers while preserving single-finger page scroll.
-        // Keep 'none' during navigation mode to avoid accidental interactions.
         gestureHandling={
           isInNavigationMode
             ? "none"
@@ -55,25 +50,22 @@ const MapView: React.FC<MapViewProps> = ({
         // Hide built-in +/- zoom controls but keep programmatic zooming intact
         zoomControl={false}
         mapId={"6922634ff75ae05ac38cc473"}
+        onClick={(e: any) => {
+          try {
+            if (
+              (e?.placeId || e?.detail?.placeId) &&
+              typeof e?.stop === "function"
+            ) {
+              e.stop();
+            }
+          } catch {}
+        }}
       >
         {providerLocation && (
           <AdvancedMarker position={providerLocation}>
             {isInNavigationMode ? (
               <div style={{ transform: `rotate(${deviceHeading ?? 0}deg)` }}>
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="#1D4ED8"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 2L2.5 21.5L12 17L21.5 21.5L12 2Z"
-                    stroke="#FFFFFF"
-                    strokeWidth="1.5"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <PaperAirplaneIcon className="h-7 w-7 text-blue-700" />
               </div>
             ) : (
               <div
@@ -91,11 +83,6 @@ const MapView: React.FC<MapViewProps> = ({
 
         {destinationCoords && (
           <AdvancedMarker position={destinationCoords}>
-            {/**
-             * Render a small label above the destination marker showing the
-             * destination name when available. Keep styling minimal so it
-             * works on mobile and desktop.
-             */}
             <div
               style={{
                 display: "flex",

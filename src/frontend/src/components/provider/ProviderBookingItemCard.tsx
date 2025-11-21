@@ -227,8 +227,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // --- Action handlers ---
+  // Section: Handlers
   const handleAccept = async () => {
+    // optimistic: emit interaction immediately so badges update in UI
+    emitInteraction();
     // Check commission validation for cash bookings before accepting
     if (booking.paymentMethod === "CashOnHand") {
       if (commissionValidation.loading) {
@@ -247,7 +249,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     const scheduledDate = new Date(booking.scheduledDate);
     const success = await acceptBookingById(booking.id, scheduledDate);
     if (success) {
-      // Booking has transitioned from Requested to Accepted; mark interaction of original request notification
       dispatchBookingInteracted(booking.id);
       navigate(`../../provider/booking/${booking.id}`);
     }
@@ -257,14 +258,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     navigate(`/provider/complete-service/${booking.id}`);
   };
 
-  // Handle cancel button click
-
-  // Handle complete confirmation
   const handleCompleteConfirm = () => {
     navigate(`/provider/complete-service/${booking.id}`);
   };
 
-  // Navigate to directions page first; actual start initiated from there
   const handleStartService = async () => {
     if (!booking) return;
 
@@ -281,7 +278,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // --- Chat handler: check for existing conversation, else create, then navigate ---
+  // Section: Handlers (chat)
   const handleChatClient = async () => {
     if (!booking.clientId || !identity) return;
     try {
@@ -328,7 +325,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       );
     }
   };
-  // --- Booking state checks for button logic ---
+  // Section: Interaction helpers
+  // Emit booking-interacted when provider performs actions from the card
+  const emitInteraction = () => {
+    try {
+      dispatchBookingInteracted(booking.id);
+    } catch {}
+  };
+  // Section: Booking state checks
   const isInProgress = status === "InProgress";
 
   // --- Helper: Check if booking is scheduled for a future date ---
@@ -339,7 +343,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     return bookingDate.getTime() > now.getTime();
   })();
 
-  // --- Reusable Booking Card Content Component ---
+  // Section: UI Components
   const BookingCardContent = ({ showDurationInDetails = true }) => (
     <div className="rounded-lg bg-white shadow-lg md:flex">
       {/* Provider Profile Image Section (Vertically Centered) */}
@@ -381,33 +385,29 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           </h3>
           <p className="mt-1 text-xs text-gray-500">{packageTitle}</p>
 
-          {/* Details List */}
-          <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-            {/* REPUTATION AND RATING: Show skeleton while loading, then fade in data */}
-            {clientId && (
-              <div className="mb-1.5 flex flex-col items-start">
-                {hasClientData ? (
-                  <div className="flex w-full flex-col">
-                    <ClientReputationScore reputation={reputation} />
-                    <ClientRatingSummary reviews={review} />
-                  </div>
-                ) : (
-                  <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-4">
-                    {/* Skeleton for Reputation Score */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-pulse rounded-full bg-gray-200"></div>
-                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200"></div>
-                    </div>
-                    {/* Skeleton for Rating Summary */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
-                      <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Rating below package name */}
+          {clientId && (
+            <div className="mt-1">
+              {hasClientData ? (
+                <ClientRatingSummary reviews={review} />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
+                  <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
+                </div>
+              )}
+            </div>
+          )}
 
+          {/* Client Reputation Score (inline with client name area) */}
+          {clientId && hasClientData && reputation && (
+            <div className="mt-1">
+              <ClientReputationScore reputation={reputation} />
+            </div>
+          )}
+
+          {/* Details List */}
+          <div className="mt-2 space-y-1.5 text-xs text-gray-600">
             {/* Date/Time */}
             <p className="flex items-center">
               <CalendarDaysIcon className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
@@ -482,15 +482,33 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         <div className="mt-5 grid grid-cols-1 gap-2 border-t border-gray-200 pt-4 sm:auto-cols-fr sm:grid-flow-col">
           <ActionButtons
             booking={booking}
-            onChat={handleChatClient}
+            onChat={() => {
+              emitInteraction();
+              handleChatClient();
+            }}
             onAccept={handleAccept}
-            onDecline={onDeclineClick}
-            onCancel={() => onCancelClick(booking)}
-            onStart={handleStartService}
-            onComplete={handleMarkAsCompleted}
-            onReport={() =>
-              navigate(`/provider/report`, { state: { bookingId: booking.id } })
-            }
+            onDecline={() => {
+              emitInteraction();
+              onDeclineClick();
+            }}
+            onCancel={() => {
+              emitInteraction();
+              onCancelClick(booking);
+            }}
+            onStart={() => {
+              emitInteraction();
+              handleStartService();
+            }}
+            onComplete={() => {
+              emitInteraction();
+              handleMarkAsCompleted();
+            }}
+            onReport={() => {
+              emitInteraction();
+              navigate(`/provider/report`, {
+                state: { bookingId: booking.id },
+              });
+            }}
             canStartServiceNow={() => !isScheduledForFuture}
             isBookingActionInProgress={isBookingActionInProgress}
             commissionValidation={commissionValidation}
@@ -500,7 +518,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     </div>
   );
 
-  // --- Card Layout ---
+  // Section: Render
   return (
     <>
       {/* Booking Card */}

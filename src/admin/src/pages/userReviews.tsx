@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { TrashIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { adminServiceCanister } from "../services/adminServiceCanister";
-import { ReviewItem } from "../components/ReviewItem";
-import { ReviewStats } from "../components/ReviewStats";
+import { ReviewItem } from "../components/analytics/ReviewItem";
+import { ReviewStats } from "../components/analytics/ReviewStats";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
+import { ConfirmModal } from "../components/ConfirmModal";
 import {
   Review,
   getCurrentReviews,
@@ -36,6 +38,7 @@ const UserReviewsPage: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
     null,
   );
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [selectedReviews, setSelectedReviews] = useState<Set<string>>(
     new Set(),
   );
@@ -219,19 +222,7 @@ const UserReviewsPage: React.FC = () => {
             onClick={handleBackClick}
             className="rounded-full p-2 hover:bg-gray-100"
           >
-            <svg
-              className="h-5 w-5 text-gray-700"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
           <h1 className="ml-3 text-lg font-semibold text-slate-800">
             My Reviews
@@ -301,11 +292,7 @@ const UserReviewsPage: React.FC = () => {
                 Restore
               </button>
               <button
-                onClick={() => {
-                  if (confirm(`Delete ${selectedReviews.size} review(s)?`)) {
-                    handleBulkAction("delete");
-                  }
-                }}
+                onClick={() => setShowBulkDeleteConfirm(true)}
                 disabled={bulkActionLoading}
                 className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
@@ -389,6 +376,20 @@ const UserReviewsPage: React.FC = () => {
         isDeleting={deletingReviewId === showDeleteConfirm}
         onConfirm={handleDeleteReview}
         onCancel={() => setShowDeleteConfirm(null)}
+      />
+
+      <ConfirmModal
+        isOpen={showBulkDeleteConfirm}
+        title="Delete Reviews"
+        message={`Are you sure you want to delete ${selectedReviews.size} review(s)?`}
+        confirmText="Delete"
+        confirmColor="bg-red-600 hover:bg-red-700"
+        isLoading={bulkActionLoading}
+        onConfirm={() => {
+          handleBulkAction("delete");
+          setShowBulkDeleteConfirm(false);
+        }}
+        onCancel={() => setShowBulkDeleteConfirm(false)}
       />
     </div>
   );

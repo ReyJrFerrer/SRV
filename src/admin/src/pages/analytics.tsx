@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { httpsCallable } from "firebase/functions";
 import { useAdmin } from "../hooks/useAdmin";
 import {
   AnalyticsHeader,
@@ -8,7 +9,7 @@ import {
   ServiceProviderRecords,
   ProviderDetailsModal,
 } from "../components";
-import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
+import { getFirebaseFunctions } from "../services/firebaseApp";
 import {
   formatCurrency,
   filterUsers,
@@ -52,12 +53,12 @@ export const AnalyticsPage: React.FC = () => {
   const [walletBalances, setWalletBalances] = useState<Record<string, number>>(
     {},
   );
+  const [walletProviderIds, setWalletProviderIds] = useState<string[]>([]);
   const [loadingWalletBalances, setLoadingWalletBalances] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       await refreshAll();
-      // refreshSystemStats is already called in refreshAll, but call it again to ensure it's up to date
       await refreshSystemStats();
     };
     loadData();
@@ -85,70 +86,54 @@ export const AnalyticsPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Fetch wallet balances for all providers
   useEffect(() => {
-    const fetchWalletBalances = async () => {
-      const providerIds = new Set<string>();
-      if (serviceProviders && serviceProviders.length > 0) {
-        serviceProviders.forEach((provider) => {
-          providerIds.add(provider.id);
-        });
-      }
+    let cancelled = false;
+    setLoadingWalletBalances(true);
 
-      if (bookings && bookings.length > 0) {
-        bookings.forEach((booking) => {
-          const providerId = booking.serviceProviderId || booking.providerId;
-          if (providerId) {
-            providerIds.add(providerId);
-          }
-        });
-      }
-
-      if (providerIds.size === 0) {
-        return;
-      }
-
-      setLoadingWalletBalances(true);
+    const fetchWalletProviders = async () => {
       try {
-        const balancePromises = Array.from(providerIds).map(async (id) => {
-          try {
-            const balance = await walletCanisterService.getBalanceOf(id);
-            return { id, balance };
-          } catch (error) {
-            console.error(`Failed to fetch wallet balance for ${id}:`, error);
-            return { id, balance: 0 };
-          }
+        const functions = getFirebaseFunctions();
+        const getAllWalletsFn = httpsCallable(functions, "getAllWallets");
+        const result = await getAllWalletsFn({});
+        const responseData = result.data as {
+          success: boolean;
+          wallets: Record<string, { balance: number }>;
+        };
+
+        if (cancelled) return;
+
+        const balancesMap: Record<string, number> = {};
+        const ids: string[] = [];
+
+        Object.entries(responseData.wallets).forEach(([userId, wallet]) => {
+          balancesMap[userId] = wallet.balance || 0;
+          ids.push(userId);
         });
 
-        const results = await Promise.all(balancePromises);
-        const balancesMap: Record<string, number> = {};
-        results.forEach(({ id, balance }) => {
-          balancesMap[id] = balance;
-        });
         setWalletBalances(balancesMap);
+        setWalletProviderIds(ids);
       } catch (error) {
-        console.error("Error fetching wallet balances:", error);
+        console.error("Error fetching wallet providers:", error);
       } finally {
-        setLoadingWalletBalances(false);
+        if (!cancelled) {
+          setLoadingWalletBalances(false);
+        }
       }
     };
 
-    // Only fetch if we have provider data
-    if (serviceProviders || (bookings && bookings.length > 0)) {
-      fetchWalletBalances();
-    }
-  }, [serviceProviders, bookings]);
+    fetchWalletProviders();
 
-  const loadProviderAnalytics = async (_providerId: string) => {
-    console.log("Provider analytics loading removed - was using mock data");
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  // Filter users based on selected filter
+  const loadProviderAnalytics = async (_providerId: string) => {};
+
   const filteredUsers = useMemo(() => {
     return filterUsers(users || [], userFilter);
   }, [users, userFilter]);
 
-  // Count users by their current active role
   const totalProviders = useMemo(() => {
     return countProviders(filteredUsers);
   }, [filteredUsers]);
@@ -157,12 +142,10 @@ export const AnalyticsPage: React.FC = () => {
     return countClients(filteredUsers);
   }, [filteredUsers]);
 
-  // Calculate online users
   const onlineUsers = useMemo(() => {
     return calculateOnlineUsers(users || []);
   }, [users]);
 
-  // Pie: Users by type
   const userPieData = useMemo(() => {
     const data = [];
     if (totalProviders > 0) {
@@ -174,7 +157,6 @@ export const AnalyticsPage: React.FC = () => {
     return data;
   }, [totalProviders, totalClients]);
 
-  // Service Provider Records Data
   const serviceProviderPerformanceData = useMemo(() => {
     return processServiceProviderPerformance(
       bookings || [],
@@ -183,6 +165,7 @@ export const AnalyticsPage: React.FC = () => {
       users || [],
       systemStats,
       walletBalances,
+      walletProviderIds,
     );
   }, [
     bookings,
@@ -191,9 +174,9 @@ export const AnalyticsPage: React.FC = () => {
     users,
     systemStats,
     walletBalances,
+    walletProviderIds,
   ]);
 
-  // Filtered and sorted service provider performance data
   const filteredServiceProviderData = useMemo(() => {
     return filterAndSortProviders(
       serviceProviderPerformanceData,
@@ -203,7 +186,6 @@ export const AnalyticsPage: React.FC = () => {
     );
   }, [serviceProviderPerformanceData, searchTerm, sortBy, sortOrder]);
 
-  // Service Categories Pie Chart Data
   const serviceCategoryData = useMemo(() => {
     return processServiceCategoryData(services || [], serviceCategories || []);
   }, [services, serviceCategories]);
@@ -212,7 +194,6 @@ export const AnalyticsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <AnalyticsHeader showMobileBar={showMobileBar} />
       <main className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 sm:pb-8 lg:px-8">
-        {/* System Overview */}
         <SystemOverviewStats
           totalRevenue={systemStats?.totalRevenue || 0}
           totalCommission={systemStats?.totalCommission || 0}
@@ -222,9 +203,7 @@ export const AnalyticsPage: React.FC = () => {
           formatCurrency={formatCurrency}
         />
 
-        {/* Provider Analytics */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Users by Type */}
           <AnalyticsPieChart
             title="Users by Type"
             data={userPieData}
@@ -275,7 +254,6 @@ export const AnalyticsPage: React.FC = () => {
             }
           />
 
-          {/* Service Categories Pie Chart */}
           <AnalyticsPieChart
             title="Services by Category"
             data={serviceCategoryData}
@@ -325,7 +303,6 @@ export const AnalyticsPage: React.FC = () => {
           />
         </div>
 
-        {/* Service Provider Records */}
         <ServiceProviderRecords
           providers={filteredServiceProviderData}
           loading={
@@ -346,7 +323,6 @@ export const AnalyticsPage: React.FC = () => {
         />
       </main>
 
-      {/* Provider Details Modal */}
       <ProviderDetailsModal
         isOpen={showProviderDetails}
         provider={selectedProvider}

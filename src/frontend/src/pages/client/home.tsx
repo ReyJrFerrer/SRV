@@ -10,7 +10,10 @@ import { useServiceManagement } from "../../hooks/serviceManagement";
 import ClientHeader from "../../components/client/home page/Header";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
 import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
-import { OneSignalBlockedModal } from "../../components/OneSignalBlockedModal";
+import {
+  OneSignalBlockedModal,
+  isOneSignalBlockedModalDismissed,
+} from "../../components/OneSignalBlockedModal";
 import { useAuth } from "../../context/AuthContext";
 import {
   ArrowPathRoundedSquareIcon,
@@ -21,10 +24,10 @@ import { useLocationStore } from "../../store/locationStore";
 
 // SECTION: ClientHomePage — main page component rendering header, categories, services, and provider CTA
 const ClientHomePage: React.FC = () => {
-  // SECTION: Navigation and state
   const navigate = useNavigate();
   const { error } = useServiceManagement();
-  const { locationStatus } = useLocationStore();
+  const { locationStatus, userProvince, userAddress, isInitialized } =
+    useLocationStore();
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
   const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
@@ -48,14 +51,16 @@ const ClientHomePage: React.FC = () => {
       );
       if (oneSignalScript) {
         oneSignalScript.addEventListener("error", () => {
-          setShowOneSignalBlockedModal(true);
+          if (!isOneSignalBlockedModalDismissed())
+            setShowOneSignalBlockedModal(true);
         });
       }
 
       // Also check if window.OneSignal is undefined after a delay
       setTimeout(() => {
         if (typeof window.OneSignal === "undefined") {
-          setShowOneSignalBlockedModal(true);
+          if (!isOneSignalBlockedModalDismissed())
+            setShowOneSignalBlockedModal(true);
         }
       }, 5000); // Give it 5 seconds to load
     };
@@ -131,10 +136,19 @@ const ClientHomePage: React.FC = () => {
       />
       {/* SECTION: Location blocked modal */}
       {(() => {
+        const realDenied =
+          locationStatus === "denied" &&
+          !userProvince &&
+          !userAddress &&
+          isInitialized;
         const visible =
-          (locationStatus === "denied" && !dismissedLocationBlock) ||
-          (permissionApiDenied && !dismissedLocationBlock) ||
-          postLoginBlockedModalVisible;
+          (realDenied && !dismissedLocationBlock) ||
+          (permissionApiDenied &&
+            !dismissedLocationBlock &&
+            !userProvince &&
+            !userAddress &&
+            isInitialized) ||
+          (postLoginBlockedModalVisible && realDenied);
 
         const handleBlockedClose = () => {
           setDismissedLocationBlock(true);

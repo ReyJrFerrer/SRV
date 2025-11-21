@@ -5,7 +5,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useLocationStore } from "../../../store/locationStore";
-import MapFunctions from "../../common/GMapFunctions/MapFunctions";
+import MapFunctions, {
+  MapFunctionsHandle,
+} from "../../common/GMapFunctions/MapFunctions";
 import { APIProvider } from "@vis.gl/react-google-maps";
 
 // --- Props ---
@@ -26,6 +28,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
   const mapsApiKey =
     import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
+  const miniMapRef = useRef<MapFunctionsHandle | null>(null);
 
   // Effect: fetch user profile when auth loads (location handled by post-login modal)
   useEffect(() => {
@@ -47,6 +51,16 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
 
   const handleProfileClick = () => {
     navigate("/provider/profile");
+  };
+
+  const handleLocationClick = () => {
+    if (primaryMapRef.current?.openChangeLocation) {
+      primaryMapRef.current.openChangeLocation();
+      return;
+    }
+    if (miniMapRef.current?.openChangeLocation) {
+      miniMapRef.current.openChangeLocation();
+    }
   };
 
   // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
@@ -200,15 +214,20 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           {/* --- Location Section --- */}
           <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleLocationClick}
+                className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none"
+                aria-label="Open my location details"
+              >
                 <MapPinIcon className="h-6 w-6 text-blue-600" />
                 <span className="text-base font-bold text-gray-800">
                   My Location
                 </span>
-              </div>
+              </button>
             </div>
             <div className="mt-2 flex items-center gap-2">
-              <MapFunctions />
+              <MapFunctions ref={primaryMapRef} />
             </div>
           </div>
         </div>
@@ -224,7 +243,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
               </span>
             </div>
             <div className="-mt-1 flex items-center gap-2">
-              <MapFunctions />
+              <MapFunctions ref={miniMapRef} />
             </div>
           </div>
         </div>

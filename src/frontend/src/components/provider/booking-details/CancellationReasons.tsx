@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface Props {
   bookingId?: string | null;
@@ -63,19 +64,7 @@ export default function CancellationReasons({
     <section className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
-          <svg
-            className="h-6 w-6 text-red-600"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728"
-            />
-          </svg>
+          <XMarkIcon className="h-6 w-6 text-red-600" />
         </div>
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-red-800">

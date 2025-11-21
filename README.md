@@ -1,60 +1,50 @@
-# 🫡 This repository uses the ULTIMATE IC VIBE CODING TEMPLATE from the github repository link https://github.com/pt-icp-hub/IC-Vibe-Coding-Template-Motoko
+# This repository uses the ULTIMATE IC VIBE CODING TEMPLATE from the github repository link https://github.com/pt-icp-hub/IC-Vibe-Coding-Template-Motoko
 
-# 🏪 SRV A Local Service Marketplace
+# SRV A Local Service Marketplace
 
-A modern service marketplace that combines the scalability and real-time capabilities of Firebase with the AI-powered trust and reputation intelligence of the Internet Computer Protocol (ICP), connecting users with local service providers through secure, transparent, and intelligent booking experiences.
+A decentralized service marketplace built on the Internet Computer Protocol (ICP) that connects users with local service providers through secure, transparent, and AI-enhanced booking experiences.
 
-> **Note**: This project evolved from an ICP-first architecture to a hybrid Firebase-ICP model during the global migration phase. The original ICP canister infrastructure has been largely replaced with Firebase Cloud Functions and Firestore, while retaining ICP for AI-powered reputation intelligence.
-
-## 🌟 What We're Building
+## What We're Building
 
 Our platform revolutionizes local service booking by leveraging a hybrid architecture that combines Firebase's real-time database capabilities with ICP's AI-powered reputation intelligence, creating a trustworthy marketplace where users can discover, book, and rate local service providers with confidence.
 
-### 🎯 Unique Value Proposition
+### Unique Value Proposition
 
-**🔄 Hybrid Architecture Excellence**
-
-- **Firebase Backend**: Real-time service management, instant booking updates, and scalable authentication
-- **ICP AI Intelligence**: Decentralized AI-powered reputation analysis and trust scoring
-- **Best of Both Worlds**: Firebase's performance with ICP's tamper-proof AI capabilities
-
-**🤖 AI-Powered Reputation System (ICP)**
+**AI-Powered Reputation System**
 
 - Intelligent monitoring of user activities including booking patterns and review behaviors
 - Advanced review sentiment analysis powered by LLM canisters for authentic feedback verification
 - Machine learning algorithms that detect fraudulent reviews and suspicious activity patterns
-- Decentralized and tamper-proof reputation scoring stored on the Internet Computer
 
-**📋 Real-Time Service Management**
+**Smart Work Verification**
 
-- Firebase-powered real-time service updates and booking synchronization
-- Live booking status tracking and automatic updates across all devices
-- Seamless chat integration with real-time message delivery
+- AI-powered validation of completed work through document and media analysis
+- Automated quality assessment of service provider deliverables
+- Proof-of-work verification system ensuring service completion standards
 
-**🔒 Hybrid Trust & Security**
+**Decentralized Trust & Security**
 
-- Firebase Authentication with OTP verification for secure user access
-- ICP-based reputation intelligence that cannot be manipulated
-- Real-time Firestore security rules protecting user data
-- Immutable AI analysis and fraud detection on the blockchain
+- Leverages ICP's tamper-proof infrastructure for transparent reputation scoring
+- Immutable booking history and review records
+- Secure identity management without compromising user privacy
 
-### 🚀 Current Features
+### Current Features
 
-#### **🎯 Core Marketplace Features**
+#### **Core Marketplace Features**
 
 - **Real-Time Service Discovery**: Browse and search local service providers with live Firestore updates
 - **Advanced Booking System**: Multi-package bookings, instant booking with real-time callbacks, conflict detection, and GPS-based distance calculation
 - **AI-Enhanced Ratings & Reviews**: Community-driven feedback with ICP-powered sentiment analysis and fraud detection
 - **Web Application**: Responsive web application optimized for desktop and mobile browsers
 
-#### **💰 Payment & Financial System**
+#### **Payment & Financial System**
 
 - **Multiple Payment Methods**: Cash-on-Hand, GCash integration via Xendit
 - **Hybrid Commission Model**: Dynamic tiered commission structure (3.5%-7%) based on service categories
 - **Firebase-Managed Transactions**: Real-time payment tracking, balance updates, and transaction history stored in Firestore
 - **Secure Payment Processing**: Firebase Cloud Functions integration with Xendit for payment gateway operations
 
-#### **🛡️ Trust & Security**
+#### **Trust & Security**
 
 - **AI-Enhanced Reputation System (ICP)**: Decentralized machine learning algorithms for fraud detection and sentiment analysis
 - **Firebase Authentication**: Secure OTP-based authentication with email/password support
@@ -62,33 +52,24 @@ Our platform revolutionizes local service booking by leveraging a hybrid archite
 - **Multi-Role Support**: Seamless role switching between Client and Service Provider with Firebase Auth custom claims
 - **Real-Time Security Rules**: Firestore security rules protecting data access and modifications
 
-#### **📱 Real-Time Communication**
+#### **Real-Time Communication**
 
 - **Firebase-Powered Chat System**: Real-time encrypted messaging with automatic conversation management
 - **Live Updates**: Real-time booking status changes, service updates, and activity notifications
 
-#### **👑 Admin & Analytics**
+#### **Admin & Analytics**
 
-- **Comprehensive Admin Dashboard**: User management, booking oversight, and commission tracking with real-time Firestore queries
-- **Firebase-Based Remittance System**: Cash collection and settlement management
-- **Real-Time Analytics**: Live booking statistics, user analytics, and platform insights from Firestore
-- **Admin Authentication**: Secure admin access control with Firebase Admin SDK
-
-#### **🎨 Enhanced User Experience**
-
-- **Active Service Management**: Provider banner for quick navigation to active services
-- **Improved Navigation**: Bottom navigation with Settings, enhanced profile management
-- **Booking Improvements**: Clear date displays, cancellation prompts, and real-time status updates
-- **Mobile-Optimized UI**: Responsive design with mobile-first approach for contact pages and service views
-- **Interactive Maps**: Enhanced map modal with improved layout and user interactions
+- **Comprehensive Admin Dashboard**: User management, booking oversight, and commission tracking
+- **Remittance System**: Cash collection and settlement management for service providers
+- **Analytics & Reporting**: Real-time booking statistics, user analytics, and platform insights
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
-Our platform leverages a **hybrid architecture** combining Firebase's real-time database and cloud infrastructure with ICP's AI-powered reputation intelligence, creating a scalable and trustworthy service marketplace.
+Our platform leverages a microservices architecture built on the Internet Computer Protocol (ICP), integrated with Firebase Cloud Functions for external payment processing.
 
-### **🔧 Architecture Overview**
+### **Architecture Overview**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
@@ -198,57 +179,17 @@ Our platform leverages a **hybrid architecture** combining Firebase's real-time 
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### **🔄 Data Flow Architecture**
+### **Inter-Canister Communication Flow**
 
-```
-┌──────────────┐
-│   Frontend   │
-│  React Web   │
-└──────┬───────┘
-       │
-       ├─────────────────────┐
-       │                     │
-       ▼                     ▼
-┌──────────────┐      ┌─────────────┐
-│   Firebase   │      │     ICP     │
-│   Backend    │◄────►│  Canisters  │
-│              │      │             │
-│ • Real-time  │      │ • AI Rep.   │
-│   Data       │      │   Scoring   │
-│ • Auth       │      │ • Sentiment │
-│ • Storage    │      │   Analysis  │
-└──────┬───────┘      └─────────────┘
-       │
-       ▼
-┌──────────────┐
-│   External   │
-│   Services   │
-│              │
-│ • Xendit     │
-│ • GCash      │
-│ • Maps API   │
-└──────────────┘
-```
+The platform uses a sophisticated inter-canister communication pattern where each canister maintains references to others for seamless data flow:
 
-### **🔑 Key Architecture Decisions**
+1. **Authentication Flow**: `Auth` → `Service` → `Booking` → `Review` → `Reputation`
+2. **Payment Processing**: `Booking` → `Commission` → `Wallet` → `Notification`
+3. **Service Management**: `Service` → `Media` → `Review` → `Reputation`
+4. **Chat System**: `Chat` → `Auth` → `Booking` (post-completion messaging)
+5. **Admin Operations**: `Admin` → All Canisters (system-wide management)
 
-#### **Why Firebase for Core Backend?**
-
-- ✅ **Real-Time Synchronization**: Instant updates across all connected clients
-- ✅ **Scalability**: Auto-scaling infrastructure handling millions of concurrent connections
-- ✅ **Developer Velocity**: Rapid development with comprehensive SDKs and built-in features
-- ✅ **Cost-Effective**: Pay-as-you-go pricing model with generous free tier
-- ✅ **Reliability**: 99.95% uptime SLA with global infrastructure
-
-#### **Why ICP for AI & Reputation?**
-
-- ✅ **Tamper-Proof Intelligence**: AI analysis results cannot be manipulated or altered
-- ✅ **Decentralized Trust**: Reputation scores stored on blockchain for transparency
-- ✅ **Advanced AI Capabilities**: LLM integration for sophisticated sentiment analysis
-- ✅ **Cost-Efficient AI**: Reverse gas model makes AI operations economically viable
-- ✅ **Privacy-Preserving**: On-chain AI without compromising user data privacy
-
-#### **Hybrid Architecture Benefits**
+### **Data Architecture**
 
 - 🚀 **Best Performance**: Firebase's real-time capabilities for instant user experience
 - 🔒 **Enhanced Trust**: ICP's blockchain-backed reputation system
@@ -258,51 +199,44 @@ Our platform leverages a **hybrid architecture** combining Firebase's real-time 
 
 ---
 
-## 🚧 Technical Challenges & Solutions
+## Technical Challenges & Solutions
 
 Throughout the development and global migration of this hybrid marketplace, we encountered and solved numerous complex technical challenges:
 
-### **� Challenge 1: Global Migration from ICP to Hybrid Firebase-ICP Architecture**
+### **Challenge 1: Cross-Platform Payment Integration**
 
 **Problem**: Migrating core business logic from ICP canisters to Firebase while retaining AI-powered reputation intelligence on ICP without service disruption.
 
 **Solution**:
 
-- Implemented phased migration approach with feature flags for gradual rollout
-- Created Firebase Cloud Functions mirroring existing canister functionality (auth, service, booking, chat, wallet)
-- Developed dual-write strategy during transition period to maintain data consistency
-- Retained reputation and LLM canisters on ICP for tamper-proof AI analysis
-- Built comprehensive Firestore security rules replacing canister-based authorization
-- Implemented real-time listeners to replace polling-based canister queries
-- Created migration scripts for data transformation from canister stable storage to Firestore collections
+- Implemented Firebase Cloud Functions as a bridge between ICP canisters and external payment APIs
+- Created a payment holding system where funds are escrowed until service completion
+- Developed comprehensive webhook handling for real-time payment status synchronization
+- Built fallback mechanisms using Firestore for payment tracking when APIs are unavailable
 
-### **🔐 Challenge 2: Real-Time Data Synchronization Across Hybrid Architecture**
+### **Challenge 2: Dynamic Commission Calculation**
 
 **Problem**: Ensuring seamless real-time updates between Firebase Firestore and ICP canisters while maintaining data consistency.
 
 **Solution**:
 
-- Implemented Firestore real-time listeners for instant UI updates on bookings, services, and chat
-- Created webhook-based communication pattern between Firebase Cloud Functions and ICP canisters
-- Developed event-driven architecture with Firestore triggers for automated workflows
-- Built reputation sync mechanism: Firestore stores booking data → ICP analyzes and returns scores
-- Implemented optimistic UI updates with rollback mechanisms for failed canister calls
-- Created comprehensive error handling for network partitions between Firebase and ICP
+- Designed a hybrid commission model with base fees (₱25-₱50) plus percentage rates (3.5%-7%)
+- Implemented tiered structures: Tier A (7%), Tier B (5%), Tier C (3.5%) based on service categories
+- Pre-calculated commission fees during service creation for faster booking acceptance
+- Integrated commission validation to prevent providers from accepting bookings without sufficient wallet balance
 
-### **🎯 Challenge 3: Firebase Authentication Integration with ICP Identity**
+### **Challenge 3: Real-Time Canister Communication**
 
 **Problem**: Transitioning from Internet Identity to Firebase Authentication while maintaining backward compatibility and security.
 
 **Solution**:
 
-- Implemented Firebase OTP-based authentication
-- Created custom claims system in Firebase Auth for role management (client/provider/admin)
-- Maintained ICP Auth canister for decentralized identity verification
-- Built bridge layer mapping Firebase UIDs to ICP Principals for reputation queries
-- Developed seamless authentication flow: Firebase Auth → Custom claims → ICP verification
-- Implemented Firebase Admin SDK for server-side user management
+- Implemented a centralized canister reference system with `setCanisterReferences()` functions
+- Created singleton actor patterns to prevent multiple actor instantiations
+- Designed async inter-canister calls with proper error handling and fallback mechanisms
+- Established clear data flow patterns: Auth → Service → Booking → Payment → Notification
 
-### **� Challenge 4: Payment Processing with Firebase-Xendit Integration**
+### **Challenge 4: Progressive Web App Implementation**
 
 **Problem**: Migrating payment workflows from canister-based wallet system to Firebase while integrating external payment gateway (Xendit).
 
@@ -316,7 +250,7 @@ Throughout the development and global migration of this hybrid marketplace, we e
 - Implemented automatic commission calculation and deduction using Firebase Functions
 - Created fallback mechanisms with Firestore audit logs when Xendit API is unavailable
 
-### **🤖 Challenge 5: Hybrid AI Reputation System**
+### **Challenge 5: AI-Powered Reputation System**
 
 **Problem**: Maintaining AI-powered reputation intelligence on ICP while core data lives in Firebase.
 
@@ -329,34 +263,29 @@ Throughout the development and global migration of this hybrid marketplace, we e
 - Built fraud detection pattern recognition using historical data from both platforms
 - Implemented immutable reputation history on ICP while displaying real-time scores from Firestore
 
-### **📊 Challenge 6: Real-Time Analytics and Admin Dashboard**
+### **Challenge 6: Multi-Payment Method Support**
 
 **Problem**: Building comprehensive admin dashboard with real-time analytics from Firebase data sources.
 
 **Solution**:
 
-- Implemented Firestore composite queries for complex analytics aggregations
-- Created Firebase Admin SDK-based user management system
-- Developed real-time dashboard using Firestore listeners for live statistics
-- Built custom indexing strategy optimizing query performance
-- Implemented pagination and infinite scroll for large dataset handling
-- Created export functionality for analytics data (CSV, PDF reports)
-- Developed role-based access control using Firebase custom claims
+- Created flexible payment method enums with variant types in Motoko
+- Implemented payment-specific validation logic (commission checks for cash, balance verification for wallets)
+- Developed payment holding and release mechanisms for digital payments
+- Built automatic commission deduction systems with detailed transaction logging
 
-### **📊 Challenge 7: Real-Time Chat System Migration**
+### **Challenge 7: Development Environment Consistency**
 
 **Problem**: Migrating encrypted chat from ICP canister to Firebase Realtime Database while maintaining security.
 
 **Solution**:
 
-- Redesigned chat architecture using Firestore subcollections for conversations
-- Implemented end-to-end encryption using Web Crypto API before Firestore storage
-- Created real-time message delivery using Firestore snapshots
-- Built automatic conversation creation post-booking completion
-- Implemented message pagination and lazy loading for performance
-- Created Firestore security rules preventing unauthorized message access
+- Implemented comprehensive devcontainer setup with all required dependencies
+- Created environment-aware configuration systems for canister communication
+- Developed mock payment systems for development when API access is restricted
+- Built automated testing infrastructure with PocketIC for canister integration testing
 
-### **🌐 Challenge 8: Multi-Environment Configuration Management**
+### **Challenge 8: State Management & Data Persistence**
 
 **Problem**: Managing different configurations for local development, staging, and production across Firebase and ICP.
 
@@ -372,181 +301,9 @@ Throughout the development and global migration of this hybrid marketplace, we e
 
 ---
 
-## 🔧 Advanced Features & Improvements
+## Advanced Features & Improvements
 
-### **� Global Migration: ICP to Hybrid Firebase-ICP Architecture**
-
-The platform underwent a comprehensive architectural transformation, migrating core functionalities to Firebase while retaining ICP's AI-powered reputation intelligence. This strategic decision combines Firebase's real-time capabilities with ICP's tamper-proof AI analysis.
-
-#### **Migration Highlights**
-
-**📦 Core Backend Migration to Firebase**
-
-- ✅ **Complete Function Suite**: Migrated 15+ business logic modules to Firebase Cloud Functions
-  - Authentication (OTP, login, signup)
-  - Service management (CRUD, search, filtering)
-  - Booking lifecycle (create, update, cancel, real-time tracking)
-  - Review system (submit, list, statistics)
-  - Wallet operations (balance, top-up, transaction history)
-  - Chat messaging (real-time send/receive)
-  - Media management (upload, storage, deletion)
-  - Notification delivery
-  - Commission calculation and tracking
-  - Admin operations (user management, analytics)
-
-**🔄 Real-Time Data Infrastructure**
-
-- ✅ **Firestore Database**: NoSQL real-time database replacing canister stable storage
-  - 10+ primary collections (Users, Services, Bookings, Reviews, Wallets, Chat, Media, etc.)
-  - Real-time listeners for instant UI updates
-  - Composite indexes for complex queries
-  - Security rules for data protection
-- ✅ **Firebase Authentication**: Secure OTP-based authentication
-  - Custom claims for role management
-  - Admin SDK for user management
-  - Session persistence across devices
-
-  - Admin SDK for user management
-
-- ✅ **Firebase Storage**: Media and document management
-  - Profile images and avatars
-  - Service showcase media
-  - Certificate and verification documents
-  - Automatic CDN distribution
-
-**🤖 ICP Intelligence Layer (Retained)**
-
-- ✅ **Reputation Canister**: AI-powered reputation scoring on blockchain
-  - Tamper-proof reputation history
-  - Fraud detection algorithms
-  - Trust level calculations
-  - Immutable scoring records
-
-- ✅ **LLM Canister**: Advanced sentiment analysis
-  - Review sentiment verification
-  - Fraud pattern detection
-  - Natural language processing
-  - AI-powered insights
-
-- ✅ **Auth Canister**: Decentralized identity verification
-  - Principal-based authentication
-  - Cross-platform identity management
-  - Integration with Firebase Auth
-
-### **🚀 Recent Major Enhancements**
-
-#### **Real-Time Service Management (v2.0)**
-
-- **Live Service Updates**: Firestore real-time listeners for instant service catalog updates
-- **Dynamic Search & Filtering**: Real-time query capabilities with composite indexes
-- **Service State Management**: Automatic synchronization across all connected clients
-- **Provider Dashboard**: Real-time analytics and booking notifications
-
-#### **Enhanced Booking Experience**
-
-- **Real-Time Booking Callbacks**: Instant booking status updates via Firestore listeners
-- **Conflict Detection**: Real-time availability checking preventing double bookings
-- **GPS Integration**: Enhanced distance calculation and location services
-- **Cancellation Improvements**: User-friendly cancellation prompts with reason tracking
-- **Date Display Enhancements**: Clear, localized date and time formatting
-
-#### **Chat & Communication System**
-
-- **Firebase-Powered Chat**: Real-time messaging using Firestore subcollections
-- **Conversation Management**: Automatic chat creation post-booking completion
-- **Message Encryption**: Client-side encryption before Firestore storage
-- **Read Receipts**: Real-time message status tracking
-
-#### **Authentication & Security**
-
-- **OTP Authentication**: Firebase-based OTP verification for secure access
-- **Session Management**: Persistent authentication across browser sessions
-- **Role-Based Access**: Custom claims for client, provider, and admin roles
-- **Security Rules**: Comprehensive Firestore security rules protecting data access
-- **Admin Authentication**: Secure admin panel access with Firebase Admin SDK
-
-#### **User Interface Improvements**
-
-- **Active Service Banner**: Provider navigation banner for quick access to active services
-- **Enhanced Bottom Navigation**: Mobile-optimized navigation with Settings integration
-- **Profile Management**: Improved profile image handling and user settings
-- **Map Modal Redesign**: Better layout and user interaction patterns
-- **Mobile Responsiveness**: Mobile-first design improvements across all pages
-- **Contact Page Optimization**: Enhanced mobile UI for contact and support pages
-
-#### **Admin Dashboard Enhancements**
-
-- **Real-Time Analytics**: Live statistics using Firestore aggregation queries
-- **User Management**: Firebase Admin SDK-powered user administration
-- **Booking Oversight**: Real-time booking monitoring and management
-- **Commission Tracking**: Automated commission calculation and reporting
-- **System Health Monitoring**: Real-time platform health metrics
-
-### **⚡ Performance Optimizations**
-
-#### **Firebase Infrastructure**
-
-- **Real-Time Queries**: Firestore composite indexes for complex query optimization
-- **CDN Distribution**: Firebase Hosting with global CDN for sub-100ms load times
-- **Database Optimization**: Efficient document structure and denormalization strategies
-- **Function Cold Start Optimization**: Keep-alive mechanisms for Cloud Functions
-
-#### **Frontend Performance**
-
-- **Code Splitting**: Dynamic imports reducing initial bundle size by 60%
-- **React Optimization**: React.memo and useMemo preventing unnecessary re-renders
-- **Image Optimization**: Lazy loading and responsive images with Firebase Storage CDN
-- **Bundle Analysis**: Vite-based build optimization with tree shaking
-- **Network Optimization**: Request batching and debouncing for API calls
-
-#### **ICP Integration Optimization**
-
-- **Batch Processing**: Aggregated reputation updates minimizing canister calls
-- **Caching Layer**: Firestore cache for ICP reputation scores reducing blockchain queries
-- **Async Processing**: Non-blocking AI analysis with background job processing
-- **Fallback Mechanisms**: Graceful degradation when ICP canisters unavailable
-
-### **🔒 Security Enhancements**
-
-#### **Firebase Security**
-
-- **Firestore Security Rules**: Granular access control at document and collection level
-- **Authentication Flow**: Multi-factor authentication with OTP verification
-- **API Security**: Cloud Functions with proper authentication and validation
-- **Data Encryption**: Client-side encryption for sensitive chat messages
-- **Audit Logging**: Comprehensive activity logs for security monitoring
-
-#### **ICP Security (Retained)**
-
-- **Immutable Records**: Blockchain-backed reputation history preventing manipulation
-- **Principal Authentication**: Decentralized identity verification
-- **Smart Contract Security**: Audited Motoko code for AI canisters
-- **Tamper-Proof AI**: AI analysis results stored on blockchain
-
-### **🎨 UI/UX Improvements from Global Migration**
-
-#### **Service Provider Experience**
-
-- Active service status banner for quick navigation
-- Enhanced service management with real-time updates
-- Improved booking notification system
-- Streamlined provider dashboard with live analytics
-
-#### **Client Experience**
-
-- Real-time service catalog with instant search results
-- Enhanced booking flow with better date/time selection
-- Improved cancellation process with clear prompts
-- Better mobile navigation and touch interactions
-
-#### **Admin Experience**
-
-- Real-time platform analytics and metrics
-- Enhanced user management interface
-- Live booking monitoring dashboard
-- Improved commission tracking and reporting
-
-### **🎯 Legacy Features (Pre-Migration)**
+### **Recent Major Enhancements**
 
 #### **Payment Integration System (Features 1.0 - 3.4)**
 
@@ -559,14 +316,69 @@ The platform underwent a comprehensive architectural transformation, migrating c
 
 - **Sentiment Analysis Integration**: LLM-powered review analysis for authentic feedback verification
 - **Fraud Detection**: Advanced algorithms for detecting suspicious review patterns and user behaviors
-- **Smart Booking Validation**: GPS-based distance calculation and conflict detection
-- **Automated Quality Assessment**: AI-powered validation of completed work
+- **Smart Booking Validation**: GPS-based distance calculation, conflict detection, and commission balance verification
+- **Automated Quality Assessment**: AI-powered validation of completed work through document and media analysis
+
+#### **Admin & Analytics System**
+
+- **Comprehensive Dashboard**: Real-time booking statistics, user analytics, and platform insights
+- **Remittance Management**: Cash collection and settlement system for service providers
+- **Role-Based Access Control**: Granular permissions with multi-role user support
+- **Audit Trail System**: Complete tracking of payments, commissions, and platform activities
+
+### **Performance Optimizations**
+
+#### **Canister Architecture Improvements**
+
+- **Singleton Actor Patterns**: Prevents multiple actor instantiations and improves performance
+- **Pre-calculated Commission Fees**: Eliminates redundant calculations during booking acceptance
+- **Optimized Inter-Canister Calls**: Reduced network overhead with batched operations
+- **Stable Memory Utilization**: Efficient data persistence across canister upgrades
+
+#### **Frontend Performance**
+
+- **Component Optimization**: React.memo implementations to prevent unnecessary re-renders
+- **Lazy Loading**: Dynamic imports and code splitting for faster initial load times
+- **Caching Strategies**: Intelligent service worker caching for offline functionality
+- **Bundle Optimization**: Vite-based build system with optimized dependency bundling
+
+### **Security Enhancements**
+
+#### **Authentication & Authorization**
+
+- **Principal-Based Security**: Leverages ICP's decentralized identity system
+- **Role-Based Access Control**: Granular permissions for clients, providers, and administrators
+- **Session Management**: Secure authentication state persistence across browser sessions
+- **API Security**: Proper validation and sanitization for all external API integrations
+
+#### **Payment Security**
+
+- **Escrow System**: Payments held securely until service completion verification
+- **Commission Validation**: Prevents booking acceptance without sufficient provider wallet balance
+- **Audit Logging**: Comprehensive transaction tracking for financial transparency
+- **Fraud Prevention**: AI-powered detection of suspicious activities and patterns
+
+### **Cross-Platform Compatibility**
+
+#### **Progressive Web App Features**
+
+- **Universal Installation**: Works across desktop, mobile, and tablet devices
+- **Offline Functionality**: Core features available without internet connection
+- **Push Notifications**: Real-time updates via Firebase Cloud Messaging
+- **Browser Compatibility**: Comprehensive support for Chrome, Safari, Firefox, Edge, and Brave
+
+#### **Responsive Design**
+
+- **Mobile-First Approach**: Optimized for mobile devices with desktop enhancements
+- **Touch-Friendly Interface**: Gesture support and touch-optimized interactions
+- **Adaptive Layouts**: Dynamic layouts that adjust to different screen sizes and orientations
+- **Accessibility Features**: ARIA compliance and keyboard navigation support
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### 🧑‍💻 1. Development Environment Setup
+### 1. Development Environment Setup
 
 This project uses a **devcontainer** for consistent development environments:
 
@@ -692,11 +504,11 @@ dfx deploy --network ic reputation
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 SRV-WCHL/
-├── 🔧 Configuration & Setup
+├── Configuration & Setup
 │   ├── .devcontainer/devcontainer.json       # Container config for development
 │   ├── .github/
 │   │   ├── instructions/                     # AI Copilot context and guidance
@@ -708,8 +520,8 @@ SRV-WCHL/
 │   ├── dfx.json                              # ICP canister configuration (AI only)
 │   └── mops.toml                             # Motoko package configuration
 │
-├── 🖥️ Frontend Applications (React Web Apps)
-│   ├── src/frontend/                         # Main React + TypeScript Web App
+├── Frontend Applications
+│   ├── src/frontend/                         # Main React + TypeScript PWA
 │   │   ├── src/
 │   │   │   ├── App.tsx                       # Main application component
 │   │   │   ├── components/                   # Reusable UI components
@@ -723,7 +535,23 @@ SRV-WCHL/
 │   └── src/admin/                            # Admin dashboard Web App
 │       └── src/                              # Admin-specific components and services
 │
-├── 🔥 Firebase Backend (Primary Infrastructure)
+├── Backend Canisters (Motoko)
+│   └── src/backend/function/
+│       ├── auth.mo                           # Authentication & user management
+│       ├── service.mo                        # Service catalog & provider management
+│       ├── booking.mo                        # Booking lifecycle & scheduling
+│       ├── review.mo                         # Reviews & ratings system
+│       ├── reputation.mo                     # AI-powered reputation scoring
+│       ├── commission.mo                     # Dynamic commission calculation
+│       ├── wallet.mo                         # Digital wallet & transactions
+│       ├── chat.mo                           # Encrypted messaging system
+│       ├── media.mo                          # Image & document storage
+│       ├── notification.mo                   # Push notification management
+│       ├── remittance.mo                     # Cash collection & settlement
+│       ├── admin.mo                          # System administration
+│       └── feedback.mo                       # Platform feedback system
+│
+├── External Services Integration
 │   └── functions/                            # Firebase Cloud Functions
 │       ├── index.js                          # Function exports and routing
 │       ├── firebase-admin.js                 # Firebase Admin SDK setup
@@ -760,26 +588,26 @@ SRV-WCHL/
 │       ├── reputation.mo                     # AI-powered reputation scoring
 │       └── feedback.mo                       # Platform feedback (legacy)
 │
-├── 🔗 Generated Interfaces
+├── Generated Interfaces
 │   └── src/declarations/                     # Auto-generated canister interfaces
 │       ├── auth/                            # Authentication canister types
 │       ├── reputation/                      # Reputation canister types
 │       └── llm/                             # LLM canister types (external)
 │
-├── 🧪 Testing Infrastructure
+├── Testing Infrastructure
 │   ├── tests/
 │   │   ├── src/                             # Backend integration tests (PocketIC)
 │   │   └── vitest.config.ts                 # Test configuration
 │   └── src/frontend/tests/                  # Frontend unit tests (Vitest)
 │
-└── 📚 Documentation
+└── Documentation
     ├── README.md                            # This comprehensive guide
     ├── CHANGELOG.md                         # Detailed version history
     ├── MIGRATION_LOG.md                     # Migration documentation
     └── docs/                                # Additional documentation
 ```
 
-### **🏗️ Architecture Highlights**
+### **Architecture Highlights**
 
 #### **Frontend Layer**
 
@@ -813,7 +641,7 @@ SRV-WCHL/
 
 ---
 
-## ✅ Testing Patterns
+## Testing Patterns
 
 The project uses a comprehensive testing approach across both Firebase and ICP components:
 
@@ -844,13 +672,13 @@ npm run test:firebase
 
 ---
 
-## 🔄 CI/CD Workflow
+## CI/CD Workflow
 
 Automated workflows in `.github/workflows/` include:
 
-- **🧪 Test Automation**: Full test suite execution on pull requests
-- **📦 Build Verification**: Ensures deployable builds
-- **🔍 Code Quality**: Linting and formatting checks
+- **Test Automation**: Full test suite execution on pull requests
+- **Build Verification**: Ensures deployable builds
+- **Code Quality**: Linting and formatting checks
 
 Future enhancements:
 
@@ -860,11 +688,11 @@ Future enhancements:
 
 ---
 
-## 🧠 GitHub Copilot Integration
+## GitHub Copilot Integration
 
 This project includes AI-assisted development through customized instructions and prompts:
 
-### 📝 Instructions (`.github/instructions/`)
+### Instructions (`.github/instructions/`)
 
 Provide context for AI assistance:
 
@@ -872,7 +700,7 @@ Provide context for AI assistance:
 - **motoko.instructions.md**: Motoko-specific coding standards
 - **test.instructions.md**: Testing patterns and practices
 
-### 🛠️ Prompts (`.github/prompts/`)
+### Prompts (`.github/prompts/`)
 
 Structured workflows for common tasks:
 
@@ -903,17 +731,7 @@ Analyzes git diffs and provides comprehensive code review covering:
 
 ---
 
-## 📚 Learning Resources
-
-### Firebase
-
-- [Firebase Documentation](https://firebase.google.com/docs)
-- [Firestore Security Rules](https://firebase.google.com/docs/firestore/security/get-started)
-- [Firebase Cloud Functions](https://firebase.google.com/docs/functions)
-- [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
-- [Firebase Authentication](https://firebase.google.com/docs/auth)
-
-### Internet Computer Protocol (ICP)
+## Learning Resources
 
 - [Internet Computer Documentation](https://internetcomputer.org/docs)
 - [Motoko Programming Language](https://internetcomputer.org/docs/motoko/home)
@@ -932,44 +750,7 @@ Analyzes git diffs and provides comprehensive code review covering:
 
 ---
 
-## 🔄 Migration Notes
-
-### From ICP-First to Hybrid Firebase-ICP Architecture
-
-This project underwent a significant architectural transformation during the global migration phase. Key changes include:
-
-#### **What Changed**
-
-- ✅ Core business logic migrated from Motoko canisters to Firebase Cloud Functions
-- ✅ Data storage moved from ICP stable memory to Firestore collections
-- ✅ Authentication transitioned from Internet Identity to Firebase Auth with OTP
-- ✅ Real-time updates now powered by Firestore listeners instead of canister polling
-- ✅ Chat system rebuilt using Firestore subcollections
-- ✅ Payment processing integrated directly with Firebase and Xendit
-
-#### **What Remained on ICP**
-
-- ✅ AI-powered reputation scoring and analysis (tamper-proof blockchain storage)
-- ✅ LLM integration for sentiment analysis and fraud detection
-- ✅ Decentralized identity verification via Auth canister
-
-#### **Why the Migration?**
-
-- **Real-Time Performance**: Firestore provides instant updates across all clients
-- **Scalability**: Firebase auto-scales to handle millions of concurrent users
-- **Developer Velocity**: Faster development with Firebase's comprehensive SDK
-- **Cost Efficiency**: Pay-as-you-go model more economical for the use case
-- **Best of Both Worlds**: Firebase performance + ICP's tamper-proof AI intelligence
-
-#### **Migration Resources**
-
-- See `MIGRATION_LOG.md` for detailed migration documentation
-- Check commit history for step-by-step migration process
-- Firebase Functions in `/functions/` replace previous canister logic
-
----
-
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions to improve the marketplace! Please:
 
@@ -991,6 +772,4 @@ For bugs or feature requests, please open an issue with detailed information.
 
 ---
 
-**Build the future of local services with hybrid cloud intelligence 🚀**
-
-_Powered by Firebase for real-time performance and ICP for tamper-proof AI trust_
+**Build the future of local services with decentralized trust**

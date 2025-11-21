@@ -2,7 +2,6 @@
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseFunctions } from "./firebaseApp";
 
-// Get Firebase Functions instance from singleton
 const functions = getFirebaseFunctions();
 
 // Frontend-adapted types
@@ -123,9 +122,9 @@ export const getFileData = async (mediaId: string): Promise<Uint8Array> => {
   }
 };
 
+// Handle media URLs
 export const extractMediaIdFromUrl = (url: string): string | null => {
   try {
-    // Handle URLs in format: /media/{mediaId} or media://{mediaId}
     if (url.startsWith("media://")) {
       return url.replace("media://", "").split("/").pop() || null;
     }
@@ -177,52 +176,28 @@ export const getImageDataUrl = async (
     ...options,
   };
 
-  console.log("getImageDataUrl - Starting for URL:", mediaUrl);
-
   try {
     // Check cache first if enabled
     if (opts.enableCache && imageCache.has(mediaUrl)) {
-      console.log("getImageDataUrl - Found in cache:", mediaUrl);
       return imageCache.get(mediaUrl)!;
     }
 
     // Extract media ID from URL
     const mediaId = extractMediaIdFromUrl(mediaUrl);
-    console.log("getImageDataUrl - Extracted media ID:", mediaId);
     if (!mediaId) {
-      console.warn("Could not extract media ID from URL:", mediaUrl);
       return opts.fallbackImageUrl;
     }
 
-    // Get file data from Firebase
-    console.log("getImageDataUrl - Calling getFileData");
+    // Get file data and media item
     const fileData = await getFileData(mediaId);
-    console.log("getImageDataUrl - Got file data, length:", fileData.length);
-
-    // Get media item for content type
-    console.log("getImageDataUrl - Getting media item for content type");
     const mediaItem = await getMediaItem(mediaId);
-    console.log("getImageDataUrl - getMediaItem result:", mediaItem);
 
     if (!mediaItem) {
-      console.warn("Failed to retrieve media item");
       return opts.fallbackImageUrl;
     }
 
-    // Convert Uint8Array to data URL
-    console.log("getImageDataUrl - Converting to data URL");
     const contentType = mediaItem.contentType;
-    console.log(
-      "getImageDataUrl - Content type:",
-      contentType,
-      "Data length:",
-      fileData.length,
-    );
     const dataUrl = await convertBlobToDataUrl(fileData, contentType);
-    console.log(
-      "getImageDataUrl - Data URL generated, length:",
-      dataUrl.length,
-    );
 
     // Cache the result if enabled
     if (opts.enableCache) {

@@ -4,6 +4,12 @@ import { adminServiceCanister } from "../services/adminServiceCanister";
 import authCanisterService from "../../../frontend/src/services/authCanisterService";
 import { ProfileImage } from "../../../frontend/src/components/common/ProfileImage";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { formatTimestamp } from "../utils/formatUtils";
+import {
+  DEFAULT_USER_IMAGE,
+  getProfileImage,
+  shouldUseDefaultImage,
+} from "../utils/profileUtils";
 
 interface ConversationSummary {
   conversation: {
@@ -23,8 +29,6 @@ interface ConversationSummary {
 }
 
 export const UserChatsPage: React.FC = () => {
-  const DEFAULT_USER_IMAGE = "/default-provider.svg";
-
   const { id: userId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -64,11 +68,10 @@ export const UserChatsPage: React.FC = () => {
             const profile = await authCanisterService.getProfile(otherUserId);
             if (profile) {
               namesMap.set(otherUserId, profile.name);
-              if (profile.profilePicture && profile.profilePicture.imageUrl) {
-                imagesMap.set(otherUserId, profile.profilePicture.imageUrl);
-              } else {
-                imagesMap.set(otherUserId, DEFAULT_USER_IMAGE);
-              }
+              imagesMap.set(
+                otherUserId,
+                getProfileImage(profile.profilePicture),
+              );
             }
           } catch (e) {}
         }),
@@ -83,20 +86,6 @@ export const UserChatsPage: React.FC = () => {
     }
   };
 
-  const formatTimestamp = (dateStr?: string) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-    const diffDays = diffHours / 24;
-
-    if (diffHours < 1) return "Just now";
-    if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
-    if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
-    return date.toLocaleDateString();
-  };
-
   const handleConversationClick = (conv: ConversationSummary) => {
     if (!userId) return;
     const otherUserId =
@@ -107,14 +96,14 @@ export const UserChatsPage: React.FC = () => {
       userNames.get(otherUserId) || `User ${otherUserId.slice(0, 8)}...`;
     const otherUserImage = userImages.get(otherUserId) || DEFAULT_USER_IMAGE;
 
-    // Navigate to the chat history page
     navigate(`/user/${userId}/chat/${conv.conversation.id}`, {
       state: {
         conversationId: conv.conversation.id,
         otherUserName,
         otherUserId,
-        otherUserImage:
-          otherUserImage !== DEFAULT_USER_IMAGE ? otherUserImage : undefined,
+        otherUserImage: !shouldUseDefaultImage(otherUserImage)
+          ? otherUserImage
+          : undefined,
       },
     });
   };
@@ -209,7 +198,7 @@ export const UserChatsPage: React.FC = () => {
                       <div className="relative h-14 w-14 flex-shrink-0">
                         <ProfileImage
                           profilePictureUrl={
-                            otherUserImage !== DEFAULT_USER_IMAGE
+                            !shouldUseDefaultImage(otherUserImage)
                               ? otherUserImage
                               : undefined
                           }

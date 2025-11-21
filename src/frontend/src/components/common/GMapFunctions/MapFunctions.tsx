@@ -1,22 +1,35 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, {
+  Suspense,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 const LocationMapModal = React.lazy(() => import("./LocationMapModal"));
 import { useLocationStore } from "../../../store/locationStore";
 import EnableLocationButton from "../locationAccessPermission/EnableLocationButton";
 import LocationBlockedModal from "../locationAccessPermission/LocationBlockedModal";
 
+// Constants
 const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_COMMON_V1";
-const ADDR_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const ADDR_CACHE_TTL_MS = 2 * 60 * 1000;
 
-const MapFunctions: React.FC = () => {
+export type MapFunctionsHandle = {
+  openMap: () => void;
+  openChangeLocation: () => void;
+};
+
+// Component
+const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
   const {
     location: geoLocation,
     userAddress,
     userProvince,
     locationLoading,
     locationStatus,
-    addressMode,
+    isInitialized,
   } = useLocationStore();
 
+  // State
   const [showMap, setShowMap] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [gmapsAddress, setGmapsAddress] = useState<string>(
@@ -28,27 +41,22 @@ const MapFunctions: React.FC = () => {
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
   const [lastRefreshTs, setLastRefreshTs] = useState<number>(0);
 
+  // Effects
   useEffect(() => {
-    // Refresh location when the page becomes visible again or on mount if stale.
-    const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+    const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 
     const tryRefresh = async (force = false) => {
       try {
-        // Only attempt refresh when permission is allowed.
         if (locationStatus !== "allowed") return;
 
         const now = Date.now();
         if (!force && now - lastRefreshTs < REFRESH_INTERVAL_MS) return;
 
-        // Force a fresh geolocation request (bypass cached early-return)
         await (useLocationStore.getState().requestLocation as any)(true);
         setLastRefreshTs(now);
-      } catch {
-        // ignore refresh errors
-      }
+      } catch {}
     };
 
-    // on mount try a refresh (non-forced)
     tryRefresh(false);
 
     const onVisibility = () => {
@@ -151,36 +159,80 @@ const MapFunctions: React.FC = () => {
     }
   }, [mapsApiLoaded, geoLocation, gmapsStatus]);
 
+  const openMap = () => {
+    if (mapsApiLoaded && geoLocation) {
+      setShowMap(true);
+    } else if (locationStatus === "denied" || locationStatus === "not_set") {
+      setShowLocationModal(true);
+    }
+  };
+
+  const openChangeLocation = () => {
+    setShowLocationModal(true);
+  };
+
+  // Auto-show blocked modal immediately on transition to denied
+  const [prevStatus, setPrevStatus] = useState(locationStatus);
+  useEffect(() => {
+    if (
+      isInitialized &&
+      locationStatus === "denied" &&
+      prevStatus !== "denied" &&
+      !showLocationModal
+    ) {
+      setShowLocationModal(true);
+    }
+    // When permission transitions to allowed, force a fresh reverse geocode
+    // and prefer detected location over any previously manually chosen address.
+    if (
+      isInitialized &&
+      prevStatus !== "allowed" &&
+      (prevStatus === "denied" || prevStatus === "not_set") &&
+      locationStatus === "allowed"
+    ) {
+      setGmapsStatus("idle"); // trigger geocode effect
+    }
+    if (prevStatus !== locationStatus) setPrevStatus(locationStatus);
+  }, [locationStatus, prevStatus, isInitialized, showLocationModal]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openMap,
+      openChangeLocation,
+    }),
+    [mapsApiLoaded, geoLocation, locationStatus],
+  );
+
+  // Render
   return (
     <>
       <div className="flex w-full items-center justify-start">
-        {mapsApiLoaded && geoLocation && gmapsStatus === "ok" ? (
-          <button
-            type="button"
-            className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-            onClick={() => setShowMap(true)}
-            title={gmapsAddress}
-          >
-            {gmapsAddress}
-          </button>
-        ) : userAddress && userProvince ? (
-          geoLocation ? (
+        {locationStatus === "allowed" && geoLocation ? (
+          mapsApiLoaded && gmapsStatus === "ok" ? (
             <button
               type="button"
-              className="text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
-              onClick={() => setShowMap(true)}
-              title={`${userAddress}, ${userProvince}`}
+              className="line-clamp-2 max-w-full text-left text-sm font-medium text-blue-900 transition-colors hover:text-blue-700 focus:outline-none"
+              onClick={openMap}
+              title={gmapsAddress}
             >
-              {userAddress}, {userProvince}
+              {gmapsAddress}
             </button>
           ) : (
             <span
-              className="text-left text-sm font-medium text-blue-900"
-              title={`${userAddress}, ${userProvince}`}
+              className="text-sm text-gray-500"
+              title="Resolving detected location"
             >
-              {userAddress}, {userProvince}
+              Resolving detected location...
             </span>
           )
+        ) : userAddress && userProvince ? (
+          <span
+            className="text-left text-sm font-medium text-blue-900"
+            title={`${userAddress}, ${userProvince}`}
+          >
+            {userAddress}, {userProvince}
+          </span>
         ) : locationLoading || gmapsStatus === "loading" ? (
           <span className="animate-pulse text-sm text-gray-500">
             Detecting location...
@@ -193,20 +245,8 @@ const MapFunctions: React.FC = () => {
       </div>
       {(locationStatus === "denied" || locationStatus === "not_set") && (
         <div className="ml-3 flex items-center gap-2">
-          {/* Only show the enable button when permission is unknown (not_set).
-              If the permission is denied (blocked), hide the enable button and
-              keep the manual "Change location" action available. */}
+          {/* Controls */}
           {locationStatus === "not_set" && <EnableLocationButton />}
-
-          {addressMode === "manual" && userAddress && userProvince && (
-            <button
-              type="button"
-              className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50"
-              onClick={() => setShowLocationModal(true)}
-            >
-              Change location
-            </button>
-          )}
         </div>
       )}
 
@@ -231,11 +271,15 @@ const MapFunctions: React.FC = () => {
       )}
 
       <LocationBlockedModal
-        visible={showLocationModal}
+        visible={
+          showLocationModal && locationStatus === "denied" && isInitialized
+        }
         onClose={() => setShowLocationModal(false)}
       />
     </>
   );
-};
+});
+
+MapFunctions.displayName = "MapFunctions";
 
 export default MapFunctions;

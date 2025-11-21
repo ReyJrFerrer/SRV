@@ -1,19 +1,8 @@
-// Component: LocationMapPicker
-// Purpose: Pin/search control for selecting a precise map location with reverse geocoding.
-// Inputs: props.value (StructuredLocation | null), props.highlight, props.label, props.persistKey
-// Outputs: onChange(StructuredLocation) with lat/lng and a user-friendly address
-// Side effects: persists to localStorage when persistKey is provided
-// Dependencies: @vis.gl/react-google-maps Map/AdvancedMarker; Google Maps JS (Places + Geocoder)
+// Imports
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 
-const containerStyle: React.CSSProperties = {
-  width: "100%",
-  height: "300px",
-  borderRadius: "0.75rem",
-};
-
-// Center of Baguio City for location biasing
+// Constants
 const baguioCenter = { lat: 16.4023, lng: 120.596 };
 
 interface StructuredLocation {
@@ -30,47 +19,97 @@ interface StructuredLocation {
 interface LocationMapPickerProps {
   value?: StructuredLocation | null;
   onChange: (loc: StructuredLocation) => void;
-  label?: string;
+  label?: React.ReactNode;
   highlight?: boolean;
   persistKey?: string;
+  mapHeight?: number; // optional override height (px)
+  onOpenFullScreen?: () => void;
 }
-
 const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   value,
   onChange,
   label = "Map Location",
   highlight = false,
   persistKey,
+  mapHeight = 300,
+  onOpenFullScreen,
 }) => {
-  // SECTION: State/Refs
+  // State/Refs
   const [internalPosition, setInternalPosition] = useState<{
     lat: number;
     lng: number;
   }>(value ? { lat: value.lat, lng: value.lng } : baguioCenter);
 
   const mapRef = useRef<google.maps.Map | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(
+  const [mapReady, setMapReady] = useState(false);
+  // Legacy PlacesService removed to avoid console warnings for new customers
+  const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(
     null,
   );
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const [searchText, setSearchText] = useState<string>("");
   const [predictions, setPredictions] = useState<
-    google.maps.places.PlaceResult[]
+    (
+      | google.maps.places.PlaceResult
+      | google.maps.places.AutocompletePrediction
+    )[]
   >([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [isLoadingPred, setIsLoadingPred] = useState<boolean>(false);
   const debounceRef = useRef<number | null>(null);
 
-  // SECTION: Helpers
+  // Helpers
+  const normalizePlace = (place: any) => {
+    if (!place) return null;
+    const g = (window as any).google;
+    const hasOld = place.geometry?.location;
+    const hasNew = place.location;
+    const location = hasOld
+      ? place.geometry.location
+      : hasNew && g
+        ? {
+            lat: () =>
+              typeof place.location.lat === "function"
+                ? place.location.lat()
+                : place.location.lat,
+            lng: () =>
+              typeof place.location.lng === "function"
+                ? place.location.lng()
+                : place.location.lng,
+          }
+        : null;
+
+    const address_components = place.address_components
+      ? place.address_components
+      : Array.isArray(place.addressComponents)
+        ? place.addressComponents.map((c: any) => ({
+            long_name: c.longText || c.long_name || c.name || "",
+            short_name: c.shortText || c.short_name || c.name || "",
+            types: c.types || [],
+          }))
+        : undefined;
+
+    return {
+      ...place,
+      name:
+        place.name ||
+        place.displayName?.text ||
+        place.displayName ||
+        place.primaryText?.text,
+      formatted_address:
+        place.formatted_address ||
+        place.formattedAddress ||
+        place.secondaryText?.text,
+      address_components,
+      geometry: location ? { location } : place.geometry,
+    };
+  };
   const composeFormattedWithPlace = (
     rawName: string | undefined,
     formattedAddress: string | undefined,
   ): string => {
     let formatted = (formattedAddress || "").trim();
     if (!formatted) return rawName || "";
-
-    // Split into comma-separated components, trim, and filter out
-    // unwanted tokens like plus-codes (e.g. "2FH3+G4C") and "Unnamed Road".
     const parts = formatted
       .split(",")
       .map((p) => p.trim())
@@ -139,12 +178,22 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
       onChange(structured);
       persistLocation(structured);
 
-      // Only adjust camera on selection to focus the chosen place.
       mapRef.current?.panTo({ lat: structured.lat, lng: structured.lng });
       mapRef.current?.setZoom(17);
     },
     [onChange, persistLocation],
   );
+
+  // Effects
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    try {
+      mapRef.current.panTo(internalPosition);
+      // Only bump zoom if the map is currently at a very low zoom
+      const currentZoom = mapRef.current.getZoom?.() ?? 0;
+      if ((currentZoom ?? 0) < 15) mapRef.current.setZoom(16);
+    } catch {}
+  }, [mapReady, internalPosition]);
 
   const reverseGeocodeAndUpdate = useCallback(
     (pos: { lat: number; lng: number }) => {
@@ -170,8 +219,49 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     [onChange, persistLocation, processPlaceDetails],
   );
 
+  const fetchPlaceById = useCallback(
+    async (placeId: string): Promise<any | null> => {
+      const g = (window as any).google;
+      try {
+        if (g?.maps?.places?.Place) {
+          const place = new g.maps.places.Place({ id: placeId });
+          await place.fetchFields({
+            fields: [
+              "id",
+              "displayName",
+              "formattedAddress",
+              "location",
+              "addressComponents",
+            ],
+          });
+          return normalizePlace(place);
+        }
+      } catch {}
+      // If new Place API is unavailable, fall back to reverse geocode only
+      return null;
+    },
+    [],
+  );
+
   const onMapClick = useCallback(
-    (e: any) => {
+    async (e: any) => {
+      try {
+        if (
+          (e?.placeId || e?.detail?.placeId) &&
+          typeof e?.stop === "function"
+        ) {
+          e.stop();
+        }
+      } catch {}
+      const placeId = e?.placeId || e?.detail?.placeId;
+      if (placeId) {
+        const detailed = await fetchPlaceById(placeId);
+        if (detailed) {
+          processPlaceDetails(detailed);
+          return;
+        }
+      }
+
       const ll = (e?.detail?.latLng || e?.latLng) as any;
       const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
       const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
@@ -181,7 +271,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         reverseGeocodeAndUpdate(pos);
       }
     },
-    [reverseGeocodeAndUpdate],
+    [reverseGeocodeAndUpdate, processPlaceDetails, fetchPlaceById],
   );
 
   useEffect(() => {
@@ -202,45 +292,62 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
       return;
     }
 
-    if (!placesServiceRef.current) {
-      const target = mapRef.current || document.createElement("div");
-      placesServiceRef.current = new g.maps.places.PlacesService(target);
+    // Prefer AutocompleteService
+    if (!autocompleteRef.current && g?.maps?.places?.AutocompleteService) {
+      autocompleteRef.current = new g.maps.places.AutocompleteService();
     }
-    if (!placesServiceRef.current) return;
 
     setIsLoadingPred(true);
-    const request: google.maps.places.TextSearchRequest = {
-      query: query,
-      location: new g.maps.LatLng(baguioCenter.lat, baguioCenter.lng),
-      radius: 15000, // 15km radius around Baguio
-      region: "ph",
-    };
 
-    placesServiceRef.current.textSearch(
-      request,
-      (
-        results: google.maps.places.PlaceResult[] | null,
-        status: google.maps.places.PlacesServiceStatus,
-      ) => {
-        if (status === g.maps.places.PlacesServiceStatus.OK && results) {
-          setPredictions(results);
-          setShowDropdown(true);
-        } else {
-          setPredictions([]);
-          setShowDropdown(false);
-        }
-        setIsLoadingPred(false);
-      },
-    );
+    if (autocompleteRef.current?.getPlacePredictions) {
+      const bias: any = {
+        center: new g.maps.LatLng(baguioCenter.lat, baguioCenter.lng),
+        radius: 15000,
+      };
+      try {
+        autocompleteRef.current.getPlacePredictions(
+          { input: query, locationBias: bias },
+          (preds: any[] | null) => {
+            setIsLoadingPred(false);
+            if (preds && preds.length) {
+              setPredictions(preds as any);
+              setShowDropdown(true);
+            } else {
+              setPredictions([]);
+              setShowDropdown(false);
+            }
+          },
+        );
+        return;
+      } catch {}
+    }
+
+    // No legacy fallback: if Autocomplete is unavailable, clear results
+    setIsLoadingPred(false);
+    setPredictions([]);
+    setShowDropdown(false);
   }, []);
 
   const onSelectPrediction = useCallback(
-    (place: google.maps.places.PlaceResult) => {
+    async (
+      pred:
+        | google.maps.places.PlaceResult
+        | google.maps.places.AutocompletePrediction
+        | any,
+    ) => {
       setShowDropdown(false);
       setPredictions([]);
-      processPlaceDetails(place);
+
+      if (pred && (pred as any).place_id && !(pred as any).geometry) {
+        const detailed = await fetchPlaceById((pred as any).place_id);
+        if (detailed) {
+          processPlaceDetails(detailed);
+          return;
+        }
+      }
+      processPlaceDetails(normalizePlace(pred));
     },
-    [processPlaceDetails],
+    [processPlaceDetails, fetchPlaceById],
   );
 
   useEffect(() => {
@@ -268,6 +375,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   return (
     <div className="space-y-2">
       <label className="text-xs font-medium text-gray-600">{label}</label>
+
       <div className="relative">
         <input
           value={searchText}
@@ -289,6 +397,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
             highlight ? "border-red-500 ring-2 ring-red-200" : "border-gray-300"
           }`}
         />
+
         {showDropdown && (predictions.length > 0 || isLoadingPred) && (
           <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-gray-200 bg-white text-sm shadow-lg">
             {isLoadingPred && (
@@ -303,8 +412,16 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
                   onClick={() => onSelectPrediction(p)}
                   className="block w-full cursor-pointer px-3 py-2 text-left hover:bg-gray-50"
                 >
-                  <p className="font-medium text-gray-800">{p.name}</p>
-                  <p className="text-xs text-gray-500">{p.formatted_address}</p>
+                  <p className="font-medium text-gray-800">
+                    {(p as any).name ||
+                      (p as any).structured_formatting?.main_text ||
+                      (p as any).description}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(p as any).formatted_address ||
+                      (p as any).structured_formatting?.secondary_text ||
+                      ""}
+                  </p>
                 </button>
               ))}
           </div>
@@ -315,33 +432,68 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
         className={`rounded-xl ${highlight ? "border-2 border-red-500 ring-2 ring-red-200" : "border border-gray-200"}`}
         style={{ overflow: "hidden" }}
       >
-        <Map
-          style={containerStyle}
-          defaultCenter={baguioCenter}
-          defaultZoom={12}
-          center={internalPosition}
-          onCameraChanged={(ev) => (mapRef.current = ev.map)}
-          onClick={onMapClick}
-          disableDefaultUI={true}
-          zoomControl={true}
-          mapId={"6922634ff75ae05ac38cc473"}
-          gestureHandling="greedy"
-        >
-          <AdvancedMarker
-            position={internalPosition}
-            draggable={true}
-            onDragEnd={(e: any) => {
-              const ll = (e?.detail?.latLng || e?.latLng) as any;
-              const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
-              const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
-              if (typeof lat === "number" && typeof lng === "number") {
-                const pos = { lat, lng };
-                setInternalPosition(pos);
-                reverseGeocodeAndUpdate(pos);
-              }
+        <div className="relative">
+          {onOpenFullScreen && (
+            <button
+              aria-label="Open full screen map"
+              type="button"
+              onClick={onOpenFullScreen}
+              className="absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md hover:bg-gray-50"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-5 w-5 text-gray-700"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"
+                />
+              </svg>
+            </button>
+          )}
+
+          <Map
+            style={{
+              width: "100%",
+              height: `${mapHeight}px`,
+              borderRadius: "0.75rem",
             }}
-          />
-        </Map>
+            defaultCenter={baguioCenter}
+            defaultZoom={18}
+            onCameraChanged={(ev) => {
+              mapRef.current = ev.map;
+              setMapReady(true);
+            }}
+            onClick={onMapClick}
+            disableDefaultUI={true}
+            zoomControl={false}
+            mapId={"6922634ff75ae05ac38cc473"}
+            gestureHandling="greedy"
+          >
+            <AdvancedMarker
+              position={internalPosition}
+              draggable={true}
+              onDragEnd={(e: any) => {
+                const ll = (e?.detail?.latLng || e?.latLng) as any;
+                const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
+                const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
+                if (typeof lat === "number" && typeof lng === "number") {
+                  const pos = { lat, lng };
+                  setInternalPosition(pos);
+                  try {
+                    mapRef.current?.panTo(pos);
+                  } catch {}
+                  reverseGeocodeAndUpdate(pos);
+                }
+              }}
+            />
+          </Map>
+        </div>
       </div>
 
       <p className="text-[10px] text-gray-400">

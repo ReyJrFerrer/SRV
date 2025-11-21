@@ -45,13 +45,11 @@ function detectBrowser() {
 // Install event - cache resources
 self.addEventListener("install", (event) => {
   const browser = detectBrowser();
-  //console.log(`🔧 SW: Installing Service Worker (${browser.name})...`);
 
   event.waitUntil(
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        //console.log("📦 SW: Caching static resources");
         return cache.addAll(
           STATIC_CACHE_URLS.map(
             (url) =>
@@ -62,7 +60,7 @@ self.addEventListener("install", (event) => {
         );
       })
       .catch((error) => {
-        //console.error("❌ SW: Failed to cache resources:", error);
+        // Error caching resources
       }),
   );
 
@@ -75,7 +73,6 @@ self.addEventListener("install", (event) => {
 // Activate event - clean up old caches
 self.addEventListener("activate", (event) => {
   const browser = detectBrowser();
-  //console.log(`✅ SW: Activating Service Worker (${browser.name})...`);
 
   event.waitUntil(
     Promise.all([
@@ -84,7 +81,6 @@ self.addEventListener("activate", (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
-              //console.log("🗑️ SW: Deleting old cache:", cacheName);
               return caches.delete(cacheName);
             }
           }),

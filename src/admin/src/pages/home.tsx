@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminDashboardStats } from "../components";
 import { useAdmin } from "../hooks/useAdmin";
-import { UserIcon } from "@heroicons/react/24/outline";
+import {
+  PresentationChartLineIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import {
   ResponsiveContainer,
@@ -21,6 +24,10 @@ import {
   type Period,
 } from "../utils/homeUtils";
 import { getFeedbackStats } from "../services/adminServiceCanister";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions } from "../services/firebaseApp";
+import { FrontendSystemSettings } from "../services/serviceTypes";
+import { useAuth } from "../context/AuthContext";
 
 export const AdminHomePage: React.FC = () => {
   const {
@@ -51,6 +58,24 @@ export const AdminHomePage: React.FC = () => {
     averageRating: number;
     totalFeedback: number;
   } | null>(null);
+
+  const [settings, setSettings] = useState<FrontendSystemSettings | null>(null);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordErrors, setPasswordErrors] = useState<{
+    oldPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+    general?: string;
+  }>({});
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [isPasswordSet, setIsPasswordSet] = useState(false);
+  const { logout } = useAuth();
 
   // Calculate active service providers count from users with ServiceProvider role
   const activeServiceProvidersCount = useMemo(() => {
@@ -137,7 +162,114 @@ export const AdminHomePage: React.FC = () => {
     loadFeedbackStats();
   }, []);
 
-  // Toggle mobile bottom bar
+  const loadSettings = async () => {
+    try {
+      const functions = getFirebaseFunctions();
+      const getSettingsFn = httpsCallable(functions, "getSettings");
+      const result = await getSettingsFn();
+      const data = result.data as {
+        success: boolean;
+        data: FrontendSystemSettings;
+      };
+      if (data.success) {
+        const settingsData = data.data;
+        if (settingsData.updatedAt) {
+          settingsData.updatedAt = new Date(settingsData.updatedAt as any);
+        }
+        setSettings(settingsData);
+      }
+
+      const isPasswordSetFn = httpsCallable(functions, "isAdminPasswordSet");
+      const passwordCheckResult = await isPasswordSetFn();
+      const passwordData = passwordCheckResult.data as {
+        success: boolean;
+        isSet: boolean;
+      };
+      if (passwordData.success) {
+        setIsPasswordSet(passwordData.isSet);
+      }
+    } catch (error) {}
+  };
+
+  const toggleRestrictNewLogins = async (enabled: boolean) => {
+    if (!settings) return;
+
+    setUpdatingSettings(true);
+    try {
+      const functions = getFirebaseFunctions();
+      const updateSettingsFn = httpsCallable(functions, "setSettings");
+      await updateSettingsFn({
+        ...settings,
+        restrictNewAdminLogins: enabled,
+      });
+      setSettings({ ...settings, restrictNewAdminLogins: enabled });
+    } catch (error) {
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    setPasswordErrors({});
+
+    if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setPasswordErrors({
+        general: "New password and confirmation are required",
+      });
+      return;
+    }
+
+    if (isPasswordSet && !passwordForm.oldPassword) {
+      setPasswordErrors({ oldPassword: "Old password is required" });
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordErrors({ confirmPassword: "Passwords do not match" });
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordErrors({
+        newPassword: "Password must be at least 8 characters long",
+      });
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const functions = getFirebaseFunctions();
+      const changePasswordFn = httpsCallable(functions, "changeAdminPassword");
+      await changePasswordFn({
+        oldPassword: isPasswordSet ? passwordForm.oldPassword : undefined,
+        newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword,
+      });
+      setShowPasswordModal(false);
+      setPasswordForm({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setPasswordErrors({});
+      setIsPasswordSet(true);
+      await loadSettings();
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to change password";
+      if (errorMessage.includes("incorrect")) {
+        setPasswordErrors({ oldPassword: "Old password is incorrect" });
+      } else {
+        setPasswordErrors({ general: errorMessage });
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
   useEffect(() => {
     const onScroll = () => {
       setShowMobileBar(window.scrollY > 80);
@@ -177,19 +309,7 @@ export const AdminHomePage: React.FC = () => {
                   to="/analytics"
                   className="inline-flex min-w-0 flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
                 >
-                  <svg
-                    className="mr-2 h-4 w-4 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
+                  <PresentationChartLineIcon className="mr-2 h-4 w-4 text-white" />
                   Analytics
                 </Link>
                 <Link
@@ -213,6 +333,227 @@ export const AdminHomePage: React.FC = () => {
             stats={dashboardStats}
             loading={loading.systemStats}
           />
+
+          {/* Security Settings Section */}
+          <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Security Settings
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Control admin access and security policies
+                  </p>
+                </div>
+                <button
+                  onClick={logout}
+                  className="inline-flex items-center justify-center self-end rounded-md border border-red-200 bg-red-50 px-4 py-1.5 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 sm:self-auto"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-gray-900">
+                    Restrict New Admin Logins
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    When enabled, only existing users in Firestore can access
+                    the admin panel. New Internet Identity accounts will be
+                    blocked.
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    toggleRestrictNewLogins(!settings?.restrictNewAdminLogins)
+                  }
+                  disabled={updatingSettings || !settings}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    settings?.restrictNewAdminLogins
+                      ? "bg-blue-600"
+                      : "bg-gray-200"
+                  } ${updatingSettings ? "cursor-not-allowed opacity-50" : ""}`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      settings?.restrictNewAdminLogins
+                        ? "translate-x-5"
+                        : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+              {settings?.restrictNewAdminLogins && (
+                <div className="mt-3 rounded-md bg-yellow-50 p-3">
+                  <p className="text-sm text-yellow-800">
+                    New Internet Identity accounts will be blocked from admin
+                    access.
+                  </p>
+                </div>
+              )}
+              <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-6">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-gray-900">
+                    Admin Access Password
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Change the password required to access the admin panel
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowPasswordModal(true)}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Change Password
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {showPasswordModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                  Change Admin Password
+                </h3>
+                {passwordErrors.general && (
+                  <div className="mb-4 rounded-md bg-red-50 p-3">
+                    <p className="text-sm text-red-800">
+                      {passwordErrors.general}
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-4">
+                  {isPasswordSet && (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Old Password
+                      </label>
+                      <input
+                        type="password"
+                        value={passwordForm.oldPassword}
+                        onChange={(e) => {
+                          setPasswordForm({
+                            ...passwordForm,
+                            oldPassword: e.target.value,
+                          });
+                          setPasswordErrors({
+                            ...passwordErrors,
+                            oldPassword: undefined,
+                          });
+                        }}
+                        className={`w-full rounded-md border ${
+                          passwordErrors.oldPassword
+                            ? "border-red-300"
+                            : "border-gray-300"
+                        } px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                        placeholder="Enter old password"
+                      />
+                      {passwordErrors.oldPassword && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {passwordErrors.oldPassword}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {!isPasswordSet && (
+                    <div className="rounded-md bg-blue-50 p-3">
+                      <p className="text-sm text-blue-800">
+                        No password is currently set. Please set an initial
+                        password.
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => {
+                        setPasswordForm({
+                          ...passwordForm,
+                          newPassword: e.target.value,
+                        });
+                        setPasswordErrors({
+                          ...passwordErrors,
+                          newPassword: undefined,
+                        });
+                      }}
+                      className={`w-full rounded-md border ${
+                        passwordErrors.newPassword
+                          ? "border-red-300"
+                          : "border-gray-300"
+                      } px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                      placeholder="Enter new password (min 8 characters)"
+                    />
+                    {passwordErrors.newPassword && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {passwordErrors.newPassword}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => {
+                        setPasswordForm({
+                          ...passwordForm,
+                          confirmPassword: e.target.value,
+                        });
+                        setPasswordErrors({
+                          ...passwordErrors,
+                          confirmPassword: undefined,
+                        });
+                      }}
+                      className={`w-full rounded-md border ${
+                        passwordErrors.confirmPassword
+                          ? "border-red-300"
+                          : "border-gray-300"
+                      } px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                      placeholder="Confirm new password"
+                    />
+                    {passwordErrors.confirmPassword && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {passwordErrors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      setPasswordForm({
+                        oldPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                      });
+                      setPasswordErrors({});
+                    }}
+                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePasswordChange}
+                    disabled={changingPassword}
+                    className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {changingPassword ? "Changing..." : "Change Password"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Charts Section */}
           <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
@@ -395,38 +736,14 @@ export const AdminHomePage: React.FC = () => {
               to="/analytics"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
             >
-              <svg
-                className="mr-2 h-4 w-4 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
+              <PresentationChartLineIcon className="mr-2 h-4 w-4 text-white" />
               Analytics
             </Link>
             <Link
               to="/users"
               className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
-              <svg
-                className="mr-2 h-4 w-4 text-blue-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                />
-              </svg>
+              <UserIcon className="mr-2 h-4 w-4 text-blue-700" />
               View Users
             </Link>
           </div>

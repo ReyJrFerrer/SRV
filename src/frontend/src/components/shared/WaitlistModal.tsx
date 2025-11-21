@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from "react";
+import { CheckIcon } from "@heroicons/react/24/outline";
 import { useWaitlist } from "./useWaitlist";
 
 export interface WaitlistModalProps {
@@ -109,18 +110,9 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({
         {isSuccess ? (
           <div className="waitlist-success">
             <div className="success-check">
-              <svg
-                width="40"
-                height="40"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
+              <div className="h-10 w-10">
+                <CheckIcon className="h-10 w-10 text-white" />
+              </div>
             </div>
             <h3>You're on the list!</h3>
             <p>

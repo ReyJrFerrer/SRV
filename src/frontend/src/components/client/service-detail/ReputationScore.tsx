@@ -67,7 +67,7 @@ const ReputationScore: React.FC<ReputationScoreProps> = ({ reputation }) => {
       className={`flex items-center rounded-lg py-1 pr-3 text-sm font-semibold ${textColor}`}
       style={{ minWidth: 0 }}
     >
-      <StarIcon className={`mr-2 h-5 w-5 ${iconColor}`} />
+      <StarIcon className={`mr-1.5 h-4 w-4  ${iconColor}`} />
       <span className="mr-2">Reputation Score:</span>
       <span className="font-bold">{score}</span>
     </span>

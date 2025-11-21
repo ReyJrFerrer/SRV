@@ -77,7 +77,6 @@ const NotificationsPageSP = () => {
     }
   }, [notifications, loading]);
 
-  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
   const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
 
   // Tabs for categorizing notifications
@@ -174,6 +173,7 @@ const NotificationsPageSP = () => {
     if (bookingTypes.includes(type)) return "Bookings";
     if (type === "review_request") return "Ratings";
     if (systemTypes.includes(type)) return "System";
+    if (type === "generic") return "Admin";
     return "All";
   };
 

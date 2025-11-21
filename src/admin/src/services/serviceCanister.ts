@@ -1,8 +1,6 @@
-// Service Management Firebase Interface for Admin
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 
-// Get Firebase instances
 const auth = getFirebaseAuth();
 const functions = getFirebaseFunctions();
 
@@ -65,15 +63,11 @@ export const serviceCanister = {
   async getAllServices(): Promise<ServiceData[]> {
     try {
       checkAuth();
-      console.log("Fetching all services from Firebase...");
 
       const getAllServices = createCallableFunction("getAllServices");
       const result = await getAllServices({});
 
       if ((result.data as any).success) {
-        console.log(
-          `Successfully fetched ${(result.data as any).services.length} services`,
-        );
         return (result.data as any).services.map((service: any) => ({
           ...service,
           createdAt: service.createdAt
@@ -98,15 +92,11 @@ export const serviceCanister = {
   async getAllCategories(): Promise<CategoryData[]> {
     try {
       checkAuth();
-      console.log("Fetching all categories from Firebase...");
 
       const getAllCategories = createCallableFunction("getAllCategories");
       const result = await getAllCategories({});
 
       if ((result.data as any).success) {
-        console.log(
-          `Successfully fetched ${(result.data as any).categories.length} categories`,
-        );
         return (result.data as any).categories.map((category: any) => ({
           ...category,
           createdAt: category.createdAt
@@ -131,7 +121,6 @@ export const serviceCanister = {
   async getServicesByCategory(categoryId: string): Promise<ServiceData[]> {
     try {
       checkAuth();
-      console.log(`Fetching services for category: ${categoryId}`);
 
       const getServicesByCategory = createCallableFunction(
         "getServicesByCategory",
@@ -139,9 +128,6 @@ export const serviceCanister = {
       const result = await getServicesByCategory({ categoryId });
 
       if ((result.data as any).success) {
-        console.log(
-          `Successfully fetched ${(result.data as any).services.length} services for category ${categoryId}`,
-        );
         return (result.data as any).services.map((service: any) => ({
           ...service,
           createdAt: service.createdAt
@@ -166,13 +152,11 @@ export const serviceCanister = {
   async getService(serviceId: string): Promise<ServiceData | null> {
     try {
       checkAuth();
-      console.log(`Fetching service: ${serviceId}`);
 
       const getService = createCallableFunction("getService");
       const result = await getService({ serviceId });
 
       if ((result.data as any).success && (result.data as any).service) {
-        console.log(`Successfully fetched service: ${serviceId}`);
         return {
           ...(result.data as any).service,
           createdAt: (result.data as any).service.createdAt
@@ -183,7 +167,6 @@ export const serviceCanister = {
             : new Date(),
         };
       } else {
-        console.log(`Service not found: ${serviceId}`);
         return null;
       }
     } catch (error) {

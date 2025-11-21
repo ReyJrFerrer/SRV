@@ -72,18 +72,10 @@ export function initializeFirebase(): {
           connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
           connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
           emulatorsConnected = true;
-          console.log(
-            "Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
-          );
         } catch (emulatorError) {
-          console.warn(
-            "Emulator connection skipped (may already be connected):",
-            emulatorError,
-          );
+          // Emulator connection skipped
         }
       }
-
-      console.log("Firebase already initialized");
       return {
         app: firebaseApp,
         auth: firebaseAuth,
@@ -127,18 +119,13 @@ export function initializeFirebase(): {
         connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
         connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
         emulatorsConnected = true;
-        console.log(
-          "Connected to Firebase Emulators (Auth, Functions, Storage, Firestore)",
-        );
       } catch (emulatorError) {
-        console.warn("Could not connect to emulators:", emulatorError);
+        // Could not connect to emulators
       }
     }
 
-    // Set language code for auth (optional)
     firebaseAuth.languageCode = "en";
 
-    console.log("Firebase initialized successfully");
     return {
       app: firebaseApp,
       auth: firebaseAuth,

@@ -171,7 +171,7 @@ If needed, you can disable version checking by commenting out the initialization
 
 1. Build and deploy your app
 2. Open the app in your browser
-3. Open DevTools Console - you should see: `📦 App version: [timestamp]`
+3. Open DevTools Console - you should see: `App version: [timestamp]`
 4. Make a change and rebuild
 5. Deploy again
 6. Wait 5 minutes (or force refresh the page multiple times)
@@ -189,10 +189,10 @@ console.log("Has update:", hasUpdate);
 
 ## Browser Support
 
-- ✅ Chrome/Edge (full support)
-- ✅ Firefox (full support)
-- ✅ Safari (full support)
-- ✅ Mobile browsers (full support)
+- Chrome/Edge (full support)
+- Firefox (full support)
+- Safari (full support)
+- Mobile browsers (full support)
 
 ## Benefits
 

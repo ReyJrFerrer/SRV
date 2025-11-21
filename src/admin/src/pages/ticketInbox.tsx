@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import {
   ArrowLeftIcon,
+  DocumentMagnifyingGlassIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon as ExclamationTriangleOutlineIcon,
   WrenchScrewdriverIcon,
@@ -15,7 +16,7 @@ import {
   getCategoryColor,
   formatDateShort,
 } from "../utils/ticketUtils";
-import { TicketFilters } from "../components/TicketFilters";
+import { TicketFilters } from "../components/support/TicketFilters";
 
 // Ticket card component
 const TicketCard: React.FC<{
@@ -103,7 +104,6 @@ export const TicketInboxPage: React.FC = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Initialize canister references and refresh data
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -114,7 +114,7 @@ export const TicketInboxPage: React.FC = () => {
     };
 
     initializeData();
-  }, [, refreshUsers]);
+  }, [refreshUsers]);
 
   // Load reports from feedback canister
   const loadReportsAsTickets = async () => {
@@ -192,12 +192,15 @@ export const TicketInboxPage: React.FC = () => {
     navigate(`/ticket/${ticket.id}`);
   };
 
-  const stats = {
-    total: tickets.length,
-    open: tickets.filter((t) => t.status === "open").length,
-    inProgress: tickets.filter((t) => t.status === "in_progress").length,
-    resolved: tickets.filter((t) => t.status === "resolved").length,
-  };
+  const stats = useMemo(
+    () => ({
+      total: tickets.length,
+      open: tickets.filter((t) => t.status === "open").length,
+      inProgress: tickets.filter((t) => t.status === "in_progress").length,
+      resolved: tickets.filter((t) => t.status === "resolved").length,
+    }),
+    [tickets],
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -390,19 +393,7 @@ export const TicketInboxPage: React.FC = () => {
               {filteredTickets.length === 0 ? (
                 <div className="py-12 text-center">
                   <div className="mx-auto h-12 w-12 text-gray-400">
-                    <svg
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      className="h-12 w-12"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
+                    <DocumentMagnifyingGlassIcon className="h-12 w-12" />
                   </div>
                   <h3 className="mt-4 text-sm font-medium text-gray-900">
                     No tickets found

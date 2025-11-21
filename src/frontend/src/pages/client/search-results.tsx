@@ -6,6 +6,7 @@ import {
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/solid";
+import { useReputation } from "../../hooks/useReputation";
 import ServiceListItem from "../../components/client/home page/ServiceListingCard";
 import BottomNavigation from "../../components/client/NavigationBar";
 import SearchBar from "../../components/client/SearchBar";
@@ -129,7 +130,53 @@ const SearchResultsPage: React.FC = () => {
     averageRating: service.rating?.average ?? 0,
     totalReviews: service.rating?.count ?? 0,
     mediaUrls: service.media || [],
+    reputationScore: serviceDataMap[service.id]?.reputationScore,
   });
+
+  // Map to hold fetched reputation scores for visible services
+  const { fetchUserReputation } = useReputation();
+  const [serviceDataMap, setServiceDataMap] = React.useState<
+    Record<string, { reputationScore?: number }>
+  >({});
+
+  useEffect(() => {
+    if (!sortedAndFilteredResults || sortedAndFilteredResults.length === 0)
+      return;
+    const toFetch = sortedAndFilteredResults.filter(
+      (s) => !!s.providerId && !serviceDataMap[s.id],
+    );
+    if (toFetch.length === 0) return;
+
+    let mounted = true;
+    (async () => {
+      const results = await Promise.all(
+        toFetch.map(async (s) => {
+          try {
+            const rep = await fetchUserReputation(s.providerId);
+            const score =
+              rep && typeof rep.trustScore === "number"
+                ? Math.round(rep.trustScore)
+                : undefined;
+            return { id: s.id, reputationScore: score };
+          } catch {
+            return { id: s.id, reputationScore: undefined };
+          }
+        }),
+      );
+      if (!mounted) return;
+      setServiceDataMap((prev) => {
+        const copy = { ...prev };
+        results.forEach((r) => {
+          copy[r.id] = { reputationScore: r.reputationScore };
+        });
+        return copy;
+      });
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [sortedAndFilteredResults, fetchUserReputation, serviceDataMap]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">

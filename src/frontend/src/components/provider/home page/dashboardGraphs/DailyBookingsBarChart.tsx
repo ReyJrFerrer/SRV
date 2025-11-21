@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -9,20 +9,162 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { CalendarDaysIcon } from "@heroicons/react/24/outline";
+import { CalendarDaysIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { Menu } from "@headlessui/react";
+import { format, subDays, subMonths, parseISO } from "date-fns";
 
 interface DailyBookingsBarChartProps {
   getBookingCountByDay: any;
 }
 
+const TIME_RANGES = [
+  { key: "7days", label: "Last 7 days" },
+  { key: "30days", label: "Last 30 days" },
+  { key: "3months", label: "Last 3 months" },
+  { key: "6months", label: "Last 6 months" },
+  { key: "12months", label: "Last 12 months" },
+  { key: "custom", label: "Custom Range" },
+];
+
+type TimeRange =
+  | "7days"
+  | "30days"
+  | "3months"
+  | "6months"
+  | "12months"
+  | "custom";
+
 const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
   getBookingCountByDay,
 }) => {
-  const data = getBookingCountByDay();
+  const [timeRange, setTimeRange] = useState<TimeRange>("30days");
+  const [customStartDate, setCustomStartDate] = useState<Date>(
+    subDays(new Date(), 30),
+  );
+  const [customEndDate, setCustomEndDate] = useState<Date>(new Date());
+  const [data, setData] = useState<any[]>([]);
+  const [totalBookings, setTotalBookings] = useState(0);
 
-  // Custom formatter for the X-Axis ticks to shorten day names
+  useEffect(() => {
+    updateChartData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange, customStartDate, customEndDate, getBookingCountByDay]);
+
+  const updateChartData = () => {
+    const now = new Date();
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+    let groupBy: "day" | "week" | "month" = "day";
+
+    if (timeRange === "custom") {
+      startDate = customStartDate;
+      endDate = customEndDate;
+      const diffDays = Math.ceil(
+        Math.abs(endDate.getTime() - startDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
+      groupBy = diffDays > 30 ? "week" : "day";
+    } else {
+      switch (timeRange) {
+        case "7days":
+          startDate = subDays(now, 7);
+          endDate = now;
+          groupBy = "day";
+          break;
+        case "30days":
+          startDate = subDays(now, 30);
+          endDate = now;
+          groupBy = "day";
+          break;
+        case "3months":
+          startDate = subMonths(now, 3);
+          endDate = now;
+          groupBy = "month";
+          break;
+        case "6months":
+          startDate = subMonths(now, 6);
+          endDate = now;
+          groupBy = "month";
+          break;
+        case "12months":
+        default:
+          startDate = subMonths(now, 12);
+          endDate = now;
+          groupBy = "month";
+          break;
+      }
+    }
+
+    let filledData: { name: string; value: number }[] = [];
+    if (groupBy === "day" && startDate && endDate) {
+      let d = new Date(startDate);
+      while (d <= endDate) {
+        filledData.push({
+          name: d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+          value: 0,
+        });
+        d.setDate(d.getDate() + 1);
+      }
+    } else if (groupBy === "week" && startDate && endDate) {
+      let d = new Date(startDate);
+      while (d <= endDate) {
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - d.getDay());
+        filledData.push({
+          name: `Week of ${weekStart.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`,
+          value: 0,
+        });
+        d.setDate(d.getDate() + 7);
+      }
+    } else if (groupBy === "month" && startDate && endDate) {
+      let d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+      while (d <= endMonth) {
+        filledData.push({
+          name: d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+          }),
+          value: 0,
+        });
+        d.setMonth(d.getMonth() + 1);
+      }
+    }
+
+    const actualData = getBookingCountByDay(startDate, endDate, groupBy);
+    const mergedData = filledData.map((item) => {
+      const found = actualData.find(
+        (d: { name: string; value: number }) => d.name === item.name,
+      );
+      return found ? { ...item, value: found.value } : item;
+    });
+
+    const total = mergedData.reduce(
+      (sum: number, item: { value: number }) => sum + (item.value || 0),
+      0,
+    );
+    setData(mergedData);
+    setTotalBookings(total);
+  };
+
+  const getTimeRangeLabel = () => {
+    const found = TIME_RANGES.find((r) => r.key === timeRange);
+    if (timeRange === "custom") {
+      return `${format(customStartDate, "MMM d, yyyy")} - ${format(customEndDate, "MMM d, yyyy")}`;
+    }
+    return found?.label || "Last 30 days";
+  };
+
+  // Custom formatter for the X-Axis ticks to shorten day names (for day group)
   const formatDayName = (name: string) => {
-    return name.substring(0, 3); // Shortens "Sunday" to "Sun", "Monday" to "Mon", etc.
+    if (name.startsWith("Week of ")) return name;
+    // e.g. "Nov 21, 2025" => "Nov 21"
+    const parts = name.split(",");
+    return parts.length > 1 ? parts[0] : name;
   };
 
   return (
@@ -30,9 +172,89 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
       <div className="mb-2 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-lg font-bold text-blue-900">
           <CalendarDaysIcon className="h-6 w-6 text-blue-400" />
-          Bookings by Day of the Week
+          Bookings Overview
         </h3>
-        <span className="text-xs text-gray-400">Last 30 days</span>
+        <div className="relative">
+          <Menu as="div" className="relative inline-block text-left">
+            <Menu.Button className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              {getTimeRangeLabel()}
+              <svg
+                className="h-4 w-4 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </Menu.Button>
+            <Menu.Items className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <div className="py-1">
+                {TIME_RANGES.map((range) => (
+                  <Menu.Item key={range.key}>
+                    {({ active }) => (
+                      <button
+                        onClick={() => {
+                          setTimeRange(range.key as TimeRange);
+                        }}
+                        className={`${
+                          active ? "bg-gray-100 text-gray-900" : "text-gray-700"
+                        } block w-full px-4 py-2 text-left text-sm`}
+                      >
+                        {range.label}
+                        {range.key === "custom" && (
+                          <CalendarIcon className="ml-2 inline h-4 w-4" />
+                        )}
+                      </button>
+                    )}
+                  </Menu.Item>
+                ))}
+                {timeRange === "custom" && (
+                  <div className="border-t border-gray-100 p-4">
+                    <div className="mb-2">
+                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                        From:
+                      </label>
+                      <input
+                        type="date"
+                        value={format(customStartDate, "yyyy-MM-dd")}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val) setCustomStartDate(parseISO(val));
+                        }}
+                        className="w-full rounded border border-gray-300 p-1 text-sm"
+                      />
+                    </div>
+                    <div className="mb-2">
+                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                        To:
+                      </label>
+                      <input
+                        type="date"
+                        value={format(customEndDate, "yyyy-MM-dd")}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val) setCustomEndDate(parseISO(val));
+                        }}
+                        className="w-full rounded border border-gray-300 p-1 text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Menu.Items>
+          </Menu>
+        </div>
+      </div>
+      <div className="mb-2 flex items-center gap-2">
+        <span className="text-base text-gray-700">Total Bookings:</span>
+        <span className="text-xl font-extrabold text-blue-600">
+          {totalBookings}
+        </span>
       </div>
       <div className="flex flex-1 items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">

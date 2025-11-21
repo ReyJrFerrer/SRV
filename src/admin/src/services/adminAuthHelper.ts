@@ -42,17 +42,6 @@ export async function createAdminProfile(
 
     const data = result.data as CreateAdminProfileResult;
 
-    if (data.success) {
-      console.log("Admin profile created:", data.message);
-      console.log("UID:", data.uid);
-
-      if (data.needsSignOut) {
-        console.log(
-          "Please sign out and sign in again to refresh your admin token",
-        );
-      }
-    }
-
     return data;
   } catch (error) {
     console.error("Failed to create admin profile:", error);

@@ -6,7 +6,9 @@ import { useAuth } from "../../../context/AuthContext";
 import { useServiceManagement } from "../../../hooks/serviceManagement";
 import authCanisterService from "../../../services/authCanisterService";
 import { APIProvider } from "@vis.gl/react-google-maps";
-import MapFunctions from "../../common/GMapFunctions/MapFunctions";
+import MapFunctions, {
+  MapFunctionsHandle,
+} from "../../common/GMapFunctions/MapFunctions";
 import { useLocationStore } from "../../../store/locationStore";
 
 // --- Props ---
@@ -52,6 +54,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [isMini, setIsMini] = useState(false);
   const [showMiniLocation, setShowMiniLocation] = useState(false);
+  const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
+  const miniMapRef = useRef<MapFunctionsHandle | null>(null);
   useEffect(() => {
     // Add hysteresis + rAF throttling to avoid rapid toggle near boundary
     let lastY = window.scrollY;
@@ -94,39 +98,36 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     return () => document.body.classList.remove("has-mini-header");
   }, [isMini]);
 
-  // Measure header height and keep it as a minHeight when the mini overlay is shown
-  // React.useLayoutEffect(() => {
-  //   const measure = () => {
-  //     if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight);
-  //   };
-  //   // Measure once after mount
-  //   measure();
-  //   window.addEventListener("resize", measure);
-  //   return () => window.removeEventListener("resize", measure);
-  // }, []);
-
   // maps logic has been extracted into MapFunctions component
-  const mapsApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // --- Handler: Search input change ---
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
     if (value.trim().length > 0) {
-      // Only use service names for suggestions, not categories
+      // Combine service names and provider names for suggestions
       const serviceNames = Array.from(
         new Set(
           services.map((service) => service.title).filter((name) => !!name),
         ),
       );
-      const filtered = serviceNames.filter((suggestion) =>
-        suggestion.toLowerCase().includes(value.toLowerCase()),
+      const providerNames = Array.from(
+        new Set(
+          services
+            .map((service) => service.providerName)
+            .filter((name) => !!name),
+        ),
       );
+      const allSuggestions = [...serviceNames, ...providerNames];
+      const filtered = allSuggestions
+        .filter((suggestion): suggestion is string => !!suggestion)
+        .filter((suggestion) =>
+          suggestion.toLowerCase().includes(value.toLowerCase()),
+        );
       setFilteredSuggestions(filtered);
       setShowSuggestions(filtered.length > 0);
     } else {
@@ -174,19 +175,26 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     navigate("/client/profile");
   };
 
+  const handleLocationClick = () => {
+    if (primaryMapRef.current?.openChangeLocation) {
+      primaryMapRef.current.openChangeLocation();
+      return;
+    }
+    if (miniMapRef.current?.openChangeLocation) {
+      miniMapRef.current.openChangeLocation();
+    }
+  };
+
   // --- Handler: suggestion click for search bar ---
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion);
     setShowSuggestions(false);
+    // Redirect to search results page with the selected suggestion
+    navigate(`/client/search-results?query=${encodeURIComponent(suggestion)}`);
   };
 
   // --- Display name for welcome message ---
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
-
-  // MapModal moved outside the component to avoid re-creation on each render
-
-  // --- Handler: search input change ---
-  // Only one handler should exist. The correct handler is defined above with dynamicSuggestions.
 
   // --- Render: Header layout ---
   return (
@@ -263,15 +271,20 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           {/* --- Location & Search Section --- */}
           <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleLocationClick}
+                className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none"
+                aria-label="Open my location details"
+              >
                 <MapPinIcon className="h-6 w-6 text-blue-600" />
                 <span className="text-base font-bold text-gray-800">
                   My Location
                 </span>
-              </div>
+              </button>
             </div>
             <div className="mt-2 flex items-center gap-2">
-              <MapFunctions />
+              <MapFunctions ref={primaryMapRef} />
             </div>
             {/* --- Search Bar for Service Queries --- */}
             <form
@@ -330,7 +343,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               }`}
             >
               <div className="-mt-1 mb-1 ml-1 flex items-center gap-2">
-                <MapFunctions />
+                <MapFunctions ref={miniMapRef} />
               </div>
             </div>
 

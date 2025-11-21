@@ -45,22 +45,10 @@ function safeSub(a, b) {
  * Cloud Function: getBalance
  */
 exports.getBalance = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [getBalance] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [getBalance] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
   const {userId} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [getBalance] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -106,26 +94,10 @@ exports.getBalance = functions.https.onCall(async (data, context) => {
  * Cloud Function: creditBalance
  */
 exports.creditBalance = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [creditBalance] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    amount: data.data?.amount,
-    paymentChannel: data.data?.paymentChannel,
-    description: data.data?.description,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [creditBalance] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
-  console.log("Payload", payload);
   const {userId, amount, paymentChannel, description} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [creditBalance] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -203,8 +175,6 @@ exports.creditBalance = functions.https.onCall(async (data, context) => {
  * @return {Promise<Object>} Result object
  */
 async function holdBalanceInternal(userId, amount, holdReference, reason) {
-  console.log("🔒 Hold Balance Internal:", {userId, amount, holdReference, reason});
-
   // Validation
   if (!userId) {
     throw new Error("User ID is required");
@@ -262,10 +232,6 @@ async function holdBalanceInternal(userId, amount, holdReference, reason) {
         updatedAt: new Date().toISOString(),
       }, {merge: true});
 
-      console.log(
-        `✅ Hold successful for user ${userId}. ` +
-        `Held: ${amount}, Total held: ${newHeldBalance}`,
-      );
       return {
         success: true,
         heldAmount: amount,
@@ -287,8 +253,6 @@ async function holdBalanceInternal(userId, amount, holdReference, reason) {
  * @return {Promise<Object>} Result object
  */
 async function releaseHoldInternal(userId, holdReference) {
-  console.log("🔓 Release Hold Internal:", {userId, holdReference});
-
   // Validation
   if (!userId) {
     throw new Error("User ID is required");
@@ -332,10 +296,6 @@ async function releaseHoldInternal(userId, holdReference) {
         updatedAt: new Date().toISOString(),
       }, {merge: true});
 
-      console.log(
-        `✅ Hold released for user ${userId}. ` +
-        `Released: ${releasedHold.amount}, Total held: ${newHeldBalance}`,
-      );
       return {
         success: true,
         releasedAmount: releasedHold.amount,
@@ -359,11 +319,6 @@ async function releaseHoldInternal(userId, holdReference) {
  * @return {Promise<Object>} Result object
  */
 async function convertHoldToDebitInternal(userId, holdReference, description, paymentChannel) {
-  console.log(
-    "💳 Convert Hold to Debit Internal:",
-    {userId, holdReference, description, paymentChannel},
-  );
-
   // Validation
   if (!userId) {
     throw new Error("User ID is required");
@@ -434,10 +389,6 @@ async function convertHoldToDebitInternal(userId, holdReference, description, pa
       const txRef = db.collection("transactions").doc(txId);
       transaction.set(txRef, transactionData);
 
-      console.log(
-        `✅ Hold converted to debit for user ${userId}. ` +
-        `Amount: ${amount}, New balance: ${newBalance}`,
-      );
       return {
         success: true,
         newBalance: newBalance,
@@ -461,8 +412,6 @@ async function convertHoldToDebitInternal(userId, holdReference, description, pa
  * @return {Promise<Object>} Result object
  */
 async function debitBalanceInternal(userId, amount, description, paymentChannel) {
-  console.log("💸 Debit Balance Internal:", {userId, amount, description, paymentChannel});
-
   // Validation - mirror Motoko validation logic
   if (!userId) {
     throw new Error("User ID is required");
@@ -514,7 +463,6 @@ async function debitBalanceInternal(userId, amount, description, paymentChannel)
       const txRef = db.collection("transactions").doc(txId);
       transaction.set(txRef, transactionData);
 
-      console.log(`✅ Debit successful for user ${userId}. New balance: ${newBalance}`);
       return {success: true, newBalance: newBalance, transactionId: txId};
     });
   } catch (error) {
@@ -528,25 +476,10 @@ async function debitBalanceInternal(userId, amount, description, paymentChannel)
  * HTTP Cloud Function - can be called from client or other services via HTTP
  */
 exports.debitBalance = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [debitBalance] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    amount: data.data?.amount,
-    description: data.data?.description,
-    paymentChannel: data.data?.paymentChannel,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [debitBalance] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
   const {userId, amount, description, paymentChannel} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [debitBalance] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -573,9 +506,6 @@ exports.debitBalance = functions.https.onCall(async (data, context) => {
  * @return {Promise<Object>} Result object with success status and new balance
  */
 async function creditWalletInternal(userId, amount, paymentChannel, description = "") {
-  const logMessage = `💰 [creditWalletInternal] Crediting ${amount} to user ${userId}`;
-  console.log(logMessage);
-
   // Input validation
   if (!userId) {
     throw new Error("User ID is required");
@@ -628,7 +558,6 @@ async function creditWalletInternal(userId, amount, paymentChannel, description 
       const txRef = db.collection("transactions").doc(txId);
       transaction.set(txRef, transactionData);
 
-      console.log(`✅ Credit successful for user ${userId}. New balance: ${newBalance}`);
       return {success: true, newBalance, transactionId: txId};
     });
   } catch (error) {
@@ -649,24 +578,10 @@ exports.creditWalletInternal = creditWalletInternal;
  * Cloud Function: transferFunds
  */
 exports.transferFunds = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [transferFunds] called");
-  const safeDataForLog = {
-    fromUserId: data.data?.fromUserId,
-    toUserId: data.data?.toUserId,
-    amount: data.data?.amount,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [transferFunds] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
   const {fromUserId, toUserId, amount} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [transferFunds] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -770,22 +685,10 @@ exports.transferFunds = functions.https.onCall(async (data, context) => {
  * Cloud Function: getTransactionHistory
  */
 exports.getTransactionHistory = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [getTransactionHistory] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [getTransactionHistory] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
   const {userId} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [getTransactionHistory] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -838,26 +741,14 @@ exports.getTransactionHistory = functions.https.onCall(async (data, context) => 
 });
 
 /**
- * Add authorized controller (Admin function)
+ * Add authorized controller
  * Cloud Function: addAuthorizedController
  */
 exports.addAuthorizedController = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [addAuthorizedController] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [addAuthorizedController] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
   const {userId} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [addAuthorizedController] Auth info:", authInfo);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -899,26 +790,14 @@ exports.addAuthorizedController = functions.https.onCall(async (data, context) =
 });
 
 /**
- * Remove authorized controller (Admin function)
+ * Remove authorized controller
  * Cloud Function: removeAuthorizedController
  */
 exports.removeAuthorizedController = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [removeAuthorizedController] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [removeAuthorizedController] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
   const {userId} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [removeAuthorizedController] Auth info:", authInfo);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -956,21 +835,11 @@ exports.removeAuthorizedController = functions.https.onCall(async (data, context
 });
 
 /**
- * Get all authorized controllers (Admin function)
+ * Get all authorized controllers
  * Cloud Function: getAuthorizedControllers
  */
 exports.getAuthorizedControllers = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [getAuthorizedControllers] called");
-  const safeDataForLog = {
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [getAuthorizedControllers] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [getAuthorizedControllers] Auth info:", authInfo);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -994,28 +863,15 @@ exports.getAuthorizedControllers = functions.https.onCall(async (data, context) 
 });
 
 /**
- * Release a held balance manually (Admin function)
+ * Release a held balance manually
  * Cloud Function: releaseHold
  * Used for dispute resolution or manual intervention
  */
 exports.releaseHold = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [releaseHold] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    holdReference: data.data?.holdReference,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [releaseHold] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
   const {userId, holdReference} = payload;
 
-  // Authentication - Admin only
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [releaseHold] Auth info:", authInfo);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -1041,26 +897,14 @@ exports.releaseHold = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Get wallet details including holds (Admin function)
+ * Get wallet details including holds
  * Cloud Function: getWalletDetails
  */
 exports.getWalletDetails = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [getWalletDetails] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    auth: data.auth ? "Present" : "Missing",
-  };
-  console.log(
-    "📦 [getWalletDetails] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2),
-  );
-  // Extract payload from data.data first
   const payload = data.data.data || data;
   const {userId} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [getWalletDetails] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -1068,7 +912,7 @@ exports.getWalletDetails = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // Authorization - only the user or admin can view wallet details
+  // Only the user or admin can view wallet details
   if (userId !== authInfo.uid && !authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",
@@ -1111,6 +955,35 @@ exports.getWalletDetails = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error in getWalletDetails:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+exports.getAllWallets = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only admins can view all wallets",
+    );
+  }
+
+  try {
+    const walletsSnapshot = await db.collection("wallets").get();
+    const wallets = {};
+
+    walletsSnapshot.forEach((doc) => {
+      const walletData = doc.data();
+      wallets[doc.id] = {
+        balance: walletData.balance || 0,
+        heldBalance: walletData.heldBalance || 0,
+        availableBalance: (walletData.balance || 0) - (walletData.heldBalance || 0),
+      };
+    });
+
+    return {success: true, wallets};
+  } catch (error) {
+    console.error("Error in getAllWallets:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });

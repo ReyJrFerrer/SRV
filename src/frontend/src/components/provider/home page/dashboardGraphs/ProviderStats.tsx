@@ -5,6 +5,7 @@ import {
   ChartBarIcon,
   BanknotesIcon,
   ChartPieIcon,
+  WalletIcon,
 } from "@heroicons/react/24/solid";
 // Import your new chart components
 const BookingStatusPieChart = React.lazy(
@@ -47,18 +48,12 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   reviewsLoading,
   reviewsError,
 }) => {
-  const { balance, fetchBalance } = useWallet();
+  const { balance } = useWallet();
 
   const navigate = useNavigate();
 
   const handleWalletClick = () => {
     navigate("/provider/wallet");
-  };
-
-  const handleRefreshBalance = async () => {
-    try {
-      await fetchBalance();
-    } catch (error) {}
   };
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -304,25 +299,6 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-blue-700">SRV Wallet</p>
-            <button
-              onClick={handleRefreshBalance}
-              className="rounded-full p-1 text-blue-600 transition-colors hover:bg-blue-100"
-              title="Refresh balance"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </button>
           </div>
           <p className="text-3xl font-extrabold tracking-tight text-gray-900">
             ₱ {balance.toFixed(2)}
@@ -333,15 +309,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         onClick={handleWalletClick}
         className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
       >
-        <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-          <path
-            stroke="currentColor"
-            strokeWidth="2"
-            d="M17 9V7a5 5 0 00-10 0v2M5 12h14m-1 9H6a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012-2z"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <WalletIcon className="h-5 w-5 text-white" />
         View Wallet
       </button>
     </div>

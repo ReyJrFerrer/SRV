@@ -201,6 +201,7 @@ export const useProviderNotificationsWithPush = () => {
           clientName: notif.clientName,
           bookingId: notif.bookingId,
           amount: notif.metadata?.amount || undefined,
+          metadata: notif.metadata,
         }));
 
       // Use only canister notifications (no frontend-generated ones)
@@ -263,6 +264,7 @@ export const useProviderNotificationsWithPush = () => {
               clientName: notif.clientName,
               bookingId: notif.bookingId,
               amount: notif.metadata?.amount || undefined,
+              metadata: notif.metadata,
             }));
 
           setNotifications(formattedNotifications);

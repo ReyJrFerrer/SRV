@@ -12,6 +12,7 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
   const {
     userAddress,
     userProvince,
+    locationStatus,
     setAddress,
     setAddressMode,
     setDisplayAddress,
@@ -19,6 +20,62 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
 
   const [province, setProvince] = useState<string>("");
   const [city, setCity] = useState<string>("");
+  const [geoPermission, setGeoPermission] = useState<string>("unknown");
+  const [suppressed, setSuppressed] = useState<boolean>(false);
+
+  // Load suppression flag (avoid flashing after success within same session)
+  useEffect(() => {
+    try {
+      const sup = localStorage.getItem("loc_block_modal_suppress");
+      if (sup === "1") setSuppressed(true);
+    } catch {}
+  }, []);
+
+  // Observe geolocation permission; auto-dismiss when not denied
+  useEffect(() => {
+    let isMounted = true;
+    const checkPermission = async () => {
+      if (typeof navigator === "undefined" || !(navigator as any).permissions)
+        return;
+      try {
+        const status: PermissionStatus = await (
+          navigator as any
+        ).permissions.query({ name: "geolocation" });
+        if (!isMounted) return;
+        setGeoPermission(status.state);
+        const handleChange = () => {
+          if (!isMounted) return;
+          setGeoPermission(status.state);
+          if (status.state !== "denied") {
+            // Close and suppress modal when user allows or reverts permission
+            try {
+              localStorage.setItem("loc_block_modal_suppress", "1");
+            } catch {}
+            if (visible) onClose();
+          }
+        };
+        status.onchange = handleChange;
+      } catch {
+        // Ignore errors (older browsers)
+      }
+    };
+    checkPermission();
+    return () => {
+      isMounted = false;
+    };
+  }, [visible, onClose]);
+
+  // Auto-dismiss if store already has a derived address & permission not explicitly denied
+  useEffect(() => {
+    if (!visible) return;
+    const hasContextLocation = !!userAddress && !!userProvince;
+    if (hasContextLocation && geoPermission !== "denied") {
+      try {
+        localStorage.setItem("loc_block_modal_suppress", "1");
+      } catch {}
+      onClose();
+    }
+  }, [visible, userAddress, userProvince, geoPermission, onClose]);
 
   // Prefill from any existing values
   useEffect(() => {
@@ -46,19 +103,17 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
     onClose();
   };
 
-  if (!visible) return null;
+  // Guard: show whenever explicitly requested and underlying geolocation permission is denied.
+  const permissionDenied =
+    geoPermission === "denied" || locationStatus === "denied";
+  const shouldShow = visible && !suppressed && permissionDenied;
+
+  if (!shouldShow) return null;
 
   const modalContent = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-        {/* Close button */}
-        <button
-          aria-label="Close"
-          className="absolute right-3 top-3 rounded-full border border-gray-300 bg-gray-100 px-2 py-1 text-gray-700 hover:bg-gray-200"
-          onClick={onClose}
-        >
-          ×
-        </button>
+        {/* Close button removed - modal requires user to pick a location */}
 
         {/* Character */}
         <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
@@ -127,20 +182,16 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose }) => {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
-              disabled={!province || !city}
-              onClick={handleSave}
-            >
-              Save location
-            </button>
-            <button
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-              onClick={onClose}
-            >
-              Continue without location
-            </button>
+          <div className="mt-6 flex justify-center">
+            <div className="w-full max-w-xs">
+              <button
+                className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+                disabled={!province || !city}
+                onClick={handleSave}
+              >
+                Save location
+              </button>
+            </div>
           </div>
           <div className="mt-3 text-center text-xs text-gray-500">
             You can enable GPS later to refine your exact position.

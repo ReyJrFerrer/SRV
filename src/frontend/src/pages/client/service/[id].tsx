@@ -22,6 +22,7 @@ import {
   serviceCanisterService,
 } from "../../../services/serviceCanisterService";
 import { useUserImage } from "../../../hooks/useMediaLoader";
+import bookingCanisterService from "../../../services/bookingCanisterService";
 import ReputationScore from "../../../components/client/service-detail/ReputationScore";
 import ReviewsSection from "../../../components/client/service-detail/ReviewsSection";
 import ServiceGallerySection from "../../../components/client/service-detail/ServiceGallerySection";
@@ -80,6 +81,7 @@ const ClientServiceDetailsPage: React.FC = () => {
   const [isCheckingReputation, setIsCheckingReputation] = useState(false);
   const [reputationError, setReputationError] = useState<string | null>(null);
   const [hasSufficientReputation, setHasSufficientReputation] = useState(true);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
   const { fetchUserReputation } = useReputation();
   const [providerRep, setProviderRep] = useState<any | null>(null);
 
@@ -183,7 +185,10 @@ const ClientServiceDetailsPage: React.FC = () => {
       return;
     }
 
+    if (isCreatingChat) return;
+
     setChatErrorMessage(null);
+    setIsCreatingChat(true);
 
     try {
       const currentUserId = identity.getPrincipal().toString();
@@ -196,29 +201,76 @@ const ClientServiceDetailsPage: React.FC = () => {
             conv.conversation.clientId === service.providerId),
       );
 
+      const resolveHeroImage = (): string | undefined => {
+        const firstImage = heroImages?.[0]?.dataUrl;
+        const isValidUrl = (url?: string | null): url is string =>
+          !!url &&
+          (url.startsWith("data:") ||
+            url.startsWith("http") ||
+            url.startsWith("/")) &&
+          url.length > 20;
+        if (isValidUrl(firstImage)) return firstImage;
+        if (service?.category?.slug)
+          return `/images/ai-sp/${service.category.slug}.svg`;
+        return "/default-provider.svg";
+      };
+
+      const preview = {
+        id: service.id,
+        name: service.name,
+        imageUrl: resolveHeroImage(),
+        price:
+          Array.isArray(packages) && packages.length > 0
+            ? Math.min(
+                ...packages
+                  .map((p: any) =>
+                    typeof p?.price === "number" ? p.price : Number(p?.price),
+                  )
+                  .filter((n: number) => !isNaN(n)),
+              )
+            : undefined,
+      } as { id: string; name: string; imageUrl?: string; price?: number };
+
+      try {
+        const providerBookings =
+          await bookingCanisterService.getProviderBookings(
+            service.providerId as any,
+          );
+        const serviceBookingsCount = (providerBookings || []).filter(
+          (b) => b.serviceId === service.id,
+        ).length;
+        (preview as any).bookingsCount = serviceBookingsCount;
+      } catch {
+        // ignore errors and leave bookingsCount undefined
+      }
+
       if (existingConversation) {
         navigate(`/client/chat/${service.providerId}`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
             otherUserImage: service.providerAvatar,
+            servicePreview: preview,
           },
         });
-      } else {
-        const newConversation = await createConversation(
-          currentUserId,
-          service.providerId,
-        );
+        return;
+      }
 
-        if (newConversation) {
-          navigate(`/client/chat/${service.providerId}`, {
-            state: {
-              conversationId: newConversation.id,
-              otherUserName: service.providerName,
-              otherUserImage: service.providerAvatar,
-            },
-          });
-        }
+      // Create new conversation if none exists
+      const newConversation = await createConversation(
+        currentUserId,
+        service.providerId,
+      );
+
+      if (newConversation) {
+        navigate(`/client/chat/${service.providerId}`, {
+          state: {
+            conversationId: newConversation.id,
+            otherUserName: service.providerName,
+            otherUserImage: service.providerAvatar,
+            servicePreview: preview,
+          },
+        });
       }
     } catch (error) {
       setChatErrorMessage(
@@ -226,6 +278,8 @@ const ClientServiceDetailsPage: React.FC = () => {
           ? error.message
           : "Could not start conversation. Please try again.",
       );
+    } finally {
+      setIsCreatingChat(false);
     }
   };
 
@@ -561,7 +615,10 @@ const ClientServiceDetailsPage: React.FC = () => {
           <button
             onClick={handleChatProviderClick}
             disabled={
-              isOwnService || !hasSufficientReputation || isCheckingReputation
+              isOwnService ||
+              !hasSufficientReputation ||
+              isCheckingReputation ||
+              isCreatingChat
             }
             className="group relative flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
             style={{ minWidth: 0, flexBasis: "32%" }}
@@ -569,7 +626,9 @@ const ClientServiceDetailsPage: React.FC = () => {
             {chatLoading ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
-                <span className="text-base font-semibold">Creating Chat</span>
+                <span className="text-base font-semibold">
+                  Creating Chat...
+                </span>
               </>
             ) : (
               <span className="text-sm font-semibold md:text-lg lg:text-xl">

@@ -1,4 +1,9 @@
 import "./shared/contact.css";
+import {
+  EnvelopeIcon,
+  PhoneIcon,
+  MapPinIcon,
+} from "@heroicons/react/24/outline";
 import { SiteHeader } from "./layout/SiteHeader";
 import { SiteFooter } from "./layout/SiteFooter";
 import { MobileSiteHeader } from "./layout/MobileSiteHeader";
@@ -136,28 +141,7 @@ const Contact = ({
                 <div className="contact-details">
                   <div className="contact-item contact-phone-item">
                     <div className="contact-icon email-icon">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <polyline
-                          points="22,6 12,13 2,6"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                      <EnvelopeIcon className="h-6 w-6 text-current" />
                     </div>
                     <div className="contact-content contact-phone-text-wrapper">
                       <h3 className="contact-label">E-mail</h3>
@@ -171,23 +155,7 @@ const Contact = ({
                     aria-label="Call SRV at (+63) 993-951-5571"
                   >
                     <div className="contact-icon phone-icon">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                        focusable="false"
-                      >
-                        <path
-                          d="M22 16.92V20a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3 5.18 2 2 0 0 1 5 3h3.09a1 1 0 0 1 1 .75c.12.66.36 1.3.7 1.88a1 1 0 0 1-.23 1.06L8.7 8.7a16 16 0 0 0 6.6 6.6l1.01-1.01a1 1 0 0 1 1.06-.23c.58.34 1.22.58 1.88.7a1 1 0 0 1 .75 1V20z"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                      <PhoneIcon className="h-6 w-6 text-current" />
                     </div>
                     <div className="contact-content contact-phone-text-wrapper">
                       <h3 className="contact-label">Phone</h3>
@@ -205,32 +173,7 @@ const Contact = ({
                     onClick={() => setShowMapModal(true)}
                   >
                     <div className="contact-icon location-icon">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                        focusable="false"
-                      >
-                        <path
-                          d="M21 10C21 17 12 23 12 23S3 17 3 10C3 5.02944 7.02944 1 12 1C16.9706 1 21 5.02944 21 10Z"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <circle
-                          cx="12"
-                          cy="10"
-                          r="3"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                      <MapPinIcon className="h-6 w-6 text-current" />
                     </div>
                     <div className="contact-content location-text-wrapper">
                       <h3 className="contact-label">Location</h3>

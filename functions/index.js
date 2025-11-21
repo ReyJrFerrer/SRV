@@ -64,8 +64,6 @@ const {
   deactivateRule,
   listRules,
   getRule,
-  assignRole,
-  removeRole,
   getUserRole,
   listUserRoles,
   hasRole,
@@ -84,6 +82,8 @@ const {
   validateCertificate,
   updateCertificateValidationStatus,
   autoReactivateSuspendedAccounts,
+  getBookingsData,
+  updateUserPhoneNumber,
 } = require("./src/admin");
 
 // Import Commission functions
@@ -172,6 +172,7 @@ const {
   getAuthorizedControllers,
   releaseHold,
   getWalletDetails,
+  getAllWallets,
 } = require("./src/wallet");
 
 // Import Review Management functions
@@ -253,7 +254,6 @@ const {
   updateMediaMetadata,
   getStorageStats,
   validateMediaItems,
-  getRemittanceMediaItems,
   getCertificatesByValidationStatus,
 } = require("./src/media");
 
@@ -358,6 +358,7 @@ exports.removeAuthorizedController = removeAuthorizedController;
 exports.getAuthorizedControllers = getAuthorizedControllers;
 exports.releaseHold = releaseHold;
 exports.getWalletDetails = getWalletDetails;
+exports.getAllWallets = getAllWallets;
 
 // Export Review Management Functions
 exports.submitReview = submitReview;
@@ -430,7 +431,6 @@ exports.deleteMedia = deleteMedia;
 exports.updateMediaMetadata = updateMediaMetadata;
 exports.getStorageStats = getStorageStats;
 exports.validateMediaItems = validateMediaItems;
-exports.getRemittanceMediaItems = getRemittanceMediaItems;
 exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
 
 // Export Admin Management Functions
@@ -439,8 +439,6 @@ exports.activateRule = activateRule;
 exports.deactivateRule = deactivateRule;
 exports.listRules = listRules;
 exports.getRule = getRule;
-exports.assignRole = assignRole;
-exports.removeRole = removeRole;
 exports.getUserRole = getUserRole;
 exports.listUserRoles = listUserRoles;
 exports.hasRole = hasRole;
@@ -452,12 +450,14 @@ exports.getUserServiceCount = getUserServiceCount;
 exports.getAllUserLockStatuses = getAllUserLockStatuses;
 exports.lockUserAccount = lockUserAccount;
 exports.updateUserReputation = updateUserReputation;
+exports.updateUserPhoneNumber = updateUserPhoneNumber;
 exports.getValidatedCertificates = getValidatedCertificates;
 exports.getRejectedCertificates = getRejectedCertificates;
 exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
 exports.validateCertificate = validateCertificate;
 exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
+exports.getBookingsData = getBookingsData;
 
 // Export Scheduled Admin Functions
 exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;
@@ -465,6 +465,16 @@ exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;
 // Export Admin Authentication Helper
 const {createAdminProfile} = require("./src/adminAuth");
 exports.createAdminProfile = createAdminProfile;
+
+// Export Admin Password Functions
+const {
+  changeAdminPassword,
+  verifyAdminPassword,
+  isAdminPasswordSet,
+} = require("./src/admin");
+exports.changeAdminPassword = changeAdminPassword;
+exports.verifyAdminPassword = verifyAdminPassword;
+exports.isAdminPasswordSet = isAdminPasswordSet;
 
 // Export Contact Form Handler
 const {sendContactEmail} = require("./sendContactEmail");

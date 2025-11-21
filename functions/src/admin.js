@@ -1,6 +1,8 @@
 const functions = require("firebase-functions");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
+const {isPhoneTaken} = require("./account");
+const bcrypt = require("bcryptjs");
 
 const db = admin.firestore();
 
@@ -21,12 +23,6 @@ function getAuthInfo(context, data) {
 
 // Constants
 const SETTINGS_KEY = "system_settings";
-const DEFAULT_SETTLEMENT_HOURS = 24;
-const DEFAULT_GCASH_ACCOUNT = "09694405454";
-const MAX_COMMISSION_BPS = 1500; // 15% max
-const MIN_ORDER_CENTAVOS = 100; // 1 PHP
-const MAX_ORDER_CENTAVOS = 100000000; // 1M PHP
-
 /**
  * Generate a unique rule ID
  * @return {String} returns a rule based on the date and a random number
@@ -321,74 +317,6 @@ exports.getRule = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ===== ROLE MANAGEMENT =====
-
-/**
- * Assign role to user
- */
-exports.assignRole = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {userId, role = "ADMIN", scope} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  console.log("In assign role", payload);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can assign roles",
-    );
-  }
-
-  try {
-    const now = new Date().toISOString();
-    const roleAssignment = {
-      userId: userId,
-      role: role,
-      scope: scope || null,
-      assignedBy: authInfo.uid,
-      assignedAt: now,
-    };
-
-    await db.collection("userRoles").doc(userId).set(roleAssignment);
-
-    // Set custom claims for Firebase Auth
-    await admin.auth().setCustomUserClaims(userId, {isAdmin: role === "ADMIN"});
-
-    return {success: true, message: `Role ${role} assigned to user ${userId}`};
-  } catch (error) {
-    console.error("Error in assignRole:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
-/**
- * Remove user role
- */
-exports.removeRole = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {userId} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can remove roles",
-    );
-  }
-
-  try {
-    await db.collection("userRoles").doc(userId).delete();
-
-    // Remove custom claims
-    await admin.auth().setCustomUserClaims(userId, {isAdmin: false});
-
-    return {success: true, message: `Role removed from user ${userId}`};
-  } catch (error) {
-    console.error("Error in removeRole:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
 /**
  * Get user role
  */
@@ -471,11 +399,7 @@ exports.hasRole = functions.https.onCall(async (data, _context) => {
 exports.setSettings = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
   const {
-    corporateGcashAccount,
-    settlementDeadlineHours,
-    maxCommissionRateBps,
-    minOrderAmount,
-    maxOrderAmount,
+    restrictNewAdminLogins,
   } = payload;
 
   const authInfo = getAuthInfo(context, data);
@@ -488,12 +412,12 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
 
   try {
     const now = new Date().toISOString();
+    const currentSettingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const currentSettings = currentSettingsDoc.exists ? currentSettingsDoc.data() : {};
+
     const settings = {
-      corporateGcashAccount: corporateGcashAccount || DEFAULT_GCASH_ACCOUNT,
-      settlementDeadlineHours: settlementDeadlineHours || DEFAULT_SETTLEMENT_HOURS,
-      maxCommissionRateBps: maxCommissionRateBps || MAX_COMMISSION_BPS,
-      minOrderAmount: minOrderAmount || MIN_ORDER_CENTAVOS,
-      maxOrderAmount: maxOrderAmount || MAX_ORDER_CENTAVOS,
+      restrictNewAdminLogins: restrictNewAdminLogins !== undefined ? restrictNewAdminLogins :
+        (currentSettings.restrictNewAdminLogins || false),
       updatedAt: now,
       updatedBy: authInfo.uid,
     };
@@ -523,13 +447,8 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
     const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
 
     if (!settingsDoc.exists) {
-      // Return default settings
       const defaultSettings = {
-        corporateGcashAccount: DEFAULT_GCASH_ACCOUNT,
-        settlementDeadlineHours: DEFAULT_SETTLEMENT_HOURS,
-        maxCommissionRateBps: MAX_COMMISSION_BPS,
-        minOrderAmount: MIN_ORDER_CENTAVOS,
-        maxOrderAmount: MAX_ORDER_CENTAVOS,
+        restrictNewAdminLogins: false,
         updatedAt: new Date().toISOString(),
         updatedBy: "system",
       };
@@ -538,14 +457,148 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
       return {success: true, data: defaultSettings};
     }
 
-    return {success: true, data: settingsDoc.data()};
+    const settingsData = settingsDoc.data();
+    if (settingsData.restrictNewAdminLogins === undefined) {
+      settingsData.restrictNewAdminLogins = false;
+    }
+
+    return {success: true, data: settingsData};
   } catch (error) {
     console.error("Error in getSettings:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
 
-// ===== ANALYTICS AND REPORTING =====
+/**
+ * Change admin access password
+ */
+exports.changeAdminPassword = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {oldPassword, newPassword, confirmPassword} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can change the admin password",
+    );
+  }
+
+  if (!newPassword || !confirmPassword) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password and confirmation are required",
+    );
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password and confirmation do not match",
+    );
+  }
+
+  if (newPassword.length < 8) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "New password must be at least 8 characters long",
+    );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    const isInitialPassword = !settings.adminPasswordHash;
+
+    if (!isInitialPassword) {
+      if (!oldPassword) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Old password is required when changing an existing password",
+        );
+      }
+
+      const isOldPasswordValid = await bcrypt.compare(oldPassword, settings.adminPasswordHash);
+      if (!isOldPasswordValid) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Old password is incorrect",
+        );
+      }
+    }
+
+    const saltRounds = 10;
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    await db.collection("systemSettings").doc(SETTINGS_KEY).update({
+      adminPasswordHash: newPasswordHash,
+      passwordUpdatedAt: new Date().toISOString(),
+      passwordUpdatedBy: authInfo.uid,
+    });
+
+    return {success: true, message: "Password changed successfully"};
+  } catch (error) {
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    console.error("Error in changeAdminPassword:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Check if admin password is set
+ */
+exports.isAdminPasswordSet = functions.https.onCall(async () => {
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    return {
+      success: true,
+      isSet: !!settings.adminPasswordHash,
+    };
+  } catch (error) {
+    console.error("Error in isAdminPasswordSet:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Verify admin password
+ */
+exports.verifyAdminPassword = functions.https.onCall(async (data) => {
+  const payload = data.data || data;
+  const {password} = payload;
+
+  if (!password) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Password is required",
+    );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    if (!settings.adminPasswordHash) {
+      return {success: true, verified: true, message: "No password set"};
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, settings.adminPasswordHash);
+
+    return {
+      success: true,
+      verified: isPasswordValid,
+      message: isPasswordValid ? "Password verified" : "Incorrect password",
+    };
+  } catch (error) {
+    console.error("Error in verifyAdminPassword:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
 
 /**
  * Get system statistics
@@ -573,14 +626,6 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     const bookingsSnapshot = await db.collection("bookings").get();
     const totalBookings = bookingsSnapshot.size;
 
-    // Debug: Log all booking statuses
-    console.log("Debug - All booking statuses:");
-    bookingsSnapshot.docs.forEach((doc, index) => {
-      const data = doc.data();
-      console.log(`Booking ${index + 1}: status="${data.status}", price=${data.price}, 
-        servicePrice=${data.servicePrice}, amount=${data.amount}`);
-    });
-
     const settledBookings = bookingsSnapshot.docs.filter((doc) => {
       const status = doc.data().status;
       return status === "Completed" || status === "Settled" ||
@@ -590,28 +635,20 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     }).length;
 
     // Calculate total revenue from completed bookings
-    console.log("Debug - Total bookings found:", bookingsSnapshot.size);
     const completedBookings = bookingsSnapshot.docs.filter((doc) => {
       const status = doc.data().status;
-      const price = doc.data().price || 0;
-      console.log("Debug - Booking status:", status, "price:", price);
       return status === "Completed" || status === "Settled" ||
       status === "completed" || status === "settled" ||
              status === "Confirmed" || status === "confirmed"||
              status === "Accepted" || status === "accepted";
     });
-    console.log("Debug - Completed bookings count:", completedBookings.length);
 
     const totalRevenue = completedBookings.reduce((sum, doc) => {
       const data = doc.data();
       const price = parseFloat(data.price) ||
       parseFloat(data.servicePrice) || parseFloat(data.amount) || 0;
-      console.log("Debug - Adding price to revenue:", price,
-        "from fields:", {price: data.price, servicePrice: data.servicePrice, amount: data.amount});
       return sum + price;
     }, 0);
-
-    console.log("Debug - Total revenue calculated:", totalRevenue);
 
     // Calculate total commission from actual wallet deductions
     const commissionTransactionsSnapshot = await db.collection("transactions")
@@ -619,21 +656,15 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       .where("payment_channel", "==", "SRV_COMMISSION")
       .get();
 
-    console.log("Debug - Commission transactions found:", commissionTransactionsSnapshot.size);
     const totalCommission = commissionTransactionsSnapshot.docs.reduce((sum, doc) => {
       const amount = doc.data().amount || 0;
-      console.log("Debug - Commission transaction amount:", amount);
       return sum + amount;
     }, 0);
-
-    console.log("Debug - Total commission calculated:", totalCommission);
 
     // Calculate total topups amount from transactions collection
     const allCreditTransactionsSnapshot = await db.collection("transactions")
       .where("transaction_type", "==", "Credit")
       .get();
-
-    console.log("Debug - All Credit transactions found:", allCreditTransactionsSnapshot.size);
 
     // Filter and sum topup transaction amounts (exclude admin credits, etc.)
     const totalTopups = allCreditTransactionsSnapshot.docs.reduce((sum, doc) => {
@@ -642,19 +673,15 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       const paymentChannel = data.payment_channel || "";
       const amount = parseFloat(data.amount) || 0;
 
-      // Only include transactions with "topup" in description but exclude admin updates
       if (
         (description.includes("topup") || description.includes("top-up")) &&
         paymentChannel !== "ADMIN_UPDATE"
       ) {
-        console.log("Debug - Topup transaction amount:", amount, "description:", data.description);
         return sum + amount;
       }
 
       return sum;
     }, 0);
-
-    console.log("Debug - Total topups amount calculated:", totalTopups);
 
     const stats = {
       totalCommissionRules: rulesSnapshot.size,
@@ -675,8 +702,6 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
   }
 });
 
-// ===== USER MANAGEMENT =====
-
 /**
  * Get all users
  */
@@ -690,13 +715,11 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Query both "profiles" and "users" collections to get all users
     const [profilesSnapshot, usersSnapshot] = await Promise.all([
       db.collection("profiles").get(),
       db.collection("users").get(),
     ]);
 
-    // Combine users from both collections
     const profiles = profilesSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -706,7 +729,6 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
       ...doc.data(),
     }));
 
-    // Merge and deduplicate by id (users collection takes precedence if duplicate)
     const userMap = new Map();
     profiles.forEach((user) => {
       const userId = user.id || user.uid || user.principal;
@@ -722,8 +744,6 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
     });
 
     const allUsers = Array.from(userMap.values());
-    console.log(`✅ [getAllUsers] Found ${allUsers.length} users (${profiles.length}
-      from profiles, ${users.length} from users)`);
 
     return {success: true, users: allUsers};
   } catch (error) {
@@ -917,7 +937,6 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // Use helper functions from reputation module
     const {createReputationActor} = require("./reputation");
     const {Principal} = require("@dfinity/principal");
 
@@ -942,13 +961,59 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
   }
 });
 
+exports.updateUserPhoneNumber = functions.https.onCall(async (data, context) => {
+  const payload = data.data || data;
+  const {userId, phone} = payload;
 
-// ===== CERTIFICATE VALIDATION =====
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only ADMIN users can update phone numbers",
+    );
+  }
+
+  if (!userId || typeof userId !== "string") {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "User ID is required",
+    );
+  }
+
+  const normalizedPhone = typeof phone === "string" ? phone.replace(/\s+/g, "") : "";
+  if (!normalizedPhone || !/^\+?\d{7,15}$/.test(normalizedPhone)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid phone number format",
+    );
+  }
+
+  if (await isPhoneTaken(normalizedPhone, userId)) {
+    throw new functions.https.HttpsError(
+      "already-exists",
+      "Phone number is already registered to another user",
+    );
+  }
+
+  try {
+    await db.collection("users").doc(userId).update({
+      phone: normalizedPhone,
+      updatedAt: new Date().toISOString(),
+      updatedBy: authInfo.uid,
+    });
+
+    return {
+      success: true,
+      message: "Phone number updated successfully",
+    };
+  } catch (error) {
+    console.error("Error in updateUserPhoneNumber:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
 
 /**
  * Update certificate validation status
- * Simple function that updates the media collection validationStatus field
- * This updates the provider pill and client indicator
  */
 exports.updateCertificateValidationStatus = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
@@ -997,7 +1062,7 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
       );
     }
 
-    // Update the validation status - this updates the provider pill and client indicator
+    // Update the validation status
     await db.collection("media").doc(certificateId).update({
       validationStatus: status,
       updatedAt: new Date().toISOString(),
@@ -1138,11 +1203,8 @@ exports.getRejectedCertificates = functions.https.onCall(async (data, context) =
   }
 });
 
-// ===== CERTIFICATE VALIDATION FUNCTIONS (NEW) =====
-
 /**
  * Get all services with certificates for validation
- * Matches getServicesWithCertificates from admin.mo
  */
 exports.getServicesWithCertificates = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
@@ -1160,12 +1222,10 @@ exports.getServicesWithCertificates = functions.https.onCall(async (data, contex
 
     // Get all services
     const services = await getAllServicesInternal();
-    console.log(`Got ${services.length} services from service collection`);
 
     // Get all pending certificates
     const pendingCerts = await getCertificatesByValidationStatusInternal("Pending");
     const pendingCertUrls = pendingCerts.map((cert) => cert.url);
-    console.log(`Got ${pendingCerts.length} pending certificates`);
 
     const servicesWithCerts = [];
 
@@ -1204,7 +1264,6 @@ exports.getServicesWithCertificates = functions.https.onCall(async (data, contex
       }
     }
 
-    console.log(`Returning ${servicesWithCerts.length} services with pending certificates`);
     return {success: true, data: servicesWithCerts};
   } catch (error) {
     console.error("Error in getServicesWithCertificates:", error);
@@ -1214,7 +1273,6 @@ exports.getServicesWithCertificates = functions.https.onCall(async (data, contex
 
 /**
  * Get pending certificate validations
- * Matches getPendingCertificateValidations from admin.mo
  */
 exports.getPendingCertificateValidations = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
@@ -1243,8 +1301,7 @@ exports.getPendingCertificateValidations = functions.https.onCall(async (data, c
 });
 
 /**
- * Validate certificate (approve or reject)
- * Matches validateCertificate from admin.mo
+ * Validate certificate
  */
 exports.validateCertificate = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
@@ -1314,41 +1371,89 @@ exports.validateCertificate = functions.https.onCall(async (data, context) => {
   }
 });
 
-/**
- * Get bookings data for admin analytics
- */
-exports.getBookingsData = functions.https.onCall(async (data, context) => {
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can get bookings data",
-    );
+exports.getBookingsData = functions.https.onRequest(async (req, res) => {
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://devsrv-rey.web.app",
+    "https://devsrv-rey.firebaseapp.com",
+    "https://srveadmin.web.app",
+    "https://srveadmin.firebaseapp.com",
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  } else {
+    res.set("Access-Control-Allow-Origin", "*");
+  }
+
+  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Access-Control-Max-Age", "3600");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).send();
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed",
+    });
   }
 
   try {
-    console.log("🔍 [getBookingsData] Starting to fetch bookings...");
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: Missing or invalid authorization header",
+      });
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: Invalid token",
+      });
+    }
+
+    const isAdmin = decodedToken.isAdmin || false;
+    if (!isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: Only ADMIN users can get bookings data",
+      });
+    }
+
     const bookingsSnapshot = await db.collection("bookings").get();
-    console.log(`🔍 [getBookingsData] Found ${bookingsSnapshot.size} bookings`);
 
     const bookings = bookingsSnapshot.docs.map((doc) => {
       const data = doc.data();
-      console.log(`🔍 [getBookingsData] Booking ${doc.id}:`, {
-        id: doc.id,
-        status: data.status,
-        createdAt: data.createdAt,
-        price: data.price,
-      });
+      const convertDate = (dateValue) => {
+        if (!dateValue) return null;
+        if (dateValue instanceof Date) return dateValue;
+        return new Date(dateValue);
+      };
+
       return {
         id: doc.id,
         ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
+        createdAt: convertDate(data.createdAt),
+        updatedAt: convertDate(data.updatedAt),
+        requestedDate: convertDate(data.requestedDate),
+        scheduledDate: convertDate(data.scheduledDate),
+        startedDate: convertDate(data.startedDate),
+        completedDate: convertDate(data.completedDate),
+        releasedAt: convertDate(data.releasedAt),
       };
     });
 
-    console.log(`🔍 [getBookingsData] Processed ${bookings.length} bookings`);
-
-    // Get commission transactions for daily tracking
     const commissionTransactionsSnapshot = await db.collection("transactions")
       .where("transaction_type", "==", "Debit")
       .where("payment_channel", "==", "SRV_COMMISSION")
@@ -1360,17 +1465,16 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
       timestamp: new Date(doc.data().timestamp),
     }));
 
-    console.log(`🔍 [getBookingsData] Returning ${bookings.length} 
-      bookings and ${commissionTransactions.length} commission transactions`);
-
-    return {
+    return res.status(200).json({
       success: true,
       bookings: bookings,
       commissionTransactions: commissionTransactions,
-    };
+    });
   } catch (error) {
-    console.error("Error in getBookingsData:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+    });
   }
 });
 
@@ -1379,9 +1483,6 @@ exports.getBookingsData = functions.https.onCall(async (data, context) => {
  * Scheduled function that runs every hour to check for expired suspensions
  */
 exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event) => {
-  console.log("🚀 [autoReactivateSuspendedAccounts] Scheduled function running...");
-  console.log(`📅 [autoReactivateSuspendedAccounts] Current time: ${new Date().toISOString()}`);
-
   try {
     const now = new Date();
 
@@ -1391,11 +1492,7 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
       .where("suspensionEndDate", "<=", now.toISOString())
       .get();
 
-    console.log(`📊 [autoReactivateSuspendedAccounts] Found ${expiredSuspensionsQuery.size}
-      expired suspensions.`);
-
     if (expiredSuspensionsQuery.empty) {
-      console.log("✅ [autoReactivateSuspendedAccounts] No expired suspensions found.");
       return {success: true, count: 0};
     }
 
@@ -1405,10 +1502,6 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
     // Process each expired suspension
     for (const doc of expiredSuspensionsQuery.docs) {
       const user = doc.data();
-
-      console.log(`📝 [autoReactivateSuspendedAccounts]
-        Reactivating account for user ${user.id}...`);
-      console.log(`   Suspension end date: ${user.suspensionEndDate}`);
 
       // Update user's locked status in Firestore
       batch.update(doc.ref, {
@@ -1420,10 +1513,8 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
       // Enable user in Firebase Auth
       try {
         await admin.auth().updateUser(user.id, {disabled: false});
-        console.log(`✅ [autoReactivateSuspendedAccounts] Enabled user ${user.id} in Firebase Auth`);
       } catch (authError) {
-        console.error(`⚠️ [autoReactivateSuspendedAccounts]
-          Failed to enable user ${user.id} in Firebase Auth: ${authError.message}`);
+        console.error(`Failed to enable user ${user.id} in Firebase Auth:`, authError.message);
         // Continue with Firestore update even if Auth update fails
       }
 
@@ -1432,14 +1523,11 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event)
 
     if (reactivatedCount > 0) {
       await batch.commit();
-      console.log(`✅ [autoReactivateSuspendedAccounts] Reactivated ${reactivatedCount} accounts.`);
     }
 
     return {success: true, count: reactivatedCount};
   } catch (error) {
-    console.error("❌ [autoReactivateSuspendedAccounts]Error reactivating suspended accounts:",
-      error);
-    console.error("Stack trace:", error.stack);
+    console.error("Error reactivating suspended accounts:", error);
     throw error;
   }
 });

@@ -50,7 +50,6 @@ export const convertProfileToUserData = async (
       `Failed to get service count for user ${userId.toString()}:`,
       error,
     );
-    console.log("Fallback 0 applied");
     servicesCount = 0;
   }
 

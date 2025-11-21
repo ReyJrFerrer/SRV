@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useAdmin } from "../hooks/useAdmin";
 import {
+  formatCurrency,
+  formatDate,
+  formatRelativeTime,
+} from "../utils/formatUtils";
+import {
   ProviderManagementHeader,
   ProviderStatsOverview,
   ProviderFilters,
@@ -83,35 +88,6 @@ export const ProviderManagementPage: React.FC = () => {
         }
       });
   }, [serviceProviders, searchTerm, sortBy, sortOrder]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(amount);
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
-
-  const formatRelativeTime = (date: Date) => {
-    const now = new Date();
-    const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
-    );
-
-    if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
-    return formatDate(date);
-  };
 
   const handleViewProvider = async (provider: any) => {
     setSelectedProvider(provider);

@@ -1,14 +1,20 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { XCircleIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import {
   walletCanisterService,
   Transaction,
 } from "../../../frontend/src/services/walletCanisterService";
 import { Toaster, toast } from "sonner";
-import WalletBalanceCard from "../components/WalletBalanceCard";
-import TransactionHistory from "../components/TransactionHistory";
-import UpdateWalletModal from "../components/UpdateWalletModal";
+import WalletBalanceCard from "../components/wallet/WalletBalanceCard";
+import TransactionHistory from "../components/wallet/TransactionHistory";
+import UpdateWalletModal from "../components/wallet/UpdateWalletModal";
+import { formatCurrency } from "../utils/formatUtils";
+import {
+  validateAmount,
+  isValidAmount,
+  getMaxAmount,
+} from "../utils/walletUtils";
 
 const UserWalletPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,15 +38,6 @@ const UserWalletPage: React.FC = () => {
 
   const TRANSACTIONS_PER_PAGE = 10;
   const predefinedAmounts = [100, 250, 500, 1000, 2500, 5000];
-
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
 
   // Fetch wallet balance
   const fetchBalance = useCallback(async () => {
@@ -117,19 +114,8 @@ const UserWalletPage: React.FC = () => {
     setShowUpdateCommissionModal(true);
   };
 
-  // Handle wallet balance amount input
   const handleAmountInputChange = (value: string) => {
-    let numericValue = value.replace(/[^0-9]/g, "");
-    if (numericValue.length > 1 && numericValue.startsWith("0")) {
-      numericValue = parseInt(numericValue, 10).toString();
-    }
-    if (parseInt(numericValue, 10) > 50000) {
-      numericValue = "50000";
-    }
-    if (numericValue === "NaN") {
-      numericValue = "";
-    }
-    setCommissionAmount(numericValue);
+    setCommissionAmount(validateAmount(value));
   };
 
   const handleModalClose = () => {
@@ -142,13 +128,10 @@ const UserWalletPage: React.FC = () => {
     if (!id) return;
 
     const amount = parseFloat(commissionAmount);
-    if (!amount || amount <= 0) {
-      toast.error("Please enter a valid amount");
-      return;
-    }
-
-    if (amount > 50000) {
-      toast.error("Maximum amount is ₱50,000");
+    if (!isValidAmount(amount)) {
+      toast.error(
+        `Please enter a valid amount (max ₱${getMaxAmount().toLocaleString()})`,
+      );
       return;
     }
 
@@ -216,19 +199,7 @@ const UserWalletPage: React.FC = () => {
                 }}
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <h1 className="text-2xl font-bold text-gray-900">User Wallet</h1>
             </div>

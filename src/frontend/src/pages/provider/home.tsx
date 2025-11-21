@@ -11,7 +11,10 @@ import { useProviderReviews } from "../../hooks/reviewManagement";
 import SPHeader from "../../components/provider/home page/SPHeader";
 import LocationBlockedModal from "../../components/common/locationAccessPermission/LocationBlockedModal";
 import LocationPermissionPromptModal from "../../components/common/locationAccessPermission/LocationPermissionPromptModal";
-import { OneSignalBlockedModal } from "../../components/OneSignalBlockedModal";
+import {
+  OneSignalBlockedModal,
+  isOneSignalBlockedModalDismissed,
+} from "../../components/OneSignalBlockedModal";
 import { useAuth } from "../../context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -34,7 +37,8 @@ const ProviderHomePage: React.FC = () => {
   const navigate = useNavigate();
 
   // --- Use Zustand location store for location status ---
-  const { locationStatus } = useLocationStore();
+  const { locationStatus, userProvince, userAddress, isInitialized } =
+    useLocationStore();
 
   // --- Dismissible location overlay state (must be declared unconditionally) ---
   const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
@@ -59,14 +63,16 @@ const ProviderHomePage: React.FC = () => {
       );
       if (oneSignalScript) {
         oneSignalScript.addEventListener("error", () => {
-          setShowOneSignalBlockedModal(true);
+          if (!isOneSignalBlockedModalDismissed())
+            setShowOneSignalBlockedModal(true);
         });
       }
 
       // Also check if window.OneSignal is undefined after a delay
       setTimeout(() => {
         if (typeof window.OneSignal === "undefined") {
-          setShowOneSignalBlockedModal(true);
+          if (!isOneSignalBlockedModalDismissed())
+            setShowOneSignalBlockedModal(true);
         }
       }, 5000); // Give it 5 seconds to load
     };
@@ -284,19 +290,26 @@ const ProviderHomePage: React.FC = () => {
 
       {/* Single blocked modal for both denied state and post-login flow */}
       {(() => {
+        // Only show the blocked modal when we have a real denial and no resolved manual/context address
+        const realDenied =
+          locationStatus === "denied" &&
+          !userProvince &&
+          !userAddress &&
+          isInitialized;
         const visible =
-          (locationStatus === "denied" && !dismissedLocationBlock) ||
-          (permissionApiDenied && !dismissedLocationBlock) ||
-          postLoginBlockedModalVisible;
+          (realDenied && !dismissedLocationBlock) ||
+          (permissionApiDenied &&
+            !dismissedLocationBlock &&
+            !userProvince &&
+            !userAddress &&
+            isInitialized) ||
+          (postLoginBlockedModalVisible && realDenied);
 
         const handleBlockedClose = () => {
-          // Always mark dismissed for provider as well so the modal doesn't
-          // immediately reappear after manual save/close.
           setDismissedLocationBlock(true);
           try {
             sessionStorage.setItem("providerDismissedLocationBlock", "1");
           } catch {}
-
           if (postLoginBlockedModalVisible) {
             acknowledgePostLoginBlockedModal();
           }

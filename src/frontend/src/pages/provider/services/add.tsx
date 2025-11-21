@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
@@ -53,6 +54,13 @@ interface ValidationErrors {
   locationMunicipalityCity?: string;
   general?: string;
   profanity?: string;
+  packageFields?: {
+    [pkgId: string]: {
+      name?: string;
+      price?: string;
+      description?: string;
+    };
+  };
 }
 
 // Backend validation constants
@@ -60,7 +68,7 @@ const VALIDATION_LIMITS = {
   MIN_TITLE_LENGTH: 3,
   MAX_TITLE_LENGTH: 40,
   MIN_DESCRIPTION_LENGTH: 3,
-  MAX_DESCRIPTION_LENGTH: 100,
+  MAX_DESCRIPTION_LENGTH: 150,
   MIN_PRICE: 1,
   MAX_PRICE: 1_000_000,
 };
@@ -361,65 +369,102 @@ const AddServicePage: React.FC = () => {
             errors.servicePackages =
               "At least one complete package with valid price is required";
           }
-          formData.servicePackages.forEach((pkg, index) => {
+
+          const packageErrors: ValidationErrors["packageFields"] = {};
+
+          formData.servicePackages.forEach((pkg) => {
+            const pkgErrors: {
+              name?: string;
+              price?: string;
+              description?: string;
+            } = {};
+
             if (pkg.name.trim() || pkg.description.trim() || pkg.price) {
               if (!pkg.name.trim()) {
-                errors.servicePackages = `Package ${index + 1}: Name is required`;
+                pkgErrors.name = "Name is required";
               } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${index + 1}: Name must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} character`;
+                pkgErrors.name = `Must be at least ${VALIDATION_LIMITS.MIN_TITLE_LENGTH} characters`;
               } else if (pkg.name.length > VALIDATION_LIMITS.MAX_TITLE_LENGTH) {
-                errors.servicePackages = `Package ${index + 1}: Name must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
+                pkgErrors.name = `Must be no more than ${VALIDATION_LIMITS.MAX_TITLE_LENGTH} characters`;
               } else if (filter.isProfane(pkg.name)) {
-                errors.servicePackages = `Package ${index + 1}: Name contains inappropriate language.`;
+                pkgErrors.name = "Name contains inappropriate language.";
               }
+
               if (!pkg.description.trim()) {
-                errors.servicePackages = `Package ${index + 1}: Description is required`;
+                pkgErrors.description = "Description is required";
               } else if (
                 pkg.description.length <
                 VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${index + 1}: Description must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} character`;
+                pkgErrors.description = `Must be at least ${VALIDATION_LIMITS.MIN_DESCRIPTION_LENGTH} characters`;
               } else if (
                 pkg.description.length >
                 VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH
               ) {
-                errors.servicePackages = `Package ${index + 1}: Description must be no more than ${VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH} characters`;
+                pkgErrors.description = `Must be no more than ${VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH} characters`;
               } else if (filter.isProfane(pkg.description)) {
-                errors.servicePackages = `Package ${index + 1}: Description contains inappropriate language.`;
+                pkgErrors.description =
+                  "Description contains inappropriate language.";
               }
+
               if (
                 !pkg.price ||
                 Number(pkg.price) < VALIDATION_LIMITS.MIN_PRICE
               ) {
-                errors.servicePackages = `Package ${index + 1}: Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
+                pkgErrors.price = `Price must be at least ₱${VALIDATION_LIMITS.MIN_PRICE}`;
               } else if (Number(pkg.price) > VALIDATION_LIMITS.MAX_PRICE) {
-                errors.servicePackages = `Package ${index + 1}: Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
+                pkgErrors.price = `Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
               }
+            }
+
+            if (Object.keys(pkgErrors).length > 0) {
+              packageErrors[pkg.id] = pkgErrors;
             }
           });
 
-          // Check for duplicate package names
-          const packageNames = formData.servicePackages
-            .filter((pkg) => pkg.name.trim())
-            .map((pkg) => pkg.name.trim().toLowerCase());
-
-          const duplicateNames = packageNames.filter(
-            (name, index) => packageNames.indexOf(name) !== index,
-          );
-
-          if (duplicateNames.length > 0) {
-            const duplicateName = duplicateNames[0];
-            const duplicateIndices = formData.servicePackages
-              .map((pkg, index) =>
-                pkg.name.trim().toLowerCase() === duplicateName
-                  ? index + 1
-                  : null,
-              )
-              .filter((index) => index !== null);
-
-            errors.servicePackages = `Package names must be unique. "${formData.servicePackages.find((pkg) => pkg.name.trim().toLowerCase() === duplicateName)?.name.trim()}" is used in packages ${duplicateIndices.join(", ")}.`;
+          if (Object.keys(packageErrors).length > 0) {
+            errors.packageFields = packageErrors;
+            // Add a general message if there isn't one already
+            if (!errors.servicePackages) {
+              errors.servicePackages =
+                "Please fix the errors in the packages below.";
+            }
           }
         }
+
+        const packageNames = formData.servicePackages
+          .filter((pkg) => pkg.name.trim())
+          .map((pkg) => ({ id: pkg.id, name: pkg.name.trim().toLowerCase() }));
+
+        const nameCounts = packageNames.reduce(
+          (acc, { name }) => {
+            acc[name] = (acc[name] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>,
+        );
+
+        const duplicateNames = Object.keys(nameCounts).filter(
+          (name) => nameCounts[name] > 1,
+        );
+
+        duplicateNames.forEach((dupName) => {
+          const packagesWithDupName = packageNames.filter(
+            (p) => p.name === dupName,
+          );
+          packagesWithDupName.forEach(({ id }) => {
+            if (errors.packageFields && errors.packageFields[id]) {
+              if (!errors.packageFields[id]!.name) {
+                errors.packageFields[id]!.name = "Package name must be unique.";
+              }
+            } else {
+              if (!errors.packageFields) errors.packageFields = {};
+              errors.packageFields[id] = {
+                name: "Package name must be unique.",
+              };
+            }
+          });
+        });
         break;
       case 2: // Availability
         if (formData.availabilitySchedule.length === 0) {
@@ -947,19 +992,7 @@ const AddServicePage: React.FC = () => {
             {validationErrors.general && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                 <div className="flex items-center">
-                  <svg
-                    className="mr-2 h-5 w-5 text-red-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <ExclamationCircleIcon className="mr-2 h-5 w-5 text-red-400" />
                   <p className="text-sm text-red-700">
                     {validationErrors.general}
                   </p>
@@ -1000,7 +1033,7 @@ const AddServicePage: React.FC = () => {
 
   // --- Main Page Layout ---
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100 pb-12">
+    <div className="bg-white-100 flex min-h-screen flex-col pt-20">
       <Toaster position="top-center" />
 
       <ServiceDrafts
@@ -1036,12 +1069,10 @@ const AddServicePage: React.FC = () => {
       </header>
       {/* Draft UI & logic moved into ServiceDrafts (renders modals and banner) */}
       {/* Main Content */}
-      <main className="container mx-auto flex-grow px-4 pb-24 pt-4 sm:p-6">
-        <div className="mt-20 sm:rounded-xl sm:bg-white sm:p-8 sm:shadow-lg">
-          {renderStep()}
-        </div>
+      <main className="container mx-auto flex-grow px-4 pt-4 sm:p-6">
+        {renderStep()}
         {/* Navigation Buttons */}
-        <div className="mb-8 mt-6 flex justify-between">
+        <div className="mb-20 mt-6 flex justify-between lg:mb-8">
           {currentStep > 1 && (
             <button
               onClick={handleBack}

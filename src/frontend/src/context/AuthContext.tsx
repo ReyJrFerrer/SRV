@@ -63,6 +63,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Updates all canister actors with the current user identity
 const updateAllActors = (identity: Identity | null) => {
   try {
     updateReputationActor(identity);
@@ -110,6 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     locationStore.initialize();
   }, [locationStore]);
 
+  // Auto-request location if permission already granted
   useEffect(() => {
     let mounted = true;
     if (typeof navigator !== "undefined" && (navigator as any).permissions) {
@@ -150,7 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [locationStore]);
 
-  // Listen to Firebase auth state changes and auto-refresh if needed
+  // Listen to Firebase auth state changes and auto-refresh token if IC session still valid
   useEffect(() => {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -172,51 +174,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => unsubscribe();
   }, [isAuthenticated, identity]);
 
-  // Auto-enable push notifications when user authenticates
+  // Auto-enable push notifications on login if supported and not denied
   useEffect(() => {
     const autoEnablePushNotifications = async () => {
-      // Only attempt auto-enable if:
-      // 1. User is authenticated
-      // 2. PWA state is loaded (not loading)
-      // 3. Push notifications are supported
-      // 4. User hasn't explicitly denied permissions
-      // 5. Not already subscribed
       if (
+        !isLoading &&
         isAuthenticated &&
         identity &&
-        !pwaState.pushSubscribed &&
         pwaState.pushNotificationSupported &&
         pwaState.pushPermission !== "denied" &&
-        pwaState.browserInfo.canReceivePushNotifications
+        !pwaState.pushSubscribed
       ) {
         try {
-          const userId = identity.getPrincipal().toString();
+          const userId = identity.getPrincipal().toString() || "anonymous";
           await enablePushNotificationsPWA(userId);
-        } catch (error) {
-          // Silently fail auto-enable - user can still enable manually if desired
-        }
+        } catch (error) {}
       }
     };
 
-    // Only run auto-enable after initial PWA state is loaded
-    if (!isLoading && isAuthenticated) {
-      autoEnablePushNotifications();
-    }
+    autoEnablePushNotifications();
   }, [
+    isLoading,
     isAuthenticated,
     identity,
-    pwaState.pushSubscribed,
     pwaState.pushNotificationSupported,
     pwaState.pushPermission,
-    pwaState.browserInfo.canReceivePushNotifications,
-
-    isLoading,
+    pwaState.pushSubscribed,
     enablePushNotificationsPWA,
   ]);
 
-  // After login, show a friendly modal asking to enable location access (once per session)
-  // Only show the prompt when the permission state is truly unknown ("not_set").
-  // If permission is already "allowed", "denied" or "unsupported", do not prompt.
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) return;
@@ -250,6 +236,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [postLoginLocationPromptVisible, locationStore.locationStatus]);
 
+  // Initialize IC auth client on mount and check if already authenticated
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -274,6 +261,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  // Login: authenticates with Internet Identity, bridges to Firebase, updates online status
   const login = async () => {
     if (!authClient) return;
 
@@ -320,6 +308,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Logout: updates online status, clears Firebase/IC sessions, resets state
   const logout = async () => {
     if (!authClient) return;
 

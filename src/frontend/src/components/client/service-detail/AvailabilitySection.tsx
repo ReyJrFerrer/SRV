@@ -1,4 +1,5 @@
 import React from "react";
+import { CalendarDaysIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export type Availability = {
   isAvailableNow?: boolean;
@@ -28,31 +29,12 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
 
   const [openDay, setOpenDay] = React.useState<string | null>(null);
 
-  const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg
-      {...props}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      className={"h-7 w-7 text-blue-400 " + (props.className || "")}
-    >
-      <rect
-        x="3"
-        y="7"
-        width="18"
-        height="13"
-        rx="3"
-        strokeWidth="2"
-        stroke="currentColor"
-      />
-      <path d="M16 3v4M8 3v4" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  // Using Heroicons for calendar and chevron icons
 
   return (
     <div className="mt-8 rounded-xl bg-white p-4 shadow-xl backdrop-blur-md">
       <div className="mb-4 flex items-center justify-between gap-2">
-        <CalendarIcon />
+        <CalendarDaysIcon className="h-7 w-7 text-blue-400" />
         <h3 className="text-lg font-semibold text-gray-800">Availability</h3>
         {isActive && (
           <span className="ml-auto flex animate-pulse items-center justify-end gap-1 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-[10px] font-bold text-green-700 lg:text-sm">
@@ -83,20 +65,9 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
                         <span className="inline-block h-2 w-2 rounded-full bg-blue-400"></span>
                         {day}
                       </span>
-                      <svg
+                      <ChevronDownIcon
                         className={`ml-2 h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+                      />
                     </button>
                     {isOpen && (
                       <div

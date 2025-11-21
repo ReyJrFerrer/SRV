@@ -10,7 +10,7 @@ const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "6ca84c57-1e6b-466d-b79
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "";
 
 // Base URL for building absolute push URLs (used only for push payloads)
-const APP_BASE_URL = process.env.APP_BASE_URL || "https://srvepinoy.web.app";
+const APP_BASE_URL = process.env.APP_BASE_URL || "https://srvpinoy.com";
 
 /**
  * Helper function to safely get user authentication info
@@ -303,18 +303,7 @@ async function sendOneSignalNotification(userId, notification) {
  * HTTPS Callable Function
  */
 exports.createNotification = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [createNotification] called");
-  const safeDataForLog = {
-    targetUserId: data.data?.targetUserId,
-    userType: data.data?.userType,
-    notificationType: data.data?.notificationType,
-    title: data.data?.title,
-    message: data.data?.message,
-    relatedEntityId: data.data?.relatedEntityId,
-    metadata: data.data?.metadata ? "Present" : "Missing",
-  };
-  console.log("📦 [createNotification] Received payload:", JSON.stringify(safeDataForLog, null, 2));
-
+  console.log("createNotification called");
   // Extract payload from data.data
   const payload = data.data || data;
   const {
@@ -329,7 +318,6 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
 
   // Authentication (must be authenticated to create notifications)
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [createNotification] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -339,7 +327,6 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
 
   // Validation (mirror Motoko logic)
   if (!targetUserId) {
-    console.error("❌ [createNotification] Validation failed: Missing targetUserId.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Target user ID is required",
@@ -347,7 +334,6 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
   }
 
   if (!userType || !Object.values(USER_TYPES).includes(userType)) {
-    console.error(`❌ [createNotification] Validation failed: Invalid userType: ${userType}.`);
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Valid user type is required (client or provider)",
@@ -358,8 +344,6 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     !notificationType ||
     !Object.values(NOTIFICATION_TYPES).includes(notificationType)
   ) {
-    console.error(`❌ [createNotification] Validation failed: 
-      Invalid notificationType: ${notificationType}.`);
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Valid notification type is required",
@@ -367,7 +351,6 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
   }
 
   if (!title || title.length === 0) {
-    console.error("❌ [createNotification] Validation failed: Missing title.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Title is required",
@@ -375,7 +358,6 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
   }
 
   if (!message || message.length === 0) {
-    console.error("❌ [createNotification] Validation failed: Missing message.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Message is required",
@@ -384,11 +366,8 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
 
   try {
     // Check spam prevention
-    console.log(`🛡️ [createNotification] Checking spam prevention for user ${targetUserId}...`);
     const spamming = await isSpamming(targetUserId, notificationType);
     if (spamming) {
-      console.warn(`⚠️ [createNotification] Notification rate 
-        limit exceeded for user ${targetUserId}.`);
       throw new functions.https.HttpsError(
         "resource-exhausted",
         "Notification rate limit exceeded",
@@ -428,7 +407,6 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     };
 
     // Store in Firestore
-    console.log(`📝 [createNotification] Creating notification document ${notificationRef.id}...`);
     await notificationRef.set(notification);
 
     // Update notification frequency tracking
@@ -442,7 +420,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
       console.error("Failed to send OneSignal notification:", error);
     });
 
-    console.log("✅ [createNotification] Function finished successfully.");
+    console.log("[createNotification] Function completed successfully");
     return {success: true, notificationId: notificationRef.id};
   } catch (error) {
     console.error("Error in createNotification:", error);
@@ -461,21 +439,13 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
  * HTTPS Callable Function
  */
 exports.getUserNotifications = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [getUserNotifications] called");
-  const safeDataForLog = {
-    userId: data.data?.userId,
-    filter: data.data?.filter,
-  };
-  console.log("📦 [getUserNotifications] Received payload:"
-    , JSON.stringify(safeDataForLog, null, 2));
-
+  console.log("getUserNotifications called");
   // Extract payload from data.data
   const payload = data.data || data;
   const {userId, filter} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [getUserNotifications] Auth info:", authInfo);
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -488,8 +458,6 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
     userId && authInfo.isAdmin ? userId : authInfo.uid;
 
   try {
-    console.log(`📝 [getUserNotifications] Fetching notifications for user ${targetUserId}...`);
-
     let query = db
       .collection("notifications")
       .where("userId", "==", targetUserId)
@@ -536,7 +504,6 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
       };
     });
 
-    console.log(`✅ [getUserNotifications] Found ${notifications.length} notifications.`);
     return {success: true, notifications};
   } catch (error) {
     console.error("Error in getUserNotifications:", error);
@@ -550,10 +517,7 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
  */
 exports.markNotificationAsRead = functions.https.onCall(
   async (data, context) => {
-    console.log("🚀 [markNotificationAsRead] called");
-    const safeDataForLog = {notificationId: data.data?.notificationId};
-    console.log("📦 [markNotificationAsRead] Received payload:"
-      , JSON.stringify(safeDataForLog, null, 2));
+    console.log("markNotificationAsRead called");
 
     // Extract payload from data.data
     const payload = data.data || data;
@@ -561,7 +525,6 @@ exports.markNotificationAsRead = functions.https.onCall(
 
     // Authentication
     const authInfo = getAuthInfo(context, data);
-    console.log("🔐 [markNotificationAsRead] Auth info:", authInfo);
 
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
@@ -572,7 +535,6 @@ exports.markNotificationAsRead = functions.https.onCall(
 
     // Validation
     if (!notificationId) {
-      console.error("❌ [markNotificationAsRead] Validation failed: Missing notificationId.");
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Notification ID is required",
@@ -580,7 +542,7 @@ exports.markNotificationAsRead = functions.https.onCall(
     }
 
     try {
-      console.log(`📝 [markNotificationAsRead] Fetching notification ${notificationId}...`);
+      console.log(`[markNotificationAsRead] Fetching notification ${notificationId}...`);
       const notificationRef = db.collection("notifications").doc(notificationId);
 
       await db.runTransaction(async (transaction) => {
@@ -595,10 +557,8 @@ exports.markNotificationAsRead = functions.https.onCall(
 
         const notification = notificationDoc.data();
 
-        // Verify ownership (unless admin)
+        // Verify ownership
         if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-          console.error(`❌ [markNotificationAsRead] Permission denied. 
-            User ${authInfo.uid} cannot access notification for user ${notification.userId}.`);
           throw new functions.https.HttpsError(
             "permission-denied",
             "You can only mark your own notifications as read",
@@ -611,15 +571,13 @@ exports.markNotificationAsRead = functions.https.onCall(
           newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
         }
 
-        console.log(`📝 [markNotificationAsRead] Updating notification 
-          ${notificationId} to status ${newStatus}.`);
         transaction.update(notificationRef, {
           status: newStatus,
           readAt: FieldValue.serverTimestamp(),
         });
       });
 
-      console.log("✅ [markNotificationAsRead] Function finished successfully.");
+      console.log("[markNotificationAsRead] Function finished successfully.");
       return {success: true};
     } catch (error) {
       console.error("Error in markNotificationAsRead:", error);
@@ -640,10 +598,7 @@ exports.markNotificationAsRead = functions.https.onCall(
  */
 exports.markNotificationAsPushSent = functions.https.onCall(
   async (data, context) => {
-    console.log("🚀 [markNotificationAsPushSent] called");
-    const safeDataForLog = {notificationId: data.data?.notificationId};
-    console.log("📦 [markNotificationAsPushSent] Received payload:"
-      , JSON.stringify(safeDataForLog, null, 2));
+    console.log("markNotificationAsPushSent called");
 
     // Extract payload from data.data
     const payload = data.data || data;
@@ -651,7 +606,6 @@ exports.markNotificationAsPushSent = functions.https.onCall(
 
     // Authentication
     const authInfo = getAuthInfo(context, data);
-    console.log("🔐 [markNotificationAsPushSent] Auth info:", authInfo);
 
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
@@ -662,7 +616,6 @@ exports.markNotificationAsPushSent = functions.https.onCall(
 
     // Validation
     if (!notificationId) {
-      console.error("❌ [markNotificationAsPushSent] Validation failed: Missing notificationId.");
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Notification ID is required",
@@ -670,7 +623,6 @@ exports.markNotificationAsPushSent = functions.https.onCall(
     }
 
     try {
-      console.log(`📝 [markNotificationAsPushSent] Fetching notification ${notificationId}...`);
       const notificationRef = db.collection("notifications").doc(notificationId);
 
       await db.runTransaction(async (transaction) => {
@@ -685,10 +637,8 @@ exports.markNotificationAsPushSent = functions.https.onCall(
 
         const notification = notificationDoc.data();
 
-        // Verify ownership (unless admin)
+        // Verify ownership
         if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-          console.error(`❌ [markNotificationAsPushSent] Permission denied. 
-            User ${authInfo.uid} cannot access notification for user ${notification.userId}.`);
           throw new functions.https.HttpsError(
             "permission-denied",
             "You can only update your own notifications",
@@ -701,15 +651,13 @@ exports.markNotificationAsPushSent = functions.https.onCall(
           newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
         }
 
-        console.log(`📝 [markNotificationAsPushSent] Updating notification 
-          ${notificationId} to status ${newStatus}.`);
         transaction.update(notificationRef, {
           status: newStatus,
           pushSentAt: FieldValue.serverTimestamp(),
         });
       });
 
-      console.log("✅ [markNotificationAsPushSent] Function finished successfully.");
+      console.log("[markNotificationAsPushSent] Function finished successfully.");
       return {success: true};
     } catch (error) {
       console.error("Error in markNotificationAsPushSent:", error);
@@ -730,10 +678,7 @@ exports.markNotificationAsPushSent = functions.https.onCall(
  */
 exports.getNotificationsForPush = functions.https.onCall(
   async (data, context) => {
-    console.log("🚀 [getNotificationsForPush] called");
-    const safeDataForLog = {userId: data.data?.userId};
-    console.log("📦 [getNotificationsForPush] Received payload:"
-      , JSON.stringify(safeDataForLog, null, 2));
+    console.log("getNotificationsForPush called");
 
     // Extract payload from data.data
     const payload = data.data || data;
@@ -741,7 +686,6 @@ exports.getNotificationsForPush = functions.https.onCall(
 
     // Authentication
     const authInfo = getAuthInfo(context, data);
-    console.log("🔐 [getNotificationsForPush] Auth info:", authInfo);
 
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
@@ -754,8 +698,6 @@ exports.getNotificationsForPush = functions.https.onCall(
     const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
 
     try {
-      console.log(`📝 [getNotificationsForPush] 
-        Fetching unread notifications for user ${targetUserId}...`);
       const snapshot = await db
         .collection("notifications")
         .where("userId", "==", targetUserId)
@@ -784,8 +726,6 @@ exports.getNotificationsForPush = functions.https.onCall(
         };
       });
 
-      console.log(`✅ [getNotificationsForPush] 
-        Found ${notifications.length} notifications to push.`);
       return {success: true, notifications};
     } catch (error) {
       console.error("Error in getNotificationsForPush:", error);
@@ -799,10 +739,7 @@ exports.getNotificationsForPush = functions.https.onCall(
  * HTTPS Callable Function
  */
 exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [storeOneSignalPlayerId] called");
-  const safeDataForLog = {playerId: data.data?.playerId ? "Present" : "Missing"};
-  console.log("📦 [storeOneSignalPlayerId] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2));
+  console.log("storeOneSignalPlayerId called");
 
   // Extract payload from data.data
   const payload = data.data || data;
@@ -810,9 +747,9 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [storeOneSignalPlayerId] Auth info:", authInfo);
 
   if (!authInfo.hasAuth) {
+    console.log("storeOneSignalPlayerId: User not authenticated");
     throw new functions.https.HttpsError(
       "unauthenticated",
       "User must be authenticated",
@@ -821,7 +758,6 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
 
   // Validation
   if (!playerId) {
-    console.error("❌ [storeOneSignalPlayerId] Validation failed: Missing playerId.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Player ID is required",
@@ -829,14 +765,11 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
   }
 
   try {
-    console.log(`📝 [storeOneSignalPlayerId] Storing player ID for user ${authInfo.uid}...`);
-
     const userRef = db.collection("users").doc(authInfo.uid);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
       // User document doesn't exist, create it with the player ID
-      console.log(`📝 [storeOneSignalPlayerId] Creating user document with player ID...`);
       await userRef.set({
         oneSignalPlayerIds: [playerId],
         oneSignalUpdatedAt: FieldValue.serverTimestamp(),
@@ -846,19 +779,17 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
       const existingPlayerIds = userDoc.data().oneSignalPlayerIds || [];
 
       if (existingPlayerIds.includes(playerId)) {
-        console.log(`📝 [storeOneSignalPlayerId] Player ID already registered, skipping update.`);
         return {success: true, message: "Player ID already registered"};
       }
 
       // Add new player ID to array
-      console.log(`📝 [storeOneSignalPlayerId] Adding new player ID...`);
       await userRef.update({
         oneSignalPlayerIds: FieldValue.arrayUnion(playerId),
         oneSignalUpdatedAt: FieldValue.serverTimestamp(),
       });
     }
 
-    console.log("✅ [storeOneSignalPlayerId] Function finished successfully.");
+    console.log("[storeOneSignalPlayerId] Function completed successfully");
     return {success: true};
   } catch (error) {
     console.error("Error in storeOneSignalPlayerId:", error);
@@ -870,7 +801,6 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
           oneSignalPlayerIds: [playerId],
           oneSignalUpdatedAt: FieldValue.serverTimestamp(),
         }, {merge: true});
-        console.log("✅ [storeOneSignalPlayerId] Created user document with player ID.");
         return {success: true};
       } catch (createError) {
         console.error("Error creating user document:", createError);
@@ -887,10 +817,7 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
  * HTTPS Callable Function
  */
 exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [removeOneSignalPlayerId] called");
-  const safeDataForLog = {playerId: data.data?.playerId};
-  console.log("📦 [removeOneSignalPlayerId] Received payload:",
-    JSON.stringify(safeDataForLog, null, 2));
+  console.log("removeOneSignalPlayerId called");
 
   // Extract payload from data.data
   const payload = data.data || data;
@@ -898,7 +825,6 @@ exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) =
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [removeOneSignalPlayerId] Auth info:", authInfo);
 
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
@@ -908,8 +834,6 @@ exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) =
   }
 
   try {
-    console.log(`📝 [removeOneSignalPlayerId] Removing player ID for user ${authInfo.uid}...`);
-
     const userRef = db.collection("users").doc(authInfo.uid);
 
     if (playerId) {
@@ -926,7 +850,7 @@ exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) =
       });
     }
 
-    console.log("✅ [removeOneSignalPlayerId] Function finished successfully.");
+    console.log("[removeOneSignalPlayerId] Function completed successfully");
     return {success: true};
   } catch (error) {
     console.error("Error in removeOneSignalPlayerId:", error);
@@ -939,18 +863,13 @@ exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) =
  * HTTPS Callable Function
  */
 exports.getNotificationStats = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [getNotificationStats] called");
-  const safeDataForLog = {userId: data.data?.userId};
-  console.log("📦 [getNotificationStats] Received payload:"
-    , JSON.stringify(safeDataForLog, null, 2));
-
+  console.log("getNotificationStats called");
   // Extract payload from data.data
   const payload = data.data || data;
   const {userId} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [getNotificationStats] Auth info:", authInfo);
 
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
@@ -963,7 +882,6 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
   const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
 
   try {
-    console.log(`📝 [getNotificationStats] Fetching notification stats for user ${targetUserId}...`);
     const snapshot = await db
       .collection("notifications")
       .where("userId", "==", targetUserId)
@@ -996,7 +914,6 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
       }
     });
 
-    console.log(`✅ [getNotificationStats] Stats calculated:`, {total, unread, pushSent, read});
     return {
       success: true,
       stats: {total, unread, pushSent, read},
@@ -1013,11 +930,9 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
  */
 exports.markAllNotificationsAsRead = functions.https.onCall(
   async (data, context) => {
-    console.log("🚀 [markAllNotificationsAsRead] called");
-
+    console.log("markAllNotificationsAsRead called");
     // Authentication
     const authInfo = getAuthInfo(context, data);
-    console.log("🔐 [markAllNotificationsAsRead] Auth info:", authInfo);
 
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
@@ -1027,8 +942,6 @@ exports.markAllNotificationsAsRead = functions.https.onCall(
     }
 
     try {
-      console.log(`📝 [markAllNotificationsAsRead] 
-        Fetching unread notifications for user ${authInfo.uid}...`);
       const snapshot = await db
         .collection("notifications")
         .where("userId", "==", authInfo.uid)
@@ -1056,8 +969,6 @@ exports.markAllNotificationsAsRead = functions.https.onCall(
       });
 
       await batch.commit();
-      console.log(`✅ [markAllNotificationsAsRead] Marked ${count} notifications as read.`);
-      console.log("✅ [markAllNotificationsAsRead] Function finished successfully.");
       return {success: true, count};
     } catch (error) {
       console.error("Error in markAllNotificationsAsRead:", error);
@@ -1072,11 +983,7 @@ exports.markAllNotificationsAsRead = functions.https.onCall(
  */
 exports.canReceiveNotification = functions.https.onCall(
   async (data, context) => {
-    console.log("🚀 [canReceiveNotification] called");
-    const safeDataForLog = {userId: data.data?.userId,
-      notificationType: data.data?.notificationType};
-    console.log("📦 [canReceiveNotification] Received payload:"
-      , JSON.stringify(safeDataForLog, null, 2));
+    console.log("canReceiveNotification called");
 
     // Extract payload from data.data
     const payload = data.data || data;
@@ -1084,7 +991,6 @@ exports.canReceiveNotification = functions.https.onCall(
 
     // Authentication
     const authInfo = getAuthInfo(context, data);
-    console.log("🔐 [canReceiveNotification] Auth info:", authInfo);
 
     if (!authInfo.hasAuth) {
       throw new functions.https.HttpsError(
@@ -1095,8 +1001,6 @@ exports.canReceiveNotification = functions.https.onCall(
 
     // Validation
     if (!userId || !notificationType) {
-      console.error(`❌ [canReceiveNotification] Validation failed: 
-        Missing userId or notificationType.`);
       throw new functions.https.HttpsError(
         "invalid-argument",
         "User ID and notification type are required",
@@ -1104,9 +1008,7 @@ exports.canReceiveNotification = functions.https.onCall(
     }
 
     try {
-      console.log(`🛡️ [canReceiveNotification] Checking rate limit for user ${userId}...`);
       const canReceive = !(await isSpamming(userId, notificationType));
-      console.log(`✅ [canReceiveNotification] Can receive: ${canReceive}`);
       return {success: true, canReceive};
     } catch (error) {
       console.error("Error in canReceiveNotification:", error);
@@ -1120,17 +1022,12 @@ exports.canReceiveNotification = functions.https.onCall(
  * HTTPS Callable Function
  */
 exports.deleteNotification = functions.https.onCall(async (data, context) => {
-  console.log("🚀 [deleteNotification] called");
-  const safeDataForLog = {notificationId: data.data?.notificationId};
-  console.log("📦 [deleteNotification] Received payload:", JSON.stringify(safeDataForLog, null, 2));
-
   // Extract payload from data.data
   const payload = data.data || data;
   const {notificationId} = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
-  console.log("🔐 [deleteNotification] Auth info:", authInfo);
 
   if (!authInfo.hasAuth) {
     throw new functions.https.HttpsError(
@@ -1141,7 +1038,6 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
 
   // Validation
   if (!notificationId) {
-    console.error("❌ [deleteNotification] Validation failed: Missing notificationId.");
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Notification ID is required",
@@ -1153,7 +1049,6 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
     const notificationDoc = await notificationRef.get();
 
     if (!notificationDoc.exists) {
-      console.error(`❌ [deleteNotification] Notification ${notificationId} not found.`);
       throw new functions.https.HttpsError("not-found", "Notification not found");
     }
 
@@ -1161,10 +1056,6 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
 
     // Security: Only allow user to delete their own notifications or admin
     if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-      console.error(
-        `❌ [deleteNotification] User ${authInfo.uid} not authorized ` +
-        `to delete notification ${notificationId}.`,
-      );
       throw new functions.https.HttpsError(
         "permission-denied",
         "Not authorized to delete this notification",
@@ -1174,7 +1065,6 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
     // Delete the notification
     await notificationRef.delete();
 
-    console.log(`✅ [deleteNotification] Notification ${notificationId} deleted successfully.`);
     return {success: true};
   } catch (error) {
     console.error("Error in deleteNotification:", error);
@@ -1193,7 +1083,7 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
  * Runs daily at midnight UTC
  */
 exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => {
-  console.log("🚀 [cleanupExpiredNotifications] scheduled function running...");
+  console.log("[cleanupExpiredNotifications] scheduled function running...");
   try {
     const now = new Date();
     const snapshot = await db
@@ -1211,7 +1101,6 @@ exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => 
 
     await batch.commit();
 
-    console.log(`✅ [cleanupExpiredNotifications] Cleaned up ${count} expired notifications.`);
     return {success: true, count};
   } catch (error) {
     console.error("Error cleaning up expired notifications:", error);
@@ -1224,7 +1113,7 @@ exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => 
  * Runs every 6 hours
  */
 exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) => {
-  console.log("🚀 [cleanupNotificationFrequency] scheduled function running...");
+  console.log("[cleanupNotificationFrequency] scheduled function running...");
   try {
     const now = Date.now();
     const windowStart = now - SPAM_PREVENTION_WINDOW;
@@ -1251,8 +1140,6 @@ exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) 
 
     await batch.commit();
 
-    console.log(`✅ [cleanupNotificationFrequency] 
-      Cleaned up ${count} old notification frequency entries.`);
     return {success: true, count};
   } catch (error) {
     console.error("Error cleaning up notification frequency:", error);

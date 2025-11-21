@@ -235,6 +235,7 @@ const useDebounce = <F extends (...args: any[]) => any>(
   );
 };
 
+// Provider booking management: handles bookings, client profiles, services, packages, analytics, and booking operations
 export const useProviderBookingManagement =
   (): ProviderBookingManagementHook => {
     // Core state management
@@ -1500,65 +1501,132 @@ export const useProviderBookingManagement =
     }, [providerBookings, calculateAnalytics, setLoadingState]);
 
     // New chart data functions
-    const getMonthlyRevenue = useCallback((): {
-      name: string;
-      value: number;
-    }[] => {
-      const monthlyRevenueMap = new Map<string, number>();
-      const now = new Date();
+    const getMonthlyRevenue = useCallback(
+      (
+        startDate?: Date,
+        endDate?: Date,
+        groupBy: "day" | "month" = "month",
+      ): { name: string; value: number }[] => {
+        const revenueMap = new Map<string, number>();
+        let filteredBookings = providerBookings;
 
-      // Initialize map for the last 12 months with 0 revenue
-      for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthName = d.toLocaleString("default", { month: "short" });
-        monthlyRevenueMap.set(monthName, 0);
-      }
-
-      providerBookings.forEach((booking) => {
-        if (booking.isCompleted && booking.completedDate) {
-          const completedDate = new Date(booking.completedDate);
-          const monthName = completedDate.toLocaleString("default", {
-            month: "short",
+        // Filter by date range if provided
+        if (startDate && endDate) {
+          filteredBookings = providerBookings.filter((booking) => {
+            if (!booking.isCompleted || !booking.completedDate) return false;
+            const completedDate = new Date(booking.completedDate);
+            return completedDate >= startDate && completedDate <= endDate;
           });
-          const currentRevenue = monthlyRevenueMap.get(monthName) || 0;
-          monthlyRevenueMap.set(
-            monthName,
-            currentRevenue + (booking.actualRevenue || 0),
+        } else {
+          filteredBookings = providerBookings.filter(
+            (booking) => booking.isCompleted && booking.completedDate,
           );
         }
-      });
 
-      return Array.from(monthlyRevenueMap, ([name, value]) => ({
-        name,
-        value,
-      }));
-    }, [providerBookings]);
+        // Aggregate by day or month
+        filteredBookings.forEach((booking) => {
+          if (!booking.completedDate) return;
+          const completedDate = new Date(booking.completedDate);
+          let key = "";
+          if (groupBy === "day") {
+            key = completedDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+          } else {
+            key = completedDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+            });
+          }
+          revenueMap.set(
+            key,
+            (revenueMap.get(key) || 0) + (booking.actualRevenue || 0),
+          );
+        });
 
-    const getBookingCountByDay = useCallback((): {
-      name: string;
-      value: number;
-    }[] => {
-      const days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ];
-      const bookingCounts = new Map<string, number>(
-        days.map((day) => [day, 0]),
-      );
+        // Sort keys chronologically
+        const sorted = Array.from(revenueMap.entries()).sort((a, b) => {
+          const aDate = new Date(a[0]);
+          const bDate = new Date(b[0]);
+          return aDate.getTime() - bDate.getTime();
+        });
 
-      providerBookings.forEach((booking) => {
-        const createdDate = new Date(booking.createdAt);
-        const dayName = days[createdDate.getDay()];
-        bookingCounts.set(dayName, (bookingCounts.get(dayName) || 0) + 1);
-      });
+        return sorted.map(([name, value]) => ({ name, value }));
+      },
+      [providerBookings],
+    );
 
-      return Array.from(bookingCounts, ([name, value]) => ({ name, value }));
-    }, [providerBookings]);
+    const getBookingCountByDay = useCallback(
+      (
+        startDate?: Date,
+        endDate?: Date,
+        groupBy: "day" | "week" | "month" = "day",
+      ): { name: string; value: number }[] => {
+        if (!startDate || !endDate) return [];
+        let result: { name: string; value: number }[] = [];
+        if (groupBy === "day") {
+          let d = new Date(startDate);
+          while (d <= endDate) {
+            const dayStr = d.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+            const count = providerBookings.filter((b) => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return (
+                bookingDate.getFullYear() === d.getFullYear() &&
+                bookingDate.getMonth() === d.getMonth() &&
+                bookingDate.getDate() === d.getDate()
+              );
+            }).length;
+            result.push({ name: dayStr, value: count });
+            d.setDate(d.getDate() + 1);
+          }
+        } else if (groupBy === "week") {
+          let d = new Date(startDate);
+          while (d <= endDate) {
+            const weekStart = new Date(d);
+            weekStart.setDate(d.getDate() - d.getDay());
+            const weekStr = `Week of ${weekStart.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`;
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            const count = providerBookings.filter((b) => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return bookingDate >= weekStart && bookingDate <= weekEnd;
+            }).length;
+            result.push({ name: weekStr, value: count });
+            d.setDate(d.getDate() + 7);
+          }
+        } else if (groupBy === "month") {
+          let d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+          const endMonth = new Date(
+            endDate.getFullYear(),
+            endDate.getMonth(),
+            1,
+          );
+          while (d <= endMonth) {
+            const monthStr = d.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+            });
+            const count = providerBookings.filter((b) => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return (
+                bookingDate.getFullYear() === d.getFullYear() &&
+                bookingDate.getMonth() === d.getMonth()
+              );
+            }).length;
+            result.push({ name: monthStr, value: count });
+            d.setMonth(d.getMonth() + 1);
+          }
+        }
+        return result;
+      },
+      [providerBookings],
+    );
 
     // Return hook interface with enhanced data
     return {

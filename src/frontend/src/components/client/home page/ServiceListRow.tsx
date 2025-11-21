@@ -1,54 +1,49 @@
+// Imports
 import React, { useState, useEffect, useMemo } from "react";
 import ServiceListItem from "./ServiceListingCard";
 import {
   EnrichedService,
   useAllServicesWithProviders,
 } from "../../../hooks/serviceInformation";
+import { useReputation } from "../../../hooks/useReputation";
 import { getCategoryImage } from "../../../utils/serviceHelpers";
 import reviewCanisterService from "../../../services/reviewCanisterService";
 import serviceCanisterService from "../../../services/serviceCanisterService";
 
+// Types
 interface ServicesListProps {
   className?: string;
 }
 
 const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
-  // Use the realtime hook for live updates from Firestore
   const { services, loading, error } = useAllServicesWithProviders();
+  const { fetchUserReputation } = useReputation();
 
-  // Pagination state
   const ITEMS_PER_PAGE = 10;
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Service data state map with proper typing
   interface ServiceData {
     isVerified?: boolean;
     averageRating: number;
     totalReviews: number;
     mediaUrls: string[]; // URLs to be loaded by ServiceListingCard
+    reputationScore?: number | undefined;
   }
 
   const [serviceDataMap, setServiceDataMap] = useState<
     Record<string, ServiceData>
   >({});
 
-  // Effect to fetch service data for all services
   useEffect(() => {
     const fetchServiceData = async () => {
-      // Only fetch data for services that will be displayed
       const servicesToDisplay = services.slice(0, displayCount);
       const serviceIds = servicesToDisplay.map((s) => s.id);
-
-      // Only fetch data for services we haven't fetched yet
       const toFetch = serviceIds.filter((id) => !serviceDataMap[id]);
 
       if (toFetch.length === 0) return;
-
-      // Initialize loading state for new services
       const newEntries: Record<string, ServiceData> = {};
       toFetch.forEach((serviceId) => {
-        // Find the service to get media URLs
         const service = services.find((s) => s.id === serviceId);
         newEntries[serviceId] = {
           isVerified: false,
@@ -58,21 +53,14 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         };
       });
 
-      // Update state with loading placeholders
       setServiceDataMap((prev) => ({ ...prev, ...newEntries }));
 
-      // Fetch data for all new services
       const fetchedData = await Promise.all(
         toFetch.map(async (serviceId) => {
           try {
-            // Find the service to get media URLs
             const service = services.find((s) => s.id === serviceId);
-
-            // Fetch service details for verification status
             const serviceDetails =
               await serviceCanisterService.getService(serviceId);
-
-            // Fetch reviews for ratings
             const reviews =
               await reviewCanisterService.getServiceReviews(serviceId);
             const visibleReviews = reviews.filter(
@@ -85,33 +73,47 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
                     0,
                   ) / visibleReviews.length
                 : 0;
+            let reputationScore: number | undefined = undefined;
+            try {
+              if (service?.providerId) {
+                const rep = await fetchUserReputation(service.providerId);
+                if (rep && typeof rep.trustScore === "number") {
+                  reputationScore = Math.round(rep.trustScore);
+                }
+              }
+            } catch (e) {
+              // ignore
+            }
 
-            return {
+            const result = {
               serviceId,
               data: {
                 isVerified: (serviceDetails as any)?.isVerified || false,
                 averageRating,
                 totalReviews: visibleReviews.length,
                 mediaUrls: service?.media || [],
+                reputationScore,
               },
             };
+
+            return result;
           } catch (err) {
-            // Find the service to get media URLs even on error
             const service = services.find((s) => s.id === serviceId);
-            return {
+            const fallback = {
               serviceId,
               data: {
                 isVerified: false,
                 averageRating: 0,
                 totalReviews: 0,
                 mediaUrls: service?.media || [],
+                reputationScore: undefined,
               },
             };
+            return fallback;
           }
         }),
       );
 
-      // Update state with fetched data
       const updatedData: Record<string, ServiceData> = {};
       fetchedData.forEach(({ serviceId, data }) => {
         updatedData[serviceId] = data;
@@ -123,9 +125,8 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     if (services.length > 0) {
       fetchServiceData();
     }
-  }, [services, displayCount]); // Only depend on services and displayCount
+  }, [services, displayCount, fetchUserReputation]); // Only depend on services and displayCount
 
-  // Memoize the enhance service function
   const enhanceService = useMemo(
     () =>
       (service: EnrichedService): EnrichedService => ({
@@ -147,9 +148,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     [],
   );
 
-  // Memoize the services with their data
   const servicesWithData = useMemo(() => {
-    // Only show services up to displayCount
     const servicesToShow = services.slice(0, displayCount);
 
     return servicesToShow.map((service) => {
@@ -167,10 +166,8 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     });
   }, [services, serviceDataMap, enhanceService, displayCount]);
 
-  // Handler for loading more services
   const handleLoadMore = () => {
     setIsLoadingMore(true);
-    // Simulate a small delay for UX
     setTimeout(() => {
       setDisplayCount((prev) =>
         Math.min(prev + ITEMS_PER_PAGE, services.length),
@@ -179,10 +176,8 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     }, 300);
   };
 
-  // Check if there are more services to load
   const hasMore = displayCount < services.length;
 
-  // Show error state
   if (error) {
     return (
       <div className={`p-4 ${className}`}>
@@ -192,14 +187,13 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
     );
   }
 
-  // Always show the layout with services or skeleton cards
   return (
     <div className={`w-full max-w-full ${className}`}>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {servicesWithData.map(({ service, serviceData }) => (
           <div key={service.id}>
             <ServiceListItem service={service} serviceData={serviceData} />
