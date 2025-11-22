@@ -33,7 +33,7 @@ const ProviderChatPage: React.FC = () => {
           otherUserImage: otherUserImageUrl,
         },
       });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   // Helper for timestamp formatting (accepts string or Date)
@@ -124,9 +124,8 @@ const ProviderChatPage: React.FC = () => {
                             otherUserImageUrl,
                           )
                         }
-                        className={`group flex cursor-pointer items-center space-x-4 px-5 py-4 transition-colors hover:bg-blue-50/70 ${
-                          unreadCount > 0 ? "bg-blue-50/60" : ""
-                        }`}
+                        className={`group flex cursor-pointer items-center space-x-4 px-5 py-4 transition-colors hover:bg-blue-50/70 ${unreadCount > 0 ? "bg-blue-50/60" : ""
+                          }`}
                       >
                         <div className="relative h-14 w-14 flex-shrink-0">
                           <ProfileImage

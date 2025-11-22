@@ -45,7 +45,7 @@ const safeUnsubscribe = async (
       try {
         listener.unsubscribe();
         activeListeners.delete(listenerId);
-      } catch (error) {}
+      } catch (error) { }
       resolve();
     }, delayMs);
   });
@@ -129,11 +129,11 @@ const adaptBackendMessage = (backendMessage: any): FrontendMessage => {
     attachment:
       backendMessage.attachment && backendMessage.attachment.length > 0
         ? {
-            fileName: backendMessage.attachment[0].fileName,
-            fileSize: Number(backendMessage.attachment[0].fileSize),
-            fileType: backendMessage.attachment[0].fileType,
-            fileUrl: backendMessage.attachment[0].fileUrl,
-          }
+          fileName: backendMessage.attachment[0].fileName,
+          fileSize: Number(backendMessage.attachment[0].fileSize),
+          fileType: backendMessage.attachment[0].fileType,
+          fileUrl: backendMessage.attachment[0].fileUrl,
+        }
         : undefined,
     status: getMessageStatus(backendMessage.status),
     createdAt: backendMessage.createdAt,
@@ -168,31 +168,31 @@ const adaptBackendConversationSummary = (
     conversation: adaptBackendConversation(backendSummary.conversation),
     lastMessage:
       backendSummary.lastMessage &&
-      Array.isArray(backendSummary.lastMessage) &&
-      backendSummary.lastMessage.length > 0
+        Array.isArray(backendSummary.lastMessage) &&
+        backendSummary.lastMessage.length > 0
         ? backendSummary.lastMessage.map(adaptBackendMessage).filter(Boolean)
         : backendSummary.conversation?.lastMessagePreview
           ? [
-              {
-                id:
-                  backendSummary.conversation.lastMessagePreview.id ||
-                  "preview",
-                conversationId: backendSummary.conversation.id,
-                senderId:
-                  backendSummary.conversation.lastMessagePreview.senderId,
-                receiverId: "", // Not needed for preview
-                messageType:
-                  backendSummary.conversation.lastMessagePreview.messageType,
-                content: {
-                  encryptedText:
-                    backendSummary.conversation.lastMessagePreview.content,
-                  encryptionKey: "",
-                },
-                status: "Sent", // Default
-                createdAt:
-                  backendSummary.conversation.lastMessagePreview.createdAt,
-              } as FrontendMessage,
-            ]
+            {
+              id:
+                backendSummary.conversation.lastMessagePreview.id ||
+                "preview",
+              conversationId: backendSummary.conversation.id,
+              senderId:
+                backendSummary.conversation.lastMessagePreview.senderId,
+              receiverId: "", // Not needed for preview
+              messageType:
+                backendSummary.conversation.lastMessagePreview.messageType,
+              content: {
+                encryptedText:
+                  backendSummary.conversation.lastMessagePreview.content,
+                encryptionKey: "",
+              },
+              status: "Sent", // Default
+              createdAt:
+                backendSummary.conversation.lastMessagePreview.createdAt,
+            } as FrontendMessage,
+          ]
           : undefined,
   };
   return adapted;
@@ -420,7 +420,7 @@ export const chatCanisterService = {
         try {
           const allConversations = Array.from(conversationMap.values());
           onUpdate(allConversations);
-        } catch (error) {}
+        } catch (error) { }
       }
     }, 200); // 200ms debounce
 
@@ -447,7 +447,7 @@ export const chatCanisterService = {
               }
             });
             debouncedUpdate();
-          } catch (error) {}
+          } catch (error) { }
         },
         (error) => {
           if (unsubscribed) return;
@@ -483,7 +483,7 @@ export const chatCanisterService = {
               }
             });
             debouncedUpdate();
-          } catch (error) {}
+          } catch (error) { }
         },
         (error) => {
           if (unsubscribed) return;
@@ -510,7 +510,7 @@ export const chatCanisterService = {
       };
     } catch (error) {
       if (onError) onError(error as Error);
-      return async () => {}; // Return no-op unsubscribe
+      return async () => { }; // Return no-op unsubscribe
     }
   },
 
@@ -562,7 +562,7 @@ export const chatCanisterService = {
             // Reverse to show oldest first (chronological)
             messages.reverse();
             debouncedUpdate(messages);
-          } catch (error) {}
+          } catch (error) { }
         },
         (error) => {
           if (unsubscribed) return;
@@ -585,7 +585,7 @@ export const chatCanisterService = {
       };
     } catch (error) {
       if (onError) onError(error as Error);
-      return async () => {}; // Return no-op unsubscribe
+      return async () => { }; // Return no-op unsubscribe
     }
   },
 
@@ -607,11 +607,15 @@ export const chatCanisterService = {
       if (unsubscribed) return;
 
       try {
-        const summaries = conversations.map((conv) => ({
-          conversation: conv,
-          // The lastMessage will be derived from lastMessagePreview in adaptBackendConversationSummary
-          lastMessage: [],
-        }));
+        const summaries = conversations.map((conv) => {
+          // Use the helper to adapt the conversation summary
+          // We construct a backend-like summary object to reuse the adapter
+          const backendSummary = {
+            conversation: conv,
+            lastMessage: [], // The adapter will look at conversation.lastMessagePreview
+          };
+          return adaptBackendConversationSummary(backendSummary);
+        });
 
         // Sort by last message time (most recent first)
         summaries.sort((a, b) => {
@@ -625,7 +629,7 @@ export const chatCanisterService = {
         if (!unsubscribed) {
           onUpdate(summaries);
         }
-      } catch (error) {}
+      } catch (error) { }
     }, 300);
 
     try {
@@ -646,7 +650,7 @@ export const chatCanisterService = {
       };
     } catch (error) {
       if (onError) onError(error as Error);
-      return async () => {};
+      return async () => { };
     }
   },
 };

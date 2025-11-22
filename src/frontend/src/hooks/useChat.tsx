@@ -60,6 +60,16 @@ export const useChat = () => {
   // Real-time listener unsubscribe functions (now async)
   const conversationsUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
   const messagesUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Get user name from cache or fetch from auth service
@@ -175,11 +185,11 @@ export const useChat = () => {
         attachment:
           backendMessage.attachment && backendMessage.attachment.length > 0
             ? {
-                fileName: backendMessage.attachment[0].fileName,
-                fileSize: Number(backendMessage.attachment[0].fileSize),
-                fileType: backendMessage.attachment[0].fileType,
-                fileUrl: backendMessage.attachment[0].fileUrl,
-              }
+              fileName: backendMessage.attachment[0].fileName,
+              fileSize: Number(backendMessage.attachment[0].fileSize),
+              fileType: backendMessage.attachment[0].fileType,
+              fileUrl: backendMessage.attachment[0].fileUrl,
+            }
             : undefined,
         status: getMessageStatus(backendMessage.status),
         createdAt: backendMessage.createdAt,
@@ -206,7 +216,7 @@ export const useChat = () => {
     if (conversationsUnsubscribe.current) {
       try {
         await conversationsUnsubscribe.current();
-      } catch (error) {}
+      } catch (error) { }
       conversationsUnsubscribe.current = null;
     }
 
@@ -308,7 +318,7 @@ export const useChat = () => {
         if (messagesUnsubscribe.current) {
           try {
             await messagesUnsubscribe.current();
-          } catch (error) {}
+          } catch (error) { }
           messagesUnsubscribe.current = null;
         }
 
@@ -343,7 +353,30 @@ export const useChat = () => {
             },
           );
 
-        // Polling removed in favor of optimized real-time listeners
+
+
+        // Polling fallback (every 3 seconds)
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+        }
+
+        pollingIntervalRef.current = setInterval(async () => {
+          if (!isMountedRef.current) return;
+          try {
+            // Fetch latest messages to ensure we don't miss anything
+            const messagePage = await chatCanisterService.getConversationMessages(
+              conversationId,
+              50, // Limit
+              0   // Offset
+            );
+
+            if (isMountedRef.current && messagePage && messagePage.messages.length > 0) {
+              setMessages(messagePage.messages);
+            }
+          } catch (e) {
+            // Silent fail on polling error
+          }
+        }, 3000);
 
         // Fetch conversation details after setting up listener
         const conversation =
@@ -488,7 +521,7 @@ export const useChat = () => {
       try {
         await chatCanisterService.markMessagesAsRead(conversationId);
         // Real-time listener will automatically update unread counts
-      } catch (err) {}
+      } catch (err) { }
     },
     [isAuthenticated, identity],
   );
@@ -517,33 +550,27 @@ export const useChat = () => {
         await conversationsUnsubscribe.current();
         conversationsUnsubscribe.current = null;
       }
-    } catch (error) {}
+    } catch (error) { }
 
     try {
       if (messagesUnsubscribe.current) {
         await messagesUnsubscribe.current();
         messagesUnsubscribe.current = null;
       }
-    } catch (error) {}
+    } catch (error) { }
   }, []);
 
   /**
    * Clear current conversation and messages
    */
   const clearCurrentConversation = useCallback(async () => {
-    // Clear polling interval - removed
-    // if (pollingIntervalRef.current) {
-    //   clearInterval(pollingIntervalRef.current);
-    //   pollingIntervalRef.current = null;
-    // }
-
     // Cleanup messages listener
     try {
       if (messagesUnsubscribe.current) {
         await messagesUnsubscribe.current();
         messagesUnsubscribe.current = null;
       }
-    } catch (error) {}
+    } catch (error) { }
 
     if (isMountedRef.current) {
       setCurrentConversation(null);
