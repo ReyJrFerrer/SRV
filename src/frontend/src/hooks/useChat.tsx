@@ -185,11 +185,11 @@ export const useChat = () => {
         attachment:
           backendMessage.attachment && backendMessage.attachment.length > 0
             ? {
-              fileName: backendMessage.attachment[0].fileName,
-              fileSize: Number(backendMessage.attachment[0].fileSize),
-              fileType: backendMessage.attachment[0].fileType,
-              fileUrl: backendMessage.attachment[0].fileUrl,
-            }
+                fileName: backendMessage.attachment[0].fileName,
+                fileSize: Number(backendMessage.attachment[0].fileSize),
+                fileType: backendMessage.attachment[0].fileType,
+                fileUrl: backendMessage.attachment[0].fileUrl,
+              }
             : undefined,
         status: getMessageStatus(backendMessage.status),
         createdAt: backendMessage.createdAt,
@@ -216,7 +216,7 @@ export const useChat = () => {
     if (conversationsUnsubscribe.current) {
       try {
         await conversationsUnsubscribe.current();
-      } catch (error) { }
+      } catch (error) {}
       conversationsUnsubscribe.current = null;
     }
 
@@ -318,7 +318,7 @@ export const useChat = () => {
         if (messagesUnsubscribe.current) {
           try {
             await messagesUnsubscribe.current();
-          } catch (error) { }
+          } catch (error) {}
           messagesUnsubscribe.current = null;
         }
 
@@ -353,8 +353,6 @@ export const useChat = () => {
             },
           );
 
-
-
         // Polling fallback (every 3 seconds)
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
@@ -364,13 +362,18 @@ export const useChat = () => {
           if (!isMountedRef.current) return;
           try {
             // Fetch latest messages to ensure we don't miss anything
-            const messagePage = await chatCanisterService.getConversationMessages(
-              conversationId,
-              50, // Limit
-              0   // Offset
-            );
+            const messagePage =
+              await chatCanisterService.getConversationMessages(
+                conversationId,
+                50, // Limit
+                0, // Offset
+              );
 
-            if (isMountedRef.current && messagePage && messagePage.messages.length > 0) {
+            if (
+              isMountedRef.current &&
+              messagePage &&
+              messagePage.messages.length > 0
+            ) {
               setMessages(messagePage.messages);
             }
           } catch (e) {
@@ -521,7 +524,7 @@ export const useChat = () => {
       try {
         await chatCanisterService.markMessagesAsRead(conversationId);
         // Real-time listener will automatically update unread counts
-      } catch (err) { }
+      } catch (err) {}
     },
     [isAuthenticated, identity],
   );
@@ -550,14 +553,14 @@ export const useChat = () => {
         await conversationsUnsubscribe.current();
         conversationsUnsubscribe.current = null;
       }
-    } catch (error) { }
+    } catch (error) {}
 
     try {
       if (messagesUnsubscribe.current) {
         await messagesUnsubscribe.current();
         messagesUnsubscribe.current = null;
       }
-    } catch (error) { }
+    } catch (error) {}
   }, []);
 
   /**
@@ -570,7 +573,7 @@ export const useChat = () => {
         await messagesUnsubscribe.current();
         messagesUnsubscribe.current = null;
       }
-    } catch (error) { }
+    } catch (error) {}
 
     if (isMountedRef.current) {
       setCurrentConversation(null);
