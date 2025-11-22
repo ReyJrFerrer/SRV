@@ -789,19 +789,17 @@ const ClientProfilePage: React.FC = () => {
                 <button
                   onClick={handleSwitchToProvider}
                   disabled={isSwitchingRole}
-                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
-                    isSwitchingRole
+                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${isSwitchingRole
                       ? "cursor-not-allowed opacity-50"
                       : "hover:bg-blue-600"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center">
                     <ArrowPathRoundedSquareIcon
-                      className={`mr-4 h-6 w-6 ${
-                        isSwitchingRole
+                      className={`mr-4 h-6 w-6 ${isSwitchingRole
                           ? "animate-spin text-blue-600"
                           : "text-black group-hover:text-white"
-                      }`}
+                        }`}
                     />
                     <span className="text-sm font-medium text-gray-800 group-hover:text-white md:text-base">
                       {isSwitchingRole
@@ -858,7 +856,7 @@ const ClientProfilePage: React.FC = () => {
                           {reputationError}
                         </p>
                         <p className="mt-2 text-xs text-gray-500">
-                          Please check your connection and try again
+                          If issues persist, please contact support.
                         </p>
                       </div>
                     </div>

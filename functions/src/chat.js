@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const {FieldValue} = require("firebase-admin/firestore");
+const { FieldValue } = require("firebase-admin/firestore");
 const {
   NOTIFICATION_TYPES,
   USER_TYPES,
@@ -39,7 +39,7 @@ function generateId() {
 exports.createConversation = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
-  const {clientId, providerId} = payload;
+  const { clientId, providerId } = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -123,7 +123,7 @@ exports.createConversation = functions.https.onCall(async (data, context) => {
 exports.sendMessage = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
-  const {conversationId, receiverId, content} = payload;
+  const { conversationId, receiverId, content } = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -219,13 +219,13 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
         conversationId: conversationId,
         senderId: senderId,
         receiverId: receiverId,
-        messageType: {Text: null},
+        messageType: { Text: null },
         content: {
           encryptedText: content.trim(),
           encryptionKey: "", // Placeholder for future encryption
         },
         attachment: [],
-        status: {Sent: null},
+        status: { Sent: null },
         createdAt: now,
         readAt: [],
       };
@@ -234,12 +234,19 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
       transaction.set(messageRef, newMessage);
 
       // Update conversation
-      const updatedUnreadCount = {...conversation.unreadCount};
+      const updatedUnreadCount = { ...conversation.unreadCount };
       updatedUnreadCount[receiverId] = (updatedUnreadCount[receiverId] || 0) + 1;
 
       transaction.update(conversationRef, {
         lastMessageAt: now,
         unreadCount: updatedUnreadCount,
+        lastMessagePreview: {
+          id: messageId,
+          content: content.trim(),
+          senderId: senderId,
+          messageType: "Text",
+          createdAt: now,
+        },
       });
 
       return {
@@ -336,7 +343,7 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
 exports.getMyConversations = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
-  const {userId: requestedUserId} = payload;
+  const { userId: requestedUserId } = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -376,11 +383,11 @@ exports.getMyConversations = functions.https.onCall(async (data, context) => {
     const conversationMap = new Map();
 
     clientConversationsSnapshot.forEach((doc) => {
-      conversationMap.set(doc.id, {id: doc.id, ...doc.data()});
+      conversationMap.set(doc.id, { id: doc.id, ...doc.data() });
     });
 
     providerConversationsSnapshot.forEach((doc) => {
-      conversationMap.set(doc.id, {id: doc.id, ...doc.data()});
+      conversationMap.set(doc.id, { id: doc.id, ...doc.data() });
     });
 
     // Fetch last message for each conversation
@@ -396,7 +403,7 @@ exports.getMyConversations = functions.https.onCall(async (data, context) => {
 
         const lastMessage = messagesSnapshot.empty ?
           [] :
-          [{id: messagesSnapshot.docs[0].id, ...messagesSnapshot.docs[0].data()}];
+          [{ id: messagesSnapshot.docs[0].id, ...messagesSnapshot.docs[0].data() }];
 
         return {
           conversation: conversation,
@@ -429,7 +436,7 @@ exports.getMyConversations = functions.https.onCall(async (data, context) => {
 exports.getConversationMessages = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
-  const {conversationId, limit = 20, offset = 0} = payload;
+  const { conversationId, limit = 20, offset = 0 } = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -489,7 +496,7 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
     const hasMore = messagesSnapshot.docs.length > limit;
     const messages = messagesSnapshot.docs
       .slice(0, limit)
-      .map((doc) => ({id: doc.id, ...doc.data()}));
+      .map((doc) => ({ id: doc.id, ...doc.data() }));
 
     // Reverse to get chronological order (oldest first)
     messages.reverse();
@@ -519,7 +526,7 @@ exports.getConversationMessages = functions.https.onCall(async (data, context) =
 exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
-  const {conversationId} = payload;
+  const { conversationId } = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -568,7 +575,7 @@ exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
       }
 
       // Reset unread count for the current user
-      const updatedUnreadCount = {...conversation.unreadCount};
+      const updatedUnreadCount = { ...conversation.unreadCount };
       updatedUnreadCount[userId] = 0;
 
       transaction.update(conversationRef, {
@@ -590,14 +597,14 @@ exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
       const now = new Date().toISOString();
       messagesSnapshot.forEach((doc) => {
         batch.update(doc.ref, {
-          status: {Read: null},
+          status: { Read: null },
           readAt: [now],
         });
       });
       await batch.commit();
     }
 
-    return {success: true, data: true};
+    return { success: true, data: true };
   } catch (error) {
     console.error("Error marking messages as read:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -614,7 +621,7 @@ exports.markMessagesAsRead = functions.https.onCall(async (data, context) => {
 exports.getConversation = functions.https.onCall(async (data, context) => {
   // Extract payload
   const payload = data.data || data;
-  const {conversationId} = payload;
+  const { conversationId } = payload;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);

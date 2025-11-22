@@ -161,7 +161,7 @@ export const useReputation = () => {
         err.message.includes("Network error") ||
         err.message.includes("fetch")
       ) {
-        setError("Network error: Could not fetch reputation score");
+        setError("Could not fetch reputation score");
       } else {
         setError("Could not load reputation data");
       }

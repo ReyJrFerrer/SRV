@@ -8,8 +8,8 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const {Principal} = require("@dfinity/principal");
-const {HttpAgent, Actor} = require("@dfinity/agent");
+const { Principal } = require("@dfinity/principal");
+const { HttpAgent, Actor } = require("@dfinity/agent");
 const fs = require("fs");
 const path = require("path");
 
@@ -41,7 +41,7 @@ function loadAuthIdlFactory() {
     );
 
     if (fs.existsSync(declarationsPath)) {
-      const {idlFactory} = require(declarationsPath);
+      const { idlFactory } = require(declarationsPath);
       return idlFactory;
     }
 
@@ -58,7 +58,7 @@ function loadAuthIdlFactory() {
  * @return {Function} The IDL factory function
  */
 function getManualAuthIdl() {
-  return ({IDL}) => {
+  return ({ IDL }) => {
     const UserRole = IDL.Variant({
       Client: IDL.Null,
       ServiceProvider: IDL.Null,
@@ -81,7 +81,7 @@ function getManualAuthIdl() {
       biography: IDL.Opt(IDL.Text),
     });
 
-    const Result = IDL.Variant({ok: Profile, err: IDL.Text});
+    const Result = IDL.Variant({ ok: Profile, err: IDL.Text });
 
     return IDL.Service({
       isPrincipalValid: IDL.Func([IDL.Principal], [Result], ["query"]),
@@ -140,7 +140,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    auth: "bkyz2-fmaaa-aaaaa-qaaaq-cai",
+    auth: "uxrrr-q7777-77774-qaaaq-cai",
   },
   ic: {
     auth: process.env.CANISTER_ID_AUTH,
@@ -189,7 +189,7 @@ const authIdlFactory = loadAuthIdlFactory();
  */
 async function createAuthActor() {
   const config = getCanisterConfig();
-  const agent = new HttpAgent({host: config.host});
+  const agent = new HttpAgent({ host: config.host });
 
   // Fetch root key for local development
   if (config.fetchRootKey) {
@@ -231,17 +231,17 @@ async function checkPrincipal(principal) {
 
     // If isPrincipalValid returns ok, the principal has a profile
     if ("ok" in result) {
-      return {isValid: true, hasProfile: true};
+      return { isValid: true, hasProfile: true };
     }
 
     // If it returns an error, the principal is new (no profile yet)
     // This is still valid - they just need to create a profile
-    return {isValid: true, hasProfile: false};
+    return { isValid: true, hasProfile: false };
   } catch (error) {
     console.error("Error checking principal:", error);
     // Even on error, allow the user through - they might be new
     // or the canister might be temporarily unavailable
-    return {isValid: true, hasProfile: false};
+    return { isValid: true, hasProfile: false };
   }
 }
 
@@ -268,7 +268,7 @@ async function getUserProfile(principalText) {
  */
 exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
   try {
-    const {principal: principalText} = data.data;
+    const { principal: principalText } = data.data;
 
 
     if (!principalText) {
@@ -290,7 +290,7 @@ exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
     }
 
     // Check the principal with IC canister
-    const {isValid} = await checkPrincipal(principal);
+    const { isValid } = await checkPrincipal(principal);
 
 
     if (!isValid) {
