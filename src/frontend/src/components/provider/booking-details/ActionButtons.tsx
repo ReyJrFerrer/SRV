@@ -294,8 +294,12 @@ const ActionButtons: React.FC<Props> = ({
     const startInProgress =
       Boolean(isStartingService) ||
       isBookingActionInProgress(booking?.id || "", "start");
-    const alreadyNotified = Boolean((booking as any)?.navigationStartedNotified);
-    const startLabel = alreadyNotified ? "Continue Navigation" : "Start Driving";
+    const alreadyNotified = Boolean(
+      (booking as any)?.navigationStartedNotified,
+    );
+    const startLabel = alreadyNotified
+      ? "Continue Navigation"
+      : "Start Driving";
 
     buttons.push(
       <button
