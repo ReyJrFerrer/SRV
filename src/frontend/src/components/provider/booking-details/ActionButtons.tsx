@@ -174,12 +174,13 @@ const ActionButtons: React.FC<Props> = ({
           e.stopPropagation();
           if (cancelInProgress) return;
           // onCancel is optional
-          (onCancel || (() => { }))();
+          (onCancel || (() => {}))();
         }}
         disabled={cancelInProgress}
         aria-disabled={cancelInProgress}
-        className={`${baseButtonClass} w-full ${color.decline} ${cancelInProgress ? "cursor-not-allowed opacity-60" : ""
-          }`}
+        className={`${baseButtonClass} w-full ${color.decline} ${
+          cancelInProgress ? "cursor-not-allowed opacity-60" : ""
+        }`}
       >
         {cancelInProgress ? (
           <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
@@ -257,8 +258,9 @@ const ActionButtons: React.FC<Props> = ({
             disabled={acceptDisabled}
             aria-disabled={acceptDisabled}
             aria-label={acceptDisabled ? tooltipMessage : "Accept booking"}
-            className={`${baseButtonClass} w-full ${color.accept} ${acceptDisabled ? "cursor-not-allowed opacity-50" : ""
-              }`}
+            className={`${baseButtonClass} w-full ${color.accept} ${
+              acceptDisabled ? "cursor-not-allowed opacity-50" : ""
+            }`}
           >
             {acceptInProgress ? (
               <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
