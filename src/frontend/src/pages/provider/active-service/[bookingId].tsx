@@ -313,14 +313,6 @@ const ActiveServicePage: React.FC = () => {
               Actions
             </h3>
             <div className="space-y-4">
-              {/* Upload Work Progress Button */}
-              {/* <button
-                type="button"
-                onClick={handleUploadEvidence}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-              >
-                <CameraIcon className="h-5 w-5" /> Upload Work Progress
-              </button> */}
               <input
                 ref={fileInputRef}
                 type="file"

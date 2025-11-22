@@ -923,6 +923,82 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
   }
 });
 
+
+exports.startNavigation = functions.https.onCall(async (data, context) => {
+  console.log("[startNavigation] called");
+  const payload = data.data || data;
+  const {bookingId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    console.error("[startNavigation] User not authenticated");
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  if (!bookingId) {
+    console.error("[startNavigation] Required parameters missing:", bookingId);
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "bookingId is required",
+    );
+  }
+  try {
+    const bookingDoc = await db.collection("bookings").doc(bookingId).get();
+    if (!bookingDoc.exists) {
+      console.error("[startNavigation] Booking not found:", bookingId);
+      throw new functions.https.HttpsError("not-found", "Booking not found");
+    }
+
+    const booking = bookingDoc.data();
+
+    // Validate provider authorization
+    if (booking.providerId !== authInfo.uid) {
+      console.error("[startNavigation] Not authorized to update this booking:",
+        booking.providerId, authInfo.uid);
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Not authorized to update this booking",
+      );
+    }
+
+    // Fetch service and provider details for notification
+    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
+
+    const providerDoc = await db.collection("users").doc(booking.providerId).get();
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
+      "the provider";
+
+    // Create notification for the client about service start
+    await createNotification(
+      booking.clientId,
+      USER_TYPES.CLIENT,
+      NOTIFICATION_TYPES.START_NAVIGATION,
+      "Navigation Started",
+      `${providerName} has started going to the location for"${serviceName}"`,
+      bookingId,
+      {
+        serviceId: booking.serviceId,
+        serviceName,
+        providerId: booking.providerId,
+        senderName: providerName,
+      },
+    );
+
+
+    return {success: true};
+  } catch (error) {
+    console.error("Error in startBooking:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
 /**
  * Start a booking (mark as in progress) - provider only
  */
@@ -1004,7 +1080,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
-      NOTIFICATION_TYPES.GENERIC,
+      NOTIFICATION_TYPES.START_SERVICE,
       "Service Started",
       `${providerName} has started working on "${serviceName}"`,
       bookingId,

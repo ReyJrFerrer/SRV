@@ -88,7 +88,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     refreshBookings,
     clearError,
     checkCommissionValidation,
-    startBookingById,
+    startNavigationById,
     // canAcceptCashBooking,
     // getWalletBalance,
   } = useProviderBookingManagement();
@@ -307,26 +307,22 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
+  // Local loading state for starting service (used to indicate button action started)
+  const [isStartingService, setIsStartingService] = useState<boolean>(false);
+
   // Updated: Navigate to directions page if location was detected automatically, otherwise start directly
   const handleStartService = useCallback(async () => {
     if (!specificBooking) return;
 
-    // Check the locationDetection flag
-    const locationDetection = (specificBooking as any).locationDetection;
-
-    if (locationDetection === "automatic") {
-      // If location was detected automatically (via GPS/maps), navigate to directions page
+    setIsStartingService(true);
+    try {
+      await startNavigationById(specificBooking.id);
       navigate(`/provider/directions/${specificBooking.id}`);
-    } else {
-      // waiting for success message to redirect rather than redirecting immediately
-      try {
-        const success = await startBookingById(specificBooking.id);
-        if (success) {
-          navigate(`/provider/active-service/${specificBooking.id}`);
-        }
-      } catch (error) {}
+    } catch (error) {
+    } finally {
+      setIsStartingService(false);
     }
-  }, [specificBooking, navigate, startBookingById]);
+  }, [specificBooking, navigate, startNavigationById]);
 
   const handleCompleteService = useCallback(async () => {
     if (!specificBooking) return;
@@ -851,6 +847,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 onDecline={handleDeclineBooking}
                 onCancel={() => setCancellingBooking(specificBooking)}
                 onStart={handleStartService}
+                isStartingService={isStartingService}
                 onComplete={handleCompleteService}
                 canStartServiceNow={canStartServiceNow}
                 isBookingActionInProgress={isBookingActionInProgress}

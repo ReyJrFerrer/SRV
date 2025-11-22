@@ -39,6 +39,8 @@ const NOTIFICATION_TYPES = {
   REVIEW_REMINDER: "review_reminder",
   GENERIC: "generic",
   NEW_BOOKING_REQUEST: "new_booking_request",
+  START_SERVICE: "start_service",
+  START_NAVIGATION: "start_navigation",
   BOOKING_CONFIRMATION: "booking_confirmation",
   PAYMENT_COMPLETED: "payment_completed",
   SERVICE_COMPLETION_REMINDER: "service_completion_reminder",
@@ -112,6 +114,17 @@ function generateNotificationHref(notificationType, userType, entityId) {
     return isProvider ?
       `/provider/active-service/${entityId}` :
       `/client/booking/${entityId}`;
+
+  case NOTIFICATION_TYPES.START_SERVICE:
+    return isProvider ?
+      `/provider/active-service/${entityId}` :
+      `/client/booking/${entityId}`;
+
+  case NOTIFICATION_TYPES.START_NAVIGATION:
+    return isProvider ?
+      `/provider/directions/${entityId}` :
+      `/client/booking/${entityId}`;
+
 
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:

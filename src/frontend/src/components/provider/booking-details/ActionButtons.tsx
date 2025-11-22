@@ -36,6 +36,7 @@ interface Props {
   onReport: () => void;
   onBookAgain?: () => void;
   bookAgainLabel?: string;
+  isStartingService?: boolean;
 }
 
 const ActionButtons: React.FC<Props> = ({
@@ -50,6 +51,7 @@ const ActionButtons: React.FC<Props> = ({
   canStartServiceNow,
   isBookingActionInProgress,
   commissionValidation,
+  isStartingService,
   onBookAgain,
   bookAgainLabel = "Book Again",
 }) => {
@@ -289,13 +291,22 @@ const ActionButtons: React.FC<Props> = ({
   }
 
   if (showStart) {
+    const startInProgress =
+      Boolean(isStartingService) || isBookingActionInProgress(booking?.id || "", "start");
+
     buttons.push(
       <button
         key="start"
         onClick={stopAndRun(onStart)}
-        className={`${baseButtonClass} w-full ${color.start}`}
+        disabled={startInProgress}
+        aria-disabled={startInProgress}
+        className={`${baseButtonClass} w-full ${color.start} ${startInProgress ? "cursor-not-allowed opacity-60" : ""}`}
       >
-        <ArrowPathIcon className="mr-2 h-5 w-5" />
+        {startInProgress ? (
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
+          <ArrowPathIcon className="mr-2 h-5 w-5" />
+        )}
         Start Driving
       </button>,
     );

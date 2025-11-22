@@ -26,7 +26,8 @@ interface ProviderBookingItemCardProps {
   acceptBookingById: any;
   isBookingActionInProgress: any;
   checkCommissionValidation: any;
-  startBookingById: any;
+  startBookingById:any
+  startNavigationById: any;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
@@ -38,7 +39,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   acceptBookingById,
   isBookingActionInProgress,
   checkCommissionValidation,
-  startBookingById,
+  startNavigationById
 }) => {
   const { identity } = useAuth();
   const navigate = useNavigate();
@@ -68,6 +69,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   });
 
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  const [isStartingService, setIsStartingService] = useState<boolean>(false);
 
   // Check commission validation for cash bookings that can be accepted
   useEffect(() => {
@@ -264,21 +266,20 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   const handleStartService = async () => {
     if (!booking) return;
-
-    // Check the locationDetection flag
     const locationDetection = (booking as any).locationDetection;
 
-    if (locationDetection === "automatic") {
-      // If location was detected automatically (via GPS/maps), navigate to directions page
-      navigate(`/provider/directions/${booking.id}`);
-    } else {
-      // If location was manually entered, start the booking directly
-      try {
-        const success = await startBookingById(booking.id);
-        if (success) {
-          navigate(`/provider/active-service/${booking.id}`);
-        }
-      } catch (error) {}
+    setIsStartingService(true);
+    try {
+      if (locationDetection === "automatic") {
+        await startNavigationById(booking.id);
+        navigate(`/provider/directions/${booking.id}`);
+      } else {
+        await startNavigationById(booking.id);
+        navigate(`/provider/directions/${booking.id}`);
+      }
+    } catch (error) {
+    } finally {
+      setIsStartingService(false);
     }
   };
 
@@ -503,6 +504,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               emitInteraction();
               handleStartService();
             }}
+            isStartingService={isStartingService}
             onComplete={() => {
               emitInteraction();
               handleMarkAsCompleted();
