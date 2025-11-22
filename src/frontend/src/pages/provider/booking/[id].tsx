@@ -318,9 +318,15 @@ const ProviderBookingDetailsPage: React.FC = () => {
       // If location was detected automatically (via GPS/maps), navigate to directions page
       navigate(`/provider/directions/${specificBooking.id}`);
     } else {
-      // If location was manually entered, start the booking directly
-      startBookingById(specificBooking.id);
-      navigate(`/provider/active-service/${specificBooking.id}`);
+      // waiting for success message to redirect rather than redirecting immediately
+      try {
+          const success = await startBookingById(specificBooking.id);
+          if (success){
+            navigate(`/provider/active-service/${specificBooking.id}`);
+          }
+      }
+      catch (error) {
+      }
     }
   }, [specificBooking, navigate, startBookingById]);
 

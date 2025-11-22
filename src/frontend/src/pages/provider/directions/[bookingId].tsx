@@ -723,7 +723,6 @@ const ProviderDirectionsPage: React.FC = () => {
       setIsStartingService(false);
     }
   };
-  // Removed manual start handler; auto-start is handled by proximity effect above
 
   if (!providerLocation) {
     return (
