@@ -299,7 +299,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                   <div className="flex flex-col items-center gap-2">
                     <div className="flex flex-col items-center">
                       {/* Avatar Skeleton */}
-                      <div className="h-24 w-24 animate-pulse rounded-full bg-gray-300 border-4 border-white"></div>
+                      <div className="h-24 w-24 animate-pulse rounded-full border-4 border-white bg-gray-300"></div>
                       {/* Provider Name Skeleton */}
                       <div className="mt-2 h-7 w-32 animate-pulse rounded bg-gray-300"></div>
                     </div>
@@ -410,7 +410,10 @@ const ClientServiceDetailsPage: React.FC = () => {
             </div>
             <div className="flex flex-col gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="border-b border-gray-200 pb-4 last:border-0">
+                <div
+                  key={i}
+                  className="border-b border-gray-200 pb-4 last:border-0"
+                >
                   <div className="mb-2 flex items-center gap-2">
                     <div className="h-10 w-10 animate-pulse rounded-full bg-gray-300"></div>
                     <div className="flex-1">
@@ -431,8 +434,14 @@ const ClientServiceDetailsPage: React.FC = () => {
         {/* Bottom Navigation Skeleton */}
         <div className="shadow-t-lg bottom-15 fixed left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
           <div className="mx-auto flex w-full items-center justify-between gap-3">
-            <div className="h-12 w-24 animate-pulse rounded-lg bg-gray-300" style={{ flexBasis: "32%" }}></div>
-            <div className="h-12 flex-1 animate-pulse rounded-xl bg-gray-300" style={{ flexBasis: "68%" }}></div>
+            <div
+              className="h-12 w-24 animate-pulse rounded-lg bg-gray-300"
+              style={{ flexBasis: "32%" }}
+            ></div>
+            <div
+              className="h-12 flex-1 animate-pulse rounded-xl bg-gray-300"
+              style={{ flexBasis: "68%" }}
+            ></div>
           </div>
         </div>
         <BottomNavigation />
