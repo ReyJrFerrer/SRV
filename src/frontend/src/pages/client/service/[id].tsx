@@ -285,8 +285,157 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   if (serviceLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+      <div className="min-h-screen bg-gray-50 pb-28 md:pb-20">
+        {/* Hero Image Skeleton */}
+        <div className="relative h-60 w-full animate-pulse bg-gray-300"></div>
+
+        <main className="relative z-10 -mt-24 p-4">
+          <div className="mx-auto mt-6 w-full max-w-5xl">
+            {/* Main Card Skeleton */}
+            <div className="rounded-3xl border border-blue-100 bg-white/70 p-6 shadow-2xl backdrop-blur-md">
+              <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
+                {/* Provider Info Skeleton */}
+                <div className="flex flex-col justify-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center">
+                      {/* Avatar Skeleton */}
+                      <div className="h-24 w-24 animate-pulse rounded-full bg-gray-300 border-4 border-white"></div>
+                      {/* Provider Name Skeleton */}
+                      <div className="mt-2 h-7 w-32 animate-pulse rounded bg-gray-300"></div>
+                    </div>
+                    {/* Reputation Badge Skeleton */}
+                    <div className="mt-1 h-6 w-24 animate-pulse rounded bg-gray-300"></div>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-gray-200 lg:hidden"></div>
+
+                {/* Service Details Skeleton */}
+                <div className="mt-4 flex flex-col justify-center lg:mt-0 lg:border-l lg:border-blue-200 lg:pl-8">
+                  {/* Service Name Skeleton */}
+                  <div className="mb-2 h-8 w-3/4 animate-pulse rounded bg-gray-300 lg:h-10"></div>
+                  {/* Category Skeleton */}
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="h-6 w-6 animate-pulse rounded bg-gray-300"></div>
+                    <div className="h-6 w-24 animate-pulse rounded bg-gray-300"></div>
+                  </div>
+                  {/* Location Skeleton */}
+                  <div className="mb-2 flex items-center">
+                    <div className="mr-2 h-6 w-6 animate-pulse rounded bg-gray-300"></div>
+                    <div className="h-5 w-40 animate-pulse rounded bg-gray-300"></div>
+                  </div>
+                  {/* Rating Skeleton */}
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="h-6 w-6 animate-pulse rounded bg-gray-300"></div>
+                    <div className="h-6 w-12 animate-pulse rounded bg-gray-300"></div>
+                    <div className="h-5 w-20 animate-pulse rounded bg-gray-300"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Packages Section Skeleton */}
+          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="h-6 w-6 animate-pulse rounded bg-gray-300"></div>
+              <div className="h-6 w-32 animate-pulse rounded bg-gray-300"></div>
+            </div>
+            <div className="flex flex-col gap-4">
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md md:flex-row"
+                >
+                  <div className="flex flex-1 items-center gap-4">
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <div className="h-6 w-3/4 animate-pulse rounded bg-gray-300"></div>
+                      <div className="h-4 w-full animate-pulse rounded bg-gray-300"></div>
+                      <div className="h-4 w-2/3 animate-pulse rounded bg-gray-300"></div>
+                    </div>
+                  </div>
+                  <div className="ml-0 mt-4 flex min-w-[120px] flex-col items-end justify-between md:ml-6 md:mt-0">
+                    <div className="h-10 w-24 animate-pulse rounded-lg bg-gray-300"></div>
+                  </div>
+                  <span className="absolute right-0 top-0 h-2 w-2 rounded-bl-2xl bg-yellow-300"></span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Availability Section Skeleton */}
+          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+            <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="h-10 w-20 animate-pulse rounded-lg bg-gray-300"
+                ></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Gallery Section Skeleton */}
+          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+            <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-300"></div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="aspect-square animate-pulse rounded-lg bg-gray-300"
+                ></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Credentials Section Skeleton */}
+          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+            <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
+            <div className="flex flex-wrap gap-4">
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-32 w-48 animate-pulse rounded-lg bg-gray-300"
+                ></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Reviews Section Skeleton */}
+          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="h-6 w-32 animate-pulse rounded bg-gray-300"></div>
+              <div className="h-6 w-24 animate-pulse rounded bg-gray-300"></div>
+            </div>
+            <div className="flex flex-col gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border-b border-gray-200 pb-4 last:border-0">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="h-10 w-10 animate-pulse rounded-full bg-gray-300"></div>
+                    <div className="flex-1">
+                      <div className="mb-1 h-5 w-32 animate-pulse rounded bg-gray-300"></div>
+                      <div className="h-4 w-20 animate-pulse rounded bg-gray-300"></div>
+                    </div>
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    <div className="h-4 w-full animate-pulse rounded bg-gray-300"></div>
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-gray-300"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+
+        {/* Bottom Navigation Skeleton */}
+        <div className="shadow-t-lg bottom-15 fixed left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
+          <div className="mx-auto flex w-full items-center justify-between gap-3">
+            <div className="h-12 w-24 animate-pulse rounded-lg bg-gray-300" style={{ flexBasis: "32%" }}></div>
+            <div className="h-12 flex-1 animate-pulse rounded-xl bg-gray-300" style={{ flexBasis: "68%" }}></div>
+          </div>
+        </div>
+        <BottomNavigation />
       </div>
     );
   }
