@@ -26,7 +26,8 @@ import { useLocationStore } from "../../store/locationStore";
 const ClientHomePage: React.FC = () => {
   const navigate = useNavigate();
   const { error } = useServiceManagement();
-  const { locationStatus } = useLocationStore();
+  const { locationStatus, userProvince, userAddress, isInitialized } =
+    useLocationStore();
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
   const [dismissedLocationBlock, setDismissedLocationBlock] = useState<boolean>(
@@ -135,10 +136,19 @@ const ClientHomePage: React.FC = () => {
       />
       {/* SECTION: Location blocked modal */}
       {(() => {
+        const realDenied =
+          locationStatus === "denied" &&
+          !userProvince &&
+          !userAddress &&
+          isInitialized;
         const visible =
-          (locationStatus === "denied" && !dismissedLocationBlock) ||
-          (permissionApiDenied && !dismissedLocationBlock) ||
-          postLoginBlockedModalVisible;
+          (realDenied && !dismissedLocationBlock) ||
+          (permissionApiDenied &&
+            !dismissedLocationBlock &&
+            !userProvince &&
+            !userAddress &&
+            isInitialized) ||
+          (postLoginBlockedModalVisible && realDenied);
 
         const handleBlockedClose = () => {
           setDismissedLocationBlock(true);

@@ -703,7 +703,7 @@ const ProviderProfilePage: React.FC = () => {
                           {reputationError}
                         </p>
                         <p className="mt-2 text-xs text-gray-500">
-                          Please check your connection and try again
+                          If issues persist, please contact support.
                         </p>
                       </div>
                     </div>

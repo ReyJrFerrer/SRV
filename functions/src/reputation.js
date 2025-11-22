@@ -72,6 +72,7 @@ function getManualReputationIdl() {
       CompetitiveManipulation: IDL.Null,
       FakeEvidence: IDL.Null,
       IdentityFraud: IDL.Null,
+      AbusiveContent: IDL.Null,
       Other: IDL.Null,
     });
 
@@ -209,7 +210,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    reputation: "bd3sg-teaaa-aaaaa-qaaba-cai",
+    reputation: "u6s2n-gx777-77774-qaaba-cai",
   },
   ic: {
     reputation: process.env.CANISTER_ID_REPUTATION,

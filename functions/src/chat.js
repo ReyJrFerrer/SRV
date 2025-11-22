@@ -240,6 +240,13 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
       transaction.update(conversationRef, {
         lastMessageAt: now,
         unreadCount: updatedUnreadCount,
+        lastMessagePreview: {
+          id: messageId,
+          content: content.trim(),
+          senderId: senderId,
+          messageType: "Text",
+          createdAt: now,
+        },
       });
 
       return {

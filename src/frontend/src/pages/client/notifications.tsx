@@ -235,6 +235,8 @@ const NotificationsPage = () => {
       "service_rescheduled",
       "service_reminder",
       "provider_on_the_way",
+      "start_service",
+      "start_navigation",
     ];
     const systemTypes = [
       "system_announcement",

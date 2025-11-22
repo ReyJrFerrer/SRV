@@ -126,6 +126,7 @@ interface ProviderBookingManagementHook {
   acceptBooking: (bookingId: string, scheduledDate?: Date) => Promise<void>;
   declineBooking: (bookingId: string, reason?: string) => Promise<void>;
   startBooking: (bookingId: string) => Promise<void>;
+  startNavigation: (bookingId: string) => Promise<void>;
   completeBooking: (bookingId: string, amountPaid?: number) => Promise<void>;
   disputeBooking: (bookingId: string, reason: string) => Promise<void>;
 
@@ -142,6 +143,7 @@ interface ProviderBookingManagementHook {
   ) => Promise<boolean>;
   declineBookingById: (bookingId: string, reason?: string) => Promise<boolean>;
   startBookingById: (bookingId: string) => Promise<boolean>;
+  startNavigationById: (bookingId: string) => Promise<boolean>;
   completeBookingById: (
     bookingId: string,
     amountPaid?: number,
@@ -945,6 +947,39 @@ export const useProviderBookingManagement =
       ],
     );
 
+    const startNavigation = useCallback(
+      async (bookingId: string) => {
+        try {
+          setLoadingState(`startNavigation-${bookingId}`, true);
+          clearError();
+
+          const updatedBooking =
+            await bookingCanisterService.startNavigation(bookingId);
+
+          if (updatedBooking) {
+            const enrichedBooking =
+              await enrichBookingWithClientData(updatedBooking);
+            setProviderBookings((prev) =>
+              prev.map((booking) =>
+                booking.id === bookingId ? enrichedBooking : booking,
+              ),
+            );
+          }
+        } catch (error) {
+          handleBookingError(error, `start navigation ${bookingId}`);
+          throw error;
+        } finally {
+          setLoadingState(`startNavigation-${bookingId}`, false);
+        }
+      },
+      [
+        setLoadingState,
+        clearError,
+        handleBookingError,
+        enrichBookingWithClientData,
+      ],
+    );
+
     const completeBooking = useCallback(
       async (bookingId: string, amountPaid?: number) => {
         try {
@@ -1654,6 +1689,7 @@ export const useProviderBookingManagement =
       acceptBooking,
       declineBooking,
       startBooking,
+      startNavigation,
       completeBooking,
       disputeBooking,
 
@@ -1725,6 +1761,15 @@ export const useProviderBookingManagement =
           return false;
         }
       },
+      startNavigationById: async (bookingId: string) => {
+        try {
+          await startNavigation(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+
       completeBookingById: async (bookingId: string, amountPaid?: number) => {
         try {
           await completeBooking(bookingId, amountPaid);

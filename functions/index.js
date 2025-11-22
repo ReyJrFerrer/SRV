@@ -144,6 +144,7 @@ const {
   acceptBooking,
   declineBooking,
   startBooking,
+  startNavigation,
   completeBooking,
   cancelBooking,
   getBooking,
@@ -330,6 +331,7 @@ exports.createBooking = createBooking;
 exports.acceptBooking = acceptBooking;
 exports.declineBooking = declineBooking;
 exports.startBooking = startBooking;
+exports.startNavigation = startNavigation;
 exports.completeBooking = completeBooking;
 exports.cancelBooking = cancelBooking;
 exports.getBooking = getBooking;

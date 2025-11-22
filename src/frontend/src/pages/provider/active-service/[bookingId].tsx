@@ -44,7 +44,6 @@ const ActiveServicePage: React.FC = () => {
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
-    // If `bookingId` is present but falsy (empty string / invalid), redirect.
     if (!bookingId) {
       navigate("/provider/bookings", { replace: true });
       return;
@@ -53,12 +52,11 @@ const ActiveServicePage: React.FC = () => {
     if (isLoadingBooking) {
       return;
     }
-    if (!booking) {
-      const redirectTimer = setTimeout(() => {
-        navigate("/provider/bookings", { replace: true });
-      }, 150);
 
-      return () => clearTimeout(redirectTimer);
+    // Only redirect if loading is complete and booking is null
+    if (!booking) {
+      navigate("/provider/bookings", { replace: true });
+      return;
     }
 
     // Only check status after confirming booking exists
@@ -315,14 +313,6 @@ const ActiveServicePage: React.FC = () => {
               Actions
             </h3>
             <div className="space-y-4">
-              {/* Upload Work Progress Button */}
-              {/* <button
-                type="button"
-                onClick={handleUploadEvidence}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-              >
-                <CameraIcon className="h-5 w-5" /> Upload Work Progress
-              </button> */}
               <input
                 ref={fileInputRef}
                 type="file"

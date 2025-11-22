@@ -88,6 +88,7 @@ const ProviderBookingsPage: React.FC = () => {
     acceptBookingById,
     checkCommissionValidation,
     startBookingById,
+    startNavigationById,
   } = useProviderBookingManagement();
 
   const { getClientReviewsByUser } = useClientRating();
@@ -688,6 +689,7 @@ const ProviderBookingsPage: React.FC = () => {
                                 checkCommissionValidation
                               }
                               startBookingById={startBookingById}
+                              startNavigationById={startNavigationById}
                             />
                           </div>
                         </Appear>
@@ -763,6 +765,7 @@ const ProviderBookingsPage: React.FC = () => {
                                 checkCommissionValidation
                               }
                               startBookingById={startBookingById}
+                              startNavigationById={startNavigationById}
                             />
                           </div>
                         </Appear>

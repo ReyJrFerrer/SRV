@@ -415,6 +415,22 @@ export const bookingCanisterService = {
   },
 
   /**
+   * Start navigation
+   */
+  async startNavigation(bookingId: string): Promise<Booking | null> {
+    try {
+      const startNavigationFn = httpsCallable(functions, "startNavigation");
+
+      const result = await startNavigationFn({ bookingId });
+      const responseData = (result.data as { success: boolean; data: Booking })
+        .data;
+      return mapBookingFields(responseData);
+    } catch (error) {
+      throw new Error(`Failed to start booking: ${error}`);
+    }
+  },
+
+  /**
    * Complete a booking
    */
   async completeBooking(

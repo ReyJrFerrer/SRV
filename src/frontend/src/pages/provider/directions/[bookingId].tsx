@@ -1,7 +1,3 @@
-// Page: Provider Directions
-// Purpose: Live navigation from provider to booking destination with alternate routes and ETA.
-// Inputs: bookingId route param, booking data via useProviderBookingManagement.
-// Behavior: Watches GPS, computes directions, renders native polylines, supports alternate selection.
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import InlineLoader from "../../../components/provider/directions/InlineLoader";
@@ -10,10 +6,6 @@ import ControlsOverlay from "../../../components/provider/directions/ControlsOve
 import StreetViewModal from "../../../components/provider/directions/StreetViewModal";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
-
-// NOTE: InlineLoader, Map rendering and StreetView modal are extracted into
-// components under src/components/provider/directions/ to keep this page
-// focused on routing and logic while preserving identical behavior.
 
 // SECTION: Math helpers (Haversine)
 const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -331,9 +323,6 @@ const ProviderDirectionsPage: React.FC = () => {
     computeDirections();
   }, [computeDirections]);
 
-  // NOTE: Removed periodic ETA refresh with nested effect. Rerouting is handled in the geolocation watch
-  // and computeDirections with drift/deviation thresholds.
-
   // Device orientation (compass) when in navigation mode
   useEffect(() => {
     if (!isInNavigationMode) return;
@@ -376,7 +365,7 @@ const ProviderDirectionsPage: React.FC = () => {
     if (isInNavigationMode) {
       const heading = deviceHeading ?? 0;
       // Zoom in to road level for navigation mode.
-      map.moveCamera({ center: providerLocation, zoom: 23, heading, tilt: 45 });
+      map.moveCamera({ center: providerLocation, zoom: 20, heading, tilt: 45 });
     } else if (followMe) {
       map.panTo(providerLocation);
     }
@@ -723,7 +712,6 @@ const ProviderDirectionsPage: React.FC = () => {
       setIsStartingService(false);
     }
   };
-  // Removed manual start handler; auto-start is handled by proximity effect above
 
   if (!providerLocation) {
     return (
