@@ -273,14 +273,12 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       navigate(`/provider/directions/${booking.id}`);
     } else {
       // If location was manually entered, start the booking directly
-       try {
-          const success = await startBookingById(booking.id);
-          if (success){
-            navigate(`/provider/active-service/${booking.id}`);
-          }
-      }
-      catch (error) {
-      }
+      try {
+        const success = await startBookingById(booking.id);
+        if (success) {
+          navigate(`/provider/active-service/${booking.id}`);
+        }
+      } catch (error) {}
     }
   };
 

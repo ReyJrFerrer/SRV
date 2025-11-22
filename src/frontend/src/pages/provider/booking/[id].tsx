@@ -320,13 +320,11 @@ const ProviderBookingDetailsPage: React.FC = () => {
     } else {
       // waiting for success message to redirect rather than redirecting immediately
       try {
-          const success = await startBookingById(specificBooking.id);
-          if (success){
-            navigate(`/provider/active-service/${specificBooking.id}`);
-          }
-      }
-      catch (error) {
-      }
+        const success = await startBookingById(specificBooking.id);
+        if (success) {
+          navigate(`/provider/active-service/${specificBooking.id}`);
+        }
+      } catch (error) {}
     }
   }, [specificBooking, navigate, startBookingById]);
 
