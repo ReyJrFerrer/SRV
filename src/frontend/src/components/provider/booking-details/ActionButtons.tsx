@@ -294,6 +294,8 @@ const ActionButtons: React.FC<Props> = ({
     const startInProgress =
       Boolean(isStartingService) ||
       isBookingActionInProgress(booking?.id || "", "start");
+    const alreadyNotified = Boolean((booking as any)?.navigationStartedNotified);
+    const startLabel = alreadyNotified ? "Continue Navigation" : "Start Driving";
 
     buttons.push(
       <button
@@ -308,7 +310,7 @@ const ActionButtons: React.FC<Props> = ({
         ) : (
           <ArrowPathIcon className="mr-2 h-5 w-5" />
         )}
-        Start Driving
+        {startLabel}
       </button>,
     );
   }

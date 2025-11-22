@@ -973,21 +973,38 @@ exports.startNavigation = functions.https.onCall(async (data, context) => {
       "the provider";
 
     // Create notification for the client about service start
-    await createNotification(
-      booking.clientId,
-      USER_TYPES.CLIENT,
-      NOTIFICATION_TYPES.START_NAVIGATION,
-      "Navigation Started",
-      `${providerName} has started going to the location for"${serviceName}"`,
-      bookingId,
-      {
-        serviceId: booking.serviceId,
-        serviceName,
-        providerId: booking.providerId,
-        senderName: providerName,
-      },
-    );
+    const alreadyNotified = booking.navigationStartedNotified === true;
 
+    if (!alreadyNotified) {
+      await createNotification(
+        booking.clientId,
+        USER_TYPES.CLIENT,
+        NOTIFICATION_TYPES.START_NAVIGATION,
+        "Navigation Started",
+        `${providerName} has started going to the location for "${serviceName}"`,
+        bookingId,
+        {
+          serviceId: booking.serviceId,
+          serviceName,
+          providerId: booking.providerId,
+          senderName: providerName,
+        },
+      );
+
+      // Mark booking so we don't send this notification again in future
+      try {
+        await db.collection("bookings").doc(bookingId).update({
+          navigationStartedNotified: true,
+          navigationStartedNotifiedAt: FieldValue.serverTimestamp(),
+        });
+      } catch (err) {
+        console.warn(
+          "Failed to mark booking as navigationStartedNotified:",
+          bookingId,
+          err,
+        );
+      }
+    }
 
     return {success: true};
   } catch (error) {
