@@ -946,7 +946,7 @@ export const useProviderBookingManagement =
         enrichBookingWithClientData,
       ],
     );
-    
+
     const startNavigation = useCallback(
       async (bookingId: string) => {
         try {
@@ -1761,7 +1761,7 @@ export const useProviderBookingManagement =
           return false;
         }
       },
-        startNavigationById: async (bookingId: string) => {
+      startNavigationById: async (bookingId: string) => {
         try {
           await startNavigation(bookingId);
           return true;

@@ -26,7 +26,7 @@ interface ProviderBookingItemCardProps {
   acceptBookingById: any;
   isBookingActionInProgress: any;
   checkCommissionValidation: any;
-  startBookingById:any
+  startBookingById: any;
   startNavigationById: any;
 }
 
@@ -39,7 +39,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   acceptBookingById,
   isBookingActionInProgress,
   checkCommissionValidation,
-  startNavigationById
+  startNavigationById,
 }) => {
   const { identity } = useAuth();
   const navigate = useNavigate();

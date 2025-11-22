@@ -292,7 +292,8 @@ const ActionButtons: React.FC<Props> = ({
 
   if (showStart) {
     const startInProgress =
-      Boolean(isStartingService) || isBookingActionInProgress(booking?.id || "", "start");
+      Boolean(isStartingService) ||
+      isBookingActionInProgress(booking?.id || "", "start");
 
     buttons.push(
       <button

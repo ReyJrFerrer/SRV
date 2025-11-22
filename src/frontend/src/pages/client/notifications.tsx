@@ -236,7 +236,7 @@ const NotificationsPage = () => {
       "service_reminder",
       "provider_on_the_way",
       "start_service",
-      "start_navigation"
+      "start_navigation",
     ];
     const systemTypes = [
       "system_announcement",

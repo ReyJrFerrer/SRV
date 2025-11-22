@@ -430,7 +430,6 @@ export const bookingCanisterService = {
     }
   },
 
-
   /**
    * Complete a booking
    */
