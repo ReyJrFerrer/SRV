@@ -34,7 +34,7 @@ const ClientChatPage: React.FC = () => {
           otherUserImage: imageToUse,
         },
       });
-    } catch { }
+    } catch {}
   };
 
   return (
@@ -89,7 +89,7 @@ const ClientChatPage: React.FC = () => {
                       `User ${otherUserId.slice(0, 8)}...`;
                     const otherUserImageUrl =
                       conversationSummary.otherUserImageUrl &&
-                        conversationSummary.otherUserImageUrl !== ""
+                      conversationSummary.otherUserImageUrl !== ""
                         ? conversationSummary.otherUserImageUrl
                         : "";
                     const unreadCount =

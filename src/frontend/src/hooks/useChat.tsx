@@ -175,11 +175,11 @@ export const useChat = () => {
         attachment:
           backendMessage.attachment && backendMessage.attachment.length > 0
             ? {
-              fileName: backendMessage.attachment[0].fileName,
-              fileSize: Number(backendMessage.attachment[0].fileSize),
-              fileType: backendMessage.attachment[0].fileType,
-              fileUrl: backendMessage.attachment[0].fileUrl,
-            }
+                fileName: backendMessage.attachment[0].fileName,
+                fileSize: Number(backendMessage.attachment[0].fileSize),
+                fileType: backendMessage.attachment[0].fileType,
+                fileUrl: backendMessage.attachment[0].fileUrl,
+              }
             : undefined,
         status: getMessageStatus(backendMessage.status),
         createdAt: backendMessage.createdAt,
@@ -206,7 +206,7 @@ export const useChat = () => {
     if (conversationsUnsubscribe.current) {
       try {
         await conversationsUnsubscribe.current();
-      } catch (error) { }
+      } catch (error) {}
       conversationsUnsubscribe.current = null;
     }
 
@@ -308,7 +308,7 @@ export const useChat = () => {
         if (messagesUnsubscribe.current) {
           try {
             await messagesUnsubscribe.current();
-          } catch (error) { }
+          } catch (error) {}
           messagesUnsubscribe.current = null;
         }
 
@@ -407,7 +407,7 @@ export const useChat = () => {
       setMessages((prev) => [...prev, optimisticMessage]);
 
       // Don't block UI with loading state for too long
-      // We still set it briefly to prevent double submission if needed, 
+      // We still set it briefly to prevent double submission if needed,
       // but the UI should feel instant because of the optimistic update
       setSendingMessage(true);
       setError(null);
@@ -488,7 +488,7 @@ export const useChat = () => {
       try {
         await chatCanisterService.markMessagesAsRead(conversationId);
         // Real-time listener will automatically update unread counts
-      } catch (err) { }
+      } catch (err) {}
     },
     [isAuthenticated, identity],
   );
@@ -517,14 +517,14 @@ export const useChat = () => {
         await conversationsUnsubscribe.current();
         conversationsUnsubscribe.current = null;
       }
-    } catch (error) { }
+    } catch (error) {}
 
     try {
       if (messagesUnsubscribe.current) {
         await messagesUnsubscribe.current();
         messagesUnsubscribe.current = null;
       }
-    } catch (error) { }
+    } catch (error) {}
   }, []);
 
   /**
@@ -543,7 +543,7 @@ export const useChat = () => {
         await messagesUnsubscribe.current();
         messagesUnsubscribe.current = null;
       }
-    } catch (error) { }
+    } catch (error) {}
 
     if (isMountedRef.current) {
       setCurrentConversation(null);

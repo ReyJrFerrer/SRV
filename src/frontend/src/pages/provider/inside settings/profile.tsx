@@ -632,17 +632,19 @@ const ProviderProfilePage: React.FC = () => {
                 <button
                   onClick={handleSwitchToClient}
                   disabled={isSwitchingRole}
-                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${isSwitchingRole
+                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
+                    isSwitchingRole
                       ? "cursor-not-allowed opacity-50"
                       : "hover:bg-yellow-400"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center">
                     <ArrowPathRoundedSquareIcon
-                      className={`mr-4 h-6 w-6 ${isSwitchingRole
+                      className={`mr-4 h-6 w-6 ${
+                        isSwitchingRole
                           ? "animate-spin text-yellow-400"
                           : "text-white group-hover:text-black"
-                        }`}
+                      }`}
                     />
                     <span className="text-md font-medium text-white group-hover:text-gray-800">
                       {isSwitchingRole
