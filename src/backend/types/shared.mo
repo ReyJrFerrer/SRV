@@ -8,558 +8,558 @@ import HashMap "mo:base/HashMap";
 import Buffer "mo:base/Buffer";
 
 module {
-    // User types
-    public type UserRole = {
-        #Client;
-        #ServiceProvider;
-        #Admin;
-    };
+  // User types
+  public type UserRole = {
+    #Client;
+    #ServiceProvider;
+    #Admin;
+  };
 
-    public type ProfileImage = {
-        imageUrl: Text;
-        thumbnailUrl: Text;
-    };
+  public type ProfileImage = {
+    imageUrl : Text;
+    thumbnailUrl : Text;
+  };
 
-    // Media storage types
-    public type MediaType = {
-        #UserProfile;
-        #ServiceImage;
-        #ServiceCertificate;
-        #RemittancePaymentProof; // New type for GCash payment screenshots
-    };
+  // Media storage types
+  public type MediaType = {
+    #UserProfile;
+    #ServiceImage;
+    #ServiceCertificate;
+    #RemittancePaymentProof; // New type for GCash payment screenshots
+  };
 
-    public type MediaItem = {
-        id: Text;
-        ownerId: Principal;
-        fileName: Text;
-        fileSize: Nat;
-        contentType: Text;
-        mediaType: MediaType;
-        filePath: Text;
-        url: Text;
-        thumbnailUrl: ?Text;
-        validationStatus: ?CertificateValidationStatus; // Only applies to ServiceCertificate type
-        createdAt: Time.Time;
-        updatedAt: Time.Time;
-    };
+  public type MediaItem = {
+    id : Text;
+    ownerId : Principal;
+    fileName : Text;
+    fileSize : Nat;
+    contentType : Text;
+    mediaType : MediaType;
+    filePath : Text;
+    url : Text;
+    thumbnailUrl : ?Text;
+    validationStatus : ?CertificateValidationStatus; // Only applies to ServiceCertificate type
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+  };
 
-    public type MediaUploadRequest = {
-        fileName: Text;
-        contentType: Text;
-        mediaType: MediaType;
-        fileData: Blob;
-        validationStatus: ?CertificateValidationStatus; // Default to #Pending for certificates
-    };
+  public type MediaUploadRequest = {
+    fileName : Text;
+    contentType : Text;
+    mediaType : MediaType;
+    fileData : Blob;
+    validationStatus : ?CertificateValidationStatus; // Default to #Pending for certificates
+  };
 
-    // Certificate validation types
-    public type CertificateValidationStatus = {
-        #Pending;
-        #Validated;
-        #Rejected;
-    };
+  // Certificate validation types
+  public type CertificateValidationStatus = {
+    #Pending;
+    #Validated;
+    #Rejected;
+  };
 
-    public type CertificateValidation = {
-        id: Text;
-        serviceId: Text;
-        providerId: Principal;
-        certificateUrls: [Text];
-        serviceTitle: Text;
-        status: CertificateValidationStatus;
-        submittedAt: Time.Time;
-        reviewedAt: ?Time.Time;
-        reviewedBy: ?Principal;
-        reviewReason: ?Text;
-    };
-    // Removed Profile
-    public type Profile = {
-        id: Principal;
-        name: Text;
-        phone: Text;
-        role: UserRole; // Original role when user first signed up
-        activeRole: UserRole; // Current active role for UI and permissions
-        createdAt: Time.Time;
-        updatedAt: Time.Time;
-        profilePicture: ?ProfileImage;
-        biography: ?Text;
-        isLocked: ?Bool; // Account lock status
-    };
+  public type CertificateValidation = {
+    id : Text;
+    serviceId : Text;
+    providerId : Principal;
+    certificateUrls : [Text];
+    serviceTitle : Text;
+    status : CertificateValidationStatus;
+    submittedAt : Time.Time;
+    reviewedAt : ?Time.Time;
+    reviewedBy : ?Principal;
+    reviewReason : ?Text;
+  };
+  // Removed Profile
+  public type Profile = {
+    id : Principal;
+    name : Text;
+    phone : Text;
+    role : UserRole; // Original role when user first signed up
+    activeRole : UserRole; // Current active role for UI and permissions
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+    profilePicture : ?ProfileImage;
+    biography : ?Text;
+    isLocked : ?Bool; // Account lock status
+  };
 
-    // Service types
-    public type ServiceCategory = {
-        id: Text;
-        name: Text;
-        description: Text;
-        parentId: ?Text;
-        slug: Text;
-        imageUrl: Text;
-    };
+  // Service types
+  public type ServiceCategory = {
+    id : Text;
+    name : Text;
+    description : Text;
+    parentId : ?Text;
+    slug : Text;
+    imageUrl : Text;
+  };
 
-    public type Location = {
-        latitude: Float;
-        longitude: Float;
-        address: Text;
-        city: Text;
-        state: Text;
-        country: Text;
-        postalCode: Text;
-    };
+  public type Location = {
+    latitude : Float;
+    longitude : Float;
+    address : Text;
+    city : Text;
+    state : Text;
+    country : Text;
+    postalCode : Text;
+  };
 
-    public type ServiceStatus = {
-        #Available;
-        #Unavailable;
-        #Suspended;
-    };
+  public type ServiceStatus = {
+    #Available;
+    #Unavailable;
+    #Suspended;
+  };
 
-    // Availability types
-    public type TimeSlot = {
-        startTime: Text; // Format: "HH:MM" (24-hour format)
-        endTime: Text;   // Format: "HH:MM" (24-hour format)
-    };
+  // Availability types
+  public type TimeSlot = {
+    startTime : Text; // Format: "HH:MM" (24-hour format)
+    endTime : Text; // Format: "HH:MM" (24-hour format)
+  };
 
-    public type DayOfWeek = {
-        #Monday;
-        #Tuesday;
-        #Wednesday;
-        #Thursday;
-        #Friday;
-        #Saturday;
-        #Sunday;
-    };
+  public type DayOfWeek = {
+    #Monday;
+    #Tuesday;
+    #Wednesday;
+    #Thursday;
+    #Friday;
+    #Saturday;
+    #Sunday;
+  };
 
-    public type DayAvailability = {
-        isAvailable: Bool;
-        slots: [TimeSlot];
-    };
+  public type DayAvailability = {
+    isAvailable : Bool;
+    slots : [TimeSlot];
+  };
 
+  public type ProviderAvailability = {
+    providerId : Principal;
+    weeklySchedule : [(DayOfWeek, DayAvailability)];
+    instantBookingEnabled : Bool;
+    bookingNoticeHours : Nat; // Minimum hours in advance for booking
+    maxBookingsPerDay : Nat;
+    isActive : Bool;
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+  };
 
-    public type ProviderAvailability = {
-        providerId: Principal;
-        weeklySchedule: [(DayOfWeek, DayAvailability)];
-        instantBookingEnabled: Bool;
-        bookingNoticeHours: Nat; // Minimum hours in advance for booking
-        maxBookingsPerDay: Nat;
-        isActive: Bool;
-        createdAt: Time.Time;
-        updatedAt: Time.Time;
-    };
+  public type AvailableSlot = {
+    date : Time.Time;
+    timeSlot : TimeSlot;
+    isAvailable : Bool;
+    conflictingBookings : [Text]; // Booking IDs that conflict
+  };
 
-    public type AvailableSlot = {
-        date: Time.Time;
-        timeSlot: TimeSlot;
-        isAvailable: Bool;
-        conflictingBookings: [Text]; // Booking IDs that conflict
-    };
+  public type ServicePackage = {
+    id : Text;
+    serviceId : Text;
+    title : Text;
+    description : Text;
+    price : Nat;
+    // Commission fee information
+    commissionFee : Nat; // Calculated commission fee for this package price
+    commissionRate : Float; // Effective commission rate as percentage
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+  };
 
-    public type ServicePackage = {
-        id: Text;
-        serviceId: Text;
-        title: Text;
-        description: Text;
-        price: Nat;
-        // Commission fee information
-        commissionFee: Nat; // Calculated commission fee for this package price
-        commissionRate: Float; // Effective commission rate as percentage
-        createdAt: Time.Time;
-        updatedAt: Time.Time;
-    };
+  public type Service = {
+    id : Text;
+    providerId : Principal;
+    title : Text;
+    description : Text;
+    category : ServiceCategory;
+    price : Nat;
+    // Commission fee information
+    commissionFee : Nat; // Calculated commission fee for this service price
+    commissionRate : Float; // Effective commission rate as percentage
+    location : Location;
+    status : ServiceStatus;
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+    rating : ?Float;
+    reviewCount : Nat;
+    imageUrls : [Text]; // Array of media URLs for service images (max 5)
+    certificateUrls : [Text]; // Array of media URLs for service certificates
+    isVerifiedService : Bool; // Service verification status based on certificates
+    // Availability information
+    weeklySchedule : ?[(DayOfWeek, DayAvailability)];
+    instantBookingEnabled : ?Bool;
+    bookingNoticeHours : ?Nat; // Minimum hours in advance for booking
+    maxBookingsPerDay : ?Nat;
+    // Package reference not needed as we'll use serviceId to look up packages
+  };
 
-    public type Service = {
-        id: Text;
-        providerId: Principal;
-        title: Text;
-        description: Text;
-        category: ServiceCategory;
-        price: Nat;
-        // Commission fee information
-        commissionFee: Nat; // Calculated commission fee for this service price
-        commissionRate: Float; // Effective commission rate as percentage
-        location: Location;
-        status: ServiceStatus;
-        createdAt: Time.Time;
-        updatedAt: Time.Time;
-        rating: ?Float;
-        reviewCount: Nat;
-        imageUrls: [Text]; // Array of media URLs for service images (max 5)
-        certificateUrls: [Text]; // Array of media URLs for service certificates
-        isVerifiedService: Bool; // Service verification status based on certificates
-        // Availability information
-        weeklySchedule: ?[(DayOfWeek, DayAvailability)];
-        instantBookingEnabled: ?Bool;
-        bookingNoticeHours: ?Nat; // Minimum hours in advance for booking
-        maxBookingsPerDay: ?Nat;
-        // Package reference not needed as we'll use serviceId to look up packages
-    };
+  // Booking types
+  public type BookingStatus = {
+    #Requested;
+    #Accepted;
+    #Declined;
+    #Cancelled;
+    #InProgress;
+    #Completed;
+    #Disputed;
+  };
 
-    // Booking types
-    public type BookingStatus = {
-        #Requested;
-        #Accepted;
-        #Declined;
-        #Cancelled;
-        #InProgress;
-        #Completed;
-        #Disputed;
-    };
+  public type Evidence = {
+    id : Text;
+    bookingId : Text;
+    submitterId : Principal;
+    description : Text;
+    fileUrls : [Text];
+    qualityScore : ?Float;
+    createdAt : Time.Time;
+  };
 
-    public type Evidence = {
-        id: Text;
-        bookingId: Text;
-        submitterId: Principal;
-        description: Text;
-        fileUrls: [Text];
-        qualityScore: ?Float;
-        createdAt: Time.Time;
-    };
+  public type Booking = {
+    id : Text;
+    clientId : Principal;
+    providerId : Principal;
+    providerName : ?Text; // Provider name for display
+    serviceId : Text;
+    servicePackageId : [Text]; // Array of package IDs for multiple package bookings
+    status : BookingStatus;
+    requestedDate : Time.Time;
+    scheduledDate : ?Time.Time;
+    startedDate : ?Time.Time; // When service status changed to InProgress
+    completedDate : ?Time.Time;
+    price : Nat;
+    amountPaid : ?Nat; // Total amount paid by client (cash received)
+    serviceTime : ?Nat; // Duration in nanoseconds from started to completed
+    location : Location;
+    evidence : ?Evidence;
+    notes : ?Text; // Optional notes from client during booking creation
+    paymentMethod : PaymentMethod; // Payment method chosen by client
+    // Payment status tracking fields for Phase 3 Payment Holding and Release
+    paymentStatus : ?Text; // PENDING, PAID_HELD, RELEASED, COMPLETED
+    paymentId : ?Text; // Reference to external payment (Xendit invoice ID)
+    heldAmount : ?Nat; // Amount held in escrow for digital payments
+    releasedAmount : ?Nat; // Amount released to provider
+    commissionRetained : ?Nat; // Commission amount retained by platform
+    paymentReleased : ?Bool; // Flag indicating if payment has been released
+    releasedAt : ?Time.Time; // Timestamp when payment was released
+    payoutId : ?Text; // Reference to payout transaction (Xendit payout ID)
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+  };
 
-    public type Booking = {
-        id: Text;
-        clientId: Principal;
-        providerId: Principal;
-        providerName: ?Text; // Provider name for display
-        serviceId: Text;
-        servicePackageId: [Text];  // Array of package IDs for multiple package bookings
-        status: BookingStatus;
-        requestedDate: Time.Time;
-        scheduledDate: ?Time.Time;
-        startedDate: ?Time.Time; // When service status changed to InProgress
-        completedDate: ?Time.Time;
-        price: Nat;
-        amountPaid: ?Nat; // Total amount paid by client (cash received)
-        serviceTime: ?Nat; // Duration in nanoseconds from started to completed
-        location: Location;
-        evidence: ?Evidence;
-        notes: ?Text;  // Optional notes from client during booking creation
-        paymentMethod: PaymentMethod; // Payment method chosen by client
-        // Payment status tracking fields for Phase 3 Payment Holding and Release
-        paymentStatus: ?Text; // PENDING, PAID_HELD, RELEASED, COMPLETED
-        paymentId: ?Text; // Reference to external payment (Xendit invoice ID)
-        heldAmount: ?Nat; // Amount held in escrow for digital payments
-        releasedAmount: ?Nat; // Amount released to provider
-        commissionRetained: ?Nat; // Commission amount retained by platform
-        paymentReleased: ?Bool; // Flag indicating if payment has been released
-        releasedAt: ?Time.Time; // Timestamp when payment was released
-        payoutId: ?Text; // Reference to payout transaction (Xendit payout ID)
-        createdAt: Time.Time;
-        updatedAt: Time.Time;
-    };
+  // Review types
+  public type ReviewStatus = {
+    #Visible;
+    #Hidden;
+    #Flagged;
+  };
 
-    // Review types
-    public type ReviewStatus = {
-        #Visible;
-        #Hidden;
-        #Flagged;
-    };
+  public type Review = {
+    id : Text;
+    bookingId : Text;
+    clientId : Principal;
+    providerId : Principal;
+    serviceId : Text;
+    rating : Nat;
+    comment : Text;
+    status : ReviewStatus;
+    qualityScore : ?Float;
+    createdAt : Time.Time;
+    updatedAt : Time.Time;
+  };
 
-    public type Review = {
-        id: Text;
-        bookingId: Text;
-        clientId: Principal;
-        providerId: Principal;
-        serviceId: Text;
-        rating: Nat;
-        comment: Text;
-        status: ReviewStatus;
-        qualityScore: ?Float;
-        createdAt: Time.Time;
-        updatedAt: Time.Time;
-    };
+  // Feedback types - General app feedback from users
+  public type AppFeedback = {
+    id : Text;
+    userId : Principal;
+    userName : Text;
+    userPhone : Text;
+    rating : Nat; // 1-5 stars
+    comment : ?Text; // Optional written review
+    createdAt : Time.Time;
+  };
 
-    // Feedback types - General app feedback from users
-    public type AppFeedback = {
-        id: Text;
-        userId: Principal;
-        userName: Text;
-        userPhone: Text;
-        rating: Nat; // 1-5 stars
-        comment: ?Text; // Optional written review
-        createdAt: Time.Time;
-    };
+  public type FeedbackStats = {
+    totalFeedback : Nat;
+    averageRating : Float;
+    ratingDistribution : [(Nat, Nat)]; // (rating, count) pairs
+    totalWithComments : Nat;
+    latestFeedback : ?AppFeedback;
+  };
 
-    public type FeedbackStats = {
-        totalFeedback: Nat;
-        averageRating: Float;
-        ratingDistribution: [(Nat, Nat)]; // (rating, count) pairs
-        totalWithComments: Nat;
-        latestFeedback: ?AppFeedback;
-    };
+  // Report types - General platform issue reports from users
+  public type AppReport = {
+    id : Text;
+    userId : Principal;
+    userName : Text;
+    userPhone : Text;
+    description : Text;
+    status : ?Text; // Admin-managed status: "open", "in_progress", "resolved", "closed"
+    createdAt : Time.Time;
+  };
 
-    // Report types - General platform issue reports from users
-    public type AppReport = {
-        id: Text;
-        userId: Principal;
-        userName: Text;
-        userPhone: Text;
-        description: Text;
-        status: ?Text; // Admin-managed status: "open", "in_progress", "resolved", "closed"
-        createdAt: Time.Time;
-    };
+  public type ReportStats = {
+    totalReports : Nat;
+    latestReport : ?AppReport;
+  };
 
-    public type ReportStats = {
-        totalReports: Nat;
-        latestReport: ?AppReport;
-    };
+  // Reputation types
+  public type TrustLevel = {
+    #New;
+    #Low;
+    #Medium;
+    #High;
+    #VeryHigh;
+  };
 
-    // Reputation types
-    public type TrustLevel = {
-        #New;
-        #Low;
-        #Medium;
-        #High;
-        #VeryHigh;
-    };
+  public type DetectionFlag = {
+    #ReviewBomb;
+    #CompetitiveManipulation;
+    #FakeEvidence;
+    #IdentityFraud;
+    #AbusiveContent;
+    #Other;
+  };
 
-    public type DetectionFlag = {
-        #ReviewBomb;
-        #CompetitiveManipulation;
-        #FakeEvidence;
-        #IdentityFraud;
-        #Other;
-    };
+  public type ReputationScore = {
+    userId : Principal;
+    trustScore : Float;
+    trustLevel : TrustLevel;
+    completedBookings : Nat;
+    averageRating : ?Float;
+    detectionFlags : [DetectionFlag];
+    lastUpdated : Time.Time;
+  };
 
-    public type ReputationScore = {
-        userId: Principal;
-        trustScore: Float;
-        trustLevel: TrustLevel;
-        completedBookings: Nat;
-        averageRating: ?Float;
-        detectionFlags: [DetectionFlag];
-        lastUpdated: Time.Time;
-    };
+  // Analytics types
+  public type ProviderAnalytics = {
+    providerId : Principal;
+    completedJobs : Nat;
+    cancelledJobs : Nat;
+    totalJobs : Nat;
+    completionRate : Float;
+    totalEarnings : Nat;
+    startDate : ?Time.Time;
+    endDate : ?Time.Time;
+    packageBreakdown : [(Text, Nat)]; // (packageId, count) pairs for package bookings
+  };
 
-    // Analytics types
-    public type ProviderAnalytics = {
-        providerId: Principal;
-        completedJobs: Nat;
-        cancelledJobs: Nat;
-        totalJobs: Nat;
-        completionRate: Float;
-        totalEarnings: Nat;
-        startDate: ?Time.Time;
-        endDate: ?Time.Time;
-        packageBreakdown: [(Text, Nat)]; // (packageId, count) pairs for package bookings
-    };
+  public type ClientAnalytics = {
+    clientId : Principal;
+    totalBookings : Nat;
+    servicesCompleted : Nat;
+    totalSpent : Nat; // Only from completed bookings
+    memberSince : Time.Time; // From user profile creation date
+    packageBreakdown : [(Text, Nat)]; // (packageId, count) pairs for package bookings
+    startDate : ?Time.Time;
+    endDate : ?Time.Time;
+  };
 
-    public type ClientAnalytics = {
-        clientId: Principal;
-        totalBookings: Nat;
-        servicesCompleted: Nat;
-        totalSpent: Nat; // Only from completed bookings
-        memberSince: Time.Time; // From user profile creation date
-        packageBreakdown: [(Text, Nat)]; // (packageId, count) pairs for package bookings
-        startDate: ?Time.Time;
-        endDate: ?Time.Time;
-    };
+  // Chat types
+  public type MessageStatus = {
+    #Sent;
+    #Delivered;
+    #Read;
+  };
 
-    // Chat types
-    public type MessageStatus = {
-        #Sent;
-        #Delivered;
-        #Read;
-    };
+  public type MessageType = {
+    #Text;
+    #File; // Future support for file attachments
+  };
 
-    public type MessageType = {
-        #Text;
-        #File; // Future support for file attachments
-    };
+  public type EncryptedContent = {
+    encryptedText : Text;
+    encryptionKey : Text;
+  };
 
-    public type EncryptedContent = {
-        encryptedText: Text;
-        encryptionKey: Text;
-    };
+  public type FileAttachment = {
+    fileName : Text;
+    fileSize : Nat;
+    fileType : Text;
+    fileUrl : Text;
+  };
 
-    public type FileAttachment = {
-        fileName: Text;
-        fileSize: Nat;
-        fileType: Text;
-        fileUrl: Text;
-    };
+  public type Message = {
+    id : Text;
+    conversationId : Text;
+    senderId : Principal;
+    receiverId : Principal;
+    messageType : MessageType;
+    content : EncryptedContent;
+    attachment : ?FileAttachment;
+    status : MessageStatus;
+    createdAt : Time.Time;
+    readAt : ?Time.Time;
+  };
 
-    public type Message = {
-        id: Text;
-        conversationId: Text;
-        senderId: Principal;
-        receiverId: Principal;
-        messageType: MessageType;
-        content: EncryptedContent;
-        attachment: ?FileAttachment;
-        status: MessageStatus;
-        createdAt: Time.Time;
-        readAt: ?Time.Time;
-    };
+  public type Conversation = {
+    id : Text;
+    clientId : Principal;
+    providerId : Principal;
+    createdAt : Time.Time;
+    lastMessageAt : ?Time.Time;
+    isActive : Bool;
+    unreadCount : [(Principal, Nat)]; // (userId, unreadCount) pairs
+  };
 
-    public type Conversation = {
-        id: Text;
-        clientId: Principal;
-        providerId: Principal;
-        createdAt: Time.Time;
-        lastMessageAt: ?Time.Time;
-        isActive: Bool;
-        unreadCount: [(Principal, Nat)]; // (userId, unreadCount) pairs
-    };
+  public type ConversationSummary = {
+    conversation : Conversation;
+    lastMessage : ?Message;
+  };
 
-    public type ConversationSummary = {
-        conversation: Conversation;
-        lastMessage: ?Message;
-    };
+  public type MessagePage = {
+    messages : [Message];
+    hasMore : Bool;
+    nextPageToken : ?Text;
+  };
 
-    public type MessagePage = {
-        messages: [Message];
-        hasMore: Bool;
-        nextPageToken: ?Text;
-    };
+  // API Response
+  public type Result<T> = {
+    #ok : T;
+    #err : Text;
+  };
 
-    // API Response
-    public type Result<T> = {
-        #ok: T;
-        #err: Text;
-    };
+  // HTTP types for serving media files
+  public type HeaderField = (Text, Text);
 
-    // HTTP types for serving media files
-    public type HeaderField = (Text, Text);
+  public type HttpRequest = {
+    method : Text;
+    url : Text;
+    headers : [HeaderField];
+    body : Blob;
+  };
 
-    public type HttpRequest = {
-        method: Text;
-        url: Text;
-        headers: [HeaderField];
-        body: Blob;
-    };
+  public type HttpResponse = {
+    status_code : Nat16;
+    headers : [HeaderField];
+    body : Blob;
+  };
 
-    public type HttpResponse = {
-        status_code: Nat16;
-        headers: [HeaderField];
-        body: Blob;
-    };
+  // Remittance system types
+  public type RemittanceOrderStatus = {
+    #AwaitingPayment; // Service provider needs to make payment
+    #PaymentSubmitted; // Service provider uploaded payment proof
+    #PaymentValidated; // Admin validated the payment
+    #Settled; // Commission confirmed and settled
+    #Cancelled;
+  };
 
-    // Remittance system types
-    public type RemittanceOrderStatus = {
-        #AwaitingPayment; // Service provider needs to make payment
-        #PaymentSubmitted; // Service provider uploaded payment proof
-        #PaymentValidated; // Admin validated the payment
-        #Settled; // Commission confirmed and settled
-        #Cancelled;
-    };
+  public type PaymentMethod = {
+    #CashOnHand;
+    #GCash;
+    #SRVWallet;
+  };
 
-    public type PaymentMethod = {
-        #CashOnHand;
-        #GCash;
-        #SRVWallet;
-    };
+  public type CommissionFormula = {
+    #Flat : Nat; // Fixed amount in centavos
+    #Percentage : Nat; // Rate in basis points (1/100 of 1%)
+    #Tiered : [(Nat, Nat)]; // (up_to_amount, rate_bps) pairs
+    #Hybrid : { base : Nat; rate_bps : Nat }; // Base amount + percentage
+  };
 
-    public type CommissionFormula = {
-        #Flat: Nat; // Fixed amount in centavos
-        #Percentage: Nat; // Rate in basis points (1/100 of 1%)
-        #Tiered: [(Nat, Nat)]; // (up_to_amount, rate_bps) pairs
-        #Hybrid: { base: Nat; rate_bps: Nat }; // Base amount + percentage
-    };
+  public type CommissionRule = {
+    id : Text;
+    version : Nat32;
+    service_types : [Text]; // ServiceCategory IDs
+    payment_methods : [PaymentMethod];
+    formula : CommissionFormula;
+    min_commission : ?Nat; // Optional minimum commission in centavos
+    max_commission : ?Nat; // Optional maximum commission in centavos
+    priority : Nat;
+    effective_from : Time.Time;
+    effective_to : ?Time.Time;
+    is_active : Bool;
+    created_at : Time.Time;
+    updated_at : Time.Time;
+  };
 
-    public type CommissionRule = {
-        id: Text;
-        version: Nat32;
-        service_types: [Text]; // ServiceCategory IDs
-        payment_methods: [PaymentMethod];
-        formula: CommissionFormula;
-        min_commission: ?Nat; // Optional minimum commission in centavos
-        max_commission: ?Nat; // Optional maximum commission in centavos
-        priority: Nat;
-        effective_from: Time.Time;
-        effective_to: ?Time.Time;
-        is_active: Bool;
-        created_at: Time.Time;
-        updated_at: Time.Time;
-    };
+  public type RemittanceOrder = {
+    id : Text;
+    service_provider_id : Principal; // Service provider who needs to pay commission
+    amount_php_centavos : Nat; // Total service amount in centavos
+    service_type : Text; // ServiceCategory ID
+    service_id : ?Text; // Optional reference to specific service
+    booking_id : ?Text; // Optional reference to related booking
+    payment_method : PaymentMethod;
+    status : RemittanceOrderStatus;
+    commission_rule_id : Text;
+    commission_version : Nat32;
+    commission_amount : Nat; // Commission in centavos
+    payment_proof_media_ids : [Text]; // Media IDs for GCash payment proofs
+    validated_by : ?Principal; // Admin who validated the payment
+    validated_at : ?Time.Time;
+    created_at : Time.Time;
+    payment_submitted_at : ?Time.Time;
+    settled_at : ?Time.Time;
+    updated_at : Time.Time;
+  };
 
-    public type RemittanceOrder = {
-        id: Text;
-        service_provider_id: Principal; // Service provider who needs to pay commission
-        amount_php_centavos: Nat; // Total service amount in centavos
-        service_type: Text; // ServiceCategory ID
-        service_id: ?Text; // Optional reference to specific service
-        booking_id: ?Text; // Optional reference to related booking
-        payment_method: PaymentMethod;
-        status: RemittanceOrderStatus;
-        commission_rule_id: Text;
-        commission_version: Nat32;
-        commission_amount: Nat; // Commission in centavos
-        payment_proof_media_ids: [Text]; // Media IDs for GCash payment proofs
-        validated_by: ?Principal; // Admin who validated the payment
-        validated_at: ?Time.Time;
-        created_at: Time.Time;
-        payment_submitted_at: ?Time.Time;
-        settled_at: ?Time.Time;
-        updated_at: Time.Time;
-    };
+  public type CommissionQuote = {
+    rule_id : Text;
+    rule_version : Nat32;
+    commission : Nat; // Commission amount in centavos
+    net : Nat; // Net proceeds in centavos
+    effective_rate : Float; // Actual commission rate as percentage
+  };
 
-    public type CommissionQuote = {
-        rule_id: Text;
-        rule_version: Nat32;
-        commission: Nat; // Commission amount in centavos
-        net: Nat; // Net proceeds in centavos
-        effective_rate: Float; // Actual commission rate as percentage
-    };
+  public type SettlementInstruction = {
+    corporate_gcash_account : Text;
+    commission_amount : Nat;
+    reference_number : Text;
+    instructions : Text;
+    expires_at : Time.Time;
+  };
 
-    public type SettlementInstruction = {
-        corporate_gcash_account: Text;
-        commission_amount: Nat;
-        reference_number: Text;
-        instructions: Text;
-        expires_at: Time.Time;
-    };
+  public type RemittanceOrderFilter = {
+    status : ?[RemittanceOrderStatus];
+    service_provider_id : ?Principal;
+    from_date : ?Time.Time;
+    to_date : ?Time.Time;
+  };
 
-    public type RemittanceOrderFilter = {
-        status: ?[RemittanceOrderStatus];
-        service_provider_id: ?Principal;
-        from_date: ?Time.Time;
-        to_date: ?Time.Time;
-    };
+  public type PageRequest = {
+    cursor : ?Text;
+    size : Nat32;
+  };
 
-    public type PageRequest = {
-        cursor: ?Text;
-        size: Nat32;
-    };
+  public type RemittanceOrderPage = {
+    items : [RemittanceOrder];
+    next_cursor : ?Text;
+    total_count : ?Nat;
+  };
 
-    public type RemittanceOrderPage = {
-        items: [RemittanceOrder];
-        next_cursor: ?Text;
-        total_count: ?Nat;
-    };
+  public type MediaValidationSummary = {
+    media_id : Text;
+    sha256 : ?Text;
+    mime_type : Text;
+    size_bytes : Nat;
+    uploaded_at : Time.Time;
+    extracted_timestamp : ?Time.Time;
+    is_valid_type : Bool;
+    is_within_size_limit : Bool;
+    has_text_content : ?Bool;
+    validation_flags : [Text];
+  };
 
-    public type MediaValidationSummary = {
-        media_id: Text;
-        sha256: ?Text;
-        mime_type: Text;
-        size_bytes: Nat;
-        uploaded_at: Time.Time;
-        extracted_timestamp: ?Time.Time;
-        is_valid_type: Bool;
-        is_within_size_limit: Bool;
-        has_text_content: ?Bool;
-        validation_flags: [Text];
-    };
+  public type SystemSettings = {
+    corporate_gcash_account : Text;
+    settlement_deadline_hours : Nat32;
+    max_commission_rate_bps : Nat;
+    min_order_amount : Nat;
+    max_order_amount : Nat;
+    updated_by : Principal;
+    updated_at : Time.Time;
+  };
 
-    public type SystemSettings = {
-        corporate_gcash_account: Text;
-        settlement_deadline_hours: Nat32;
-        max_commission_rate_bps: Nat;
-        min_order_amount: Nat;
-        max_order_amount: Nat;
-        updated_by: Principal;
-        updated_at: Time.Time;
-    };
-
-    // Service provider data aggregated from multiple sources
-    public type ServiceProviderData = {
-        id: Principal;
-        name: Text;
-        phone: Text;
-        total_earnings: Nat; // in centavos
-        pending_commission: Nat; // in centavos
-        settled_commission: Nat; // in centavos
-        outstanding_balance: Nat; // in centavos
-        pending_orders: Nat;
-        overdue_orders: Nat;
-        total_orders_completed: Nat;
-        average_order_value: Nat; // in centavos
-        next_deadline: ?Time.Time;
-        last_activity: Time.Time;
-    };
-}
+  // Service provider data aggregated from multiple sources
+  public type ServiceProviderData = {
+    id : Principal;
+    name : Text;
+    phone : Text;
+    total_earnings : Nat; // in centavos
+    pending_commission : Nat; // in centavos
+    settled_commission : Nat; // in centavos
+    outstanding_balance : Nat; // in centavos
+    pending_orders : Nat;
+    overdue_orders : Nat;
+    total_orders_completed : Nat;
+    average_order_value : Nat; // in centavos
+    next_deadline : ?Time.Time;
+    last_activity : Time.Time;
+  };
+};

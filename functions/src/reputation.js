@@ -72,6 +72,7 @@ function getManualReputationIdl() {
       CompetitiveManipulation: IDL.Null,
       FakeEvidence: IDL.Null,
       IdentityFraud: IDL.Null,
+      AbusiveContent: IDL.Null,
       Other: IDL.Null,
     });
 
