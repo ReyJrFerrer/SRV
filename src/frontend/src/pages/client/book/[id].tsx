@@ -1316,8 +1316,177 @@ const BookingPage: React.FC = () => {
     );
   }
 
-  if (loading)
-    return <div className="p-10 text-center">Loading service details...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <style>{`
+          .booking-calendar-wrapper .react-datepicker { width: 100%; border: none; box-shadow: none; }
+          .booking-calendar-wrapper .react-datepicker__month-container { width: 100%; }
+          .booking-calendar-wrapper .react-datepicker__header { background-color: #f3f4f6; border-bottom: none; border-radius: 0.75rem 0.75rem 0 0; }
+          .booking-calendar-wrapper .react-datepicker__day-names, .booking-calendar-wrapper .react-datepicker__week { display: flex; justify-content: space-around; }
+          .booking-calendar-wrapper .react-datepicker__day { margin: 0.25rem; border-radius: 0.5rem; transition: background 0.2s, color 0.2s; }
+          .booking-calendar-wrapper .react-datepicker__day--selected, .booking-calendar-wrapper .react-datepicker__day--keyboard-selected {
+            background-color: #2563eb !important; color: #fff !important; font-weight: bold; }
+          .booking-calendar-wrapper .react-datepicker__day--disabled { opacity: 0.4; cursor: not-allowed; }
+          .booking-calendar-wrapper .react-datepicker__day:hover:not(.react-datepicker__day--disabled) { background-color: #dbeafe; color: #1e40af; }
+          .booking-calendar-wrapper .react-datepicker__current-month { font-weight: 600; color: #1e293b; }
+        `}</style>
+        <main className="flex-1">
+          <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
+            {/* Header Skeleton */}
+            <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+              <div className="relative flex w-full items-center px-5 py-4">
+                <div className="mr-4 h-6 w-6 animate-pulse rounded bg-gray-300"></div>
+                <div className="absolute left-1/2 h-7 w-32 -translate-x-1/2 animate-pulse rounded bg-gray-300"></div>
+              </div>
+            </header>
+
+            <div className="flex-grow pb-28">
+              <div className="mx-auto max-w-5xl px-2 py-8 md:px-8">
+                <div className="md:flex md:gap-x-8">
+                  {/* Left Column Skeleton */}
+                  <div className="space-y-6 md:w-1/2">
+                    {/* Packages Section Skeleton */}
+                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+                      <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
+                      <div className="space-y-3">
+                        {[1, 2].map((i) => (
+                          <div
+                            key={i}
+                            className="flex items-center gap-3 rounded-lg border border-gray-200 p-4"
+                          >
+                            <div className="h-5 w-5 animate-pulse rounded border-2 border-gray-300 bg-gray-100"></div>
+                            <div className="flex-1 space-y-2">
+                              <div className="h-5 w-3/4 animate-pulse rounded bg-gray-300"></div>
+                              <div className="h-4 w-full animate-pulse rounded bg-gray-300"></div>
+                              <div className="h-4 w-2/3 animate-pulse rounded bg-gray-300"></div>
+                            </div>
+                            <div className="h-6 w-20 animate-pulse rounded bg-gray-300"></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Service Location Section Skeleton */}
+                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+                      <div className="mb-4 h-6 w-48 animate-pulse rounded bg-gray-300"></div>
+                      {/* Map Skeleton */}
+                      <div className="mb-4 h-64 w-full animate-pulse rounded-lg bg-gray-300"></div>
+                      {/* Address Inputs Skeleton */}
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="h-4 w-24 animate-pulse rounded bg-gray-300"></div>
+                          <div className="h-10 w-full animate-pulse rounded border border-gray-200 bg-gray-100"></div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="h-4 w-32 animate-pulse rounded bg-gray-300"></div>
+                          <div className="h-10 w-full animate-pulse rounded border border-gray-200 bg-gray-100"></div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <div className="h-4 w-20 animate-pulse rounded bg-gray-300"></div>
+                            <div className="h-10 w-full animate-pulse rounded border border-gray-200 bg-gray-100"></div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="h-4 w-28 animate-pulse rounded bg-gray-300"></div>
+                            <div className="h-10 w-full animate-pulse rounded border border-gray-200 bg-gray-100"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column Skeleton */}
+                  <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
+                    {/* Schedule Section Skeleton */}
+                    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+                      <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
+                      {/* Booking Option Buttons Skeleton */}
+                      <div className="mb-6 flex gap-3">
+                        <div className="h-12 flex-1 animate-pulse rounded-lg bg-gray-300"></div>
+                        <div className="h-12 flex-1 animate-pulse rounded-lg bg-gray-300"></div>
+                      </div>
+                      {/* Calendar Skeleton */}
+                      <div className="mb-6 h-64 w-full animate-pulse rounded-lg bg-gray-200"></div>
+                      {/* Time Slots Skeleton */}
+                      <div className="space-y-2">
+                        <div className="h-5 w-32 animate-pulse rounded bg-gray-300"></div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div
+                              key={i}
+                              className="h-10 animate-pulse rounded-lg bg-gray-200"
+                            ></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Section Skeleton (Desktop) */}
+                    <div className="hidden md:block">
+                      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+                        <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
+                        {/* Payment Method Buttons Skeleton */}
+                        <div className="mb-4 flex gap-2">
+                          <div className="h-10 flex-1 animate-pulse rounded-lg bg-gray-300"></div>
+                          <div className="h-10 flex-1 animate-pulse rounded-lg bg-gray-300"></div>
+                          <div className="h-10 flex-1 animate-pulse rounded-lg bg-gray-300"></div>
+                        </div>
+                        {/* Amount Input Skeleton */}
+                        <div className="space-y-2">
+                          <div className="h-4 w-32 animate-pulse rounded bg-gray-300"></div>
+                          <div className="h-12 w-full animate-pulse rounded border border-gray-200 bg-gray-100"></div>
+                        </div>
+                        {/* Total Price Skeleton */}
+                        <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
+                          <div className="h-5 w-24 animate-pulse rounded bg-gray-300"></div>
+                          <div className="h-6 w-32 animate-pulse rounded bg-gray-300"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Section Skeleton (Mobile) */}
+                    <div className="mt-4 md:hidden">
+                      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+                        <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
+                        <div className="mb-4 flex gap-2">
+                          <div className="h-10 flex-1 animate-pulse rounded-lg bg-gray-300"></div>
+                          <div className="h-10 flex-1 animate-pulse rounded-lg bg-gray-300"></div>
+                          <div className="h-10 flex-1 animate-pulse rounded-lg bg-gray-300"></div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="h-4 w-32 animate-pulse rounded bg-gray-300"></div>
+                          <div className="h-12 w-full animate-pulse rounded border border-gray-200 bg-gray-100"></div>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
+                          <div className="h-5 w-24 animate-pulse rounded bg-gray-300"></div>
+                          <div className="h-6 w-32 animate-pulse rounded bg-gray-300"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Notes Section Skeleton */}
+                    <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-md">
+                      <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-300"></div>
+                      <div className="h-24 w-full animate-pulse rounded border border-gray-200 bg-gray-100"></div>
+                      <div className="mt-2 h-4 w-20 animate-pulse rounded bg-gray-300"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Sticky Bar Skeleton */}
+            <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white/80 p-4 shadow-xl backdrop-blur-md">
+              <div className="relative mx-auto max-w-5xl">
+                <div className="h-12 w-full animate-pulse rounded-xl bg-gray-300"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
   if (error)
     return <div className="p-10 text-center text-red-500">{String(error)}</div>;
   if (!service)
