@@ -92,8 +92,13 @@ export const generateBookingsChartData = (
   for (let i = daysToShow - 1; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    // Normalize to midnight local time to avoid UTC conversion issues
-    date.setHours(0, 0, 0, 0);
+    // Normalize to midnight UTC to match Firestore UTC dates
+    date.setUTCHours(0, 0, 0, 0);
+    
+    // Extract UTC date string directly (YYYY-MM-DD)
+    const dateStr = date.toISOString().slice(0, 10);
+    
+    // Format for display (local date for user-friendly display)
     const formattedDate = date
       .toLocaleDateString("en-US", {
         month: "short",
@@ -102,30 +107,18 @@ export const generateBookingsChartData = (
       .toUpperCase()
       .replace(" ", ". ");
 
-    // Use local date components for accurate comparison
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
-
     let count = 0;
 
     // Count bookings for specific date
     if (bookings && bookings.length > 0) {
       count = bookings.filter((booking) => {
         if (!booking.createdAt) return false;
-        // Convert booking date to local date components
-        const bookingDate = typeof booking.createdAt === "string" 
-          ? new Date(booking.createdAt)
+        // Extract date directly from Firestore UTC string (first 10 chars: YYYY-MM-DD)
+        const bookingDateStr = typeof booking.createdAt === "string" 
+          ? booking.createdAt.slice(0, 10)
           : booking.createdAt instanceof Date
-          ? booking.createdAt
+          ? booking.createdAt.toISOString().slice(0, 10)
           : null;
-        if (!bookingDate) return false;
-        
-        const bookingYear = bookingDate.getFullYear();
-        const bookingMonth = String(bookingDate.getMonth() + 1).padStart(2, '0');
-        const bookingDay = String(bookingDate.getDate()).padStart(2, '0');
-        const bookingDateStr = `${bookingYear}-${bookingMonth}-${bookingDay}`;
         
         return bookingDateStr === dateStr;
       }).length;
@@ -157,8 +150,13 @@ export const generateRevenueChartData = (
   for (let i = daysToShow - 1; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    // Normalize to midnight local time to avoid UTC conversion issues
-    date.setHours(0, 0, 0, 0);
+    // Normalize to midnight UTC to match Firestore UTC dates
+    date.setUTCHours(0, 0, 0, 0);
+    
+    // Extract UTC date string directly (YYYY-MM-DD)
+    const dateStr = date.toISOString().slice(0, 10);
+    
+    // Format for display (local date for user-friendly display)
     const formattedDate = date
       .toLocaleDateString("en-US", {
         month: "short",
@@ -166,12 +164,6 @@ export const generateRevenueChartData = (
       })
       .toUpperCase()
       .replace(" ", ". ");
-
-    // Use local date components for accurate comparison
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
 
     let revenue = 0;
     let commission = 0;
@@ -182,18 +174,12 @@ export const generateRevenueChartData = (
       revenue = bookings
         .filter((booking) => {
           if (!booking.createdAt) return false;
-          // Convert booking date to local date components
-          const bookingDate = typeof booking.createdAt === "string" 
-            ? new Date(booking.createdAt)
+          // Extract date directly from Firestore UTC string (first 10 chars: YYYY-MM-DD)
+          const bookingDateStr = typeof booking.createdAt === "string" 
+            ? booking.createdAt.slice(0, 10)
             : booking.createdAt instanceof Date
-            ? booking.createdAt
+            ? booking.createdAt.toISOString().slice(0, 10)
             : null;
-          if (!bookingDate) return false;
-          
-          const bookingYear = bookingDate.getFullYear();
-          const bookingMonth = String(bookingDate.getMonth() + 1).padStart(2, '0');
-          const bookingDay = String(bookingDate.getDate()).padStart(2, '0');
-          const bookingDateStr = `${bookingYear}-${bookingMonth}-${bookingDay}`;
           
           return (
             bookingDateStr === dateStr &&
@@ -207,18 +193,12 @@ export const generateRevenueChartData = (
         commission = commissionTransactions
           .filter((transaction) => {
             if (!transaction.timestamp) return false;
-            // Convert transaction date to local date components
-            const transactionDate = typeof transaction.timestamp === "string" 
-              ? new Date(transaction.timestamp)
+            // Extract date directly from Firestore UTC string (first 10 chars: YYYY-MM-DD)
+            const transactionDateStr = typeof transaction.timestamp === "string" 
+              ? transaction.timestamp.slice(0, 10)
               : transaction.timestamp instanceof Date
-              ? transaction.timestamp
+              ? transaction.timestamp.toISOString().slice(0, 10)
               : null;
-            if (!transactionDate) return false;
-            
-            const transactionYear = transactionDate.getFullYear();
-            const transactionMonth = String(transactionDate.getMonth() + 1).padStart(2, '0');
-            const transactionDay = String(transactionDate.getDate()).padStart(2, '0');
-            const transactionDateStr = `${transactionYear}-${transactionMonth}-${transactionDay}`;
             
             return transactionDateStr === dateStr;
           })
