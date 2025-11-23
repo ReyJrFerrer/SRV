@@ -22,8 +22,8 @@ Instead of a simple arithmetic mean, we now use a **Bayesian Average** for calcu
 Penalizes low ratings while protecting new users from premature score destruction.
 
 - **Deduction Logic**: If the Bayesian Average drops below **3.0**, points are **deducted** from the score instead of added.
-  - *Providers*: `(3.0 - Avg) * 12.5` (Max 25 pts deduction)
-  - *Clients*: `(3.0 - Avg) * 8.0` (Max 16 pts deduction)
+  - _Providers_: `(3.0 - Avg) * 12.5` (Max 25 pts deduction)
+  - _Clients_: `(3.0 - Avg) * 8.0` (Max 16 pts deduction)
 
 - **Consistency Threshold**:
   - **New Users (< 3 bookings)**:
