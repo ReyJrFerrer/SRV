@@ -61,25 +61,13 @@ export const BookingReviewPage: React.FC = () => {
   // Check booking status and existing review
   useEffect(() => {
     const checkBookingAndReview = async () => {
-      // Step 1: Check if we have a booking ID
-      if (!bookingId) {
-        navigate("/client/booking", { replace: true });
-        return;
-      }
 
-      // Step 2: Wait for booking to load
+      // Step 1: Wait for booking to load
       if (isLoadingBooking) {
         return;
       }
-
-      // Step 3: Check if booking exists
-      if (!booking) {
-        navigate("/client/booking", { replace: true });
-        return;
-      }
-
       // Step 4: Check if booking is completed
-      if (booking.status !== "Completed") {
+      if (booking?.status !== "Completed") {
         navigate("/client/booking", { replace: true });
         return;
       }
@@ -87,7 +75,7 @@ export const BookingReviewPage: React.FC = () => {
       // Step 5: All basic checks passed, now check for existing review
       try {
         setCheckingReview(true);
-        const bookingReviews = await getBookingReviews(bookingId);
+        const bookingReviews = await getBookingReviews(bookingId as string);
 
         // Check if client has already submitted a review
         if (bookingReviews && bookingReviews.length > 0) {
@@ -132,8 +120,8 @@ export const BookingReviewPage: React.FC = () => {
       try {
         setProviderName(
           booking.providerProfile?.name ||
-            booking.providerName ||
-            "Service Provider",
+          booking.providerName ||
+          "Service Provider",
         );
 
         // Check commission validation for cash bookings
@@ -315,11 +303,11 @@ export const BookingReviewPage: React.FC = () => {
                 <span className="font-bold">Price:</span> ₱
                 {booking.price
                   ? (
-                      booking.price +
-                      (booking.paymentMethod === "CashOnHand"
-                        ? commissionValidation.estimatedCommission
-                        : 0)
-                    ).toFixed(2)
+                    booking.price +
+                    (booking.paymentMethod === "CashOnHand"
+                      ? commissionValidation.estimatedCommission
+                      : 0)
+                  ).toFixed(2)
                   : "TBD"}
               </div>
             </div>
@@ -336,20 +324,18 @@ export const BookingReviewPage: React.FC = () => {
                   key={star}
                   type="button"
                   aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                  className={`transition-transform focus:outline-none ${
-                    !isSubmitting ? "hover:scale-110 focus:scale-110" : ""
-                  }`}
+                  className={`transition-transform focus:outline-none ${!isSubmitting ? "hover:scale-110 focus:scale-110" : ""
+                    }`}
                   onClick={() => !isSubmitting && handleRating(star)}
                   onMouseEnter={() => !isSubmitting && setHovered(star)}
                   onMouseLeave={() => !isSubmitting && setHovered(null)}
                   disabled={isSubmitting}
                 >
                   <StarIcon
-                    className={`h-12 w-12 drop-shadow transition-colors ${
-                      (hovered ?? rating) >= star
-                        ? "text-yellow-400"
-                        : "text-gray-200"
-                    }`}
+                    className={`h-12 w-12 drop-shadow transition-colors ${(hovered ?? rating) >= star
+                      ? "text-yellow-400"
+                      : "text-gray-200"
+                      }`}
                     fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
                   />
                 </button>

@@ -44,23 +44,11 @@ const ActiveServicePage: React.FC = () => {
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
-    if (!bookingId) {
-      navigate("/provider/bookings", { replace: true });
-      return;
-    }
-
     if (isLoadingBooking) {
       return;
     }
-
-    // Only redirect if loading is complete and booking is null
-    if (!booking) {
-      navigate("/provider/bookings", { replace: true });
-      return;
-    }
-
     // Only check status after confirming booking exists
-    if (booking.status !== "InProgress") {
+    if (booking?.status !== "InProgress") {
       navigate("/provider/bookings", { replace: true });
       return;
     }
@@ -257,19 +245,19 @@ const ActiveServicePage: React.FC = () => {
                 <span>
                   {booking.scheduledDate
                     ? new Date(booking.scheduledDate).toLocaleString([], {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
                     : new Date(booking.requestedDate).toLocaleString([], {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                 </span>
               </div>
               <div className="flex items-start">
@@ -287,7 +275,7 @@ const ActiveServicePage: React.FC = () => {
                       ₱
                       {Number(
                         booking.price +
-                          commissionValidation.estimatedCommission,
+                        commissionValidation.estimatedCommission,
                       ).toFixed(2)}
                     </span>
                   </span>

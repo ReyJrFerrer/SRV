@@ -33,12 +33,12 @@ const ConversationPage: React.FC = () => {
   const servicePreview =
     (location.state?.servicePreview as
       | {
-          id: string;
-          name: string;
-          imageUrl?: string;
-          price?: number;
-          bookingsCount?: number;
-        }
+        id: string;
+        name: string;
+        imageUrl?: string;
+        price?: number;
+        bookingsCount?: number;
+      }
       | undefined) ?? undefined;
   const [showServicePreview, setShowServicePreview] =
     useState<boolean>(!!servicePreview);
@@ -69,7 +69,7 @@ const ConversationPage: React.FC = () => {
             setOtherUserImage(profile.profilePicture.imageUrl);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
     return () => {
       isMounted = false;
@@ -109,7 +109,7 @@ const ConversationPage: React.FC = () => {
       ) {
         setOtherUserImage(profile.profilePicture.imageUrl);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -139,7 +139,7 @@ const ConversationPage: React.FC = () => {
           : currentConversation.clientId;
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
-    } catch {}
+    } catch { }
   };
 
   const handleReportClick = () => {
@@ -170,7 +170,7 @@ const ConversationPage: React.FC = () => {
       <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
         <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/client/chat")}
             className="rounded-full p-2 hover:bg-blue-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
@@ -322,11 +322,10 @@ const ConversationPage: React.FC = () => {
                   </div>
                 )}
                 <div
-                  className={`max-w-xs rounded-2xl px-5 py-3 shadow-sm md:max-w-md lg:max-w-lg ${
-                    fromCurrentUser
+                  className={`max-w-xs rounded-2xl px-5 py-3 shadow-sm md:max-w-md lg:max-w-lg ${fromCurrentUser
                       ? "rounded-br-none bg-blue-600 text-white"
                       : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
-                  }`}
+                    }`}
                   style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
                 >
                   <p className="overflow-wrap-anywhere break-words text-base leading-snug">
@@ -335,9 +334,8 @@ const ConversationPage: React.FC = () => {
                       : message.content.encryptedText}
                   </p>
                   <p
-                    className={`mt-1 text-right text-xs ${
-                      fromCurrentUser ? "text-blue-100" : "text-gray-400"
-                    }`}
+                    className={`mt-1 text-right text-xs ${fromCurrentUser ? "text-blue-100" : "text-gray-400"
+                      }`}
                   >
                     {formatTimestamp(message.createdAt)}
                   </p>

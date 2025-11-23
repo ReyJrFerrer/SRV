@@ -84,7 +84,7 @@ const ConversationPage: React.FC = () => {
       ) {
         setOtherUserImageUrl(profile.profilePicture.imageUrl);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   // Mark messages as read when conversation loads
@@ -120,7 +120,7 @@ const ConversationPage: React.FC = () => {
 
       await sendMessage(messageText.trim(), receiverId);
       setMessageText("");
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const handleReportClick = () => {
@@ -153,7 +153,7 @@ const ConversationPage: React.FC = () => {
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/provider/chat')}
           className="rounded-full p-2 hover:bg-gray-100"
         >
           <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
@@ -209,11 +209,10 @@ const ConversationPage: React.FC = () => {
                   </div>
                 )}
                 <div
-                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${
-                    fromCurrentUser
+                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${fromCurrentUser
                       ? "rounded-br-none bg-blue-600 text-white"
                       : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
-                  }`}
+                    }`}
                 >
                   <p className="text-sm">
                     {typeof message.content === "string"
@@ -221,9 +220,8 @@ const ConversationPage: React.FC = () => {
                       : message.content.encryptedText}
                   </p>
                   <p
-                    className={`mt-1 text-right text-xs ${
-                      fromCurrentUser ? "text-blue-100" : "text-gray-400"
-                    }`}
+                    className={`mt-1 text-right text-xs ${fromCurrentUser ? "text-blue-100" : "text-gray-400"
+                      }`}
                   >
                     {formatTimestamp(message.createdAt)}
                   </p>
