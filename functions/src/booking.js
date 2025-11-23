@@ -1,8 +1,8 @@
 const functions = require("firebase-functions");
-const {onSchedule} = require("firebase-functions/v2/scheduler");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
-const {FieldValue} = require("firebase-admin/firestore");
-const {deductReputationForCancellationInternal} = require("./reputation");
+const { FieldValue } = require("firebase-admin/firestore");
+const { deductReputationForCancellationInternal } = require("./reputation");
 const {
   NOTIFICATION_TYPES,
   USER_TYPES,
@@ -202,11 +202,11 @@ async function validateCommissionBalance(booking) {
  */
 function isServiceActive(service) {
   return service.isActive === true ||
-         service.active === true ||
-         service.status === "Available" ||
-         service.status === "active" ||
-         service.isActive === "true" ||
-         service.active === "true";
+    service.active === true ||
+    service.status === "Available" ||
+    service.status === "active" ||
+    service.isActive === "true" ||
+    service.active === "true";
 }
 
 /**
@@ -475,8 +475,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError(
         "failed-precondition",
         `Your reputation score (${clientReputation.data.trustScore}) is too ` +
-          "low to create a booking. Please contact support if you believe " +
-          "this is an error.",
+        "low to create a booking. Please contact support if you believe " +
+        "this is an error.",
       );
     }
 
@@ -498,7 +498,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError(
         "failed-precondition",
         "This provider is currently not accepting new bookings due to " +
-          "reputation issues. Please try another provider.",
+        "reputation issues. Please try another provider.",
       );
     }
 
@@ -538,7 +538,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
         if (!packageDoc.exists) {
           console.error("[createBooking] Package not found:", packageId);
           const errorMsg =
-          `Package with ID ${packageId} not found in 'service_packages' collection.`;
+            `Package with ID ${packageId} not found in 'service_packages' collection.`;
           throw new functions.https.HttpsError("not-found", errorMsg);
         }
 
@@ -547,7 +547,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
           console.error("[createBooking] Package belongs to wrong service:",
             packageId, packageData.serviceId, serviceId);
           const errorMsg =
-           `Package ${packageId} belongs to service ${packageData.serviceId}, 
+            `Package ${packageId} belongs to service ${packageData.serviceId}, 
            but booking is for service ${serviceId}.`;
           throw new functions.https.HttpsError(
             "permission-denied",
@@ -641,7 +641,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    return {success: true, data: newBooking};
+    return { success: true, data: newBooking };
   } catch (error) {
     console.error("Error in createBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -656,7 +656,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
  */
 exports.acceptBooking = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {bookingId, scheduledDate} = payload;
+  const { bookingId, scheduledDate } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -814,7 +814,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in acceptBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -830,7 +830,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
 exports.declineBooking = functions.https.onCall(async (data, context) => {
   console.log("[declineBooking] called");
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -913,7 +913,7 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in declineBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -927,7 +927,7 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
 exports.startNavigation = functions.https.onCall(async (data, context) => {
   console.log("[startNavigation] called");
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1006,7 +1006,7 @@ exports.startNavigation = functions.https.onCall(async (data, context) => {
       }
     }
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
     console.error("Error in startBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -1022,7 +1022,7 @@ exports.startNavigation = functions.https.onCall(async (data, context) => {
 exports.startBooking = functions.https.onCall(async (data, context) => {
   console.log("[startBooking] called");
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1128,7 +1128,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in startBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -1144,7 +1144,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
 exports.completeBooking = functions.https.onCall(async (data, context) => {
   console.log("[completeBooking] called");
   const payload = data.data || data;
-  const {bookingId, amountPaid} = payload;
+  const { bookingId, amountPaid } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1297,12 +1297,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    // Try-catch of updating reputation scores, if these fails then the functions goes through
-    try {
-      await updateProviderReputationInternal(booking.providerId);
-    } catch (error) {
-      console.log("Reputation couldn't update");
-    }
+
 
 
     // Create review reminder notification for client
@@ -1341,7 +1336,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in completeBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -1356,7 +1351,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
  */
 exports.cancelBooking = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {bookingId, cancelReason} = payload;
+  const { bookingId, cancelReason } = payload;
 
   if (!cancelReason || typeof cancelReason !== "string" || cancelReason.trim() === "") {
     throw new functions.https.HttpsError(
@@ -1406,7 +1401,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
 
     // Deduct reputation for cancelling Accepted or InProgress bookings (both clients and providers)
     const shouldDeductReputation = booking.status === "Accepted" ||
-    booking.status === "InProgress"|| booking.status === "Requested";
+      booking.status === "InProgress" || booking.status === "Requested";
 
     if (shouldDeductReputation) {
       try {
@@ -1511,7 +1506,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       // Don't fail the cancellation if ticket creation fails - just log it
     }
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in cancelBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -1526,7 +1521,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
  */
 exports.getBooking = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1553,14 +1548,14 @@ exports.getBooking = functions.https.onCall(async (data, context) => {
 
     // Validate user authorization (client, provider, or admin can view)
     if (booking.clientId !== authInfo.uid &&
-        booking.providerId !== authInfo.uid &&
-        !authInfo.isAdmin) {
+      booking.providerId !== authInfo.uid &&
+      !authInfo.isAdmin) {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Not authorized to view this booking",
       );
     }
-    return {success: true, data: booking};
+    return { success: true, data: booking };
   } catch (error) {
     console.error("Error in getBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -1575,7 +1570,7 @@ exports.getBooking = functions.https.onCall(async (data, context) => {
  */
 exports.getClientBookings = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {clientId, limit = 50} = payload;
+  const { clientId, limit = 50 } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1602,7 +1597,7 @@ exports.getClientBookings = functions.https.onCall(async (data, context) => {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return {success: true, data: bookings};
+    return { success: true, data: bookings };
   } catch (error) {
     console.error("Error in getClientBookings:", error);
     throw new functions.https.HttpsError("internal", error.message);
@@ -1614,7 +1609,7 @@ exports.getClientBookings = functions.https.onCall(async (data, context) => {
  */
 exports.getProviderBookings = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {providerId, limit = 50} = payload;
+  const { providerId, limit = 50 } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1641,7 +1636,7 @@ exports.getProviderBookings = functions.https.onCall(async (data, context) => {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return {success: true, data: bookings};
+    return { success: true, data: bookings };
   } catch (error) {
     console.error("Error in getProviderBookings:", error);
     throw new functions.https.HttpsError("internal", error.message);
@@ -1653,7 +1648,7 @@ exports.getProviderBookings = functions.https.onCall(async (data, context) => {
  */
 exports.getBookingsByStatus = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {status, limit = 50} = payload;
+  const { status, limit = 50 } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -1678,7 +1673,7 @@ exports.getBookingsByStatus = functions.https.onCall(async (data, context) => {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return {success: true, data: bookings};
+    return { success: true, data: bookings };
   } catch (error) {
     console.error("Error in getBookingsByStatus:", error);
     throw new functions.https.HttpsError("internal", error.message);
@@ -1691,7 +1686,7 @@ exports.getBookingsByStatus = functions.https.onCall(async (data, context) => {
  */
 exports.disputeBooking = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1764,10 +1759,10 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
       "Booking Disputed",
       `${disputerName} has disputed the booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, disputedBy: authInfo.uid, disputerName},
+      { serviceId: booking.serviceId, serviceName, disputedBy: authInfo.uid, disputerName },
     );
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in disputeBooking:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -1782,7 +1777,7 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
  */
 exports.checkServiceAvailability = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {serviceId, requestedDateTime} = payload;
+  const { serviceId, requestedDateTime } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1810,7 +1805,7 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
 
     // Check if service is active - handle different possible field names/formats
     if (!isServiceActive(service)) {
-      return {success: true, data: {available: false, reason: "Service is not active"}};
+      return { success: true, data: { available: false, reason: "Service is not active" } };
     }
 
     // Check for booking conflicts
@@ -1824,7 +1819,7 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
     if (hasConflict) {
       return {
         success: true,
-        data: {available: false, reason: "Time slot conflicts with existing booking"},
+        data: { available: false, reason: "Time slot conflicts with existing booking" },
       };
     }
 
@@ -1853,7 +1848,7 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
       if (!daySchedule || !daySchedule.availability?.isAvailable) {
         return {
           success: true,
-          data: {available: false, reason: `Service not available on ${requestedDayName}`},
+          data: { available: false, reason: `Service not available on ${requestedDayName}` },
         };
       }
 
@@ -1868,16 +1863,16 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
           // Check if requested time is within the slot (no notice period restriction)
           const requestedMinute = localDate.getMinutes();
           const isInSlotRange = (requestedHour > startHour ||
-                                (requestedHour === startHour && requestedMinute >= startMinute)) &&
-                               (requestedHour < endHour ||
-                                (requestedHour === endHour && requestedMinute < endMinute));
+            (requestedHour === startHour && requestedMinute >= startMinute)) &&
+            (requestedHour < endHour ||
+              (requestedHour === endHour && requestedMinute < endMinute));
 
           return isInSlotRange;
         });
       }
     }
 
-    return {success: true, data: {available: true, reason: "Service is available"}};
+    return { success: true, data: { available: true, reason: "Service is available" } };
   } catch (error) {
     console.error("Error in checkServiceAvailability:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -1892,7 +1887,7 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
  */
 exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {serviceId, date} = payload;
+  const { serviceId, date } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1920,12 +1915,12 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
 
     // Check if service is active first
     if (!isServiceActive(service)) {
-      return {success: true, data: []};
+      return { success: true, data: [] };
     }
 
     // Get service availability from weeklySchedule
     if (!service.weeklySchedule || service.weeklySchedule.length === 0) {
-      return {success: true, data: []};
+      return { success: true, data: [] };
     }
 
     const requestedDate = new Date(date);
@@ -1941,8 +1936,8 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
     );
 
     if (!daySchedule || !daySchedule.availability?.isAvailable ||
-        !daySchedule.availability?.slots) {
-      return {success: true, data: []};
+      !daySchedule.availability?.slots) {
+      return { success: true, data: [] };
     }
 
     // Get existing bookings for this service on this date
@@ -2004,7 +1999,7 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
       };
     });
 
-    return {success: true, data: availableSlots};
+    return { success: true, data: availableSlots };
   } catch (error) {
     console.error("Error in getServiceAvailableSlots:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -2019,7 +2014,7 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
  */
 exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {clientId, startDate, endDate} = payload;
+  const { clientId, startDate, endDate } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -2119,7 +2114,7 @@ exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
  */
 exports.getProviderAnalytics = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {providerId, startDate, endDate} = payload;
+  const { providerId, startDate, endDate } = payload;
 
   // Authentication - Admin only
   const authInfo = getAuthInfo(context, data);
@@ -2248,7 +2243,7 @@ exports.getProviderAnalytics = functions.https.onCall(async (data, context) => {
  */
 exports.releasePayment = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
-  const {bookingId, paymentId, releasedAmount, commissionRetained, payoutId} = payload;
+  const { bookingId, paymentId, releasedAmount, commissionRetained, payoutId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -2338,7 +2333,7 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
       "Payment Released",
       `Payment for booking ${bookingId} has been released`,
       bookingId,
-      {serviceId: booking.serviceId, releasedAmount, commissionRetained},
+      { serviceId: booking.serviceId, releasedAmount, commissionRetained },
     );
 
     const updatedBooking = {
@@ -2352,7 +2347,7 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
       updatedAt: releaseDate,
     };
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in releasePayment:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -2387,7 +2382,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
       .get();
 
     if (missedBookingsQuery.empty && expiredRequestedBookingsQuery.empty) {
-      return {success: true, count: 0};
+      return { success: true, count: 0 };
     }
 
     const batch = db.batch();
@@ -2477,7 +2472,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         };
 
         ticketPromises.push(
-          db.collection("reports").doc(reportId).set(newReport).catch(() => {}),
+          db.collection("reports").doc(reportId).set(newReport).catch(() => { }),
         );
       } catch (ticketError) {
         // Capture errors
@@ -2581,7 +2576,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       .get();
 
     if (upcomingBookingsQuery.empty) {
-      return {success: true, count: 0};
+      return { success: true, count: 0 };
     }
 
     const batch = db.batch();
@@ -2671,7 +2666,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       await Promise.allSettled(notificationPromises);
     }
 
-    return {success: true, count: reminderCount};
+    return { success: true, count: reminderCount };
   } catch (error) {
     console.error("Error sending service reminders:", error);
     throw error;

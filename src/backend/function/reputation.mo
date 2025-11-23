@@ -53,6 +53,15 @@ persistent actor ReputationCanister {
   // private let REVIEW_SENTIMENT_WEIGHT : Float = 0.15;
   private let ACTIVITY_FREQUENCY_WEIGHT : Float = 0.1;
 
+  // Bayesian Average Constants
+  private let BAYESIAN_CONFIDENCE_THRESHOLD : Float = 2.0; // Reduced from 5.0 for faster sensitivity
+  private let BAYESIAN_PRIOR_MEAN : Float = 3.0; // Reduced from 4.0 for neutral start
+
+  // Review Weighting Constants
+  private let MAX_REVIEW_WEIGHT : Float = 2.0;
+  private let MIN_REVIEW_WEIGHT : Float = 0.1;
+  private let REVIEW_AGE_HALFLIFE_DAYS : Float = 180.0; // Weight decays by half every 6 months
+
   // Abusive content detection
   private let ABUSIVE_KEYWORDS : [Text] = [
     "scam",
@@ -86,7 +95,7 @@ persistent actor ReputationCanister {
   };
 
   // Authorization helper function
-  private func isAuthorized(caller : Principal) : Bool {
+  private func _isAuthorized(caller : Principal) : Bool {
     switch (trustedServiceAgent) {
       case (null) { false };
       case (?agent) { Principal.equal(caller, agent) };
@@ -107,20 +116,20 @@ persistent actor ReputationCanister {
     score += bookingPoints;
 
     // 2. Rating Quality Score (max 20 points)
-    // Apply confidence factor based on number of bookings to prevent huge jumps for new users
-    let confidenceFactor = Float.min(1.0, Float.fromInt(completedBookings) / 5.0);
 
     switch (averageRating) {
       case (null) {};
       case (?rating) {
-        // Higher weight for ratings above 4.0
-        var ratingPoints = 0.0;
-        if (rating >= 4.0) {
-          ratingPoints := (rating - 1.0) * 6.0; // Maps 1-5 to 0-24
-        } else {
-          ratingPoints := (rating - 1.0) * 4.0; // Maps 1-5 to 0-16
-        };
-        score += ratingPoints * confidenceFactor;
+        // Use Bayesian Average for smoother scoring
+        let bayesianAvg = calculateBayesianAverage(rating, completedBookings);
+
+        // Map Bayesian average (1-5) to points (0-20)
+        // 5.0 -> 20 points
+        // 4.0 -> 15 points
+        // 3.0 -> 10 points
+        // 1.0 -> 0 points
+        let ratingPoints = (bayesianAvg - 1.0) * 5.0;
+        score += Float.max(0.0, Float.min(20.0, ratingPoints));
       };
     };
 
@@ -217,8 +226,6 @@ persistent actor ReputationCanister {
     score += completionPoints;
 
     // 2. Service Quality Score based on ratings (max 25 points)
-    // Apply confidence factor based on number of bookings
-    let confidenceFactor = Float.min(1.0, Float.fromInt(completedBookings) / 5.0);
 
     switch (averageRating) {
       case (null) {
@@ -226,19 +233,40 @@ persistent actor ReputationCanister {
         score += 5.0; // Small bonus for new providers
       };
       case (?rating) {
-        var ratingPoints = 0.0;
-        if (rating >= 4.5) {
-          ratingPoints := 25.0; // Excellent service
-        } else if (rating >= 4.0) {
-          ratingPoints := 20.0; // Very good service
-        } else if (rating >= 3.5) {
-          ratingPoints := 15.0; // Good service
-        } else if (rating >= 3.0) {
-          ratingPoints := 10.0; // Average service
+        // Use Bayesian Average for smoother scoring
+        let bayesianAvg = calculateBayesianAverage(rating, completedBookings);
+
+        if (bayesianAvg < 3.0) {
+          // DEDUCT points for low ratings
+          // Check for consistency threshold (new users get lenient treatment)
+          if (completedBookings < 3) {
+            // For new users, apply minimal penalty to offset completion points
+            // Keeps score near BASE_SCORE (50.0)
+            // (3.0 - 2.33) * 2.0 = ~1.34 points deduction
+            let penalty = (3.0 - bayesianAvg) * 2.0;
+            score -= penalty;
+          } else {
+            // Established users get full penalty
+            // 1.0 avg -> (3.0 - 1.0) * 8.0 = -16.0 points
+            let penalty = (3.0 - bayesianAvg) * 8.0;
+            score -= penalty;
+          };
         } else {
-          ratingPoints := 5.0; // Below average but still positive
+          // ADD points for good ratings (3.0+)
+          // Check for consistency threshold (new users get limited reward)
+          if (completedBookings < 3) {
+            // For new users, apply minimal reward
+            // Prevents premature score inflation
+            // (5.0 - 3.0) * 2.5 = 5.0 points max reward
+            let reward = (bayesianAvg - 3.0) * 2.5;
+            score += reward;
+          } else {
+            // Established users get full reward
+            // Map 3.0-5.0 to 0-25 points
+            let reward = (bayesianAvg - 3.0) * 12.5;
+            score += reward;
+          };
         };
-        score += ratingPoints * confidenceFactor;
       };
     };
 
@@ -381,6 +409,47 @@ persistent actor ReputationCanister {
     return 0.0;
   };
 
+  // Bayesian Average Calculation
+  // Formula: ( (avg * count) + (prior * C) ) / (count + C)
+  private func calculateBayesianAverage(currentAverage : Float, count : Nat) : Float {
+    let n = Float.fromInt(count);
+    let weightedSum = (currentAverage * n) + (BAYESIAN_PRIOR_MEAN * BAYESIAN_CONFIDENCE_THRESHOLD);
+    let totalWeight = n + BAYESIAN_CONFIDENCE_THRESHOLD;
+    return weightedSum / totalWeight;
+  };
+
+  // Calculate Review Weight based on reviewer reputation and age
+  private func calculateReviewWeight(
+    reviewerReputationScore : Float,
+    reviewerTrustLevel : TrustLevel,
+    reviewQualityScore : Float,
+    reviewAge : Time.Time,
+  ) : Float {
+    // 1. Base weight from reviewer reputation (0.5 to 1.5)
+    var weight = 0.5 + (reviewerReputationScore / 100.0);
+
+    // 2. Adjust based on trust level
+    switch (reviewerTrustLevel) {
+      case (#VeryHigh) { weight *= 1.2 };
+      case (#High) { weight *= 1.1 };
+      case (#Medium) { weight *= 1.0 };
+      case (#Low) { weight *= 0.8 };
+      case (#New) { weight *= 0.6 };
+    };
+
+    // 3. Adjust based on review quality (0.5 to 1.5 multiplier)
+    weight *= (0.5 + reviewQualityScore);
+
+    // 4. Time Decay (Exponential decay)
+    let ageInDays = Float.fromInt(Time.now() - reviewAge) / (24.0 * 60.0 * 60.0 * 1_000_000_000.0);
+    if (ageInDays > 0.0) {
+      let decayFactor = 1.0 / (1.0 + (ageInDays / REVIEW_AGE_HALFLIFE_DAYS));
+      weight *= decayFactor;
+    };
+
+    return Float.max(MIN_REVIEW_WEIGHT, Float.min(MAX_REVIEW_WEIGHT, weight));
+  };
+
   // Enhanced review analysis
   private func analyzeReview(review : Review) : [DetectionFlag] {
     var flags : [DetectionFlag] = [];
@@ -442,41 +511,6 @@ persistent actor ReputationCanister {
 
     return Float.fromInt(positiveWords) / Float.fromInt(totalWords);
   };
-
-  // Enhanced evidence quality evaluation
-  // private func evaluateEvidenceQuality(evidence : Evidence) : Float {
-  //     var qualityScore : Float = 0.75; // Base quality score
-
-  //     // 1. Description length and quality
-  //     if (Text.size(evidence.description) > 100) {
-  //         qualityScore += 0.1;
-  //     };
-
-  //     // 2. File evidence
-  //     if (evidence.fileUrls.size() > 0) {
-  //         qualityScore += 0.1;
-  //         // Bonus for multiple files
-  //         if (evidence.fileUrls.size() > 1) {
-  //             qualityScore += 0.05;
-  //         };
-  //     };
-
-  //     // 3. Keyword analysis
-  //     let description = Text.toLowercase(evidence.description);
-  //     if (Text.contains(description, #text "proof") or
-  //         Text.contains(description, #text "evidence") or
-  //         Text.contains(description, #text "photo")) {
-  //         qualityScore += 0.05;
-  //     };
-
-  //     // 4. Timeliness
-  //     let ageInHours = Float.fromInt(Time.now() - evidence.createdAt) / (60.0 * 60.0 * 1_000_000_000.0);
-  //     if (ageInHours <= 24.0) { // Within 24 hours
-  //         qualityScore += 0.1;
-  //     };
-
-  //     return Float.min(1.0, qualityScore);
-  // };
 
   // Enhanced reputation history tracking
   private func updateReputationHistory(userId : Principal, newScore : Float) {
@@ -564,18 +598,12 @@ persistent actor ReputationCanister {
   };
 
   // Enhanced reputation update specifically for service providers
-  // Now accepts data as parameters instead of fetching from other canisters
-  // Secured for Firebase service agent only
   public shared (_msg) func updateProviderReputation(
     providerId : Principal,
     completedBookingsCount : Nat,
     averageRating : ?Float,
     accountAge : Time.Time,
   ) : async Result<ReputationScore> {
-    // Check authorization
-    // if (not isAuthorized(msg.caller)) {
-    //     return #err("Unauthorized: Only trusted service agent can call this function");
-    // };
 
     switch (reputations.get(providerId)) {
       case (null) {
@@ -837,62 +865,11 @@ persistent actor ReputationCanister {
   // Process a new review and update reputations
   // Accepts additional data needed for reputation calculation
   // Secured for Firebase service agent only
-  public shared (msg) func processReview(
+  public shared (_msg) func processReview(
     review : Review,
     clientCompletedBookings : Nat,
     clientAverageRating : ?Float,
     clientAccountAge : Time.Time,
-  ) : async Result<Review> {
-    // Check authorization
-    // if (not isAuthorized(msg.caller)) {
-    //     return #err("Unauthorized: Only trusted service agent can call this function");
-    // };
-
-    // 1. Analyze review for flags
-    let flags = analyzeReview(review);
-
-    // 2. Calculate quality score (0.0 - 1.0)
-    let qualityScore : Float = Float.max(0.0, Float.min(1.0, 1.0 - (Float.fromInt(flags.size()) * 0.25)));
-
-    // 3. Determine if review should be hidden
-    let shouldHide = qualityScore < 0.3 or flags.size() > 2;
-
-    // 4. Update client reputation (the reviewer) to track their trustworthiness
-    // Now using internal function to persist flags
-    ignore _updateUserReputation(
-      review.clientId,
-      clientCompletedBookings,
-      clientAverageRating,
-      clientAccountAge,
-      flags,
-    );
-
-    // 5. Return updated review with status and quality score
-    let updatedReview : Review = {
-      id = review.id;
-      bookingId = review.bookingId;
-      clientId = review.clientId;
-      providerId = review.providerId;
-      serviceId = review.serviceId;
-      rating = review.rating;
-      comment = review.comment;
-      status = if (shouldHide) { #Hidden } else if (flags.size() > 0) {
-        #Flagged;
-      } else { #Visible };
-      qualityScore = ?qualityScore;
-      createdAt = review.createdAt;
-      updatedAt = Time.now();
-    };
-
-    return #ok(updatedReview);
-  };
-
-  // Process a provider-to-client review and update provider reputation
-  // This is used when providers rate clients after service completion
-  // Accepts additional data needed for reputation calculation
-  // Secured for Firebase service agent only
-  public shared (_msg) func processProviderReview(
-    review : Review,
     providerCompletedBookings : Nat,
     providerAverageRating : ?Float,
     providerAccountAge : Time.Time,
@@ -911,8 +888,26 @@ persistent actor ReputationCanister {
     // 3. Determine if review should be hidden
     let shouldHide = qualityScore < 0.3 or flags.size() > 2;
 
-    // 4. Update provider reputation (the reviewer) to track their trustworthiness
-    // Now using internal function to persist flags
+    // 4. Update client reputation (the reviewer) - Activity & Quality
+    let clientUpdateResult = _updateUserReputation(
+      review.clientId,
+      clientCompletedBookings,
+      clientAverageRating,
+      clientAccountAge,
+      flags,
+    );
+
+    let reviewerReputationScore = switch (clientUpdateResult) {
+      case (#ok(score)) score.trustScore;
+      case (#err(_)) 50.0; // Default
+    };
+
+    let reviewerTrustLevel = switch (clientUpdateResult) {
+      case (#ok(score)) score.trustLevel;
+      case (#err(_)) #Low;
+    };
+
+    // 5. Update provider reputation (the target) - Rating Received
     ignore _updateProviderReputation(
       review.providerId,
       providerCompletedBookings,
@@ -921,7 +916,10 @@ persistent actor ReputationCanister {
       flags,
     );
 
-    // 5. Return updated review with status and quality score
+    // Calculate effective weight
+    let weight = calculateReviewWeight(reviewerReputationScore, reviewerTrustLevel, qualityScore, review.createdAt);
+
+    // 6. Return updated review with status and quality score
     let updatedReview : Review = {
       id = review.id;
       bookingId = review.bookingId;
@@ -934,6 +932,7 @@ persistent actor ReputationCanister {
         #Flagged;
       } else { #Visible };
       qualityScore = ?qualityScore;
+      weight = ?weight;
       createdAt = review.createdAt;
       updatedAt = Time.now();
     };
@@ -941,28 +940,84 @@ persistent actor ReputationCanister {
     return #ok(updatedReview);
   };
 
-  // Process evidence submission
-  // public func processEvidence(evidence : Evidence) : async Result<Evidence> {
-  //     // 1. Evaluate evidence quality
-  //     let qualityScore = evaluateEvidenceQuality(evidence);
+  // Process a provider-to-client review and update provider reputation
+  // This is used when providers rate clients after service completion
+  // Accepts additional data needed for reputation calculation
+  // Secured for Firebase service agent only
+  public shared (_msg) func processProviderReview(
+    review : Review,
+    providerCompletedBookings : Nat,
+    providerAverageRating : ?Float,
+    providerAccountAge : Time.Time,
+    clientCompletedBookings : Nat,
+    clientAverageRating : ?Float,
+    clientAccountAge : Time.Time,
+  ) : async Result<Review> {
+    // Check authorization
+    // if (not isAuthorized(msg.caller)) {
+    //     return #err("Unauthorized: Only trusted service agent can call this function");
+    // };
 
-  //     // 2. Update evidence with quality score
-  //     let updatedEvidence : Evidence = {
-  //         id = evidence.id;
-  //         bookingId = evidence.bookingId;
-  //         submitterId = evidence.submitterId;
-  //         description = evidence.description;
-  //         fileUrls = evidence.fileUrls;
-  //         qualityScore = ?qualityScore;
-  //         createdAt = evidence.createdAt;
-  //     };
+    // 1. Analyze review for flags
+    let flags = analyzeReview(review);
 
-  //     // 3. Update submitter reputation
-  //     ignore await updateUserReputation(evidence.submitterId);
+    // 2. Calculate quality score (0.0 - 1.0)
+    let qualityScore : Float = Float.max(0.0, Float.min(1.0, 1.0 - (Float.fromInt(flags.size()) * 0.25)));
 
-  //     return #ok(updatedEvidence);
-  // };
+    // 3. Determine if review should be hidden
+    let shouldHide = qualityScore < 0.3 or flags.size() > 2;
 
+    // 4. Update provider reputation (the reviewer) - Activity & Quality
+    let providerUpdateResult = _updateProviderReputation(
+      review.providerId,
+      providerCompletedBookings,
+      providerAverageRating,
+      providerAccountAge,
+      flags,
+    );
+
+    let reviewerReputationScore = switch (providerUpdateResult) {
+      case (#ok(score)) score.trustScore;
+      case (#err(_)) 50.0; // Default
+    };
+
+    let reviewerTrustLevel = switch (providerUpdateResult) {
+      case (#ok(score)) score.trustLevel;
+      case (#err(_)) #Low;
+    };
+
+    // 5. Update client reputation (the target) - Rating Received
+    ignore _updateUserReputation(
+      review.clientId,
+      clientCompletedBookings,
+      clientAverageRating,
+      clientAccountAge,
+      flags,
+    );
+
+    // Calculate effective weight
+    let weight = calculateReviewWeight(reviewerReputationScore, reviewerTrustLevel, qualityScore, review.createdAt);
+
+    // 6. Return updated review with status and quality score
+    let updatedReview : Review = {
+      id = review.id;
+      bookingId = review.bookingId;
+      clientId = review.clientId;
+      providerId = review.providerId;
+      serviceId = review.serviceId;
+      rating = review.rating;
+      comment = review.comment;
+      status = if (shouldHide) { #Hidden } else if (flags.size() > 0) {
+        #Flagged;
+      } else { #Visible };
+      qualityScore = ?qualityScore;
+      weight = ?weight;
+      createdAt = review.createdAt;
+      updatedAt = Time.now();
+    };
+
+    return #ok(updatedReview);
+  };
   // Get reputation score with history for a user
   public query func getReputationScoreWithHistory(userId : Principal) : async Result<{ score : ReputationScore; history : [(Time.Time, Float)] }> {
     switch (reputations.get(userId)) {
@@ -987,58 +1042,6 @@ persistent actor ReputationCanister {
     clientCompletedBookings : Nat,
     clientAverageRating : ?Float,
     clientAccountAge : Time.Time,
-  ) : async Result<Review> {
-    // Check authorization
-    // if (not isAuthorized(msg.caller)) {
-    //     return #err("Unauthorized: Only trusted service agent can call this function");
-    // };
-
-    // 1. Analyze sentiment with LLM
-    let llmSentimentScore = await analyzeSentimentWithLLM(review);
-
-    // 2. Analyze review for flags (enhanced with LLM sentiment)
-    let flags = analyzeReviewWithLLMSentiment(review, llmSentimentScore);
-
-    // 3. Calculate quality score incorporating LLM sentiment
-    let qualityScore : Float = calculateReviewQualityWithLLM(review, llmSentimentScore, flags);
-
-    // 4. Determine if review should be hidden
-    let shouldHide = qualityScore < 0.3 or flags.size() > 2;
-
-    // 5. Update client reputation (the reviewer) to track their trustworthiness
-    ignore await updateUserReputation(
-      review.clientId,
-      clientCompletedBookings,
-      clientAverageRating,
-      clientAccountAge,
-    );
-
-    // 6. Return updated review with status and quality score
-    let updatedReview : Review = {
-      id = review.id;
-      bookingId = review.bookingId;
-      clientId = review.clientId;
-      providerId = review.providerId;
-      serviceId = review.serviceId;
-      rating = review.rating;
-      comment = review.comment;
-      status = if (shouldHide) { #Hidden } else if (flags.size() > 0) {
-        #Flagged;
-      } else { #Visible };
-      qualityScore = ?qualityScore;
-      createdAt = review.createdAt;
-      updatedAt = Time.now();
-    };
-
-    return #ok(updatedReview);
-  };
-
-  // Process a provider-to-client review with LLM sentiment analysis
-  // This is used when providers rate clients after service completion
-  // Accepts additional data needed for reputation calculation
-  // Secured for Firebase service agent only
-  public shared (_msg) func processProviderReviewWithLLM(
-    review : Review,
     providerCompletedBookings : Nat,
     providerAverageRating : ?Float,
     providerAccountAge : Time.Time,
@@ -1060,7 +1063,25 @@ persistent actor ReputationCanister {
     // 4. Determine if review should be hidden
     let shouldHide = qualityScore < 0.3 or flags.size() > 2;
 
-    // 5. Update provider reputation (the reviewer) to track their trustworthiness
+    // 5. Update client reputation (the reviewer) - Activity & Quality
+    let clientUpdateResult = await updateUserReputation(
+      review.clientId,
+      clientCompletedBookings,
+      clientAverageRating,
+      clientAccountAge,
+    );
+
+    let reviewerReputationScore = switch (clientUpdateResult) {
+      case (#ok(score)) score.trustScore;
+      case (#err(_)) 50.0; // Default
+    };
+
+    let reviewerTrustLevel = switch (clientUpdateResult) {
+      case (#ok(score)) score.trustLevel;
+      case (#err(_)) #Low;
+    };
+
+    // 6. Update provider reputation (the target) - Rating Received
     ignore await updateProviderReputation(
       review.providerId,
       providerCompletedBookings,
@@ -1068,7 +1089,10 @@ persistent actor ReputationCanister {
       providerAccountAge,
     );
 
-    // 6. Return updated review with status and quality score
+    // Calculate effective weight
+    let weight = calculateReviewWeight(reviewerReputationScore, reviewerTrustLevel, qualityScore, review.createdAt);
+
+    // 7. Return updated review with status and quality score
     let updatedReview : Review = {
       id = review.id;
       bookingId = review.bookingId;
@@ -1081,6 +1105,87 @@ persistent actor ReputationCanister {
         #Flagged;
       } else { #Visible };
       qualityScore = ?qualityScore;
+      weight = ?weight;
+      createdAt = review.createdAt;
+      updatedAt = Time.now();
+    };
+
+    return #ok(updatedReview);
+  };
+
+  // Process a provider-to-client review with LLM sentiment analysis
+  // This is used when providers rate clients after service completion
+  // Accepts additional data needed for reputation calculation
+  // Secured for Firebase service agent only
+  public shared (_msg) func processProviderReviewWithLLM(
+    review : Review,
+    providerCompletedBookings : Nat,
+    providerAverageRating : ?Float,
+    providerAccountAge : Time.Time,
+    clientCompletedBookings : Nat,
+    clientAverageRating : ?Float,
+    clientAccountAge : Time.Time,
+  ) : async Result<Review> {
+    // Check authorization
+    // if (not isAuthorized(msg.caller)) {
+    //     return #err("Unauthorized: Only trusted service agent can call this function");
+    // };
+
+    // 1. Analyze sentiment with LLM
+    let llmSentimentScore = await analyzeSentimentWithLLM(review);
+
+    // 2. Analyze review for flags (enhanced with LLM sentiment)
+    let flags = analyzeReviewWithLLMSentiment(review, llmSentimentScore);
+
+    // 3. Calculate quality score incorporating LLM sentiment
+    let qualityScore : Float = calculateReviewQualityWithLLM(review, llmSentimentScore, flags);
+
+    // 4. Determine if review should be hidden
+    let shouldHide = qualityScore < 0.3 or flags.size() > 2;
+
+    // 5. Update provider reputation (the reviewer) - Activity & Quality
+    let providerUpdateResult = await updateProviderReputation(
+      review.providerId,
+      providerCompletedBookings,
+      providerAverageRating,
+      providerAccountAge,
+    );
+
+    let reviewerReputationScore = switch (providerUpdateResult) {
+      case (#ok(score)) score.trustScore;
+      case (#err(_)) 50.0; // Default
+    };
+
+    let reviewerTrustLevel = switch (providerUpdateResult) {
+      case (#ok(score)) score.trustLevel;
+      case (#err(_)) #Low;
+    };
+
+    // 6. Update client reputation (the target) - Rating Received
+    ignore await updateUserReputation(
+      review.clientId,
+      clientCompletedBookings,
+      clientAverageRating,
+      clientAccountAge,
+    );
+
+    // Calculate effective weight
+    let weight = calculateReviewWeight(reviewerReputationScore, reviewerTrustLevel, qualityScore, review.createdAt);
+
+    // 7. Return updated review with status and quality score
+    let updatedReview : Review = {
+      id = review.id;
+      bookingId = review.bookingId;
+      clientId = review.clientId;
+      providerId = review.providerId;
+      serviceId = review.serviceId;
+      rating = review.rating;
+      comment = review.comment;
+      status = if (shouldHide) { #Hidden } else if (flags.size() > 0) {
+        #Flagged;
+      } else { #Visible };
+      qualityScore = ?qualityScore;
+      weight = ?weight;
       createdAt = review.createdAt;
       updatedAt = Time.now();
     };

@@ -9,8 +9,8 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const {HttpAgent, Actor} = require("@dfinity/agent");
-const {Principal} = require("@dfinity/principal");
+const { HttpAgent, Actor } = require("@dfinity/agent");
+const { Principal } = require("@dfinity/principal");
 const fs = require("fs");
 const path = require("path");
 
@@ -41,7 +41,7 @@ function loadReputationIdlFactory() {
 
     if (fs.existsSync(declarationsPath)) {
       console.log("Reputation declarations found, loading IDL factory...");
-      const {idlFactory} = require(declarationsPath);
+      const { idlFactory } = require(declarationsPath);
       return idlFactory;
     }
 
@@ -58,7 +58,7 @@ function loadReputationIdlFactory() {
  * @return {Function} The IDL factory function
  */
 function getManualReputationIdl() {
-  return ({IDL}) => {
+  return ({ IDL }) => {
     const TrustLevel = IDL.Variant({
       New: IDL.Null,
       Low: IDL.Null,
@@ -102,12 +102,13 @@ function getManualReputationIdl() {
       comment: IDL.Text,
       status: ReviewStatus,
       qualityScore: IDL.Opt(IDL.Float64),
+      weight: IDL.Opt(IDL.Float64),
       createdAt: IDL.Int,
       updatedAt: IDL.Int,
     });
 
-    const ReputationResult = IDL.Variant({ok: ReputationScore, err: IDL.Text});
-    const ReviewResult = IDL.Variant({ok: Review, err: IDL.Text});
+    const ReputationResult = IDL.Variant({ ok: ReputationScore, err: IDL.Text });
+    const ReviewResult = IDL.Variant({ ok: Review, err: IDL.Text });
 
     return IDL.Service({
       initializeReputation: IDL.Func(
@@ -126,22 +127,38 @@ function getManualReputationIdl() {
         [],
       ),
       processReview: IDL.Func(
-        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [
+          Review,
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Client data
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Provider data
+        ],
         [ReviewResult],
         [],
       ),
       processReviewWithLLM: IDL.Func(
-        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [
+          Review,
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Client data
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Provider data
+        ],
         [ReviewResult],
         [],
       ),
       processProviderReview: IDL.Func(
-        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [
+          Review,
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Provider data
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Client data
+        ],
         [ReviewResult],
         [],
       ),
       processProviderReviewWithLLM: IDL.Func(
-        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [
+          Review,
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Provider data
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Client data
+        ],
         [ReviewResult],
         [],
       ),
@@ -153,7 +170,7 @@ function getManualReputationIdl() {
       ),
       setUserReputation: IDL.Func(
         [IDL.Principal, IDL.Nat],
-        [IDL.Variant({ok: IDL.Text, err: IDL.Text})],
+        [IDL.Variant({ ok: IDL.Text, err: IDL.Text })],
         [],
       ),
     });
@@ -210,7 +227,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    reputation: "u6s2n-gx777-77774-qaaba-cai",
+    reputation: "bd3sg-teaaa-aaaaa-qaaba-cai",
   },
   ic: {
     reputation: process.env.CANISTER_ID_REPUTATION,
@@ -259,7 +276,7 @@ const reputationIdlFactory = loadReputationIdlFactory();
  */
 async function createReputationActor() {
   const config = getCanisterConfig();
-  const agent = new HttpAgent({host: config.host});
+  const agent = new HttpAgent({ host: config.host });
 
   // Fetch root key for local development
   if (config.fetchRootKey) {
@@ -460,7 +477,7 @@ async function initializeReputationInternal(userId, creationTime) {
 exports.initializeReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const {userId, creationTime} = payload;
+  const { userId, creationTime } = payload;
 
   if (!userId) {
     throw new functions.https.HttpsError(
@@ -586,17 +603,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
     // Check if this is a provider-to-client review
     const isProviderReview = review.reviewType === "ProviderToClient";
 
-    // Fetch appropriate user data based on review type
-    let clientData;
-    let providerData;
-
-    if (isProviderReview) {
-      // For provider reviews, we need provider data (the reviewer)
-      providerData = await fetchProviderData(review.providerId);
-    } else {
-      // For regular reviews, we need client data (the reviewer)
-      clientData = await fetchUserData(review.clientId);
-    }
+    // Fetch BOTH user data
+    const clientData = await fetchUserData(review.clientId);
+    const providerData = await fetchProviderData(review.providerId);
 
     // Prepare review for IC canister
     const icReview = {
@@ -607,8 +616,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
       serviceId: review.serviceId,
       rating: BigInt(review.rating),
       comment: review.comment,
-      status: {Visible: null},
+      status: { Visible: null },
       qualityScore: review.qualityScore ? [review.qualityScore] : [],
+      weight: [], // Calculated by backend
       createdAt: isoToNanoseconds(review.createdAt),
       updatedAt: isoToNanoseconds(review.updatedAt),
     };
@@ -624,6 +634,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
           BigInt(providerData.completedBookings),
           providerData.averageRating ? [providerData.averageRating] : [],
           providerData.accountAge,
+          BigInt(clientData.completedBookings),
+          clientData.averageRating ? [clientData.averageRating] : [],
+          clientData.accountAge,
         );
       } else {
         // Process regular review (client rating provider)
@@ -633,6 +646,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
           BigInt(clientData.completedBookings),
           clientData.averageRating ? [clientData.averageRating] : [],
           clientData.accountAge,
+          BigInt(providerData.completedBookings),
+          providerData.averageRating ? [providerData.averageRating] : [],
+          providerData.accountAge,
         );
       }
     } else {
@@ -644,6 +660,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
           BigInt(providerData.completedBookings),
           providerData.averageRating ? [providerData.averageRating] : [],
           providerData.accountAge,
+          BigInt(clientData.completedBookings),
+          clientData.averageRating ? [clientData.averageRating] : [],
+          clientData.accountAge,
         );
       } else {
         // Process regular review (client rating provider)
@@ -653,12 +672,15 @@ async function processReviewForReputationInternal(review, useLLM = false) {
           BigInt(clientData.completedBookings),
           clientData.averageRating ? [clientData.averageRating] : [],
           clientData.accountAge,
+          BigInt(providerData.completedBookings),
+          providerData.averageRating ? [providerData.averageRating] : [],
+          providerData.accountAge,
         );
       }
     }
 
     if ("ok" in result) {
-      return {success: true, data: result.ok};
+      return { success: true, data: result.ok };
     } else {
       throw new Error(`Failed to process review: ${result.err}`);
     }
@@ -675,7 +697,7 @@ async function processReviewForReputationInternal(review, useLLM = false) {
 exports.updateUserReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const {userId} = payload;
+  const { userId } = payload;
 
   if (!userId) {
     throw new functions.https.HttpsError(
@@ -703,7 +725,7 @@ exports.updateUserReputationInternal = updateUserReputationInternal;
 exports.updateProviderReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const {providerId} = payload;
+  const { providerId } = payload;
 
   if (!providerId) {
     throw new functions.https.HttpsError(
@@ -760,7 +782,7 @@ const deductReputationForCancellationInternal = async (userId) => {
 exports.deductReputationForCancellation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const {userId} = payload;
+  const { userId } = payload;
 
   if (!userId) {
     throw new functions.https.HttpsError(
@@ -771,7 +793,7 @@ exports.deductReputationForCancellation = functions.https.onCall(async (data, _c
 
   try {
     const result = await deductReputationForCancellationInternal(userId);
-    return {success: true, data: result};
+    return { success: true, data: result };
   } catch (error) {
     console.error("Error deducting reputation for cancellation:", error);
     throw new functions.https.HttpsError(
@@ -792,7 +814,7 @@ exports.deductReputationForCancellationInternal = deductReputationForCancellatio
 exports.processReviewForReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const {review, useLLM = false} = payload;
+  const { review, useLLM = false } = payload;
 
   if (!review || !review.id) {
     throw new functions.https.HttpsError(

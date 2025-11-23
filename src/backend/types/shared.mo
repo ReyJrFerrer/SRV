@@ -259,6 +259,7 @@ module {
     comment : Text;
     status : ReviewStatus;
     qualityScore : ?Float;
+    weight : ?Float; // Effective weight of this review based on reviewer reputation
     createdAt : Time.Time;
     updatedAt : Time.Time;
   };
