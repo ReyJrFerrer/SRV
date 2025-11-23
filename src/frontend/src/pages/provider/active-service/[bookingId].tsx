@@ -245,19 +245,19 @@ const ActiveServicePage: React.FC = () => {
                 <span>
                   {booking.scheduledDate
                     ? new Date(booking.scheduledDate).toLocaleString([], {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                     : new Date(booking.requestedDate).toLocaleString([], {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                 </span>
               </div>
               <div className="flex items-start">
@@ -275,7 +275,7 @@ const ActiveServicePage: React.FC = () => {
                       ₱
                       {Number(
                         booking.price +
-                        commissionValidation.estimatedCommission,
+                          commissionValidation.estimatedCommission,
                       ).toFixed(2)}
                     </span>
                   </span>
