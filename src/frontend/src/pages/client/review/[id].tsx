@@ -61,25 +61,12 @@ export const BookingReviewPage: React.FC = () => {
   // Check booking status and existing review
   useEffect(() => {
     const checkBookingAndReview = async () => {
-      // Step 1: Check if we have a booking ID
-      if (!bookingId) {
-        navigate("/client/booking", { replace: true });
-        return;
-      }
-
-      // Step 2: Wait for booking to load
+      // Step 1: Wait for booking to load
       if (isLoadingBooking) {
         return;
       }
-
-      // Step 3: Check if booking exists
-      if (!booking) {
-        navigate("/client/booking", { replace: true });
-        return;
-      }
-
       // Step 4: Check if booking is completed
-      if (booking.status !== "Completed") {
+      if (booking?.status !== "Completed") {
         navigate("/client/booking", { replace: true });
         return;
       }
@@ -87,7 +74,7 @@ export const BookingReviewPage: React.FC = () => {
       // Step 5: All basic checks passed, now check for existing review
       try {
         setCheckingReview(true);
-        const bookingReviews = await getBookingReviews(bookingId);
+        const bookingReviews = await getBookingReviews(bookingId as string);
 
         // Check if client has already submitted a review
         if (bookingReviews && bookingReviews.length > 0) {

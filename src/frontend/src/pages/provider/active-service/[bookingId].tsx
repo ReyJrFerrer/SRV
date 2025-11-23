@@ -44,23 +44,11 @@ const ActiveServicePage: React.FC = () => {
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
-    if (!bookingId) {
-      navigate("/provider/bookings", { replace: true });
-      return;
-    }
-
     if (isLoadingBooking) {
       return;
     }
-
-    // Only redirect if loading is complete and booking is null
-    if (!booking) {
-      navigate("/provider/bookings", { replace: true });
-      return;
-    }
-
     // Only check status after confirming booking exists
-    if (booking.status !== "InProgress") {
+    if (booking?.status !== "InProgress") {
       navigate("/provider/bookings", { replace: true });
       return;
     }

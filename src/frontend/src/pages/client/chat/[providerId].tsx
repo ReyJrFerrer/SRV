@@ -170,7 +170,7 @@ const ConversationPage: React.FC = () => {
       <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
         <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/client/chat")}
             className="rounded-full p-2 hover:bg-blue-100"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />

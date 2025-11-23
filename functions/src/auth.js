@@ -140,7 +140,7 @@ function detectEnvironment() {
 // Canister ID mappings for different environments
 const CANISTER_IDS = {
   local: {
-    auth: "uxrrr-q7777-77774-qaaaq-cai",
+    auth: "bkyz2-fmaaa-aaaaa-qaaaq-cai",
   },
   ic: {
     auth: process.env.CANISTER_ID_AUTH,

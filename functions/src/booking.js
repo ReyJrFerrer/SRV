@@ -13,7 +13,6 @@ const {
   sendOneSignalNotification,
 } = require("./notification");
 const {
-  updateProviderReputationInternal,
   checkUserReputationInternal,
 } = require("./reputation");
 const {
@@ -202,11 +201,11 @@ async function validateCommissionBalance(booking) {
  */
 function isServiceActive(service) {
   return service.isActive === true ||
-         service.active === true ||
-         service.status === "Available" ||
-         service.status === "active" ||
-         service.isActive === "true" ||
-         service.active === "true";
+    service.active === true ||
+    service.status === "Available" ||
+    service.status === "active" ||
+    service.isActive === "true" ||
+    service.active === "true";
 }
 
 /**
@@ -475,8 +474,8 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError(
         "failed-precondition",
         `Your reputation score (${clientReputation.data.trustScore}) is too ` +
-          "low to create a booking. Please contact support if you believe " +
-          "this is an error.",
+        "low to create a booking. Please contact support if you believe " +
+        "this is an error.",
       );
     }
 
@@ -498,7 +497,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError(
         "failed-precondition",
         "This provider is currently not accepting new bookings due to " +
-          "reputation issues. Please try another provider.",
+        "reputation issues. Please try another provider.",
       );
     }
 
@@ -538,7 +537,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
         if (!packageDoc.exists) {
           console.error("[createBooking] Package not found:", packageId);
           const errorMsg =
-          `Package with ID ${packageId} not found in 'service_packages' collection.`;
+            `Package with ID ${packageId} not found in 'service_packages' collection.`;
           throw new functions.https.HttpsError("not-found", errorMsg);
         }
 
@@ -547,7 +546,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
           console.error("[createBooking] Package belongs to wrong service:",
             packageId, packageData.serviceId, serviceId);
           const errorMsg =
-           `Package ${packageId} belongs to service ${packageData.serviceId}, 
+            `Package ${packageId} belongs to service ${packageData.serviceId}, 
            but booking is for service ${serviceId}.`;
           throw new functions.https.HttpsError(
             "permission-denied",
@@ -1297,13 +1296,6 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       },
     );
 
-    // Try-catch of updating reputation scores, if these fails then the functions goes through
-    try {
-      await updateProviderReputationInternal(booking.providerId);
-    } catch (error) {
-      console.log("Reputation couldn't update");
-    }
-
 
     // Create review reminder notification for client
     await createNotification(
@@ -1406,7 +1398,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
 
     // Deduct reputation for cancelling Accepted or InProgress bookings (both clients and providers)
     const shouldDeductReputation = booking.status === "Accepted" ||
-    booking.status === "InProgress"|| booking.status === "Requested";
+      booking.status === "InProgress" || booking.status === "Requested";
 
     if (shouldDeductReputation) {
       try {
@@ -1553,8 +1545,8 @@ exports.getBooking = functions.https.onCall(async (data, context) => {
 
     // Validate user authorization (client, provider, or admin can view)
     if (booking.clientId !== authInfo.uid &&
-        booking.providerId !== authInfo.uid &&
-        !authInfo.isAdmin) {
+      booking.providerId !== authInfo.uid &&
+      !authInfo.isAdmin) {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Not authorized to view this booking",
@@ -1868,9 +1860,9 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
           // Check if requested time is within the slot (no notice period restriction)
           const requestedMinute = localDate.getMinutes();
           const isInSlotRange = (requestedHour > startHour ||
-                                (requestedHour === startHour && requestedMinute >= startMinute)) &&
-                               (requestedHour < endHour ||
-                                (requestedHour === endHour && requestedMinute < endMinute));
+            (requestedHour === startHour && requestedMinute >= startMinute)) &&
+            (requestedHour < endHour ||
+              (requestedHour === endHour && requestedMinute < endMinute));
 
           return isInSlotRange;
         });
@@ -1941,7 +1933,7 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
     );
 
     if (!daySchedule || !daySchedule.availability?.isAvailable ||
-        !daySchedule.availability?.slots) {
+      !daySchedule.availability?.slots) {
       return {success: true, data: []};
     }
 
@@ -2477,7 +2469,7 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         };
 
         ticketPromises.push(
-          db.collection("reports").doc(reportId).set(newReport).catch(() => {}),
+          db.collection("reports").doc(reportId).set(newReport).catch(() => { }),
         );
       } catch (ticketError) {
         // Capture errors

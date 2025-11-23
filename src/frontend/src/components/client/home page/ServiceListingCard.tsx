@@ -337,11 +337,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
           <div className="service-content relative flex flex-grow flex-col p-4">
             <div className="flex-grow">
-              <div className="mb-2 flex flex-col items-start gap-x-2 gap-y-1 text-base text-blue-700">
-                <p className="mb-1 mt-2 truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
+              <div className="mb-2 flex min-w-0 flex-col items-start gap-x-2 gap-y-1 text-base text-blue-700">
+                <p className="mb-1 mt-2 w-full truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
                   {service.title}
                 </p>
-                <p className="flex items-center gap-1 truncate font-bold">
+                <p className="flex min-w-0 items-center gap-1 truncate font-bold">
                   {service.providerName}
                   {isVerified && (
                     <CheckBadgeIcon

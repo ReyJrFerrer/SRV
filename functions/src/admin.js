@@ -338,7 +338,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
 
     const totalRevenue = completedBookings.reduce((sum, doc) => {
       const data = doc.data();
-      const price = parseFloat(data.price)  || 0;
+      const price = parseFloat(data.price) || 0;
       return sum + price;
     }, 0);
 
@@ -1051,7 +1051,7 @@ exports.validateCertificate = functions.https.onCall(async (data, context) => {
 });
 
 exports.getBookingsData = functions.https.onRequest(async (req, res) => {
-  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || 
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS ||
     "http://localhost:5173,http://127.0.0.1:5173";
   const allowedOrigins = allowedOriginsEnv.split(",").map((origin) => origin.trim());
 

@@ -204,7 +204,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         <div className="mb-4 flex flex-col gap-2 text-xs font-medium sm:flex-row sm:gap-3">
           <div
             onClick={() => setMapMode("detected")}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition md:border-none ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition ${
               mapMode === "detected"
                 ? "bg-blue-600 text-white"
                 : "border-gray-300 text-gray-700"
@@ -216,7 +216,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
           <div
             onClick={() => setMapMode("custom")}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition md:border-none ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition ${
               mapMode === "custom"
                 ? "bg-blue-600 text-white"
                 : "border-gray-300 text-gray-700"
@@ -231,7 +231,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               setShowFallbackForms(true);
               setLocationInputMode("detected");
             }}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 md:border-none"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 "
           >
             <PencilSquareIcon className="h-4 w-4 shrink-0" />
             <span>Use Manual Address Form</span>
