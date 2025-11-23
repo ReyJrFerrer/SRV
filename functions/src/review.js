@@ -27,7 +27,7 @@ const REVIEW_WINDOW_DAYS = 30;
 const MAX_COMMENT_LENGTH = 500;
 const MIN_RATING = 1;
 const MAX_RATING = 5;
-const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 1;
+const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 5;
 // Number of consecutive bad reviews to trigger auto-report
 const BAD_REVIEW_RATING_THRESHOLD = 2; // Rating <= this value is considered "bad"
 
