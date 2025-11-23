@@ -115,7 +115,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       try {
         setShowFallbackForms(true);
         setLocationInputMode("manual");
-      } catch {}
+      } catch { }
     }
   }, [locationStatus, setLocationInputMode, setShowFallbackForms]);
 
@@ -168,7 +168,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
           setMapPreciseAddress("");
           setMapDisplayAddress("");
         }
-      } catch {}
+      } catch { }
     }
   }, [
     mapMode,
@@ -189,11 +189,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   }, [showFullScreenMap]);
   return (
     <div
-      className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
-        highlight
-          ? "border-2 border-red-500 ring-2 ring-red-200"
-          : "border-gray-100"
-      }`}
+      className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${highlight
+        ? "border-2 border-red-500 ring-2 ring-red-200"
+        : "border-gray-100"
+        }`}
     >
       <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
         <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
@@ -204,11 +203,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         <div className="mb-4 flex flex-col gap-2 text-xs font-medium sm:flex-row sm:gap-3">
           <div
             onClick={() => setMapMode("detected")}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition md:border-none ${
-              mapMode === "detected"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition ${mapMode === "detected"
+              ? "bg-blue-600 text-white"
+              : "border-gray-300 text-gray-700"
+              }`}
           >
             <MapPinIcon className="h-4 w-4 shrink-0" />
             <span>Use Detected Location</span>
@@ -216,11 +214,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 
           <div
             onClick={() => setMapMode("custom")}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition md:border-none ${
-              mapMode === "custom"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition ${mapMode === "custom"
+              ? "bg-blue-600 text-white"
+              : "border-gray-300 text-gray-700"
+              }`}
           >
             <MapIcon className="hrink-0 h-4 w-4" />
             <span>Pin / Search Location</span>
@@ -231,7 +228,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               setShowFallbackForms(true);
               setLocationInputMode("detected");
             }}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 md:border-none"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 "
           >
             <PencilSquareIcon className="h-4 w-4 shrink-0" />
             <span>Use Manual Address Form</span>
@@ -283,7 +280,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                       ) {
                         e.stop();
                       }
-                    } catch {}
+                    } catch { }
                   }}
                 >
                   <AdvancedMarker
@@ -349,10 +346,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   ? { ...mapLocation, address: mapLocation.address ?? "" }
                   : geoLocation
                     ? {
-                        lat: geoLocation.latitude,
-                        lng: geoLocation.longitude,
-                        address: cleanedDetectedAddress,
-                      }
+                      lat: geoLocation.latitude,
+                      lng: geoLocation.longitude,
+                      address: cleanedDetectedAddress,
+                    }
                     : null
               }
               onOpenFullScreen={() => setShowFullScreenMap(true)}
@@ -476,11 +473,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             ref={barangayRef}
             value={selectedBarangay}
             onChange={(e) => setSelectedBarangay(e.target.value)}
-            className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-              highlightInput === "barangay"
-                ? "border-2 border-red-500 ring-2 ring-red-200"
-                : ""
-            }`}
+            className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${highlightInput === "barangay"
+              ? "border-2 border-red-500 ring-2 ring-red-200"
+              : ""
+              }`}
           >
             <option value="" disabled>
               Select Barangay *
@@ -504,14 +500,13 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               placeholder="Enter your Barangay *"
               value={otherBarangay}
               onChange={(e) => setOtherBarangay(e.target.value)}
-              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                highlightInput === "otherBarangay" ||
+              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${highlightInput === "otherBarangay" ||
                 (otherBarangay &&
                   (otherBarangay.trim().length < 3 ||
                     otherBarangay.trim().length > 20))
-                  ? "border-2 border-red-500 ring-2 ring-red-200"
-                  : "border-blue-400"
-              }`}
+                ? "border-2 border-red-500 ring-2 ring-red-200"
+                : "border-blue-400"
+                }`}
               minLength={3}
               maxLength={20}
               required
@@ -523,17 +518,15 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             placeholder="Street Name *"
             value={street}
             onChange={(e) => setStreet(e.target.value)}
-            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-              !selectedBarangay
-                ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                : "border-gray-300 bg-white text-gray-700"
-            } ${
-              highlightInput === "street" ||
-              (street &&
-                (street.trim().length < 3 || street.trim().length > 20))
+            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay
+              ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+              : "border-gray-300 bg-white text-gray-700"
+              } ${highlightInput === "street" ||
+                (street &&
+                  (street.trim().length < 3 || street.trim().length > 20))
                 ? "border-2 border-red-500 ring-2 ring-red-200"
                 : ""
-            }`}
+              }`}
             disabled={!selectedBarangay}
             minLength={3}
             maxLength={20}
@@ -544,17 +537,15 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             placeholder="House/Unit No. *"
             value={houseNumber}
             onChange={(e) => setHouseNumber(e.target.value)}
-            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-              !street
-                ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                : "border-gray-300 bg-white text-gray-700"
-            } ${
-              highlightInput === "houseNumber" ||
-              (houseNumber &&
-                (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street
+              ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+              : "border-gray-300 bg-white text-gray-700"
+              } ${highlightInput === "houseNumber" ||
+                (houseNumber &&
+                  (houseNumber.length > 15 || !/\d/.test(houseNumber)))
                 ? "border-2 border-red-500 ring-2 ring-red-200"
                 : ""
-            }`}
+              }`}
             disabled={!street}
             maxLength={15}
           />
@@ -630,11 +621,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             ref={barangayRef}
             value={selectedBarangay}
             onChange={(e) => setSelectedBarangay(e.target.value)}
-            className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-              highlightInput === "barangay"
-                ? "border-2 border-red-500 ring-2 ring-red-200"
-                : ""
-            }`}
+            className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${highlightInput === "barangay"
+              ? "border-2 border-red-500 ring-2 ring-red-200"
+              : ""
+              }`}
             disabled={!manualCity}
           >
             <option value="" disabled>
@@ -654,14 +644,13 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               placeholder="Enter your Barangay *"
               value={otherBarangay}
               onChange={(e) => setOtherBarangay(e.target.value)}
-              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                highlightInput === "otherBarangay" ||
+              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${highlightInput === "otherBarangay" ||
                 (otherBarangay &&
                   (otherBarangay.trim().length < 3 ||
                     otherBarangay.trim().length > 20))
-                  ? "border-2 border-red-500 ring-2 ring-red-200"
-                  : "border-blue-400"
-              }`}
+                ? "border-2 border-red-500 ring-2 ring-red-200"
+                : "border-blue-400"
+                }`}
               minLength={3}
               maxLength={20}
               required
@@ -673,17 +662,15 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             placeholder="Street Name *"
             value={street}
             onChange={(e) => setStreet(e.target.value)}
-            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-              !selectedBarangay
-                ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                : "border-gray-300 bg-white text-gray-700"
-            } ${
-              highlightInput === "street" ||
-              (street &&
-                (street.trim().length < 3 || street.trim().length > 20))
+            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!selectedBarangay
+              ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+              : "border-gray-300 bg-white text-gray-700"
+              } ${highlightInput === "street" ||
+                (street &&
+                  (street.trim().length < 3 || street.trim().length > 20))
                 ? "border-2 border-red-500 ring-2 ring-red-200"
                 : ""
-            }`}
+              }`}
             disabled={!selectedBarangay}
             minLength={3}
             maxLength={20}
@@ -694,17 +681,15 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
             placeholder="House/Unit No. *"
             value={houseNumber}
             onChange={(e) => setHouseNumber(e.target.value)}
-            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-              !street
-                ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                : "border-gray-300 bg-white text-gray-700"
-            } ${
-              highlightInput === "houseNumber" ||
-              (houseNumber &&
-                (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${!street
+              ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+              : "border-gray-300 bg-white text-gray-700"
+              } ${highlightInput === "houseNumber" ||
+                (houseNumber &&
+                  (houseNumber.length > 15 || !/\d/.test(houseNumber)))
                 ? "border-2 border-red-500 ring-2 ring-red-200"
                 : ""
-            }`}
+              }`}
             disabled={!street}
             maxLength={15}
           />
@@ -727,10 +712,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               ? { ...mapLocation, address: mapLocation.address ?? "" }
               : geoLocation
                 ? {
-                    lat: geoLocation.latitude,
-                    lng: geoLocation.longitude,
-                    address: cleanedDetectedAddress,
-                  }
+                  lat: geoLocation.latitude,
+                  lng: geoLocation.longitude,
+                  address: cleanedDetectedAddress,
+                }
                 : null
           }
           onChange={(loc: any) => {
