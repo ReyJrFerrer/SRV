@@ -269,7 +269,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
         >
           <div className="relative">
-            <div className="aspect-video w-full bg-blue-50">
+            <div className="aspect-video w-full rounded-t-2xl bg-blue-50">
               <img
                 src={imageSrc}
                 alt={service.title}

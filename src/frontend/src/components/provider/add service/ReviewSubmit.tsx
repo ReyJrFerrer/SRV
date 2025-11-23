@@ -52,8 +52,8 @@ const ReviewSubmit: React.FC<Props> = ({
           <div className="flex flex-col gap-8 md:flex-row">
             {/* Service Name + Category Card */}
             <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-2 flex items-center gap-2">
-                <DocumentCheckIcon className="h-5 w-5 text-blue-400" />
+              <div className="mb-2 flex items-start gap-2">
+                <DocumentCheckIcon className="h-5 w-5 shrink-0 text-blue-400" />
                 <h3 className="font-semibold text-gray-800">
                   Service Name & Category
                 </h3>
@@ -75,8 +75,8 @@ const ReviewSubmit: React.FC<Props> = ({
 
             {/* Location Card: Takes 1/3 of the width on desktop */}
             <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-4 flex items-center gap-2">
-                <MapPinIcon className="h-5 w-5 text-blue-400" />
+              <div className="mb-4 flex items-start gap-2">
+                <MapPinIcon className="h-5 w-5 shrink-0 text-blue-400" />
                 <h3 className="font-semibold text-gray-800">Location</h3>
               </div>
               <div className="break-words font-medium text-blue-900">
@@ -88,8 +88,8 @@ const ReviewSubmit: React.FC<Props> = ({
 
             {/* Availability Card: Takes 1/3 of the width on desktop */}
             <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-4 flex items-center gap-2">
-                <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
+              <div className="mb-4 flex items-start gap-2">
+                <CalendarDaysIcon className="h-5 w-5 shrink-0 text-blue-400" />
                 <h3 className="font-semibold text-gray-800">Availability</h3>
               </div>
               <div className="font-medium text-blue-900">
@@ -106,8 +106,8 @@ const ReviewSubmit: React.FC<Props> = ({
           </div>
 
           <div className="rounded-lg bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
+            <div className="mb-4 flex items-start gap-2">
+              <CalendarDaysIcon className="h-5 w-5 shrink-0 text-blue-400" />
               <h3 className="font-semibold text-gray-800">Packages</h3>
             </div>
             <div className="space-y-2">
