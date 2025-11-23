@@ -1033,10 +1033,6 @@ persistent actor ReputationCanister {
       };
     };
   };
-
-  // Process a new review with LLM sentiment analysis
-  // Accepts additional data needed for reputation calculation
-  // Secured for Firebase service agent only
   public shared (_msg) func processReviewWithLLM(
     review : Review,
     clientCompletedBookings : Nat,
@@ -1046,10 +1042,6 @@ persistent actor ReputationCanister {
     providerAverageRating : ?Float,
     providerAccountAge : Time.Time,
   ) : async Result<Review> {
-    // Check authorization
-    // if (not isAuthorized(msg.caller)) {
-    //     return #err("Unauthorized: Only trusted service agent can call this function");
-    // };
 
     // 1. Analyze sentiment with LLM
     let llmSentimentScore = await analyzeSentimentWithLLM(review);
@@ -1115,8 +1107,6 @@ persistent actor ReputationCanister {
 
   // Process a provider-to-client review with LLM sentiment analysis
   // This is used when providers rate clients after service completion
-  // Accepts additional data needed for reputation calculation
-  // Secured for Firebase service agent only
   public shared (_msg) func processProviderReviewWithLLM(
     review : Review,
     providerCompletedBookings : Nat,
