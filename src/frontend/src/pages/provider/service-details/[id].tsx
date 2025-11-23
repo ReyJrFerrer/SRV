@@ -990,14 +990,203 @@ const ProviderServiceDetailPage: React.FC = () => {
   // Show loading screen during initialization or data loading
   if (loading && !service) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-        <p className="mt-4 text-gray-700">Loading service details...</p>
-        {retryCount > 0 && (
-          <p className="mt-2 text-sm text-gray-500">
-            Retry attempt: {retryCount}
-          </p>
-        )}
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+          <div className="flex w-full items-center justify-center px-4 py-3">
+            <div className="h-7 w-32 animate-pulse rounded bg-gray-200 lg:h-8"></div>
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-full space-y-10 px-4 py-16 sm:px-8">
+          {/* Hero Section Skeleton */}
+          <div className="space-y-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+            {/* Image carousel skeleton */}
+            <div className="relative h-64 w-full overflow-hidden rounded-t-xl bg-gray-200">
+              <div className="absolute inset-0 animate-pulse bg-gray-300"></div>
+            </div>
+
+            {/* Title and category skeleton */}
+            <div className="space-y-3 pb-6">
+              <div className="ml-8 h-8 w-3/4 animate-pulse rounded bg-gray-200"></div>
+              <div className="ml-8 h-6 w-1/3 animate-pulse rounded bg-gray-200"></div>
+            </div>
+          </div>
+
+          {/* Info Grid Skeleton */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            {/* Left Column */}
+            <div className="flex flex-col gap-8">
+              {/* Location & Availability Section Skeleton */}
+              <div className="flex animate-pulse flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6 shadow-lg shadow-sm">
+                {/* Header Section (Title + Edit Button placeholder) */}
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  {/* Title Bone (Icon + Text) */}
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-gray-200"></div>
+                    <div className="h-6 w-48 rounded-md bg-gray-200 lg:h-7 lg:w-64"></div>
+                  </div>
+                  {/* Edit Button Bone */}
+                  <div className="h-9 w-9 rounded-full bg-gray-200"></div>
+                </div>
+
+                {/* Content Body Skeleton (Mimics the viewing state) */}
+                <div className="space-y-5">
+                  {/* Address Section Skeleton */}
+                  <div>
+                    {/* Label Bone */}
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-gray-200"></div>
+                      <div className="h-5 w-20 rounded bg-gray-200"></div>
+                    </div>
+                    {/* Address Data Box Bone */}
+                    <div className="h-10 w-full rounded-lg border border-gray-200 bg-gray-200"></div>
+                  </div>
+
+                  {/* Availability Section Skeleton */}
+                  <div>
+                    {/* Label Bone */}
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-gray-200"></div>
+                      <div className="h-5 w-24 rounded bg-gray-200"></div>
+                    </div>
+
+                    {/* Availability Cards Container Bone */}
+                    <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-gray-200 px-3 py-4">
+                      {/* Generate 3 fake "Day Cards" to simulate schedule */}
+                      {[...Array(3)].map((_, index) => (
+                        <div
+                          key={index}
+                          // Matching the exact classes of the real card container for alignment
+                          className="flex w-full flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow sm:w-auto sm:min-w-[140px]"
+                        >
+                          {/* Day Name Badge Bone (e.g., "Monday") */}
+                          <div className="mb-3 flex h-6 w-28 items-center gap-2 rounded-full bg-gray-200 px-3"></div>
+
+                          {/* Time Slots List Bones */}
+                          <div className="ml-1 flex flex-col gap-2">
+                            {/* Slot 1 Bone (e.g., 9:00 AM - 5:00 PM) */}
+                            <div className="flex items-center gap-2">
+                              <div className="h-6 w-32 rounded bg-gray-200"></div>
+                            </div>
+                            {/* Slot 2 Bone (Optional second slot) */}
+                            <div
+                              className={`flex items-center gap-2 ${index === 1 ? "hidden" : ""}`}
+                            >
+                              <div className="h-6 w-24 rounded bg-gray-200"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Packages Section Skeleton */}
+              <div className="flex animate-pulse flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                {/* Header Section */}
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <div className="flex items-center gap-2">
+                    {/* Icon Bone */}
+                    <div className="h-6 w-6 rounded bg-gray-200"></div>
+                    {/* Title Bone */}
+                    <div className="h-6 w-48 rounded bg-gray-200 lg:h-7 lg:w-56"></div>
+                  </div>
+                  {/* Add Button Bone */}
+                  <div className="h-9 w-32 rounded-md bg-gray-200"></div>
+                </div>
+
+                {/* Content Section */}
+                <div className="space-y-4">
+                  {/* Package Cards Grid */}
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                    {/* Generate 2 fake cards to fill the view */}
+                    {[...Array(2)].map((_, index) => (
+                      <div
+                        key={index}
+                        className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+                      >
+                        {/* Card Top: Title & Description */}
+                        <div className="mb-4">
+                          <div className="mb-3">
+                            {/* Package Title Bone */}
+                            <div className="mb-2 h-7 w-3/4 rounded bg-gray-200"></div>
+                            {/* Description Bones (2 lines) */}
+                            <div className="mb-1 h-4 w-full rounded bg-gray-200"></div>
+                            <div className="h-4 w-2/3 rounded bg-gray-200"></div>
+                          </div>
+
+                          {/* Price Block Bones */}
+                          <div className="mt-3 space-y-2">
+                            {/* Main Price */}
+                            <div className="h-7 w-24 rounded bg-gray-200"></div>
+                            {/* Commission Text */}
+                            <div className="h-3 w-32 rounded bg-gray-200"></div>
+                            {/* Total Badge */}
+                            <div className="h-6 w-28 rounded-full bg-gray-200"></div>
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="my-4 border-t border-gray-200"></div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-4 xl:flex-row">
+                          {/* Edit Button Bone */}
+                          <div className="h-10 w-full rounded-xl bg-gray-200"></div>
+                          {/* Delete Button Bone */}
+                          <div className="h-10 w-full rounded-xl bg-gray-200"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="flex flex-col gap-8">
+              {/* Certifications Section Skeleton */}
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="h-6 w-36 animate-pulse rounded bg-gray-200"></div>
+                  <div className="h-9 w-20 animate-pulse rounded-lg bg-gray-200"></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="aspect-square animate-pulse rounded-lg bg-gray-200"
+                    ></div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Images Section Skeleton */}
+              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="h-6 w-32 animate-pulse rounded bg-gray-200"></div>
+                  <div className="h-9 w-20 animate-pulse rounded-lg bg-gray-200"></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className="aspect-square animate-pulse rounded-lg bg-gray-200"
+                    ></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons Skeleton */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <div className="h-12 w-full animate-pulse rounded-lg bg-gray-200"></div>
+            <div className="h-12 w-full animate-pulse rounded-lg bg-gray-200"></div>
+          </div>
+        </main>
+        <BottomNavigation />
       </div>
     );
   }
@@ -1104,7 +1293,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-full space-y-10 px-4 py-16 sm:px-8">
+      <main className="mx-auto max-w-full space-y-10 px-4 pb-10 sm:px-8">
         <HeroSection
           onBack={() => navigate("/provider/home")}
           service={service}
