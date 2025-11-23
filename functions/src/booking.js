@@ -13,7 +13,6 @@ const {
   sendOneSignalNotification,
 } = require("./notification");
 const {
-  updateProviderReputationInternal,
   checkUserReputationInternal,
 } = require("./reputation");
 const {
