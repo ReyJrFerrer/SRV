@@ -9,8 +9,8 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const { HttpAgent, Actor } = require("@dfinity/agent");
-const { Principal } = require("@dfinity/principal");
+const {HttpAgent, Actor} = require("@dfinity/agent");
+const {Principal} = require("@dfinity/principal");
 const fs = require("fs");
 const path = require("path");
 
@@ -41,7 +41,7 @@ function loadReputationIdlFactory() {
 
     if (fs.existsSync(declarationsPath)) {
       console.log("Reputation declarations found, loading IDL factory...");
-      const { idlFactory } = require(declarationsPath);
+      const {idlFactory} = require(declarationsPath);
       return idlFactory;
     }
 
@@ -58,7 +58,7 @@ function loadReputationIdlFactory() {
  * @return {Function} The IDL factory function
  */
 function getManualReputationIdl() {
-  return ({ IDL }) => {
+  return ({IDL}) => {
     const TrustLevel = IDL.Variant({
       New: IDL.Null,
       Low: IDL.Null,
@@ -107,8 +107,8 @@ function getManualReputationIdl() {
       updatedAt: IDL.Int,
     });
 
-    const ReputationResult = IDL.Variant({ ok: ReputationScore, err: IDL.Text });
-    const ReviewResult = IDL.Variant({ ok: Review, err: IDL.Text });
+    const ReputationResult = IDL.Variant({ok: ReputationScore, err: IDL.Text});
+    const ReviewResult = IDL.Variant({ok: Review, err: IDL.Text});
 
     return IDL.Service({
       initializeReputation: IDL.Func(
@@ -170,7 +170,7 @@ function getManualReputationIdl() {
       ),
       setUserReputation: IDL.Func(
         [IDL.Principal, IDL.Nat],
-        [IDL.Variant({ ok: IDL.Text, err: IDL.Text })],
+        [IDL.Variant({ok: IDL.Text, err: IDL.Text})],
         [],
       ),
     });
@@ -276,7 +276,7 @@ const reputationIdlFactory = loadReputationIdlFactory();
  */
 async function createReputationActor() {
   const config = getCanisterConfig();
-  const agent = new HttpAgent({ host: config.host });
+  const agent = new HttpAgent({host: config.host});
 
   // Fetch root key for local development
   if (config.fetchRootKey) {
@@ -477,7 +477,7 @@ async function initializeReputationInternal(userId, creationTime) {
 exports.initializeReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const { userId, creationTime } = payload;
+  const {userId, creationTime} = payload;
 
   if (!userId) {
     throw new functions.https.HttpsError(
@@ -616,7 +616,7 @@ async function processReviewForReputationInternal(review, useLLM = false) {
       serviceId: review.serviceId,
       rating: BigInt(review.rating),
       comment: review.comment,
-      status: { Visible: null },
+      status: {Visible: null},
       qualityScore: review.qualityScore ? [review.qualityScore] : [],
       weight: [], // Calculated by backend
       createdAt: isoToNanoseconds(review.createdAt),
@@ -680,7 +680,7 @@ async function processReviewForReputationInternal(review, useLLM = false) {
     }
 
     if ("ok" in result) {
-      return { success: true, data: result.ok };
+      return {success: true, data: result.ok};
     } else {
       throw new Error(`Failed to process review: ${result.err}`);
     }
@@ -697,7 +697,7 @@ async function processReviewForReputationInternal(review, useLLM = false) {
 exports.updateUserReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   if (!userId) {
     throw new functions.https.HttpsError(
@@ -725,7 +725,7 @@ exports.updateUserReputationInternal = updateUserReputationInternal;
 exports.updateProviderReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const { providerId } = payload;
+  const {providerId} = payload;
 
   if (!providerId) {
     throw new functions.https.HttpsError(
@@ -782,7 +782,7 @@ const deductReputationForCancellationInternal = async (userId) => {
 exports.deductReputationForCancellation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   if (!userId) {
     throw new functions.https.HttpsError(
@@ -793,7 +793,7 @@ exports.deductReputationForCancellation = functions.https.onCall(async (data, _c
 
   try {
     const result = await deductReputationForCancellationInternal(userId);
-    return { success: true, data: result };
+    return {success: true, data: result};
   } catch (error) {
     console.error("Error deducting reputation for cancellation:", error);
     throw new functions.https.HttpsError(
@@ -814,7 +814,7 @@ exports.deductReputationForCancellationInternal = deductReputationForCancellatio
 exports.processReviewForReputation = functions.https.onCall(async (data, _context) => {
   // Extract payload
   const payload = data.data || data;
-  const { review, useLLM = false } = payload;
+  const {review, useLLM = false} = payload;
 
   if (!review || !review.id) {
     throw new functions.https.HttpsError(
