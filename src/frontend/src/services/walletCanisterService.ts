@@ -204,69 +204,6 @@ export const walletCanisterService = {
   },
 
   /**
-   * Add authorized controller (Admin function)
-   */
-  async addAuthorizedController(userId: string): Promise<string> {
-    try {
-      const addAuthorizedControllerFn = httpsCallable(
-        functions,
-        "addAuthorizedController",
-      );
-
-      const result = await addAuthorizedControllerFn({
-        data: { userId },
-      });
-
-      const responseData = result.data as { success: boolean; message: string };
-      return responseData.message;
-    } catch (error) {
-      throw new Error(`Failed to add authorized controller: ${error}`);
-    }
-  },
-
-  /**
-   * Remove authorized controller (Admin function)
-   */
-  async removeAuthorizedController(userId: string): Promise<string> {
-    try {
-      const removeAuthorizedControllerFn = httpsCallable(
-        functions,
-        "removeAuthorizedController",
-      );
-
-      const result = await removeAuthorizedControllerFn({
-        data: { userId },
-      });
-
-      const responseData = result.data as { success: boolean; message: string };
-      return responseData.message;
-    } catch (error) {
-      throw new Error(`Failed to remove authorized controller: ${error}`);
-    }
-  },
-
-  /**
-   * Get all authorized controllers (Admin function)
-   */
-  async getAuthorizedControllers(): Promise<any[]> {
-    try {
-      const getAuthorizedControllersFn = httpsCallable(
-        functions,
-        "getAuthorizedControllers",
-      );
-
-      const result = await getAuthorizedControllersFn({});
-      const responseData = result.data as {
-        success: boolean;
-        controllers: any[];
-      };
-      return responseData.controllers || [];
-    } catch (error) {
-      return []; // Return empty array on error
-    }
-  },
-
-  /**
    * Get balance for a specific principal (legacy compatibility)
    * @deprecated Use getBalanceOf with userId string instead
    */
