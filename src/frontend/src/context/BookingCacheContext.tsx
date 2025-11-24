@@ -15,13 +15,17 @@ interface BookingCacheContextValue {
   // Provider bookings
   getProviderBooking: (
     bookingId: string,
+    options?: { forceRefresh?: boolean },
   ) => Promise<ProviderEnhancedBooking | null>;
   providerBookingCache: Map<string, ProviderEnhancedBooking>;
   isLoadingProviderBooking: (bookingId: string) => boolean;
   isProviderBookingsReady: boolean; // Tracks if initial load is complete
 
   // Client bookings
-  getClientBooking: (bookingId: string) => Promise<EnhancedBooking | null>;
+  getClientBooking: (
+    bookingId: string,
+    options?: { forceRefresh?: boolean },
+  ) => Promise<EnhancedBooking | null>;
   clientBookingCache: Map<string, EnhancedBooking>;
   isLoadingClientBooking: (bookingId: string) => boolean;
   isClientBookingsReady: boolean; // Tracks if initial load is complete
@@ -134,11 +138,17 @@ export const BookingCacheProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Fetches provider booking: checks cache, dedupes requests, then fetches from backend
   const getProviderBooking = useCallback(
-    async (bookingId: string): Promise<ProviderEnhancedBooking | null> => {
+    async (
+      bookingId: string,
+      options?: { forceRefresh?: boolean },
+    ): Promise<ProviderEnhancedBooking | null> => {
       // 1. Check cache first (use ref to avoid dependency)
-      const cached = providerBookingCache.get(bookingId);
-      if (cached) {
-        return cached;
+      // Skip cache check if forceRefresh is true
+      if (!options?.forceRefresh) {
+        const cached = providerBookingCache.get(bookingId);
+        if (cached) {
+          return cached;
+        }
       }
 
       // 2. Check if already loading (dedupe requests)
@@ -182,11 +192,17 @@ export const BookingCacheProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Fetches client booking: checks cache, dedupes requests, then fetches from backend
   const getClientBooking = useCallback(
-    async (bookingId: string): Promise<EnhancedBooking | null> => {
+    async (
+      bookingId: string,
+      options?: { forceRefresh?: boolean },
+    ): Promise<EnhancedBooking | null> => {
       // 1. Check cache first (use ref to avoid dependency)
-      const cached = clientBookingCache.get(bookingId);
-      if (cached) {
-        return cached;
+      // Skip cache check if forceRefresh is true
+      if (!options?.forceRefresh) {
+        const cached = clientBookingCache.get(bookingId);
+        if (cached) {
+          return cached;
+        }
       }
 
       // 2. Check if already loading (dedupe requests)

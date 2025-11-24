@@ -39,8 +39,11 @@ export const BookingReviewPage: React.FC = () => {
   const [, setCheckingReview] = useState(true);
 
   // Use cached booking hook
-  const { booking, isLoading: isLoadingBooking } =
-    useCachedClientBooking(bookingId);
+  const {
+    booking,
+    isLoading: isLoadingBooking,
+    isValidating,
+  } = useCachedClientBooking(bookingId);
 
   const { formatBookingDate, formatLocationString } = useBookingManagement();
 
@@ -67,6 +70,9 @@ export const BookingReviewPage: React.FC = () => {
       }
       // Step 4: Check if booking is completed
       if (booking?.status !== "Completed") {
+        // If we are currently validating (fetching fresh data), don't redirect yet
+        if (isValidating) return;
+
         navigate("/client/booking", { replace: true });
         return;
       }
@@ -106,7 +112,14 @@ export const BookingReviewPage: React.FC = () => {
     };
 
     checkBookingAndReview();
-  }, [bookingId, booking, isLoadingBooking, getBookingReviews, navigate]);
+  }, [
+    bookingId,
+    booking,
+    isLoadingBooking,
+    getBookingReviews,
+    navigate,
+    isValidating,
+  ]);
 
   // Load provider name and commission validation when booking is available
   useEffect(() => {
@@ -119,8 +132,8 @@ export const BookingReviewPage: React.FC = () => {
       try {
         setProviderName(
           booking.providerProfile?.name ||
-            booking.providerName ||
-            "Service Provider",
+          booking.providerName ||
+          "Service Provider",
         );
 
         // Check commission validation for cash bookings
@@ -248,7 +261,7 @@ export const BookingReviewPage: React.FC = () => {
   }
 
   // Show loading state while booking is being fetched
-  if (!booking) {
+  if (!booking || (booking.status !== "Completed" && isValidating)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
@@ -302,11 +315,11 @@ export const BookingReviewPage: React.FC = () => {
                 <span className="font-bold">Price:</span> ₱
                 {booking.price
                   ? (
-                      booking.price +
-                      (booking.paymentMethod === "CashOnHand"
-                        ? commissionValidation.estimatedCommission
-                        : 0)
-                    ).toFixed(2)
+                    booking.price +
+                    (booking.paymentMethod === "CashOnHand"
+                      ? commissionValidation.estimatedCommission
+                      : 0)
+                  ).toFixed(2)
                   : "TBD"}
               </div>
             </div>
@@ -323,20 +336,18 @@ export const BookingReviewPage: React.FC = () => {
                   key={star}
                   type="button"
                   aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                  className={`transition-transform focus:outline-none ${
-                    !isSubmitting ? "hover:scale-110 focus:scale-110" : ""
-                  }`}
+                  className={`transition-transform focus:outline-none ${!isSubmitting ? "hover:scale-110 focus:scale-110" : ""
+                    }`}
                   onClick={() => !isSubmitting && handleRating(star)}
                   onMouseEnter={() => !isSubmitting && setHovered(star)}
                   onMouseLeave={() => !isSubmitting && setHovered(null)}
                   disabled={isSubmitting}
                 >
                   <StarIcon
-                    className={`h-12 w-12 drop-shadow transition-colors ${
-                      (hovered ?? rating) >= star
-                        ? "text-yellow-400"
-                        : "text-gray-200"
-                    }`}
+                    className={`h-12 w-12 drop-shadow transition-colors ${(hovered ?? rating) >= star
+                      ? "text-yellow-400"
+                      : "text-gray-200"
+                      }`}
                     fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
                   />
                 </button>
