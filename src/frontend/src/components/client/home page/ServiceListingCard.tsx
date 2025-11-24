@@ -274,8 +274,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 src={imageSrc}
                 alt={service.title}
                 className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity duration-1000 
-                  ${imageLoaded ? "opacity-100" : "opacity-0"
-                  }`}
+                  ${imageLoaded ? "opacity-100" : "opacity-0"}`}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/ai-sp/others.svg";

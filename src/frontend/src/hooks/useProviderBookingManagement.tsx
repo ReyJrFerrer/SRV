@@ -854,7 +854,7 @@ export const useProviderBookingManagement =
                 );
               } else {
               }
-            } catch (chatError) { }
+            } catch (chatError) {}
           }
 
           if (updatedBooking) {
@@ -1102,8 +1102,8 @@ export const useProviderBookingManagement =
       const totalRevenue =
         completedBookings > 0
           ? providerBookings
-            .filter((booking) => booking.isCompleted)
-            .reduce((sum, booking) => sum + (booking.actualRevenue || 0), 0)
+              .filter((booking) => booking.isCompleted)
+              .reduce((sum, booking) => sum + (booking.actualRevenue || 0), 0)
           : 0;
 
       const expectedRevenue = providerBookings
@@ -1116,7 +1116,7 @@ export const useProviderBookingManagement =
       const averageBookingValue =
         totalBookings > 0
           ? providerBookings.reduce((sum, booking) => sum + booking.price, 0) /
-          totalBookings
+            totalBookings
           : 0;
 
       // Performance metrics
@@ -1337,7 +1337,7 @@ export const useProviderBookingManagement =
         try {
           clearError();
           await operation();
-        } catch (error) { }
+        } catch (error) {}
       },
       [clearError],
     );
