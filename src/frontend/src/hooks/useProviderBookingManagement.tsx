@@ -1663,6 +1663,137 @@ export const useProviderBookingManagement =
       [providerBookings],
     );
 
+    // Individual booking lookup and action functions
+    const getBookingById = useCallback(
+      async (bookingId: string) => {
+        try {
+          // First try to find in local state for instant response
+          const localBooking = providerBookings.find(
+            (booking) => booking.id === bookingId,
+          );
+          if (localBooking) {
+            return localBooking;
+          }
+
+          // If not found locally, fetch from backend
+          const booking = await bookingCanisterService.getBooking(bookingId);
+          if (booking) {
+            // Enrich with client data before returning
+            const enrichedBooking = await enrichBookingWithClientData(booking);
+            return enrichedBooking;
+          }
+
+          return null;
+        } catch (error) {
+          return null;
+        }
+      },
+      [providerBookings, enrichBookingWithClientData],
+    );
+
+    const getBookingWithClientData = useCallback(
+      async (bookingId: string) => {
+        try {
+          // Use getBookingById which now checks backend if not in local state
+          const booking = await (async () => {
+            const localBooking = providerBookings.find(
+              (b) => b.id === bookingId,
+            );
+            if (localBooking) return localBooking;
+
+            const fetchedBooking =
+              await bookingCanisterService.getBooking(bookingId);
+            return fetchedBooking;
+          })();
+
+          if (!booking) return null;
+          return await enrichBookingWithClientData(booking);
+        } catch (error) {
+          return null;
+        }
+      },
+      [providerBookings, enrichBookingWithClientData],
+    );
+
+    const acceptBookingById = useCallback(
+      async (bookingId: string, scheduledDate?: Date) => {
+        try {
+          await acceptBooking(bookingId, scheduledDate);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [acceptBooking],
+    );
+
+    const declineBookingById = useCallback(
+      async (bookingId: string) => {
+        try {
+          await declineBooking(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [declineBooking],
+    );
+
+    const startBookingById = useCallback(
+      async (bookingId: string) => {
+        try {
+          await startBooking(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [startBooking],
+    );
+
+    const startNavigationById = useCallback(
+      async (bookingId: string) => {
+        try {
+          await startNavigation(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [startNavigation],
+    );
+
+    const completeBookingById = useCallback(
+      async (bookingId: string, amountPaid?: number) => {
+        try {
+          await completeBooking(bookingId, amountPaid);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [completeBooking],
+    );
+
+    const disputeBookingById = useCallback(
+      async (bookingId: string) => {
+        try {
+          await disputeBooking(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [disputeBooking],
+    );
+
+    const isBookingActionInProgress = useCallback(
+      (bookingId: string, action: string) => {
+        return isOperationInProgress(`${action}-${bookingId}`);
+      },
+      [isOperationInProgress],
+    );
+
     // Return hook interface with enhanced data
     return {
       // Data states
@@ -1694,101 +1825,15 @@ export const useProviderBookingManagement =
       disputeBooking,
 
       // Individual booking lookup and action functions
-      getBookingById: async (bookingId: string) => {
-        try {
-          // First try to find in local state for instant response
-          const localBooking = providerBookings.find(
-            (booking) => booking.id === bookingId,
-          );
-          if (localBooking) {
-            return localBooking;
-          }
-
-          // If not found locally, fetch from backend
-          const booking = await bookingCanisterService.getBooking(bookingId);
-          if (booking) {
-            // Enrich with client data before returning
-            const enrichedBooking = await enrichBookingWithClientData(booking);
-            return enrichedBooking;
-          }
-
-          return null;
-        } catch (error) {
-          return null;
-        }
-      },
-      getBookingWithClientData: async (bookingId: string) => {
-        try {
-          // Use getBookingById which now checks backend if not in local state
-          const booking = await (async () => {
-            const localBooking = providerBookings.find(
-              (b) => b.id === bookingId,
-            );
-            if (localBooking) return localBooking;
-
-            const fetchedBooking =
-              await bookingCanisterService.getBooking(bookingId);
-            return fetchedBooking;
-          })();
-
-          if (!booking) return null;
-          return await enrichBookingWithClientData(booking);
-        } catch (error) {
-          return null;
-        }
-      },
-      acceptBookingById: async (bookingId: string, scheduledDate?: Date) => {
-        try {
-          await acceptBooking(bookingId, scheduledDate);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      declineBookingById: async (bookingId: string) => {
-        try {
-          await declineBooking(bookingId);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      startBookingById: async (bookingId: string) => {
-        try {
-          await startBooking(bookingId);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      startNavigationById: async (bookingId: string) => {
-        try {
-          await startNavigation(bookingId);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-
-      completeBookingById: async (bookingId: string, amountPaid?: number) => {
-        try {
-          await completeBooking(bookingId, amountPaid);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      disputeBookingById: async (bookingId: string) => {
-        try {
-          await disputeBooking(bookingId);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      isBookingActionInProgress: (bookingId: string, action: string) => {
-        return isOperationInProgress(`${action}-${bookingId}`);
-      },
+      getBookingById,
+      getBookingWithClientData,
+      acceptBookingById,
+      declineBookingById,
+      startBookingById,
+      startNavigationById,
+      completeBookingById,
+      disputeBookingById,
+      isBookingActionInProgress,
 
       // Data filtering and categorization
       getBookingsByStatus,

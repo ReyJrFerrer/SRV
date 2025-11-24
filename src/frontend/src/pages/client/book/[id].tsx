@@ -165,7 +165,7 @@ const BookingPage: React.FC = () => {
     packages: { id: string; checked: boolean }[];
     bookingOption: "sameday" | "scheduled" | null;
     selectedDate: string | null;
-    selectedTime: string;
+    // selectedTime removed to prevent restoring invalid slots
     street: string;
     houseNumber: string;
     landmark: string;
@@ -200,7 +200,6 @@ const BookingPage: React.FC = () => {
         packages: packages.map((p) => ({ id: p.id, checked: !!p.checked })),
         bookingOption,
         selectedDate: selectedDate ? selectedDate.toISOString() : null,
-        selectedTime,
         street,
         houseNumber,
         landmark,
@@ -223,7 +222,7 @@ const BookingPage: React.FC = () => {
           if (d.packages && d.packages.some((p) => p.checked)) return true;
           if (d.bookingOption) return true;
           if (d.selectedDate) return true;
-          if (d.selectedTime && d.selectedTime.trim()) return true;
+          // if (d.selectedTime && d.selectedTime.trim()) return true; // removed
           if (d.street && d.street.trim()) return true;
           if (d.houseNumber && d.houseNumber.trim()) return true;
           if (d.landmark && d.landmark.trim()) return true;
@@ -250,7 +249,7 @@ const BookingPage: React.FC = () => {
     packages,
     bookingOption,
     selectedDate,
-    selectedTime,
+    // selectedTime, // removed
     street,
     houseNumber,
     landmark,
@@ -319,7 +318,7 @@ const BookingPage: React.FC = () => {
               return true;
             if (parsed.bookingOption) return true;
             if (parsed.selectedDate) return true;
-            if (parsed.selectedTime && parsed.selectedTime.trim()) return true;
+            // if (parsed.selectedTime && parsed.selectedTime.trim()) return true; // removed
             if (parsed.street && parsed.street.trim()) return true;
             if (parsed.houseNumber && parsed.houseNumber.trim()) return true;
             if (parsed.landmark && parsed.landmark.trim()) return true;
@@ -362,7 +361,7 @@ const BookingPage: React.FC = () => {
       setSelectedDate(
         parsedDraft.selectedDate ? new Date(parsedDraft.selectedDate) : null,
       );
-      setSelectedTime(parsedDraft.selectedTime || "");
+      // setSelectedTime(parsedDraft.selectedTime || ""); // removed
       setStreet(parsedDraft.street || "");
       setHouseNumber(parsedDraft.houseNumber || "");
       setLandmark(parsedDraft.landmark || "");

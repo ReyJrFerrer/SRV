@@ -263,7 +263,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     }
 
     return (
-      <div className="group relative flex flex-col items-center transition-all duration-300">
+      <div className="group relative flex flex-col items-center">
         <Link
           to={`/client/service/${service.id}`}
           className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg  hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
@@ -273,9 +273,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               <img
                 src={imageSrc}
                 alt={service.title}
-                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover ${
-                  imageLoaded ? "opacity-100" : "opacity-0"
-                }`}
+                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity duration-1000 
+                  ${imageLoaded ? "opacity-100" : "opacity-0"}`}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/ai-sp/others.svg";
