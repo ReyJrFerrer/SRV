@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 
-
 const HashRouterFix: React.FC = () => {
   useEffect(() => {
     const pathname = window.location.pathname;
