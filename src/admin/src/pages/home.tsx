@@ -107,18 +107,17 @@ export const AdminHomePage: React.FC = () => {
   // Charts: period filter
   const [period, setPeriod] = useState<Period>("7d");
   const lineData = useMemo(() => {
-    return generateBookingsChartData(bookings || [], totalBookings, period);
-  }, [bookings, totalBookings, period]);
+    return generateBookingsChartData(bookings || [], period);
+  }, [bookings, period]);
 
   // Revenue per Day chart data with vertical grids
   const revenueLineData = useMemo(() => {
     return generateRevenueChartData(
       bookings || [],
       commissionTransactions || [],
-      systemStats,
       period,
     );
-  }, [bookings, commissionTransactions, systemStats, period]);
+  }, [bookings, commissionTransactions, period]);
 
   // Load services with certificates for pending validations count
   useEffect(() => {
