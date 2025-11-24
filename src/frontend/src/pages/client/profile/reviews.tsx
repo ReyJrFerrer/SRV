@@ -123,7 +123,7 @@ const ReviewsPage: React.FC = () => {
     <>
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             My Reviews
           </h1>
         </div>
