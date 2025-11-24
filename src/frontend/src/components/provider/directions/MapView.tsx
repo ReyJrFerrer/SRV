@@ -49,7 +49,7 @@ const MapView: React.FC<MapViewProps> = ({
         disableDefaultUI={true}
         // Hide built-in +/- zoom controls but keep programmatic zooming intact
         zoomControl={false}
-        mapId={import.meta.env.VITE_MAP_ID}
+        mapId={"6922634ff75ae05ac38cc473"}
         onClick={(e: any) => {
           try {
             if (

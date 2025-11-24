@@ -38,9 +38,7 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
 }) => {
   const isHidden = review.status === "Hidden";
   const showReviewerInfo = activeTab === "received" && reviewerInfo;
-  const { userImageUrl } = useUserImage(
-    reviewerInfo?.profilePicture?.imageUrl,
-  );
+  const { userImageUrl } = useUserImage(reviewerInfo?.profilePicture?.imageUrl);
 
   return (
     <div
