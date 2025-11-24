@@ -16,6 +16,8 @@ interface Props {
   categories: Array<{ id: string; name: string }>;
   categoriesLoading: boolean;
   savingTitleCategory: boolean;
+  reviewCount: number;
+  averageRating: number;
   setEditedTitle: (v: string) => void;
   setEditedCategory: (v: string) => void;
   onEdit: () => void;
@@ -35,6 +37,8 @@ const HeroSection: React.FC<Props> = ({
   categories,
   categoriesLoading,
   savingTitleCategory,
+  reviewCount,
+  averageRating,
   setEditedTitle,
   setEditedCategory,
   onEdit,
@@ -272,8 +276,8 @@ const HeroSection: React.FC<Props> = ({
           <div className="flex min-w-[180px] flex-col items-center justify-center gap-2">
             <ViewReviewsButton
               serviceId={service.id}
-              averageRating={service.averageRating!}
-              totalReviews={service.totalReviews!}
+              averageRating={averageRating}
+              totalReviews={reviewCount}
               variant="card"
               className="mt-1"
             />

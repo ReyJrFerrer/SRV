@@ -15,21 +15,34 @@ export const useCachedProviderBooking = (bookingId: string | undefined) => {
     getProviderBooking,
     isLoadingProviderBooking,
     isProviderBookingsReady,
+    providerBookingCache,
   } = useBookingCache();
-  const [booking, setBooking] = useState<ProviderEnhancedBooking | null>(null);
+
+  // Initialize from cache if available
+  const [booking, setBooking] = useState<ProviderEnhancedBooking | null>(() => {
+    if (bookingId && providerBookingCache.has(bookingId)) {
+      return providerBookingCache.get(bookingId) || null;
+    }
+    return null;
+  });
+
   const [isFetching, setIsFetching] = useState(false);
   const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+  // Track if we are currently validating (fetching fresh data)
+  const [isValidating, setIsValidating] = useState(!!bookingId);
 
   useEffect(() => {
     if (!bookingId) {
       setBooking(null);
       setIsFetching(false);
       setMinLoadingComplete(true);
+      setIsValidating(false);
       return;
     }
 
     const fetchBooking = async () => {
       setIsFetching(true);
+      setIsValidating(true);
 
       // Minimum loading time to prevent flicker (150ms)
       const minLoadingPromise = new Promise((resolve) =>
@@ -37,7 +50,10 @@ export const useCachedProviderBooking = (bookingId: string | undefined) => {
       );
 
       try {
-        const fetchedBooking = await getProviderBooking(bookingId);
+        // Force refresh to ensure we get latest status
+        const fetchedBooking = await getProviderBooking(bookingId, {
+          forceRefresh: true,
+        });
         setBooking(fetchedBooking);
 
         // Wait for minimum loading time
@@ -45,20 +61,34 @@ export const useCachedProviderBooking = (bookingId: string | undefined) => {
       } finally {
         setIsFetching(false);
         setMinLoadingComplete(true);
+        setIsValidating(false);
       }
     };
 
     fetchBooking();
   }, [bookingId, getProviderBooking]);
 
+  // Update local state if cache updates from elsewhere
+  useEffect(() => {
+    if (bookingId && providerBookingCache.has(bookingId)) {
+      const cached = providerBookingCache.get(bookingId);
+      if (cached && cached !== booking) {
+        setBooking(cached);
+      }
+    }
+  }, [bookingId, providerBookingCache, booking]);
+
   return {
     booking,
+    // Loading is true only if we have NO data and are fetching/waiting
     isLoading: booking
       ? false
       : isFetching ||
         !minLoadingComplete ||
         !isProviderBookingsReady ||
         (bookingId ? isLoadingProviderBooking(bookingId) : false),
+    // Expose validation state so pages can decide whether to redirect
+    isValidating,
   };
 };
 
@@ -67,25 +97,41 @@ export const useCachedProviderBooking = (bookingId: string | undefined) => {
  * Uses BookingCacheContext for centralized caching with SWR pattern
  *
  * @param bookingId - The booking ID to fetch
- * @returns {booking, isLoading} - The booking data and loading state
+ * @returns {booking, isLoading, isValidating} - The booking data and loading state
  */
 export const useCachedClientBooking = (bookingId: string | undefined) => {
-  const { getClientBooking, isLoadingClientBooking, isClientBookingsReady } =
-    useBookingCache();
-  const [booking, setBooking] = useState<EnhancedBooking | null>(null);
+  const {
+    getClientBooking,
+    isLoadingClientBooking,
+    isClientBookingsReady,
+    clientBookingCache,
+  } = useBookingCache();
+
+  // Initialize from cache if available
+  const [booking, setBooking] = useState<EnhancedBooking | null>(() => {
+    if (bookingId && clientBookingCache.has(bookingId)) {
+      return clientBookingCache.get(bookingId) || null;
+    }
+    return null;
+  });
+
   const [isFetching, setIsFetching] = useState(false);
   const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+  // Track if we are currently validating (fetching fresh data)
+  const [isValidating, setIsValidating] = useState(!!bookingId);
 
   useEffect(() => {
     if (!bookingId) {
       setBooking(null);
       setIsFetching(false);
       setMinLoadingComplete(true);
+      setIsValidating(false);
       return;
     }
 
     const fetchBooking = async () => {
       setIsFetching(true);
+      setIsValidating(true);
 
       // Minimum loading time to prevent flicker (150ms)
       const minLoadingPromise = new Promise((resolve) =>
@@ -93,7 +139,10 @@ export const useCachedClientBooking = (bookingId: string | undefined) => {
       );
 
       try {
-        const fetchedBooking = await getClientBooking(bookingId);
+        // Force refresh to ensure we get latest status
+        const fetchedBooking = await getClientBooking(bookingId, {
+          forceRefresh: true,
+        });
         setBooking(fetchedBooking);
 
         // Wait for minimum loading time
@@ -101,11 +150,22 @@ export const useCachedClientBooking = (bookingId: string | undefined) => {
       } finally {
         setIsFetching(false);
         setMinLoadingComplete(true);
+        setIsValidating(false);
       }
     };
 
     fetchBooking();
   }, [bookingId, getClientBooking]);
+
+  // Update local state if cache updates from elsewhere
+  useEffect(() => {
+    if (bookingId && clientBookingCache.has(bookingId)) {
+      const cached = clientBookingCache.get(bookingId);
+      if (cached && cached !== booking) {
+        setBooking(cached);
+      }
+    }
+  }, [bookingId, clientBookingCache, booking]);
 
   return {
     booking,
@@ -117,5 +177,7 @@ export const useCachedClientBooking = (bookingId: string | undefined) => {
         !minLoadingComplete ||
         !isClientBookingsReady ||
         (bookingId ? isLoadingClientBooking(bookingId) : false),
+    // Expose validation state so pages can decide whether to redirect
+    isValidating,
   };
 };

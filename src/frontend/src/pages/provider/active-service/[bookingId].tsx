@@ -39,8 +39,11 @@ const ActiveServicePage: React.FC = () => {
   const { checkCommissionValidation } = useProviderBookingManagement();
 
   // Use cached booking hook - fetches once, shares across all pages
-  const { booking, isLoading: isLoadingBooking } =
-    useCachedProviderBooking(bookingId);
+  const {
+    booking,
+    isLoading: isLoadingBooking,
+    isValidating,
+  } = useCachedProviderBooking(bookingId);
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
@@ -49,10 +52,13 @@ const ActiveServicePage: React.FC = () => {
     }
     // Only check status after confirming booking exists
     if (booking?.status !== "InProgress") {
+      // If we are currently validating (fetching fresh data), don't redirect yet
+      if (isValidating) return;
+
       navigate("/provider/bookings", { replace: true });
       return;
     }
-  }, [booking, isLoadingBooking, bookingId, navigate]);
+  }, [booking, isLoadingBooking, bookingId, navigate, isValidating]);
 
   const { identity } = useAuth();
   const { conversations, createConversation } = useChat();
@@ -89,11 +95,6 @@ const ActiveServicePage: React.FC = () => {
     if (!booking) return;
     navigate(`/provider/complete-service/${booking.id}`);
   };
-
-  // const handleUploadEvidence = () => {
-  //   // Trigger the hidden file input
-  //   fileInputRef.current?.click();
-  // };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -182,25 +183,6 @@ const ActiveServicePage: React.FC = () => {
     }
   };
 
-  // Show loading state while booking is being fetched
-  if (isLoadingBooking || !booking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  // Now safe to check booking status since we know booking exists
-  if (booking.status !== "InProgress") {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-center text-orange-500">
-        This booking is not currently in progress. Current status:{" "}
-        {booking.status}
-      </div>
-    );
-  }
-
   // --- UI Section ---
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
@@ -213,137 +195,153 @@ const ActiveServicePage: React.FC = () => {
       </header>
 
       <main className="container mx-auto flex-grow space-y-10 px-4 py-16 sm:px-8">
-        {/* Timer removed */}
+        {isLoadingBooking || !booking ? (
+          <div className="flex min-h-screen items-center justify-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+          </div>
+        ) : booking.status !== "InProgress" ? (
+          <div className="flex min-h-screen items-center justify-center p-4 text-center text-orange-500">
+            {isValidating ? (
+              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+            ) : (
+              `This booking is not currently in progress. Current status: ${booking.status}`
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Timer removed */}
 
-        {/* Details and Actions Section */}
-        <div className="mt-6 py-14 sm:mt-8 md:flex md:gap-8 lg:gap-12">
-          {/* Left Column: Booking Details */}
-          <section className="w-full rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:flex-1">
-            <h2 className="mb-4 border-b border-blue-100 pb-3 text-xl font-bold text-blue-800 sm:text-2xl">
-              Service Details
-            </h2>
-            <div className="space-y-4 text-base text-gray-700">
-              <div className="flex items-center">
-                <UserIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <span className="font-semibold text-gray-800">
-                  {booking.clientName || "Unknown Client"}
-                </span>
-              </div>
-              {booking.clientPhone && (
-                <div className="flex items-center">
-                  <PhoneIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                  <a
-                    href={`tel:${booking.clientPhone}`}
-                    className="font-medium text-blue-600 hover:underline"
+            {/* Details and Actions Section */}
+            <div className="mt-6 py-14 sm:mt-8 md:flex md:gap-8 lg:gap-12">
+              {/* Left Column: Booking Details */}
+              <section className="w-full rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:flex-1">
+                <h2 className="mb-4 border-b border-blue-100 pb-3 text-xl font-bold text-blue-800 sm:text-2xl">
+                  Service Details
+                </h2>
+                <div className="space-y-4 text-base text-gray-700">
+                  <div className="flex items-center">
+                    <UserIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
+                    <span className="font-semibold text-gray-800">
+                      {booking.clientName || "Unknown Client"}
+                    </span>
+                  </div>
+                  {booking.clientPhone && (
+                    <div className="flex items-center">
+                      <PhoneIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
+                      <a
+                        href={`tel:${booking.clientPhone}`}
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        {booking.clientPhone}
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex items-center">
+                    <CalendarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
+                    <span>
+                      {booking.scheduledDate
+                        ? new Date(booking.scheduledDate).toLocaleString([], {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : new Date(booking.requestedDate).toLocaleString([], {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                    </span>
+                  </div>
+                  <div className="flex items-start">
+                    <MapPinIcon className="mr-3 mt-1 h-6 w-6 flex-shrink-0 text-blue-400" />
+                    <span className="break-words font-medium text-gray-800">
+                      {booking.formattedLocation || "Location not specified"}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-700">
+                        Price:{" "}
+                        <span className="font-semibold text-green-700">
+                          ₱
+                          {Number(
+                            booking.price +
+                              commissionValidation.estimatedCommission,
+                          ).toFixed(2)}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-700">
+                        Client's amount to pay:{" "}
+                        <span className="font-semibold text-green-700">
+                          ₱{Number(booking.amountPaid).toFixed(2)}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Right Column: Actions */}
+              <section className="mt-8 rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:mt-0 md:w-auto md:max-w-xs lg:w-1/3 xl:w-1/4">
+                <h3 className="mb-5 text-lg font-bold text-blue-800 sm:text-xl">
+                  Actions
+                </h3>
+                <div className="space-y-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  {uploadedImageName && (
+                    <div className="mt-2 flex items-center gap-2 rounded bg-green-50 px-3 py-2 text-sm text-green-700">
+                      <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                      Image "{uploadedImageName}" uploaded!
+                    </div>
+                  )}
+                  <button
+                    onClick={handleContactClient}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                   >
-                    {booking.clientPhone}
-                  </a>
+                    <PaperAirplaneIcon className="h-5 w-5" /> Contact{" "}
+                    {booking.clientName?.split(" ")[0] || "Client"}
+                  </button>
+                  <button
+                    onClick={handleChatClient}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                  >
+                    <ChatBubbleLeftRightIcon className="h-5 w-5" /> Chat{" "}
+                    {booking.clientName?.split(" ")[0] || "Client"}
+                  </button>
+                  <button
+                    onClick={handleMarkCompleted}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-green-700"
+                  >
+                    <CheckCircleIcon className="h-5 w-5" /> Mark as Completed
+                  </button>
+                  <button
+                    onClick={() => setIsCancelModalOpen(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
+                  >
+                    <XCircleIcon className="h-5 w-5" />
+                    Cancel Service
+                  </button>
                 </div>
-              )}
-              <div className="flex items-center">
-                <CalendarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <span>
-                  {booking.scheduledDate
-                    ? new Date(booking.scheduledDate).toLocaleString([], {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : new Date(booking.requestedDate).toLocaleString([], {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                </span>
-              </div>
-              <div className="flex items-start">
-                <MapPinIcon className="mr-3 mt-1 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <span className="break-words font-medium text-gray-800">
-                  {booking.formattedLocation || "Location not specified"}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-700">
-                    Price:{" "}
-                    <span className="font-semibold text-green-700">
-                      ₱
-                      {Number(
-                        booking.price +
-                          commissionValidation.estimatedCommission,
-                      ).toFixed(2)}
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-700">
-                    Client's amount to pay:{" "}
-                    <span className="font-semibold text-green-700">
-                      ₱{Number(booking.amountPaid).toFixed(2)}
-                    </span>
-                  </span>
-                </div>
-              </div>
+              </section>
             </div>
-          </section>
-
-          {/* Right Column: Actions */}
-          <section className="mt-8 rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:mt-0 md:w-auto md:max-w-xs lg:w-1/3 xl:w-1/4">
-            <h3 className="mb-5 text-lg font-bold text-blue-800 sm:text-xl">
-              Actions
-            </h3>
-            <div className="space-y-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              {uploadedImageName && (
-                <div className="mt-2 flex items-center gap-2 rounded bg-green-50 px-3 py-2 text-sm text-green-700">
-                  <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                  Image "{uploadedImageName}" uploaded!
-                </div>
-              )}
-              <button
-                onClick={handleContactClient}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-              >
-                <PaperAirplaneIcon className="h-5 w-5" /> Contact{" "}
-                {booking.clientName?.split(" ")[0] || "Client"}
-              </button>
-              <button
-                onClick={handleChatClient}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
-              >
-                <ChatBubbleLeftRightIcon className="h-5 w-5" /> Chat{" "}
-                {booking.clientName?.split(" ")[0] || "Client"}
-              </button>
-              <button
-                onClick={handleMarkCompleted}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-green-700"
-              >
-                <CheckCircleIcon className="h-5 w-5" /> Mark as Completed
-              </button>
-              <button
-                onClick={() => setIsCancelModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
-              >
-                <XCircleIcon className="h-5 w-5" />
-                Cancel Service
-              </button>
-            </div>
-          </section>
-        </div>
+          </>
+        )}
       </main>
       <div className="lg:hidden"></div>
       <CancelWithReasonButton

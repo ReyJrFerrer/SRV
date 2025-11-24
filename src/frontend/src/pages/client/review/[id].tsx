@@ -39,8 +39,11 @@ export const BookingReviewPage: React.FC = () => {
   const [, setCheckingReview] = useState(true);
 
   // Use cached booking hook
-  const { booking, isLoading: isLoadingBooking } =
-    useCachedClientBooking(bookingId);
+  const {
+    booking,
+    isLoading: isLoadingBooking,
+    isValidating,
+  } = useCachedClientBooking(bookingId);
 
   const { formatBookingDate, formatLocationString } = useBookingManagement();
 
@@ -67,6 +70,9 @@ export const BookingReviewPage: React.FC = () => {
       }
       // Step 4: Check if booking is completed
       if (booking?.status !== "Completed") {
+        // If we are currently validating (fetching fresh data), don't redirect yet
+        if (isValidating) return;
+
         navigate("/client/booking", { replace: true });
         return;
       }
@@ -106,7 +112,14 @@ export const BookingReviewPage: React.FC = () => {
     };
 
     checkBookingAndReview();
-  }, [bookingId, booking, isLoadingBooking, getBookingReviews, navigate]);
+  }, [
+    bookingId,
+    booking,
+    isLoadingBooking,
+    getBookingReviews,
+    navigate,
+    isValidating,
+  ]);
 
   // Load provider name and commission validation when booking is available
   useEffect(() => {
@@ -248,7 +261,7 @@ export const BookingReviewPage: React.FC = () => {
   }
 
   // Show loading state while booking is being fetched
-  if (!booking) {
+  if (!booking || (booking.status !== "Completed" && isValidating)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>

@@ -6,6 +6,7 @@ import {
   useServiceManagement,
 } from "../../hooks/serviceManagement";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
+import { useServiceReviews } from "../../hooks/reviewManagement";
 import { toast } from "sonner";
 import Tooltip from "../common/Tooltip";
 
@@ -31,6 +32,148 @@ const getCategoryImage = (slugOrName?: string) => {
   return `/images/categories/${slug}.svg`;
 };
 
+interface ServiceCardProps {
+  service: EnhancedService;
+  isActive: boolean;
+  activeCount: number;
+  plural: string;
+  hasActiveBookings: (id: string) => boolean;
+  handleToggleActive: (serviceId: string, isActive: boolean) => Promise<void>;
+  setDeleteConfirmId: (id: string | null) => void;
+  deletingId: string | null;
+}
+
+const ServiceCard: React.FC<ServiceCardProps> = ({
+  service,
+  isActive,
+  activeCount,
+  plural,
+  hasActiveBookings,
+  handleToggleActive,
+  setDeleteConfirmId,
+  deletingId,
+}) => {
+  const navigate = useNavigate();
+  const { reviews, getAverageRating } = useServiceReviews(service.id as string);
+  const visibleReviews = reviews.filter((r) => r.status === "Visible");
+  const averageRating = getAverageRating(visibleReviews);
+  const reviewCount = visibleReviews.length;
+  const categoryImage = getCategoryImage(
+    service.category?.slug || service.category?.name,
+  );
+
+  return (
+    <div className="group relative mt-8 flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+      <button
+        type="button"
+        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+        style={{ background: "transparent", border: "none", padding: 0 }}
+        onClick={() => navigate(`/provider/service-details/${service.id}`)}
+        aria-label={`View details for ${service.title}`}
+        tabIndex={0}
+      />
+
+      <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
+        <img
+          src={categoryImage}
+          alt={service.category?.name || "Category"}
+          className="h-16 w-16 rounded-full border-4 border-white bg-white object-cover shadow-lg"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/images/categories/others.svg";
+          }}
+        />
+      </div>
+
+      {isActive ? (
+        <span
+          className="pointer-events-none absolute right-3 top-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
+          title="Active"
+        >
+          Active
+        </span>
+      ) : (
+        <span
+          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${
+            getStatusDisplay(service.status).className
+          } pointer-events-none`}
+        >
+          {getStatusDisplay(service.status).text}
+        </span>
+      )}
+
+      <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
+        <h4
+          className="mb-0 line-clamp-2 w-full break-words text-center text-lg font-bold text-blue-900"
+          style={{ wordBreak: "break-word" }}
+        >
+          {service.title}
+        </h4>
+        <div className="flex items-center justify-center gap-2">
+          <StarIcon className="h-5 w-5 text-yellow-400" />
+          <span className="font-semibold text-blue-900">
+            {averageRating || "0"} / 5{" "}
+            <span className="text-gray-500">({reviewCount})</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="relative z-10 mt-4 grid w-full grid-cols-2 gap-2">
+        <Tooltip
+          content={`Cannot ${isActive ? "deactivate" : "activate"} service with ${activeCount} active booking${plural}`}
+          showWhenDisabled={hasActiveBookings(service.id)}
+        >
+          <button
+            type="button"
+            className={`w-full rounded-lg px-2 py-2 text-sm font-semibold transition-colors ${
+              hasActiveBookings(service.id)
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            } ${
+              isActive
+                ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                : "bg-green-500 text-white hover:bg-green-600"
+            }`}
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!hasActiveBookings(service.id)) {
+                await handleToggleActive(service.id, isActive);
+              }
+            }}
+            disabled={hasActiveBookings(service.id)}
+          >
+            {isActive ? "Deactivate" : "Activate"}
+          </button>
+        </Tooltip>
+        <Tooltip
+          content={`Cannot delete service with ${activeCount} active booking${plural}`}
+          showWhenDisabled={hasActiveBookings(service.id)}
+        >
+          <button
+            type="button"
+            className={`w-full rounded-lg bg-red-500 px-2 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
+              hasActiveBookings(service.id)
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!hasActiveBookings(service.id)) {
+                setDeleteConfirmId(service.id);
+              }
+            }}
+            disabled={
+              deletingId === service.id || hasActiveBookings(service.id)
+            }
+          >
+            Delete
+          </button>
+        </Tooltip>
+      </div>
+    </div>
+  );
+};
+
 interface ServiceManagementProps {
   services?: EnhancedService[];
   loading?: boolean;
@@ -49,7 +192,6 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 }) => {
   // Limit displayed services to 4
   const displayedServices = services.slice(0, 4);
-  const navigate = useNavigate();
   const { updateServiceStatus, deleteService } = useServiceManagement();
   const { bookings: providerBookings } = useProviderBookingManagement();
 
@@ -208,138 +350,21 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
               const isActive = service.status === "Available";
-              const categoryImage = getCategoryImage(
-                service.category?.slug || service.category?.name,
-              );
-
               const activeCount = getServiceActiveBookingsCount(service.id);
               const plural = activeCount !== 1 ? "s" : "";
 
               return (
-                <div
+                <ServiceCard
                   key={service.id}
-                  className="group relative mt-8 flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
-                >
-                  {/* Make the entire card a button */}
-                  <button
-                    type="button"
-                    className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      padding: 0,
-                    }}
-                    onClick={() =>
-                      navigate(`/provider/service-details/${service.id}`)
-                    }
-                    aria-label={`View details for ${service.title}`}
-                    tabIndex={0}
-                  />
-
-                  {/* Category image */}
-                  <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
-                    <img
-                      src={categoryImage}
-                      alt={service.category?.name || "Category"}
-                      className="h-16 w-16 rounded-full border-4 border-white bg-white object-cover shadow-lg"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/images/categories/others.svg";
-                      }}
-                    />
-                  </div>
-
-                  {/* Status badge */}
-                  {isActive ? (
-                    <span
-                      className="pointer-events-none absolute right-3 top-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
-                      title="Active"
-                    >
-                      Active
-                    </span>
-                  ) : (
-                    <span
-                      className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(service.status).className} pointer-events-none`}
-                    >
-                      {getStatusDisplay(service.status).text}
-                    </span>
-                  )}
-
-                  <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
-                    <h4
-                      className="mb-0 line-clamp-2 w-full break-words text-center text-lg font-bold text-blue-900"
-                      style={{ wordBreak: "break-word" }}
-                    >
-                      {service.title}
-                    </h4>
-                    <div className="flex items-center justify-center gap-2">
-                      <StarIcon className="h-5 w-5 text-yellow-400" />
-                      <span className="font-semibold text-blue-900">
-                        {service.averageRating || "0"} / 5{" "}
-                        <span className="text-gray-500">
-                          ({service.reviewCount})
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="relative z-10 mt-4 grid w-full grid-cols-2 gap-2">
-                    <Tooltip
-                      content={`Cannot ${
-                        isActive ? "deactivate" : "activate"
-                      } service with ${activeCount} active booking${plural}`}
-                      showWhenDisabled={hasActiveBookings(service.id)}
-                    >
-                      <button
-                        type="button"
-                        className={`w-full rounded-lg px-2 py-2 text-sm font-semibold transition-colors ${
-                          hasActiveBookings(service.id)
-                            ? "cursor-not-allowed opacity-50"
-                            : ""
-                        } ${
-                          isActive
-                            ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                            : "bg-green-500 text-white hover:bg-green-600"
-                        }`}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (!hasActiveBookings(service.id)) {
-                            await handleToggleActive(service.id, isActive);
-                          }
-                        }}
-                        disabled={hasActiveBookings(service.id)}
-                      >
-                        {isActive ? "Deactivate" : "Activate"}
-                      </button>
-                    </Tooltip>
-                    <Tooltip
-                      content={`Cannot delete service with ${activeCount} active booking${plural}`}
-                      showWhenDisabled={hasActiveBookings(service.id)}
-                    >
-                      <button
-                        type="button"
-                        className={`w-full rounded-lg bg-red-500 px-2 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
-                          hasActiveBookings(service.id)
-                            ? "cursor-not-allowed opacity-50"
-                            : ""
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!hasActiveBookings(service.id)) {
-                            setDeleteConfirmId(service.id);
-                          }
-                        }}
-                        disabled={
-                          deletingId === service.id ||
-                          hasActiveBookings(service.id)
-                        }
-                      >
-                        Delete
-                      </button>
-                    </Tooltip>
-                  </div>
-                </div>
+                  service={service}
+                  isActive={isActive}
+                  activeCount={activeCount}
+                  plural={plural}
+                  hasActiveBookings={hasActiveBookings}
+                  handleToggleActive={handleToggleActive}
+                  setDeleteConfirmId={setDeleteConfirmId}
+                  deletingId={deletingId}
+                />
               );
             })}
           </div>
