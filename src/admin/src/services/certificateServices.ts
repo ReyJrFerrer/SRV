@@ -35,27 +35,6 @@ export const getPendingCertificateValidations = async (): Promise<any[]> => {
   }
 };
 
-export const validateCertificate = async (
-  validationId: string,
-  approved: boolean,
-  reason?: string,
-): Promise<string> => {
-  try {
-    requireAuth();
-
-    const result = await callFirebaseFunction("validateCertificate", {
-      certificateId: validationId,
-      approved,
-      reason: reason || null,
-    });
-
-    return result.message || "Certificate validation updated successfully";
-  } catch (error) {
-    console.error("Error validating certificate", error);
-    throw new Error(`Failed to validate certificate: ${error}`);
-  }
-};
-
 // Update certificate validation status
 export const updateCertificateValidationStatus = async (
   certificateId: string,

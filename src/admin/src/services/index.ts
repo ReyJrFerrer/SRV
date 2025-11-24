@@ -40,7 +40,6 @@ export const adminServiceCanister = {
   getServicesWithCertificates: certificateServices.getServicesWithCertificates,
   getPendingCertificateValidations:
     certificateServices.getPendingCertificateValidations,
-  validateCertificate: certificateServices.validateCertificate,
   updateCertificateValidationStatus:
     certificateServices.updateCertificateValidationStatus,
   getValidatedCertificates: certificateServices.getValidatedCertificates,

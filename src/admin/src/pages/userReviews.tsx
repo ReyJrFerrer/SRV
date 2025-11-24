@@ -7,6 +7,7 @@ import { ReviewItem } from "../components/analytics/ReviewItem";
 import { ReviewStats } from "../components/analytics/ReviewStats";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { ConfirmModal } from "../components/ConfirmModal";
+import { getProfile } from "../services/identityBridge";
 import {
   Review,
   getCurrentReviews,
@@ -44,6 +45,9 @@ const UserReviewsPage: React.FC = () => {
   );
   const [showHiddenOnly, setShowHiddenOnly] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [reviewerProfiles, setReviewerProfiles] = useState<
+    Record<string, { name: string; profilePicture?: { imageUrl: string } }>
+  >({});
 
   useEffect(() => {
     document.title = "User Reviews | Admin";
@@ -64,6 +68,57 @@ const UserReviewsPage: React.FC = () => {
       setReceivedReviews(receivedReviews || []);
       setGivenAsClientReviews(givenAsClientReviews || []);
       setGivenAsProviderReviews(givenAsProviderReviews || []);
+
+      // Fetch reviewer profiles for received reviews
+      if (receivedReviews && receivedReviews.length > 0) {
+        const uniqueProviderIds = [
+          ...new Set(
+            receivedReviews
+              .map((r) => r.providerId)
+              .filter((id): id is string => !!id),
+          ),
+        ];
+
+        const profilePromises = uniqueProviderIds.map(async (providerId) => {
+          try {
+            const profile = await getProfile(providerId);
+            if (profile && profile.success && profile.profile) {
+              return {
+                providerId,
+                name: profile.profile.name || "Unknown User",
+                profilePicture: profile.profile.profilePicture,
+              };
+            }
+            return {
+              providerId,
+              name: "Unknown User",
+              profilePicture: undefined,
+            };
+          } catch (error) {
+            console.error(`Error fetching profile for ${providerId}:`, error);
+            return {
+              providerId,
+              name: "Unknown User",
+              profilePicture: undefined,
+            };
+          }
+        });
+
+        const profiles = await Promise.all(profilePromises);
+        const profilesMap = profiles.reduce(
+          (acc, { providerId, name, profilePicture }) => {
+            acc[providerId] = { name, profilePicture };
+            return acc;
+          },
+          {} as Record<
+            string,
+            { name: string; profilePicture?: { imageUrl: string } }
+          >,
+        );
+        setReviewerProfiles(profilesMap);
+      } else {
+        setReviewerProfiles({});
+      }
     } catch (e) {
       console.error("Error loading reviews:", e);
       setError("Failed to load reviews.");
@@ -351,18 +406,26 @@ const UserReviewsPage: React.FC = () => {
                       new Date(b.createdAt).getTime() -
                       new Date(a.createdAt).getTime(),
                   )
-                  .map((rev) => (
-                    <ReviewItem
-                      key={rev.id}
-                      review={rev}
-                      isSelected={selectedReviews.has(rev.id)}
-                      isDeleting={deletingReviewId === rev.id}
-                      bulkActionLoading={bulkActionLoading}
-                      onSelect={toggleSelectReview}
-                      onRestore={handleRestoreReview}
-                      onShowDeleteConfirm={setShowDeleteConfirm}
-                    />
-                  ))}
+                  .map((rev) => {
+                    const reviewerInfo =
+                      activeTab === "received" && rev.providerId
+                        ? reviewerProfiles[rev.providerId]
+                        : undefined;
+                    return (
+                      <ReviewItem
+                        key={rev.id}
+                        review={rev}
+                        isSelected={selectedReviews.has(rev.id)}
+                        isDeleting={deletingReviewId === rev.id}
+                        bulkActionLoading={bulkActionLoading}
+                        onSelect={toggleSelectReview}
+                        onRestore={handleRestoreReview}
+                        onShowDeleteConfirm={setShowDeleteConfirm}
+                        activeTab={activeTab}
+                        reviewerInfo={reviewerInfo}
+                      />
+                    );
+                  })}
               </div>
             </>
           )}

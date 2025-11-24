@@ -74,7 +74,6 @@ const {
   getRejectedCertificates,
   getServicesWithCertificates,
   getPendingCertificateValidations,
-  validateCertificate,
   updateCertificateValidationStatus,
   autoReactivateSuspendedAccounts,
   getBookingsData,
@@ -437,7 +436,6 @@ exports.getValidatedCertificates = getValidatedCertificates;
 exports.getRejectedCertificates = getRejectedCertificates;
 exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
-exports.validateCertificate = validateCertificate;
 exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
 exports.getBookingsData = getBookingsData;
 
