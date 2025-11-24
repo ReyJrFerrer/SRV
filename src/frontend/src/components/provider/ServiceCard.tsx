@@ -51,7 +51,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { images } = useServiceImages(service.id, service.imageUrls);
-  const {reviews, getAverageRating} = useServiceReviews(service?.id as string);
+  const { reviews, getAverageRating } = useServiceReviews(
+    service?.id as string,
+  );
   const statusDisplay = getStatusDisplay(service.status);
   const isActive = service.status === "Available";
 

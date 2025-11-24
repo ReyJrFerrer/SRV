@@ -94,9 +94,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         </span>
       ) : (
         <span
-          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${getStatusDisplay(
-            service.status,
-          ).className} pointer-events-none`}
+          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${
+            getStatusDisplay(service.status).className
+          } pointer-events-none`}
         >
           {getStatusDisplay(service.status).text}
         </span>
@@ -112,7 +112,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <div className="flex items-center justify-center gap-2">
           <StarIcon className="h-5 w-5 text-yellow-400" />
           <span className="font-semibold text-blue-900">
-            {averageRating || "0"} / 5 {" "}
+            {averageRating || "0"} / 5{" "}
             <span className="text-gray-500">({reviewCount})</span>
           </span>
         </div>
@@ -126,7 +126,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           <button
             type="button"
             className={`w-full rounded-lg px-2 py-2 text-sm font-semibold transition-colors ${
-              hasActiveBookings(service.id) ? "cursor-not-allowed opacity-50" : ""
+              hasActiveBookings(service.id)
+                ? "cursor-not-allowed opacity-50"
+                : ""
             } ${
               isActive
                 ? "bg-yellow-500 text-white hover:bg-yellow-600"
@@ -150,7 +152,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           <button
             type="button"
             className={`w-full rounded-lg bg-red-500 px-2 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
-              hasActiveBookings(service.id) ? "cursor-not-allowed opacity-50" : ""
+              hasActiveBookings(service.id)
+                ? "cursor-not-allowed opacity-50"
+                : ""
             }`}
             onClick={(e) => {
               e.stopPropagation();
@@ -158,7 +162,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 setDeleteConfirmId(service.id);
               }
             }}
-            disabled={deletingId === service.id || hasActiveBookings(service.id)}
+            disabled={
+              deletingId === service.id || hasActiveBookings(service.id)
+            }
           >
             Delete
           </button>

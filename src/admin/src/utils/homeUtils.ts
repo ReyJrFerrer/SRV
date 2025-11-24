@@ -94,10 +94,10 @@ export const generateBookingsChartData = (
     date.setDate(date.getDate() - i);
     // Normalize to midnight UTC to match Firestore UTC dates
     date.setUTCHours(0, 0, 0, 0);
-    
+
     // Extract UTC date string directly (YYYY-MM-DD)
     const dateStr = date.toISOString().slice(0, 10);
-    
+
     // Format for display (local date for user-friendly display)
     const formattedDate = date
       .toLocaleDateString("en-US", {
@@ -114,12 +114,13 @@ export const generateBookingsChartData = (
       count = bookings.filter((booking) => {
         if (!booking.createdAt) return false;
         // Extract date directly from Firestore UTC string (first 10 chars: YYYY-MM-DD)
-        const bookingDateStr = typeof booking.createdAt === "string" 
-          ? booking.createdAt.slice(0, 10)
-          : booking.createdAt instanceof Date
-          ? booking.createdAt.toISOString().slice(0, 10)
-          : null;
-        
+        const bookingDateStr =
+          typeof booking.createdAt === "string"
+            ? booking.createdAt.slice(0, 10)
+            : booking.createdAt instanceof Date
+              ? booking.createdAt.toISOString().slice(0, 10)
+              : null;
+
         return bookingDateStr === dateStr;
       }).length;
     } else if (i === 0) {
@@ -152,10 +153,10 @@ export const generateRevenueChartData = (
     date.setDate(date.getDate() - i);
     // Normalize to midnight UTC to match Firestore UTC dates
     date.setUTCHours(0, 0, 0, 0);
-    
+
     // Extract UTC date string directly (YYYY-MM-DD)
     const dateStr = date.toISOString().slice(0, 10);
-    
+
     // Format for display (local date for user-friendly display)
     const formattedDate = date
       .toLocaleDateString("en-US", {
@@ -175,12 +176,13 @@ export const generateRevenueChartData = (
         .filter((booking) => {
           if (!booking.createdAt) return false;
           // Extract date directly from Firestore UTC string (first 10 chars: YYYY-MM-DD)
-          const bookingDateStr = typeof booking.createdAt === "string" 
-            ? booking.createdAt.slice(0, 10)
-            : booking.createdAt instanceof Date
-            ? booking.createdAt.toISOString().slice(0, 10)
-            : null;
-          
+          const bookingDateStr =
+            typeof booking.createdAt === "string"
+              ? booking.createdAt.slice(0, 10)
+              : booking.createdAt instanceof Date
+                ? booking.createdAt.toISOString().slice(0, 10)
+                : null;
+
           return (
             bookingDateStr === dateStr &&
             (booking.status === "Completed" || booking.status === "Settled")
@@ -194,12 +196,13 @@ export const generateRevenueChartData = (
           .filter((transaction) => {
             if (!transaction.timestamp) return false;
             // Extract date directly from Firestore UTC string (first 10 chars: YYYY-MM-DD)
-            const transactionDateStr = typeof transaction.timestamp === "string" 
-              ? transaction.timestamp.slice(0, 10)
-              : transaction.timestamp instanceof Date
-              ? transaction.timestamp.toISOString().slice(0, 10)
-              : null;
-            
+            const transactionDateStr =
+              typeof transaction.timestamp === "string"
+                ? transaction.timestamp.slice(0, 10)
+                : transaction.timestamp instanceof Date
+                  ? transaction.timestamp.toISOString().slice(0, 10)
+                  : null;
+
             return transactionDateStr === dateStr;
           })
           .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);

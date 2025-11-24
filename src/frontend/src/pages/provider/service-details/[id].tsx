@@ -67,7 +67,9 @@ const ProviderServiceDetailPage: React.FC = () => {
 
   const [service, setService] = useState<EnhancedService | null>(null);
 
-  const {reviews, getAverageRating} = useServiceReviews(service?.id as string);
+  const { reviews, getAverageRating } = useServiceReviews(
+    service?.id as string,
+  );
 
   // Load service images using the useServiceImages hook
   const { images: serviceImages, isLoading: isLoadingServiceImages } =

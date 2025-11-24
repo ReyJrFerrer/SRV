@@ -265,18 +265,18 @@ const ServiceReviewsPage: React.FC = () => {
       {/* Header for navigation */}
       <header className="sticky top-0 z-50 bg-white/80 shadow-sm backdrop-blur">
         <div className="relative flex w-full items-center px-4 py-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="mr-3 rounded-full transition hover:bg-blue-100"
-              aria-label="Go back"
-            >
-              <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-            </button>
-            <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-xl font-extrabold tracking-tight text-black lg:text-2xl">
-              {isServiceOwner
-                ? "My Service Reviews"
-                : `Reviews for ${service.name}`}
-            </h1>
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-3 rounded-full transition hover:bg-blue-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+          </button>
+          <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+            {isServiceOwner
+              ? "My Service Reviews"
+              : `Reviews for ${service.name}`}
+          </h1>
         </div>
       </header>
 
