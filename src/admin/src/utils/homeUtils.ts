@@ -90,14 +90,11 @@ export const generateBookingsChartData = (
 
   for (let i = daysToShow - 1; i >= 0; i--) {
     const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    // Normalize to midnight UTC to match Firestore UTC dates
+    date.setUTCDate(date.getUTCDate() - i);
     date.setUTCHours(0, 0, 0, 0);
 
-    // Extract UTC date string directly (YYYY-MM-DD)
     const dateStr = date.toISOString().slice(0, 10);
 
-    // Format for display (local date for user-friendly display)
     const formattedDate = date
       .toLocaleDateString("en-US", {
         month: "short",
@@ -110,11 +107,8 @@ export const generateBookingsChartData = (
 
     if (bookings && bookings.length > 0) {
       count = bookings.filter((booking) => {
-        if (!booking.createdAt) return false;
-        const bookingDateStr = typeof booking.createdAt === "string" 
-          ? booking.createdAt.slice(0, 10) 
-          : null;
-        return bookingDateStr === dateStr;
+        if (!booking.createdAt || typeof booking.createdAt !== "string") return false;
+        return booking.createdAt.slice(0, 10) === dateStr;
       }).length;
     }
 
@@ -140,14 +134,11 @@ export const generateRevenueChartData = (
 
   for (let i = daysToShow - 1; i >= 0; i--) {
     const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    // Normalize to midnight UTC to match Firestore UTC dates
+    date.setUTCDate(date.getUTCDate() - i);
     date.setUTCHours(0, 0, 0, 0);
 
-    // Extract UTC date string directly (YYYY-MM-DD)
     const dateStr = date.toISOString().slice(0, 10);
 
-    // Format for display (local date for user-friendly display)
     const formattedDate = date
       .toLocaleDateString("en-US", {
         month: "short",
@@ -159,31 +150,22 @@ export const generateRevenueChartData = (
     let revenue = 0;
     let commission = 0;
 
-    // Calculate revenue for specific date
     if (bookings && bookings.length > 0) {
-      // Calculate revenue from completed bookings
       revenue = bookings
         .filter((booking) => {
-          if (!booking.createdAt) return false;
-          const bookingDateStr = typeof booking.createdAt === "string" 
-            ? booking.createdAt.slice(0, 10) 
-            : null;
+          if (!booking.createdAt || typeof booking.createdAt !== "string") return false;
           return (
-            bookingDateStr === dateStr &&
+            booking.createdAt.slice(0, 10) === dateStr &&
             (booking.status === "Completed" || booking.status === "Settled")
           );
         })
         .reduce((sum, booking) => sum + (booking.price || 0), 0);
 
-      // Calculate commission from commission transactions
       if (commissionTransactions && commissionTransactions.length > 0) {
         commission = commissionTransactions
           .filter((transaction) => {
-            if (!transaction.timestamp) return false;
-            const transactionDateStr = typeof transaction.timestamp === "string" 
-              ? transaction.timestamp.slice(0, 10) 
-              : null;
-            return transactionDateStr === dateStr;
+            if (!transaction.timestamp || typeof transaction.timestamp !== "string") return false;
+            return transaction.timestamp.slice(0, 10) === dateStr;
           })
           .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
       }

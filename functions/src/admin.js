@@ -1051,7 +1051,7 @@ exports.getBookingsData = functions.https.onRequest(async (req, res) => {
       return {
         id: doc.id,
         ...data,
-        createdAt: convertDate(data.createdAt),
+        createdAt: data.createdAt,
         updatedAt: convertDate(data.updatedAt),
         requestedDate: convertDate(data.requestedDate),
         scheduledDate: convertDate(data.scheduledDate),
