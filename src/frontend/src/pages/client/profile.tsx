@@ -656,7 +656,7 @@ const ClientProfilePage: React.FC = () => {
         />
       )}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-4">
+        <div className="relative flex w-full items-center px-4 py-3.5">
           <button
             onClick={() => navigate(-1)}
             className="rounded-full hover:bg-gray-100"

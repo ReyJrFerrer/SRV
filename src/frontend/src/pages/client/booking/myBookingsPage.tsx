@@ -557,7 +557,7 @@ const MyBookingsPage: React.FC = () => {
               </button>
             </div>
           ) : filteredBookings.length > 0 ? (
-            <div className="space-y-10">
+            <div className="my-4 space-y-4 pb-16">
               {sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
