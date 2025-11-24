@@ -340,7 +340,7 @@ const BookingPage: React.FC = () => {
         } else {
           try {
             localStorage.removeItem(draftKey);
-          } catch { }
+          } catch {}
         }
       }
     } catch (err) {
@@ -388,7 +388,7 @@ const BookingPage: React.FC = () => {
     suppressDraftSaveRef.current = true;
     try {
       if (draftKey) localStorage.removeItem(draftKey);
-    } catch { }
+    } catch {}
     // allow saves again on next tick
     setTimeout(() => (suppressDraftSaveRef.current = false), 50);
     setParsedDraft(null);
@@ -659,14 +659,14 @@ const BookingPage: React.FC = () => {
       const dateToCheck =
         bookingOption === "sameday"
           ? new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate(),
-            9,
-            0,
-            0,
-            0,
-          )
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate(),
+              9,
+              0,
+              0,
+              0,
+            )
           : selectedDate;
       if (!dateToCheck) {
         setCheckingSlots(false);
@@ -1241,7 +1241,7 @@ const BookingPage: React.FC = () => {
         if (!paymentResult.success) {
           setFormError(
             paymentResult.error ||
-            "Failed to create payment invoice. Please try again.",
+              "Failed to create payment invoice. Please try again.",
           );
           return;
         }
@@ -1266,11 +1266,11 @@ const BookingPage: React.FC = () => {
           providerName: providerProfile?.name,
           date: finalScheduledDate
             ? finalScheduledDate.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
             : "Same Day",
           time: bookingData.scheduledTime || "As soon as possible",
           packagePrice: totalPrice.toFixed(2),

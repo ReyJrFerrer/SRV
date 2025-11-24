@@ -111,9 +111,10 @@ export const generateBookingsChartData = (
     if (bookings && bookings.length > 0) {
       count = bookings.filter((booking) => {
         if (!booking.createdAt) return false;
-        const bookingDateStr = typeof booking.createdAt === "string" 
-          ? booking.createdAt.slice(0, 10) 
-          : null;
+        const bookingDateStr =
+          typeof booking.createdAt === "string"
+            ? booking.createdAt.slice(0, 10)
+            : null;
         return bookingDateStr === dateStr;
       }).length;
     }
@@ -165,9 +166,10 @@ export const generateRevenueChartData = (
       revenue = bookings
         .filter((booking) => {
           if (!booking.createdAt) return false;
-          const bookingDateStr = typeof booking.createdAt === "string" 
-            ? booking.createdAt.slice(0, 10) 
-            : null;
+          const bookingDateStr =
+            typeof booking.createdAt === "string"
+              ? booking.createdAt.slice(0, 10)
+              : null;
           return (
             bookingDateStr === dateStr &&
             (booking.status === "Completed" || booking.status === "Settled")
@@ -180,9 +182,10 @@ export const generateRevenueChartData = (
         commission = commissionTransactions
           .filter((transaction) => {
             if (!transaction.timestamp) return false;
-            const transactionDateStr = typeof transaction.timestamp === "string" 
-              ? transaction.timestamp.slice(0, 10) 
-              : null;
+            const transactionDateStr =
+              typeof transaction.timestamp === "string"
+                ? transaction.timestamp.slice(0, 10)
+                : null;
             return transactionDateStr === dateStr;
           })
           .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
