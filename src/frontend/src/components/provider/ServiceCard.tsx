@@ -7,6 +7,7 @@ import {
   StarIcon,
 } from "@heroicons/react/24/solid";
 import { EnhancedService } from "../../hooks/serviceManagement";
+import { useServiceReviews } from "../../hooks/reviewManagement";
 import { useServiceImages } from "../../hooks/useMediaLoader";
 import Tooltip from "../common/Tooltip";
 
@@ -50,9 +51,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { images } = useServiceImages(service.id, service.imageUrls);
+  const {reviews, getAverageRating} = useServiceReviews(service?.id as string);
   const statusDisplay = getStatusDisplay(service.status);
   const isActive = service.status === "Available";
 
+  const visibleReviews = reviews.filter((r) => r.status === "Visible");
+  const averageRating = getAverageRating(visibleReviews);
+  const reviewCount = visibleReviews.length;
   return (
     <div className="group relative flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-6 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
       {/* Make the entire card a button except for the action buttons */}
@@ -118,8 +123,8 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <span className="flex items-center gap-1 text-yellow-400">
           <StarIcon className="h-5 w-5" />
           <span className="font-semibold text-yellow-500">
-            {service.averageRating || "0"} / 5{" "}
-            <span className="text-gray-400">({service.reviewCount})</span>
+            {averageRating || "0"} / 5{" "}
+            <span className="text-gray-400">({reviewCount})</span>
           </span>
         </span>
       </div>

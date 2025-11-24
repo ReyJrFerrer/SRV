@@ -271,7 +271,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                     lng: geoLocation.longitude,
                   }}
                   defaultZoom={16}
-                  mapId="6922634ff75ae05ac38cc473"
+                  mapId={import.meta.env.VITE_MAP_ID}
                   style={{ width: "100%", height: 260 }}
                   disableDefaultUI={true}
                   zoomControl={true}

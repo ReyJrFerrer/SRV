@@ -83,7 +83,7 @@ const LocationMapModal: React.FC<LocationMapModalProps> = ({
             <Map
               center={mapCenter}
               zoom={zoom}
-              mapId="6922634ff75ae05ac38cc473"
+              mapId= {import.meta.env.VITE_MAP_ID}
               style={{ width: "100%", height: "100%" }}
               disableDefaultUI={true}
               mapTypeControl={false}

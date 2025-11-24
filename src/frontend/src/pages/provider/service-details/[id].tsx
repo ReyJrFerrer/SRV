@@ -17,6 +17,7 @@ import {
   serviceCanisterService,
 } from "../../../services/serviceCanisterService";
 import { mediaService } from "../../../services/mediaService";
+import { useServiceReviews } from "../../../hooks/reviewManagement";
 import useProviderBookingManagement from "../../../hooks/useProviderBookingManagement";
 import { Toaster, toast } from "sonner";
 import { validateTimeSlots } from "../../../components/provider/service-details";
@@ -65,6 +66,8 @@ const ProviderServiceDetailPage: React.FC = () => {
   const { bookings: providerBookings } = useProviderBookingManagement();
 
   const [service, setService] = useState<EnhancedService | null>(null);
+
+  const {reviews, getAverageRating} = useServiceReviews(service?.id as string);
 
   // Load service images using the useServiceImages hook
   const { images: serviceImages, isLoading: isLoadingServiceImages } =
@@ -986,6 +989,9 @@ const ProviderServiceDetailPage: React.FC = () => {
       setIsDeletingPackage(false);
     }
   };
+  const visibleReviews = reviews.filter((r) => r.status === "Visible");
+  const averageRating = getAverageRating(visibleReviews);
+  const reviewCount = visibleReviews.length;
 
   // Show loading screen during initialization or data loading
   if (loading && !service) {
@@ -1307,6 +1313,8 @@ const ProviderServiceDetailPage: React.FC = () => {
           categories={categories}
           categoriesLoading={categoriesLoading}
           savingTitleCategory={savingTitleCategory}
+          averageRating={averageRating}
+          reviewCount={reviewCount}
           setEditedTitle={setEditedTitle}
           setEditedCategory={setEditedCategory}
           onEdit={handleEditTitleCategory}
