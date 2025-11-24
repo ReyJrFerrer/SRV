@@ -241,19 +241,19 @@ const ActiveServicePage: React.FC = () => {
                     <span>
                       {booking.scheduledDate
                         ? new Date(booking.scheduledDate).toLocaleString([], {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                         : new Date(booking.requestedDate).toLocaleString([], {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                     </span>
                   </div>
                   <div className="flex items-start">
@@ -266,12 +266,12 @@ const ActiveServicePage: React.FC = () => {
                     <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
                     <div className="flex flex-col">
                       <span className="font-medium text-gray-700">
-                        Price: {" "}
+                        Price:{" "}
                         <span className="font-semibold text-green-700">
                           ₱
                           {Number(
                             booking.price +
-                            commissionValidation.estimatedCommission,
+                              commissionValidation.estimatedCommission,
                           ).toFixed(2)}
                         </span>
                       </span>
@@ -281,7 +281,7 @@ const ActiveServicePage: React.FC = () => {
                     <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
                     <div className="flex flex-col">
                       <span className="font-medium text-gray-700">
-                        Client's amount to pay: {" "}
+                        Client's amount to pay:{" "}
                         <span className="font-semibold text-green-700">
                           ₱{Number(booking.amountPaid).toFixed(2)}
                         </span>
@@ -314,13 +314,15 @@ const ActiveServicePage: React.FC = () => {
                     onClick={handleContactClient}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                   >
-                    <PaperAirplaneIcon className="h-5 w-5" /> Contact {booking.clientName?.split(" ")[0] || "Client"}
+                    <PaperAirplaneIcon className="h-5 w-5" /> Contact{" "}
+                    {booking.clientName?.split(" ")[0] || "Client"}
                   </button>
                   <button
                     onClick={handleChatClient}
                     className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                   >
-                    <ChatBubbleLeftRightIcon className="h-5 w-5" /> Chat {booking.clientName?.split(" ")[0] || "Client"}
+                    <ChatBubbleLeftRightIcon className="h-5 w-5" /> Chat{" "}
+                    {booking.clientName?.split(" ")[0] || "Client"}
                   </button>
                   <button
                     onClick={handleMarkCompleted}

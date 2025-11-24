@@ -84,9 +84,9 @@ export const useCachedProviderBooking = (bookingId: string | undefined) => {
     isLoading: booking
       ? false
       : isFetching ||
-      !minLoadingComplete ||
-      !isProviderBookingsReady ||
-      (bookingId ? isLoadingProviderBooking(bookingId) : false),
+        !minLoadingComplete ||
+        !isProviderBookingsReady ||
+        (bookingId ? isLoadingProviderBooking(bookingId) : false),
     // Expose validation state so pages can decide whether to redirect
     isValidating,
   };
@@ -174,9 +174,9 @@ export const useCachedClientBooking = (bookingId: string | undefined) => {
     isLoading: booking
       ? false
       : isFetching ||
-      !minLoadingComplete ||
-      !isClientBookingsReady ||
-      (bookingId ? isLoadingClientBooking(bookingId) : false),
+        !minLoadingComplete ||
+        !isClientBookingsReady ||
+        (bookingId ? isLoadingClientBooking(bookingId) : false),
     // Expose validation state so pages can decide whether to redirect
     isValidating,
   };
