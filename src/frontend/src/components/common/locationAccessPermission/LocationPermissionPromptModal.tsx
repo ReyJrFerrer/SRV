@@ -14,7 +14,6 @@ const LocationPermissionPromptModal: React.FC<Props> = ({
   visible,
   onEnable,
   onSkip,
-  onClose,
 }) => {
   // If the caller marked the modal visible but the browser permission is
   // already known (allowed/denied/unsupported), don't render the prompt.
@@ -63,15 +62,6 @@ const LocationPermissionPromptModal: React.FC<Props> = ({
   const content = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-        {/* Close */}
-        <button
-          aria-label="Close"
-          className="absolute right-3 top-3 rounded-full border border-gray-300 bg-gray-100 px-2 py-1 text-gray-700 hover:bg-gray-200"
-          onClick={onClose ?? onSkip}
-        >
-          ×
-        </button>
-
         {/* Character / Branding (optional image kept consistent with other modal) */}
         <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
           <img
