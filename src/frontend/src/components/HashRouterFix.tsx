@@ -2,13 +2,13 @@ import { useEffect } from "react";
 
 /**
  * HashRouterFix Component
- * 
+ *
  * Fixes malformed URLs where the path appears before the hash (#) instead of after it.
  * This happens when URLs are shared or bookmarked incorrectly with HashRouter.
- * 
+ *
  * Example of malformed URL:
  * https://srvpinoy.com/provider/receipt/123?price=100#/provider/home
- * 
+ *
  * Should be:
  * https://srvpinoy.com/#/provider/receipt/123?price=100
  */
