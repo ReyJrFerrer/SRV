@@ -472,7 +472,7 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
             onClick={onMapClick}
             disableDefaultUI={true}
             zoomControl={false}
-            mapId={import.meta.env.VITE_MAP_ID}
+            mapId={"6922634ff75ae05ac38cc473"}
             gestureHandling="greedy"
           >
             <AdvancedMarker
