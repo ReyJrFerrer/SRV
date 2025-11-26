@@ -107,7 +107,8 @@ export const generateBookingsChartData = (
 
     if (bookings && bookings.length > 0) {
       count = bookings.filter((booking) => {
-        if (!booking.createdAt || typeof booking.createdAt !== "string") return false;
+        if (!booking.createdAt || typeof booking.createdAt !== "string")
+          return false;
         return booking.createdAt.slice(0, 10) === dateStr;
       }).length;
     }
@@ -153,7 +154,8 @@ export const generateRevenueChartData = (
     if (bookings && bookings.length > 0) {
       revenue = bookings
         .filter((booking) => {
-          if (!booking.createdAt || typeof booking.createdAt !== "string") return false;
+          if (!booking.createdAt || typeof booking.createdAt !== "string")
+            return false;
           return (
             booking.createdAt.slice(0, 10) === dateStr &&
             (booking.status === "Completed" || booking.status === "Settled")
@@ -164,7 +166,11 @@ export const generateRevenueChartData = (
       if (commissionTransactions && commissionTransactions.length > 0) {
         commission = commissionTransactions
           .filter((transaction) => {
-            if (!transaction.timestamp || typeof transaction.timestamp !== "string") return false;
+            if (
+              !transaction.timestamp ||
+              typeof transaction.timestamp !== "string"
+            )
+              return false;
             return transaction.timestamp.slice(0, 10) === dateStr;
           })
           .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
