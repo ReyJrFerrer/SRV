@@ -151,7 +151,7 @@ const TimeSlotInput: React.FC<{
     <div className="relative flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-colors hover:border-blue-300 md:gap-3">
       {/* Start Input */}
       <div className="flex min-w-[120px] flex-1 flex-col gap-1">
-        <label className="py-2 text-[10px] font-bold tracking-wider text-gray-400 uppercase">
+        <label className="py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
           From
         </label>
         <div className="relative">
@@ -164,14 +164,14 @@ const TimeSlotInput: React.FC<{
             )}
             onChange={(e) => handleTimeChange("start", e.target.value)}
             // UPDATED: 'text-base' prevents iOS zoom, 'sm:text-sm' keeps it small on desktop
-            className="w-full appearance-none rounded-md border border-gray-200 bg-gray-50 py-2 pr-2 pl-3 text-base font-medium text-gray-700 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none sm:text-sm [&::-webkit-calendar-picker-indicator]:hidden"
+            className="w-full appearance-none rounded-md border border-gray-200 bg-gray-50 py-2 pl-3 pr-2 text-base font-medium text-gray-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm [&::-webkit-calendar-picker-indicator]:hidden"
           />
         </div>
       </div>
 
       {/* End Input */}
       <div className="flex min-w-[120px] flex-1 flex-col gap-1">
-        <label className="py-2 text-[10px] font-bold tracking-wider text-gray-400 uppercase">
+        <label className="py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
           To
         </label>
         <div className="relative">
@@ -180,7 +180,7 @@ const TimeSlotInput: React.FC<{
             value={getStateAs24h(slot.endHour, slot.endMinute, slot.endPeriod)}
             onChange={(e) => handleTimeChange("end", e.target.value)}
             // UPDATED: 'text-base' prevents iOS zoom, 'sm:text-sm' keeps it small on desktop
-            className="w-full appearance-none rounded-md border border-gray-200 bg-gray-50 py-2 pr-2 pl-3 text-base font-medium text-gray-700 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none sm:text-sm [&::-webkit-calendar-picker-indicator]:hidden"
+            className="w-full appearance-none rounded-md border border-gray-200 bg-gray-50 py-2 pl-3 pr-2 text-base font-medium text-gray-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm [&::-webkit-calendar-picker-indicator]:hidden"
           />
         </div>
       </div>
@@ -189,7 +189,7 @@ const TimeSlotInput: React.FC<{
       <button
         type="button"
         onClick={() => onRemove(slot.id)}
-        className="absolute top-2 right-2 rounded-full bg-red-100 p-1.5 text-red-500 hover:bg-red-200"
+        className="absolute right-2 top-2 rounded-full bg-red-100 p-1.5 text-red-500 hover:bg-red-200"
       >
         <TrashIcon className="h-4 w-4" />
       </button>
@@ -575,7 +575,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             ) : (
               <div className="space-y-4">
                 {activeDays.length === 0 && (
-                  <p className="text-center text-gray-400 italic">
+                  <p className="text-center italic text-gray-400">
                     Select a day above to set hours.
                   </p>
                 )}
