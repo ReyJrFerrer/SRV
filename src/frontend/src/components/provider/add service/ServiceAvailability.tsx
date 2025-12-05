@@ -453,12 +453,13 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               <button
                 type="button"
                 onClick={() => togglePreset(weekdays)}
-                className={`font-medium hover:underline ${weekdays.every((d) =>
-                  formData.availabilitySchedule.includes(d),
-                )
+                className={`font-medium hover:underline ${
+                  weekdays.every((d) =>
+                    formData.availabilitySchedule.includes(d),
+                  )
                     ? "font-bold text-blue-800"
                     : "text-blue-600"
-                  }`}
+                }`}
               >
                 Weekdays
               </button>
@@ -466,12 +467,13 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               <button
                 type="button"
                 onClick={() => togglePreset(weekends)}
-                className={`font-medium hover:underline ${weekends.every((d) =>
-                  formData.availabilitySchedule.includes(d),
-                )
+                className={`font-medium hover:underline ${
+                  weekends.every((d) =>
+                    formData.availabilitySchedule.includes(d),
+                  )
                     ? "font-bold text-blue-800"
                     : "text-blue-600"
-                  }`}
+                }`}
               >
                 Weekends
               </button>
@@ -479,12 +481,13 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               <button
                 type="button"
                 onClick={() => togglePreset(allDays)}
-                className={`font-medium hover:underline ${allDays.every((d) =>
-                  formData.availabilitySchedule.includes(d),
-                )
+                className={`font-medium hover:underline ${
+                  allDays.every((d) =>
+                    formData.availabilitySchedule.includes(d),
+                  )
                     ? "font-bold text-blue-800"
                     : "text-blue-600"
-                  }`}
+                }`}
               >
                 Everyday
               </button>
@@ -507,10 +510,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   key={day}
                   type="button"
                   onClick={() => handleDayToggle(day)}
-                  className={`flex h-10 min-w-[3rem] flex-1 items-center justify-center rounded-full border px-4 text-sm font-medium transition-all ${isSelected
+                  className={`flex h-10 min-w-[3rem] flex-1 items-center justify-center rounded-full border px-4 text-sm font-medium transition-all ${
+                    isSelected
                       ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200"
                       : "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50"
-                    }`}
+                  }`}
                 >
                   <span className="sm:hidden">{day.slice(0, 3)}</span>
                   <span className="hidden sm:inline">{day.slice(0, 3)}</span>
