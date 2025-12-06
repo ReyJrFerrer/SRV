@@ -314,7 +314,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const emitInteraction = useCallback(() => {
     try {
       dispatchBookingInteracted(booking.id);
-    } catch { }
+    } catch {}
   }, [booking.id]);
 
   const handleBookAgain = () => {
@@ -536,9 +536,9 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 <CalendarDaysIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
                 {booking.scheduledDate
                   ? formatDateRange(
-                    booking.requestedDate || booking.createdAt,
-                    booking.scheduledDate,
-                  )
+                      booking.requestedDate || booking.createdAt,
+                      booking.scheduledDate,
+                    )
                   : formatDate(booking.requestedDate || booking.createdAt)}
               </p>
 
@@ -586,50 +586,50 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               onBookAgain={
                 isCompleted && booking.serviceId
                   ? () => {
-                    emitInteraction();
-                    handleBookAgain();
-                  }
+                      emitInteraction();
+                      handleBookAgain();
+                    }
                   : undefined
               }
               bookAgainLabel={"Book Again"}
               reviewButtonContent={
                 reviewButtonContent
                   ? (() => {
-                    const r = reviewButtonContent as any;
-                    // If the original review content provided a navigation href, intercept
-                    // and navigate programmatically so we can emit interaction first.
-                    if (r.href) {
+                      const r = reviewButtonContent as any;
+                      // If the original review content provided a navigation href, intercept
+                      // and navigate programmatically so we can emit interaction first.
+                      if (r.href) {
+                        return {
+                          text: r.text,
+                          icon: r.icon,
+                          onClick: () => {
+                            emitInteraction();
+                            navigate(r.href.pathname, {
+                              state: r.href.query || ({ providerName } as any),
+                            });
+                          },
+                          to: undefined,
+                          state: undefined,
+                          disabled: r.disabled,
+                          className: r.className,
+                        } as any;
+                      }
+
                       return {
                         text: r.text,
                         icon: r.icon,
                         onClick: () => {
                           emitInteraction();
-                          navigate(r.href.pathname, {
-                            state: r.href.query || ({ providerName } as any),
-                          });
+                          if (r.onClick) r.onClick();
                         },
-                        to: undefined,
-                        state: undefined,
+                        to: r.href ? r.href.pathname : undefined,
+                        state: r.href
+                          ? r.href.query || { providerName }
+                          : undefined,
                         disabled: r.disabled,
                         className: r.className,
                       } as any;
-                    }
-
-                    return {
-                      text: r.text,
-                      icon: r.icon,
-                      onClick: () => {
-                        emitInteraction();
-                        if (r.onClick) r.onClick();
-                      },
-                      to: r.href ? r.href.pathname : undefined,
-                      state: r.href
-                        ? r.href.query || { providerName }
-                        : undefined,
-                      disabled: r.disabled,
-                      className: r.className,
-                    } as any;
-                  })()
+                    })()
                   : null
               }
               status={booking.status}
