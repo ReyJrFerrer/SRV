@@ -26,6 +26,10 @@ import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
+import MonthlyBookingsCalendar, {
+  CalendarItem,
+} from "../../components/common/calendar/MonthlyBookingsCalendar";
+
 
 type BookingStatusTab =
   | "ALL"
@@ -60,8 +64,7 @@ const ProviderBookingsPage: React.FC = () => {
   const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] =
     useState<boolean>(false);
-  // Categories derived from bookings (only categories present in bookings)
-  // We compute this via a memo below instead of fetching all categories.
+
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
@@ -440,6 +443,36 @@ const ProviderBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [currentBookings]);
 
+
+  // View toggle for Scheduled section
+  const [scheduledView, setScheduledView] = useState<"calendar" | "list">(
+    "calendar",
+  );
+
+  const toCalendarItems = useCallback(
+    (list: ProviderEnhancedBooking[]): CalendarItem[] => {
+      const toDate = (b: ProviderEnhancedBooking) => {
+        const dateStr =
+          (b as any).scheduledDateTime ||
+          (b as any).requestedDate ||
+          (b as any).requestedDateTime ||
+          (b as any).createdAt;
+        return new Date(dateStr);
+      };
+      return list
+        .map((b) => ({
+          id: b.id,
+          date: toDate(b),
+          title: b.serviceName || "Service",
+          subtitle: b.clientName || undefined,
+          status: b.status,
+        }))
+        .filter((x) => !isNaN(x.date.getTime()));
+    },
+    [],
+  );
+
+
   // Effect to fetch client data for all unique client IDs
   useEffect(() => {
     const fetchStatsForClients = async () => {
@@ -530,9 +563,8 @@ const ProviderBookingsPage: React.FC = () => {
                   <FunnelIcon className="mr-1 h-5 w-5" />
                   <span className="hidden md:inline">{timingFilter}</span>
                   <ChevronDownIcon
-                    className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${
-                      isTimingDropdownOpen ? "rotate-180" : "rotate-0"
-                    }`}
+                    className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${isTimingDropdownOpen ? "rotate-180" : "rotate-0"
+                      }`}
                   />
                 </button>
                 {isTimingDropdownOpen && (
@@ -550,11 +582,10 @@ const ProviderBookingsPage: React.FC = () => {
                             setTimingFilter(filter);
                             setIsTimingDropdownOpen(false);
                           }}
-                          className={`${
-                            timingFilter === filter
-                              ? "bg-blue-100 text-blue-900"
-                              : "text-gray-700"
-                          } block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                          className={`${timingFilter === filter
+                            ? "bg-blue-100 text-blue-900"
+                            : "text-gray-700"
+                            } block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
                           role="menuitem"
                         >
                           {filter}
@@ -602,11 +633,10 @@ const ProviderBookingsPage: React.FC = () => {
                     onClick={() => {
                       setActiveTab(tab);
                     }}
-                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${
-                      activeTab === tab
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-600 hover:bg-yellow-200"
-                    }`}
+                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${activeTab === tab
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-600 hover:bg-yellow-200"
+                      }`}
                   >
                     {tab} ({tabCounts[tab as keyof typeof tabCounts]})
                   </button>
@@ -651,7 +681,7 @@ const ProviderBookingsPage: React.FC = () => {
                               if (
                                 (activeTab === "IN PROGRESS" ||
                                   booking.status?.toLowerCase() ===
-                                    "inprogress") &&
+                                  "inprogress") &&
                                 booking.id
                               ) {
                                 navigate(
@@ -706,72 +736,115 @@ const ProviderBookingsPage: React.FC = () => {
                     <h2 className="text-lg font-bold tracking-wide text-blue-700">
                       Scheduled Bookings
                     </h2>
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        type="button"
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${scheduledView === "calendar"
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-600 hover:bg-yellow-200"
+                          }`}
+                        onClick={() => setScheduledView("calendar")}
+                      >
+                        Calendar
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${scheduledView === "list"
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-600 hover:bg-yellow-200"
+                          }`}
+                        onClick={() => setScheduledView("list")}
+                      >
+                        List
+                      </button>
+
+                    </div>
                   </div>
-                  <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
-                    {scheduledBookings.map((booking, idx) => {
-                      const clientId =
-                        booking.clientProfile?.id?.toString() ||
-                        booking.clientId?.toString();
-                      const clientData =
-                        clientId && clientDataMap[clientId]
-                          ? clientDataMap[clientId]
-                          : { reviews: [], reputation: null };
-                      return (
-                        <Appear
-                          key={booking.id}
-                          delayMs={idx * 30}
-                          variant="fade-up"
-                        >
-                          <div
-                            onClick={() => {
-                              if (
-                                (activeTab === "IN PROGRESS" ||
-                                  booking.status?.toLowerCase() ===
-                                    "inprogress") &&
-                                booking.id
-                              ) {
-                                navigate(
-                                  `/provider/active-service/${booking.id}`,
-                                );
-                              } else if (booking.id) {
-                                if (booking.status === "Requested") {
-                                  dispatchBookingInteracted(booking.id);
-                                }
-                                navigate(`/provider/booking/${booking.id}`);
-                              }
-                            }}
-                            className="w-full cursor-pointer transition-shadow hover:shadow-lg"
+                  {scheduledView === "calendar" ? (
+                    <div className="rounded-2xl border border-blue-200 bg-white p-3 shadow-sm">
+                      <MonthlyBookingsCalendar
+                        items={toCalendarItems(scheduledBookings)}
+                        initialMonth={new Date()}
+                        onItemClick={(id) => {
+                          const booking = scheduledBookings.find(
+                            (b) => b.id === id,
+                          );
+                          if (!booking) return;
+                          if (booking.status === "Requested") {
+                            dispatchBookingInteracted(booking.id);
+                          }
+                          navigate(`/provider/booking/${booking.id}`);
+                        }}
+                      />
+                    </div>
+                  ) : (
+
+                    <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
+                      {scheduledBookings.map((booking, idx) => {
+                        const clientId =
+                          booking.clientProfile?.id?.toString() ||
+                          booking.clientId?.toString();
+                        const clientData =
+                          clientId && clientDataMap[clientId]
+                            ? clientDataMap[clientId]
+                            : { reviews: [], reputation: null };
+                        return (
+                          <Appear
+                            key={booking.id}
+                            delayMs={idx * 30}
+                            variant="fade-up"
                           >
-                            <ProviderBookingItemCard
-                              booking={booking}
-                              review={clientData.reviews}
-                              reputation={clientData.reputation}
-                              onDeclineClick={() => {
-                                setDecliningBookingId(booking.id);
-                                setShowDeclineConfirm(true);
+                            <div
+                              onClick={() => {
+                                if (
+                                  (activeTab === "IN PROGRESS" ||
+                                    booking.status?.toLowerCase() ===
+                                    "inprogress") &&
+                                  booking.id
+                                ) {
+                                  navigate(
+                                    `/provider/active-service/${booking.id}`,
+                                  );
+                                } else if (booking.id) {
+                                  if (booking.status === "Requested") {
+                                    dispatchBookingInteracted(booking.id);
+                                  }
+                                  navigate(`/provider/booking/${booking.id}`);
+                                }
                               }}
-                              onCancelClick={(
-                                booking: ProviderEnhancedBooking,
-                              ) => setCancellingBooking(booking)}
-                              isDeclining={isBookingActionInProgress(
-                                booking.id,
-                                "decline",
-                              )}
-                              acceptBookingById={acceptBookingById}
-                              isBookingActionInProgress={
-                                isBookingActionInProgress
-                              }
-                              checkCommissionValidation={
-                                checkCommissionValidation
-                              }
-                              startBookingById={startBookingById}
-                              startNavigationById={startNavigationById}
-                            />
-                          </div>
-                        </Appear>
-                      );
-                    })}
-                  </div>
+                              className="w-full cursor-pointer transition-shadow hover:shadow-lg"
+                            >
+                              <ProviderBookingItemCard
+                                booking={booking}
+                                review={clientData.reviews}
+                                reputation={clientData.reputation}
+                                onDeclineClick={() => {
+                                  setDecliningBookingId(booking.id);
+                                  setShowDeclineConfirm(true);
+                                }}
+                                onCancelClick={(
+                                  booking: ProviderEnhancedBooking,
+                                ) => setCancellingBooking(booking)}
+                                isDeclining={isBookingActionInProgress(
+                                  booking.id,
+                                  "decline",
+                                )}
+                                acceptBookingById={acceptBookingById}
+                                isBookingActionInProgress={
+                                  isBookingActionInProgress
+                                }
+                                checkCommissionValidation={
+                                  checkCommissionValidation
+                                }
+                                startBookingById={startBookingById}
+                                startNavigationById={startNavigationById}
+                              />
+                            </div>
+                          </Appear>
+                        );
+                      })}
+                    </div>
+                  )}
                 </section>
               )}
             </div>

@@ -1,6 +1,5 @@
-// SECTION: Imports — dependencies for this page
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
 import BottomNavigation from "../../../components/client/NavigationBar";
@@ -21,6 +20,10 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
 } from "@heroicons/react/24/solid";
+import MonthlyBookingsCalendar, {
+  CalendarItem,
+} from "../../../components/common/calendar/MonthlyBookingsCalendar";
+
 
 type BookingStatusTab =
   | "ALL"
@@ -40,6 +43,7 @@ const TAB_ITEMS: BookingStatusTab[] = [
 
 const MyBookingsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const bookingManagement = useBookingManagement();
   const { getServiceReviews, calculateServiceRating } = useReviewManagement({
     autoLoadUserReviews: false,
@@ -262,6 +266,28 @@ const MyBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
 
+
+  // View toggle for Scheduled section (default to calendar)
+  const [scheduledView, setScheduledView] = useState<"calendar" | "list">(
+    "calendar",
+  );
+
+  const toCalendarItems = React.useCallback(
+    (list: EnhancedBooking[]): CalendarItem[] => {
+      return list
+        .map((b) => ({
+          id: b.id,
+          date: new Date(b.requestedDate || b.createdAt),
+          title: b.serviceName || b.packageName || "Service",
+          subtitle: b.providerProfile?.name || undefined,
+          status: b.status,
+        }))
+        .filter((x) => !isNaN(x.date.getTime()));
+    },
+    [],
+  );
+
+
   const [serviceStatsMap, setServiceStatsMap] = useState<
     Record<
       string,
@@ -324,7 +350,7 @@ const MyBookingsPage: React.FC = () => {
                     completedBookings: rep.completedBookings,
                   };
                 }
-              } catch (err) {}
+              } catch (err) { }
             }
 
             mapCopy[serviceId] = {
@@ -523,11 +549,10 @@ const MyBookingsPage: React.FC = () => {
                     onClick={() => {
                       setActiveTab(tab);
                     }}
-                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${
-                      activeTab === tab
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-600 hover:bg-yellow-200"
-                    }`}
+                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${activeTab === tab
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-600 hover:bg-yellow-200"
+                      }`}
                   >
                     {tab} ({tabCounts[tab as keyof typeof tabCounts]})
                   </button>
@@ -603,35 +628,83 @@ const MyBookingsPage: React.FC = () => {
                     <h2 className="text-lg font-bold tracking-wide text-blue-700">
                       Scheduled Bookings
                     </h2>
-                  </div>
-                  <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
-                    {scheduledBookings.map((booking, idx) => (
-                      <Appear
-                        key={booking.id}
-                        delayMs={idx * 30}
-                        variant="fade-up"
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        type="button"
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${scheduledView === "calendar"
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-600 hover:bg-yellow-200"
+                          }`}
+                        onClick={() => setScheduledView("calendar")}
                       >
-                        <ClientBookingItemCard
-                          booking={booking}
-                          onCancelClick={setCancellingBooking}
-                          averageRating={
-                            serviceStatsMap[booking.serviceId || ""]
-                              ?.averageRating
-                          }
-                          reviewCount={
-                            serviceStatsMap[booking.serviceId || ""]?.reviews
-                              .length ?? 0
-                          }
-                          reviews={
-                            serviceStatsMap[booking.serviceId || ""]?.reviews
-                          }
-                          reputation={
-                            serviceStatsMap[booking.serviceId || ""]?.reputation
-                          }
-                        />
-                      </Appear>
-                    ))}
+                        Calendar
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${scheduledView === "list"
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-600 hover:bg-yellow-200"
+                          }`}
+                        onClick={() => setScheduledView("list")}
+                      >
+                        List
+                      </button>
+                    </div>
+
+
                   </div>
+                  {scheduledView === "calendar" ? (
+                    <div className="rounded-2xl border border-blue-200 bg-white p-3 shadow-sm">
+                      <MonthlyBookingsCalendar
+                        items={toCalendarItems(scheduledBookings)}
+                        initialMonth={new Date()}
+                        onItemClick={(id) => {
+                          const booking = scheduledBookings.find(
+                            (b) => b.id === id,
+                          );
+                          if (!booking) return;
+                          if (
+                            booking.status === "Accepted" ||
+                            booking.status === "Requested"
+                          ) {
+                            if (booking.status === "Accepted") {
+                            }
+                          }
+                          navigate(`/client/booking/${booking.id}`);
+                        }}
+                      />
+                    </div>
+                  ) : (
+
+                    <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
+                      {scheduledBookings.map((booking, idx) => (
+                        <Appear
+                          key={booking.id}
+                          delayMs={idx * 30}
+                          variant="fade-up"
+                        >
+                          <ClientBookingItemCard
+                            booking={booking}
+                            onCancelClick={setCancellingBooking}
+                            averageRating={
+                              serviceStatsMap[booking.serviceId || ""]
+                                ?.averageRating
+                            }
+                            reviewCount={
+                              serviceStatsMap[booking.serviceId || ""]?.reviews
+                                .length ?? 0
+                            }
+                            reviews={
+                              serviceStatsMap[booking.serviceId || ""]?.reviews
+                            }
+                            reputation={
+                              serviceStatsMap[booking.serviceId || ""]?.reputation
+                            }
+                          />
+                        </Appear>
+                      ))}
+                    </div>
+                  )}
                 </section>
               )}
             </div>
