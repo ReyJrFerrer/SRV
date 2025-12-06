@@ -29,7 +29,7 @@ const SearchResultsPage: React.FC = () => {
   const [pendingMaxPrice, setPendingMaxPrice] = useState(0);
   const [pendingMinRating, setPendingMinRating] = useState(0);
   const [sortBy, setSortBy] = useState("rating");
-  const [maxPrice, setMaxPrice] = useState(10000);
+  const [maxPrice, setMaxPrice] = useState(10000000);
   const [minRating, setMinRating] = useState(0);
 
   useEffect(() => {
@@ -247,7 +247,7 @@ const SearchResultsPage: React.FC = () => {
                 <input
                   type="range"
                   min="100"
-                  max="10000"
+                  max="10000000"
                   step="100"
                   value={pendingMaxPrice}
                   onChange={(e) => setPendingMaxPrice(Number(e.target.value))}

@@ -501,10 +501,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
         // Process service images if provided - convert Uint8Array to base64
         let processedImages:
           | Array<{
-              fileName: string;
-              contentType: string;
-              fileData: string; // base64 encoded
-            }>
+            fileName: string;
+            contentType: string;
+            fileData: string; // base64 encoded
+          }>
           | undefined;
 
         if (request.serviceImages && request.serviceImages.length > 0) {
@@ -528,10 +528,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
         // Process service certificates if provided - convert Uint8Array to base64
         let processedCertificates:
           | Array<{
-              fileName: string;
-              contentType: string;
-              fileData: string; // base64 encoded
-            }>
+            fileName: string;
+            contentType: string;
+            fileData: string; // base64 encoded
+          }>
           | undefined;
 
         if (
@@ -854,7 +854,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
     [setOperationLoading, handleError],
   );
 
-  // Fixed: getAvailableSlots now uses Date parameter and converts to timestamp
   const getAvailableSlots = useCallback(
     async (serviceId: string, date: Date): Promise<AvailableSlot[]> => {
       try {
@@ -902,14 +901,14 @@ export const useServiceManagement = (): ServiceManagementHook => {
           prev.map((service) =>
             service.id === serviceId
               ? {
-                  ...service,
-                  availability: service.availability
-                    ? {
-                        ...service.availability,
-                        instantBookingEnabled: enabled,
-                      }
-                    : undefined,
-                }
+                ...service,
+                availability: service.availability
+                  ? {
+                    ...service.availability,
+                    instantBookingEnabled: enabled,
+                  }
+                  : undefined,
+              }
               : service,
           ),
         );
@@ -1090,9 +1089,9 @@ export const useServiceManagement = (): ServiceManagementHook => {
       const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos((from.latitude * Math.PI) / 180) *
-          Math.cos((to.latitude * Math.PI) / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
+        Math.cos((to.latitude * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     },
@@ -1196,7 +1195,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
         const averageRating =
           providerServices.length > 0
             ? providerServices.reduce((sum, s) => sum + (s.rating || 0), 0) /
-              providerServices.length
+            providerServices.length
             : 0;
 
         return {
