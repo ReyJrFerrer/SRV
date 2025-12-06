@@ -29,7 +29,7 @@ const ClientRatingSummary: React.FC<ClientRatingSummaryProps> = ({
         i <= full ? (
           <StarIcon key={i} className="h-4 w-4 text-yellow-400" />
         ) : (
-          <StarIconOutline key={i} className="h-4 w-4 text-yellow-400" />
+          <StarIconOutline key={i} className="h-4 w-4 text-gray-300" />
         ),
       );
     }
