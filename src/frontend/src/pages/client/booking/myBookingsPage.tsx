@@ -24,7 +24,6 @@ import MonthlyBookingsCalendar, {
   CalendarItem,
 } from "../../../components/common/calendar/MonthlyBookingsCalendar";
 
-
 type BookingStatusTab =
   | "ALL"
   | "PENDING"
@@ -266,7 +265,6 @@ const MyBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
 
-
   // View toggle for Scheduled section (default to calendar)
   const [scheduledView, setScheduledView] = useState<"calendar" | "list">(
     "calendar",
@@ -286,7 +284,6 @@ const MyBookingsPage: React.FC = () => {
     },
     [],
   );
-
 
   const [serviceStatsMap, setServiceStatsMap] = useState<
     Record<
@@ -350,7 +347,7 @@ const MyBookingsPage: React.FC = () => {
                     completedBookings: rep.completedBookings,
                   };
                 }
-              } catch (err) { }
+              } catch (err) {}
             }
 
             mapCopy[serviceId] = {
@@ -549,10 +546,11 @@ const MyBookingsPage: React.FC = () => {
                     onClick={() => {
                       setActiveTab(tab);
                     }}
-                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${activeTab === tab
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-600 hover:bg-yellow-200"
-                      }`}
+                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${
+                      activeTab === tab
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-600 hover:bg-yellow-200"
+                    }`}
                   >
                     {tab} ({tabCounts[tab as keyof typeof tabCounts]})
                   </button>
@@ -631,27 +629,27 @@ const MyBookingsPage: React.FC = () => {
                     <div className="ml-auto flex items-center gap-2">
                       <button
                         type="button"
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${scheduledView === "calendar"
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-600 hover:bg-yellow-200"
-                          }`}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          scheduledView === "calendar"
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-600 hover:bg-yellow-200"
+                        }`}
                         onClick={() => setScheduledView("calendar")}
                       >
                         Calendar
                       </button>
                       <button
                         type="button"
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${scheduledView === "list"
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-600 hover:bg-yellow-200"
-                          }`}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          scheduledView === "list"
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-600 hover:bg-yellow-200"
+                        }`}
                         onClick={() => setScheduledView("list")}
                       >
                         List
                       </button>
                     </div>
-
-
                   </div>
                   {scheduledView === "calendar" ? (
                     <div className="rounded-2xl border border-blue-200 bg-white p-3 shadow-sm">
@@ -675,7 +673,6 @@ const MyBookingsPage: React.FC = () => {
                       />
                     </div>
                   ) : (
-
                     <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
                       {scheduledBookings.map((booking, idx) => (
                         <Appear
@@ -698,7 +695,8 @@ const MyBookingsPage: React.FC = () => {
                               serviceStatsMap[booking.serviceId || ""]?.reviews
                             }
                             reputation={
-                              serviceStatsMap[booking.serviceId || ""]?.reputation
+                              serviceStatsMap[booking.serviceId || ""]
+                                ?.reputation
                             }
                           />
                         </Appear>
