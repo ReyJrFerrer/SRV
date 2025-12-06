@@ -229,8 +229,8 @@ const formatServiceForDetailPage = (
     availability: {
       schedule: service.weeklySchedule
         ? service.weeklySchedule
-          .filter((day) => day.availability.isAvailable)
-          .map((day) => day.day)
+            .filter((day) => day.availability.isAvailable)
+            .map((day) => day.day)
         : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], // Default schedule
       timeSlots: formatTimeSlots(service.weeklySchedule),
       isAvailableNow: isServiceAvailableNow(service.weeklySchedule),
@@ -312,7 +312,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
               providerData = await authCanisterService.getProfile(
                 serviceData.providerId,
               );
-            } catch (err) { }
+            } catch (err) {}
           }
 
           setProvider(providerData);
@@ -358,7 +358,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
         );
         setService(formattedService);
       }
-    } catch (err) { }
+    } catch (err) {}
   }, [serviceId]);
 
   return {

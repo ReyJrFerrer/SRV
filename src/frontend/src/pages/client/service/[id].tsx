@@ -170,8 +170,8 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const isOwnService = Boolean(
     identity &&
-    service &&
-    identity.getPrincipal().toString() === service.providerId,
+      service &&
+      identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -222,12 +222,12 @@ const ClientServiceDetailsPage: React.FC = () => {
         price:
           Array.isArray(packages) && packages.length > 0
             ? Math.min(
-              ...packages
-                .map((p: any) =>
-                  typeof p?.price === "number" ? p.price : Number(p?.price),
-                )
-                .filter((n: number) => !isNaN(n)),
-            )
+                ...packages
+                  .map((p: any) =>
+                    typeof p?.price === "number" ? p.price : Number(p?.price),
+                  )
+                  .filter((n: number) => !isNaN(n)),
+              )
             : undefined,
       } as { id: string; name: string; imageUrl?: string; price?: number };
 
@@ -476,8 +476,8 @@ const ClientServiceDetailsPage: React.FC = () => {
     : false;
   const hasPendingCertificates = hasCertificates
     ? serviceCertificates.some(
-      (cert) => cert.validationStatus === "Pending" || !cert.validationStatus,
-    )
+        (cert) => cert.validationStatus === "Pending" || !cert.validationStatus,
+      )
     : false;
   const visibleReviews = reviews.filter((r) => r.status === "Visible");
   const averageRating = getAverageRating(visibleReviews);
@@ -505,12 +505,19 @@ const ClientServiceDetailsPage: React.FC = () => {
     };
 
     // Use weeklySchedule if available (preferred - has correct day-to-slot associations)
-    if (weeklySchedule && Array.isArray(weeklySchedule) && weeklySchedule.length > 0) {
+    if (
+      weeklySchedule &&
+      Array.isArray(weeklySchedule) &&
+      weeklySchedule.length > 0
+    ) {
       weeklySchedule.forEach((dayEntry) => {
         if (dayEntry.availability?.isAvailable) {
           availableDays.push(dayEntry.day);
-          timeSlotsByDay[dayEntry.day] = (dayEntry.availability.slots || []).map(
-            (slot) => `${formatTo12Hour(slot.startTime)} - ${formatTo12Hour(slot.endTime)}`
+          timeSlotsByDay[dayEntry.day] = (
+            dayEntry.availability.slots || []
+          ).map(
+            (slot) =>
+              `${formatTo12Hour(slot.startTime)} - ${formatTo12Hour(slot.endTime)}`,
           );
         }
       });
@@ -532,43 +539,47 @@ const ClientServiceDetailsPage: React.FC = () => {
       // Legacy: distribute slots evenly (this is the problematic format)
       const { timeSlots } = service.availability;
       if (Array.isArray(timeSlots) && timeSlots.length > 0) {
-        timeSlots.forEach((slot: string | { day?: string; start?: string; end?: string }) => {
-          if (typeof slot === "string") {
-            let formattedSlot = slot;
-            if (!slot.includes("AM") && !slot.includes("PM")) {
-              const match = slot.match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/);
-              if (match) {
-                const [, startHour, startMin, endHour, endMin] = match;
-                const startTime = `${startHour.padStart(2, "0")}:${startMin}`;
-                const endTime = `${endHour.padStart(2, "0")}:${endMin}`;
-                formattedSlot = `${formatTime12Hour(startTime)} - ${formatTime12Hour(endTime)}`;
+        timeSlots.forEach(
+          (slot: string | { day?: string; start?: string; end?: string }) => {
+            if (typeof slot === "string") {
+              let formattedSlot = slot;
+              if (!slot.includes("AM") && !slot.includes("PM")) {
+                const match = slot.match(
+                  /^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/,
+                );
+                if (match) {
+                  const [, startHour, startMin, endHour, endMin] = match;
+                  const startTime = `${startHour.padStart(2, "0")}:${startMin}`;
+                  const endTime = `${endHour.padStart(2, "0")}:${endMin}`;
+                  formattedSlot = `${formatTime12Hour(startTime)} - ${formatTime12Hour(endTime)}`;
+                }
+              }
+              // In legacy format, we can't know which day the slot belongs to
+              // So we'll just add to all days (this is the bug the weeklySchedule fixes)
+              availableDays.forEach((day) => {
+                if (!timeSlotsByDay[day].includes(formattedSlot)) {
+                  timeSlotsByDay[day].push(formattedSlot);
+                }
+              });
+            } else if (
+              slot &&
+              typeof slot === "object" &&
+              "start" in slot &&
+              "end" in slot &&
+              slot.start &&
+              slot.end
+            ) {
+              const formattedSlot = `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
+              const day = slot.day || availableDays[0];
+              if (availableDays.includes(day)) {
+                if (!timeSlotsByDay[day]) timeSlotsByDay[day] = [];
+                if (!timeSlotsByDay[day].includes(formattedSlot)) {
+                  timeSlotsByDay[day].push(formattedSlot);
+                }
               }
             }
-            // In legacy format, we can't know which day the slot belongs to
-            // So we'll just add to all days (this is the bug the weeklySchedule fixes)
-            availableDays.forEach((day) => {
-              if (!timeSlotsByDay[day].includes(formattedSlot)) {
-                timeSlotsByDay[day].push(formattedSlot);
-              }
-            });
-          } else if (
-            slot &&
-            typeof slot === "object" &&
-            "start" in slot &&
-            "end" in slot &&
-            slot.start &&
-            slot.end
-          ) {
-            const formattedSlot = `${formatTime12Hour(slot.start)} - ${formatTime12Hour(slot.end)}`;
-            const day = slot.day || availableDays[0];
-            if (availableDays.includes(day)) {
-              if (!timeSlotsByDay[day]) timeSlotsByDay[day] = [];
-              if (!timeSlotsByDay[day].includes(formattedSlot)) {
-                timeSlotsByDay[day].push(formattedSlot);
-              }
-            }
-          }
-        });
+          },
+        );
       }
     }
 
