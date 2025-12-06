@@ -44,7 +44,9 @@ const GlobalChatDock: React.FC = () => {
   const location = useLocation();
   const path = location.pathname;
   const shouldHide =
-    /\/client\/chat(\/|$)/.test(path) || /\/provider\/chat(\/|$)/.test(path);
+    /\/client\/chat(\/|$)/.test(path) ||
+    /\/provider\/chat(\/|$)/.test(path) ||
+    /\/create-profile/.test(path);
 
   // Track window resize to disable on mobile
   useEffect(() => {
