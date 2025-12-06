@@ -6,6 +6,12 @@ import {
   EyeSlashIcon,
 } from "@heroicons/react/24/solid";
 import { Review } from "../../utils/userReviewsUtils";
+import { useUserImage } from "../../../../frontend/src/hooks/useMediaLoader";
+
+interface ReviewerInfo {
+  name: string;
+  profilePicture?: { imageUrl: string };
+}
 
 interface ReviewItemProps {
   review: Review;
@@ -15,6 +21,8 @@ interface ReviewItemProps {
   onSelect: (reviewId: string) => void;
   onRestore: (reviewId: string) => void;
   onShowDeleteConfirm: (reviewId: string) => void;
+  activeTab?: "received" | "given-client" | "given-provider";
+  reviewerInfo?: ReviewerInfo;
 }
 
 export const ReviewItem: React.FC<ReviewItemProps> = ({
@@ -25,8 +33,12 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
   onSelect,
   onRestore,
   onShowDeleteConfirm,
+  activeTab,
+  reviewerInfo,
 }) => {
   const isHidden = review.status === "Hidden";
+  const showReviewerInfo = activeTab === "received" && reviewerInfo;
+  const { userImageUrl } = useUserImage(reviewerInfo?.profilePicture?.imageUrl);
 
   return (
     <div
@@ -42,15 +54,31 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
             onChange={() => onSelect(review.id)}
             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
-          <div className="flex items-center">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <StarIcon
-                key={s}
-                className={`h-4 w-4 ${
-                  s <= review.rating ? "text-yellow-400" : "text-gray-200"
-                }`}
+          {showReviewerInfo && (
+            <div className="relative mr-2 flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100">
+              <img
+                src={userImageUrl || "/default-client.svg"}
+                alt={reviewerInfo.name}
+                className="h-full w-full object-cover"
               />
-            ))}
+            </div>
+          )}
+          <div className="flex flex-col gap-1">
+            {showReviewerInfo && (
+              <span className="text-sm font-medium text-gray-900">
+                {reviewerInfo.name}
+              </span>
+            )}
+            <div className="flex items-center">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <StarIcon
+                  key={s}
+                  className={`h-4 w-4 ${
+                    s <= review.rating ? "text-yellow-400" : "text-gray-200"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
           {isHidden && (
             <span className="flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">

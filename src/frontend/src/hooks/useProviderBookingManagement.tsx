@@ -126,6 +126,7 @@ interface ProviderBookingManagementHook {
   acceptBooking: (bookingId: string, scheduledDate?: Date) => Promise<void>;
   declineBooking: (bookingId: string, reason?: string) => Promise<void>;
   startBooking: (bookingId: string) => Promise<void>;
+  startNavigation: (bookingId: string) => Promise<void>;
   completeBooking: (bookingId: string, amountPaid?: number) => Promise<void>;
   disputeBooking: (bookingId: string, reason: string) => Promise<void>;
 
@@ -142,6 +143,7 @@ interface ProviderBookingManagementHook {
   ) => Promise<boolean>;
   declineBookingById: (bookingId: string, reason?: string) => Promise<boolean>;
   startBookingById: (bookingId: string) => Promise<boolean>;
+  startNavigationById: (bookingId: string) => Promise<boolean>;
   completeBookingById: (
     bookingId: string,
     amountPaid?: number,
@@ -945,6 +947,39 @@ export const useProviderBookingManagement =
       ],
     );
 
+    const startNavigation = useCallback(
+      async (bookingId: string) => {
+        try {
+          setLoadingState(`startNavigation-${bookingId}`, true);
+          clearError();
+
+          const updatedBooking =
+            await bookingCanisterService.startNavigation(bookingId);
+
+          if (updatedBooking) {
+            const enrichedBooking =
+              await enrichBookingWithClientData(updatedBooking);
+            setProviderBookings((prev) =>
+              prev.map((booking) =>
+                booking.id === bookingId ? enrichedBooking : booking,
+              ),
+            );
+          }
+        } catch (error) {
+          handleBookingError(error, `start navigation ${bookingId}`);
+          throw error;
+        } finally {
+          setLoadingState(`startNavigation-${bookingId}`, false);
+        }
+      },
+      [
+        setLoadingState,
+        clearError,
+        handleBookingError,
+        enrichBookingWithClientData,
+      ],
+    );
+
     const completeBooking = useCallback(
       async (bookingId: string, amountPaid?: number) => {
         try {
@@ -1501,65 +1536,263 @@ export const useProviderBookingManagement =
     }, [providerBookings, calculateAnalytics, setLoadingState]);
 
     // New chart data functions
-    const getMonthlyRevenue = useCallback((): {
-      name: string;
-      value: number;
-    }[] => {
-      const monthlyRevenueMap = new Map<string, number>();
-      const now = new Date();
+    const getMonthlyRevenue = useCallback(
+      (
+        startDate?: Date,
+        endDate?: Date,
+        groupBy: "day" | "month" = "month",
+      ): { name: string; value: number }[] => {
+        const revenueMap = new Map<string, number>();
+        let filteredBookings = providerBookings;
 
-      // Initialize map for the last 12 months with 0 revenue
-      for (let i = 11; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthName = d.toLocaleString("default", { month: "short" });
-        monthlyRevenueMap.set(monthName, 0);
-      }
-
-      providerBookings.forEach((booking) => {
-        if (booking.isCompleted && booking.completedDate) {
-          const completedDate = new Date(booking.completedDate);
-          const monthName = completedDate.toLocaleString("default", {
-            month: "short",
+        // Filter by date range if provided
+        if (startDate && endDate) {
+          filteredBookings = providerBookings.filter((booking) => {
+            if (!booking.isCompleted || !booking.completedDate) return false;
+            const completedDate = new Date(booking.completedDate);
+            return completedDate >= startDate && completedDate <= endDate;
           });
-          const currentRevenue = monthlyRevenueMap.get(monthName) || 0;
-          monthlyRevenueMap.set(
-            monthName,
-            currentRevenue + (booking.actualRevenue || 0),
+        } else {
+          filteredBookings = providerBookings.filter(
+            (booking) => booking.isCompleted && booking.completedDate,
           );
         }
-      });
 
-      return Array.from(monthlyRevenueMap, ([name, value]) => ({
-        name,
-        value,
-      }));
-    }, [providerBookings]);
+        // Aggregate by day or month
+        filteredBookings.forEach((booking) => {
+          if (!booking.completedDate) return;
+          const completedDate = new Date(booking.completedDate);
+          let key = "";
+          if (groupBy === "day") {
+            key = completedDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+          } else {
+            key = completedDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+            });
+          }
+          revenueMap.set(
+            key,
+            (revenueMap.get(key) || 0) + (booking.actualRevenue || 0),
+          );
+        });
 
-    const getBookingCountByDay = useCallback((): {
-      name: string;
-      value: number;
-    }[] => {
-      const days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ];
-      const bookingCounts = new Map<string, number>(
-        days.map((day) => [day, 0]),
-      );
+        // Sort keys chronologically
+        const sorted = Array.from(revenueMap.entries()).sort((a, b) => {
+          const aDate = new Date(a[0]);
+          const bDate = new Date(b[0]);
+          return aDate.getTime() - bDate.getTime();
+        });
 
-      providerBookings.forEach((booking) => {
-        const createdDate = new Date(booking.createdAt);
-        const dayName = days[createdDate.getDay()];
-        bookingCounts.set(dayName, (bookingCounts.get(dayName) || 0) + 1);
-      });
+        return sorted.map(([name, value]) => ({ name, value }));
+      },
+      [providerBookings],
+    );
 
-      return Array.from(bookingCounts, ([name, value]) => ({ name, value }));
-    }, [providerBookings]);
+    const getBookingCountByDay = useCallback(
+      (
+        startDate?: Date,
+        endDate?: Date,
+        groupBy: "day" | "week" | "month" = "day",
+      ): { name: string; value: number }[] => {
+        if (!startDate || !endDate) return [];
+        let result: { name: string; value: number }[] = [];
+        if (groupBy === "day") {
+          let d = new Date(startDate);
+          while (d <= endDate) {
+            const dayStr = d.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+            const count = providerBookings.filter((b) => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return (
+                bookingDate.getFullYear() === d.getFullYear() &&
+                bookingDate.getMonth() === d.getMonth() &&
+                bookingDate.getDate() === d.getDate()
+              );
+            }).length;
+            result.push({ name: dayStr, value: count });
+            d.setDate(d.getDate() + 1);
+          }
+        } else if (groupBy === "week") {
+          let d = new Date(startDate);
+          while (d <= endDate) {
+            const weekStart = new Date(d);
+            weekStart.setDate(d.getDate() - d.getDay());
+            const weekStr = `Week of ${weekStart.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`;
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            const count = providerBookings.filter((b) => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return bookingDate >= weekStart && bookingDate <= weekEnd;
+            }).length;
+            result.push({ name: weekStr, value: count });
+            d.setDate(d.getDate() + 7);
+          }
+        } else if (groupBy === "month") {
+          let d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+          const endMonth = new Date(
+            endDate.getFullYear(),
+            endDate.getMonth(),
+            1,
+          );
+          while (d <= endMonth) {
+            const monthStr = d.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+            });
+            const count = providerBookings.filter((b) => {
+              const bookingDate = new Date(b.scheduledDate || b.createdAt);
+              return (
+                bookingDate.getFullYear() === d.getFullYear() &&
+                bookingDate.getMonth() === d.getMonth()
+              );
+            }).length;
+            result.push({ name: monthStr, value: count });
+            d.setMonth(d.getMonth() + 1);
+          }
+        }
+        return result;
+      },
+      [providerBookings],
+    );
+
+    // Individual booking lookup and action functions
+    const getBookingById = useCallback(
+      async (bookingId: string) => {
+        try {
+          // First try to find in local state for instant response
+          const localBooking = providerBookings.find(
+            (booking) => booking.id === bookingId,
+          );
+          if (localBooking) {
+            return localBooking;
+          }
+
+          // If not found locally, fetch from backend
+          const booking = await bookingCanisterService.getBooking(bookingId);
+          if (booking) {
+            // Enrich with client data before returning
+            const enrichedBooking = await enrichBookingWithClientData(booking);
+            return enrichedBooking;
+          }
+
+          return null;
+        } catch (error) {
+          return null;
+        }
+      },
+      [providerBookings, enrichBookingWithClientData],
+    );
+
+    const getBookingWithClientData = useCallback(
+      async (bookingId: string) => {
+        try {
+          // Use getBookingById which now checks backend if not in local state
+          const booking = await (async () => {
+            const localBooking = providerBookings.find(
+              (b) => b.id === bookingId,
+            );
+            if (localBooking) return localBooking;
+
+            const fetchedBooking =
+              await bookingCanisterService.getBooking(bookingId);
+            return fetchedBooking;
+          })();
+
+          if (!booking) return null;
+          return await enrichBookingWithClientData(booking);
+        } catch (error) {
+          return null;
+        }
+      },
+      [providerBookings, enrichBookingWithClientData],
+    );
+
+    const acceptBookingById = useCallback(
+      async (bookingId: string, scheduledDate?: Date) => {
+        try {
+          await acceptBooking(bookingId, scheduledDate);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [acceptBooking],
+    );
+
+    const declineBookingById = useCallback(
+      async (bookingId: string) => {
+        try {
+          await declineBooking(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [declineBooking],
+    );
+
+    const startBookingById = useCallback(
+      async (bookingId: string) => {
+        try {
+          await startBooking(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [startBooking],
+    );
+
+    const startNavigationById = useCallback(
+      async (bookingId: string) => {
+        try {
+          await startNavigation(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [startNavigation],
+    );
+
+    const completeBookingById = useCallback(
+      async (bookingId: string, amountPaid?: number) => {
+        try {
+          await completeBooking(bookingId, amountPaid);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [completeBooking],
+    );
+
+    const disputeBookingById = useCallback(
+      async (bookingId: string) => {
+        try {
+          await disputeBooking(bookingId);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      [disputeBooking],
+    );
+
+    const isBookingActionInProgress = useCallback(
+      (bookingId: string, action: string) => {
+        return isOperationInProgress(`${action}-${bookingId}`);
+      },
+      [isOperationInProgress],
+    );
 
     // Return hook interface with enhanced data
     return {
@@ -1587,96 +1820,20 @@ export const useProviderBookingManagement =
       acceptBooking,
       declineBooking,
       startBooking,
+      startNavigation,
       completeBooking,
       disputeBooking,
 
       // Individual booking lookup and action functions
-      getBookingById: async (bookingId: string) => {
-        try {
-          // First try to find in local state for instant response
-          const localBooking = providerBookings.find(
-            (booking) => booking.id === bookingId,
-          );
-          if (localBooking) {
-            return localBooking;
-          }
-
-          // If not found locally, fetch from backend
-          const booking = await bookingCanisterService.getBooking(bookingId);
-          if (booking) {
-            // Enrich with client data before returning
-            const enrichedBooking = await enrichBookingWithClientData(booking);
-            return enrichedBooking;
-          }
-
-          return null;
-        } catch (error) {
-          return null;
-        }
-      },
-      getBookingWithClientData: async (bookingId: string) => {
-        try {
-          // Use getBookingById which now checks backend if not in local state
-          const booking = await (async () => {
-            const localBooking = providerBookings.find(
-              (b) => b.id === bookingId,
-            );
-            if (localBooking) return localBooking;
-
-            const fetchedBooking =
-              await bookingCanisterService.getBooking(bookingId);
-            return fetchedBooking;
-          })();
-
-          if (!booking) return null;
-          return await enrichBookingWithClientData(booking);
-        } catch (error) {
-          return null;
-        }
-      },
-      acceptBookingById: async (bookingId: string, scheduledDate?: Date) => {
-        try {
-          await acceptBooking(bookingId, scheduledDate);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      declineBookingById: async (bookingId: string) => {
-        try {
-          await declineBooking(bookingId);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      startBookingById: async (bookingId: string) => {
-        try {
-          await startBooking(bookingId);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      completeBookingById: async (bookingId: string, amountPaid?: number) => {
-        try {
-          await completeBooking(bookingId, amountPaid);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      disputeBookingById: async (bookingId: string) => {
-        try {
-          await disputeBooking(bookingId);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      isBookingActionInProgress: (bookingId: string, action: string) => {
-        return isOperationInProgress(`${action}-${bookingId}`);
-      },
+      getBookingById,
+      getBookingWithClientData,
+      acceptBookingById,
+      declineBookingById,
+      startBookingById,
+      startNavigationById,
+      completeBookingById,
+      disputeBookingById,
+      isBookingActionInProgress,
 
       // Data filtering and categorization
       getBookingsByStatus,

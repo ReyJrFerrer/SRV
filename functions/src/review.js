@@ -27,7 +27,7 @@ const REVIEW_WINDOW_DAYS = 30;
 const MAX_COMMENT_LENGTH = 500;
 const MIN_RATING = 1;
 const MAX_RATING = 5;
-const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 1;
+const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 5;
 // Number of consecutive bad reviews to trigger auto-report
 const BAD_REVIEW_RATING_THRESHOLD = 2; // Rating <= this value is considered "bad"
 
@@ -873,7 +873,6 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // First, try to find the review in either collection
     const reviewDoc = await db.collection("reviews").doc(reviewId).get();
     const providerReviewDoc = await db.collection("providerReviews").doc(reviewId).get();
 
@@ -894,8 +893,6 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
     }
 
     return await db.runTransaction(async (transaction) => {
-      // ===== ALL READ OPERATIONS FIRST =====
-
       const reviewRef = db.collection(reviewCollection).doc(reviewId);
 
       // Read service data for rating statistics update (only for regular reviews)
@@ -906,16 +903,12 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
         serviceSnap = await transaction.get(serviceRef);
       }
 
-      // ===== VALIDATION CHECKS =====
-
       if (existingReview.status !== "Hidden") {
         throw new functions.https.HttpsError(
           "failed-precondition",
           "Review is not hidden",
         );
       }
-
-      // ===== ALL WRITE OPERATIONS AFTER =====
 
       const now = new Date().toISOString();
       const updatedReview = {
@@ -926,7 +919,7 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
 
       transaction.update(reviewRef, updatedReview);
 
-      // Update service rating statistics (only for regular reviews, not provider reviews)
+      // Update service rating statistics
       if (reviewCollection === "reviews" && serviceSnap && serviceSnap.exists) {
         const service = serviceSnap.data();
         const currentRating = service.averageRating || 0;
@@ -994,8 +987,7 @@ exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) =>
     const updated = [];
     const errors = [];
 
-    // Process reviews in batches to avoid transaction limits
-    const batchSize = 500; // Firestore batch write limit
+    const batchSize = 500;
     for (let i = 0; i < reviewIds.length; i += batchSize) {
       const batch = db.batch();
       const batchIds = reviewIds.slice(i, i + batchSize);
@@ -1030,8 +1022,6 @@ exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) =>
 
         updated.push(reviewId);
       }
-
-      // Commit batch
       await batch.commit();
     }
 

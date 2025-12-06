@@ -36,6 +36,7 @@ interface Props {
   onReport: () => void;
   onBookAgain?: () => void;
   bookAgainLabel?: string;
+  isStartingService?: boolean;
 }
 
 const ActionButtons: React.FC<Props> = ({
@@ -50,6 +51,7 @@ const ActionButtons: React.FC<Props> = ({
   canStartServiceNow,
   isBookingActionInProgress,
   commissionValidation,
+  isStartingService,
   onBookAgain,
   bookAgainLabel = "Book Again",
 }) => {
@@ -269,7 +271,7 @@ const ActionButtons: React.FC<Props> = ({
           </button>
 
           {/* Tooltip */}
-          {acceptDisabled && isTooltipVisible && (
+          {acceptDisabledBecauseCommission && isTooltipVisible && (
             <div
               className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-64 -translate-x-1/2 animate-[fadeIn_0.2s_ease-in] rounded-lg bg-gray-900 px-4 py-3 text-center text-sm leading-relaxed text-white shadow-xl"
               role="tooltip"
@@ -289,14 +291,30 @@ const ActionButtons: React.FC<Props> = ({
   }
 
   if (showStart) {
+    const startInProgress =
+      Boolean(isStartingService) ||
+      isBookingActionInProgress(booking?.id || "", "start");
+    const alreadyNotified = Boolean(
+      (booking as any)?.navigationStartedNotified,
+    );
+    const startLabel = alreadyNotified
+      ? "Continue Navigation"
+      : "Start Driving";
+
     buttons.push(
       <button
         key="start"
         onClick={stopAndRun(onStart)}
-        className={`${baseButtonClass} w-full ${color.start}`}
+        disabled={startInProgress}
+        aria-disabled={startInProgress}
+        className={`${baseButtonClass} w-full ${color.start} ${startInProgress ? "cursor-not-allowed opacity-60" : ""}`}
       >
-        <ArrowPathIcon className="mr-2 h-5 w-5" />
-        Start Driving
+        {startInProgress ? (
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
+          <ArrowPathIcon className="mr-2 h-5 w-5" />
+        )}
+        {startLabel}
       </button>,
     );
   }

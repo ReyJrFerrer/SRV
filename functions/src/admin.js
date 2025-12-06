@@ -21,301 +21,7 @@ function getAuthInfo(context, data) {
   };
 }
 
-// Constants
 const SETTINGS_KEY = "system_settings";
-/**
- * Generate a unique rule ID
- * @return {String} returns a rule based on the date and a random number
- */
-function generateRuleId() {
-  const now = Date.now();
-  const random = Math.floor(Math.random() * 10000);
-  return `rule-${now}-${random}`;
-}
-
-/**
- * Validate commission rule data
- * @param {Object} draft - The commission rule draft to validate
- * @return {void}  Throws an HttpsError if validation failsct}
- */
-function validateCommissionRule(draft) {
-  // Validate service types
-  if (!draft.serviceTypes || draft.serviceTypes.length === 0) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Service types cannot be empty",
-    );
-  }
-
-  // Validate payment methods
-  if (!draft.paymentMethods || draft.paymentMethods.length === 0) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Payment methods cannot be empty",
-    );
-  }
-
-  // Validate formula
-  if (!draft.formula || !draft.formula.type) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Commission formula is required",
-    );
-  }
-
-  // Validate commission caps
-  if (draft.minCommission && draft.maxCommission && draft.minCommission > draft.maxCommission) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Minimum commission cannot be greater than maximum commission",
-    );
-  }
-
-  // Validate effective dates
-  const now = new Date();
-  const effectiveFrom = new Date(draft.effectiveFrom);
-  const oneYearFromNow = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
-
-  if (effectiveFrom > oneYearFromNow) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Effective date cannot be more than one year in the future",
-    );
-  }
-
-  if (draft.effectiveTo) {
-    const effectiveTo = new Date(draft.effectiveTo);
-    if (effectiveTo <= effectiveFrom) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Effective to date must be after effective from date",
-      );
-    }
-  }
-}
-
-// ===== COMMISSION RULES MANAGEMENT =====
-
-/**
- * Create or update commission rules
- */
-exports.upsertCommissionRules = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {rules} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can manage commission rules",
-    );
-  }
-
-  if (!rules || rules.length === 0) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Rules array cannot be empty",
-    );
-  }
-
-  try {
-    const resultRules = [];
-    const batch = db.batch();
-
-    for (const draft of rules) {
-      validateCommissionRule(draft);
-
-      const now = new Date().toISOString();
-      const ruleId = draft.id || generateRuleId();
-
-      const rule = {
-        id: ruleId,
-        serviceTypes: draft.serviceTypes,
-        paymentMethods: draft.paymentMethods,
-        formula: draft.formula,
-        minCommission: draft.minCommission || null,
-        maxCommission: draft.maxCommission || null,
-        priority: draft.priority,
-        isActive: true,
-        effectiveFrom: draft.effectiveFrom,
-        effectiveTo: draft.effectiveTo || null,
-        createdAt: draft.id ? undefined : now, // Don't overwrite creation date for updates
-        updatedAt: now,
-        version: 1,
-      };
-
-      // Remove undefined fields
-      Object.keys(rule).forEach((key) => {
-        if (rule[key] === undefined) {
-          delete rule[key];
-        }
-      });
-
-      const ruleRef = db.collection("commissionRules").doc(ruleId);
-      batch.set(ruleRef, rule, {merge: true});
-      resultRules.push(rule);
-    }
-
-    await batch.commit();
-    return {success: true, data: resultRules};
-  } catch (error) {
-    console.error("Error in upsertCommissionRules:", error);
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
-    }
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
-/**
- * Activate a specific commission rule version
- */
-exports.activateRule = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {ruleId} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can activate commission rules",
-    );
-  }
-
-  try {
-    const ruleRef = db.collection("commissionRules").doc(ruleId);
-    const ruleDoc = await ruleRef.get();
-
-    if (!ruleDoc.exists) {
-      throw new functions.https.HttpsError(
-        "not-found",
-        "Commission rule not found",
-      );
-    }
-
-    await ruleRef.update({
-      isActive: true,
-      updatedAt: new Date().toISOString(),
-    });
-
-    return {success: true, message: `Rule ${ruleId} activated successfully`};
-  } catch (error) {
-    console.error("Error in activateRule:", error);
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
-    }
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
-/**
- * Deactivate a commission rule
- */
-exports.deactivateRule = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {ruleId} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can deactivate commission rules",
-    );
-  }
-
-  try {
-    const ruleRef = db.collection("commissionRules").doc(ruleId);
-    const ruleDoc = await ruleRef.get();
-
-    if (!ruleDoc.exists) {
-      throw new functions.https.HttpsError(
-        "not-found",
-        "Commission rule not found",
-      );
-    }
-
-    await ruleRef.update({
-      isActive: false,
-      updatedAt: new Date().toISOString(),
-    });
-
-    return {success: true, message: `Rule ${ruleId} deactivated successfully`};
-  } catch (error) {
-    console.error("Error in deactivateRule:", error);
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
-    }
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
-/**
- * List commission rules with filtering
- */
-exports.listRules = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {filter = {}} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can list commission rules",
-    );
-  }
-
-  try {
-    let query = db.collection("commissionRules");
-
-    // Apply filters
-    if (filter.serviceType) {
-      query = query.where("serviceTypes", "array-contains", filter.serviceType);
-    }
-    if (filter.activeOnly === true) {
-      query = query.where("isActive", "==", true);
-    }
-    if (filter.paymentMethod) {
-      query = query.where("paymentMethods", "array-contains", filter.paymentMethod);
-    }
-
-    const snapshot = await query.orderBy("priority").orderBy("createdAt", "desc").get();
-    const rules = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
-
-    return {success: true, data: rules};
-  } catch (error) {
-    console.error("Error in listRules:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
-/**
- * Get specific commission rule
- */
-exports.getRule = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {ruleId} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can get commission rules",
-    );
-  }
-
-  try {
-    const ruleDoc = await db.collection("commissionRules").doc(ruleId).get();
-
-    if (!ruleDoc.exists) {
-      return {success: true, data: null};
-    }
-
-    return {success: true, data: {id: ruleDoc.id, ...ruleDoc.data()}};
-  } catch (error) {
-    console.error("Error in getRule:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
 
 /**
  * Get user role
@@ -325,7 +31,7 @@ exports.getUserRole = functions.https.onCall(async (data, context) => {
   const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+  if (!authInfo.isAdmin) {
     throw new functions.https.HttpsError(
       "permission-denied",
       "Only ADMIN users can get user roles",
@@ -390,8 +96,6 @@ exports.hasRole = functions.https.onCall(async (data, _context) => {
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
-
-// ===== SETTINGS MANAGEMENT =====
 
 /**
  * Update system settings
@@ -569,7 +273,7 @@ exports.isAdminPasswordSet = functions.https.onCall(async () => {
  * Verify admin password
  */
 exports.verifyAdminPassword = functions.https.onCall(async (data) => {
-  const payload = data.data || data;
+  const payload = data.data;
   const {password} = payload;
 
   if (!password) {
@@ -626,27 +330,15 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     const bookingsSnapshot = await db.collection("bookings").get();
     const totalBookings = bookingsSnapshot.size;
 
-    const settledBookings = bookingsSnapshot.docs.filter((doc) => {
-      const status = doc.data().status;
-      return status === "Completed" || status === "Settled" ||
-      status === "completed" || status === "settled" ||
-      status === "Confirmed" ||
-      status === "confirmed" || status === "Accepted" || status === "accepted";
-    }).length;
-
     // Calculate total revenue from completed bookings
     const completedBookings = bookingsSnapshot.docs.filter((doc) => {
       const status = doc.data().status;
-      return status === "Completed" || status === "Settled" ||
-      status === "completed" || status === "settled" ||
-             status === "Confirmed" || status === "confirmed"||
-             status === "Accepted" || status === "accepted";
+      return status === "Completed";
     });
 
     const totalRevenue = completedBookings.reduce((sum, doc) => {
       const data = doc.data();
-      const price = parseFloat(data.price) ||
-      parseFloat(data.servicePrice) || parseFloat(data.amount) || 0;
+      const price = parseFloat(data.price) || 0;
       return sum + price;
     }, 0);
 
@@ -689,7 +381,7 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
       totalUsersWithRoles: rolesSnapshot.size,
       adminUsers: adminRolesSnapshot.size,
       totalBookings: totalBookings,
-      settledBookings: settledBookings,
+      settledBookings: completedBookings.length,
       totalRevenue: totalRevenue,
       totalCommission: totalCommission,
       totalTopups: totalTopups,
@@ -715,29 +407,16 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const [profilesSnapshot, usersSnapshot] = await Promise.all([
-      db.collection("profiles").get(),
-      db.collection("users").get(),
-    ]);
+    const usersSnapshot = await db.collection("users").get();
 
-    const profiles = profilesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
     const users = usersSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
 
     const userMap = new Map();
-    profiles.forEach((user) => {
-      const userId = user.id || user.uid || user.principal;
-      if (userId) {
-        userMap.set(userId, user);
-      }
-    });
     users.forEach((user) => {
-      const userId = user.id || user.uid || user.principal;
+      const userId = user.id;
       if (userId) {
         userMap.set(userId, user);
       }
@@ -884,7 +563,7 @@ exports.lockUserAccount = functions.https.onCall(async (data, context) => {
       updatedBy: authInfo.uid,
     };
 
-    // If locking, calculate suspension end date based on duration
+    // Calculate suspension end date based on duration
     if (locked && suspensionDurationDays !== undefined && suspensionDurationDays !== null) {
       const suspensionEndDate = new Date();
       suspensionEndDate.setDate(suspensionEndDate.getDate() + suspensionDurationDays);
@@ -980,11 +659,11 @@ exports.updateUserPhoneNumber = functions.https.onCall(async (data, context) => 
     );
   }
 
-  const normalizedPhone = typeof phone === "string" ? phone.replace(/\s+/g, "") : "";
-  if (!normalizedPhone || !/^\+?\d{7,15}$/.test(normalizedPhone)) {
+  const normalizedPhone = typeof phone === "string" ? phone.replace(/\D/g, "") : "";
+  if (!normalizedPhone || !/^(09|9)\d{9}$/.test(normalizedPhone)) {
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "Invalid phone number format",
+      "Invalid phone number format. Must be 10 or 11 digits starting with 9 or 09",
     );
   }
 
@@ -1300,92 +979,20 @@ exports.getPendingCertificateValidations = functions.https.onCall(async (data, c
   }
 });
 
-/**
- * Validate certificate
- */
-exports.validateCertificate = functions.https.onCall(async (data, context) => {
-  const payload = data.data || data;
-  const {certificateId, approved, reason} = payload;
-
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only ADMIN users can validate certificates",
-    );
-  }
-
-  if (!certificateId) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Certificate ID is required",
-    );
-  }
-
-  if (approved === undefined || approved === null) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Approved status is required",
-    );
-  }
-
-  try {
-    const {updateCertificateValidationStatusInternal} = require("./media");
-
-    // Update certificate validation status in media collection
-    const newStatus = approved ? "Validated" : "Rejected";
-    await updateCertificateValidationStatusInternal(certificateId, newStatus);
-
-    // Also update or create validation record in certificateValidations collection
-    const validationRef = db.collection("certificateValidations").doc(certificateId);
-    const validationDoc = await validationRef.get();
-
-    const now = new Date().toISOString();
-    const validationData = {
-      status: newStatus,
-      reviewedAt: now,
-      reviewedBy: authInfo.uid,
-      reviewReason: reason || null,
-      updatedAt: now,
-    };
-
-    if (validationDoc.exists) {
-      // Update existing validation
-      await validationRef.update(validationData);
-    } else {
-      // Create new validation record
-      await validationRef.set({
-        id: certificateId,
-        ...validationData,
-        submittedAt: now,
-      });
-    }
-
-    return {
-      success: true,
-      message: `Certificate ${approved ? "approved" : "rejected"} successfully`,
-    };
-  } catch (error) {
-    console.error("Error in validateCertificate:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
-
 exports.getBookingsData = functions.https.onRequest(async (req, res) => {
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://devsrv-rey.web.app",
-    "https://devsrv-rey.firebaseapp.com",
-    "https://srveadmin.web.app",
-    "https://srveadmin.firebaseapp.com",
-  ];
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS ||
+    "http://localhost:5173,http://127.0.0.1:5173";
+  const allowedOrigins = allowedOriginsEnv.split(",").map((origin) => origin.trim());
 
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  if (origin && allowedOrigins.includes(origin)) {
     res.set("Access-Control-Allow-Origin", origin);
-  } else {
+  } else if (process.env.FUNCTIONS_EMULATOR === "true") {
+    // In emulator, allow all origins for development
     res.set("Access-Control-Allow-Origin", "*");
+  } else {
+    // In production, only allow configured origins or deny
+    res.set("Access-Control-Allow-Origin", allowedOrigins[0] || "*");
   }
 
   res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -1444,7 +1051,7 @@ exports.getBookingsData = functions.https.onRequest(async (req, res) => {
       return {
         id: doc.id,
         ...data,
-        createdAt: convertDate(data.createdAt),
+        createdAt: data.createdAt,
         updatedAt: convertDate(data.updatedAt),
         requestedDate: convertDate(data.requestedDate),
         scheduledDate: convertDate(data.scheduledDate),

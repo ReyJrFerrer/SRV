@@ -170,7 +170,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
               : trustLevel === "Low"
                 ? "Building Trust"
                 : trustLevel}{" "}
-        Provider
+        User
         <button
           type="button"
           aria-label="Show badge info"
@@ -219,7 +219,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           <li className="flex flex-col gap-1 rounded-lg border border-blue-100 bg-blue-50 p-3">
             <div className="flex items-center gap-3">
               <SparklesIcon className="h-6 w-6 text-blue-500" />
-              <span className="font-semibold text-blue-700">New Provider</span>
+              <span className="font-semibold text-blue-700">New User</span>
               <span className="text-xs text-gray-500">Score: 50</span>
             </div>
             <span className="text-xs text-gray-700">
@@ -703,7 +703,7 @@ const ProviderProfilePage: React.FC = () => {
                           {reputationError}
                         </p>
                         <p className="mt-2 text-xs text-gray-500">
-                          Please check your connection and try again
+                          If issues persist, please contact support.
                         </p>
                       </div>
                     </div>

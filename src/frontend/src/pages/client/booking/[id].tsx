@@ -288,7 +288,7 @@ const BookingDetailsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3 sm:px-6 md:pl-24 lg:pl-24">
+        <div className="flex max-w-4xl items-center px-4 py-3.5 sm:px-6 md:pl-24 lg:pl-24">
           <button
             onClick={() => navigate(-1)}
             className="flex-shrink-0 rounded-full hover:bg-gray-100 lg:mr-4"

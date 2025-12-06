@@ -264,28 +264,26 @@ const ServiceReviewsPage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 pb-20 md:pb-0">
       {/* Header for navigation */}
       <header className="sticky top-0 z-50 bg-white/80 shadow-sm backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <div className="flex items-center">
-            <button
-              onClick={() => navigate(-1)}
-              className="mr-3 rounded-full p-2 transition hover:bg-blue-100"
-              aria-label="Go back"
-            >
-              <ArrowLeftIcon className="h-6 w-6 text-blue-700" />
-            </button>
-            <h1 className="truncate text-center text-2xl font-bold text-black drop-shadow-sm">
-              {isServiceOwner
-                ? "My Service Reviews"
-                : `Reviews for ${service.name}`}
-            </h1>
-          </div>
+        <div className="relative flex w-full items-center px-4 py-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-3 rounded-full transition hover:bg-blue-100"
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+          </button>
+          <h1 className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+            {isServiceOwner
+              ? "My Service Reviews"
+              : `Reviews for ${service.name}`}
+          </h1>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto p-4">
         {/* Service Info Card */}
-        <div className="mb-8 flex flex-col items-center rounded-2xl bg-white/90 p-6 shadow-xl md:flex-row md:items-center md:space-x-8">
+        <div className="my-8 flex flex-col items-center rounded-2xl bg-white/90 p-6 shadow-xl md:flex-row md:items-center md:space-x-8">
           <div className="relative mb-4 h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-4 border-blue-100 bg-white shadow-lg md:mb-0">
             <img
               src={providerAvatar}

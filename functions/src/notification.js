@@ -10,7 +10,7 @@ const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "6ca84c57-1e6b-466d-b79
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "";
 
 // Base URL for building absolute push URLs (used only for push payloads)
-const APP_BASE_URL = process.env.APP_BASE_URL || "https://srvepinoy.web.app";
+const APP_BASE_URL = process.env.APP_BASE_URL || "https://srvpinoy.com";
 
 /**
  * Helper function to safely get user authentication info
@@ -39,6 +39,8 @@ const NOTIFICATION_TYPES = {
   REVIEW_REMINDER: "review_reminder",
   GENERIC: "generic",
   NEW_BOOKING_REQUEST: "new_booking_request",
+  START_SERVICE: "start_service",
+  START_NAVIGATION: "start_navigation",
   BOOKING_CONFIRMATION: "booking_confirmation",
   PAYMENT_COMPLETED: "payment_completed",
   SERVICE_COMPLETION_REMINDER: "service_completion_reminder",
@@ -112,6 +114,17 @@ function generateNotificationHref(notificationType, userType, entityId) {
     return isProvider ?
       `/provider/active-service/${entityId}` :
       `/client/booking/${entityId}`;
+
+  case NOTIFICATION_TYPES.START_SERVICE:
+    return isProvider ?
+      `/provider/active-service/${entityId}` :
+      `/client/booking/${entityId}`;
+
+  case NOTIFICATION_TYPES.START_NAVIGATION:
+    return isProvider ?
+      `/provider/directions/${entityId}` :
+      `/client/booking/${entityId}`;
+
 
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
   case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:

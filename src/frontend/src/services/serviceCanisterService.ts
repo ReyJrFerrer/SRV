@@ -627,36 +627,6 @@ export const serviceCanisterService = {
   },
 
   /**
-   * Add a new category
-   */
-  async addCategory(
-    name: string,
-    slug: string,
-    parentId: string | undefined,
-    description: string,
-    imageUrl: string,
-  ): Promise<ServiceCategory | null> {
-    try {
-      const addCategoryFn = httpsCallable(functions, "addCategory");
-      const result = await addCategoryFn({
-        name,
-        description,
-        parentId,
-        slug,
-        imageUrl,
-      });
-
-      const data = result.data as {
-        success: boolean;
-        category: ServiceCategory;
-      };
-      return data.success ? data.category : null;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
    * Get all categories (real-time listener)
    */
   subscribeToAllCategories(

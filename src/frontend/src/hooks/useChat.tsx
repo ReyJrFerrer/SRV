@@ -67,6 +67,15 @@ export const useChat = () => {
   const messagesUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
   /**
    * Get user name from cache or fetch from auth service
    */
@@ -371,34 +380,32 @@ export const useChat = () => {
             },
           );
 
-        // Clear any existing polling interval
+        // Polling fallback (every 3 seconds)
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
         }
 
         pollingIntervalRef.current = setInterval(async () => {
-          if (!isMountedRef.current) {
-            if (pollingIntervalRef.current) {
-              clearInterval(pollingIntervalRef.current);
-              pollingIntervalRef.current = null;
-            }
-            return;
-          }
-
+          if (!isMountedRef.current) return;
           try {
+            // Fetch latest messages to ensure we don't miss anything
             const messagePage =
               await chatCanisterService.getConversationMessages(
                 conversationId,
-                50,
-                0,
+                50, // Limit
+                0, // Offset
               );
 
-            if (isMountedRef.current && messagePage.messages.length > 0) {
-              const adaptedMessages =
-                messagePage.messages.map(adaptBackendMessage);
-              setMessages(adaptedMessages);
+            if (
+              isMountedRef.current &&
+              messagePage &&
+              messagePage.messages.length > 0
+            ) {
+              setMessages(messagePage.messages);
             }
-          } catch (error) {}
+          } catch (e) {
+            // Silent fail on polling error
+          }
         }, 3000);
 
         // Fetch conversation details after setting up listener
@@ -446,6 +453,28 @@ export const useChat = () => {
         throw new Error("Message cannot exceed 500 characters");
       }
 
+      // Optimistic update
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage: FrontendMessage = {
+        id: tempId,
+        conversationId: currentConversation.id,
+        senderId: identity.getPrincipal().toString(),
+        receiverId: receiverId,
+        messageType: "Text",
+        content: {
+          encryptedText: content.trim(),
+          encryptionKey: "",
+        },
+        status: "Sent",
+        createdAt: new Date().toISOString(),
+      };
+
+      // Add optimistic message to state immediately
+      setMessages((prev) => [...prev, optimisticMessage]);
+
+      // Don't block UI with loading state for too long
+      // We still set it briefly to prevent double submission if needed,
+      // but the UI should feel instant because of the optimistic update
       setSendingMessage(true);
       setError(null);
 
@@ -456,13 +485,14 @@ export const useChat = () => {
           content.trim(),
         );
 
-        if (newMessage) {
-          // Real-time listener will automatically update the messages
-          // No need to manually update state
-        }
+        // The real-time listener will eventually replace our optimistic message
+        // But if it's slow, we might want to update the ID of our local message
+        // For now, we rely on the listener to refresh the list
 
         return newMessage;
       } catch (err) {
+        // Remove optimistic message on error
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
         setError(
           err instanceof Error ? err.message : "Could not send message.",
         );
@@ -567,12 +597,6 @@ export const useChat = () => {
    * Clear current conversation and messages
    */
   const clearCurrentConversation = useCallback(async () => {
-    // Clear polling interval
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
-    }
-
     // Cleanup messages listener
     try {
       if (messagesUnsubscribe.current) {

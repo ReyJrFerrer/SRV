@@ -14,9 +14,7 @@ import {
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
-import serviceCanisterService, {
-  ServiceCategory,
-} from "../../services/serviceCanisterService";
+import { ServiceCategory } from "../../services/serviceCanisterService";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import useClientRating from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
@@ -28,9 +26,6 @@ import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
-import MonthlyBookingsCalendar, {
-  CalendarItem,
-} from "../../components/common/calendar/MonthlyBookingsCalendar";
 
 type BookingStatusTab =
   | "ALL"
@@ -65,7 +60,8 @@ const ProviderBookingsPage: React.FC = () => {
   const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] =
     useState<boolean>(false);
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  // Categories derived from bookings (only categories present in bookings)
+  // We compute this via a memo below instead of fetching all categories.
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
@@ -92,6 +88,7 @@ const ProviderBookingsPage: React.FC = () => {
     acceptBookingById,
     checkCommissionValidation,
     startBookingById,
+    startNavigationById,
   } = useProviderBookingManagement();
 
   const { getClientReviewsByUser } = useClientRating();
@@ -191,23 +188,29 @@ const ProviderBookingsPage: React.FC = () => {
     };
   }, []);
 
-  // Load service categories for filtering
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const cats = await serviceCanisterService.getAllCategories();
-        if (!mounted) return;
-        setCategories(cats || []);
-      } catch (err) {
-        // ignore
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  // Derive categories that actually appear in the current bookings list
+  const categories = useMemo((): ServiceCategory[] => {
+    try {
+      const map = new Map<string, ServiceCategory>();
+      (bookings || []).forEach((b) => {
+        const cat = b?.serviceDetails?.category;
+        if (cat && cat.id) {
+          if (!map.has(cat.id)) {
+            map.set(cat.id, {
+              id: cat.id,
+              name: cat.name,
+              slug: cat.slug ?? "",
+              description: cat.description ?? "",
+              imageUrl: cat.imageUrl ?? "",
+            });
+          }
+        }
+      });
+      return Array.from(map.values());
+    } catch {
+      return [];
+    }
+  }, [bookings]);
 
   const categorizedBookings = useMemo(() => {
     const cancelledBookings = getBookingsByStatus("Cancelled");
@@ -254,18 +257,6 @@ const ProviderBookingsPage: React.FC = () => {
 
     if (timingFilter !== "All") {
       filteredBookings = filteredBookings.filter((booking) => {
-        const status = (booking.status || "").toString().toLowerCase();
-
-        const statusNorm = status.replace(/[^a-z]/g, "");
-
-        if (
-          statusNorm.includes("complete") ||
-          statusNorm.includes("cancel") ||
-          statusNorm.includes("declined")
-        ) {
-          return false;
-        }
-
         const bookingDateString =
           (booking as any).scheduledDateTime ||
           (booking as any).requestedDate ||
@@ -295,17 +286,26 @@ const ProviderBookingsPage: React.FC = () => {
     }
 
     if (searchTerm) {
-      filteredBookings = filteredBookings.filter(
-        (booking) =>
-          (booking.serviceName &&
-            booking.serviceName
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase())) ||
-          booking.clientName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          booking.id.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
+      const q = searchTerm.toLowerCase();
+      filteredBookings = filteredBookings.filter((booking) => {
+        const serviceName = (booking.serviceName || "").toString();
+        const clientName = (
+          booking.clientName ||
+          booking.clientProfile?.name ||
+          ""
+        ).toString();
+        const categoryName = (
+          booking.serviceDetails?.category?.name || ""
+        ).toString();
+        const packageName = ((booking as any).packageName || "").toString();
+
+        return (
+          serviceName.toLowerCase().includes(q) ||
+          clientName.toLowerCase().includes(q) ||
+          categoryName.toLowerCase().includes(q) ||
+          packageName.toLowerCase().includes(q)
+        );
+      });
     }
 
     // Category filter (if selected, filter by the booking's serviceDetails.category.id)
@@ -439,34 +439,6 @@ const ProviderBookingsPage: React.FC = () => {
 
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [currentBookings]);
-
-  // View toggle for Scheduled section
-  const [scheduledView, setScheduledView] = useState<"calendar" | "list">(
-    "calendar",
-  );
-
-  const toCalendarItems = useCallback(
-    (list: ProviderEnhancedBooking[]): CalendarItem[] => {
-      const toDate = (b: ProviderEnhancedBooking) => {
-        const dateStr =
-          (b as any).scheduledDateTime ||
-          (b as any).requestedDate ||
-          (b as any).requestedDateTime ||
-          (b as any).createdAt;
-        return new Date(dateStr);
-      };
-      return list
-        .map((b) => ({
-          id: b.id,
-          date: toDate(b),
-          title: b.serviceName || "Service",
-          subtitle: b.clientName || undefined,
-          status: b.status,
-        }))
-        .filter((x) => !isNaN(x.date.getTime()));
-    },
-    [],
-  );
 
   // Effect to fetch client data for all unique client IDs
   useEffect(() => {
@@ -717,6 +689,7 @@ const ProviderBookingsPage: React.FC = () => {
                                 checkCommissionValidation
                               }
                               startBookingById={startBookingById}
+                              startNavigationById={startNavigationById}
                             />
                           </div>
                         </Appear>
@@ -733,114 +706,72 @@ const ProviderBookingsPage: React.FC = () => {
                     <h2 className="text-lg font-bold tracking-wide text-blue-700">
                       Scheduled Bookings
                     </h2>
-                    <div className="ml-auto flex items-center gap-2">
-                      <button
-                        type="button"
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          scheduledView === "calendar"
-                            ? "bg-blue-600 text-white"
-                            : "text-gray-600 hover:bg-yellow-200"
-                        }`}
-                        onClick={() => setScheduledView("calendar")}
-                      >
-                        Calendar
-                      </button>
-                      <button
-                        type="button"
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          scheduledView === "list"
-                            ? "bg-blue-600 text-white"
-                            : "text-gray-600 hover:bg-yellow-200"
-                        }`}
-                        onClick={() => setScheduledView("list")}
-                      >
-                        List
-                      </button>
-                    </div>
                   </div>
-                  {scheduledView === "calendar" ? (
-                    <div className="rounded-2xl border border-blue-200 bg-white p-3 shadow-sm">
-                      <MonthlyBookingsCalendar
-                        items={toCalendarItems(scheduledBookings)}
-                        initialMonth={new Date()}
-                        onItemClick={(id) => {
-                          const booking = scheduledBookings.find(
-                            (b) => b.id === id,
-                          );
-                          if (!booking) return;
-                          if (booking.status === "Requested") {
-                            dispatchBookingInteracted(booking.id);
-                          }
-                          navigate(`/provider/booking/${booking.id}`);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
-                      {scheduledBookings.map((booking, idx) => {
-                        const clientId =
-                          booking.clientProfile?.id?.toString() ||
-                          booking.clientId?.toString();
-                        const clientData =
-                          clientId && clientDataMap[clientId]
-                            ? clientDataMap[clientId]
-                            : { reviews: [], reputation: null };
-                        return (
-                          <Appear
-                            key={booking.id}
-                            delayMs={idx * 30}
-                            variant="fade-up"
+                  <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
+                    {scheduledBookings.map((booking, idx) => {
+                      const clientId =
+                        booking.clientProfile?.id?.toString() ||
+                        booking.clientId?.toString();
+                      const clientData =
+                        clientId && clientDataMap[clientId]
+                          ? clientDataMap[clientId]
+                          : { reviews: [], reputation: null };
+                      return (
+                        <Appear
+                          key={booking.id}
+                          delayMs={idx * 30}
+                          variant="fade-up"
+                        >
+                          <div
+                            onClick={() => {
+                              if (
+                                (activeTab === "IN PROGRESS" ||
+                                  booking.status?.toLowerCase() ===
+                                    "inprogress") &&
+                                booking.id
+                              ) {
+                                navigate(
+                                  `/provider/active-service/${booking.id}`,
+                                );
+                              } else if (booking.id) {
+                                if (booking.status === "Requested") {
+                                  dispatchBookingInteracted(booking.id);
+                                }
+                                navigate(`/provider/booking/${booking.id}`);
+                              }
+                            }}
+                            className="w-full cursor-pointer transition-shadow hover:shadow-lg"
                           >
-                            <div
-                              onClick={() => {
-                                if (
-                                  (activeTab === "IN PROGRESS" ||
-                                    booking.status?.toLowerCase() ===
-                                      "inprogress") &&
-                                  booking.id
-                                ) {
-                                  navigate(
-                                    `/provider/active-service/${booking.id}`,
-                                  );
-                                } else if (booking.id) {
-                                  if (booking.status === "Requested") {
-                                    dispatchBookingInteracted(booking.id);
-                                  }
-                                  navigate(`/provider/booking/${booking.id}`);
-                                }
+                            <ProviderBookingItemCard
+                              booking={booking}
+                              review={clientData.reviews}
+                              reputation={clientData.reputation}
+                              onDeclineClick={() => {
+                                setDecliningBookingId(booking.id);
+                                setShowDeclineConfirm(true);
                               }}
-                              className="w-full cursor-pointer transition-shadow hover:shadow-lg"
-                            >
-                              <ProviderBookingItemCard
-                                booking={booking}
-                                review={clientData.reviews}
-                                reputation={clientData.reputation}
-                                onDeclineClick={() => {
-                                  setDecliningBookingId(booking.id);
-                                  setShowDeclineConfirm(true);
-                                }}
-                                onCancelClick={(
-                                  booking: ProviderEnhancedBooking,
-                                ) => setCancellingBooking(booking)}
-                                isDeclining={isBookingActionInProgress(
-                                  booking.id,
-                                  "decline",
-                                )}
-                                acceptBookingById={acceptBookingById}
-                                isBookingActionInProgress={
-                                  isBookingActionInProgress
-                                }
-                                checkCommissionValidation={
-                                  checkCommissionValidation
-                                }
-                                startBookingById={startBookingById}
-                              />
-                            </div>
-                          </Appear>
-                        );
-                      })}
-                    </div>
-                  )}
+                              onCancelClick={(
+                                booking: ProviderEnhancedBooking,
+                              ) => setCancellingBooking(booking)}
+                              isDeclining={isBookingActionInProgress(
+                                booking.id,
+                                "decline",
+                              )}
+                              acceptBookingById={acceptBookingById}
+                              isBookingActionInProgress={
+                                isBookingActionInProgress
+                              }
+                              checkCommissionValidation={
+                                checkCommissionValidation
+                              }
+                              startBookingById={startBookingById}
+                              startNavigationById={startNavigationById}
+                            />
+                          </div>
+                        </Appear>
+                      );
+                    })}
+                  </div>
                 </section>
               )}
             </div>

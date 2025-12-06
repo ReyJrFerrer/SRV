@@ -82,7 +82,6 @@ export interface RevenueChartData {
 // Generate bookings per day chart data
 export const generateBookingsChartData = (
   bookings: any[],
-  totalBookings: number,
   period: Period,
 ): BookingsChartData[] => {
   const today = new Date();
@@ -91,7 +90,11 @@ export const generateBookingsChartData = (
 
   for (let i = daysToShow - 1; i >= 0; i--) {
     const date = new Date(today);
-    date.setDate(date.getDate() - i);
+    date.setUTCDate(date.getUTCDate() - i);
+    date.setUTCHours(0, 0, 0, 0);
+
+    const dateStr = date.toISOString().slice(0, 10);
+
     const formattedDate = date
       .toLocaleDateString("en-US", {
         month: "short",
@@ -102,28 +105,18 @@ export const generateBookingsChartData = (
 
     let count = 0;
 
-    // Count bookings for specific date
     if (bookings && bookings.length > 0) {
-      const dateStr = date.toISOString().slice(0, 10);
       count = bookings.filter((booking) => {
-        let bookingDateStr;
-        if (booking.createdAt instanceof Date) {
-          bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-        } else if (typeof booking.createdAt === "string") {
-          bookingDateStr = booking.createdAt.slice(0, 10);
-        } else {
+        if (!booking.createdAt || typeof booking.createdAt !== "string")
           return false;
-        }
-        return bookingDateStr === dateStr;
+        return booking.createdAt.slice(0, 10) === dateStr;
       }).length;
-    } else if (i === 0) {
-      count = totalBookings;
     }
 
     chartData.push({
       date: formattedDate,
       count,
-      fullDate: date.toISOString().slice(0, 10),
+      fullDate: dateStr,
     });
   }
 
@@ -134,7 +127,6 @@ export const generateBookingsChartData = (
 export const generateRevenueChartData = (
   bookings: any[],
   commissionTransactions: any[],
-  systemStats: any,
   period: Period,
 ): RevenueChartData[] => {
   const today = new Date();
@@ -143,7 +135,11 @@ export const generateRevenueChartData = (
 
   for (let i = daysToShow - 1; i >= 0; i--) {
     const date = new Date(today);
-    date.setDate(date.getDate() - i);
+    date.setUTCDate(date.getUTCDate() - i);
+    date.setUTCHours(0, 0, 0, 0);
+
+    const dateStr = date.toISOString().slice(0, 10);
+
     const formattedDate = date
       .toLocaleDateString("en-US", {
         month: "short",
@@ -155,52 +151,37 @@ export const generateRevenueChartData = (
     let revenue = 0;
     let commission = 0;
 
-    // Calculate revenue for specific date
     if (bookings && bookings.length > 0) {
-      const dateStr = date.toISOString().slice(0, 10);
-
-      // Calculate revenue from completed bookings
       revenue = bookings
         .filter((booking) => {
-          let bookingDateStr;
-          if (booking.createdAt instanceof Date) {
-            bookingDateStr = booking.createdAt.toISOString().slice(0, 10);
-          } else if (typeof booking.createdAt === "string") {
-            bookingDateStr = booking.createdAt.slice(0, 10);
-          } else {
+          if (!booking.createdAt || typeof booking.createdAt !== "string")
             return false;
-          }
           return (
-            bookingDateStr === dateStr &&
+            booking.createdAt.slice(0, 10) === dateStr &&
             (booking.status === "Completed" || booking.status === "Settled")
           );
         })
         .reduce((sum, booking) => sum + (booking.price || 0), 0);
 
-      // Calculate commission from commission transactions
       if (commissionTransactions && commissionTransactions.length > 0) {
         commission = commissionTransactions
           .filter((transaction) => {
             if (
               !transaction.timestamp ||
               typeof transaction.timestamp !== "string"
-            ) {
+            )
               return false;
-            }
             return transaction.timestamp.slice(0, 10) === dateStr;
           })
           .reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
       }
-    } else if (i === 0) {
-      revenue = systemStats?.totalRevenue || 0;
-      commission = systemStats?.totalCommission || 0;
     }
 
     chartData.push({
       date: formattedDate,
       revenue,
       commission,
-      fullDate: date.toISOString().slice(0, 10),
+      fullDate: dateStr,
     });
   }
 

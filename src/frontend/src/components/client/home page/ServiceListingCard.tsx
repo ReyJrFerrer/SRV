@@ -263,19 +263,18 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     }
 
     return (
-      <div className="group relative flex flex-col items-center transition-all duration-300">
+      <div className="group relative flex flex-col items-center">
         <Link
           to={`/client/service/${service.id}`}
-          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
+          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg  hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
         >
           <div className="relative">
-            <div className="aspect-video w-full bg-blue-50">
+            <div className="aspect-video w-full rounded-t-2xl bg-blue-50">
               <img
                 src={imageSrc}
                 alt={service.title}
-                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity duration-1000 ${
-                  imageLoaded ? "opacity-100" : "opacity-0"
-                }`}
+                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity duration-1000 
+                  ${imageLoaded ? "opacity-100" : "opacity-0"}`}
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/ai-sp/others.svg";
@@ -337,11 +336,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
           <div className="service-content relative flex flex-grow flex-col p-4">
             <div className="flex-grow">
-              <div className="mb-2 flex flex-col items-start gap-x-2 gap-y-1 text-base text-blue-700">
-                <p className="mb-1 mt-2 truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
+              <div className="mb-2 flex min-w-0 flex-col items-start gap-x-2 gap-y-1 text-base text-blue-700">
+                <p className="mb-1 mt-2 w-full truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
                   {service.title}
                 </p>
-                <p className="flex items-center gap-1 truncate font-bold">
+                <p className="flex min-w-0 items-center gap-1 truncate font-bold">
                   {service.providerName}
                   {isVerified && (
                     <CheckBadgeIcon

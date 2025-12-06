@@ -18,6 +18,15 @@ interface MonthlyRevenueLineChartProps {
   getMonthlyRevenue: any;
 }
 
+const TIME_RANGES = [
+  { key: "7days", label: "Last 7 days" },
+  { key: "30days", label: "Last 30 days" },
+  { key: "3months", label: "Last 3 months" },
+  { key: "6months", label: "Last 6 months" },
+  { key: "12months", label: "Last 12 months" },
+  { key: "custom", label: "Custom Range" },
+];
+
 type TimeRange =
   | "7days"
   | "30days"
@@ -34,86 +43,110 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
     subMonths(new Date(), 12),
   );
   const [customEndDate, setCustomEndDate] = useState<Date>(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  // showDatePicker is not used, remove
   const [data, setData] = useState<any[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
 
   useEffect(() => {
     updateChartData();
-  }, [timeRange, customStartDate, customEndDate]);
+  }, [timeRange, customStartDate, customEndDate, getMonthlyRevenue]);
 
   const updateChartData = () => {
-    let filteredData = getMonthlyRevenue();
-    let total = 0;
+    const now = new Date();
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+    let groupBy: "day" | "month" = "month";
 
-    // Filter data based on selected time range
     if (timeRange === "custom") {
-      filteredData = filteredData.filter((item: any) => {
-        const itemDate = new Date(item.date || item.name);
-        return itemDate >= customStartDate && itemDate <= customEndDate;
-      });
+      startDate = customStartDate;
+      endDate = customEndDate;
+      const diffDays = Math.ceil(
+        Math.abs(endDate.getTime() - startDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
+      groupBy = diffDays > 60 ? "month" : "day";
     } else {
-      const now = new Date();
-      let startDate: Date;
-
       switch (timeRange) {
         case "7days":
           startDate = subDays(now, 7);
-          filteredData = filteredData.filter(
-            (item: any) => new Date(item.date || item.name) >= startDate,
-          );
+          endDate = now;
+          groupBy = "day";
           break;
         case "30days":
           startDate = subDays(now, 30);
-          filteredData = filteredData.filter(
-            (item: any) => new Date(item.date || item.name) >= startDate,
-          );
+          endDate = now;
+          groupBy = "day";
           break;
         case "3months":
           startDate = subMonths(now, 3);
-          filteredData = filteredData.filter(
-            (item: any) => new Date(item.date || item.name) >= startDate,
-          );
+          endDate = now;
+          groupBy = "month";
           break;
         case "6months":
           startDate = subMonths(now, 6);
-          filteredData = filteredData.filter(
-            (item: any) => new Date(item.date || item.name) >= startDate,
-          );
+          endDate = now;
+          groupBy = "month";
           break;
         case "12months":
         default:
+          startDate = subMonths(now, 12);
+          endDate = now;
+          groupBy = "month";
           break;
       }
     }
 
-    // Calculate total revenue for the filtered data
-    total = filteredData.reduce(
-      (sum: number, item: any) => sum + (item.value || 0),
+    // Pre-fill data for the range
+    let filledData: { name: string; value: number }[] = [];
+    if (groupBy === "month" && startDate && endDate) {
+      let d = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      while (d <= endDate) {
+        filledData.push({
+          name: d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+          }),
+          value: 0,
+        });
+        d.setMonth(d.getMonth() + 1);
+      }
+    } else if (groupBy === "day" && startDate && endDate) {
+      let d = new Date(startDate);
+      while (d <= endDate) {
+        filledData.push({
+          name: d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+          value: 0,
+        });
+        d.setDate(d.getDate() + 1);
+      }
+    }
+
+    const actualData = getMonthlyRevenue(startDate, endDate, groupBy);
+    const mergedData = filledData.map((item) => {
+      const found = actualData.find(
+        (d: { name: string; value: number }) => d.name === item.name,
+      );
+      return found ? { ...item, value: found.value } : item;
+    });
+
+    const total = mergedData.reduce(
+      (sum: number, item: { value: number }) => sum + (item.value || 0),
       0,
     );
-
-    setData(filteredData);
+    setData(mergedData);
     setTotalRevenue(total);
   };
 
   const getTimeRangeLabel = () => {
-    switch (timeRange) {
-      case "7days":
-        return "Last 7 days";
-      case "30days":
-        return "Last 30 days";
-      case "3months":
-        return "Last 3 months";
-      case "6months":
-        return "Last 6 months";
-      case "12months":
-        return "Last 12 months";
-      case "custom":
-        return `${format(customStartDate, "MMM d, yyyy")} - ${format(customEndDate, "MMM d, yyyy")}`;
-      default:
-        return "Last 12 months";
+    const found = TIME_RANGES.find((r) => r.key === timeRange);
+    if (timeRange === "custom") {
+      return `${format(customStartDate, "MMM d, yyyy")} - ${format(customEndDate, "MMM d, yyyy")}`;
     }
+    return found?.label || "Last 12 months";
   };
 
   return (
@@ -143,120 +176,64 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
             </Menu.Button>
             <Menu.Items className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               <div className="py-1">
-                <Menu.Item>
-                  {({ active }) => (
-                    <button
-                      onClick={() => setTimeRange("7days")}
-                      className={`${
-                        active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                      } block w-full px-4 py-2 text-left text-sm`}
-                    >
-                      Last 7 days
-                    </button>
-                  )}
-                </Menu.Item>
-                <Menu.Item>
-                  {({ active }) => (
-                    <button
-                      onClick={() => setTimeRange("30days")}
-                      className={`${
-                        active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                      } block w-full px-4 py-2 text-left text-sm`}
-                    >
-                      Last 30 days
-                    </button>
-                  )}
-                </Menu.Item>
-                <Menu.Item>
-                  {({ active }) => (
-                    <button
-                      onClick={() => setTimeRange("3months")}
-                      className={`${
-                        active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                      } block w-full px-4 py-2 text-left text-sm`}
-                    >
-                      Last 3 months
-                    </button>
-                  )}
-                </Menu.Item>
-                <Menu.Item>
-                  {({ active }) => (
-                    <button
-                      onClick={() => setTimeRange("6months")}
-                      className={`${
-                        active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                      } block w-full px-4 py-2 text-left text-sm`}
-                    >
-                      Last 6 months
-                    </button>
-                  )}
-                </Menu.Item>
-                <Menu.Item>
-                  {({ active }) => (
-                    <button
-                      onClick={() => setTimeRange("12months")}
-                      className={`${
-                        active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                      } block w-full px-4 py-2 text-left text-sm`}
-                    >
-                      Last 12 months
-                    </button>
-                  )}
-                </Menu.Item>
-                <Menu.Item>
-                  {({ active }) => (
-                    <div>
+                {TIME_RANGES.map((range) => (
+                  <Menu.Item key={range.key}>
+                    {({ active }) => (
                       <button
-                        onClick={() => setShowDatePicker(!showDatePicker)}
+                        onClick={() => {
+                          setTimeRange(range.key as TimeRange);
+                          // No need to setShowDatePicker, variable removed
+                        }}
                         className={`${
                           active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                        } block flex w-full items-center justify-between px-4 py-2 text-left text-sm`}
+                        } block w-full px-4 py-2 text-left text-sm`}
                       >
-                        <span>Custom Range</span>
-                        <CalendarIcon className="h-4 w-4" />
+                        {range.label}
+                        {range.key === "custom" && (
+                          <CalendarIcon className="ml-2 inline h-4 w-4" />
+                        )}
                       </button>
-                      {showDatePicker && (
-                        <div className="border-t border-gray-100 p-4">
-                          <div className="mb-2">
-                            <label className="mb-1 block text-xs font-medium text-gray-700">
-                              From:
-                            </label>
-                            <input
-                              type="date"
-                              value={format(customStartDate, "yyyy-MM-dd")}
-                              onChange={(e) =>
-                                setCustomStartDate(parseISO(e.target.value))
-                              }
-                              className="w-full rounded border border-gray-300 p-1 text-sm"
-                            />
-                          </div>
-                          <div className="mb-2">
-                            <label className="mb-1 block text-xs font-medium text-gray-700">
-                              To:
-                            </label>
-                            <input
-                              type="date"
-                              value={format(customEndDate, "yyyy-MM-dd")}
-                              onChange={(e) =>
-                                setCustomEndDate(parseISO(e.target.value))
-                              }
-                              className="w-full rounded border border-gray-300 p-1 text-sm"
-                            />
-                          </div>
-                          <button
-                            onClick={() => {
-                              setTimeRange("custom");
-                              setShowDatePicker(false);
-                            }}
-                            className="w-full rounded bg-blue-600 px-3 py-1 text-sm text-white transition-colors hover:bg-blue-700"
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      )}
+                    )}
+                  </Menu.Item>
+                ))}
+                {timeRange === "custom" && (
+                  <div className="border-t border-gray-100 p-4">
+                    <div className="mb-2">
+                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                        From:
+                      </label>
+                      <input
+                        type="date"
+                        value={format(customStartDate, "yyyy-MM-dd")}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val) setCustomStartDate(parseISO(val));
+                        }}
+                        className="w-full rounded border border-gray-300 p-1 text-sm"
+                      />
                     </div>
-                  )}
-                </Menu.Item>
+                    <div className="mb-2">
+                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                        To:
+                      </label>
+                      <input
+                        type="date"
+                        value={format(customEndDate, "yyyy-MM-dd")}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val) setCustomEndDate(parseISO(val));
+                        }}
+                        className="w-full rounded border border-gray-300 p-1 text-sm"
+                      />
+                    </div>
+                    <button
+                      // No need to setShowDatePicker, variable removed
+                      className="w-full rounded bg-blue-600 px-3 py-1 text-sm text-white transition-colors hover:bg-blue-700"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                )}
               </div>
             </Menu.Items>
           </Menu>
@@ -281,38 +258,10 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="name"
-              reversed={timeRange !== "custom"}
+              reversed={false}
               tick={{ fontSize: 13, fill: "#334155" }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(value) => {
-                if (!value) return "";
-                const date = new Date(value);
-                if (isNaN(date.getTime())) return ""; // Return empty string for invalid dates
-
-                if (timeRange === "7days" || timeRange === "30days") {
-                  return format(date, "MMM d");
-                } else if (
-                  timeRange === "3months" ||
-                  timeRange === "6months" ||
-                  timeRange === "12months"
-                ) {
-                  return format(date, "MMM yyyy");
-                } else if (timeRange === "custom") {
-                  const diffDays = Math.ceil(
-                    Math.abs(date.getTime() - customStartDate.getTime()) /
-                      (1000 * 60 * 60 * 24),
-                  );
-                  if (diffDays > 60) {
-                    return format(date, "MMM yyyy");
-                  } else if (diffDays > 7) {
-                    return format(date, "MMM d");
-                  } else {
-                    return format(date, "EEE");
-                  }
-                }
-                return format(date, "MMM d, yyyy"); // Default format
-              }}
             />
             <YAxis
               tick={{ fontSize: 13, fill: "#334155" }}

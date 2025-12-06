@@ -97,7 +97,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   // Using Heroicons for chat bubble icon
 
   return (
-    <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl">
+    <div className="my-8 rounded-xl bg-white p-4 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ChatBubbleLeftEllipsisIcon className="h-7 w-7 text-yellow-400" />

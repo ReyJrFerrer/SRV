@@ -59,11 +59,6 @@ const {
 
 // Import Admin Management functions
 const {
-  upsertCommissionRules,
-  activateRule,
-  deactivateRule,
-  listRules,
-  getRule,
   getUserRole,
   listUserRoles,
   hasRole,
@@ -79,7 +74,6 @@ const {
   getRejectedCertificates,
   getServicesWithCertificates,
   getPendingCertificateValidations,
-  validateCertificate,
   updateCertificateValidationStatus,
   autoReactivateSuspendedAccounts,
   getBookingsData,
@@ -124,7 +118,6 @@ const {
   uploadServiceCertificates,
   removeServiceCertificate,
   verifyService,
-  addCategory,
   getAllCategories,
   initializeCategories,
   createServicePackage,
@@ -144,6 +137,7 @@ const {
   acceptBooking,
   declineBooking,
   startBooking,
+  startNavigation,
   completeBooking,
   cancelBooking,
   getBooking,
@@ -167,10 +161,6 @@ const {
   debitBalance,
   transferFunds,
   getTransactionHistory,
-  addAuthorizedController,
-  removeAuthorizedController,
-  getAuthorizedControllers,
-  releaseHold,
   getWalletDetails,
   getAllWallets,
 } = require("./src/wallet");
@@ -311,7 +301,6 @@ exports.reorderServiceImages = reorderServiceImages;
 exports.uploadServiceCertificates = uploadServiceCertificates;
 exports.removeServiceCertificate = removeServiceCertificate;
 exports.verifyService = verifyService;
-exports.addCategory = addCategory;
 exports.getAllCategories = getAllCategories;
 exports.initializeCategories = initializeCategories;
 exports.createServicePackage = createServicePackage;
@@ -330,6 +319,7 @@ exports.createBooking = createBooking;
 exports.acceptBooking = acceptBooking;
 exports.declineBooking = declineBooking;
 exports.startBooking = startBooking;
+exports.startNavigation = startNavigation;
 exports.completeBooking = completeBooking;
 exports.cancelBooking = cancelBooking;
 exports.getBooking = getBooking;
@@ -353,10 +343,6 @@ exports.creditBalance = creditBalance;
 exports.debitBalance = debitBalance;
 exports.transferFunds = transferFunds;
 exports.getTransactionHistory = getTransactionHistory;
-exports.addAuthorizedController = addAuthorizedController;
-exports.removeAuthorizedController = removeAuthorizedController;
-exports.getAuthorizedControllers = getAuthorizedControllers;
-exports.releaseHold = releaseHold;
 exports.getWalletDetails = getWalletDetails;
 exports.getAllWallets = getAllWallets;
 
@@ -434,11 +420,6 @@ exports.validateMediaItems = validateMediaItems;
 exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
 
 // Export Admin Management Functions
-exports.upsertCommissionRules = upsertCommissionRules;
-exports.activateRule = activateRule;
-exports.deactivateRule = deactivateRule;
-exports.listRules = listRules;
-exports.getRule = getRule;
 exports.getUserRole = getUserRole;
 exports.listUserRoles = listUserRoles;
 exports.hasRole = hasRole;
@@ -455,7 +436,6 @@ exports.getValidatedCertificates = getValidatedCertificates;
 exports.getRejectedCertificates = getRejectedCertificates;
 exports.getServicesWithCertificates = getServicesWithCertificates;
 exports.getPendingCertificateValidations = getPendingCertificateValidations;
-exports.validateCertificate = validateCertificate;
 exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
 exports.getBookingsData = getBookingsData;
 

@@ -39,7 +39,7 @@ const ActiveServiceBanner: React.FC = () => {
           (isFullPage ? "" : "")
         }
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex max-w-7xl  flex-1 items-center gap-2">
           <button
             type="button"
             onClick={() => navigate(`/provider/active-service/${booking.id}`)}

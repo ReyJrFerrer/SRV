@@ -72,6 +72,7 @@ function getManualReputationIdl() {
       CompetitiveManipulation: IDL.Null,
       FakeEvidence: IDL.Null,
       IdentityFraud: IDL.Null,
+      AbusiveContent: IDL.Null,
       Other: IDL.Null,
     });
 
@@ -101,6 +102,7 @@ function getManualReputationIdl() {
       comment: IDL.Text,
       status: ReviewStatus,
       qualityScore: IDL.Opt(IDL.Float64),
+      weight: IDL.Opt(IDL.Float64),
       createdAt: IDL.Int,
       updatedAt: IDL.Int,
     });
@@ -125,22 +127,38 @@ function getManualReputationIdl() {
         [],
       ),
       processReview: IDL.Func(
-        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [
+          Review,
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Client data
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Provider data
+        ],
         [ReviewResult],
         [],
       ),
       processReviewWithLLM: IDL.Func(
-        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [
+          Review,
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Client data
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Provider data
+        ],
         [ReviewResult],
         [],
       ),
       processProviderReview: IDL.Func(
-        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [
+          Review,
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Provider data
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Client data
+        ],
         [ReviewResult],
         [],
       ),
       processProviderReviewWithLLM: IDL.Func(
-        [Review, IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int],
+        [
+          Review,
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Provider data
+          IDL.Nat, IDL.Opt(IDL.Float64), IDL.Int, // Client data
+        ],
         [ReviewResult],
         [],
       ),
@@ -585,17 +603,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
     // Check if this is a provider-to-client review
     const isProviderReview = review.reviewType === "ProviderToClient";
 
-    // Fetch appropriate user data based on review type
-    let clientData;
-    let providerData;
-
-    if (isProviderReview) {
-      // For provider reviews, we need provider data (the reviewer)
-      providerData = await fetchProviderData(review.providerId);
-    } else {
-      // For regular reviews, we need client data (the reviewer)
-      clientData = await fetchUserData(review.clientId);
-    }
+    // Fetch BOTH user data
+    const clientData = await fetchUserData(review.clientId);
+    const providerData = await fetchProviderData(review.providerId);
 
     // Prepare review for IC canister
     const icReview = {
@@ -608,6 +618,7 @@ async function processReviewForReputationInternal(review, useLLM = false) {
       comment: review.comment,
       status: {Visible: null},
       qualityScore: review.qualityScore ? [review.qualityScore] : [],
+      weight: [], // Calculated by backend
       createdAt: isoToNanoseconds(review.createdAt),
       updatedAt: isoToNanoseconds(review.updatedAt),
     };
@@ -623,6 +634,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
           BigInt(providerData.completedBookings),
           providerData.averageRating ? [providerData.averageRating] : [],
           providerData.accountAge,
+          BigInt(clientData.completedBookings),
+          clientData.averageRating ? [clientData.averageRating] : [],
+          clientData.accountAge,
         );
       } else {
         // Process regular review (client rating provider)
@@ -632,6 +646,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
           BigInt(clientData.completedBookings),
           clientData.averageRating ? [clientData.averageRating] : [],
           clientData.accountAge,
+          BigInt(providerData.completedBookings),
+          providerData.averageRating ? [providerData.averageRating] : [],
+          providerData.accountAge,
         );
       }
     } else {
@@ -643,6 +660,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
           BigInt(providerData.completedBookings),
           providerData.averageRating ? [providerData.averageRating] : [],
           providerData.accountAge,
+          BigInt(clientData.completedBookings),
+          clientData.averageRating ? [clientData.averageRating] : [],
+          clientData.accountAge,
         );
       } else {
         // Process regular review (client rating provider)
@@ -652,6 +672,9 @@ async function processReviewForReputationInternal(review, useLLM = false) {
           BigInt(clientData.completedBookings),
           clientData.averageRating ? [clientData.averageRating] : [],
           clientData.accountAge,
+          BigInt(providerData.completedBookings),
+          providerData.averageRating ? [providerData.averageRating] : [],
+          providerData.accountAge,
         );
       }
     }
