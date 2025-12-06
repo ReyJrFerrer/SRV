@@ -265,7 +265,6 @@ const ProviderServiceDetailPage: React.FC = () => {
 
       try {
         const serviceData = await getService(id);
-
         if (serviceData) {
           // Ensure weeklySchedule has 'slots' array for existing data
           const processedServiceData = {
@@ -385,14 +384,14 @@ const ProviderServiceDetailPage: React.FC = () => {
       setService((prev) =>
         prev
           ? {
-              ...prev,
-              title: editedTitle,
-              category: {
-                ...prev.category,
-                id: editedCategory,
-                name: selectedCategory?.name || "Unknown Category",
-              },
-            }
+            ...prev,
+            title: editedTitle,
+            category: {
+              ...prev.category,
+              id: editedCategory,
+              name: selectedCategory?.name || "Unknown Category",
+            },
+          }
           : prev,
       );
       setEditTitleCategory(false);
@@ -750,7 +749,7 @@ const ProviderServiceDetailPage: React.FC = () => {
               reader.readAsDataURL(file);
             });
           }
-        } catch (error) {}
+        } catch (error) { }
 
         return {
           url: tempUrl,

@@ -154,6 +154,8 @@ export interface FormattedServiceDetail {
     schedule: string[];
     timeSlots: string[];
     isAvailableNow: boolean;
+    /** Full weekly schedule with day-to-slot associations */
+    weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>;
   };
   rating: {
     average: number;
@@ -227,11 +229,12 @@ const formatServiceForDetailPage = (
     availability: {
       schedule: service.weeklySchedule
         ? service.weeklySchedule
-            .filter((day) => day.availability.isAvailable)
-            .map((day) => day.day)
+          .filter((day) => day.availability.isAvailable)
+          .map((day) => day.day)
         : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], // Default schedule
       timeSlots: formatTimeSlots(service.weeklySchedule),
       isAvailableNow: isServiceAvailableNow(service.weeklySchedule),
+      weeklySchedule: service.weeklySchedule, // Preserve full day-to-slot associations
     },
     rating: {
       average: service.rating || 0,
@@ -309,7 +312,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
               providerData = await authCanisterService.getProfile(
                 serviceData.providerId,
               );
-            } catch (err) {}
+            } catch (err) { }
           }
 
           setProvider(providerData);
@@ -355,7 +358,7 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
         );
         setService(formattedService);
       }
-    } catch (err) {}
+    } catch (err) { }
   }, [serviceId]);
 
   return {
