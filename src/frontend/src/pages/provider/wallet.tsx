@@ -98,7 +98,7 @@ const WalletPage: React.FC = () => {
         if (profile && !profile.isOnboarded) {
           setShowOnboardingModal(true);
         }
-      } catch (error) { }
+      } catch (error) {}
     };
 
     checkOnboardingStatus();
@@ -172,7 +172,7 @@ const WalletPage: React.FC = () => {
             );
           }
         }
-      } catch (error) { }
+      } catch (error) {}
     }
 
     // Remove completed/expired invoices from tracking
@@ -262,9 +262,14 @@ const WalletPage: React.FC = () => {
     }
 
     // Prevent leading zeros for the integer part (except for "0." case)
-    if (parts[0].length > 1 && parts[0].startsWith("0") && parts[0][1] !== ".") {
+    if (
+      parts[0].length > 1 &&
+      parts[0].startsWith("0") &&
+      parts[0][1] !== "."
+    ) {
       parts[0] = parseInt(parts[0], 10).toString();
-      sanitizedValue = parts.length === 2 ? parts[0] + "." + parts[1] : parts[0];
+      sanitizedValue =
+        parts.length === 2 ? parts[0] + "." + parts[1] : parts[0];
     }
 
     // Prevent exceeding 50,000
@@ -544,10 +549,10 @@ const WalletPage: React.FC = () => {
                                 </span>
                                 {transaction.transaction_type ===
                                   "Transfer" && (
-                                    <span className="text-xs text-gray-500">
-                                      • Transfer
-                                    </span>
-                                  )}
+                                  <span className="text-xs text-gray-500">
+                                    • Transfer
+                                  </span>
+                                )}
                               </div>
                               <p className="text-sm text-gray-500">
                                 {transaction.description}
@@ -637,10 +642,11 @@ const WalletPage: React.FC = () => {
                     <button
                       key={amount}
                       onClick={() => handlePredefinedAmount(amount)}
-                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${topUpAmount === amount.toString()
-                        ? "border-blue-500 bg-blue-50/80 text-blue-600"
-                        : "border-gray-200 bg-white/80 text-gray-700 hover:bg-gray-50/80"
-                        }`}
+                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        topUpAmount === amount.toString()
+                          ? "border-blue-500 bg-blue-50/80 text-blue-600"
+                          : "border-gray-200 bg-white/80 text-gray-700 hover:bg-gray-50/80"
+                      }`}
                     >
                       ₱{amount.toLocaleString()}
                     </button>
