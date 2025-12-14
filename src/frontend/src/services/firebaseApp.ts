@@ -90,7 +90,7 @@ export function initializeFirebase(): {
           connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
           connectDatabaseEmulator(firebaseDatabase, "127.0.0.1", 9000);
           emulatorsConnected = true;
-        } catch (emulatorError) { }
+        } catch (emulatorError) {}
       }
       return {
         app: firebaseApp,
@@ -139,7 +139,7 @@ export function initializeFirebase(): {
         connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
         connectDatabaseEmulator(firebaseDatabase, "127.0.0.1", 9000);
         emulatorsConnected = true;
-      } catch (emulatorError) { }
+      } catch (emulatorError) {}
     }
 
     // Set language code for auth (optional)
@@ -247,7 +247,7 @@ export function storeICCustomToken(token: string): void {
   try {
     localStorage.setItem(IC_TOKEN_KEY, token);
     localStorage.setItem(IC_TOKEN_TIMESTAMP_KEY, Date.now().toString());
-  } catch (error) { }
+  } catch (error) {}
 }
 
 /**
@@ -286,5 +286,5 @@ export function clearICCustomToken(): void {
   try {
     localStorage.removeItem(IC_TOKEN_KEY);
     localStorage.removeItem(IC_TOKEN_TIMESTAMP_KEY);
-  } catch (error) { }
+  } catch (error) {}
 }
