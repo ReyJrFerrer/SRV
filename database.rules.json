@@ -1,0 +1,11 @@
+{
+    "rules": {
+        "providerLocations": {
+            "$bookingId": {
+                ".read": "auth != null",
+                ".write": "auth != null",
+                ".validate": "newData.hasChildren(['lat', 'lng', 'updatedAt'])"
+            }
+        }
+    }
+}

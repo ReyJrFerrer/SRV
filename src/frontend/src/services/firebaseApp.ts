@@ -22,6 +22,11 @@ import {
   Firestore,
   connectFirestoreEmulator,
 } from "firebase/firestore";
+import {
+  getDatabase,
+  Database,
+  connectDatabaseEmulator,
+} from "firebase/database";
 
 interface FirebaseConfig {
   apiKey: string;
@@ -37,6 +42,7 @@ let firebaseAuth: Auth | null = null;
 let firebaseFunctions: Functions | null = null;
 let firebaseStorage: FBStorage | null = null;
 let firebaseFirestore: Firestore | null = null;
+let firebaseDatabase: Database | null = null;
 let emulatorsConnected = false;
 
 // Store the IC custom token for restoration after phone verification
@@ -55,6 +61,7 @@ export function initializeFirebase(): {
   functions: Functions;
   storage: FBStorage;
   firestore: Firestore;
+  database: Database;
 } {
   try {
     // Check if Firebase is already initialized
@@ -64,6 +71,7 @@ export function initializeFirebase(): {
       firebaseFunctions = getFunctions(firebaseApp);
       firebaseStorage = getStorage(firebaseApp);
       firebaseFirestore = getFirestore(firebaseApp);
+      firebaseDatabase = getDatabase(firebaseApp);
 
       // Connect to emulators if in development and not already connected
       if (
@@ -77,8 +85,9 @@ export function initializeFirebase(): {
           connectFunctionsEmulator(firebaseFunctions, "127.0.0.1", 5001);
           connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
           connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
+          connectDatabaseEmulator(firebaseDatabase, "127.0.0.1", 9000);
           emulatorsConnected = true;
-        } catch (emulatorError) {}
+        } catch (emulatorError) { }
       }
       return {
         app: firebaseApp,
@@ -86,6 +95,7 @@ export function initializeFirebase(): {
         functions: firebaseFunctions,
         storage: firebaseStorage,
         firestore: firebaseFirestore,
+        database: firebaseDatabase,
       };
     }
 
@@ -110,6 +120,7 @@ export function initializeFirebase(): {
     firebaseFunctions = getFunctions(firebaseApp);
     firebaseStorage = getStorage(firebaseApp);
     firebaseFirestore = getFirestore(firebaseApp);
+    firebaseDatabase = getDatabase(firebaseApp, import.meta.env.VITE_FIREBASE_DATABASE_URL);
 
     // Connect to emulators in development
     if (import.meta.env.DEV || window.location.hostname === "localhost") {
@@ -120,8 +131,9 @@ export function initializeFirebase(): {
         connectFunctionsEmulator(firebaseFunctions, "127.0.0.1", 5001);
         connectStorageEmulator(firebaseStorage, "127.0.0.1", 9199);
         connectFirestoreEmulator(firebaseFirestore, "127.0.0.1", 8080);
+        connectDatabaseEmulator(firebaseDatabase, "127.0.0.1", 9000);
         emulatorsConnected = true;
-      } catch (emulatorError) {}
+      } catch (emulatorError) { }
     }
 
     // Set language code for auth (optional)
@@ -133,6 +145,7 @@ export function initializeFirebase(): {
       functions: firebaseFunctions,
       storage: firebaseStorage,
       firestore: firebaseFirestore,
+      database: firebaseDatabase,
     };
   } catch (error) {
     throw error;
@@ -200,6 +213,18 @@ export function getFirebaseFirestore(): Firestore {
 }
 
 /**
+ * Get the Firebase Realtime Database instance
+ * Initializes Firebase if not already initialized
+ */
+export function getFirebaseDatabase(): Database {
+  if (!firebaseDatabase) {
+    const { database } = initializeFirebase();
+    return database;
+  }
+  return firebaseDatabase;
+}
+
+/**
  * Check if Firebase is initialized
  */
 export function isFirebaseInitialized(): boolean {
@@ -216,7 +241,7 @@ export function storeICCustomToken(token: string): void {
   try {
     localStorage.setItem(IC_TOKEN_KEY, token);
     localStorage.setItem(IC_TOKEN_TIMESTAMP_KEY, Date.now().toString());
-  } catch (error) {}
+  } catch (error) { }
 }
 
 /**
@@ -255,5 +280,5 @@ export function clearICCustomToken(): void {
   try {
     localStorage.removeItem(IC_TOKEN_KEY);
     localStorage.removeItem(IC_TOKEN_TIMESTAMP_KEY);
-  } catch (error) {}
+  } catch (error) { }
 }
