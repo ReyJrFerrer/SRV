@@ -17,6 +17,7 @@ interface ProviderTrackingMapProps {
   onMapReady?: (map: google.maps.Map) => void;
   autoFollow?: boolean;
   className?: string;
+  destinationName?: string;
 }
 
 const containerStyle: React.CSSProperties = {
@@ -34,6 +35,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   onMapReady,
   autoFollow = true,
   className = "",
+  destinationName,
 }) => {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [directionsResult, setDirectionsResult] =
@@ -222,8 +224,8 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-700 shadow-lg ring-4 ring-white">
                   <MapPinIcon className="h-5 w-5 text-white" />
                 </div>
-                <div className="mt-1 rounded-full bg-white/95 px-2 py-1 text-xs font-semibold text-gray-800 shadow">
-                  Your Location
+                <div className="mt-1 max-w-[150px] truncate rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-gray-800 shadow-md backdrop-blur">
+                  {destinationName || "Destination"}
                 </div>
               </div>
             </AdvancedMarker>

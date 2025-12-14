@@ -171,6 +171,9 @@ const ClientTrackingPage: React.FC = () => {
         mapApiKey={mapApiKey}
         autoFollow={true}
         className="h-full w-full"
+        destinationName={
+          (booking as any)?.formattedLocation || (booking as any)?.location
+        }
       />
 
       {/* Back button overlay */}
