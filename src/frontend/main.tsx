@@ -76,6 +76,9 @@ const ReceiptPage = lazy(
   () => import("./src/pages/client/booking/receipt/[id]"),
 );
 const ClientBookService = lazy(() => import("./src/pages/client/book/[id]"));
+const ClientTrackingPage = lazy(
+  () => import("./src/pages/client/tracking/[bookingId]"),
+);
 
 // Client Category & Review Pages
 const ClientCategory = lazy(
@@ -163,7 +166,7 @@ window.OneSignalDeferred.push(async function (OneSignal) {
 
     // Setup our service wrapper after OneSignal is fully initialized
     oneSignalService.setupAfterInit();
-  } catch (error) {}
+  } catch (error) { }
 });
 
 const ConversationPage = lazy(
@@ -295,6 +298,12 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                       element={<ClientCategory />}
                     />
                     <Route path="review/:id" element={<ClientReview />} />
+
+                    {/* Tracking Route */}
+                    <Route
+                      path="tracking/:bookingId"
+                      element={<ClientTrackingPage />}
+                    />
                   </Route>
 
                   {/* Provider Routes with Nested Layout */}

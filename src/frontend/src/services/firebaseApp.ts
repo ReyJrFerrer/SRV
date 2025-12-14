@@ -71,7 +71,10 @@ export function initializeFirebase(): {
       firebaseFunctions = getFunctions(firebaseApp);
       firebaseStorage = getStorage(firebaseApp);
       firebaseFirestore = getFirestore(firebaseApp);
-      firebaseDatabase = getDatabase(firebaseApp);
+      firebaseDatabase = getDatabase(
+        firebaseApp,
+        import.meta.env.VITE_FIREBASE_DATABASE_URL,
+      );
 
       // Connect to emulators if in development and not already connected
       if (
@@ -120,7 +123,10 @@ export function initializeFirebase(): {
     firebaseFunctions = getFunctions(firebaseApp);
     firebaseStorage = getStorage(firebaseApp);
     firebaseFirestore = getFirestore(firebaseApp);
-    firebaseDatabase = getDatabase(firebaseApp, import.meta.env.VITE_FIREBASE_DATABASE_URL);
+    firebaseDatabase = getDatabase(
+      firebaseApp,
+      import.meta.env.VITE_FIREBASE_DATABASE_URL,
+    );
 
     // Connect to emulators in development
     if (import.meta.env.DEV || window.location.hostname === "localhost") {

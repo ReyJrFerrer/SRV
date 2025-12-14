@@ -142,7 +142,7 @@ const ProviderDirectionsPage: React.FC = () => {
         }
         document.body.removeChild(probe);
       }
-    } catch { }
+    } catch {}
   }, []);
 
   // Decode Google encoded polyline to LatLngLiteral[] (fallback when steps.path absent)
@@ -199,7 +199,7 @@ const ProviderDirectionsPage: React.FC = () => {
         }
       }
       if (path.length > 1) return path;
-    } catch { }
+    } catch {}
     // Fallback: decode overview_polyline if present
     const poly = (route as any).overview_polyline?.points;
     if (typeof poly === "string" && poly.length > 0) {
@@ -291,7 +291,7 @@ const ProviderDirectionsPage: React.FC = () => {
           latest,
           pos.coords.heading ?? null,
           pos.coords.speed ?? null,
-          pos.coords.accuracy
+          pos.coords.accuracy,
         );
       },
       (err) => {
@@ -436,7 +436,7 @@ const ProviderDirectionsPage: React.FC = () => {
           }
         }
         if (acc.length > 1) return acc;
-      } catch { }
+      } catch {}
       const poly = (route as any).overview_polyline?.points;
       if (typeof poly === "string" && poly.length > 0) {
         return decodePolyline(poly);
@@ -529,19 +529,19 @@ const ProviderDirectionsPage: React.FC = () => {
           try {
             if (pos) altInfoWindowRef.current.setPosition(pos as any);
             altInfoWindowRef.current.open(map);
-          } catch { }
-        } catch { }
+          } catch {}
+        } catch {}
       });
 
       const overLn = google.maps.event.addListener(pl, "mouseover", () => {
         try {
           pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
-        } catch { }
+        } catch {}
       });
       const outLn = google.maps.event.addListener(pl, "mouseout", () => {
         try {
           pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
-        } catch { }
+        } catch {}
       });
 
       altRouteListenersRef.current.push(clickLn, overLn, outLn);
@@ -580,18 +580,18 @@ const ProviderDirectionsPage: React.FC = () => {
           try {
             if (pos) altInfoWindowRef.current.setPosition(pos as any);
             altInfoWindowRef.current.open(map);
-          } catch { }
-        } catch { }
+          } catch {}
+        } catch {}
       });
       const overLn = google.maps.event.addListener(pl, "mouseover", () => {
         try {
           pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
-        } catch { }
+        } catch {}
       });
       const outLn = google.maps.event.addListener(pl, "mouseout", () => {
         try {
           pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
-        } catch { }
+        } catch {}
       });
 
       altRoutePolylinesRef.current.push(pl);
@@ -609,7 +609,7 @@ const ProviderDirectionsPage: React.FC = () => {
       const bounds = new google.maps.LatLngBounds();
       for (const p of pts) bounds.extend(p);
       (map as any).fitBounds(bounds, 60);
-    } catch { }
+    } catch {}
   }, [directionsResponse, selectedRouteIndex, getRoutePath]);
 
   // SECTION: Cleanup on unmount
@@ -671,7 +671,7 @@ const ProviderDirectionsPage: React.FC = () => {
     const saveCache = (c: Record<string, CacheEntry>) => {
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify(c));
-      } catch { }
+      } catch {}
     };
     const norm = (s: string) => s.toLowerCase();
     const cache = loadCache();
