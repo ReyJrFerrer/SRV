@@ -61,7 +61,6 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
     <div
       className={`mx-4 mb-4 rounded-3xl bg-white px-5 pb-6 pt-4 shadow-xl sm:mx-auto sm:max-w-md ${className}`}
     >
-
       {/* Provider Info Row */}
       <div className="mb-4 flex items-center gap-4">
         {/* Provider Photo */}
@@ -79,8 +78,9 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
           )}
           {/* Online indicator */}
           <div
-            className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${isStale ? "bg-yellow-400" : "bg-green-500"
-              }`}
+            className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${
+              isStale ? "bg-yellow-400" : "bg-green-500"
+            }`}
           />
         </div>
 
