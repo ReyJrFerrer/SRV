@@ -8,8 +8,13 @@ import "./src/index.css";
 import ScrollToTop from "./src/components/ScrollToTop";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import HashRouterFix from "./src/components/HashRouterFix";
-// Local wrapper to provide Google Maps context only where needed
 import { APIProvider } from "@vis.gl/react-google-maps";
+// Context
+import { AuthProvider } from "./src/context/AuthContext";
+import { BookingCacheProvider } from "./src/context/BookingCacheContext";
+import oneSignalService from "./src/services/oneSignalService";
+import { initVersionChecker } from "./src/utils/versionChecker";
+import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -134,12 +139,7 @@ const ProviderRateClientPage = lazy(
 );
 const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 
-// Context
-import { AuthProvider } from "./src/context/AuthContext";
-import { BookingCacheProvider } from "./src/context/BookingCacheContext";
-import oneSignalService from "./src/services/oneSignalService";
-import { initVersionChecker } from "./src/utils/versionChecker";
-import GlobalChatDock from "./src/components/chat/GlobalChatDock";
+
 
 // Initialize version checker for automatic cache clearing on new deployments
 initVersionChecker();
@@ -165,7 +165,7 @@ window.OneSignalDeferred.push(async function (OneSignal) {
 
     // Setup our service wrapper after OneSignal is fully initialized
     oneSignalService.setupAfterInit();
-  } catch (error) {}
+  } catch (error) { }
 });
 
 const ConversationPage = lazy(
