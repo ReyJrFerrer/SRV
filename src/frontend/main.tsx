@@ -139,8 +139,6 @@ const ProviderRateClientPage = lazy(
 );
 const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 
-
-
 // Initialize version checker for automatic cache clearing on new deployments
 initVersionChecker();
 
@@ -165,7 +163,7 @@ window.OneSignalDeferred.push(async function (OneSignal) {
 
     // Setup our service wrapper after OneSignal is fully initialized
     oneSignalService.setupAfterInit();
-  } catch (error) { }
+  } catch (error) {}
 });
 
 const ConversationPage = lazy(
