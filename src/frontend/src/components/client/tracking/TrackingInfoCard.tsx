@@ -6,7 +6,12 @@
  */
 
 import React from "react";
-import { ChatBubbleLeftIcon, XMarkIcon, EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import {
+  ChatBubbleLeftIcon,
+  XMarkIcon,
+  EyeIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
 interface TrackingInfoCardProps {
   providerName: string;
   providerPhoto?: string | null;
@@ -68,7 +73,6 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
 
   return (
     <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
-    
       {/* Street View Button - positioned above the card */}
       {showStreetViewButton && onStreetView && (
         <div className="flex w-full justify-end px-1">
@@ -82,7 +86,7 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
           </button>
         </div>
       )}
-        {/* Follow me checkbox and recenter button */}
+      {/* Follow me checkbox and recenter button */}
       {setFollowMe && onRecenter && (
         <div className="flex items-center justify-between px-1">
           <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -109,125 +113,121 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
       <div className="relative rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
         {(etaText || distanceText) && (
           <div className="text-center">
-            {
-             (etaText || distanceText) && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                    <div className="text-lg font-extrabold text-gray-900">
-                        {etaText}
-                    </div>
-                    <span className="text-gray-300">•</span>
-                    <div className="text-base font-semibold text-gray-700">
-                        {distanceText}
-                    </div>
+            {(etaText || distanceText) && (
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                  <div className="text-lg font-extrabold text-gray-900">
+                    {etaText}
                   </div>
-                  {/** Destination name shown under ETA/distance */}
-                  {typeof destinationName === "string" &&
-                    destinationName.trim() !== "" && (
-                      <div className="mt-1 max-w-[90%] text-sm text-gray-600">
-                         {destinationName}
-                      </div>
-                    )}
+                  <span className="text-gray-300">•</span>
+                  <div className="text-base font-semibold text-gray-700">
+                    {distanceText}
+                  </div>
                 </div>
-              )
-           }
+                {/** Destination name shown under ETA/distance */}
+                {typeof destinationName === "string" &&
+                  destinationName.trim() !== "" && (
+                    <div className="mt-1 max-w-[90%] text-sm text-gray-600">
+                      {destinationName}
+                    </div>
+                  )}
+              </div>
+            )}
           </div>
         )}
       </div>
-      
-      
+
       <div
         className={`mx-4 mb-4 rounded-3xl bg-white px-5 pb-6 pt-4 shadow-xl sm:mx-auto sm:max-w-md ${className}`}
       >
-      {/* Provider Info Row */}
-      <div className="mb-4 flex items-start gap-4">
-        {/* Provider Photo */}
-        <div className="relative">
-          {providerPhoto ? (
-            <img
-              src={providerPhoto}
-              alt={providerName}
-              className="h-14 w-14 rounded-full object-cover ring-2 ring-blue-500"
+        {/* Provider Info Row */}
+        <div className="mb-4 flex items-start gap-4">
+          {/* Provider Photo */}
+          <div className="relative">
+            {providerPhoto ? (
+              <img
+                src={providerPhoto}
+                alt={providerName}
+                className="h-14 w-14 rounded-full object-cover ring-2 ring-blue-500"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-lg font-bold text-white ring-2 ring-blue-300">
+                {providerName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            {/* Online indicator */}
+            <div
+              className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${
+                isStale ? "bg-yellow-400" : "bg-green-500"
+              }`}
             />
-          ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-lg font-bold text-white ring-2 ring-blue-300">
-              {providerName.charAt(0).toUpperCase()}
+          </div>
+
+          {/* Name, status, and ETA/Distance */}
+          <div className="flex-1">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                {/* Provider name and ETA/Distance on same row */}
+                <div className="mb-1 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {providerName}
+                  </h3>
+                </div>
+                {/* Status and last updated */}
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <span
+                    className={isStale ? "text-yellow-600" : "text-green-600"}
+                  >
+                    {isStale ? "Updating..." : "En Route"}
+                  </span>
+                  {lastUpdated && (
+                    <>
+                      <span className="mx-1 text-gray-400">•</span>
+                      <span>{getLastUpdatedText()}</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-5">
+          <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-1000"
+              style={{ width: `${getProgressPercent()}%` }}
+            />
+          </div>
+          <div className="mt-1 flex justify-between text-xs text-gray-500">
+            <span>Provider departed</span>
+            <span>Arriving soon</span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          {onChat && (
+            <button
+              onClick={onChat}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700"
+            >
+              <ChatBubbleLeftIcon className="h-5 w-5" />
+              <span>Chat</span>
+            </button>
           )}
-          {/* Online indicator */}
-          <div
-            className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${
-              isStale ? "bg-yellow-400" : "bg-green-500"
-            }`}
-          />
-        </div>
-
-        {/* Name, status, and ETA/Distance */}
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              {/* Provider name and ETA/Distance on same row */}
-              <div className="mb-1 flex items-center gap-2">
-                <h3 className="text-lg font-bold text-gray-900">{providerName}</h3>
-              </div>
-                    {/* Status and last updated */}
-              <div className="flex items-center gap-1 text-sm text-gray-600">
-                <span className={isStale ? "text-yellow-600" : "text-green-600"}>
-                  {isStale ? "Updating..." : "En Route"}
-                </span>
-                {lastUpdated && (
-                  <>
-                    <span className="mx-1 text-gray-400">•</span>
-                    <span>{getLastUpdatedText()}</span>
-                  </>
-                )}
-              </div>
-              
-        
-            </div>              
-            
-            </div>
-          
-         
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-600 transition-colors hover:bg-red-100"
+            >
+              <XMarkIcon className="h-5 w-5" />
+              <span>Cancel</span>
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Progress Bar */}
-      <div className="mb-5">
-        <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-1000"
-            style={{ width: `${getProgressPercent()}%` }}
-          />
-        </div>
-        <div className="mt-1 flex justify-between text-xs text-gray-500">
-          <span>Provider departed</span>
-          <span>Arriving soon</span>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        {onChat && (
-          <button
-            onClick={onChat}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700"
-          >
-            <ChatBubbleLeftIcon className="h-5 w-5" />
-            <span>Chat</span>
-          </button>
-        )}
-        {onCancel && (
-          <button
-            onClick={onCancel}
-            className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-600 transition-colors hover:bg-red-100"
-          >
-            <XMarkIcon className="h-5 w-5" />
-            <span>Cancel</span>
-          </button>
-        )}
-      </div>
-    </div>
     </div>
   );
 };

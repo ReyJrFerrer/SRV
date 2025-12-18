@@ -18,7 +18,10 @@ interface ProviderTrackingMapProps {
   autoFollow?: boolean;
   className?: string;
   destinationName?: string;
-  onRouteCalculated?: (etaText: string | null, distanceText: string | null) => void;
+  onRouteCalculated?: (
+    etaText: string | null,
+    distanceText: string | null,
+  ) => void;
 }
 
 const containerStyle: React.CSSProperties = {
@@ -48,9 +51,9 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   const altInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
   const lastRouteTimeRef = useRef<number>(0);
-  
+
   // Dynamic color from Tailwind
-  const mainStrokeColorRef = useRef<string>("#2563eb"); 
+  const mainStrokeColorRef = useRef<string>("#2563eb");
 
   // Decode polyline for rendering
   const decodePolyline = (encoded: string): google.maps.LatLngLiteral[] => {
@@ -105,7 +108,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
           setDirectionsResult(result);
           setSelectedRouteIndex(0);
           lastRouteTimeRef.current = now;
-          
+
           // Notify parent of route calculation
           if (onRouteCalculated) {
             const eta = result.routes[0]?.legs[0]?.duration?.text || null;
@@ -363,7 +366,6 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
       </div>
     );
   }
-
 
   return (
     <div className={`relative ${className}`}>

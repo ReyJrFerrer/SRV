@@ -41,23 +41,22 @@ const ClientTrackingPage: React.FC = () => {
   // Destination coordinates from booking
   const [destinationCoords, setDestinationCoords] =
     useState<google.maps.LatLngLiteral | null>(null);
-  
+
   // Street view modal state
   const [showStreetView, setShowStreetView] = useState<boolean>(false);
-  
+
   // Track if Google Maps API is loaded
   const [isMapApiLoaded, setIsMapApiLoaded] = useState(false);
-  
+
   // ETA and distance from map
   const [etaText, setEtaText] = useState<string | null>(null);
   const [distanceText, setDistanceText] = useState<string | null>(null);
-  
+
   // Follow me state and map ref
   const [followMe, setFollowMe] = useState<boolean>(true);
   const mapRef = React.useRef<google.maps.Map | null>(null);
 
-  const mapApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const mapApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // Resolve destination coordinates from booking location
   useEffect(() => {
@@ -254,7 +253,10 @@ const ClientTrackingPage: React.FC = () => {
           setFollowMe={setFollowMe}
           onRecenter={() => {
             if (mapRef.current && providerLocation) {
-              mapRef.current.panTo({ lat: providerLocation.lat, lng: providerLocation.lng });
+              mapRef.current.panTo({
+                lat: providerLocation.lat,
+                lng: providerLocation.lng,
+              });
             }
           }}
         />
