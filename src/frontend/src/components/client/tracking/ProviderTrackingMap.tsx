@@ -18,6 +18,7 @@ interface ProviderTrackingMapProps {
   autoFollow?: boolean;
   className?: string;
   destinationName?: string;
+  onRouteCalculated?: (etaText: string | null, distanceText: string | null) => void;
 }
 
 const containerStyle: React.CSSProperties = {
@@ -36,12 +37,20 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   autoFollow = true,
   className = "",
   destinationName,
+  onRouteCalculated,
 }) => {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [directionsResult, setDirectionsResult] =
     useState<google.maps.DirectionsResult | null>(null);
   const routePolylineRef = useRef<google.maps.Polyline | null>(null);
+  const altRoutePolylinesRef = useRef<google.maps.Polyline[]>([]);
+  const altRouteListenersRef = useRef<google.maps.MapsEventListener[]>([]);
+  const altInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
   const lastRouteTimeRef = useRef<number>(0);
+  
+  // Dynamic color from Tailwind
+  const mainStrokeColorRef = useRef<string>("#2563eb"); 
 
   // Decode polyline for rendering
   const decodePolyline = (encoded: string): google.maps.LatLngLiteral[] => {
@@ -89,53 +98,225 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
         origin: providerLocation,
         destination: clientLocation,
         travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true,
       },
       (result, status) => {
         if (status === google.maps.DirectionsStatus.OK && result) {
           setDirectionsResult(result);
+          setSelectedRouteIndex(0);
           lastRouteTimeRef.current = now;
+          
+          // Notify parent of route calculation
+          if (onRouteCalculated) {
+            const eta = result.routes[0]?.legs[0]?.duration?.text || null;
+            const distance = result.routes[0]?.legs[0]?.distance?.text || null;
+            onRouteCalculated(eta, distance);
+          }
         }
       },
     );
-  }, [providerLocation, clientLocation]);
+  }, [providerLocation, clientLocation, onRouteCalculated]);
 
-  // Draw route polyline
+  // Draw route polyline with alternative routes
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !directionsResult || !(window as any).google?.maps) return;
 
-    const route = directionsResult.routes[0];
-    if (!route) return;
+    // Helper to build a path from a route
+    const buildPathFromRoute = (route: any): google.maps.LatLngLiteral[] => {
+      try {
+        const acc: google.maps.LatLngLiteral[] = [];
+        for (const leg of route.legs || []) {
+          for (const step of leg.steps || []) {
+            if (Array.isArray((step as any).path)) {
+              for (const p of (step as any).path) {
+                const lat = (p as any).lat ? (p as any).lat() : (p as any).lat;
+                const lng = (p as any).lng ? (p as any).lng() : (p as any).lng;
+                if (typeof lat === "number" && typeof lng === "number") {
+                  acc.push({ lat, lng });
+                }
+              }
+            }
+          }
+        }
+        if (acc.length > 1) return acc;
+      } catch {}
+      const poly = (route as any).overview_polyline?.points;
+      if (typeof poly === "string" && poly.length > 0) {
+        return decodePolyline(poly);
+      }
+      return [];
+    };
 
-    const path = route.overview_polyline
-      ? decodePolyline((route as any).overview_polyline.points || "")
+    const routes = directionsResult?.routes || [];
+    const mainPath = routes[selectedRouteIndex]
+      ? buildPathFromRoute(routes[selectedRouteIndex])
       : [];
+    const altInfos = routes
+      .map((r, idx) => ({ idx, path: buildPathFromRoute(r) }))
+      .filter((o) => o.idx !== selectedRouteIndex && o.path.length > 1);
 
-    if (path.length < 2) return;
+    // Clear old alt listeners
+    for (const ln of altRouteListenersRef.current) ln.remove();
+    altRouteListenersRef.current = [];
 
-    // Clear old polyline
-    if (routePolylineRef.current) {
-      routePolylineRef.current.setMap(null);
+    // If no main path, clear polylines and return
+    if (!mainPath || mainPath.length < 2) {
+      if (routePolylineRef.current) {
+        routePolylineRef.current.setMap(null);
+        routePolylineRef.current = null;
+      }
+      for (const pl of altRoutePolylinesRef.current) pl.setMap(null);
+      altRoutePolylinesRef.current = [];
+      return;
     }
 
-    // Create new polyline with animated dash pattern
-    routePolylineRef.current = new google.maps.Polyline({
-      path,
-      strokeColor: "#3B82F6", // blue-500
-      strokeOpacity: 0.9,
-      strokeWeight: 5,
-      clickable: false,
-      geodesic: true,
-    });
+    // Main polyline (solid)
+    if (!routePolylineRef.current) {
+      routePolylineRef.current = new google.maps.Polyline({
+        path: mainPath,
+        strokeColor: mainStrokeColorRef.current,
+        strokeOpacity: 0.9,
+        strokeWeight: 6,
+        clickable: false,
+        geodesic: true,
+      });
+      routePolylineRef.current.setMap(map);
+    } else {
+      routePolylineRef.current.setPath(mainPath as any);
+      routePolylineRef.current.setOptions({
+        strokeColor: mainStrokeColorRef.current,
+        strokeOpacity: 0.9,
+        strokeWeight: 6,
+      });
+    }
 
-    routePolylineRef.current.setMap(map);
+    // Alternate polylines (dashed)
+    const lineSymbol: google.maps.Symbol = {
+      path: "M 0,-1 0,1",
+      strokeOpacity: 1,
+      scale: 3,
+    };
 
+    // Remove extra alt polylines
+    while (altRoutePolylinesRef.current.length > altInfos.length) {
+      const pl = altRoutePolylinesRef.current.pop();
+      if (pl) pl.setMap(null);
+    }
+
+    // Update existing alts
+    for (let i = 0; i < altRoutePolylinesRef.current.length; i++) {
+      const { idx, path } = altInfos[i];
+      const pl = altRoutePolylinesRef.current[i];
+      pl.setPath(path as any);
+      pl.setOptions({
+        strokeColor: mainStrokeColorRef.current,
+        strokeOpacity: 0,
+        strokeWeight: 4,
+        icons: [{ icon: lineSymbol, offset: "0", repeat: "20px" } as any],
+        clickable: true,
+      });
+
+      // attach listeners: click selects route and shows an info window
+      const clickLn = google.maps.event.addListener(pl, "click", (ev: any) => {
+        setSelectedRouteIndex(idx);
+        try {
+          if (!altInfoWindowRef.current)
+            altInfoWindowRef.current = new google.maps.InfoWindow();
+          const route = directionsResult?.routes[idx];
+          const leg = route?.legs?.[0];
+          const content = `<div style="font-size:13px;color:#0f172a;"><strong>${leg?.duration?.text || "N/A"}</strong><div style="font-size:12px;color:#374151;">${leg?.distance?.text || "N/A"}</div></div>`;
+          altInfoWindowRef.current.setContent(content);
+          const pos = ev?.latLng
+            ? ev.latLng
+            : path && path[Math.floor(path.length / 2)];
+          try {
+            if (pos) altInfoWindowRef.current.setPosition(pos as any);
+            altInfoWindowRef.current.open(map);
+          } catch {}
+        } catch {}
+      });
+
+      const overLn = google.maps.event.addListener(pl, "mouseover", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
+        } catch {}
+      });
+      const outLn = google.maps.event.addListener(pl, "mouseout", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
+        } catch {}
+      });
+
+      altRouteListenersRef.current.push(clickLn, overLn, outLn);
+    }
+
+    // Add missing alts
+    for (
+      let i = altRoutePolylinesRef.current.length;
+      i < altInfos.length;
+      i++
+    ) {
+      const { idx, path } = altInfos[i];
+      const pl = new google.maps.Polyline({
+        path,
+        strokeColor: mainStrokeColorRef.current,
+        strokeOpacity: 0,
+        strokeWeight: 4,
+        clickable: true,
+        icons: [{ icon: lineSymbol, offset: "0", repeat: "20px" } as any],
+      });
+      pl.setMap(map);
+
+      // listeners for newly created alternate polyline
+      const clickLn = google.maps.event.addListener(pl, "click", (ev: any) => {
+        setSelectedRouteIndex(idx);
+        try {
+          if (!altInfoWindowRef.current)
+            altInfoWindowRef.current = new google.maps.InfoWindow();
+          const route = directionsResult?.routes[idx];
+          const leg = route?.legs?.[0];
+          const content = `<div style="font-size:13px;color:#0f172a;"><strong>${leg?.duration?.text || "N/A"}</strong><div style="font-size:12px;color:#374151;">${leg?.distance?.text || "N/A"}</div></div>`;
+          altInfoWindowRef.current.setContent(content);
+          const pos = ev?.latLng
+            ? ev.latLng
+            : path && path[Math.floor(path.length / 2)];
+          try {
+            if (pos) altInfoWindowRef.current.setPosition(pos as any);
+            altInfoWindowRef.current.open(map);
+          } catch {}
+        } catch {}
+      });
+      const overLn = google.maps.event.addListener(pl, "mouseover", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
+        } catch {}
+      });
+      const outLn = google.maps.event.addListener(pl, "mouseout", () => {
+        try {
+          pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
+        } catch {}
+      });
+
+      altRoutePolylinesRef.current.push(pl);
+      altRouteListenersRef.current.push(clickLn, overLn, outLn);
+    }
+  }, [directionsResult, selectedRouteIndex]);
+
+  // Cleanup polylines only on unmount
+  useEffect(() => {
     return () => {
       if (routePolylineRef.current) {
         routePolylineRef.current.setMap(null);
       }
+      for (const pl of altRoutePolylinesRef.current) {
+        pl.setMap(null);
+      }
+      for (const ln of altRouteListenersRef.current) {
+        ln.remove();
+      }
     };
-  }, [directionsResult]);
+  }, []);
 
   // Auto-follow provider location
   useEffect(() => {
@@ -183,10 +364,6 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
     );
   }
 
-  // Get ETA from directions
-  const etaText = directionsResult?.routes[0]?.legs[0]?.duration?.text || null;
-  const distanceText =
-    directionsResult?.routes[0]?.legs[0]?.distance?.text || null;
 
   return (
     <div className={`relative ${className}`}>
@@ -232,20 +409,6 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
           )}
         </Map>
       </APIProvider>
-
-      {/* ETA Overlay - Top right */}
-      {(etaText || distanceText) && (
-        <div className="absolute right-4 top-4 rounded-xl bg-white/95 px-4 py-2 shadow-lg backdrop-blur">
-          <div className="text-center">
-            {etaText && (
-              <div className="text-lg font-bold text-gray-900">{etaText}</div>
-            )}
-            {distanceText && (
-              <div className="text-sm text-gray-600">{distanceText}</div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

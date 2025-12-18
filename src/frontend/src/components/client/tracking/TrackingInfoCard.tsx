@@ -6,19 +6,23 @@
  */
 
 import React from "react";
-import { ChatBubbleLeftIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { ClockIcon, MapIcon } from "@heroicons/react/24/outline";
-
+import { ChatBubbleLeftIcon, XMarkIcon, EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 interface TrackingInfoCardProps {
   providerName: string;
   providerPhoto?: string | null;
   etaText?: string | null;
   distanceText?: string | null;
+  destinationName?: string | null;
   lastUpdated?: number | null;
   isStale?: boolean;
   onChat?: () => void;
   onCancel?: () => void;
   onClose?: () => void;
+  onStreetView?: () => void;
+  showStreetViewButton?: boolean;
+  followMe?: boolean;
+  setFollowMe?: (value: boolean) => void;
+  onRecenter?: () => void;
   className?: string;
 }
 
@@ -27,11 +31,16 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
   providerPhoto,
   etaText,
   distanceText,
+  destinationName,
   lastUpdated,
   isStale = false,
   onChat,
   onCancel,
-  onClose,
+  onStreetView,
+  showStreetViewButton = false,
+  followMe = false,
+  setFollowMe,
+  onRecenter,
   className = "",
 }) => {
   // Calculate time since last update
@@ -58,11 +67,80 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
   };
 
   return (
-    <div
-      className={`mx-4 mb-4 rounded-3xl bg-white px-5 pb-6 pt-4 shadow-xl sm:mx-auto sm:max-w-md ${className}`}
-    >
+    <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
+    
+      {/* Street View Button - positioned above the card */}
+      {showStreetViewButton && onStreetView && (
+        <div className="flex w-full justify-end px-1">
+          <button
+            onClick={onStreetView}
+            className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow-lg ring-1 ring-gray-200 backdrop-blur hover:bg-white"
+            title="Open Street View"
+            aria-label="Open Street View"
+          >
+            <EyeIcon className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+        {/* Follow me checkbox and recenter button */}
+      {setFollowMe && onRecenter && (
+        <div className="flex items-center justify-between px-1">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={followMe}
+              onChange={(e) => setFollowMe(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            Follow me
+          </label>
+          <button
+            type="button"
+            onClick={onRecenter}
+            className="grid h-10 w-10 place-items-center rounded-full bg-white/95 text-gray-700 shadow ring-1 ring-gray-200 hover:bg-white"
+            title="Re-center map on provider"
+            aria-label="Re-center map"
+          >
+            <ArrowPathIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      <div className="relative rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
+        {(etaText || distanceText) && (
+          <div className="text-center">
+            {
+             (etaText || distanceText) && (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                    <div className="text-lg font-extrabold text-gray-900">
+                        {etaText}
+                    </div>
+                    <span className="text-gray-300">•</span>
+                    <div className="text-base font-semibold text-gray-700">
+                        {distanceText}
+                    </div>
+                  </div>
+                  {/** Destination name shown under ETA/distance */}
+                  {typeof destinationName === "string" &&
+                    destinationName.trim() !== "" && (
+                      <div className="mt-1 max-w-[90%] text-sm text-gray-600">
+                         {destinationName}
+                      </div>
+                    )}
+                </div>
+              )
+           }
+          </div>
+        )}
+      </div>
+      
+      
+      <div
+        className={`mx-4 mb-4 rounded-3xl bg-white px-5 pb-6 pt-4 shadow-xl sm:mx-auto sm:max-w-md ${className}`}
+      >
       {/* Provider Info Row */}
-      <div className="mb-4 flex items-center gap-4">
+      <div className="mb-4 flex items-start gap-4">
         {/* Provider Photo */}
         <div className="relative">
           {providerPhoto ? (
@@ -84,55 +162,34 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
           />
         </div>
 
-        {/* Name and status */}
+        {/* Name, status, and ETA/Distance */}
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-gray-900">{providerName}</h3>
-          <div className="flex items-center gap-1 text-sm text-gray-600">
-            <span className={isStale ? "text-yellow-600" : "text-green-600"}>
-              {isStale ? "Updating..." : "En Route"}
-            </span>
-            {lastUpdated && (
-              <>
-                <span className="mx-1 text-gray-400">•</span>
-                <span>{getLastUpdatedText()}</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Close button */}
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        )}
-      </div>
-
-      {/* ETA and Distance */}
-      <div className="mb-4 flex gap-4">
-        {etaText && (
-          <div className="flex flex-1 items-center gap-2 rounded-xl bg-blue-50 px-4 py-3">
-            <ClockIcon className="h-5 w-5 text-blue-600" />
-            <div>
-              <div className="text-lg font-bold text-gray-900">{etaText}</div>
-              <div className="text-xs text-gray-500">Estimated arrival</div>
-            </div>
-          </div>
-        )}
-        {distanceText && (
-          <div className="flex flex-1 items-center gap-2 rounded-xl bg-gray-50 px-4 py-3">
-            <MapIcon className="h-5 w-5 text-gray-600" />
-            <div>
-              <div className="text-lg font-bold text-gray-900">
-                {distanceText}
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              {/* Provider name and ETA/Distance on same row */}
+              <div className="mb-1 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-900">{providerName}</h3>
               </div>
-              <div className="text-xs text-gray-500">Distance away</div>
+                    {/* Status and last updated */}
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <span className={isStale ? "text-yellow-600" : "text-green-600"}>
+                  {isStale ? "Updating..." : "En Route"}
+                </span>
+                {lastUpdated && (
+                  <>
+                    <span className="mx-1 text-gray-400">•</span>
+                    <span>{getLastUpdatedText()}</span>
+                  </>
+                )}
+              </div>
+              
+        
+            </div>              
+            
             </div>
-          </div>
-        )}
+          
+         
+        </div>
       </div>
 
       {/* Progress Bar */}
@@ -170,6 +227,7 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
           </button>
         )}
       </div>
+    </div>
     </div>
   );
 };

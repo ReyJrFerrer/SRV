@@ -32,6 +32,7 @@ pubsub-debug.log
 /src/frontend/dev-dist
 
 firebase-debug.1.log
+database-debug.log
 
 # Firebase hosting cache
 .firebase/

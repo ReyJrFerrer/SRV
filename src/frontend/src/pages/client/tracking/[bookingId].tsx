@@ -14,6 +14,7 @@ import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import ProviderTrackingMap from "../../../components/client/tracking/ProviderTrackingMap";
 import TrackingInfoCard from "../../../components/client/tracking/TrackingInfoCard";
+import StreetViewModal from "../../../components/provider/directions/StreetViewModal";
 
 const ClientTrackingPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -40,13 +41,27 @@ const ClientTrackingPage: React.FC = () => {
   // Destination coordinates from booking
   const [destinationCoords, setDestinationCoords] =
     useState<google.maps.LatLngLiteral | null>(null);
+  
+  // Street view modal state
+  const [showStreetView, setShowStreetView] = useState<boolean>(false);
+  
+  // Track if Google Maps API is loaded
+  const [isMapApiLoaded, setIsMapApiLoaded] = useState(false);
+  
+  // ETA and distance from map
+  const [etaText, setEtaText] = useState<string | null>(null);
+  const [distanceText, setDistanceText] = useState<string | null>(null);
+  
+  // Follow me state and map ref
+  const [followMe, setFollowMe] = useState<boolean>(true);
+  const mapRef = React.useRef<google.maps.Map | null>(null);
 
   const mapApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // Resolve destination coordinates from booking location
   useEffect(() => {
-    if (!booking) return;
+    if (!booking || !isMapApiLoaded) return;
 
     // Check for explicit coordinates
     const explicitLat = (booking as any)?.latitude;
@@ -55,6 +70,9 @@ const ClientTrackingPage: React.FC = () => {
       setDestinationCoords({ lat: explicitLat, lng: explicitLng });
       return;
     }
+
+    // If we already have destination coords, don't re-geocode
+    if (destinationCoords) return;
 
     // Geocode the location string
     const location =
@@ -65,10 +83,11 @@ const ClientTrackingPage: React.FC = () => {
     geocoder.geocode({ address: location }, (results, status) => {
       if (status === "OK" && results && results[0]) {
         const loc = results[0].geometry.location;
-        setDestinationCoords({ lat: loc.lat(), lng: loc.lng() });
+        const coords = { lat: loc.lat(), lng: loc.lng() };
+        setDestinationCoords(coords);
       }
     });
-  }, [booking]);
+  }, [booking, isMapApiLoaded, destinationCoords]);
 
   // Redirect if booking not valid for tracking
   useEffect(() => {
@@ -169,11 +188,19 @@ const ClientTrackingPage: React.FC = () => {
         clientLocation={destinationCoords}
         heading={providerLocation?.heading}
         mapApiKey={mapApiKey}
-        autoFollow={true}
+        onMapReady={(map) => {
+          setIsMapApiLoaded(true);
+          mapRef.current = map;
+        }}
+        autoFollow={followMe}
         className="h-full w-full"
         destinationName={
           (booking as any)?.formattedLocation || (booking as any)?.location
         }
+        onRouteCalculated={(eta, distance) => {
+          setEtaText(eta);
+          setDistanceText(distance);
+        }}
       />
 
       {/* Back button overlay */}
@@ -211,15 +238,34 @@ const ClientTrackingPage: React.FC = () => {
         <TrackingInfoCard
           providerName={providerName}
           providerPhoto={providerPhoto}
-          etaText={null} // Will be populated when map calculates route
-          distanceText={null}
+          etaText={etaText}
+          distanceText={distanceText}
+          destinationName={
+            (booking as any)?.formattedLocation || (booking as any)?.location
+          }
           lastUpdated={lastUpdated}
           isStale={isStale}
           onChat={handleChat}
           onCancel={handleCancel}
           onClose={handleClose}
+          onStreetView={() => setShowStreetView(true)}
+          showStreetViewButton={!!destinationCoords}
+          followMe={followMe}
+          setFollowMe={setFollowMe}
+          onRecenter={() => {
+            if (mapRef.current && providerLocation) {
+              mapRef.current.panTo({ lat: providerLocation.lat, lng: providerLocation.lng });
+            }
+          }}
         />
       </div>
+
+      {/* Street View Modal */}
+      <StreetViewModal
+        show={showStreetView}
+        position={destinationCoords}
+        onClose={() => setShowStreetView(false)}
+      />
 
       {/* Hide navigation bar on this page for immersive experience */}
     </div>
