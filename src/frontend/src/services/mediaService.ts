@@ -1128,11 +1128,7 @@ export const uploadProblemProofMedia = async (
   // Constraints
   const MAX_FILES = 5;
   const MAX_VIDEO_MB = 25; // guard for very large clips
-  const ACCEPTED_VIDEO_TYPES = [
-    "video/mp4",
-    "video/quicktime",
-    "video/webm",
-  ];
+  const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
   if (files.length > MAX_FILES) {
     throw new Error(`Maximum ${MAX_FILES} attachments allowed`);
@@ -1140,7 +1136,12 @@ export const uploadProblemProofMedia = async (
 
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const uploadMediaFn = httpsCallable<
-    { fileName: string; contentType: string; mediaType: string; fileData: string },
+    {
+      fileName: string;
+      contentType: string;
+      mediaType: string;
+      fileData: string;
+    },
     { success: boolean; data: { url: string } }
   >(functions, "uploadMedia");
 

@@ -84,7 +84,7 @@ const BookingPage: React.FC = () => {
   const [notes, setNotes] = useState<string>("");
   const [problemMediaFiles, setProblemMediaFiles] = useState<File[]>([]);
   const NOTES_CHAR_LIMIT = 50;
-    const problemMediaSectionRef = useRef<HTMLDivElement>(null);
+  const problemMediaSectionRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
     "CashOnHand" | "GCash" | "SRVWallet"
@@ -1293,25 +1293,25 @@ const BookingPage: React.FC = () => {
         }
       }
 
-            // Upload proof media (if any) and attach to booking payload
-            let proofUrls: string[] = [];
-            if (problemMediaFiles.length > 0) {
-              try {
-                proofUrls = await uploadProblemProofMedia(problemMediaFiles);
-              } catch (e: any) {
-                setFormError(
-                  e?.message ||
-                    "Failed to upload attachments. Please remove large files or try again.",
-                );
-                setIsSubmitting(false);
-                return;
-              }
-            }
-            if (proofUrls.length > 0) {
-              (bookingData as any).attachments = proofUrls;
-            }
+      // Upload proof media (if any) and attach to booking payload
+      let proofUrls: string[] = [];
+      if (problemMediaFiles.length > 0) {
+        try {
+          proofUrls = await uploadProblemProofMedia(problemMediaFiles);
+        } catch (e: any) {
+          setFormError(
+            e?.message ||
+              "Failed to upload attachments. Please remove large files or try again.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      if (proofUrls.length > 0) {
+        (bookingData as any).attachments = proofUrls;
+      }
 
-            const booking = await createBookingRequest(bookingData);
+      const booking = await createBookingRequest(bookingData);
       if (booking) {
         setFormError(null);
         const confirmationDetails = {

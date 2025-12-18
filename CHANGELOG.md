@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Store client problem attachments on booking records and show them on provider booking details; moved client problem media section below location on wide screens.
 
 ### Added

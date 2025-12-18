@@ -40,12 +40,16 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
     >
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">
-          Problem Photos/Videos {required && <span className="text-red-600">(Required)</span>}
+          Problem Photos/Videos{" "}
+          {required && <span className="text-red-600">(Required)</span>}
         </h2>
-        <span className="text-xs text-gray-500">Up to {maxFiles} attachments</span>
+        <span className="text-xs text-gray-500">
+          Up to {maxFiles} attachments
+        </span>
       </div>
       <p className="mb-4 text-sm text-gray-600">
-        Add clear photos or a short video showing the issue. This helps the provider prepare tools and parts.
+        Add clear photos or a short video showing the issue. This helps the
+        provider prepare tools and parts.
       </p>
       <div className="flex items-center gap-3">
         <input
@@ -75,12 +79,24 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
             const isVideo = f.type.startsWith("video/");
             const url = URL.createObjectURL(f);
             return (
-              <li key={`${f.name}-${idx}`} className="relative overflow-hidden rounded-lg border border-gray-200">
+              <li
+                key={`${f.name}-${idx}`}
+                className="relative overflow-hidden rounded-lg border border-gray-200"
+              >
                 {isImage && (
-                  <img src={url} alt={f.name} className="h-32 w-full object-cover" />
+                  <img
+                    src={url}
+                    alt={f.name}
+                    className="h-32 w-full object-cover"
+                  />
                 )}
                 {isVideo && (
-                  <video src={url} className="h-32 w-full object-cover" controls preload="metadata" />
+                  <video
+                    src={url}
+                    className="h-32 w-full object-cover"
+                    controls
+                    preload="metadata"
+                  />
                 )}
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/50 px-2 py-1 text-[10px] text-white">
                   <span className="truncate">{f.name}</span>

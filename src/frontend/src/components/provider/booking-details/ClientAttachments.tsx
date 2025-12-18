@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { getImageDataUrl, extractMediaIdFromUrl } from "../../../services/mediaService";
+import {
+  getImageDataUrl,
+  extractMediaIdFromUrl,
+} from "../../../services/mediaService";
 import { httpsCallable } from "firebase/functions";
 import { initializeFirebase } from "../../../services/firebaseApp";
 
@@ -18,14 +21,17 @@ const isVideoUrl = (url: string) => {
   );
 };
 
-const ClientAttachments: React.FC<ClientAttachmentsProps> = ({ attachments, notes }) => {
+const ClientAttachments: React.FC<ClientAttachmentsProps> = ({
+  attachments,
+  notes,
+}) => {
   const items = useMemo(() => {
     const list: string[] = [];
     if (attachments && Array.isArray(attachments)) {
       for (const a of attachments) if (a) list.push(a);
     }
     // Fallback: parse [PROOF_ATTACHMENTS] block from notes
-    if ((!list.length) && notes) {
+    if (!list.length && notes) {
       try {
         const startTag = "[PROOF_ATTACHMENTS]";
         const endTag = "[/PROOF_ATTACHMENTS]";
@@ -43,16 +49,18 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({ attachments, note
     return list;
   }, [attachments, notes]);
 
-  const [resolved, setResolved] = useState<Record<number, { url: string; error?: string }>>({});
+  const [resolved, setResolved] = useState<
+    Record<number, { url: string; error?: string }>
+  >({});
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       const { functions } = initializeFirebase();
-      const getMediaItemFn = httpsCallable<{ mediaId: string }, { success: boolean; data: any }>(
-        functions,
-        "getMediaItem",
-      );
+      const getMediaItemFn = httpsCallable<
+        { mediaId: string },
+        { success: boolean; data: any }
+      >(functions, "getMediaItem");
 
       const entries = await Promise.all(
         items.map(async (src, idx) => {
@@ -77,11 +85,16 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({ attachments, note
             }
 
             // Resolve to data URL (preload) to improve reliability like ServiceImageUpload
-            const dataUrl = await getImageDataUrl(candidateUrl, { enableCache: true });
+            const dataUrl = await getImageDataUrl(candidateUrl, {
+              enableCache: true,
+            });
             return [idx, { url: dataUrl }] as const;
           } catch (e: any) {
             // Fallback to original string
-            return [idx, { url: src, error: e?.message || "Failed to resolve image" }] as const;
+            return [
+              idx,
+              { url: src, error: e?.message || "Failed to resolve image" },
+            ] as const;
           }
         }),
       );
@@ -101,7 +114,9 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({ attachments, note
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
-      <h2 className="mb-4 text-lg font-semibold text-gray-900">Client Attachments</h2>
+      <h2 className="mb-4 text-lg font-semibold text-gray-900">
+        Client Attachments
+      </h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {items.map((original, idx) => {
           const entry = resolved[idx];
@@ -119,7 +134,12 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({ attachments, note
                   Loading...
                 </div>
               ) : video ? (
-                <video className="h-40 w-full object-cover" src={url} controls preload="metadata" />
+                <video
+                  className="h-40 w-full object-cover"
+                  src={url}
+                  controls
+                  preload="metadata"
+                />
               ) : (
                 <img
                   className="h-40 w-full object-cover"
@@ -128,7 +148,8 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({ attachments, note
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     // if data URL failed, try original URL
-                    if (url !== original) (e.currentTarget as HTMLImageElement).src = original;
+                    if (url !== original)
+                      (e.currentTarget as HTMLImageElement).src = original;
                   }}
                   loading="lazy"
                 />
