@@ -1334,6 +1334,7 @@ const BookingPage: React.FC = () => {
           landmark: landmark || "None",
           municipality: finalMunicipality,
           province: finalProvince,
+          attachments: (bookingData as any)?.attachments || proofUrls || [],
         };
         // clear saved draft for this service now that booking succeeded
         try {

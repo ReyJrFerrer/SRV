@@ -53,6 +53,21 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({
     Record<number, { url: string; error?: string }>
   >({});
 
+  const [lightbox, setLightbox] = useState<{
+    open: boolean;
+    index: number;
+    url: string;
+    isVideo: boolean;
+  }>({ open: false, index: 0, url: "", isVideo: false });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox((s) => ({ ...s, open: false }));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -128,6 +143,11 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({
             <div
               key={`${original}-${idx}`}
               className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+              onClick={() => {
+                if (!loading) {
+                  setLightbox({ open: true, index: idx, url, isVideo: video });
+                }
+              }}
             >
               {loading ? (
                 <div className="flex h-40 w-full items-center justify-center text-xs text-gray-500">
@@ -158,6 +178,45 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({
           );
         })}
       </div>
+
+      {lightbox.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setLightbox((s) => ({ ...s, open: false }))}
+          aria-modal
+          role="dialog"
+        >
+          <div
+            className="relative max-h-[85vh] w-full max-w-3xl rounded-xl bg-white p-3 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute right-2 top-2 rounded-md bg-black/50 px-2 py-1 text-xs font-semibold text-white hover:bg-black/70"
+              onClick={() => setLightbox((s) => ({ ...s, open: false }))}
+              aria-label="Close"
+            >
+              Close
+            </button>
+            <div className="flex items-center justify-center">
+              {lightbox.isVideo ? (
+                <video
+                  src={lightbox.url}
+                  className="max-h-[75vh] w-full max-w-full object-contain"
+                  controls
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={lightbox.url}
+                  className="max-h-[75vh] w-full max-w-full object-contain"
+                  alt="Attachment preview"
+                  referrerPolicy="no-referrer"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
