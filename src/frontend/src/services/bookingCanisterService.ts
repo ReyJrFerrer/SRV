@@ -136,6 +136,7 @@ export interface Booking {
   serviceTime?: number; // Duration in nanoseconds from started to completed
   location: Location;
   evidence?: Evidence;
+  attachments?: string[];
   notes?: string;
   paymentMethod: PaymentMethod;
   paymentId?: string; // Reference to external payment (Xendit invoice ID)
@@ -209,6 +210,7 @@ export const bookingCanisterService = {
     paymentMethod: PaymentMethod = "CashOnHand",
     paymentId?: string,
     locationDetection: "automatic" | "manual" = "manual",
+    attachments?: string[],
   ): Promise<Booking | null> {
     try {
       const createBookingFn = httpsCallable(functions, "createBooking");
@@ -222,6 +224,7 @@ export const bookingCanisterService = {
         scheduledDate: scheduledDate.toISOString(), // Send the end time to backend
         servicePackageIds,
         notes,
+        attachments,
         amountToPay,
         paymentMethod,
         paymentId,

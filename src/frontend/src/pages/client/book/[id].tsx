@@ -23,7 +23,9 @@ import PackagesSection from "../../../components/client/booking/PackagesSection"
 import ScheduleSection from "../../../components/client/booking/ScheduleSection";
 import ServiceLocationSection from "../../../components/client/booking/ServiceLocationSection";
 import NotesSection from "../../../components/client/booking/NotesSection";
+import ProblemMediaSection from "../../../components/client/booking/ProblemMediaSection";
 import StickyConfirmBar from "../../../components/client/booking/StickyConfirmBar";
+import { uploadProblemProofMedia } from "../../../services/mediaService";
 
 const BookingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -80,7 +82,9 @@ const BookingPage: React.FC = () => {
   const [houseNumber, setHouseNumber] = useState<string>("");
   const [landmark, setLandmark] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [problemMediaFiles, setProblemMediaFiles] = useState<File[]>([]);
   const NOTES_CHAR_LIMIT = 50;
+    const problemMediaSectionRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
     "CashOnHand" | "GCash" | "SRVWallet"
@@ -901,6 +905,8 @@ const BookingPage: React.FC = () => {
     if (highlightInput === "amountPaid" && amountPaid) setHighlightInput("");
     if (highlightInput === "selectedTime" && selectedTime)
       setHighlightInput("");
+    if (highlightInput === "problemMedia" && problemMediaFiles.length > 0)
+      setHighlightInput("");
     if (highlightInput === "package" && packages.some((pkg) => pkg.checked))
       setHighlightInput("");
     if (highlightInput === "bookingOption" && bookingOption)
@@ -918,6 +924,7 @@ const BookingPage: React.FC = () => {
     packages,
     bookingOption,
     paymentError,
+    problemMediaFiles,
   ]);
 
   useEffect(() => {
@@ -932,6 +939,8 @@ const BookingPage: React.FC = () => {
       ref = bookingSectionRef.current as any;
     if (highlightInput === "paymentSection")
       ref = paymentSectionRef.current as any;
+    if (highlightInput === "problemMedia")
+      ref = problemMediaSectionRef.current as any;
     if (ref) {
       setTimeout(() => {
         ref?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1059,6 +1068,32 @@ const BookingPage: React.FC = () => {
           bookingOption === "sameday" ? "time for today" : "time slot";
         setFormError(`Please select a ${timeLabel} before proceeding.`);
         highlightField = "selectedTime";
+        setIsSubmitting(false);
+        setHighlightInput(highlightField);
+        return;
+      }
+
+      // Require problem proof for repair-like categories
+      const isRepairCategory = (name?: string) => {
+        if (!name) return false;
+        const n = name.toLowerCase();
+        return (
+          n.includes("repair") ||
+          n.includes("technician") ||
+          n.includes("gadget") ||
+          n.includes("appliance") ||
+          n.includes("automobile") ||
+          n.includes("mechanic") ||
+          n.includes("car") ||
+          n.includes("motor")
+        );
+      };
+      const requiresProof = isRepairCategory(service?.category?.name as any);
+      if (requiresProof && problemMediaFiles.length === 0) {
+        setFormError(
+          "Please attach at least one photo or a short video showing the problem.",
+        );
+        highlightField = "problemMedia";
         setIsSubmitting(false);
         setHighlightInput(highlightField);
         return;
@@ -1258,7 +1293,25 @@ const BookingPage: React.FC = () => {
         }
       }
 
-      const booking = await createBookingRequest(bookingData);
+            // Upload proof media (if any) and attach to booking payload
+            let proofUrls: string[] = [];
+            if (problemMediaFiles.length > 0) {
+              try {
+                proofUrls = await uploadProblemProofMedia(problemMediaFiles);
+              } catch (e: any) {
+                setFormError(
+                  e?.message ||
+                    "Failed to upload attachments. Please remove large files or try again.",
+                );
+                setIsSubmitting(false);
+                return;
+              }
+            }
+            if (proofUrls.length > 0) {
+              (bookingData as any).attachments = proofUrls;
+            }
+
+            const booking = await createBookingRequest(bookingData);
       if (booking) {
         setFormError(null);
         const confirmationDetails = {
@@ -1592,6 +1645,26 @@ const BookingPage: React.FC = () => {
                     streetRef={streetRef}
                     houseNumberRef={houseNumberRef}
                   />
+                  <div className="mb-6" ref={problemMediaSectionRef}>
+                    <ProblemMediaSection
+                      files={problemMediaFiles}
+                      onFilesChange={setProblemMediaFiles}
+                      required={(() => {
+                        const n = (service?.category?.name || "").toLowerCase();
+                        return (
+                          n.includes("repair") ||
+                          n.includes("technician") ||
+                          n.includes("gadget") ||
+                          n.includes("appliance") ||
+                          n.includes("automobile") ||
+                          n.includes("mechanic") ||
+                          n.includes("car") ||
+                          n.includes("motor")
+                        );
+                      })()}
+                      highlight={highlightInput === "problemMedia"}
+                    />
+                  </div>
                 </div>
                 <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
                   <ScheduleSection

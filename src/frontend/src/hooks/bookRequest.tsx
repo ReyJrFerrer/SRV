@@ -31,6 +31,7 @@ export interface BookingRequest {
   location: string | Location;
   concerns?: string;
   notes?: string; // Optional notes for the booking
+  attachments?: string[]; // Optional proof attachments (images/videos)
   amountToPay?: number;
   paymentMethod: "CashOnHand" | "GCash" | "SRVWallet"; // Payment method chosen by client
   paymentId?: string; // Optional payment ID for e-wallet payments (Xendit invoice ID)
@@ -409,6 +410,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
           bookingData.paymentMethod, // Pass the payment method to the booking
           bookingData.paymentId, // Pass the payment ID (Xendit invoice ID) for e-wallet payments
           bookingData.locationDetection || "manual", // Pass the location detection mode
+          bookingData.attachments, // Optional attachments
         );
         return booking;
       } catch (err) {

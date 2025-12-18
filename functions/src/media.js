@@ -29,9 +29,11 @@ function getAuthInfo(context, data) {
 }
 
 // Constants - mirroring media.mo canister
-const MAX_FILE_SIZE = 1000000; // 1MB in bytes
+const MAX_FILE_SIZE = 1000000; // 1MB in bytes (general images)
 const MAX_REMITTANCE_FILE_SIZE = 1048576; // 1MB in bytes
+const MAX_PROBLEM_PROOF_VIDEO_SIZE = 30 * 1024 * 1024; // 30MB for short clips
 const SUPPORTED_CONTENT_TYPES = [
+  // Images
   "image/jpeg",
   "image/jpg",
   "image/png",
@@ -39,7 +41,13 @@ const SUPPORTED_CONTENT_TYPES = [
   "image/webp",
   "image/bmp",
   "image/svg+xml",
+  "image/heic",
+  // Documents
   "application/pdf",
+  // Problem proof videos
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
 ];
 
 /**
@@ -57,11 +65,13 @@ function validateContentType(contentType) {
  * @param {string} mediaType - Type of media
  * @return {boolean} True if valid
  */
-function validateFileSize(fileSize, mediaType) {
+function validateFileSize(fileSize, mediaType, contentType) {
+  // Special handling for ProblemProof videos
+  if (mediaType === "ProblemProof" && contentType?.startsWith("video/")) {
+    return fileSize > 0 && fileSize <= MAX_PROBLEM_PROOF_VIDEO_SIZE;
+  }
   const maxSize =
-    mediaType === "RemittancePaymentProof" ?
-      MAX_REMITTANCE_FILE_SIZE :
-      MAX_FILE_SIZE;
+    mediaType === "RemittancePaymentProof" ? MAX_REMITTANCE_FILE_SIZE : MAX_FILE_SIZE;
   return fileSize > 0 && fileSize <= maxSize;
 }
 
@@ -80,6 +90,7 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
     ServiceCertificate: "certificates",
     RemittancePaymentProof: "remittance",
     ReportAttachment: "reports",
+    ProblemProof: "problem-proof",
   }[mediaType];
 
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -150,9 +161,12 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
   const fileSize = fileBuffer.length;
 
   // Validate file size
-  if (!validateFileSize(fileSize, mediaType)) {
-    const maxSizeText =
-      mediaType === "RemittancePaymentProof" ? "1MB" : "450KB";
+  if (!validateFileSize(fileSize, mediaType, contentType)) {
+    const maxSizeText = mediaType === "RemittancePaymentProof"
+      ? "1MB"
+      : mediaType === "ProblemProof" && contentType?.startsWith("video/")
+        ? "30MB"
+        : "1MB";
     throw new functions.https.HttpsError(
       "invalid-argument",
       `File size must be between 1 byte and ${maxSizeText} for this media type`,
@@ -162,6 +176,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
   try {
     const mediaId = await generateUuid();
     const ownerId = authInfo.uid;
+    const downloadToken = await generateUuid();
     const filePath = generateFilePath(ownerId, mediaType, fileName, mediaId);
 
     // Upload file to Cloud Storage
@@ -173,23 +188,22 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
           mediaId: mediaId,
           ownerId: ownerId,
           mediaType: mediaType,
+          firebaseStorageDownloadTokens: downloadToken,
         },
       },
     });
-
-    // Make file publicly accessible (or use signed URLs for private access)
-    await file.makePublic();
 
     // Get public URL - handle both emulator and production
     let publicUrl;
     if (process.env.FUNCTIONS_EMULATOR === "true" || process.env.FIREBASE_STORAGE_EMULATOR_HOST) {
       // Emulator environment - use emulator URL format
       const encodedPath = encodeURIComponent(filePath);
-      publicUrl = `http://127.0.0.1:9199/v0/b/${bucket.name}/o/${encodedPath}?alt=media`;
+      publicUrl = `http://127.0.0.1:9199/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
       console.log("Using emulator storage URL:", publicUrl);
     } else {
       // Production environment - use googleapis URL
-      publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+      const encodedPath = encodeURIComponent(filePath);
+      publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
     }
 
     // Create media item metadata

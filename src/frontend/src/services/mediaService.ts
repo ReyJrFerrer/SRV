@@ -106,6 +106,7 @@ export const getImageDataUrl = async (
     // For Firebase Storage URLs (both production and emulator), return directly
     if (
       mediaUrl.includes("storage.googleapis.com") ||
+      mediaUrl.includes("firebasestorage.googleapis.com") ||
       mediaUrl.includes("127.0.0.1:9199") ||
       mediaUrl.includes("localhost:9199")
     ) {
@@ -1110,6 +1111,85 @@ export const mediaService = {
       };
     }
   },
+};
+
+/**
+ * Upload problem proof media (images or short videos) for bookings.
+ * - Images are optionally resized/compressed similar to report attachments
+ * - Videos are passed through as-is with size/type validation
+ * Returns an array of public URLs.
+ */
+export const uploadProblemProofMedia = async (
+  files: File[],
+  options: ImageUploadOptions = {},
+): Promise<string[]> => {
+  if (!files || files.length === 0) return [];
+
+  // Constraints
+  const MAX_FILES = 5;
+  const MAX_VIDEO_MB = 25; // guard for very large clips
+  const ACCEPTED_VIDEO_TYPES = [
+    "video/mp4",
+    "video/quicktime",
+    "video/webm",
+  ];
+
+  if (files.length > MAX_FILES) {
+    throw new Error(`Maximum ${MAX_FILES} attachments allowed`);
+  }
+
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const uploadMediaFn = httpsCallable<
+    { fileName: string; contentType: string; mediaType: string; fileData: string },
+    { success: boolean; data: { url: string } }
+  >(functions, "uploadMedia");
+
+  const urls: string[] = [];
+
+  for (const file of files) {
+    const isImage = file.type.startsWith("image/");
+    const isVideo = ACCEPTED_VIDEO_TYPES.includes(file.type);
+    if (!isImage && !isVideo) {
+      throw new Error(
+        `Unsupported file type ${file.type}. Allowed images and videos (MP4/WEBM/MOV).`,
+      );
+    }
+
+    let toUpload: File = file;
+
+    if (isImage) {
+      // Resize/compress images similar to report attachments
+      const currentSizeKB = file.size / 1024;
+      if (currentSizeKB > opts.maxSizeKB) {
+        toUpload = await intelligentScaleImageTo450KB(file, opts.maxSizeKB);
+      }
+      if (opts.maxWidth || opts.maxHeight) {
+        toUpload = await resizeImage(toUpload, opts.maxWidth, opts.maxHeight);
+      }
+    } else if (isVideo) {
+      const sizeMB = file.size / (1024 * 1024);
+      if (sizeMB > MAX_VIDEO_MB) {
+        throw new Error(`Video too large. Max ${MAX_VIDEO_MB}MB allowed.`);
+      }
+    }
+
+    const data = await fileToUint8Array(toUpload);
+    const base64 = uint8ArrayToBase64(data);
+
+    const result = await uploadMediaFn({
+      fileName: file.name,
+      contentType: file.type,
+      mediaType: "ProblemProof",
+      fileData: base64,
+    });
+    if (result.data.success && result.data.data.url) {
+      urls.push(result.data.data.url);
+    } else {
+      throw new Error("Failed to upload attachment");
+    }
+  }
+
+  return urls;
 };
 
 export default mediaService;
