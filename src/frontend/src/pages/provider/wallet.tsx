@@ -247,25 +247,38 @@ const WalletPage: React.FC = () => {
   };
 
   const handleAmountInputChange = (value: string) => {
-    // Allow only numbers by stripping non-digit characters
-    let numericValue = value.replace(/[^0-9]/g, "");
+    // Allow only numbers and a single decimal point
+    let sanitizedValue = value.replace(/[^0-9.]/g, "");
 
-    // Prevent leading zeros, unless the value is "0" itself
-    if (numericValue.length > 1 && numericValue.startsWith("0")) {
-      numericValue = parseInt(numericValue, 10).toString();
+    // Ensure only one decimal point
+    const parts = sanitizedValue.split(".");
+    if (parts.length > 2) {
+      sanitizedValue = parts[0] + "." + parts.slice(1).join("");
+    }
+
+    // Limit to 2 decimal places
+    if (parts.length === 2 && parts[1].length > 2) {
+      sanitizedValue = parts[0] + "." + parts[1].slice(0, 2);
+    }
+
+    // Prevent leading zeros for the integer part (except for "0." case)
+    if (
+      parts[0].length > 1 &&
+      parts[0].startsWith("0") &&
+      parts[0][1] !== "."
+    ) {
+      parts[0] = parseInt(parts[0], 10).toString();
+      sanitizedValue =
+        parts.length === 2 ? parts[0] + "." + parts[1] : parts[0];
     }
 
     // Prevent exceeding 50,000
-    if (parseInt(numericValue, 10) > 50000) {
-      numericValue = "50000";
+    const numericValue = parseFloat(sanitizedValue);
+    if (!isNaN(numericValue) && numericValue > 50000) {
+      sanitizedValue = "50000";
     }
 
-    // Handle empty or invalid parsing
-    if (numericValue === "NaN") {
-      numericValue = "";
-    }
-
-    setTopUpAmount(numericValue);
+    setTopUpAmount(sanitizedValue);
   };
 
   const handleRefresh = async () => {

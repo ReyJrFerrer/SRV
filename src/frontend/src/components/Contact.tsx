@@ -169,7 +169,7 @@ const Contact = ({
                   <button
                     type="button"
                     className="contact-item contact-location-item"
-                    aria-label="Open map showing location: InTT Office, University of the Cordilleras Legarda Campus, Basement 1, Legarda Road, Baguio City, Philippines"
+                    aria-label="Open map showing location: InTTO Office, University of the Cordilleras Legarda Campus, Basement 1, Legarda Road, Baguio City, Philippines"
                     onClick={() => setShowMapModal(true)}
                   >
                     <div className="contact-icon location-icon">
@@ -178,7 +178,7 @@ const Contact = ({
                     <div className="contact-content location-text-wrapper">
                       <h3 className="contact-label">Location</h3>
                       <p className="contact-value">
-                        InTT Office, University of the Cordilleras Legarda
+                        InTTO Office, University of the Cordilleras Legarda
                         Campus, Basement 1, Legarda Road, Baguio City,
                         Philippines
                       </p>

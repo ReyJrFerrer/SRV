@@ -6,6 +6,7 @@ import ControlsOverlay from "../../../components/provider/directions/ControlsOve
 import StreetViewModal from "../../../components/provider/directions/StreetViewModal";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
+import { useProviderLocationPublisher } from "../../../hooks/useProviderLocationPublisher";
 
 // SECTION: Math helpers (Haversine)
 const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -36,6 +37,15 @@ const ProviderDirectionsPage: React.FC = () => {
   // Use cached booking hook - fetches once, shares across all pages
   const { booking, isLoading: isLoadingBooking } =
     useCachedProviderBooking(bookingId);
+
+  // Real-time location publisher for client tracking
+  const { publishLocation } = useProviderLocationPublisher({
+    bookingId: bookingId,
+    enabled: Boolean(booking && booking.status === "Accepted"),
+    throttleMs: 3000,
+    minDistanceM: 20,
+    minHeadingChange: 30,
+  });
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
@@ -275,7 +285,14 @@ const ProviderDirectionsPage: React.FC = () => {
             }
           }
         }
-        // prevPos not used
+
+        // Publish location for real-time client tracking
+        publishLocation(
+          latest,
+          pos.coords.heading ?? null,
+          pos.coords.speed ?? null,
+          pos.coords.accuracy,
+        );
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) setGeoDenied(true);

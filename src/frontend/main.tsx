@@ -8,8 +8,13 @@ import "./src/index.css";
 import ScrollToTop from "./src/components/ScrollToTop";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import HashRouterFix from "./src/components/HashRouterFix";
-// Local wrapper to provide Google Maps context only where needed
 import { APIProvider } from "@vis.gl/react-google-maps";
+// Context
+import { AuthProvider } from "./src/context/AuthContext";
+import { BookingCacheProvider } from "./src/context/BookingCacheContext";
+import oneSignalService from "./src/services/oneSignalService";
+import { initVersionChecker } from "./src/utils/versionChecker";
+import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -71,6 +76,9 @@ const ReceiptPage = lazy(
   () => import("./src/pages/client/booking/receipt/[id]"),
 );
 const ClientBookService = lazy(() => import("./src/pages/client/book/[id]"));
+const ClientTrackingPage = lazy(
+  () => import("./src/pages/client/tracking/[bookingId]"),
+);
 
 // Client Category & Review Pages
 const ClientCategory = lazy(
@@ -133,13 +141,6 @@ const ProviderRateClientPage = lazy(
   () => import("./src/pages/provider/rate-client/[bookingId]"),
 );
 const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
-
-// Context
-import { AuthProvider } from "./src/context/AuthContext";
-import { BookingCacheProvider } from "./src/context/BookingCacheContext";
-import oneSignalService from "./src/services/oneSignalService";
-import { initVersionChecker } from "./src/utils/versionChecker";
-import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 
 // Initialize version checker for automatic cache clearing on new deployments
 initVersionChecker();
@@ -297,6 +298,12 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                       element={<ClientCategory />}
                     />
                     <Route path="review/:id" element={<ClientReview />} />
+
+                    {/* Tracking Route */}
+                    <Route
+                      path="tracking/:bookingId"
+                      element={<ClientTrackingPage />}
+                    />
                   </Route>
 
                   {/* Provider Routes with Nested Layout */}
