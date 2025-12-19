@@ -51,7 +51,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   const altInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
   const lastRouteTimeRef = useRef<number>(0);
-  
+
   // Throttle auto-pan: track last pan time and position
   const lastPanTimeRef = useRef<number>(0);
   const lastPanPosRef = useRef<google.maps.LatLngLiteral | null>(null);
@@ -103,7 +103,8 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
     const lat2 = toRad(b.lat);
     const sinDLat = Math.sin(dLat / 2);
     const sinDLon = Math.sin(dLon / 2);
-    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+    const h =
+      sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
     const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
     return R * c;
   };
@@ -353,7 +354,9 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
     const now = Date.now();
     const since = now - lastPanTimeRef.current;
     const lastPos = lastPanPosRef.current;
-    const distance = lastPos ? haversineDistanceMeters(lastPos, providerLocation) : Infinity;
+    const distance = lastPos
+      ? haversineDistanceMeters(lastPos, providerLocation)
+      : Infinity;
 
     if (since < MIN_INTERVAL_MS && distance < MIN_DISTANCE_M) return;
 
