@@ -51,6 +51,10 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   const altInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
   const lastRouteTimeRef = useRef<number>(0);
+  
+  // Throttle auto-pan: track last pan time and position
+  const lastPanTimeRef = useRef<number>(0);
+  const lastPanPosRef = useRef<google.maps.LatLngLiteral | null>(null);
 
   // Dynamic color from Tailwind
   const mainStrokeColorRef = useRef<string>("#2563eb");
@@ -84,6 +88,24 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
       coordinates.push({ lat: lat / 1e5, lng: lng / 1e5 });
     }
     return coordinates;
+  };
+
+  // Small haversine helper (meters) to avoid panning for tiny movements
+  const haversineDistanceMeters = (
+    a: google.maps.LatLngLiteral,
+    b: google.maps.LatLngLiteral,
+  ) => {
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const R = 6371000; // meters
+    const dLat = toRad(b.lat - a.lat);
+    const dLon = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLon = Math.sin(dLon / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+    const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+    return R * c;
   };
 
   // Calculate route between provider and client
@@ -323,9 +345,23 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
 
   // Auto-follow provider location
   useEffect(() => {
-    if (autoFollow && mapRef.current && providerLocation) {
+    if (!autoFollow || !mapRef.current || !providerLocation) return;
+
+    // Throttle pans to avoid constant recentering. Minimum interval and distance.
+    const MIN_INTERVAL_MS = 3000; // 3 seconds
+    const MIN_DISTANCE_M = 10; // 10 meters
+    const now = Date.now();
+    const since = now - lastPanTimeRef.current;
+    const lastPos = lastPanPosRef.current;
+    const distance = lastPos ? haversineDistanceMeters(lastPos, providerLocation) : Infinity;
+
+    if (since < MIN_INTERVAL_MS && distance < MIN_DISTANCE_M) return;
+
+    try {
       mapRef.current.panTo(providerLocation);
-    }
+      lastPanTimeRef.current = now;
+      lastPanPosRef.current = providerLocation;
+    } catch {}
   }, [providerLocation, autoFollow]);
 
   // Fit bounds when both locations are available

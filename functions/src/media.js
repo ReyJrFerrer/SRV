@@ -63,6 +63,7 @@ function validateContentType(contentType) {
  * Validate file size based on media type
  * @param {number} fileSize - File size in bytes
  * @param {string} mediaType - Type of media
+ * @param {string} contentType - MIME type of the file
  * @return {boolean} True if valid
  */
 function validateFileSize(fileSize, mediaType, contentType) {
@@ -162,11 +163,11 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
 
   // Validate file size
   if (!validateFileSize(fileSize, mediaType, contentType)) {
-    const maxSizeText = mediaType === "RemittancePaymentProof"
-      ? "1MB"
-      : mediaType === "ProblemProof" && contentType?.startsWith("video/")
-        ? "30MB"
-        : "1MB";
+    const maxSizeText = mediaType === "RemittancePaymentProof" ?
+      "1MB" :
+      mediaType === "ProblemProof" && contentType?.startsWith("video/") ?
+        "30MB" :
+        "1MB";
     throw new functions.https.HttpsError(
       "invalid-argument",
       `File size must be between 1 byte and ${maxSizeText} for this media type`,

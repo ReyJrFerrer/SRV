@@ -591,7 +591,9 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
           .filter((x) => typeof x === "string" && x.trim().length > 0)
           .slice(0, 5);
       }
-    } catch {}
+    } catch {
+      console.error("[createBooking] Failed to normalize attachments");
+    }
 
     const newBooking = {
       id: bookingId,
