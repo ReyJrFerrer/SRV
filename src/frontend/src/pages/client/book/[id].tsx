@@ -1646,7 +1646,7 @@ const BookingPage: React.FC = () => {
                     streetRef={streetRef}
                     houseNumberRef={houseNumberRef}
                   />
-                  <div className="mb-6" ref={problemMediaSectionRef}>
+                  <div className="mb-6 hidden md:block" ref={problemMediaSectionRef}>
                     <ProblemMediaSection
                       files={problemMediaFiles}
                       onFilesChange={setProblemMediaFiles}
@@ -1719,6 +1719,27 @@ const BookingPage: React.FC = () => {
                         isProviderOnboarded={isProviderOnboarded}
                       />
                     </div>
+                  </div>
+                  {/* Mobile-only: show Problem Media above Notes */}
+                  <div className="mb-6 md:hidden" ref={problemMediaSectionRef}>
+                    <ProblemMediaSection
+                      files={problemMediaFiles}
+                      onFilesChange={setProblemMediaFiles}
+                      required={(() => {
+                        const n = (service?.category?.name || "").toLowerCase();
+                        return (
+                          n.includes("repair") ||
+                          n.includes("technician") ||
+                          n.includes("gadget") ||
+                          n.includes("appliance") ||
+                          n.includes("automobile") ||
+                          n.includes("mechanic") ||
+                          n.includes("car") ||
+                          n.includes("motor")
+                        );
+                      })()}
+                      highlight={highlightInput === "problemMedia"}
+                    />
                   </div>
                   <div className="mb-6">
                     <NotesSection

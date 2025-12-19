@@ -18,7 +18,10 @@ const defaultSteps: StepItem[] = [
   { id: 5, label: "Review & Submit" },
 ];
 
-const ProgressTracker: React.FC<ProgressTrackerProps> = ({ currentStep, steps = defaultSteps }) => {
+const ProgressTracker: React.FC<ProgressTrackerProps> = ({
+  currentStep,
+  steps = defaultSteps,
+}) => {
   const total = steps.length;
   const safeStep = Math.min(Math.max(currentStep, 1), total);
   const percent = Math.round(((safeStep - 1) / total) * 100);
@@ -28,7 +31,9 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ currentStep, steps = 
       <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-sm font-semibold text-gray-700">Progress</div>
-          <div className="text-sm font-semibold text-blue-700">Step {safeStep}/{total}</div>
+          <div className="text-sm font-semibold text-blue-700">
+            Step {safeStep}/{total}
+          </div>
         </div>
         <div className="mb-6 h-2 w-full rounded-full bg-gray-100">
           <div
@@ -51,16 +56,22 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ currentStep, steps = 
                         (isCompleted
                           ? "bg-blue-600 text-white"
                           : isCurrent
-                          ? "border-2 border-blue-600 text-blue-700"
-                          : "border-2 border-gray-300 text-gray-500")
+                            ? "border-2 border-blue-600 text-blue-700"
+                            : "border-2 border-gray-300 text-gray-500")
                       }
                     >
                       {isCompleted ? "✓" : s.id}
                     </div>
-                    <span className={
-                      `mt-2 truncate text-xs font-medium ` +
-                      (isCompleted ? "text-blue-700" : isCurrent ? "text-blue-800" : "text-gray-500")
-                    }>
+                    <span
+                      className={
+                        `mt-2 truncate text-xs font-medium ` +
+                        (isCompleted
+                          ? "text-blue-700"
+                          : isCurrent
+                            ? "text-blue-800"
+                            : "text-gray-500")
+                      }
+                    >
                       {s.label}
                     </span>
                   </div>
@@ -86,8 +97,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ currentStep, steps = 
                       (isCompleted
                         ? "bg-blue-600 text-white"
                         : isCurrent
-                        ? "border-2 border-blue-600 text-blue-700"
-                        : "border-2 border-gray-300 text-gray-500")
+                          ? "border-2 border-blue-600 text-blue-700"
+                          : "border-2 border-gray-300 text-gray-500")
                     }
                   >
                     {isCompleted ? "✓" : s.id}

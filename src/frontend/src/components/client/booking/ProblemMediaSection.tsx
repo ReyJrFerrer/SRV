@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { PaperClipIcon } from "@heroicons/react/24/outline";
 
 type ProblemMediaSectionProps = {
   files: File[];
@@ -36,22 +37,20 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
 
   return (
     <section
-      className={`rounded-xl border ${highlight ? "border-red-400" : "border-gray-200"} bg-white p-6 shadow-md`}
+      className={`rounded-2xl border ${highlight ? "border-red-400 ring-2 ring-red-200" : "border-gray-200"} bg-white p-5 shadow-sm`}
     >
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Problem Photos/Videos{" "}
-          {required && <span className="text-red-600">(Required)</span>}
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-base font-bold text-gray-900">
+          <span className="h-4 w-1 rounded bg-blue-600" aria-hidden="true" />
+          <span>Problem Photos/Videos</span>
+          {required && <span className="ml-1 text-red-600" aria-hidden="true">*</span>}
         </h2>
-        <span className="text-xs text-gray-500">
-          Up to {maxFiles} attachments
-        </span>
+        <span className="text-xs text-gray-500">Up to {maxFiles} attachments</span>
       </div>
       <p className="mb-4 text-sm text-gray-600">
-        Add clear photos or a short video showing the issue. This helps the
-        provider prepare tools and parts.
+        Add clear photos or a short video showing the issue. This helps the provider prepare tools and parts.
       </p>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
           ref={inputRef}
           type="file"
@@ -63,17 +62,16 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 sm:w-auto"
         >
+          <PaperClipIcon className="h-4 w-4" aria-hidden="true" />
           Add Attachments
         </button>
-        <span className="text-xs text-gray-500">
-          Accepted: images (JPG/PNG/HEIC) and videos (MP4/WEBM/MOV)
-        </span>
+        <span className="text-xs text-gray-500">Accepted: images (JPG/PNG/HEIC) and videos (MP4/WEBM/MOV)</span>
       </div>
 
       {files.length > 0 && (
-        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           {files.map((f, idx) => {
             const isImage = f.type.startsWith("image/");
             const isVideo = f.type.startsWith("video/");
@@ -81,25 +79,16 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
             return (
               <li
                 key={`${f.name}-${idx}`}
-                className="relative overflow-hidden rounded-lg border border-gray-200"
+                className="group relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
               >
                 {isImage && (
-                  <img
-                    src={url}
-                    alt={f.name}
-                    className="h-32 w-full object-cover"
-                  />
+                  <img src={url} alt={f.name} className="h-32 w-full object-cover" />
                 )}
                 {isVideo && (
-                  <video
-                    src={url}
-                    className="h-32 w-full object-cover"
-                    controls
-                    preload="metadata"
-                  />
+                  <video src={url} className="h-32 w-full object-cover" controls preload="metadata" />
                 )}
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/50 px-2 py-1 text-[10px] text-white">
-                  <span className="truncate">{f.name}</span>
+                  <span className="truncate" title={f.name}>{f.name}</span>
                   <button
                     type="button"
                     onClick={() => removeAt(idx)}

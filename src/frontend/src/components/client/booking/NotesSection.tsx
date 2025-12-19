@@ -15,9 +15,7 @@ const NotesSection: React.FC<NotesSectionProps> = ({
     <h3 className="mb-4 flex items-center text-lg font-bold text-blue-900 md:text-xl">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
       Notes for Provider{" "}
-      <span className="text-sm font-normal text-gray-400 md:text-base">
-        (Optional)
-      </span>
+     
     </h3>
     <textarea
       placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
