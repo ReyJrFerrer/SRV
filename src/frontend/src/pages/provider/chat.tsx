@@ -188,7 +188,7 @@ const ProviderChatPage: React.FC = () => {
               className={`w-full rounded-2xl bg-white/90 shadow-lg ring-1 ring-blue-100 ${isDesktop ? "md:flex md:h-[85vh] md:overflow-hidden" : ""}`}
             >
               <ul
-                className={`${isDesktop ? "md:w-[420px] md:flex-shrink-0 md:h-full md:overflow-y-auto" : ""} divide-y divide-blue-50`}
+                className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} divide-y divide-blue-50`}
               >
                 {conversations
                   .slice() // copy array to avoid mutating original
@@ -276,7 +276,7 @@ const ProviderChatPage: React.FC = () => {
                   })}
               </ul>
               {isDesktop && (
-                <div className="md:flex md:flex-1 md:flex-col md:border-l md:border-blue-100 md:overflow-hidden">
+                <div className="md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-blue-100">
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
                       {/* Header */}
