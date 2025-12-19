@@ -49,7 +49,10 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
       <CreditCardIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
       <span>
-        Payment Method <span className="ml-1 text-red-600" aria-hidden="true">*</span>
+        Payment Method{" "}
+        <span className="ml-1 text-red-600" aria-hidden="true">
+          *
+        </span>
       </span>
     </h3>
     <div className="space-y-3">
