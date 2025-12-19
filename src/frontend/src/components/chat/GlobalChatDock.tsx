@@ -49,6 +49,8 @@ const GlobalChatDock: React.FC = () => {
     window.innerWidth >= DESKTOP_MIN_WIDTH,
   );
   const prevUnreadRef = useRef<number>(0);
+  const prevUnreadMapRef = useRef<Map<string, number>>(new Map());
+  const defaultTitleRef = useRef<string>(document.title);
   const [sending, setSending] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const ensureAudioReady = useCallback(() => {
@@ -218,6 +220,42 @@ const GlobalChatDock: React.FC = () => {
   useEffect(() => {
     prevUnreadRef.current = unreadTotal;
   }, [unreadTotal]);
+
+  // Restore title on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        document.title = defaultTitleRef.current;
+      } catch {}
+    };
+  }, []);
+
+  // Update tab title with sender name when a new unread appears
+  useEffect(() => {
+    if (!isAuthenticated || !isDesktop) return;
+    let updated = false;
+    conversations.forEach((summary) => {
+      const c = summary.conversation;
+      if (!c || !c.unreadCount) return;
+      let unreadForUser = 0;
+      if (myPrincipal === c.clientId) unreadForUser = c.unreadCount[c.clientId] || 0;
+      else if (myPrincipal === c.providerId) unreadForUser = c.unreadCount[c.providerId] || 0;
+      const prev = prevUnreadMapRef.current.get(c.id) || 0;
+      if (!updated && unreadForUser > prev) {
+        const sender = summary.otherUserName || summary.otherUserId.slice(0, 8);
+        try {
+          document.title = `(${unreadTotal}) ${sender} sent you a message`;
+        } catch {}
+        updated = true;
+      }
+      prevUnreadMapRef.current.set(c.id, unreadForUser);
+    });
+    if (!updated && unreadTotal === 0) {
+      try {
+        document.title = defaultTitleRef.current;
+      } catch {}
+    }
+  }, [conversations, myPrincipal, isAuthenticated, isDesktop, unreadTotal]);
 
   const handleSend = async () => {
     if (!activeConversation || !messageInput.trim() || sending) return;
