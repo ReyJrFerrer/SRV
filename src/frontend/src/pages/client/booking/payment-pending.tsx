@@ -159,6 +159,7 @@ const PaymentPendingPage: React.FC = () => {
                 time: bookingData.scheduledTime || "",
                 location: bookingData.location,
                 notes: bookingData.notes || "",
+                attachments: (bookingData as any)?.attachments || [],
                 amountToPay: "0.00",
                 packagePrice: bookingData.totalPrice.toFixed(2),
                 landmark: "",

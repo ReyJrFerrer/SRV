@@ -1,4 +1,5 @@
 import React from "react";
+import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 
 type Package = {
   id: string;
@@ -32,7 +33,13 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
   >
     <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-      Select Package(s) <span className="text-red-500">*</span>
+      <ClipboardDocumentListIcon
+        className="h-5 w-5 text-blue-600"
+        aria-hidden="true"
+      />
+      <span>
+        Select Package(s) <span className="text-red-500">*</span>
+      </span>
     </h3>
 
     {packages.map((pkg) => (

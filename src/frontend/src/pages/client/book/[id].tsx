@@ -18,12 +18,27 @@ import {
 import { useAuth } from "../../../context/AuthContext";
 import { useLocationStore } from "../../../store/locationStore";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+
+// Simple lockable wrapper: just blur + disable interactions when locked
+const LockableSection: React.FC<{
+  locked: boolean;
+  lockReason?: string;
+  children: React.ReactNode;
+}> = ({ locked, children }) => {
+  return (
+    <div className={locked ? "pointer-events-none opacity-50 blur-sm" : ""}>
+      {children}
+    </div>
+  );
+};
 import PaymentSection from "../../../components/client/booking/PaymentSection";
 import PackagesSection from "../../../components/client/booking/PackagesSection";
 import ScheduleSection from "../../../components/client/booking/ScheduleSection";
 import ServiceLocationSection from "../../../components/client/booking/ServiceLocationSection";
 import NotesSection from "../../../components/client/booking/NotesSection";
+import ProblemMediaSection from "../../../components/client/booking/ProblemMediaSection";
 import StickyConfirmBar from "../../../components/client/booking/StickyConfirmBar";
+import { uploadProblemProofMedia } from "../../../services/mediaService";
 
 const BookingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -54,6 +69,8 @@ const BookingPage: React.FC = () => {
   const packageSectionRef = useRef<HTMLDivElement>(null);
   const bookingSectionRef = useRef<HTMLDivElement>(null);
   const paymentSectionRef = useRef<HTMLDivElement>(null);
+  const locationMobileRef = useRef<HTMLDivElement>(null);
+  const notesMobileRef = useRef<HTMLDivElement>(null);
 
   // Section: State
   const [packages, setPackages] = useState<
@@ -80,7 +97,9 @@ const BookingPage: React.FC = () => {
   const [houseNumber, setHouseNumber] = useState<string>("");
   const [landmark, setLandmark] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [problemMediaFiles, setProblemMediaFiles] = useState<File[]>([]);
   const NOTES_CHAR_LIMIT = 50;
+  const problemMediaSectionRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
     "CashOnHand" | "GCash" | "SRVWallet"
@@ -901,6 +920,8 @@ const BookingPage: React.FC = () => {
     if (highlightInput === "amountPaid" && amountPaid) setHighlightInput("");
     if (highlightInput === "selectedTime" && selectedTime)
       setHighlightInput("");
+    if (highlightInput === "problemMedia" && problemMediaFiles.length > 0)
+      setHighlightInput("");
     if (highlightInput === "package" && packages.some((pkg) => pkg.checked))
       setHighlightInput("");
     if (highlightInput === "bookingOption" && bookingOption)
@@ -918,6 +939,7 @@ const BookingPage: React.FC = () => {
     packages,
     bookingOption,
     paymentError,
+    problemMediaFiles,
   ]);
 
   useEffect(() => {
@@ -932,6 +954,8 @@ const BookingPage: React.FC = () => {
       ref = bookingSectionRef.current as any;
     if (highlightInput === "paymentSection")
       ref = paymentSectionRef.current as any;
+    if (highlightInput === "problemMedia")
+      ref = problemMediaSectionRef.current as any;
     if (ref) {
       setTimeout(() => {
         ref?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1059,6 +1083,32 @@ const BookingPage: React.FC = () => {
           bookingOption === "sameday" ? "time for today" : "time slot";
         setFormError(`Please select a ${timeLabel} before proceeding.`);
         highlightField = "selectedTime";
+        setIsSubmitting(false);
+        setHighlightInput(highlightField);
+        return;
+      }
+
+      // Require problem proof for repair-like categories
+      const isRepairCategory = (name?: string) => {
+        if (!name) return false;
+        const n = name.toLowerCase();
+        return (
+          n.includes("repair") ||
+          n.includes("technician") ||
+          n.includes("gadget") ||
+          n.includes("appliance") ||
+          n.includes("automobile") ||
+          n.includes("mechanic") ||
+          n.includes("car") ||
+          n.includes("motor")
+        );
+      };
+      const requiresProof = isRepairCategory(service?.category?.name as any);
+      if (requiresProof && problemMediaFiles.length === 0) {
+        setFormError(
+          "Please attach at least one photo or a short video showing the problem.",
+        );
+        highlightField = "problemMedia";
         setIsSubmitting(false);
         setHighlightInput(highlightField);
         return;
@@ -1258,6 +1308,24 @@ const BookingPage: React.FC = () => {
         }
       }
 
+      // Upload proof media (if any) and attach to booking payload
+      let proofUrls: string[] = [];
+      if (problemMediaFiles.length > 0) {
+        try {
+          proofUrls = await uploadProblemProofMedia(problemMediaFiles);
+        } catch (e: any) {
+          setFormError(
+            e?.message ||
+              "Failed to upload attachments. Please remove large files or try again.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      if (proofUrls.length > 0) {
+        (bookingData as any).attachments = proofUrls;
+      }
+
       const booking = await createBookingRequest(bookingData);
       if (booking) {
         setFormError(null);
@@ -1281,6 +1349,7 @@ const BookingPage: React.FC = () => {
           landmark: landmark || "None",
           municipality: finalMunicipality,
           province: finalProvince,
+          attachments: (bookingData as any)?.attachments || proofUrls || [],
         };
         // clear saved draft for this service now that booking succeeded
         try {
@@ -1306,6 +1375,109 @@ const BookingPage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Section gating helpers (plain computed values to avoid hook order issues)
+  const packagesComplete = packages.some((p) => p.checked);
+  const scheduleComplete = !!bookingOption && !!selectedTime;
+  const isUsingMapPin =
+    !showFallbackForms && !!(mapLocation && mapLocation.lat && mapLocation.lng);
+  const isManualLocationValid = (() => {
+    try {
+      if (!selectedBarangay.trim()) return false;
+      if (
+        selectedBarangay === "__other__" &&
+        (!otherBarangay ||
+          otherBarangay.trim().length < 3 ||
+          otherBarangay.trim().length > 20)
+      )
+        return false;
+      if (street.trim().length < 3 || street.trim().length > 20) return false;
+      if (
+        !houseNumber.trim() ||
+        houseNumber.length > 15 ||
+        !/\d/.test(houseNumber)
+      )
+        return false;
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  const locationComplete = isUsingMapPin || isManualLocationValid;
+  const paymentComplete = (() => {
+    if (!packagesComplete) return false;
+    if (!paymentMethod) return false;
+    if (paymentMethod === "CashOnHand") {
+      return !!amountPaid.trim() && !paymentError;
+    }
+    return true;
+  })();
+  const requiresProof = (() => {
+    const name = (service?.category?.name as any) || "";
+    const n = String(name).toLowerCase();
+    return (
+      n.includes("repair") ||
+      n.includes("technician") ||
+      n.includes("gadget") ||
+      n.includes("appliance") ||
+      n.includes("automobile") ||
+      n.includes("mechanic") ||
+      n.includes("car") ||
+      n.includes("motor")
+    );
+  })();
+  const problemPhotosComplete = requiresProof
+    ? problemMediaFiles.length > 0
+    : true;
+  const notesPreconditionsComplete =
+    packagesComplete &&
+    scheduleComplete &&
+    locationComplete &&
+    paymentComplete &&
+    problemPhotosComplete;
+
+  // Mobile step gating: show only up to the current incomplete step
+  const currentMobileStep = (() => {
+    if (!packagesComplete) return 0; // Packages
+    if (!scheduleComplete) return 1; // Schedule
+    if (!locationComplete) return 2; // Location
+    if (!paymentComplete) return 3; // Payment
+    if (!problemPhotosComplete) return 4; // Problem Photos (if required)
+    return 5; // Notes
+  })();
+
+  // Pop-up effect for newly unlocked sections (mobile)
+  const prevMobileStepRef = useRef<number>(currentMobileStep);
+  const [popIndex, setPopIndex] = useState<number | null>(null);
+  useEffect(() => {
+    const prev = prevMobileStepRef.current;
+    if (currentMobileStep > prev) {
+      setPopIndex(currentMobileStep);
+      // Auto-scroll the newly unlocked section into view on mobile
+      if (typeof window !== "undefined" && window.innerWidth <= 768) {
+        setTimeout(() => {
+          let target: HTMLElement | null = null;
+          if (currentMobileStep === 1)
+            target = bookingSectionRef.current as any;
+          else if (currentMobileStep === 2)
+            target = locationMobileRef.current as any;
+          else if (currentMobileStep === 3)
+            target = paymentSectionRef.current as any;
+          else if (currentMobileStep === 4)
+            target = problemMediaSectionRef.current as any;
+          else if (currentMobileStep === 5)
+            target = notesMobileRef.current as any;
+          try {
+            target?.scrollIntoView({ behavior: "smooth", block: "start" });
+          } catch {}
+        }, 120);
+      }
+      const t = setTimeout(() => setPopIndex(null), 600);
+      prevMobileStepRef.current = currentMobileStep;
+      return () => clearTimeout(t);
+    }
+    prevMobileStepRef.current = currentMobileStep;
+  }, [currentMobileStep]);
 
   if (!serviceId) {
     return (
@@ -1333,14 +1505,14 @@ const BookingPage: React.FC = () => {
         <main className="flex-1">
           <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
             {/* Header Skeleton */}
-            <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+            <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm md:sticky">
               <div className="relative flex w-full items-center px-5 py-4">
                 <div className="mr-4 h-6 w-6 animate-pulse rounded bg-gray-300"></div>
                 <div className="absolute left-1/2 h-7 w-32 -translate-x-1/2 animate-pulse rounded bg-gray-300"></div>
               </div>
             </header>
 
-            <div className="flex-grow pb-28">
+            <div className="flex-grow pb-28 pt-16 md:pt-0">
               <div className="mx-auto max-w-5xl px-2 py-8 md:px-8">
                 <div className="md:flex md:gap-x-8">
                   {/* Left Column Skeleton */}
@@ -1524,8 +1696,11 @@ const BookingPage: React.FC = () => {
           .booking-calendar-wrapper .react-datepicker__day--disabled { opacity: 0.4; cursor: not-allowed; }
           .booking-calendar-wrapper .react-datepicker__day:hover:not(.react-datepicker__day--disabled) { background-color: #dbeafe; color: #1e40af; }
           .booking-calendar-wrapper .react-datepicker__current-month { font-weight: 600; color: #1e293b; }
+
+          @keyframes popIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+          .animate-pop { animation: popIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1); }
         `}</style>
-          <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+          <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm md:sticky">
             <div className="relative flex w-full items-center px-5 py-4">
               <button
                 onClick={() => navigate(-1)}
@@ -1539,9 +1714,10 @@ const BookingPage: React.FC = () => {
             </div>
           </header>
 
-          <div className="flex-grow pb-28" ref={pageContainerRef}>
+          <div className="flex-grow pb-28 pt-16 md:pt-0" ref={pageContainerRef}>
             <div className="mx-auto max-w-5xl px-2 py-8 md:px-8">
               <div className="md:flex md:gap-x-8">
+                {/* Left column (Desktop): Packages → Schedule → Location */}
                 <div className="space-y-6 md:w-1/2">
                   <PackagesSection
                     packages={packages}
@@ -1549,110 +1725,317 @@ const BookingPage: React.FC = () => {
                     highlight={highlightInput === "package"}
                     innerRef={packageSectionRef}
                   />
-                  <ServiceLocationSection
-                    highlight={highlightInput === "mapLocation"}
-                    mapsReady={mapsReady}
-                    mapMode={mapMode}
-                    setMapMode={setMapMode}
-                    showFallbackForms={showFallbackForms}
-                    setShowFallbackForms={setShowFallbackForms}
-                    geoLocation={geoLocation as any}
-                    locationLoading={locationLoading}
-                    detectedStatus={detectedStatus}
-                    detectedAddress={detectedAddress}
-                    mapLocation={mapLocation}
-                    setMapLocation={setMapLocation}
-                    mapPreciseAddress={mapPreciseAddress}
-                    setMapPreciseAddress={setMapPreciseAddress}
-                    mapDisplayAddress={mapDisplayAddress}
-                    setMapDisplayAddress={setMapDisplayAddress}
-                    locationInputMode={locationInputMode}
-                    setLocationInputMode={setLocationInputMode}
-                    displayMunicipality={displayMunicipality}
-                    displayProvince={displayProvince}
-                    barangayOptions={barangayOptions}
-                    selectedBarangay={selectedBarangay}
-                    setSelectedBarangay={setSelectedBarangay}
-                    otherBarangay={otherBarangay}
-                    setOtherBarangay={setOtherBarangay}
-                    street={street}
-                    setStreet={setStreet}
-                    houseNumber={houseNumber}
-                    setHouseNumber={setHouseNumber}
-                    landmark={landmark}
-                    setLandmark={setLandmark}
-                    manualProvince={manualProvince}
-                    setManualProvince={setManualProvince}
-                    manualCity={manualCity}
-                    setManualCity={setManualCity}
-                    manualBarangayOptions={manualBarangayOptions}
-                    highlightInput={highlightInput}
-                    barangayRef={barangayRef}
-                    otherBarangayRef={otherBarangayRef}
-                    streetRef={streetRef}
-                    houseNumberRef={houseNumberRef}
-                  />
-                </div>
-                <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
-                  <ScheduleSection
-                    innerRef={bookingSectionRef}
-                    bookingOption={bookingOption}
-                    isSameDayAvailable={!!isSameDayAvailable}
-                    onChangeBookingOption={handleBookingOptionChange}
-                    selectedDate={selectedDate}
-                    onDateChange={handleDateChange}
-                    selectedTime={selectedTime}
-                    setSelectedTime={setSelectedTime}
-                    availableSlots={availableSlots as any}
-                    slotAvailability={slotAvailability}
-                    checkingSlots={checkingSlots}
-                    hasUserBookedTimeSlot={hasUserBookedTimeSlot}
-                    serviceWeeklySchedule={service.weeklySchedule}
-                    dayIndexToName={dayIndexToName}
-                    highlight={
-                      highlightInput === "bookingOption" ||
-                      highlightInput === "selectedTime"
-                    }
-                  />
 
+                  {/* Desktop: Schedule locked until Packages complete */}
                   <div className="hidden md:block">
-                    <div ref={paymentSectionRef}>
-                      <PaymentSection
-                        paymentMethod={paymentMethod}
-                        setPaymentMethod={setPaymentMethod}
-                        packages={packages}
-                        amountPaid={amountPaid}
-                        handleAmountChange={handleAmountChange}
-                        paymentError={paymentError}
-                        totalPrice={totalPrice}
-                        highlight={highlightInput === "paymentSection"}
-                        isProviderOnboarded={isProviderOnboarded}
+                    <LockableSection
+                      locked={!packagesComplete}
+                      lockReason="complete Packages first"
+                    >
+                      <ScheduleSection
+                        innerRef={bookingSectionRef}
+                        bookingOption={bookingOption}
+                        isSameDayAvailable={!!isSameDayAvailable}
+                        onChangeBookingOption={handleBookingOptionChange}
+                        selectedDate={selectedDate}
+                        onDateChange={handleDateChange}
+                        selectedTime={selectedTime}
+                        setSelectedTime={setSelectedTime}
+                        availableSlots={availableSlots as any}
+                        slotAvailability={slotAvailability}
+                        checkingSlots={checkingSlots}
+                        hasUserBookedTimeSlot={hasUserBookedTimeSlot}
+                        serviceWeeklySchedule={service.weeklySchedule}
+                        dayIndexToName={dayIndexToName}
+                        highlight={
+                          highlightInput === "bookingOption" ||
+                          highlightInput === "selectedTime"
+                        }
                       />
-                    </div>
+                    </LockableSection>
                   </div>
 
-                  <div className="mt-4 md:hidden">
-                    <div ref={paymentSectionRef}>
-                      <PaymentSection
-                        paymentMethod={paymentMethod}
-                        setPaymentMethod={setPaymentMethod}
-                        packages={packages}
-                        amountPaid={amountPaid}
-                        handleAmountChange={handleAmountChange}
-                        paymentError={paymentError}
-                        totalPrice={totalPrice}
-                        highlight={highlightInput === "paymentSection"}
-                        isProviderOnboarded={isProviderOnboarded}
+                  {/* Location locked until Schedule complete (Desktop) */}
+                  <div className="hidden md:block">
+                    <LockableSection
+                      locked={!packagesComplete || !scheduleComplete}
+                      lockReason={
+                        !packagesComplete
+                          ? "complete Packages first"
+                          : "complete Schedule first"
+                      }
+                    >
+                      <ServiceLocationSection
+                        highlight={highlightInput === "mapLocation"}
+                        mapsReady={mapsReady}
+                        mapMode={mapMode}
+                        setMapMode={setMapMode}
+                        showFallbackForms={showFallbackForms}
+                        setShowFallbackForms={setShowFallbackForms}
+                        geoLocation={geoLocation as any}
+                        locationLoading={locationLoading}
+                        detectedStatus={detectedStatus}
+                        detectedAddress={detectedAddress}
+                        mapLocation={mapLocation}
+                        setMapLocation={setMapLocation}
+                        mapPreciseAddress={mapPreciseAddress}
+                        setMapPreciseAddress={setMapPreciseAddress}
+                        mapDisplayAddress={mapDisplayAddress}
+                        setMapDisplayAddress={setMapDisplayAddress}
+                        locationInputMode={locationInputMode}
+                        setLocationInputMode={setLocationInputMode}
+                        displayMunicipality={displayMunicipality}
+                        displayProvince={displayProvince}
+                        barangayOptions={barangayOptions}
+                        selectedBarangay={selectedBarangay}
+                        setSelectedBarangay={setSelectedBarangay}
+                        otherBarangay={otherBarangay}
+                        setOtherBarangay={setOtherBarangay}
+                        street={street}
+                        setStreet={setStreet}
+                        houseNumber={houseNumber}
+                        setHouseNumber={setHouseNumber}
+                        landmark={landmark}
+                        setLandmark={setLandmark}
+                        manualProvince={manualProvince}
+                        setManualProvince={setManualProvince}
+                        manualCity={manualCity}
+                        setManualCity={setManualCity}
+                        manualBarangayOptions={manualBarangayOptions}
+                        highlightInput={highlightInput}
+                        barangayRef={barangayRef}
+                        otherBarangayRef={otherBarangayRef}
+                        streetRef={streetRef}
+                        houseNumberRef={houseNumberRef}
                       />
+                    </LockableSection>
+                  </div>
+                </div>
+
+                {/* Right column (Desktop): Payment → Problem Photos → Notes */}
+                <div className="mt-8 space-y-6 md:mt-0 md:w-1/2">
+                  {/* Desktop: Payment locked until Location complete */}
+                  <div className="hidden md:block">
+                    <LockableSection
+                      locked={
+                        !(
+                          packagesComplete &&
+                          scheduleComplete &&
+                          locationComplete
+                        )
+                      }
+                      lockReason={
+                        !packagesComplete
+                          ? "complete Packages first"
+                          : !scheduleComplete
+                            ? "complete Schedule first"
+                            : "complete Location first"
+                      }
+                    >
+                      <div ref={paymentSectionRef}>
+                        <PaymentSection
+                          paymentMethod={paymentMethod}
+                          setPaymentMethod={setPaymentMethod}
+                          packages={packages}
+                          amountPaid={amountPaid}
+                          handleAmountChange={handleAmountChange}
+                          paymentError={paymentError}
+                          totalPrice={totalPrice}
+                          highlight={highlightInput === "paymentSection"}
+                          isProviderOnboarded={isProviderOnboarded}
+                        />
+                      </div>
+                    </LockableSection>
+                  </div>
+
+                  {/* Desktop: Problem Photos locked until Payment complete */}
+                  <div className="hidden md:block" ref={problemMediaSectionRef}>
+                    <LockableSection
+                      locked={!paymentComplete}
+                      lockReason="complete Payment first"
+                    >
+                      <ProblemMediaSection
+                        files={problemMediaFiles}
+                        onFilesChange={setProblemMediaFiles}
+                        required={requiresProof}
+                        highlight={highlightInput === "problemMedia"}
+                      />
+                    </LockableSection>
+                  </div>
+
+                  {/* Desktop: Notes locked until all prior sections complete */}
+                  <div className="hidden md:block">
+                    <LockableSection locked={!notesPreconditionsComplete}>
+                      <div className="mb-6">
+                        <NotesSection
+                          notes={notes}
+                          onChange={handleNotesChange}
+                          limit={NOTES_CHAR_LIMIT}
+                        />
+                      </div>
+                    </LockableSection>
+                  </div>
+
+                  {/* Mobile sequence: Packages (above), Schedule, Location, Payment, Photos, Notes */}
+                  {/* Mobile: Show Schedule only when Packages are complete */}
+                  {currentMobileStep >= 1 && (
+                    <div
+                      className={`md:hidden ${popIndex === 1 ? "animate-pop" : ""}`}
+                    >
+                      <LockableSection locked={!packagesComplete}>
+                        <ScheduleSection
+                          innerRef={bookingSectionRef}
+                          bookingOption={bookingOption}
+                          isSameDayAvailable={!!isSameDayAvailable}
+                          onChangeBookingOption={handleBookingOptionChange}
+                          selectedDate={selectedDate}
+                          onDateChange={handleDateChange}
+                          selectedTime={selectedTime}
+                          setSelectedTime={setSelectedTime}
+                          availableSlots={availableSlots as any}
+                          slotAvailability={slotAvailability}
+                          checkingSlots={checkingSlots}
+                          hasUserBookedTimeSlot={hasUserBookedTimeSlot}
+                          serviceWeeklySchedule={service.weeklySchedule}
+                          dayIndexToName={dayIndexToName}
+                          highlight={
+                            highlightInput === "bookingOption" ||
+                            highlightInput === "selectedTime"
+                          }
+                        />
+                      </LockableSection>
                     </div>
-                  </div>
-                  <div className="mb-6">
-                    <NotesSection
-                      notes={notes}
-                      onChange={handleNotesChange}
-                      limit={NOTES_CHAR_LIMIT}
-                    />
-                  </div>
+                  )}
+
+                  {/* Mobile: Show Location only when Schedule is complete */}
+                  {currentMobileStep >= 2 && (
+                    <div
+                      className={`md:hidden ${popIndex === 2 ? "animate-pop" : ""}`}
+                      ref={locationMobileRef}
+                    >
+                      <LockableSection
+                        locked={!(packagesComplete && scheduleComplete)}
+                      >
+                        <ServiceLocationSection
+                          highlight={highlightInput === "mapLocation"}
+                          mapsReady={mapsReady}
+                          mapMode={mapMode}
+                          setMapMode={setMapMode}
+                          showFallbackForms={showFallbackForms}
+                          setShowFallbackForms={setShowFallbackForms}
+                          geoLocation={geoLocation as any}
+                          locationLoading={locationLoading}
+                          detectedStatus={detectedStatus}
+                          detectedAddress={detectedAddress}
+                          mapLocation={mapLocation}
+                          setMapLocation={setMapLocation}
+                          mapPreciseAddress={mapPreciseAddress}
+                          setMapPreciseAddress={setMapPreciseAddress}
+                          mapDisplayAddress={mapDisplayAddress}
+                          setMapDisplayAddress={setMapDisplayAddress}
+                          locationInputMode={locationInputMode}
+                          setLocationInputMode={setLocationInputMode}
+                          displayMunicipality={displayMunicipality}
+                          displayProvince={displayProvince}
+                          barangayOptions={barangayOptions}
+                          selectedBarangay={selectedBarangay}
+                          setSelectedBarangay={setSelectedBarangay}
+                          otherBarangay={otherBarangay}
+                          setOtherBarangay={setOtherBarangay}
+                          street={street}
+                          setStreet={setStreet}
+                          houseNumber={houseNumber}
+                          setHouseNumber={setHouseNumber}
+                          landmark={landmark}
+                          setLandmark={setLandmark}
+                          manualProvince={manualProvince}
+                          setManualProvince={setManualProvince}
+                          manualCity={manualCity}
+                          setManualCity={setManualCity}
+                          manualBarangayOptions={manualBarangayOptions}
+                          highlightInput={highlightInput}
+                          barangayRef={barangayRef}
+                          otherBarangayRef={otherBarangayRef}
+                          streetRef={streetRef}
+                          houseNumberRef={houseNumberRef}
+                        />
+                      </LockableSection>
+                    </div>
+                  )}
+
+                  {/* Mobile: Show Payment only when Location is complete */}
+                  {currentMobileStep >= 3 && (
+                    <div
+                      className={`mt-4 md:hidden ${popIndex === 3 ? "animate-pop" : ""}`}
+                    >
+                      <LockableSection
+                        locked={
+                          !(
+                            packagesComplete &&
+                            locationComplete &&
+                            scheduleComplete
+                          )
+                        }
+                        lockReason={
+                          !packagesComplete
+                            ? "complete Packages first"
+                            : !locationComplete
+                              ? "complete Location first"
+                              : "complete Schedule first"
+                        }
+                      >
+                        <div ref={paymentSectionRef}>
+                          <PaymentSection
+                            paymentMethod={paymentMethod}
+                            setPaymentMethod={setPaymentMethod}
+                            packages={packages}
+                            amountPaid={amountPaid}
+                            handleAmountChange={handleAmountChange}
+                            paymentError={paymentError}
+                            totalPrice={totalPrice}
+                            highlight={highlightInput === "paymentSection"}
+                            isProviderOnboarded={isProviderOnboarded}
+                          />
+                        </div>
+                      </LockableSection>
+                    </div>
+                  )}
+
+                  {/* Mobile: Show Problem Photos only when Payment complete and required */}
+                  {requiresProof && currentMobileStep >= 4 && (
+                    <div
+                      className={`mb-6 md:hidden ${popIndex === 4 ? "animate-pop" : ""}`}
+                      ref={problemMediaSectionRef}
+                    >
+                      <LockableSection
+                        locked={!paymentComplete}
+                        lockReason="complete Payment first"
+                      >
+                        <ProblemMediaSection
+                          files={problemMediaFiles}
+                          onFilesChange={setProblemMediaFiles}
+                          required={requiresProof}
+                          highlight={highlightInput === "problemMedia"}
+                        />
+                      </LockableSection>
+                    </div>
+                  )}
+
+                  {/* Mobile: Show Notes only when all prior sections complete */}
+                  {currentMobileStep >= 5 && (
+                    <div
+                      className={`mb-6 md:hidden ${popIndex === 5 ? "animate-pop" : ""}`}
+                      ref={notesMobileRef}
+                    >
+                      <LockableSection locked={!notesPreconditionsComplete}>
+                        <NotesSection
+                          notes={notes}
+                          onChange={handleNotesChange}
+                          limit={NOTES_CHAR_LIMIT}
+                        />
+                      </LockableSection>
+                    </div>
+                  )}
                 </div>
                 <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white/80 p-4 shadow-xl backdrop-blur-md">
                   <div className="relative mx-auto max-w-5xl">

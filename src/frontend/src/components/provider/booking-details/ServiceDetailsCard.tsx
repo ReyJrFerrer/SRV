@@ -48,8 +48,9 @@ const ServiceDetailsCard: React.FC<Props> = ({
 }) => {
   return (
     <div className="min-w-full flex-1 rounded-2xl bg-white p-4 shadow-lg lg:min-w-[320px]">
-      <h3 className="text-md mb-3 font-bold text-blue-700 lg:text-lg">
-        Service Section
+      <h3 className="text-md mb-3 flex items-center gap-2 font-bold text-blue-700 lg:text-lg">
+        <BriefcaseIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+        <span>Service Section</span>
       </h3>
       <div className="mb-2 flex items-start gap-2 lg:items-center">
         <BriefcaseIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />

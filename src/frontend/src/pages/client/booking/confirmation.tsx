@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
+import ClientAttachments from "../../../components/common/MediaAttachments";
 
 interface BookingDetails {
   serviceName: string;
@@ -12,6 +13,7 @@ interface BookingDetails {
   time: string;
   location?: string;
   notes: string;
+  attachments?: string[];
   amountToPay: string;
   packagePrice: string;
   landmark: string;
@@ -244,6 +246,14 @@ const BookingConfirmationPage: React.FC = () => {
                     {bookingDetails.notes}
                   </p>
                 )}
+
+                {/* Attachments (images/videos) */}
+                <div className="mt-4">
+                  <ClientAttachments
+                    attachments={bookingDetails.attachments}
+                    notes={bookingDetails.notes}
+                  />
+                </div>
               </div>
             </div>
             <Link

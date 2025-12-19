@@ -14,6 +14,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
+import ClientAttachments from "../../../components/common/MediaAttachments";
 import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
 import BottomNavigation from "../../../components/provider/NavigationBar";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
@@ -834,6 +835,12 @@ const ProviderBookingDetailsPage: React.FC = () => {
               mapsApiKey={mapsApiKey}
               showStreetView={showStreetView}
               setShowStreetView={setShowStreetView}
+            />
+
+            {/* Client Attachments Section */}
+            <ClientAttachments
+              attachments={(specificBooking as any)?.attachments}
+              notes={(specificBooking as any)?.notes}
             />
             {/* Booking Notes Section */}
             <BookingNotes notes={(specificBooking as any)?.notes} />

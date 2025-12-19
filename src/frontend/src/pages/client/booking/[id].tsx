@@ -28,6 +28,7 @@ import BookingNotes from "../../../components/client/booking-details/BookingNote
 import ActionButtons from "../../../components/client/booking-details/ActionButtons";
 import BookingDetailsSkeleton from "../../../components/client/booking-details/BookingDetailsSkeleton";
 import { dispatchBookingInteracted } from "../../../utils/interactionEvents";
+import ClientAttachments from "../../../components/common/MediaAttachments";
 
 type BookingStatus =
   | "Requested"
@@ -389,6 +390,14 @@ const BookingDetailsPage: React.FC = () => {
                   currentStatus={status as BookingStatus}
                 />
               </div>
+            </div>
+
+            {/* Client Attachments */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl">
+              <ClientAttachments
+                attachments={(specificBooking as any)?.attachments}
+                notes={(specificBooking as any)?.notes}
+              />
             </div>
 
             <BookingNotes notes={(specificBooking as any)?.notes} />

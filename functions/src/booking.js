@@ -433,6 +433,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     scheduledDate,
     servicePackageIds = [],
     notes,
+    attachments = [],
     amountToPay,
     paymentMethod,
     paymentId,
@@ -582,6 +583,16 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     const bookingId = generateBookingId();
     const now = new Date().toISOString();
 
+    // Normalize attachments (array of strings/URLs), enforce limit of 5
+    let normalizedAttachments = [];
+    try {
+      if (Array.isArray(attachments)) {
+        normalizedAttachments = attachments
+          .filter((x) => typeof x === "string" && x.trim().length > 0)
+          .slice(0, 5);
+      }
+    } catch {}
+
     const newBooking = {
       id: bookingId,
       clientId: authInfo.uid,
@@ -599,6 +610,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       serviceTime: null,
       location,
       evidence: null,
+      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : [],
       notes: notes || null,
       paymentMethod,
       locationDetection: locationDetection,

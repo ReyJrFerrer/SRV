@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Store client problem attachments on booking records and show them on provider booking details; moved client problem media section below location on wide screens.
+
+### Added
+
 - Provider directions page (`/provider/directions/:bookingId`) showing turn-by-turn route from provider current location to client destination with ability to start service upon arrival. Uses unified Google Maps loader to avoid duplicate script issues.
 
 - Add loading skeletons for service lists and provider services to stabilize layout during data fetches

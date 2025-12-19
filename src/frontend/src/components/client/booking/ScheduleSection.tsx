@@ -1,5 +1,9 @@
 import React, { Suspense } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CalendarDaysIcon,
+} from "@heroicons/react/24/outline";
 // Lazy-load react-datepicker and its CSS only when needed
 const LazyDatePicker = React.lazy(async () => {
   const mod = await import("react-datepicker");
@@ -73,7 +77,13 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
     >
       <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
         <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-        Booking Schedule <span className="text-red-500">*</span>
+        <CalendarDaysIcon
+          className="h-5 w-5 text-blue-600"
+          aria-hidden="true"
+        />
+        <span>
+          Booking Schedule <span className="text-red-500">*</span>
+        </span>
       </h3>
 
       <div className="mb-4 flex gap-3">
