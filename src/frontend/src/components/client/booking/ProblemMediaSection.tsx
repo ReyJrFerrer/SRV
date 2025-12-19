@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { PaperClipIcon } from "@heroicons/react/24/outline";
+import { PaperClipIcon, PhotoIcon } from "@heroicons/react/24/outline";
 
 type ProblemMediaSectionProps = {
   files: File[];
@@ -44,6 +44,7 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
       <div className="mb-3 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-base font-bold text-gray-900">
           <span className="h-4 w-1 rounded bg-blue-600" aria-hidden="true" />
+          <PhotoIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
           <span>Problem Photos</span>
           {required && (
             <span className="ml-1 text-red-600" aria-hidden="true">

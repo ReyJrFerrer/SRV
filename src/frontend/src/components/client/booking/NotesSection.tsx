@@ -1,4 +1,5 @@
 import React from "react";
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 
 export type NotesSectionProps = {
   notes: string;
@@ -12,9 +13,10 @@ const NotesSection: React.FC<NotesSectionProps> = ({
   limit,
 }) => (
   <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
-    <h3 className="mb-4 flex items-center text-lg font-bold text-blue-900 md:text-xl">
+    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-      Notes for Provider{" "}
+      <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+      <span>Notes for Provider</span>
     </h3>
     <textarea
       placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"

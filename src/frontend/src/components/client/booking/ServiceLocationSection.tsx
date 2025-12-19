@@ -197,7 +197,10 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
     >
       <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
         <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-        Service Location <span className="text-red-500">*</span>
+        <MapPinIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+        <span>
+          Service Location <span className="text-red-500">*</span>
+        </span>
       </h3>
 
       {!showFallbackForms && locationStatus !== "denied" && (
