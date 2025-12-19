@@ -9,7 +9,7 @@ type ProblemMediaSectionProps = {
   maxFiles?: number;
 };
 
-const ACCEPT_TYPES = "image/*,video/mp4,video/quicktime,video/webm";
+const ACCEPT_TYPES = "image/*";
 
 const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
   files,
@@ -21,7 +21,7 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const list = Array.from(e.target.files || []);
+    const list = Array.from(e.target.files || []).filter((f) => f.type.startsWith("image/"));
     if (list.length === 0) return;
     const current = files || [];
     const remaining = Math.max(0, maxFiles - current.length);
@@ -42,7 +42,7 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
       <div className="mb-3 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-base font-bold text-gray-900">
           <span className="h-4 w-1 rounded bg-blue-600" aria-hidden="true" />
-          <span>Problem Photos/Videos</span>
+          <span>Problem Photos</span>
           {required && (
             <span className="ml-1 text-red-600" aria-hidden="true">
               *
@@ -54,7 +54,7 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
         </span>
       </div>
       <p className="mb-4 text-sm text-gray-600">
-        Add clear photos or a short video showing the issue. This helps the
+        Add clear photos showing the issue. This helps the
         provider prepare tools and parts.
       </p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -74,37 +74,19 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
           <PaperClipIcon className="h-4 w-4" aria-hidden="true" />
           Add Attachments
         </button>
-        <span className="text-xs text-gray-500">
-          Accepted: images (JPG/PNG/HEIC) and videos (MP4/WEBM/MOV)
-        </span>
+        <span className="text-xs text-gray-500">Accepted: images (JPG/PNG/HEIC)</span>
       </div>
 
       {files.length > 0 && (
         <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           {files.map((f, idx) => {
-            const isImage = f.type.startsWith("image/");
-            const isVideo = f.type.startsWith("video/");
             const url = URL.createObjectURL(f);
             return (
               <li
                 key={`${f.name}-${idx}`}
                 className="group relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
               >
-                {isImage && (
-                  <img
-                    src={url}
-                    alt={f.name}
-                    className="h-32 w-full object-cover"
-                  />
-                )}
-                {isVideo && (
-                  <video
-                    src={url}
-                    className="h-32 w-full object-cover"
-                    controls
-                    preload="metadata"
-                  />
-                )}
+                <img src={url} alt={f.name} className="h-32 w-full object-cover" />
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/50 px-2 py-1 text-[10px] text-white">
                   <span className="truncate" title={f.name}>
                     {f.name}
