@@ -238,8 +238,10 @@ const GlobalChatDock: React.FC = () => {
       const c = summary.conversation;
       if (!c || !c.unreadCount) return;
       let unreadForUser = 0;
-      if (myPrincipal === c.clientId) unreadForUser = c.unreadCount[c.clientId] || 0;
-      else if (myPrincipal === c.providerId) unreadForUser = c.unreadCount[c.providerId] || 0;
+      if (myPrincipal === c.clientId)
+        unreadForUser = c.unreadCount[c.clientId] || 0;
+      else if (myPrincipal === c.providerId)
+        unreadForUser = c.unreadCount[c.providerId] || 0;
       const prev = prevUnreadMapRef.current.get(c.id) || 0;
       if (!updated && unreadForUser > prev) {
         const sender = summary.otherUserName || summary.otherUserId.slice(0, 8);
