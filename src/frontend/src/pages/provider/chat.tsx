@@ -164,7 +164,7 @@ const ProviderChatPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="mx-auto mt-6 max-w-6xl px-2 md:px-4">
+      <main className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (
           loading ? (
             <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
@@ -185,10 +185,10 @@ const ProviderChatPage: React.FC = () => {
             </div>
           ) : conversations.length > 0 ? (
             <section
-              className={`rounded-2xl bg-white/90 shadow-lg ring-1 ring-blue-100 ${isDesktop ? "md:flex md:h-[75vh]" : ""}`}
+              className={`w-full rounded-2xl bg-white/90 shadow-lg ring-1 ring-blue-100 ${isDesktop ? "md:flex md:h-[85vh] md:overflow-hidden" : ""}`}
             >
               <ul
-                className={`${isDesktop ? "md:w-[360px] md:flex-shrink-0" : ""} divide-y divide-blue-50`}
+                className={`${isDesktop ? "md:w-[420px] md:flex-shrink-0 md:h-full md:overflow-y-auto" : ""} divide-y divide-blue-50`}
               >
                 {conversations
                   .slice() // copy array to avoid mutating original
@@ -276,7 +276,7 @@ const ProviderChatPage: React.FC = () => {
                   })}
               </ul>
               {isDesktop && (
-                <div className="md:flex md:flex-1 md:flex-col md:border-l md:border-blue-100">
+                <div className="md:flex md:flex-1 md:flex-col md:border-l md:border-blue-100 md:overflow-hidden">
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
                       {/* Header */}
@@ -329,7 +329,7 @@ const ProviderChatPage: React.FC = () => {
                                   </div>
                                 )}
                                 <div
-                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
+                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
                                 >
                                   <p className="text-sm">
                                     {typeof message.content === "string"
@@ -348,7 +348,7 @@ const ProviderChatPage: React.FC = () => {
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="border-t border-blue-100 p-3">
+                      <div className="border-t border-blue-100 p-3 md:sticky md:bottom-0 md:bg-white">
                         <form
                           onSubmit={(e) => {
                             e.preventDefault();
