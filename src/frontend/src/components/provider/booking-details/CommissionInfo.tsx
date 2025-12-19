@@ -25,7 +25,8 @@ interface Props {
 const CommissionInfo: React.FC<Props> = ({ show, commissionValidation }) => {
   if (!show) return null;
   const fmt = (n: number | undefined) => `₱${(n || 0).toFixed(2)}`;
-  const remaining = (commissionValidation.availableBalance || 0) -
+  const remaining =
+    (commissionValidation.availableBalance || 0) -
     (commissionValidation.estimatedCommission || 0);
   return (
     <div className="rounded-2xl bg-white p-4 shadow-lg">
@@ -43,13 +44,17 @@ const CommissionInfo: React.FC<Props> = ({ show, commissionValidation }) => {
           {/* Compact wallet stats */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-              <div className="text-xs font-medium text-gray-600">Total Balance</div>
+              <div className="text-xs font-medium text-gray-600">
+                Total Balance
+              </div>
               <div className="mt-1 text-base font-semibold text-gray-900">
                 {fmt(commissionValidation.totalBalance)}
               </div>
             </div>
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-              <div className="text-xs font-medium text-gray-600">Held (Reserved)</div>
+              <div className="text-xs font-medium text-gray-600">
+                Held (Reserved)
+              </div>
               <div className="mt-1 text-base font-semibold text-amber-700">
                 -{fmt(commissionValidation.heldBalance)}
               </div>
@@ -67,7 +72,7 @@ const CommissionInfo: React.FC<Props> = ({ show, commissionValidation }) => {
             <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
               <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />
               <div className="text-sm text-gray-700">
-                Required Commission: {" "}
+                Required Commission:{" "}
                 <span className="font-semibold text-red-600">
                   {fmt(commissionValidation.estimatedCommission)}
                 </span>
@@ -80,14 +85,23 @@ const CommissionInfo: React.FC<Props> = ({ show, commissionValidation }) => {
             <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
               <XCircleIcon className="mt-0.5 h-5 w-5 text-rose-500" />
               <div className="flex-1 text-sm">
-                <p className="font-semibold text-rose-800">Insufficient Available Balance</p>
+                <p className="font-semibold text-rose-800">
+                  Insufficient Available Balance
+                </p>
                 {commissionValidation.commissionValidationMessage && (
                   <p className="mt-1 text-rose-700">
                     {commissionValidation.commissionValidationMessage}
                   </p>
                 )}
                 <p className="mt-1 text-rose-700">
-                  Needed: <span className="font-medium">{fmt(commissionValidation.estimatedCommission)}</span> · Available: <span className="font-medium">{fmt(commissionValidation.availableBalance)}</span>
+                  Needed:{" "}
+                  <span className="font-medium">
+                    {fmt(commissionValidation.estimatedCommission)}
+                  </span>{" "}
+                  · Available:{" "}
+                  <span className="font-medium">
+                    {fmt(commissionValidation.availableBalance)}
+                  </span>
                 </p>
                 <Link
                   to="/provider/wallet"
@@ -102,9 +116,12 @@ const CommissionInfo: React.FC<Props> = ({ show, commissionValidation }) => {
               <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-3">
                 <CheckCircleIcon className="mt-0.5 h-5 w-5 text-green-600" />
                 <div className="text-sm">
-                  <p className="font-semibold text-green-800">Balance Sufficient</p>
+                  <p className="font-semibold text-green-800">
+                    Balance Sufficient
+                  </p>
                   <p className="mt-1 text-green-700">
-                    Remaining after hold: <span className="font-medium">{fmt(remaining)}</span>
+                    Remaining after hold:{" "}
+                    <span className="font-medium">{fmt(remaining)}</span>
                   </p>
                   <p className="mt-1 text-xs text-green-700">
                     Commission holds when you accept this booking.
