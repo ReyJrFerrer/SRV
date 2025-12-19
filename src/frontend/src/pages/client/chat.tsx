@@ -1,17 +1,40 @@
 // SECTION: Imports — dependencies for this page
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
 import BottomNavigation from "../../components/client/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 import { dispatchChatsRead } from "../../utils/interactionEvents";
+import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
   const navigate = useNavigate();
-  const { conversations, loading, error, markAsRead } = useChat();
+  const {
+    conversations,
+    loading,
+    error,
+    markAsRead,
+    loadConversation,
+    currentConversation,
+    messages,
+    sendMessage,
+    sendingMessage,
+  } = useChat();
   const [, setTick] = React.useState(0);
+  const [isDesktop, setIsDesktop] = useState<boolean>(
+    window.innerWidth >= 1024,
+  );
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
+  const [selectedOtherUserName, setSelectedOtherUserName] =
+    useState<string>("");
+  const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
+    useState<string>("");
+  const [messageText, setMessageText] = useState<string>("");
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onConv = () => setTick((t) => t + 1);
@@ -28,6 +51,62 @@ const ClientChatPage: React.FC = () => {
     document.title = "Messages | SRV";
   }, []);
 
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Auto-select most recent conversation on desktop
+  useEffect(() => {
+    if (!isDesktop) return;
+    if (selectedConversationId) return;
+    if (!conversations || conversations.length === 0) return;
+
+    const sorted = conversations.slice().sort((a, b) => {
+      const aTime = a.lastMessage?.[0]?.createdAt
+        ? new Date(a.lastMessage[0].createdAt).getTime()
+        : 0;
+      const bTime = b.lastMessage?.[0]?.createdAt
+        ? new Date(b.lastMessage[0].createdAt).getTime()
+        : 0;
+      return bTime - aTime;
+    });
+
+    const top = sorted[0];
+    if (!top) return;
+    const conversationId = top.conversation.id;
+    const otherUserId = top.otherUserId;
+    const otherUserName =
+      top.otherUserName || `User ${otherUserId.slice(0, 8)}...`;
+    const imageToUse =
+      top.otherUserImageUrl && top.otherUserImageUrl !== ""
+        ? top.otherUserImageUrl
+        : DEFAULT_USER_IMAGE;
+
+    setSelectedConversationId(conversationId);
+    setSelectedOtherUserName(otherUserName);
+    setSelectedOtherUserImageUrl(imageToUse);
+    loadConversation(conversationId);
+    markAsRead(conversationId)
+      .then(() => dispatchChatsRead())
+      .catch(() => {});
+  }, [
+    isDesktop,
+    conversations,
+    selectedConversationId,
+    loadConversation,
+    markAsRead,
+  ]);
+
+  // Scroll to bottom on message updates
+  useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [messages, selectedConversationId]);
+
   const DEFAULT_USER_IMAGE = "/default-provider.svg";
   const handleConversationClick = async (
     conversationId: string,
@@ -39,13 +118,54 @@ const ClientChatPage: React.FC = () => {
       // Trigger a refresh of unread chat counts across the app
       dispatchChatsRead();
       const imageToUse = otherUserImageUrl || DEFAULT_USER_IMAGE;
-      navigate(`/client/chat/${conversationId}`, {
-        state: {
-          conversationId,
-          otherUserName,
-          otherUserImage: imageToUse,
-        },
-      });
+      if (isDesktop) {
+        setSelectedConversationId(conversationId);
+        setSelectedOtherUserName(otherUserName);
+        setSelectedOtherUserImageUrl(imageToUse);
+        loadConversation(conversationId);
+      } else {
+        navigate(`/client/chat/${conversationId}`, {
+          state: {
+            conversationId,
+            otherUserName,
+            otherUserImage: imageToUse,
+          },
+        });
+      }
+    } catch {}
+  };
+
+  const formatTimestamp = (dateStr?: string | Date) => {
+    if (!dateStr) return "";
+    const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = diffHours / 24;
+
+    if (diffHours < 1) return "Just now";
+    if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
+    if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !messageText.trim() ||
+      !currentConversation ||
+      !identity ||
+      sendingMessage
+    )
+      return;
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+      const receiverId =
+        currentConversation.clientId === currentUserId
+          ? currentConversation.providerId
+          : currentConversation.clientId;
+      await sendMessage(messageText.trim(), receiverId);
+      setMessageText("");
     } catch {}
   };
 
@@ -59,7 +179,7 @@ const ClientChatPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="mx-auto mt-6 max-w-2xl px-2 md:px-0">
+      <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (
           loading ? (
             <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
@@ -76,8 +196,12 @@ const ClientChatPage: React.FC = () => {
               </button>
             </div>
           ) : conversations.length > 0 ? (
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
-              <ul className="divide-y divide-gray-100">
+            <div
+              className={`w-full rounded-2xl border border-gray-100 bg-white shadow-md ${isDesktop ? "md:flex md:h-[85vh] md:overflow-hidden" : ""}`}
+            >
+              <ul
+                className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} divide-y divide-gray-100`}
+              >
                 {conversations
                   .slice()
                   .sort((a, b) => {
@@ -106,23 +230,6 @@ const ClientChatPage: React.FC = () => {
                         : "";
                     const unreadCount =
                       conversation.unreadCount[currentUserId] || 0;
-                    const formatTimestamp = (dateStr?: string | Date) => {
-                      if (!dateStr) return "";
-                      const date =
-                        typeof dateStr === "string"
-                          ? new Date(dateStr)
-                          : dateStr;
-                      const now = new Date();
-                      const diffMs = now.getTime() - date.getTime();
-                      const diffHours = diffMs / (1000 * 60 * 60);
-                      const diffDays = diffHours / 24;
-
-                      if (diffHours < 1) return "Just now";
-                      if (diffHours < 24)
-                        return `${Math.floor(diffHours)}h ago`;
-                      if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
-                      return date.toLocaleDateString();
-                    };
 
                     return (
                       <li
@@ -176,6 +283,114 @@ const ClientChatPage: React.FC = () => {
                     );
                   })}
               </ul>
+              {isDesktop && (
+                <div className="md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100">
+                  {selectedConversationId ? (
+                    <div className="flex h-full flex-col">
+                      {/* Header */}
+                      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-10 w-10">
+                            <ProfileImage
+                              profilePictureUrl={selectedOtherUserImageUrl}
+                              userName={selectedOtherUserName}
+                              size="h-10 w-10"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {selectedOtherUserName}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Messages */}
+                      <div
+                        ref={messagesContainerRef}
+                        className="flex-1 space-y-4 overflow-y-auto p-4"
+                      >
+                        {messages.length === 0 ? (
+                          <div className="flex h-full items-center justify-center">
+                            <p className="text-gray-500">
+                              No messages yet. Start the conversation!
+                            </p>
+                          </div>
+                        ) : (
+                          messages.map((message) => {
+                            const isMine =
+                              identity?.getPrincipal().toString() ===
+                              message.senderId;
+                            return (
+                              <div
+                                key={message.id}
+                                className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}
+                              >
+                                {!isMine && (
+                                  <div className="relative h-8 w-8 flex-shrink-0">
+                                    <ProfileImage
+                                      profilePictureUrl={
+                                        selectedOtherUserImageUrl
+                                      }
+                                      userName={selectedOtherUserName}
+                                      size="h-8 w-8"
+                                    />
+                                  </div>
+                                )}
+                                <div
+                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
+                                >
+                                  <p className="text-sm">
+                                    {typeof message.content === "string"
+                                      ? message.content
+                                      : message.content?.encryptedText}
+                                  </p>
+                                  <p
+                                    className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
+                                  >
+                                    {formatTimestamp(message.createdAt)}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                      {/* Composer */}
+                      <div className="border-t border-gray-200 p-3 md:sticky md:bottom-0 md:bg-white">
+                        <form
+                          onSubmit={handleSendMessage}
+                          className="flex items-center gap-3"
+                        >
+                          <input
+                            type="text"
+                            value={messageText}
+                            onChange={(e) => setMessageText(e.target.value)}
+                            placeholder="Type a message..."
+                            maxLength={500}
+                            disabled={sendingMessage || !currentConversation}
+                            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                          />
+                          <button
+                            type="submit"
+                            disabled={
+                              sendingMessage ||
+                              !messageText.trim() ||
+                              !currentConversation
+                            }
+                            className="rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+                          >
+                            <PaperAirplaneIcon className="h-5 w-5" />
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex h-full items-center justify-center p-8 text-gray-500">
+                      Select a conversation to view messages
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
