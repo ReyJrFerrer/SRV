@@ -1457,11 +1457,16 @@ const BookingPage: React.FC = () => {
       if (typeof window !== "undefined" && window.innerWidth <= 768) {
         setTimeout(() => {
           let target: HTMLElement | null = null;
-          if (currentMobileStep === 1) target = bookingSectionRef.current as any;
-          else if (currentMobileStep === 2) target = locationMobileRef.current as any;
-          else if (currentMobileStep === 3) target = paymentSectionRef.current as any;
-          else if (currentMobileStep === 4) target = problemMediaSectionRef.current as any;
-          else if (currentMobileStep === 5) target = notesMobileRef.current as any;
+          if (currentMobileStep === 1)
+            target = bookingSectionRef.current as any;
+          else if (currentMobileStep === 2)
+            target = locationMobileRef.current as any;
+          else if (currentMobileStep === 3)
+            target = paymentSectionRef.current as any;
+          else if (currentMobileStep === 4)
+            target = problemMediaSectionRef.current as any;
+          else if (currentMobileStep === 5)
+            target = notesMobileRef.current as any;
           try {
             target?.scrollIntoView({ behavior: "smooth", block: "start" });
           } catch {}
@@ -1500,7 +1505,7 @@ const BookingPage: React.FC = () => {
         <main className="flex-1">
           <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
             {/* Header Skeleton */}
-            <header className="fixed md:sticky top-0 inset-x-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+            <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm md:sticky">
               <div className="relative flex w-full items-center px-5 py-4">
                 <div className="mr-4 h-6 w-6 animate-pulse rounded bg-gray-300"></div>
                 <div className="absolute left-1/2 h-7 w-32 -translate-x-1/2 animate-pulse rounded bg-gray-300"></div>
@@ -1667,7 +1672,6 @@ const BookingPage: React.FC = () => {
     return new Date(ts).toLocaleDateString();
   };
 
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" />
@@ -1696,7 +1700,7 @@ const BookingPage: React.FC = () => {
           @keyframes popIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
           .animate-pop { animation: popIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1); }
         `}</style>
-          <header className="fixed md:sticky top-0 inset-x-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+          <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm md:sticky">
             <div className="relative flex w-full items-center px-5 py-4">
               <button
                 onClick={() => navigate(-1)}
@@ -1875,7 +1879,9 @@ const BookingPage: React.FC = () => {
                   {/* Mobile sequence: Packages (above), Schedule, Location, Payment, Photos, Notes */}
                   {/* Mobile: Show Schedule only when Packages are complete */}
                   {currentMobileStep >= 1 && (
-                    <div className={`md:hidden ${popIndex === 1 ? "animate-pop" : ""}`}>
+                    <div
+                      className={`md:hidden ${popIndex === 1 ? "animate-pop" : ""}`}
+                    >
                       <LockableSection locked={!packagesComplete}>
                         <ScheduleSection
                           innerRef={bookingSectionRef}
@@ -1903,8 +1909,13 @@ const BookingPage: React.FC = () => {
 
                   {/* Mobile: Show Location only when Schedule is complete */}
                   {currentMobileStep >= 2 && (
-                    <div className={`md:hidden ${popIndex === 2 ? "animate-pop" : ""}`} ref={locationMobileRef}>
-                      <LockableSection locked={!(packagesComplete && scheduleComplete)}>
+                    <div
+                      className={`md:hidden ${popIndex === 2 ? "animate-pop" : ""}`}
+                      ref={locationMobileRef}
+                    >
+                      <LockableSection
+                        locked={!(packagesComplete && scheduleComplete)}
+                      >
                         <ServiceLocationSection
                           highlight={highlightInput === "mapLocation"}
                           mapsReady={mapsReady}
@@ -1954,43 +1965,48 @@ const BookingPage: React.FC = () => {
 
                   {/* Mobile: Show Payment only when Location is complete */}
                   {currentMobileStep >= 3 && (
-                  <div className={`mt-4 md:hidden ${popIndex === 3 ? "animate-pop" : ""}`}>
-                    <LockableSection
-                      locked={
-                        !(
-                          packagesComplete &&
-                          locationComplete &&
-                          scheduleComplete
-                        )
-                      }
-                      lockReason={
-                        !packagesComplete
-                          ? "complete Packages first"
-                          : !locationComplete
-                            ? "complete Location first"
-                            : "complete Schedule first"
-                      }
+                    <div
+                      className={`mt-4 md:hidden ${popIndex === 3 ? "animate-pop" : ""}`}
                     >
-                      <div ref={paymentSectionRef}>
-                        <PaymentSection
-                          paymentMethod={paymentMethod}
-                          setPaymentMethod={setPaymentMethod}
-                          packages={packages}
-                          amountPaid={amountPaid}
-                          handleAmountChange={handleAmountChange}
-                          paymentError={paymentError}
-                          totalPrice={totalPrice}
-                          highlight={highlightInput === "paymentSection"}
-                          isProviderOnboarded={isProviderOnboarded}
-                        />
-                      </div>
-                    </LockableSection>
-                  </div>
+                      <LockableSection
+                        locked={
+                          !(
+                            packagesComplete &&
+                            locationComplete &&
+                            scheduleComplete
+                          )
+                        }
+                        lockReason={
+                          !packagesComplete
+                            ? "complete Packages first"
+                            : !locationComplete
+                              ? "complete Location first"
+                              : "complete Schedule first"
+                        }
+                      >
+                        <div ref={paymentSectionRef}>
+                          <PaymentSection
+                            paymentMethod={paymentMethod}
+                            setPaymentMethod={setPaymentMethod}
+                            packages={packages}
+                            amountPaid={amountPaid}
+                            handleAmountChange={handleAmountChange}
+                            paymentError={paymentError}
+                            totalPrice={totalPrice}
+                            highlight={highlightInput === "paymentSection"}
+                            isProviderOnboarded={isProviderOnboarded}
+                          />
+                        </div>
+                      </LockableSection>
+                    </div>
                   )}
 
                   {/* Mobile: Show Problem Photos only when Payment complete and required */}
                   {requiresProof && currentMobileStep >= 4 && (
-                    <div className={`mb-6 md:hidden ${popIndex === 4 ? "animate-pop" : ""}`} ref={problemMediaSectionRef}>
+                    <div
+                      className={`mb-6 md:hidden ${popIndex === 4 ? "animate-pop" : ""}`}
+                      ref={problemMediaSectionRef}
+                    >
                       <LockableSection
                         locked={!paymentComplete}
                         lockReason="complete Payment first"
@@ -2007,7 +2023,10 @@ const BookingPage: React.FC = () => {
 
                   {/* Mobile: Show Notes only when all prior sections complete */}
                   {currentMobileStep >= 5 && (
-                    <div className={`mb-6 md:hidden ${popIndex === 5 ? "animate-pop" : ""}`} ref={notesMobileRef}>
+                    <div
+                      className={`mb-6 md:hidden ${popIndex === 5 ? "animate-pop" : ""}`}
+                      ref={notesMobileRef}
+                    >
                       <LockableSection locked={!notesPreconditionsComplete}>
                         <NotesSection
                           notes={notes}
