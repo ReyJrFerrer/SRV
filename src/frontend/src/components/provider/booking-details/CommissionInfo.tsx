@@ -3,6 +3,7 @@ import {
   CurrencyDollarIcon,
   XCircleIcon,
   CheckCircleIcon,
+  WalletIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 
@@ -25,8 +26,9 @@ const CommissionInfo: React.FC<Props> = ({ show, commissionValidation }) => {
   if (!show) return null;
   return (
     <div className="rounded-2xl bg-white p-4 shadow-lg">
-      <h3 className="text-md mb-3 font-bold text-blue-700 lg:text-lg">
-        Wallet & Commission Information
+      <h3 className="text-md mb-3 flex items-center gap-2 font-bold text-blue-700 lg:text-lg">
+        <WalletIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+        <span>Wallet & Commission Information</span>
       </h3>
       {commissionValidation.loading ? (
         <div className="flex items-center gap-2 text-gray-600">
