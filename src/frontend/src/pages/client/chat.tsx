@@ -23,10 +23,16 @@ const ClientChatPage: React.FC = () => {
     sendingMessage,
   } = useChat();
   const [, setTick] = React.useState(0);
-  const [isDesktop, setIsDesktop] = useState<boolean>(window.innerWidth >= 1024);
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [selectedOtherUserName, setSelectedOtherUserName] = useState<string>("");
-  const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] = useState<string>("");
+  const [isDesktop, setIsDesktop] = useState<boolean>(
+    window.innerWidth >= 1024,
+  );
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
+  const [selectedOtherUserName, setSelectedOtherUserName] =
+    useState<string>("");
+  const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
+    useState<string>("");
   const [messageText, setMessageText] = useState<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -57,31 +63,41 @@ const ClientChatPage: React.FC = () => {
     if (selectedConversationId) return;
     if (!conversations || conversations.length === 0) return;
 
-    const sorted = conversations
-      .slice()
-      .sort((a, b) => {
-        const aTime = a.lastMessage?.[0]?.createdAt
-          ? new Date(a.lastMessage[0].createdAt).getTime()
-          : 0;
-        const bTime = b.lastMessage?.[0]?.createdAt
-          ? new Date(b.lastMessage[0].createdAt).getTime()
-          : 0;
-        return bTime - aTime;
-      });
+    const sorted = conversations.slice().sort((a, b) => {
+      const aTime = a.lastMessage?.[0]?.createdAt
+        ? new Date(a.lastMessage[0].createdAt).getTime()
+        : 0;
+      const bTime = b.lastMessage?.[0]?.createdAt
+        ? new Date(b.lastMessage[0].createdAt).getTime()
+        : 0;
+      return bTime - aTime;
+    });
 
     const top = sorted[0];
     if (!top) return;
     const conversationId = top.conversation.id;
     const otherUserId = top.otherUserId;
-    const otherUserName = top.otherUserName || `User ${otherUserId.slice(0, 8)}...`;
-    const imageToUse = top.otherUserImageUrl && top.otherUserImageUrl !== "" ? top.otherUserImageUrl : DEFAULT_USER_IMAGE;
+    const otherUserName =
+      top.otherUserName || `User ${otherUserId.slice(0, 8)}...`;
+    const imageToUse =
+      top.otherUserImageUrl && top.otherUserImageUrl !== ""
+        ? top.otherUserImageUrl
+        : DEFAULT_USER_IMAGE;
 
     setSelectedConversationId(conversationId);
     setSelectedOtherUserName(otherUserName);
     setSelectedOtherUserImageUrl(imageToUse);
     loadConversation(conversationId);
-    markAsRead(conversationId).then(() => dispatchChatsRead()).catch(() => {});
-  }, [isDesktop, conversations, selectedConversationId, loadConversation, markAsRead]);
+    markAsRead(conversationId)
+      .then(() => dispatchChatsRead())
+      .catch(() => {});
+  }, [
+    isDesktop,
+    conversations,
+    selectedConversationId,
+    loadConversation,
+    markAsRead,
+  ]);
 
   // Scroll to bottom on message updates
   useEffect(() => {
@@ -135,7 +151,13 @@ const ClientChatPage: React.FC = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || !currentConversation || !identity || sendingMessage) return;
+    if (
+      !messageText.trim() ||
+      !currentConversation ||
+      !identity ||
+      sendingMessage
+    )
+      return;
     try {
       const currentUserId = identity.getPrincipal().toString();
       const receiverId =
@@ -174,8 +196,11 @@ const ClientChatPage: React.FC = () => {
               </button>
             </div>
           ) : conversations.length > 0 ? (
-            <div className={`rounded-2xl border border-gray-100 bg-white shadow-md ${isDesktop ? "md:flex md:h-[75vh]" : ""}`}>
-              <ul className={`${isDesktop ? "md:w-[360px] md:flex-shrink-0" : ""} divide-y divide-gray-100`}
+            <div
+              className={`rounded-2xl border border-gray-100 bg-white shadow-md ${isDesktop ? "md:flex md:h-[75vh]" : ""}`}
+            >
+              <ul
+                className={`${isDesktop ? "md:w-[360px] md:flex-shrink-0" : ""} divide-y divide-gray-100`}
               >
                 {conversations
                   .slice()
@@ -259,7 +284,7 @@ const ClientChatPage: React.FC = () => {
                   })}
               </ul>
               {isDesktop && (
-                <div className="md:border-l md:border-gray-100 md:flex md:flex-1 md:flex-col">
+                <div className="md:flex md:flex-1 md:flex-col md:border-l md:border-gray-100">
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
                       {/* Header */}
@@ -280,30 +305,48 @@ const ClientChatPage: React.FC = () => {
                         </div>
                       </div>
                       {/* Messages */}
-                      <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto p-4">
+                      <div
+                        ref={messagesContainerRef}
+                        className="flex-1 space-y-4 overflow-y-auto p-4"
+                      >
                         {messages.length === 0 ? (
                           <div className="flex h-full items-center justify-center">
-                            <p className="text-gray-500">No messages yet. Start the conversation!</p>
+                            <p className="text-gray-500">
+                              No messages yet. Start the conversation!
+                            </p>
                           </div>
                         ) : (
                           messages.map((message) => {
-                            const isMine = identity?.getPrincipal().toString() === message.senderId;
+                            const isMine =
+                              identity?.getPrincipal().toString() ===
+                              message.senderId;
                             return (
-                              <div key={message.id} className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
+                              <div
+                                key={message.id}
+                                className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}
+                              >
                                 {!isMine && (
                                   <div className="relative h-8 w-8 flex-shrink-0">
                                     <ProfileImage
-                                      profilePictureUrl={selectedOtherUserImageUrl}
+                                      profilePictureUrl={
+                                        selectedOtherUserImageUrl
+                                      }
                                       userName={selectedOtherUserName}
                                       size="h-8 w-8"
                                     />
                                   </div>
                                 )}
-                                <div className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}>
+                                <div
+                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
+                                >
                                   <p className="text-sm">
-                                    {typeof message.content === "string" ? message.content : message.content?.encryptedText}
+                                    {typeof message.content === "string"
+                                      ? message.content
+                                      : message.content?.encryptedText}
                                   </p>
-                                  <p className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}>
+                                  <p
+                                    className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
+                                  >
                                     {formatTimestamp(message.createdAt)}
                                   </p>
                                 </div>
@@ -314,7 +357,10 @@ const ClientChatPage: React.FC = () => {
                       </div>
                       {/* Composer */}
                       <div className="border-t border-gray-200 p-3">
-                        <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+                        <form
+                          onSubmit={handleSendMessage}
+                          className="flex items-center gap-3"
+                        >
                           <input
                             type="text"
                             value={messageText}
@@ -326,7 +372,11 @@ const ClientChatPage: React.FC = () => {
                           />
                           <button
                             type="submit"
-                            disabled={sendingMessage || !messageText.trim() || !currentConversation}
+                            disabled={
+                              sendingMessage ||
+                              !messageText.trim() ||
+                              !currentConversation
+                            }
                             className="rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
                           >
                             <PaperAirplaneIcon className="h-5 w-5" />
