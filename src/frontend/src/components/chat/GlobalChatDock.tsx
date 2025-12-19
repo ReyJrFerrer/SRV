@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { ProfileImage } from "../common/ProfileImage";
@@ -199,7 +205,14 @@ const GlobalChatDock: React.FC = () => {
       // Keep in list mode if no active conversation
     }
     prevUnreadRef.current = unread;
-  }, [unreadTotal, isAuthenticated, isDesktop, isVisible, isMinimized, playMessageSound]);
+  }, [
+    unreadTotal,
+    isAuthenticated,
+    isDesktop,
+    isVisible,
+    isMinimized,
+    playMessageSound,
+  ]);
 
   // On first load, prime unread ref
   useEffect(() => {
@@ -375,12 +388,15 @@ const GlobalChatDock: React.FC = () => {
                         try {
                           if (myPrincipal === conversation.clientId) {
                             return (
-                              conversation.unreadCount[conversation.clientId] || 0
+                              conversation.unreadCount[conversation.clientId] ||
+                              0
                             );
                           }
                           if (myPrincipal === conversation.providerId) {
                             return (
-                              conversation.unreadCount[conversation.providerId] || 0
+                              conversation.unreadCount[
+                                conversation.providerId
+                              ] || 0
                             );
                           }
                           return 0;
