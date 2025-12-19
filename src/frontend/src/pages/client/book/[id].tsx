@@ -1646,7 +1646,10 @@ const BookingPage: React.FC = () => {
                     streetRef={streetRef}
                     houseNumberRef={houseNumberRef}
                   />
-                  <div className="mb-6 hidden md:block" ref={problemMediaSectionRef}>
+                  <div
+                    className="mb-6 hidden md:block"
+                    ref={problemMediaSectionRef}
+                  >
                     <ProblemMediaSection
                       files={problemMediaFiles}
                       onFilesChange={setProblemMediaFiles}

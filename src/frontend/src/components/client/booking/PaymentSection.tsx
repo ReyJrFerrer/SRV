@@ -47,7 +47,10 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   >
     <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-      Payment Method <span className="ml-1 text-red-600" aria-hidden="true">*</span>
+      Payment Method{" "}
+      <span className="ml-1 text-red-600" aria-hidden="true">
+        *
+      </span>
     </h3>
     <div className="space-y-3">
       <div
