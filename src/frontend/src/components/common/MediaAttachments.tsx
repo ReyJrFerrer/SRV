@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   getImageDataUrl,
   extractMediaIdFromUrl,
-} from "../../../services/mediaService";
+} from "../../services/mediaService";
 import { httpsCallable } from "firebase/functions";
-import { initializeFirebase } from "../../../services/firebaseApp";
+import { initializeFirebase } from "../../services/firebaseApp";
 
 interface ClientAttachmentsProps {
   attachments?: string[];
@@ -129,8 +129,8 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
-      <h2 className="mb-4 text-lg font-semibold text-gray-900">
-        Client Attachments
+      <h2 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-700">
+        Media Attachments
       </h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {items.map((original, idx) => {

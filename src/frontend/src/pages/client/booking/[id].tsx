@@ -27,7 +27,7 @@ import BookingNotes from "../../../components/client/booking-details/BookingNote
 import ActionButtons from "../../../components/client/booking-details/ActionButtons";
 import BookingDetailsSkeleton from "../../../components/client/booking-details/BookingDetailsSkeleton";
 import { dispatchBookingInteracted } from "../../../utils/interactionEvents";
-import ClientAttachments from "../../../components/provider/booking-details/ClientAttachments";
+import ClientAttachments from "../../../components/common/MediaAttachments";
 
 type BookingStatus =
   | "Requested"

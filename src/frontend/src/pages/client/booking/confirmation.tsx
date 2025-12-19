@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
-import ClientAttachments from "../../../components/provider/booking-details/ClientAttachments";
+import ClientAttachments from "../../../components/common/MediaAttachments";
 
 interface BookingDetails {
   serviceName: string;

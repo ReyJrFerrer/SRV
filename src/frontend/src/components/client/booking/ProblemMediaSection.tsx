@@ -21,7 +21,9 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const list = Array.from(e.target.files || []).filter((f) => f.type.startsWith("image/"));
+    const list = Array.from(e.target.files || []).filter((f) =>
+      f.type.startsWith("image/"),
+    );
     if (list.length === 0) return;
     const current = files || [];
     const remaining = Math.max(0, maxFiles - current.length);
@@ -54,8 +56,8 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
         </span>
       </div>
       <p className="mb-4 text-sm text-gray-600">
-        Add clear photos showing the issue. This helps the
-        provider prepare tools and parts.
+        Add clear photos showing the issue. This helps the provider prepare
+        tools and parts.
       </p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
@@ -74,7 +76,9 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
           <PaperClipIcon className="h-4 w-4" aria-hidden="true" />
           Add Attachments
         </button>
-        <span className="text-xs text-gray-500">Accepted: images (JPG/PNG/HEIC)</span>
+        <span className="text-xs text-gray-500">
+          Accepted: images (JPG/PNG/HEIC)
+        </span>
       </div>
 
       {files.length > 0 && (
@@ -86,7 +90,11 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
                 key={`${f.name}-${idx}`}
                 className="group relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
               >
-                <img src={url} alt={f.name} className="h-32 w-full object-cover" />
+                <img
+                  src={url}
+                  alt={f.name}
+                  className="h-32 w-full object-cover"
+                />
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/50 px-2 py-1 text-[10px] text-white">
                   <span className="truncate" title={f.name}>
                     {f.name}

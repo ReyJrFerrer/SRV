@@ -14,7 +14,7 @@ import {
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
 import MapSection from "../../../components/provider/booking-details/MapSection";
-import ClientAttachments from "../../../components/provider/booking-details/ClientAttachments";
+import ClientAttachments from "../../../components/common/MediaAttachments";
 import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
 import BottomNavigation from "../../../components/provider/NavigationBar";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
