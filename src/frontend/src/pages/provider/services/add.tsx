@@ -18,6 +18,7 @@ import ServiceAvailability from "../../../components/provider/add service/Servic
 import ServiceLocation from "../../../components/provider/add service/ServiceLocation";
 import ServiceImageUpload from "../../../components/provider/add service/ServiceImageUpload";
 import ReviewSubmit from "../../../components/provider/add service/ReviewSubmit";
+import ProgressTracker from "../../../components/provider/add service/ProgressTracker";
 // Draft UI/logic moved into ServiceDrafts component
 
 // Service Management Hook & Types
@@ -1070,6 +1071,7 @@ const AddServicePage: React.FC = () => {
       {/* Draft UI & logic moved into ServiceDrafts (renders modals and banner) */}
       {/* Main Content */}
       <main className="container mx-auto flex-grow px-4 pt-4 sm:p-6">
+        <ProgressTracker currentStep={currentStep} />
         {renderStep()}
         {/* Navigation Buttons */}
         <div className="mb-20 mt-6 flex justify-between lg:mb-8">
