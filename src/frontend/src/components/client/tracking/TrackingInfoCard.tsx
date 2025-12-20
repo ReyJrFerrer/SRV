@@ -110,7 +110,7 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
         </div>
       )}
 
-      <div className="relative rounded-xl bg-white/95 p-4 shadow-lg backdrop-blur">
+      <div className="mx-4 mb-4 rounded-3xl bg-white px-5 pb-6 pt-4 shadow-xl sm:mx-auto sm:max-w-md">
         {(etaText || distanceText) && (
           <div className="text-center">
             {(etaText || distanceText) && (
