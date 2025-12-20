@@ -192,6 +192,7 @@ const ClientTrackingPage: React.FC = () => {
           mapRef.current = map;
         }}
         autoFollow={followMe}
+        onAutoFollowChange={setFollowMe}
         className="h-full w-full"
         destinationName={
           (booking as any)?.formattedLocation || (booking as any)?.location

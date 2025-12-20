@@ -16,6 +16,7 @@ interface ProviderTrackingMapProps {
   mapApiKey: string;
   onMapReady?: (map: google.maps.Map) => void;
   autoFollow?: boolean;
+  onAutoFollowChange?: (value: boolean) => void;
   className?: string;
   destinationName?: string;
   onRouteCalculated?: (
@@ -38,6 +39,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   mapApiKey,
   onMapReady,
   autoFollow = true,
+  onAutoFollowChange,
   className = "",
   destinationName,
   onRouteCalculated,
@@ -344,9 +346,38 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
     };
   }, []);
 
-  // Auto-follow provider location
+  // Disable auto-follow when user drags the map
+  const dragListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   useEffect(() => {
-    if (!autoFollow || !mapRef.current || !providerLocation) return;
+    const map = mapRef.current;
+    if (!(window as any).google?.maps || !map) return;
+    // Clean existing listener
+    if (dragListenerRef.current) {
+      dragListenerRef.current.remove();
+      dragListenerRef.current = null;
+    }
+    dragListenerRef.current = google.maps.event.addListener(
+      map,
+      "dragstart",
+      () => {
+        // User manually dragged - stop auto-following
+        if (onAutoFollowChange) {
+          onAutoFollowChange(false);
+        }
+      },
+    );
+    return () => {
+      if (dragListenerRef.current) {
+        dragListenerRef.current.remove();
+        dragListenerRef.current = null;
+      }
+    };
+  }, [onAutoFollowChange]);
+
+  // Auto-follow provider location only when autoFollow is true
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!autoFollow || !map || !providerLocation) return;
 
     // Throttle pans to avoid constant recentering. Minimum interval and distance.
     const MIN_INTERVAL_MS = 3000; // 3 seconds
@@ -361,28 +392,11 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
     if (since < MIN_INTERVAL_MS && distance < MIN_DISTANCE_M) return;
 
     try {
-      mapRef.current.panTo(providerLocation);
+      map.panTo(providerLocation);
       lastPanTimeRef.current = now;
       lastPanPosRef.current = providerLocation;
     } catch {}
   }, [providerLocation, autoFollow]);
-
-  // Fit bounds when both locations are available
-  useEffect(() => {
-    const map = mapRef.current;
-    if (
-      !map ||
-      !providerLocation ||
-      !clientLocation ||
-      !(window as any).google?.maps
-    )
-      return;
-
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(providerLocation);
-    bounds.extend(clientLocation);
-    map.fitBounds(bounds, 80);
-  }, [providerLocation, clientLocation]);
 
   const handleMapLoad = (map: google.maps.Map) => {
     mapRef.current = map;
