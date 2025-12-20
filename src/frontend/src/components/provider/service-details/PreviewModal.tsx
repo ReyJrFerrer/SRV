@@ -26,7 +26,7 @@ const PreviewModal: React.FC<Props> = ({
       />
       <div className="relative z-10 flex flex-col items-center justify-center">
         <button
-          className="absolute right-2 top-2 z-20 rounded-full bg-white/80 p-2 text-gray-700 hover:bg-white"
+          className="absolute right-2 top-2 z-20 rounded-full bg-white/60 p-2 text-gray-700 hover:bg-white"
           onClick={onClose}
           aria-label="Close preview"
         >

@@ -6,6 +6,7 @@ import {
 } from "../../services/mediaService";
 import { httpsCallable } from "firebase/functions";
 import { initializeFirebase } from "../../services/firebaseApp";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface ClientAttachmentsProps {
   attachments?: string[];
@@ -193,11 +194,11 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              className="absolute right-2 top-2 rounded-md bg-black/50 px-2 py-1 text-xs font-semibold text-white hover:bg-black/70"
+              className="absolute right-2 top-2 rounded-full bg-white/50 p-2 text-gray-700 hover:bg-white"
               onClick={() => setLightbox((s) => ({ ...s, open: false }))}
               aria-label="Close"
             >
-              Close
+              <XMarkIcon className="h-6 w-6" />
             </button>
             <div className="flex items-center justify-center">
               {lightbox.isVideo ? (
