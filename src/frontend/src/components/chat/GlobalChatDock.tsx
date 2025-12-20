@@ -70,7 +70,9 @@ const GlobalChatDock: React.FC = () => {
   const shouldHide =
     /\/client\/chat(\/|$)/.test(path) ||
     /\/provider\/chat(\/|$)/.test(path) ||
-    /\/create-profile/.test(path);
+    /\/create-profile/.test(path) ||
+     /\/provider\/services\/add(\/|$)/.test(path)
+    ;
 
   // Current user principal
   const myPrincipal = identity?.getPrincipal().toString();
