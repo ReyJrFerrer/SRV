@@ -1,10 +1,11 @@
-import React from "react";
-import GStreetView from "../../common/GMapFunctions/GStreetView";
+import React, { useEffect } from "react";
+import GStreetView from "./GMapFunctions/GStreetView";
 
 interface StreetViewModalProps {
   show: boolean;
   position: google.maps.LatLngLiteral | null;
   onClose: () => void;
+  showCloseButton?: boolean;
 }
 
 const StreetViewModal: React.FC<StreetViewModalProps> = ({
@@ -13,20 +14,26 @@ const StreetViewModal: React.FC<StreetViewModalProps> = ({
   onClose,
 }) => {
   if (!show || !position) return null;
+
+  useEffect(() => {
+    if (!show) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [show, onClose]);
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
       role="dialog"
       aria-modal="true"
+      onMouseDown={onClose}
     >
-      <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
-        <button
-          className="absolute right-3 top-3 z-10 rounded-full border border-gray-400 bg-gray-200 p-2 hover:bg-gray-300"
-          onClick={onClose}
-          aria-label="Close Street View"
-        >
-          <span className="text-xl font-bold text-gray-700">&times;</span>
-        </button>
+      <div
+        className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="h-full w-full">
           <GStreetView
             position={position}

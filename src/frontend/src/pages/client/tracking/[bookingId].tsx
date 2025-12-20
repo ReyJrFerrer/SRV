@@ -14,7 +14,7 @@ import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import ProviderTrackingMap from "../../../components/client/tracking/ProviderTrackingMap";
 import TrackingInfoCard from "../../../components/client/tracking/TrackingInfoCard";
-import StreetViewModal from "../../../components/provider/directions/StreetViewModal";
+import StreetViewModal from "../../../components/common/StreetViewModal";
 
 const ClientTrackingPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();

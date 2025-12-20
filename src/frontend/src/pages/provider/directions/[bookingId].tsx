@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import InlineLoader from "../../../components/provider/directions/InlineLoader";
 import MapView from "../../../components/provider/directions/MapView";
 import ControlsOverlay from "../../../components/provider/directions/ControlsOverlay";
-import StreetViewModal from "../../../components/provider/directions/StreetViewModal";
+import StreetViewModal from "../../../components/common/StreetViewModal";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import { useProviderLocationPublisher } from "../../../hooks/useProviderLocationPublisher";
