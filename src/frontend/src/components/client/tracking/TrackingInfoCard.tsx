@@ -7,8 +7,8 @@
 
 import React from "react";
 import {
-  ChatBubbleLeftIcon,
-  XMarkIcon,
+  // ChatBubbleLeftIcon,
+  // XMarkIcon,
   EyeIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
@@ -17,6 +17,10 @@ interface TrackingInfoCardProps {
   providerPhoto?: string | null;
   etaText?: string | null;
   distanceText?: string | null;
+  /** Remaining distance in meters between provider and destination */
+  distanceMeters?: number | null;
+  /** Original/total route distance in meters used to compute progress */
+  totalDistanceMeters?: number | null;
   destinationName?: string | null;
   lastUpdated?: number | null;
   isStale?: boolean;
@@ -39,13 +43,15 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
   destinationName,
   lastUpdated,
   isStale = false,
-  onChat,
-  onCancel,
+  // onChat,
+  // onCancel,
   onStreetView,
   showStreetViewButton = false,
   followMe = false,
   setFollowMe,
   onRecenter,
+  distanceMeters = null,
+  totalDistanceMeters = null,
   className = "",
 }) => {
   // Calculate time since last update
@@ -57,10 +63,19 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
     const minutes = Math.floor(seconds / 60);
     return `${minutes}m ago`;
   };
-
-  // Calculate progress (rough estimate based on ETA)
+  // distance based progress
   const getProgressPercent = () => {
-    // This is a visual approximation - in production you'd track actual progress
+    if (
+      typeof distanceMeters === "number" &&
+      typeof totalDistanceMeters === "number" &&
+      totalDistanceMeters > 0
+    ) {
+      const fraction = 1 - Math.max(0, Math.min(1, distanceMeters / totalDistanceMeters));
+      const percent = Math.round(fraction * 100);
+      return Math.max(0, Math.min(100, percent));
+    }
+
+    // Fallback: visual approximation based on ETA text
     if (!etaText) return 30;
     const match = etaText.match(/(\d+)/);
     if (!match) return 50;
@@ -207,7 +222,7 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        {/* <div className="flex gap-3">
           {onChat && (
             <button
               onClick={onChat}
@@ -226,7 +241,7 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
               <span>Cancel</span>
             </button>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -22,6 +22,8 @@ interface ProviderTrackingMapProps {
   onRouteCalculated?: (
     etaText: string | null,
     distanceText: string | null,
+    distanceMeters: number | null,
+    totalDistanceMeters: number | null,
   ) => void;
 }
 
@@ -136,9 +138,12 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
 
           // Notify parent of route calculation
           if (onRouteCalculated) {
-            const eta = result.routes[0]?.legs[0]?.duration?.text || null;
-            const distance = result.routes[0]?.legs[0]?.distance?.text || null;
-            onRouteCalculated(eta, distance);
+            const leg = result.routes[0]?.legs[0];
+            const eta = leg?.duration?.text || null;
+            const distance = leg?.distance?.text || null;
+            const distanceMeters = leg?.distance?.value || null;
+            const totalDistanceMeters = leg?.distance?.value || null;
+            onRouteCalculated(eta, distance, distanceMeters, totalDistanceMeters);
           }
         }
       },

@@ -51,6 +51,8 @@ const ClientTrackingPage: React.FC = () => {
   // ETA and distance from map
   const [etaText, setEtaText] = useState<string | null>(null);
   const [distanceText, setDistanceText] = useState<string | null>(null);
+  const [distanceMeters, setDistanceMeters] = useState<number | null>(null);
+  const [totalDistanceMeters, setTotalDistanceMeters] = useState<number | null>(null);
 
   // Follow me state and map ref
   const [followMe, setFollowMe] = useState<boolean>(true);
@@ -197,9 +199,11 @@ const ClientTrackingPage: React.FC = () => {
         destinationName={
           (booking as any)?.formattedLocation || (booking as any)?.location
         }
-        onRouteCalculated={(eta, distance) => {
+        onRouteCalculated={(eta, distance, distMeters, totalDistMeters) => {
           setEtaText(eta);
           setDistanceText(distance);
+          setDistanceMeters(distMeters);
+          setTotalDistanceMeters(totalDistMeters);
         }}
       />
 
@@ -240,6 +244,8 @@ const ClientTrackingPage: React.FC = () => {
           providerPhoto={providerPhoto}
           etaText={etaText}
           distanceText={distanceText}
+          distanceMeters={distanceMeters}
+          totalDistanceMeters={totalDistanceMeters}
           destinationName={
             (booking as any)?.formattedLocation || (booking as any)?.location
           }
