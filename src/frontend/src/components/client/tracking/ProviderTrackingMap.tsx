@@ -143,7 +143,12 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
             const distance = leg?.distance?.text || null;
             const distanceMeters = leg?.distance?.value || null;
             const totalDistanceMeters = leg?.distance?.value || null;
-            onRouteCalculated(eta, distance, distanceMeters, totalDistanceMeters);
+            onRouteCalculated(
+              eta,
+              distance,
+              distanceMeters,
+              totalDistanceMeters,
+            );
           }
         }
       },

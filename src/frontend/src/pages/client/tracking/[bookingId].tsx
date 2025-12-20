@@ -52,7 +52,9 @@ const ClientTrackingPage: React.FC = () => {
   const [etaText, setEtaText] = useState<string | null>(null);
   const [distanceText, setDistanceText] = useState<string | null>(null);
   const [distanceMeters, setDistanceMeters] = useState<number | null>(null);
-  const [totalDistanceMeters, setTotalDistanceMeters] = useState<number | null>(null);
+  const [totalDistanceMeters, setTotalDistanceMeters] = useState<number | null>(
+    null,
+  );
 
   // Follow me state and map ref
   const [followMe, setFollowMe] = useState<boolean>(true);

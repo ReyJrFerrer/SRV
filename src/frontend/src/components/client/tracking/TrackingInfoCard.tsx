@@ -70,7 +70,8 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
       typeof totalDistanceMeters === "number" &&
       totalDistanceMeters > 0
     ) {
-      const fraction = 1 - Math.max(0, Math.min(1, distanceMeters / totalDistanceMeters));
+      const fraction =
+        1 - Math.max(0, Math.min(1, distanceMeters / totalDistanceMeters));
       const percent = Math.round(fraction * 100);
       return Math.max(0, Math.min(100, percent));
     }
