@@ -9,6 +9,8 @@ import ScrollToTop from "./src/components/ScrollToTop";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import HashRouterFix from "./src/components/HashRouterFix";
 import { APIProvider } from "@vis.gl/react-google-maps";
+import { useLocationStore } from "./src/store/locationStore";
+
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
@@ -18,9 +20,37 @@ import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+  const { mapsApiKey, setMapsApiReady } = useLocationStore();
+
+  // Validate API key on mount
+  React.useEffect(() => {
+    if (!mapsApiKey || mapsApiKey === "") {
+      console.error(
+        "Google Maps API key is missing. Please set VITE_GOOGLE_MAPS_API_KEY in your environment variables.",
+      );
+      setMapsApiReady(false, "API key is missing");
+    } else {
+      setMapsApiReady(true, null);
+    }
+  }, [mapsApiKey, setMapsApiReady]);
+
+  if (!mapsApiKey || mapsApiKey === "") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="rounded-lg bg-red-50 p-6 text-center shadow-md">
+          <h2 className="mb-2 text-xl font-bold text-red-600">
+            Maps Configuration Error
+          </h2>
+          <p className="text-gray-700">
+            Google Maps API key is not configured. Please contact support.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <APIProvider apiKey={apiKey} libraries={["places"]}>
+    <APIProvider apiKey={mapsApiKey} libraries={["places"]}>
       {children}
     </APIProvider>
   );
@@ -210,14 +240,15 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <ErrorBoundary>
       <HashRouterFix />
       <QueryClientProvider client={queryClient}>
-        <HashRouter>
-          <ScrollToTop />
-          <AuthProvider>
-            <BookingCacheProvider>
-              <Suspense fallback={null}>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<App />} />
+        <MapsProviderWrapper>
+          <HashRouter>
+            <ScrollToTop />
+            <AuthProvider>
+              <BookingCacheProvider>
+                <Suspense fallback={null}>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<App />} />
                   <Route
                     path="/create-profile"
                     element={
@@ -284,12 +315,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                     />
                     <Route
                       path="book/:id"
-                      element={
-                        // Scope Google Maps only to booking flow pages that need it
-                        <MapsProviderWrapper>
-                          <ClientBookService />
-                        </MapsProviderWrapper>
-                      }
+                      element={<ClientBookService />}
                     />
 
                     {/* Category & Review Routes */}
@@ -348,12 +374,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                     {/* Booking Management Routes */}
                     <Route
                       path="booking/:id"
-                      element={
-                        // Provider booking details uses interactive Map + geocoding
-                        <MapsProviderWrapper>
-                          <ProviderBookingDetails />
-                        </MapsProviderWrapper>
-                      }
+                      element={<ProviderBookingDetails />}
                     />
                     <Route
                       path="active-service/:bookingId"
@@ -401,6 +422,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             </BookingCacheProvider>
           </AuthProvider>
         </HashRouter>
+      </MapsProviderWrapper>
       </QueryClientProvider>
     </ErrorBoundary>
   </React.StrictMode>,

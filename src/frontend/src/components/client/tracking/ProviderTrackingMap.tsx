@@ -6,14 +6,13 @@
  */
 
 import React, { useRef, useEffect, useState } from "react";
-import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import { TruckIcon, MapPinIcon } from "@heroicons/react/24/solid";
 
 interface ProviderTrackingMapProps {
   providerLocation: google.maps.LatLngLiteral | null;
   clientLocation: google.maps.LatLngLiteral | null;
   heading?: number | null;
-  mapApiKey: string;
   onMapReady?: (map: google.maps.Map) => void;
   autoFollow?: boolean;
   onAutoFollowChange?: (value: boolean) => void;
@@ -38,7 +37,6 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   providerLocation,
   clientLocation,
   heading,
-  mapApiKey,
   onMapReady,
   autoFollow = true,
   onAutoFollowChange,
@@ -432,8 +430,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
 
   return (
     <div className={`relative ${className}`}>
-      <APIProvider apiKey={mapApiKey}>
-        <Map
+      <Map
           style={containerStyle}
           defaultZoom={15}
           defaultCenter={providerLocation}
@@ -473,7 +470,6 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
             </AdvancedMarker>
           )}
         </Map>
-      </APIProvider>
     </div>
   );
 };

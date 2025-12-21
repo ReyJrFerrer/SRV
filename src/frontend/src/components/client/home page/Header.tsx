@@ -1,11 +1,9 @@
-// --- Imports ---
 import React, { useState, useEffect, useRef } from "react";
 import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useServiceManagement } from "../../../hooks/serviceManagement";
 import authCanisterService from "../../../services/authCanisterService";
-import { APIProvider } from "@vis.gl/react-google-maps";
 import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
@@ -97,9 +95,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     else document.body.classList.remove("has-mini-header");
     return () => document.body.classList.remove("has-mini-header");
   }, [isMini]);
-
-  // maps logic has been extracted into MapFunctions component
-  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -198,7 +193,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- Render: Header layout ---
   return (
-    <APIProvider apiKey={mapsApiKey}>
+    <>
       <header
         ref={headerRef}
         // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
@@ -384,7 +379,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </div>
         </div>
       )}
-    </APIProvider>
+    </>
   );
 };
 

@@ -244,9 +244,6 @@ const ProviderDirectionsPage: React.FC = () => {
     return minD;
   };
 
-  const mapApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
-
   // SECTION: Geolocation watch
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -636,8 +633,6 @@ const ProviderDirectionsPage: React.FC = () => {
       return;
     }
     if (destResolveStatus === "pending" || destResolveStatus === "ok") return;
-    const mapKeyMissing = mapApiKey === "REPLACE_WITH_KEY";
-    if (mapKeyMissing) return; // can't geocode without a real key
 
     // Candidate address strings (ordered)
     const candidates: string[] = [];
@@ -709,7 +704,7 @@ const ProviderDirectionsPage: React.FC = () => {
       });
     };
     tryNext();
-  }, [booking, mapApiKey, destResolveStatus]);
+  }, [booking, destResolveStatus]);
 
   const handleStartService = async () => {
     if (!bookingId || isStartingService) return;
@@ -761,7 +756,6 @@ const ProviderDirectionsPage: React.FC = () => {
   return (
     <div className="relative h-screen w-screen">
       <MapView
-        mapApiKey={mapApiKey}
         providerLocation={providerLocation}
         destinationCoords={destinationCoords}
         isInNavigationMode={isInNavigationMode}
@@ -803,12 +797,6 @@ const ProviderDirectionsPage: React.FC = () => {
         position={destinationCoords}
         onClose={() => setShowStreetView(false)}
       />
-
-      {mapApiKey === "REPLACE_WITH_KEY" && (
-        <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-orange-500/90 px-3 py-1 text-[11px] font-semibold text-white shadow">
-          Missing Google Maps API key
-        </div>
-      )}
     </div>
   );
 };

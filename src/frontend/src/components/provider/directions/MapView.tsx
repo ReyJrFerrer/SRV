@@ -1,9 +1,8 @@
 import React from "react";
-import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 
 interface MapViewProps {
-  mapApiKey: string;
   providerLocation: google.maps.LatLngLiteral | null;
   destinationCoords: google.maps.LatLngLiteral | null;
   isInNavigationMode: boolean;
@@ -20,7 +19,6 @@ const containerStyle: React.CSSProperties = {
 };
 
 const MapView: React.FC<MapViewProps> = ({
-  mapApiKey,
   providerLocation,
   destinationCoords,
   isInNavigationMode,
@@ -30,8 +28,7 @@ const MapView: React.FC<MapViewProps> = ({
 }) => {
   if (!providerLocation) return null;
   return (
-    <APIProvider apiKey={mapApiKey}>
-      <Map
+    <Map
         style={containerStyle}
         defaultZoom={isInNavigationMode ? 20 : 15}
         defaultCenter={providerLocation}
@@ -128,7 +125,6 @@ const MapView: React.FC<MapViewProps> = ({
           </AdvancedMarker>
         )}
       </Map>
-    </APIProvider>
   );
 };
 

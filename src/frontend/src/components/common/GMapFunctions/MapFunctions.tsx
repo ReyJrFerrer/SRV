@@ -218,6 +218,14 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
             >
               {gmapsAddress}
             </button>
+          ) : userAddress && userProvince ? (
+            // Show locationStore address while Google Maps is loading
+            <span
+              className="text-left text-sm font-medium text-blue-900"
+              title={`${userAddress}, ${userProvince}`}
+            >
+              {userAddress}, {userProvince}
+            </span>
           ) : (
             <span
               className="text-sm text-gray-500"

@@ -60,8 +60,6 @@ const ClientTrackingPage: React.FC = () => {
   const [followMe, setFollowMe] = useState<boolean>(true);
   const mapRef = React.useRef<google.maps.Map | null>(null);
 
-  const mapApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
   // Resolve destination coordinates from booking location
   useEffect(() => {
     if (!booking || !isMapApiLoaded) return;
@@ -190,7 +188,6 @@ const ClientTrackingPage: React.FC = () => {
         }
         clientLocation={destinationCoords}
         heading={providerLocation?.heading}
-        mapApiKey={mapApiKey}
         onMapReady={(map) => {
           setIsMapApiLoaded(true);
           mapRef.current = map;

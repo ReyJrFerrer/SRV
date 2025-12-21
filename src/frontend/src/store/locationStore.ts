@@ -36,6 +36,11 @@ interface LocationState {
   displayAddress: string;
   manualFields: ManualFields;
 
+  // Google Maps API management
+  mapsApiKey: string;
+  mapsApiReady: boolean;
+  mapsApiError: string | null;
+
   // Actions
   setLocation: (status: LocationStatus, location?: Location | null) => void;
   setAddress: (address: string, province: string) => void;
@@ -43,6 +48,7 @@ interface LocationState {
   setAddressMode: (mode: "context" | "manual") => void;
   setDisplayAddress: (address: string) => void;
   setManualFields: (fields: ManualFields) => void;
+  setMapsApiReady: (ready: boolean, error?: string | null) => void;
   requestLocation: (force?: boolean) => Promise<void>;
   clearLocation: () => void;
   initialize: () => Promise<void>;
@@ -154,7 +160,7 @@ export const useLocationStore = create<LocationState>()(
       locationLoading: false,
       isInitialized: false,
       addressMode: "context",
-      displayAddress: "Detecting location...",
+      displayAddress: "",
       manualFields: {
         barangay: "",
         street: "",
@@ -163,6 +169,9 @@ export const useLocationStore = create<LocationState>()(
         municipality: "",
         province: "",
       },
+      mapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+      mapsApiReady: false,
+      mapsApiError: null,
 
       // Actions
       setLocation: (status: LocationStatus, newLocation?: Location | null) => {
@@ -200,6 +209,10 @@ export const useLocationStore = create<LocationState>()(
 
       setManualFields: (fields: ManualFields) => {
         set({ manualFields: fields });
+      },
+
+      setMapsApiReady: (ready: boolean, error: string | null = null) => {
+        set({ mapsApiReady: ready, mapsApiError: error });
       },
 
       requestLocation: async (force: boolean = false) => {
@@ -261,39 +274,33 @@ export const useLocationStore = create<LocationState>()(
             const { latitude, longitude, accuracy } = position.coords;
             const newLocation: Location = { latitude, longitude, accuracy };
 
-            // Check cache first
+            set({
+              location: newLocation,
+              locationStatus: "allowed",
+              locationLoading: false, // Location acquired, maps can work
+            });
+            localStorage.setItem("userLocation", JSON.stringify(newLocation));
+            localStorage.setItem("locationPermission", "allowed");
+
             const cacheKey = `address_${latitude}_${longitude}`;
             const cached = localStorage.getItem(cacheKey);
 
             if (cached) {
               try {
                 const { address, province } = JSON.parse(cached);
-                if (get().addressMode === "manual") {
+                if (get().addressMode !== "manual") {
                   set({
-                    location: newLocation,
-                    locationStatus: "allowed",
-                    locationLoading: false,
-                  });
-                } else {
-                  set({
-                    location: newLocation,
-                    locationStatus: "allowed",
                     userAddress: address,
                     userProvince: province,
-                    locationLoading: false,
                   });
                 }
-                localStorage.setItem(
-                  "userLocation",
-                  JSON.stringify(newLocation),
-                );
-                localStorage.setItem("locationPermission", "allowed");
                 return;
               } catch {
                 // Continue to fetch if cache is invalid
               }
             }
 
+            // Fetch address in background
             try {
               // Use BigDataCloud's free reverse geocoding API (supports CORS)
               const data = await fetchWithRetry(
@@ -303,52 +310,25 @@ export const useLocationStore = create<LocationState>()(
               const normalized = normalizeLocationData(data);
 
               if (normalized) {
-                if (get().addressMode === "manual") {
+                if (get().addressMode !== "manual") {
                   set({
-                    location: newLocation,
-                    locationStatus: "allowed",
-                    locationLoading: false,
-                  });
-                } else {
-                  set({
-                    location: newLocation,
-                    locationStatus: "allowed",
                     userAddress: normalized.address,
                     userProvince: normalized.province,
-                    locationLoading: false,
                   });
                 }
-
                 // Cache the result
                 localStorage.setItem(cacheKey, JSON.stringify(normalized));
-                localStorage.setItem(
-                  "userLocation",
-                  JSON.stringify(newLocation),
-                );
-                localStorage.setItem("locationPermission", "allowed");
-              } else {
+              } else if (get().addressMode !== "manual") {
                 set({
-                  location: newLocation,
-                  locationStatus: "allowed",
                   userAddress: "Could not determine city",
                   userProvince: "",
-                  locationLoading: false,
                 });
               }
             } catch (error) {
-              if (get().addressMode === "manual") {
+              if (get().addressMode !== "manual") {
                 set({
-                  location: newLocation,
-                  locationStatus: "allowed",
-                  locationLoading: false,
-                });
-              } else {
-                set({
-                  location: newLocation,
-                  locationStatus: "allowed",
-                  userAddress: "Could not determine city",
+                  userAddress: "Failed to resolve address",
                   userProvince: "",
-                  locationLoading: false,
                 });
               }
             }
@@ -446,8 +426,13 @@ export const useLocationStore = create<LocationState>()(
         }
 
         set({ isInitialized: true });
-        // Do not automatically request geolocation on initial app load.
-        // Components/pages (e.g., headers) or post-login effect will explicitly call requestLocation().
+        
+
+        if (!storedLocation || storedPermission !== "allowed") {
+          get().requestLocation().catch(() => {
+            // Silently handle errors - don't show alerts on auto-request
+          });
+        }
       },
     }),
     {

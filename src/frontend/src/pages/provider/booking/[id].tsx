@@ -414,8 +414,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
   >("idle");
   const [, setGeocodeSource] = useState<string>("");
 
-  const mapsApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
   const [mapsReady, setMapsReady] = useState(false);
   useEffect(() => {
     if ((window as any).google?.maps) {
@@ -567,8 +565,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
       });
     }
     if (addrCandidates.length === 0) return;
-    const apiKeyMissing = mapsApiKey === "REPLACE_WITH_KEY";
-    if (apiKeyMissing) return; // can't geocode without real key
 
     // First attempt cache lookups
     for (const c of addrCandidates) {
@@ -626,7 +622,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     mapsReady,
     bookingLocation,
     specificBooking?.serviceDetails?.location,
-    mapsApiKey,
   ]);
 
   // Determine loading state
@@ -832,7 +827,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
               displayAddress={displayAddress}
               preciseAddress={preciseAddress}
               geocodedAddress={geocodedAddress}
-              mapsApiKey={mapsApiKey}
               showStreetView={showStreetView}
               setShowStreetView={setShowStreetView}
             />

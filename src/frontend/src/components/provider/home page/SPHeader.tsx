@@ -8,7 +8,6 @@ import { useLocationStore } from "../../../store/locationStore";
 import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
-import { APIProvider } from "@vis.gl/react-google-maps";
 
 // --- Props ---
 export interface HeaderProps {
@@ -26,8 +25,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   useLocationStore();
   const [profile, setProfile] = useState<any>(null);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
-  const mapsApiKey =
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "REPLACE_WITH_KEY";
   const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
   const miniMapRef = useRef<MapFunctionsHandle | null>(null);
 
@@ -139,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
 
   // --- Render: Header layout ---
   return (
-    <APIProvider apiKey={mapsApiKey}>
+    <>
       <header
         ref={headerRef}
         className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 px-4 shadow-lg backdrop-blur ${className}`}
@@ -248,7 +245,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           </div>
         </div>
       )}
-    </APIProvider>
+    </>
   );
 };
 

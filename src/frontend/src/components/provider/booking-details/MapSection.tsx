@@ -14,7 +14,6 @@ interface Props {
   displayAddress?: string;
   preciseAddress?: string;
   geocodedAddress?: string;
-  mapsApiKey: string;
   showStreetView: boolean;
   setShowStreetView: (v: boolean) => void;
 }
@@ -29,7 +28,6 @@ const MapSection: React.FC<Props> = ({
   displayAddress,
   preciseAddress,
   geocodedAddress,
-  mapsApiKey,
   showStreetView,
   setShowStreetView,
 }) => {
@@ -59,28 +57,9 @@ const MapSection: React.FC<Props> = ({
       </p>
       {!mapsReady && (
         <div className="relative mb-3 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-          {(() => {
-            const coord =
-              resolvedCoords || (hasExplicitCoords ? clientLocation : null);
-            const staticKey =
-              mapsApiKey === "REPLACE_WITH_KEY" ? null : mapsApiKey;
-            const staticUrl =
-              coord && staticKey
-                ? `https://maps.googleapis.com/maps/api/staticmap?center=${coord.lat},${coord.lng}&zoom=15&size=640x300&maptype=roadmap&markers=color:red%7C${coord.lat},${coord.lng}&key=${staticKey}`
-                : null;
-            return staticUrl ? (
-              <img
-                src={staticUrl}
-                alt="Map preview"
-                className="h-64 w-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <div className="flex h-64 w-full items-center justify-center text-xs text-gray-400">
-                Loading map script...
-              </div>
-            );
-          })()}
+          <div className="flex h-64 w-full items-center justify-center text-xs text-gray-400">
+            Loading map script...
+          </div>
           <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent px-3 py-2 text-[11px] font-medium leading-tight text-white">
             {bookingLocation !== "Location not specified"
               ? bookingLocation
@@ -156,12 +135,6 @@ const MapSection: React.FC<Props> = ({
           {!hasExplicitCoords && geocodeStatus === "failed" && (
             <p className="mt-2 text-xs text-red-500">
               Could not resolve the address to coordinates.
-            </p>
-          )}
-          {mapsApiKey === "REPLACE_WITH_KEY" && (
-            <p className="mt-2 text-xs text-orange-600">
-              Google Maps API key missing. Set VITE_GOOGLE_MAPS_API_KEY for full
-              accuracy.
             </p>
           )}
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
