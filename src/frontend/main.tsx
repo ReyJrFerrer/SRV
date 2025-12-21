@@ -16,7 +16,10 @@ import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
-import { initializeCacheManagement, forceClearAndReload } from "./src/utils/cacheManager";
+import {
+  initializeCacheManagement,
+  forceClearAndReload,
+} from "./src/utils/cacheManager";
 import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -88,11 +91,7 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
   }
 
   return (
-    <APIProvider 
-      apiKey={mapsApiKey} 
-      libraries={["places"]}
-      version="weekly"
-    >
+    <APIProvider apiKey={mapsApiKey} libraries={["places"]} version="weekly">
       {children}
     </APIProvider>
   );

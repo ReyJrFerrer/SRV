@@ -3,8 +3,8 @@
  * Catches and handles errors in map components gracefully
  */
 
-import React, { Component, ReactNode } from 'react';
-import { forceClearAndReload } from '../../utils/cacheManager';
+import React, { Component, ReactNode } from "react";
+import { forceClearAndReload } from "../../utils/cacheManager";
 
 interface Props {
   children: ReactNode;
@@ -32,22 +32,22 @@ class MapErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[MapErrorBoundary] Map component error:', error, errorInfo);
-    
+    console.error("[MapErrorBoundary] Map component error:", error, errorInfo);
+
     this.setState({
       error,
       errorInfo,
     });
 
     // Check if it's a Google Maps API error
-    const isGoogleMapsError = 
-      error.message?.includes('google') ||
-      error.message?.includes('maps') ||
-      error.message?.includes('Geocoder') ||
-      error.message?.includes('DirectionsService');
+    const isGoogleMapsError =
+      error.message?.includes("google") ||
+      error.message?.includes("maps") ||
+      error.message?.includes("Geocoder") ||
+      error.message?.includes("DirectionsService");
 
     if (isGoogleMapsError) {
-      console.error('[MapErrorBoundary] Detected Google Maps API error');
+      console.error("[MapErrorBoundary] Detected Google Maps API error");
     }
   }
 
@@ -89,19 +89,21 @@ class MapErrorBoundary extends Component<Props, State> {
                 />
               </svg>
             </div>
-            
+
             <h2 className="mb-2 text-xl font-bold text-gray-900">
               Map Loading Error
             </h2>
-            
+
             <p className="mb-4 text-sm text-gray-600">
-              {this.state.error?.message || 'Something went wrong with the map.'}
+              {this.state.error?.message ||
+                "Something went wrong with the map."}
             </p>
-            
+
             <p className="mb-6 text-xs text-gray-500">
-              This may be due to network issues or cached data. Try refreshing or clearing your cache.
+              This may be due to network issues or cached data. Try refreshing
+              or clearing your cache.
             </p>
-            
+
             <div className="flex flex-col gap-2">
               <button
                 onClick={this.handleRetry}
@@ -109,7 +111,7 @@ class MapErrorBoundary extends Component<Props, State> {
               >
                 Try Again
               </button>
-              
+
               <button
                 onClick={this.handleClearCache}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50"

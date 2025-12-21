@@ -64,9 +64,13 @@ const ClientTrackingPage: React.FC = () => {
   // Resolve destination coordinates from booking location
   useEffect(() => {
     if (!booking) return;
-    
+
     // Guard: Wait for map API to be fully loaded
-    if (!isMapApiLoaded || typeof window === "undefined" || !(window as any).google?.maps?.Geocoder) {
+    if (
+      !isMapApiLoaded ||
+      typeof window === "undefined" ||
+      !(window as any).google?.maps?.Geocoder
+    ) {
       return;
     }
 
