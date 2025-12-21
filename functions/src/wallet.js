@@ -626,7 +626,6 @@ exports.transferFunds = functions.https.onCall(async (data, context) => {
         fromBalance = fromWalletDoc.data().balance || 0;
       }
 
-      // Mirror Motoko safeSub logic
       const newFromBalance = safeSub(fromBalance, amount);
       if (newFromBalance === null) {
         throw new functions.https.HttpsError(
@@ -705,7 +704,6 @@ exports.getTransactionHistory = functions.https.onCall(async (data, context) => 
   }
 
   try {
-    // Mirror Motoko logic: get all transactions where user is either sender or receiver
     const transactionsQuery1 = db.collection("transactions").where("from", "==", userId);
     const transactionsQuery2 = db.collection("transactions").where("to", "==", userId);
 

@@ -305,7 +305,7 @@ async function createNotification(
 }
 
 /**
- * Cancel conflicting bookings when a booking is accepted
+ * Cancel conflicting bookings when a booking is requested
  * @param {string} acceptedBookingId - The booking ID that was accepted
  * @param {string} providerId - Provider ID
  * @param {string} requestedDate - Requested date/time ISO string (start time)
@@ -1481,11 +1481,12 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
       });
     });
     // Release held commission for cash jobs (if booking was accepted)
-    if (booking.paymentMethod === "CashOnHand" && booking.status === "Accepted") {
+    if (booking.paymentMethod === "CashOnHand" &&
+      (booking.status === "Accepted" || booking.status === "InProgress")) {
       try {
         await releaseHoldInternal(booking.providerId, bookingId);
       } catch (releaseError) {
-        // caputre holding
+        // caputre holding error
       }
     }
 
@@ -2469,6 +2470,15 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
       } catch (error) {
         // Don't fail the cancellation if reputation update fails, just log it
       }
+      if (booking.paymentMethod === "CashOnHand" &&
+      (booking.status === "Accepted" || booking.status === "InProgress")) {
+        try {
+          await releaseHoldInternal(booking.providerId, booking.id);
+        } catch (releaseError) {
+        // caputre holding error
+        }
+      }
+
 
       // Update booking status to Cancelled
       batch.update(doc.ref, {
