@@ -431,45 +431,45 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   return (
     <div className={`relative ${className}`}>
       <Map
-          style={containerStyle}
-          defaultZoom={15}
-          defaultCenter={providerLocation}
-          onIdle={(ev) => handleMapLoad(ev.map)}
-          onTilesLoaded={(ev) => handleMapLoad(ev.map)}
-          gestureHandling="greedy"
-          disableDefaultUI={true}
-          zoomControl={false}
-          mapId={"6922634ff75ae05ac38cc473"}
-        >
-          {/* Provider Marker */}
-          <AdvancedMarker position={providerLocation}>
-            <div
-              className="relative flex h-12 w-12 items-center justify-center"
-              style={{ transform: `rotate(${heading ?? 0}deg)` }}
-            >
-              {/* Outer pulse ring */}
-              <div className="absolute inset-0 animate-ping rounded-full bg-blue-400 opacity-25" />
-              {/* Inner circle */}
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg ring-4 ring-white">
-                <TruckIcon className="h-5 w-5 text-white" />
+        style={containerStyle}
+        defaultZoom={15}
+        defaultCenter={providerLocation}
+        onIdle={(ev) => handleMapLoad(ev.map)}
+        onTilesLoaded={(ev) => handleMapLoad(ev.map)}
+        gestureHandling="greedy"
+        disableDefaultUI={true}
+        zoomControl={false}
+        mapId={"6922634ff75ae05ac38cc473"}
+      >
+        {/* Provider Marker */}
+        <AdvancedMarker position={providerLocation}>
+          <div
+            className="relative flex h-12 w-12 items-center justify-center"
+            style={{ transform: `rotate(${heading ?? 0}deg)` }}
+          >
+            {/* Outer pulse ring */}
+            <div className="absolute inset-0 animate-ping rounded-full bg-blue-400 opacity-25" />
+            {/* Inner circle */}
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg ring-4 ring-white">
+              <TruckIcon className="h-5 w-5 text-white" />
+            </div>
+          </div>
+        </AdvancedMarker>
+
+        {/* Client Destination Marker */}
+        {clientLocation && (
+          <AdvancedMarker position={clientLocation}>
+            <div className="flex flex-col items-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-700 shadow-lg ring-4 ring-white">
+                <MapPinIcon className="h-5 w-5 text-white" />
+              </div>
+              <div className="mt-1 max-w-[150px] truncate rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-gray-800 shadow-md backdrop-blur">
+                {destinationName || "Destination"}
               </div>
             </div>
           </AdvancedMarker>
-
-          {/* Client Destination Marker */}
-          {clientLocation && (
-            <AdvancedMarker position={clientLocation}>
-              <div className="flex flex-col items-center">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-700 shadow-lg ring-4 ring-white">
-                  <MapPinIcon className="h-5 w-5 text-white" />
-                </div>
-                <div className="mt-1 max-w-[150px] truncate rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-gray-800 shadow-md backdrop-blur">
-                  {destinationName || "Destination"}
-                </div>
-              </div>
-            </AdvancedMarker>
-          )}
-        </Map>
+        )}
+      </Map>
     </div>
   );
 };
