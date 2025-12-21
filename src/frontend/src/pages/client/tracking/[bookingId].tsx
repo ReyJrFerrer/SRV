@@ -15,6 +15,7 @@ import { useAuth } from "../../../context/AuthContext";
 import ProviderTrackingMap from "../../../components/client/tracking/ProviderTrackingMap";
 import TrackingInfoCard from "../../../components/client/tracking/TrackingInfoCard";
 import StreetViewModal from "../../../components/common/StreetViewModal";
+import MapErrorBoundary from "../../../components/common/MapErrorBoundary";
 
 const ClientTrackingPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -62,7 +63,12 @@ const ClientTrackingPage: React.FC = () => {
 
   // Resolve destination coordinates from booking location
   useEffect(() => {
-    if (!booking || !isMapApiLoaded) return;
+    if (!booking) return;
+    
+    // Guard: Wait for map API to be fully loaded
+    if (!isMapApiLoaded || typeof window === "undefined" || !(window as any).google?.maps?.Geocoder) {
+      return;
+    }
 
     // Check for explicit coordinates
     const explicitLat = (booking as any)?.latitude;
@@ -78,16 +84,22 @@ const ClientTrackingPage: React.FC = () => {
     // Geocode the location string
     const location =
       (booking as any)?.formattedLocation || (booking as any)?.location;
-    if (!location || !(window as any).google?.maps) return;
+    if (!location) return;
 
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: location }, (results, status) => {
-      if (status === "OK" && results && results[0]) {
-        const loc = results[0].geometry.location;
-        const coords = { lat: loc.lat(), lng: loc.lng() };
-        setDestinationCoords(coords);
-      }
-    });
+    try {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ address: location }, (results, status) => {
+        if (status === "OK" && results && results[0]) {
+          const loc = results[0].geometry.location;
+          const coords = { lat: loc.lat(), lng: loc.lng() };
+          setDestinationCoords(coords);
+        } else {
+          console.warn("[ClientTracking] Geocoding failed:", status);
+        }
+      });
+    } catch (error) {
+      console.error("[ClientTracking] Geocoding error:", error);
+    }
   }, [booking, isMapApiLoaded, destinationCoords]);
 
   // Redirect if booking not valid for tracking
@@ -180,31 +192,33 @@ const ClientTrackingPage: React.FC = () => {
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-gray-100">
       {/* Map fills entire screen */}
-      <ProviderTrackingMap
-        providerLocation={
-          providerLocation
-            ? { lat: providerLocation.lat, lng: providerLocation.lng }
-            : null
-        }
-        clientLocation={destinationCoords}
-        heading={providerLocation?.heading}
-        onMapReady={(map) => {
-          setIsMapApiLoaded(true);
-          mapRef.current = map;
-        }}
-        autoFollow={followMe}
-        onAutoFollowChange={setFollowMe}
-        className="h-full w-full"
-        destinationName={
-          (booking as any)?.formattedLocation || (booking as any)?.location
-        }
-        onRouteCalculated={(eta, distance, distMeters, totalDistMeters) => {
-          setEtaText(eta);
-          setDistanceText(distance);
-          setDistanceMeters(distMeters);
-          setTotalDistanceMeters(totalDistMeters);
-        }}
-      />
+      <MapErrorBoundary>
+        <ProviderTrackingMap
+          providerLocation={
+            providerLocation
+              ? { lat: providerLocation.lat, lng: providerLocation.lng }
+              : null
+          }
+          clientLocation={destinationCoords}
+          heading={providerLocation?.heading}
+          onMapReady={(map) => {
+            setIsMapApiLoaded(true);
+            mapRef.current = map;
+          }}
+          autoFollow={followMe}
+          onAutoFollowChange={setFollowMe}
+          className="h-full w-full"
+          destinationName={
+            (booking as any)?.formattedLocation || (booking as any)?.location
+          }
+          onRouteCalculated={(eta, distance, distMeters, totalDistMeters) => {
+            setEtaText(eta);
+            setDistanceText(distance);
+            setDistanceMeters(distMeters);
+            setTotalDistanceMeters(totalDistMeters);
+          }}
+        />
+      </MapErrorBoundary>
 
       {/* Back button overlay */}
       <div className="absolute left-4 top-4 z-20">

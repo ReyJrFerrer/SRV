@@ -113,14 +113,19 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
 
   // Calculate route between provider and client
   useEffect(() => {
-    if (!providerLocation || !clientLocation || !(window as any).google?.maps)
+    // Guard: ensure Google Maps API is fully loaded
+    if (!providerLocation || !clientLocation) return;
+    if (typeof window === "undefined" || !(window as any).google?.maps?.DirectionsService) {
+      console.warn("[ProviderTrackingMap] DirectionsService not ready yet");
       return;
+    }
 
     const now = Date.now();
     // Avoid recalculating route too frequently (every 30 seconds)
     if (now - lastRouteTimeRef.current < 30000 && directionsResult) return;
 
-    const directionsService = new google.maps.DirectionsService();
+    try {
+      const directionsService = new google.maps.DirectionsService();
     directionsService.route(
       {
         origin: providerLocation,
@@ -148,15 +153,27 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
               totalDistanceMeters,
             );
           }
+        } else {
+          console.warn("[ProviderTrackingMap] Directions request failed:", status);
         }
       },
     );
-  }, [providerLocation, clientLocation, onRouteCalculated]);
+    } catch (error) {
+      console.error("[ProviderTrackingMap] Error calculating route:", error);
+    }
+  }, [providerLocation, clientLocation, directionsResult, onRouteCalculated]);
 
   // Draw route polyline with alternative routes
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !directionsResult || !(window as any).google?.maps) return;
+    // Guard: ensure everything is ready before drawing
+    if (!map || !directionsResult) return;
+    if (typeof window === "undefined" || !(window as any).google?.maps?.Polyline) {
+      console.warn("[ProviderTrackingMap] Polyline API not ready yet");
+      return;
+    }
+    
+    try {
 
     // Helper to build a path from a route
     const buildPathFromRoute = (route: any): google.maps.LatLngLiteral[] => {
@@ -336,6 +353,18 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
 
       altRoutePolylinesRef.current.push(pl);
       altRouteListenersRef.current.push(clickLn, overLn, outLn);
+    }
+    } catch (error) {
+      console.error("[ProviderTrackingMap] Error rendering polylines:", error);
+      // Clean up on error
+      if (routePolylineRef.current) {
+        try { routePolylineRef.current.setMap(null); } catch {}
+        routePolylineRef.current = null;
+      }
+      for (const pl of altRoutePolylinesRef.current) {
+        try { pl.setMap(null); } catch {}
+      }
+      altRoutePolylinesRef.current = [];
     }
   }, [directionsResult, selectedRouteIndex]);
 

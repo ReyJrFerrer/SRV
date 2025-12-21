@@ -16,11 +16,13 @@ import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
+import { initializeCacheManagement, forceClearAndReload } from "./src/utils/cacheManager";
 import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { mapsApiKey, setMapsApiReady } = useLocationStore();
+  const [apiLoadError, setApiLoadError] = React.useState<string | null>(null);
 
   // Validate API key on mount
   React.useEffect(() => {
@@ -33,6 +35,20 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
       setMapsApiReady(true, null);
     }
   }, [mapsApiKey, setMapsApiReady]);
+
+  // Listen for Google Maps API load errors (e.g., AuthFailure)
+  React.useEffect(() => {
+    const handleGoogleError = (error: ErrorEvent) => {
+      if (error.message && error.message.includes("Google Maps")) {
+        console.error("[MapsProvider] Google Maps API Error:", error);
+        setApiLoadError(error.message);
+        setMapsApiReady(false, "API authentication failed");
+      }
+    };
+
+    window.addEventListener("error", handleGoogleError);
+    return () => window.removeEventListener("error", handleGoogleError);
+  }, [setMapsApiReady]);
 
   if (!mapsApiKey || mapsApiKey === "") {
     return (
@@ -49,8 +65,34 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
     );
   }
 
+  // Show error with reload option if API fails to load
+  if (apiLoadError) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="rounded-lg bg-red-50 p-6 text-center shadow-md">
+          <h2 className="mb-2 text-xl font-bold text-red-600">
+            Maps Loading Error
+          </h2>
+          <p className="mb-4 text-gray-700">
+            Failed to load Google Maps. This may be due to cached credentials.
+          </p>
+          <button
+            onClick={() => forceClearAndReload()}
+            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            Clear Cache & Reload
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <APIProvider apiKey={mapsApiKey} libraries={["places"]}>
+    <APIProvider 
+      apiKey={mapsApiKey} 
+      libraries={["places"]}
+      version="weekly"
+    >
       {children}
     </APIProvider>
   );
@@ -174,6 +216,9 @@ const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 
 // Initialize version checker for automatic cache clearing on new deployments
 initVersionChecker();
+
+// Initialize cache management to handle Maps API caching issues
+initializeCacheManagement();
 
 // Initialize OneSignal when SDK is loaded
 window.OneSignalDeferred = window.OneSignalDeferred || [];
