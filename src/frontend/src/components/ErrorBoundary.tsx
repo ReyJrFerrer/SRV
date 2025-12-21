@@ -84,20 +84,20 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             
             */}
             {
-            // import.meta.env.DEV && 
-            
-            this.state.error &&
-             (
-              <details className="mb-4 rounded-md bg-gray-100 p-4">
-                <summary className="cursor-pointer font-semibold text-gray-700">
-                  Error Details (Development Only)
-                </summary>
-                <pre className="mt-2 overflow-auto text-xs text-red-600">
-                  {this.state.error.toString()}
-                  {this.state.errorInfo?.componentStack}
-                </pre>
-              </details>
-            )}
+              // import.meta.env.DEV &&
+
+              this.state.error && (
+                <details className="mb-4 rounded-md bg-gray-100 p-4">
+                  <summary className="cursor-pointer font-semibold text-gray-700">
+                    Error Details (Development Only)
+                  </summary>
+                  <pre className="mt-2 overflow-auto text-xs text-red-600">
+                    {this.state.error.toString()}
+                    {this.state.errorInfo?.componentStack}
+                  </pre>
+                </details>
+              )
+            }
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
