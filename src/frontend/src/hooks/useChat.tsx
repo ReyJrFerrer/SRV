@@ -554,6 +554,9 @@ export const useChat = () => {
       try {
         await chatCanisterService.markMessagesAsRead(conversationId);
         // Real-time listener will automatically update unread counts
+        try {
+          dispatchChatsRead();
+        } catch (e) {}
       } catch (err) {}
     },
     [isAuthenticated, identity],

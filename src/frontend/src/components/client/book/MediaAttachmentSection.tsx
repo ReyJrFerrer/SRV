@@ -45,7 +45,7 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
         <h2 className="flex items-center gap-2 text-base font-bold text-gray-900">
           <span className="h-4 w-1 rounded bg-blue-600" aria-hidden="true" />
           <PhotoIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
-          <span>Problem Photos</span>
+          <span>Attach Proof</span>
           {required && (
             <span className="ml-1 text-red-600" aria-hidden="true">
               *

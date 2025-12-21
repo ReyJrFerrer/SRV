@@ -31,13 +31,13 @@ const LockableSection: React.FC<{
     </div>
   );
 };
-import PaymentSection from "../../../components/client/booking/PaymentSection";
-import PackagesSection from "../../../components/client/booking/PackagesSection";
-import ScheduleSection from "../../../components/client/booking/ScheduleSection";
-import ServiceLocationSection from "../../../components/client/booking/ServiceLocationSection";
-import NotesSection from "../../../components/client/booking/NotesSection";
-import ProblemMediaSection from "../../../components/client/booking/ProblemMediaSection";
-import StickyConfirmBar from "../../../components/client/booking/StickyConfirmBar";
+import PaymentSection from "../../../components/client/book/PaymentSection";
+import PackagesSection from "../../../components/client/book/PackagesSection";
+import ScheduleSection from "../../../components/client/book/ScheduleSection";
+import ServiceLocationSection from "../../../components/client/book/ServiceLocationSection";
+import NotesSection from "../../../components/client/book/NotesSection";
+import ProblemMediaSection from "../../../components/client/book/MediaAttachmentSection";
+import StickyConfirmBar from "../../../components/client/book/StickyConfirmBar";
 import { uploadProblemProofMedia } from "../../../services/mediaService";
 
 const BookingPage: React.FC = () => {
@@ -1848,20 +1848,23 @@ const BookingPage: React.FC = () => {
                     </LockableSection>
                   </div>
 
-                  {/* Desktop: Problem Photos locked until Payment complete */}
-                  <div className="hidden md:block" ref={problemMediaSectionRef}>
-                    <LockableSection
-                      locked={!paymentComplete}
-                      lockReason="complete Payment first"
-                    >
-                      <ProblemMediaSection
-                        files={problemMediaFiles}
-                        onFilesChange={setProblemMediaFiles}
-                        required={requiresProof}
-                        highlight={highlightInput === "problemMedia"}
-                      />
-                    </LockableSection>
-                  </div>
+                  {/* Desktop: Problem Photos only visible once Packages, Schedule, Location, and Payment are complete */}
+                  {packagesComplete &&
+                    scheduleComplete &&
+                    locationComplete &&
+                    paymentComplete && (
+                      <div
+                        className="hidden md:block"
+                        ref={problemMediaSectionRef}
+                      >
+                        <ProblemMediaSection
+                          files={problemMediaFiles}
+                          onFilesChange={setProblemMediaFiles}
+                          required={requiresProof}
+                          highlight={highlightInput === "problemMedia"}
+                        />
+                      </div>
+                    )}
 
                   {/* Desktop: Notes locked until all prior sections complete */}
                   <div className="hidden md:block">
@@ -2001,8 +2004,8 @@ const BookingPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Mobile: Show Problem Photos only when Payment complete and required */}
-                  {requiresProof && currentMobileStep >= 4 && (
+                  {/* Mobile: Show Problem Photos when Payment is complete (optional for non-repair categories) */}
+                  {currentMobileStep >= 4 && (
                     <div
                       className={`mb-6 md:hidden ${popIndex === 4 ? "animate-pop" : ""}`}
                       ref={problemMediaSectionRef}

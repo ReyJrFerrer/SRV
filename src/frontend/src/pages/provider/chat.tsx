@@ -6,7 +6,6 @@ import { useChat } from "../../hooks/useChat";
 // Components
 import BottomNavigation from "../../components/provider/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
-import { dispatchChatsRead } from "../../utils/interactionEvents";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 
 const ProviderChatPage: React.FC = () => {
@@ -24,6 +23,44 @@ const ProviderChatPage: React.FC = () => {
     sendMessage,
     sendingMessage,
   } = useChat();
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const ensureAudioReady = React.useCallback(() => {
+    try {
+      let ctx = audioCtxRef.current;
+      if (!ctx) {
+        ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioCtxRef.current = ctx as AudioContext;
+      }
+      ctx.resume?.();
+    } catch {}
+  }, []);
+  const [soundEnabled] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem("chatSoundEnabled");
+      return v !== "false";
+    } catch {
+      return true;
+    }
+  });
+  const playMessageSound = React.useCallback(() => {
+    if (!soundEnabled) return;
+    try {
+      ensureAudioReady();
+      const ctx = audioCtxRef.current!;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } catch {}
+  }, [soundEnabled, ensureAudioReady]);
   const [isDesktop, setIsDesktop] = useState<boolean>(
     window.innerWidth >= 1024,
   );
@@ -36,6 +73,10 @@ const ProviderChatPage: React.FC = () => {
     useState<string>("");
   const [messageText, setMessageText] = useState<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const lastMarkedRef = useRef<{ id: string; t: number } | null>(null);
+  const prevUnreadRef = useRef<number>(0);
+  const prevUnreadMapRef = useRef<Map<string, number>>(new Map());
+  const defaultTitleRef = useRef<string>("Messages | SRV");
 
   useEffect(() => {
     const onConv = () => setTick((t) => t + 1);
@@ -46,10 +87,6 @@ const ProviderChatPage: React.FC = () => {
       window.removeEventListener("conversations-updated", onConv);
       window.removeEventListener("messages-updated", onMsg);
     };
-  }, []);
-
-  useEffect(() => {
-    document.title = "Messages | SRV";
   }, []);
 
   useEffect(() => {
@@ -83,15 +120,13 @@ const ProviderChatPage: React.FC = () => {
     const imageToUse =
       top.otherUserImageUrl && top.otherUserImageUrl !== ""
         ? top.otherUserImageUrl
-        : "/default-client.svg";
+        : "";
 
     setSelectedConversationId(conversationId);
     setSelectedOtherUserName(otherUserName);
     setSelectedOtherUserImageUrl(imageToUse);
     loadConversation(conversationId);
-    markAsRead(conversationId)
-      .then(() => dispatchChatsRead())
-      .catch(() => {});
+    markAsRead(conversationId).catch(() => {});
   }, [
     isDesktop,
     conversations,
@@ -100,12 +135,27 @@ const ProviderChatPage: React.FC = () => {
     markAsRead,
   ]);
 
-  // Scroll to bottom on message updates
+  // Scroll to bottom on message updates (robust: after layout and assets)
   useEffect(() => {
     const el = messagesContainerRef.current;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
-    }
+    if (!el) return;
+    const scrollBottom = () => {
+      try {
+        el.scrollTop = el.scrollHeight;
+      } catch {}
+    };
+    // Immediate
+    scrollBottom();
+    // Next frame(s) for layout updates
+    const raf1 = requestAnimationFrame(scrollBottom);
+    const raf2 = requestAnimationFrame(scrollBottom);
+    // Small delay for images/fonts
+    const timeout = setTimeout(scrollBottom, 250);
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(timeout);
+    };
   }, [messages, selectedConversationId]);
 
   const handleConversationClick = async (
@@ -115,9 +165,8 @@ const ProviderChatPage: React.FC = () => {
   ) => {
     try {
       await markAsRead(conversationId);
-      // Trigger refresh of unread chat badges globally
-      dispatchChatsRead();
-      const imageToUse = otherUserImageUrl || "/default-client.svg";
+      const imageToUse =
+        otherUserImageUrl && otherUserImageUrl !== "" ? otherUserImageUrl : "";
       if (isDesktop) {
         setSelectedConversationId(conversationId);
         setSelectedOtherUserName(otherUserName);
@@ -135,23 +184,142 @@ const ProviderChatPage: React.FC = () => {
     } catch (error) {}
   };
 
+  // Compute unread total for current user
+  const unreadTotal = React.useMemo(() => {
+    const myId = identity?.getPrincipal().toString();
+    if (!myId) return 0;
+    try {
+      return conversations.reduce((sum, s) => {
+        const c = s.conversation;
+        if (!c || !c.unreadCount) return sum;
+        const mine = c.unreadCount[myId] || 0;
+        return sum + mine;
+      }, 0);
+    } catch {
+      return 0;
+    }
+  }, [conversations, identity]);
+
+  // Play sound and update title on new unread
+  useEffect(() => {
+    if (!isAuthenticated || !isDesktop) return;
+    const unread = unreadTotal;
+    if (unread > prevUnreadRef.current) {
+      playMessageSound();
+    }
+    prevUnreadRef.current = unread;
+  }, [unreadTotal, isAuthenticated, isDesktop, playMessageSound]);
+
+  // Update tab title with sender name on unread increments
+  useEffect(() => {
+    if (!isAuthenticated || !isDesktop) return;
+    let updated = false;
+    const myId = identity?.getPrincipal().toString();
+    conversations.forEach((summary) => {
+      const c = summary.conversation;
+      if (!c || !c.unreadCount || !myId) return;
+      const unreadForUser = c.unreadCount[myId] || 0;
+      const prev = prevUnreadMapRef.current.get(c.id) || 0;
+      if (!updated && unreadForUser > prev) {
+        const sender = summary.otherUserName || summary.otherUserId.slice(0, 8);
+        try {
+          document.title = `(${unreadTotal}) ${sender} sent you a message`;
+        } catch {}
+        updated = true;
+      }
+      prevUnreadMapRef.current.set(c.id, unreadForUser);
+    });
+    if (!updated && unreadTotal === 0) {
+      try {
+        document.title = defaultTitleRef.current;
+      } catch {}
+    }
+  }, [conversations, identity, isAuthenticated, isDesktop, unreadTotal]);
+
+  // Prime unread ref on load
+  useEffect(() => {
+    prevUnreadRef.current = unreadTotal;
+  }, [unreadTotal]);
+
+  // Restore title on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        document.title = defaultTitleRef.current;
+      } catch {}
+    };
+  }, []);
+
+  // Mark active conversation as read on interaction (debounced)
+  const handlePageInteract = React.useCallback(() => {
+    // Resume audio context via user gesture so sounds can play
+    try {
+      ensureAudioReady();
+    } catch {}
+    if (!selectedConversationId) return;
+    const now = Date.now();
+    const last = lastMarkedRef.current;
+    if (!last || last.id !== selectedConversationId || now - last.t > 1000) {
+      try {
+        void markAsRead(selectedConversationId);
+      } catch {}
+      lastMarkedRef.current = { id: selectedConversationId, t: now };
+    }
+  }, [selectedConversationId, markAsRead, ensureAudioReady]);
+
+  // Keep title and unread trackers in sync when chats are marked as read elsewhere
+  useEffect(() => {
+    const onChatsRead = () => {
+      try {
+        prevUnreadMapRef.current = new Map();
+        prevUnreadRef.current = unreadTotal;
+        if (unreadTotal === 0) {
+          document.title = defaultTitleRef.current;
+        }
+      } catch {}
+    };
+    window.addEventListener("chats-read", onChatsRead);
+    return () => window.removeEventListener("chats-read", onChatsRead);
+  }, [unreadTotal]);
+
   // Helper for timestamp formatting (accepts string or Date)
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
     const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffMinutes = diffMs / (1000 * 60);
+    const diffHours = diffMinutes / 60;
     const diffDays = diffHours / 24;
 
-    if (diffHours < 1) return "Just now";
+    if (diffMinutes < 1) return "Just now";
+    if (diffMinutes < 60) return `${Math.floor(diffMinutes)}m ago`;
     if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
     if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
     return date.toLocaleDateString();
   };
 
+  // Absolute date-time formatting for message bubble labels
+  const formatDateTime = (dateStr?: string | Date) => {
+    if (!dateStr) return "";
+    const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+    try {
+      return date.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    } catch {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      const hh = String(date.getHours()).padStart(2, "0");
+      const mi = String(date.getMinutes()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-50 pb-24">
+    <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-4 py-3">
           <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
@@ -185,7 +353,7 @@ const ProviderChatPage: React.FC = () => {
             </div>
           ) : conversations.length > 0 ? (
             <section
-              className={`w-full rounded-2xl bg-white/90 shadow-lg ring-1 ring-blue-100 ${isDesktop ? "md:flex md:h-[85vh] md:overflow-hidden" : ""}`}
+              className={`w-full ${isDesktop ? "md:flex md:h-[calc(100vh-64px)] md:overflow-hidden" : ""}`}
             >
               <ul
                 className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} divide-y divide-blue-50`}
@@ -300,6 +468,8 @@ const ProviderChatPage: React.FC = () => {
                       <div
                         ref={messagesContainerRef}
                         className="flex-1 space-y-4 overflow-y-auto p-4"
+                        onMouseDown={handlePageInteract}
+                        onTouchStart={handlePageInteract}
                       >
                         {messages.length === 0 ? (
                           <div className="flex h-full items-center justify-center">
@@ -339,7 +509,7 @@ const ProviderChatPage: React.FC = () => {
                                   <p
                                     className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
                                   >
-                                    {formatTimestamp(message.createdAt)}
+                                    {formatDateTime(message.createdAt)}
                                   </p>
                                 </div>
                               </div>

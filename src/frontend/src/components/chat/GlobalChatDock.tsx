@@ -36,6 +36,7 @@ const GlobalChatDock: React.FC = () => {
     markAsRead,
     clearCurrentConversation,
     error,
+    loading,
   } = useChat();
 
   // Dock visibility & state
@@ -53,6 +54,8 @@ const GlobalChatDock: React.FC = () => {
   const defaultTitleRef = useRef<string>(document.title);
   const [sending, setSending] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const lastMarkedRef = useRef<{ id: string; t: number } | null>(null);
+  const dockJustOpenedRef = useRef<boolean>(false);
   const ensureAudioReady = useCallback(() => {
     try {
       let ctx = audioCtxRef.current;
@@ -150,6 +153,71 @@ const GlobalChatDock: React.FC = () => {
     [loadConversation, markAsRead],
   );
 
+  // Mark active conversation as read when interacting with the open dock
+  const handleDockInteract = useCallback(() => {
+    if (viewMode !== "conversation" || !activeConversation) return;
+    const id = activeConversation.conversationId;
+    const now = Date.now();
+    const last = lastMarkedRef.current;
+    if (!last || last.id !== id || now - last.t > 1000) {
+      // best-effort, no await needed
+      try {
+        void markAsRead(id);
+      } catch {}
+      lastMarkedRef.current = { id, t: now };
+    }
+  }, [viewMode, activeConversation, markAsRead]);
+
+  // Precompute safely-sorted conversations by latest message time
+  const sortedConversations = useMemo(() => {
+    const safeTime = (ts?: string) => {
+      if (!ts) return -Infinity;
+      const t = new Date(ts).getTime();
+      return Number.isFinite(t) ? t : -Infinity;
+    };
+    try {
+      return conversations
+        .filter((s) => !!s?.conversation?.id)
+        .slice()
+        .sort((a, b) => {
+          const aTime = safeTime(a.lastMessage?.[0]?.createdAt);
+          const bTime = safeTime(b.lastMessage?.[0]?.createdAt);
+          return bTime - aTime;
+        });
+    } catch {
+      return conversations || [];
+    }
+  }, [conversations]);
+
+  // Avoid blank state: auto-open the most recent conversation when dock is shown
+  const autoOpenGuardRef = useRef<number>(0);
+  useEffect(() => {
+    if (!isVisible || isMinimized) return;
+    if (viewMode !== "list") return;
+    if (activeConversation) return;
+    if (!dockJustOpenedRef.current) return;
+    const now = Date.now();
+    if (now - autoOpenGuardRef.current < 800) return;
+    const latest = sortedConversations[0];
+    if (latest) {
+      openConversation({
+        conversationId: latest.conversation.id,
+        otherUserId: latest.otherUserId,
+        otherUserName: latest.otherUserName || latest.otherUserId.slice(0, 8),
+        otherUserImageUrl: latest.otherUserImageUrl,
+      });
+      autoOpenGuardRef.current = now;
+      dockJustOpenedRef.current = false;
+    }
+  }, [
+    isVisible,
+    isMinimized,
+    viewMode,
+    activeConversation,
+    sortedConversations,
+    openConversation,
+  ]);
+
   // Detect new conversations and auto-open the latest if not minimized
   const prevConversationIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -230,6 +298,20 @@ const GlobalChatDock: React.FC = () => {
     };
   }, []);
 
+  // Minimize dock on Escape key
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (!isDesktop || shouldHide) return;
+        if (isVisible && !isMinimized) {
+          setIsMinimized(true);
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isDesktop, shouldHide, isVisible, isMinimized]);
+
   // Update tab title with sender name when a new unread appears
   useEffect(() => {
     if (!isAuthenticated || !isDesktop) return;
@@ -259,6 +341,21 @@ const GlobalChatDock: React.FC = () => {
     }
   }, [conversations, myPrincipal, isAuthenticated, isDesktop, unreadTotal]);
 
+  // Keep dock title and unread trackers in sync when other views mark chats as read
+  useEffect(() => {
+    const onChatsRead = () => {
+      try {
+        prevUnreadMapRef.current = new Map();
+        prevUnreadRef.current = unreadTotal;
+        if (unreadTotal === 0) {
+          document.title = defaultTitleRef.current;
+        }
+      } catch {}
+    };
+    window.addEventListener("chats-read", onChatsRead);
+    return () => window.removeEventListener("chats-read", onChatsRead);
+  }, [unreadTotal]);
+
   const handleSend = async () => {
     if (!activeConversation || !messageInput.trim() || sending) return;
     const content = messageInput.trim();
@@ -279,6 +376,7 @@ const GlobalChatDock: React.FC = () => {
     setViewMode("list");
     setActiveConversation(null);
     clearCurrentConversation();
+    dockJustOpenedRef.current = false;
   };
 
   // Determine unread totals and header style based on active conversation and overall unseen conversations
@@ -302,6 +400,7 @@ const GlobalChatDock: React.FC = () => {
             setIsVisible(true);
             setIsMinimized(false);
             ensureAudioReady();
+            dockJustOpenedRef.current = true;
           }}
           className={`pointer-events-auto relative flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition-colors ${unreadTotal > 0 ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-600 hover:bg-gray-500"}`}
           aria-label="Open messages"
@@ -318,7 +417,10 @@ const GlobalChatDock: React.FC = () => {
 
       {/* Popup Panel */}
       {isVisible && !isMinimized && (
-        <div className="pointer-events-auto flex h-[560px] min-h-0 w-96 flex-col overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-2xl">
+        <div
+          className="pointer-events-auto flex h-[560px] min-h-0 w-96 flex-col overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-2xl"
+          onMouseDown={handleDockInteract}
+        >
           {/* Header */}
           <div className={headerClass}>
             <div className="flex items-center gap-2">
@@ -404,90 +506,85 @@ const GlobalChatDock: React.FC = () => {
           {/* Body */}
           {viewMode === "list" && (
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">
-              {conversations.length === 0 ? (
+              {loading ? (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  Loading conversations...
+                </div>
+              ) : error ? (
+                <div className="p-4 text-center text-sm text-red-600">
+                  {error}
+                </div>
+              ) : conversations.length === 0 ? (
                 <div className="p-4 text-center text-sm text-gray-500">
                   No conversations yet.
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-100">
-                  {conversations
-                    .slice()
-                    .sort((a, b) => {
-                      const aTime = a.lastMessage?.[0]?.createdAt
-                        ? new Date(a.lastMessage[0].createdAt).getTime()
-                        : 0;
-                      const bTime = b.lastMessage?.[0]?.createdAt
-                        ? new Date(b.lastMessage[0].createdAt).getTime()
-                        : 0;
-                      return bTime - aTime;
-                    })
-                    .map((summary) => {
-                      const conversation = summary.conversation;
-                      const last = summary.lastMessage?.[0];
-                      const unreadForUser = (() => {
-                        try {
-                          if (myPrincipal === conversation.clientId) {
-                            return (
-                              conversation.unreadCount[conversation.clientId] ||
-                              0
-                            );
-                          }
-                          if (myPrincipal === conversation.providerId) {
-                            return (
-                              conversation.unreadCount[
-                                conversation.providerId
-                              ] || 0
-                            );
-                          }
-                          return 0;
-                        } catch {
-                          return 0;
+                  {sortedConversations.map((summary) => {
+                    const conversation = summary.conversation;
+                    const last = summary.lastMessage?.[0];
+                    const unreadForUser = (() => {
+                      try {
+                        if (myPrincipal === conversation.clientId) {
+                          return (
+                            conversation.unreadCount[conversation.clientId] || 0
+                          );
                         }
-                      })();
-                      return (
-                        <li
-                          key={conversation.id}
-                          onClick={() =>
-                            openConversation({
-                              conversationId: conversation.id,
-                              otherUserId: summary.otherUserId,
-                              otherUserName:
-                                summary.otherUserName ||
-                                summary.otherUserId.slice(0, 8),
-                              otherUserImageUrl: summary.otherUserImageUrl,
-                            })
-                          }
-                          className="group flex cursor-pointer items-start gap-3 px-4 py-3 text-base hover:bg-blue-50"
-                        >
-                          <div className="mt-0.5 flex-shrink-0">
-                            <ProfileImage
-                              profilePictureUrl={summary.otherUserImageUrl}
-                              userName={
-                                summary.otherUserName ||
-                                summary.otherUserId.slice(0, 8)
-                              }
-                              size="h-10 w-10"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="truncate font-medium text-gray-900 group-hover:text-blue-700">
-                                {summary.otherUserName ||
-                                  summary.otherUserId.slice(0, 12)}
+                        if (myPrincipal === conversation.providerId) {
+                          return (
+                            conversation.unreadCount[conversation.providerId] ||
+                            0
+                          );
+                        }
+                        return 0;
+                      } catch {
+                        return 0;
+                      }
+                    })();
+                    return (
+                      <li
+                        key={conversation.id}
+                        onClick={() =>
+                          openConversation({
+                            conversationId: conversation.id,
+                            otherUserId: summary.otherUserId,
+                            otherUserName:
+                              summary.otherUserName ||
+                              summary.otherUserId.slice(0, 8),
+                            otherUserImageUrl: summary.otherUserImageUrl,
+                          })
+                        }
+                        className="group flex cursor-pointer items-start gap-3 px-4 py-3 text-base hover:bg-blue-50"
+                      >
+                        <div className="mt-0.5 flex-shrink-0">
+                          <ProfileImage
+                            profilePictureUrl={summary.otherUserImageUrl}
+                            userName={
+                              summary.otherUserName ||
+                              summary.otherUserId.slice(0, 8)
+                            }
+                            size="h-10 w-10"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="truncate font-medium text-gray-900 group-hover:text-blue-700">
+                              {summary.otherUserName ||
+                                summary.otherUserId.slice(0, 12)}
+                            </span>
+                            {unreadForUser > 0 && (
+                              <span className="ml-2 rounded-full bg-blue-600 px-2.5 py-0.5 text-sm font-bold text-white">
+                                {unreadForUser}
                               </span>
-                              {unreadForUser > 0 && (
-                                <span className="ml-2 rounded-full bg-blue-600 px-2.5 py-0.5 text-sm font-bold text-white">
-                                  {unreadForUser}
-                                </span>
-                              )}
-                            </div>
-                            <p className="truncate text-xs text-gray-500">
-                              {last?.content?.encryptedText || "No messages"}
-                            </p>
+                            )}
                           </div>
-                        </li>
-                      );
-                    })}
+                          <p className="truncate text-xs text-gray-500">
+                            {last?.content?.encryptedText || "No messages"}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -504,18 +601,36 @@ const GlobalChatDock: React.FC = () => {
                     {messages.map((m) => {
                       const myPrincipal = identity?.getPrincipal().toString();
                       const isMine = m.senderId === myPrincipal;
+                      const isSending =
+                        typeof m.id === "string" && m.id.startsWith("temp-");
+                      const statusLabel = isSending
+                        ? "Sending…"
+                        : m.status === "Read"
+                          ? "Read"
+                          : m.status === "Delivered"
+                            ? "Delivered"
+                            : "Sent";
                       return (
                         <li
                           key={m.id}
                           className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                         >
-                          <span
-                            className={`max-w-[70%] rounded-lg px-3 py-2 text-sm shadow ${isMine ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"}`}
+                          <div
+                            className={`max-w-[70%] ${isMine ? "text-right" : "text-left"}`}
                           >
-                            {typeof m.content === "string"
-                              ? m.content
-                              : m.content?.encryptedText || ""}
-                          </span>
+                            <span
+                              className={`inline-block rounded-lg px-3 py-2 text-sm shadow ${isMine ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"}`}
+                            >
+                              {typeof m.content === "string"
+                                ? m.content
+                                : m.content?.encryptedText || ""}
+                            </span>
+                            {isMine && (
+                              <div className="mt-1 text-[10px] font-medium text-gray-500">
+                                {statusLabel}
+                              </div>
+                            )}
+                          </div>
                         </li>
                       );
                     })}
