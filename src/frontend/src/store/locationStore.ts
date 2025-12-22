@@ -426,7 +426,6 @@ export const useLocationStore = create<LocationState>()(
         }
 
         set({ isInitialized: true });
-
       },
     }),
     {
