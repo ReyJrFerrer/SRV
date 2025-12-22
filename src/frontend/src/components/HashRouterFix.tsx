@@ -8,16 +8,16 @@ const HashRouterFix: React.FC = () => {
 
     // Case 1: Nested hash fragments (e.g., /path#/another#/third)
     // This happens when navigation occurs multiple times with hash routing
-    if (hash && hash.includes('#', 1)) {
+    if (hash && hash.includes("#", 1)) {
       // Extract the last hash fragment which is the actual route
-      const lastHashIndex = hash.lastIndexOf('#');
+      const lastHashIndex = hash.lastIndexOf("#");
       const correctHash = hash.substring(lastHashIndex);
-      
-      console.log('[HashRouterFix] Detected nested hash, fixing:', {
+
+      console.log("[HashRouterFix] Detected nested hash, fixing:", {
         original: window.location.href,
-        correctHash
+        correctHash,
       });
-      
+
       // Build correct URL with only the last hash fragment
       const targetUrl = `${window.location.origin}/${correctHash}`;
       window.location.replace(targetUrl);
@@ -32,10 +32,13 @@ const HashRouterFix: React.FC = () => {
       // prefer the hash so we return to the page the user actually visited.
       const correctHash = hash && hash !== "#" ? hash : `#${pathname}${search}`;
 
-      console.log('[HashRouterFix] Detected path-based route, converting to hash:', {
-        original: window.location.href,
-        correctHash
-      });
+      console.log(
+        "[HashRouterFix] Detected path-based route, converting to hash:",
+        {
+          original: window.location.href,
+          correctHash,
+        },
+      );
 
       // Build full URL with origin so the pathname becomes '/'
       const targetUrl = `${window.location.origin}/${correctHash}`;

@@ -20,16 +20,13 @@ export function useNoBackNavigation(fallbackPath: string) {
     try {
       // For HashRouter, construct URL using only the hash portion to avoid nesting
       // The location from react-router already represents the hash route content
-      const currentRoute = location.pathname + location.search + (location.hash || '');
-      
+      const currentRoute =
+        location.pathname + location.search + (location.hash || "");
+
       // Build proper hash URL (e.g., /#/client/booking/confirmation)
       const url = `/#${currentRoute}`;
-      
-      window.history.pushState(
-        { __noback: true },
-        "",
-        url,
-      );
+
+      window.history.pushState({ __noback: true }, "", url);
     } catch {}
 
     const onPopState = () => {
