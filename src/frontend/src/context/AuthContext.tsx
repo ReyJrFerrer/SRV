@@ -37,6 +37,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  profileStatus: { hasProfile: boolean; needsProfile: boolean } | null;
+  isExplicitLogin: boolean;
   // --- Location properties (now delegated to Zustand store) ---
   location: Location | null;
   locationStatus: LocationStatus;
@@ -98,7 +100,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [profileStatus, setProfileStatus] = useState<{
+    hasProfile: boolean;
+    needsProfile: boolean;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isExplicitLogin, setIsExplicitLogin] = useState(false);
   // Post-login location prompt state
   const [postLoginLocationPromptVisible, setPostLoginLocationPromptVisible] =
     useState(false);
@@ -267,6 +274,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setIsLoading(true);
     setError(null);
+    setIsExplicitLogin(true);
 
     try {
       await authClient.login({
@@ -291,10 +299,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const principal = identity.getPrincipal().toString();
             const result = await signInWithInternetIdentity(principal);
             setFirebaseUser(result.user);
+            // Store profile status from backend response (avoids race condition with Firestore)
+            setProfileStatus({
+              hasProfile: result.hasProfile,
+              needsProfile: result.needsProfile,
+            });
             try {
               await authCanisterService.updateUserActiveStatus(true);
             } catch (error) {}
-          } catch (fbError) {}
+          } catch (fbError) {
+            setError("Authentication failed. Please try again.");
+          }
 
           setIsLoading(false);
         },
@@ -328,6 +343,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Logout from Internet Identity
     await authClient.logout();
+
+    // Clear profile status
+    setProfileStatus(null);
     setIsAuthenticated(false);
     setIdentity(null);
     setFirebaseUser(null);
@@ -377,6 +395,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isLoading,
     error,
+    profileStatus,
+    isExplicitLogin,
     // Delegate location properties to Zustand store
     location: locationStore.location,
     locationStatus: locationStore.locationStatus,

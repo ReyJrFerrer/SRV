@@ -155,7 +155,7 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
       );
     } catch {
       setGmapsStatus("failed");
-      setGmapsAddress("Reverse geocode failed");
+      setGmapsAddress("Address not found");
     }
   }, [mapsApiLoaded, geoLocation, gmapsStatus]);
 

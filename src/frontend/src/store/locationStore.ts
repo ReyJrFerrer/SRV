@@ -427,13 +427,6 @@ export const useLocationStore = create<LocationState>()(
 
         set({ isInitialized: true });
 
-        if (!storedLocation || storedPermission !== "allowed") {
-          get()
-            .requestLocation()
-            .catch(() => {
-              // Silently handle errors - don't show alerts on auto-request
-            });
-        }
       },
     }),
     {

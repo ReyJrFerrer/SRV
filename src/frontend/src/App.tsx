@@ -18,19 +18,31 @@ type CurrentView = "main" | "about" | "contact";
 const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, identity, firebaseUser, login, isLoading } =
-    useAuth();
+  const {
+    isAuthenticated,
+    identity,
+    firebaseUser,
+    login,
+    isLoading,
+    profileStatus,
+    isExplicitLogin,
+  } = useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
   const [showSuspensionModal, setShowSuspensionModal] = useState(false);
 
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
-      // CRITICAL: Only check profile if BOTH IC and Firebase auth are ready
       if (isAuthenticated && identity && firebaseUser) {
         setIsCheckingProfile(true);
 
         try {
+          // Only navigate to create-profile if login button was explicitly clicked
+          if (profileStatus && profileStatus.needsProfile && isExplicitLogin) {
+            navigate("/create-profile");
+            setIsCheckingProfile(false);
+            return;
+          }
           const profile = await authCanisterService.getMyProfile();
 
           // Check if account is suspended
@@ -64,14 +76,22 @@ const LandingPage = () => {
             } else if (profile.activeRole === "ServiceProvider") {
               navigate("/provider/home");
             } else {
-              // Profile exists but no valid role - go to create profile
-              navigate("/create-profile");
+              // Profile exists but no valid role - only go to create profile on explicit login
+              if (isExplicitLogin) {
+                navigate("/create-profile");
+              } else {
+                navigate("/");
+              }
             }
-          } else {
+          } else if (isExplicitLogin) {
+            // Only navigate to create-profile if this was an explicit login
             navigate("/create-profile");
+          } else {
+            // Automatic login with no profile - go to landing page
+            navigate("/");
           }
         } catch (err) {
-          // Only redirect if we're not already on landing page
+          // On profile fetch failure, go to landing page (not create-profile)
           if (location.pathname !== "/") {
             navigate("/");
           }
@@ -86,7 +106,15 @@ const LandingPage = () => {
       }
     };
     checkProfileAndRedirect();
-  }, [isAuthenticated, identity, firebaseUser, navigate, location.pathname]);
+  }, [
+    isAuthenticated,
+    identity,
+    firebaseUser,
+    profileStatus,
+    isExplicitLogin,
+    navigate,
+    location.pathname,
+  ]);
 
   // Show a loading indicator while checking the user's session.
   if (isCheckingProfile) {

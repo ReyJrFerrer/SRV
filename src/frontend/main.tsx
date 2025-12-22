@@ -9,23 +9,19 @@ import ScrollToTop from "./src/components/ScrollToTop";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import HashRouterFix from "./src/components/HashRouterFix";
 import { APIProvider } from "@vis.gl/react-google-maps";
-import { useLocationStore } from "./src/store/locationStore";
-
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
-import {
-  initializeCacheManagement,
-  forceClearAndReload,
-} from "./src/utils/cacheManager";
 import GlobalChatDock from "./src/components/chat/GlobalChatDock";
+
 const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { mapsApiKey, setMapsApiReady } = useLocationStore();
-  const [apiLoadError, setApiLoadError] = React.useState<string | null>(null);
+  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+  const [, setApiLoadError] = React.useState<string | null>(null);
+  const [, setApiReady] = React.useState(false);
 
   // Validate API key on mount
   React.useEffect(() => {
@@ -33,11 +29,11 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
       console.error(
         "Google Maps API key is missing. Please set VITE_GOOGLE_MAPS_API_KEY in your environment variables.",
       );
-      setMapsApiReady(false, "API key is missing");
+      setApiReady(false);
     } else {
-      setMapsApiReady(true, null);
+      setApiReady(true);
     }
-  }, [mapsApiKey, setMapsApiReady]);
+  }, [mapsApiKey]);
 
   // Listen for Google Maps API load errors (e.g., AuthFailure)
   React.useEffect(() => {
@@ -45,13 +41,13 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
       if (error.message && error.message.includes("Google Maps")) {
         console.error("[MapsProvider] Google Maps API Error:", error);
         setApiLoadError(error.message);
-        setMapsApiReady(false, "API authentication failed");
+        setApiReady(false);
       }
     };
 
     window.addEventListener("error", handleGoogleError);
     return () => window.removeEventListener("error", handleGoogleError);
-  }, [setMapsApiReady]);
+  }, []);
 
   if (!mapsApiKey || mapsApiKey === "") {
     return (
@@ -63,28 +59,6 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
           <p className="text-gray-700">
             Google Maps API key is not configured. Please contact support.
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error with reload option if API fails to load
-  if (apiLoadError) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="rounded-lg bg-red-50 p-6 text-center shadow-md">
-          <h2 className="mb-2 text-xl font-bold text-red-600">
-            Maps Loading Error
-          </h2>
-          <p className="mb-4 text-gray-700">
-            Failed to load Google Maps. This may be due to cached credentials.
-          </p>
-          <button
-            onClick={() => forceClearAndReload()}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Clear Cache & Reload
-          </button>
         </div>
       </div>
     );
@@ -216,8 +190,6 @@ const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 // Initialize version checker for automatic cache clearing on new deployments
 initVersionChecker();
 
-// Initialize cache management to handle Maps API caching issues
-initializeCacheManagement();
 
 // Initialize OneSignal when SDK is loaded
 window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -284,25 +256,31 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <ErrorBoundary>
       <HashRouterFix />
       <QueryClientProvider client={queryClient}>
-        <MapsProviderWrapper>
-          <HashRouter>
-            <ScrollToTop />
-            <AuthProvider>
-              <BookingCacheProvider>
-                <Suspense fallback={null}>
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<App />} />
-                    <Route
-                      path="/create-profile"
-                      element={
-                        <CreateProfileGuard>
-                          <CreateProfile />
-                        </CreateProfileGuard>
-                      }
-                    />
+        <HashRouter>
+          <ScrollToTop />
+          <AuthProvider>
+            <BookingCacheProvider>
+              <Suspense fallback={null}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<App />} />
+                  <Route
+                    path="/create-profile"
+                    element={
+                      <CreateProfileGuard>
+                        <CreateProfile />
+                      </CreateProfileGuard>
+                    }
+                  />
 
-                    <Route path="/client" element={<ClientLayout />}>
+                  <Route
+                    path="/client"
+                    element={
+                      <MapsProviderWrapper>
+                        <ClientLayout />
+                      </MapsProviderWrapper>
+                    }
+                  >
                       <Route index element={<ClientRedirect />} />
                       <Route path="home" element={<ClientHome />} />
                       <Route path="chat" element={<ClientChat />} />
@@ -380,7 +358,14 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                     </Route>
 
                     {/* Provider Routes with Nested Layout */}
-                    <Route path="/provider" element={<ProviderLayout />}>
+                    <Route
+                      path="/provider"
+                      element={
+                        <MapsProviderWrapper>
+                          <ProviderLayout />
+                        </MapsProviderWrapper>
+                      }
+                    >
                       <Route index element={<ProviderRedirect />} />
                       <Route path="home" element={<ProviderHome />} />
                       <Route path="bookings" element={<ProviderBookings />} />
@@ -472,10 +457,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               </BookingCacheProvider>
             </AuthProvider>
           </HashRouter>
-        </MapsProviderWrapper>
-      </QueryClientProvider>
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </React.StrictMode>,
+  );
+
 
 // end
