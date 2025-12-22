@@ -38,6 +38,19 @@ import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 type WeeklyScheduleEntry =
   import("../../../components/provider/service-details").WeeklyScheduleEntry;
 
+// Simple lockable wrapper: just blur + disable interactions when locked
+const LockableSection: React.FC<{
+  locked: boolean;
+  lockReason?: string;
+  children: React.ReactNode;
+}> = ({ locked, children }) => {
+  return (
+    <div className={locked ? "pointer-events-none opacity-50 blur-[1px]" : ""}>
+      {children}
+    </div>
+  );
+};
+
 const ProviderServiceDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -1301,6 +1314,18 @@ const ProviderServiceDetailPage: React.FC = () => {
 
       {/* Main Content */}
       <main className="mx-auto max-w-full space-y-10 px-4 pb-10 sm:px-8">
+        {/** Compute edit-lock state */}
+        {/** Only the section currently being edited remains interactive */}
+        {/** Others get blurred and non-interactive to prevent concurrent edits */}
+        {/** Keep HeroSection interactive always so the user can save/cancel */}
+        {/** This is a plain layout-level lock — underlying components remain unchanged */}
+        {/** Any of the flags below indicates an edit in progress */}
+        {/** NOTE: We intentionally avoid changing child components' logic */}
+        {/** to keep this change minimal and focused on UX. */}
+        {/** Derived: any editing ongoing */}
+        {/** eslint-disable-next-line @typescript-eslint/no-unused-vars */}
+        {(() => null)()}
+        {/* no-op expression to satisfy JSX-only block; actual logic below in props */}
         <HeroSection
           onBack={() => navigate("/provider/home")}
           service={service}
@@ -1331,99 +1356,149 @@ const ProviderServiceDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* Left: Location & Packages */}
           <div className="flex flex-col gap-8">
-            <LocationAvailabilitySection
-              editLocationAvailability={editLocationAvailability}
-              hasActiveBookings={hasActiveBookings}
-              activeBookingsCount={activeBookingsCount}
-              editedCity={editedCity}
-              editedState={editedState}
-              setEditedCity={setEditedCity}
-              setEditedState={setEditedState}
-              editedWeeklySchedule={editedWeeklySchedule as any}
-              setEditedWeeklySchedule={setEditedWeeklySchedule as any}
-              savingLocationAvailability={savingLocationAvailability}
-              onEdit={handleEditLocationAvailability}
-              onCancel={handleCancelLocationAvailability}
-              onSave={handleSaveLocationAvailability}
-              service={service}
-            />
+            <LockableSection
+              locked={
+                (editTitleCategory ||
+                  editImages ||
+                  editCertifications ||
+                  isAddingOrEditingPackage) &&
+                !editLocationAvailability
+              }
+            >
+              <LocationAvailabilitySection
+                editLocationAvailability={editLocationAvailability}
+                hasActiveBookings={hasActiveBookings}
+                activeBookingsCount={activeBookingsCount}
+                editedCity={editedCity}
+                editedState={editedState}
+                setEditedCity={setEditedCity}
+                setEditedState={setEditedState}
+                editedWeeklySchedule={editedWeeklySchedule as any}
+                setEditedWeeklySchedule={setEditedWeeklySchedule as any}
+                savingLocationAvailability={savingLocationAvailability}
+                onEdit={handleEditLocationAvailability}
+                onCancel={handleCancelLocationAvailability}
+                onSave={handleSaveLocationAvailability}
+                service={service}
+              />
+            </LockableSection>
 
-            <PackagesSection
-              packages={packages}
-              isAddingOrEditingPackage={isAddingOrEditingPackage}
-              activeBookingsCount={activeBookingsCount}
-              hasActiveBookings={hasActiveBookings}
-              packageFormTitle={packageFormTitle}
-              packageFormDescription={packageFormDescription}
-              packageFormPrice={packageFormPrice}
-              packageFormLoading={packageFormLoading}
-              currentPackageId={currentPackageId}
-              onAddPackage={handleAddPackage}
-              onCancelPackageEdit={handleCancelPackageEdit}
-              onSavePackage={handleSavePackage}
-              onEditPackage={handleEditPackage}
-              onDeletePackage={handleDeletePackage}
-              setPackageFormTitle={setPackageFormTitle}
-              setPackageFormDescription={setPackageFormDescription}
-              setPackageFormPrice={setPackageFormPrice}
-            />
+            <LockableSection
+              locked={
+                (editTitleCategory ||
+                  editImages ||
+                  editCertifications ||
+                  editLocationAvailability) &&
+                !isAddingOrEditingPackage
+              }
+            >
+              <PackagesSection
+                packages={packages}
+                isAddingOrEditingPackage={isAddingOrEditingPackage}
+                activeBookingsCount={activeBookingsCount}
+                hasActiveBookings={hasActiveBookings}
+                packageFormTitle={packageFormTitle}
+                packageFormDescription={packageFormDescription}
+                packageFormPrice={packageFormPrice}
+                packageFormLoading={packageFormLoading}
+                currentPackageId={currentPackageId}
+                onAddPackage={handleAddPackage}
+                onCancelPackageEdit={handleCancelPackageEdit}
+                onSavePackage={handleSavePackage}
+                onEditPackage={handleEditPackage}
+                onDeletePackage={handleDeletePackage}
+                setPackageFormTitle={setPackageFormTitle}
+                setPackageFormDescription={setPackageFormDescription}
+                setPackageFormPrice={setPackageFormPrice}
+              />
+            </LockableSection>
           </div>
 
           {/* Right: Certifications & Service Images */}
           <div className="flex flex-col gap-8">
-            <CertificationsSection
-              hasActiveBookings={hasActiveBookings}
-              activeBookingsCount={activeBookingsCount}
-              editCertifications={editCertifications}
-              tempDisplayCertificates={tempDisplayCertificates}
-              serviceCertificates={serviceCertificates}
-              certificateUploadError={certificateUploadError}
-              uploadingCertificates={uploadingCertificates}
-              savingCertifications={savingCertifications}
-              onToggleEdit={handleEditCertifications}
-              onCancel={handleCancelCertifications}
-              onSave={handleSaveCertifications}
-              onUpload={handleCertificationUpload}
-              onRemove={handleRemoveCertificate}
-              onPreview={(url, type) => {
-                setPreviewUrl(url);
-                setPreviewType(type);
-              }}
-              isPdfFile={isPdfFile}
-            />
+            <LockableSection
+              locked={
+                (editTitleCategory ||
+                  editImages ||
+                  editLocationAvailability ||
+                  isAddingOrEditingPackage) &&
+                !editCertifications
+              }
+            >
+              <CertificationsSection
+                hasActiveBookings={hasActiveBookings}
+                activeBookingsCount={activeBookingsCount}
+                editCertifications={editCertifications}
+                tempDisplayCertificates={tempDisplayCertificates}
+                serviceCertificates={serviceCertificates}
+                certificateUploadError={certificateUploadError}
+                uploadingCertificates={uploadingCertificates}
+                savingCertifications={savingCertifications}
+                onToggleEdit={handleEditCertifications}
+                onCancel={handleCancelCertifications}
+                onSave={handleSaveCertifications}
+                onUpload={handleCertificationUpload}
+                onRemove={handleRemoveCertificate}
+                onPreview={(url, type) => {
+                  setPreviewUrl(url);
+                  setPreviewType(type);
+                }}
+                isPdfFile={isPdfFile}
+              />
+            </LockableSection>
 
-            <ImagesSection
-              hasActiveBookings={hasActiveBookings}
-              activeBookingsCount={activeBookingsCount}
-              editImages={editImages}
-              tempDisplayImages={tempDisplayImages}
-              serviceImages={serviceImages}
-              uploadError={uploadError}
-              uploadingImages={uploadingImages}
-              savingImages={savingImages}
-              onToggleEdit={handleEditImages}
-              onCancel={handleCancelImages}
-              onSave={handleSaveImages}
-              onUpload={handleImageUpload}
-              onRemove={handleRemoveImage}
-              onPreview={(url, type) => {
-                setPreviewUrl(url);
-                setPreviewType(type);
-              }}
-              isPdfFile={isPdfFile}
-            />
+            <LockableSection
+              locked={
+                (editTitleCategory ||
+                  editCertifications ||
+                  editLocationAvailability ||
+                  isAddingOrEditingPackage) &&
+                !editImages
+              }
+            >
+              <ImagesSection
+                hasActiveBookings={hasActiveBookings}
+                activeBookingsCount={activeBookingsCount}
+                editImages={editImages}
+                tempDisplayImages={tempDisplayImages}
+                serviceImages={serviceImages}
+                uploadError={uploadError}
+                uploadingImages={uploadingImages}
+                savingImages={savingImages}
+                onToggleEdit={handleEditImages}
+                onCancel={handleCancelImages}
+                onSave={handleSaveImages}
+                onUpload={handleImageUpload}
+                onRemove={handleRemoveImage}
+                onPreview={(url, type) => {
+                  setPreviewUrl(url);
+                  setPreviewType(type);
+                }}
+                isPdfFile={isPdfFile}
+              />
+            </LockableSection>
           </div>
         </div>
 
-        <ActionButtons
-          status={service.status}
-          isUpdatingStatus={isUpdatingStatus}
-          isDeleting={isDeleting}
-          hasActiveBookings={hasActiveBookings}
-          activeBookingsCount={activeBookingsCount}
-          onToggleStatus={handleStatusToggle}
-          onDeleteClick={() => setShowDeleteConfirm(true)}
-        />
+        <LockableSection
+          locked={
+            editTitleCategory ||
+            editLocationAvailability ||
+            editImages ||
+            editCertifications ||
+            isAddingOrEditingPackage
+          }
+        >
+          <ActionButtons
+            status={service.status}
+            isUpdatingStatus={isUpdatingStatus}
+            isDeleting={isDeleting}
+            hasActiveBookings={hasActiveBookings}
+            activeBookingsCount={activeBookingsCount}
+            onToggleStatus={handleStatusToggle}
+            onDeleteClick={() => setShowDeleteConfirm(true)}
+          />
+        </LockableSection>
       </main>
       <BottomNavigation />
     </div>

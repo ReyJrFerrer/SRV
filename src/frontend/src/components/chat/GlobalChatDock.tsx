@@ -465,7 +465,20 @@ const GlobalChatDock: React.FC = () => {
                 <span className="text-base font-semibold">Conversations</span>
               )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              {loading && (
+                <span
+                  role="status"
+                  aria-live="polite"
+                  className={
+                    headerUsesDarkText
+                      ? "text-xs font-medium text-gray-600"
+                      : "text-xs font-medium text-white/90"
+                  }
+                >
+                  Loading...
+                </span>
+              )}
               <button
                 onClick={() => setSoundEnabled((v) => !v)}
                 aria-label={soundEnabled ? "Disable sound" : "Enable sound"}

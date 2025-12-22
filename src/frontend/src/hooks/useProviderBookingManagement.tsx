@@ -168,6 +168,14 @@ interface ProviderBookingManagementHook {
   // New chart data functions
   getMonthlyRevenue: () => { name: string; value: number }[];
   getBookingCountByDay: () => { name: string; value: number }[];
+  // Status counts by adjustable period for dashboard pie chart
+  getStatusCountsByPeriod: (period: "7d" | "30d" | "12m" | "all") => {
+    accepted: number;
+    completed: number;
+    pending: number;
+    cancelled: number;
+    disputed: number;
+  };
 
   // Utility functions
   formatBookingDate: (dateString: string) => string;
@@ -1600,7 +1608,8 @@ export const useProviderBookingManagement =
         groupBy: "day" | "week" | "month" = "day",
       ): { name: string; value: number }[] => {
         if (!startDate || !endDate) return [];
-        let result: { name: string; value: number }[] = [];
+        const result: { name: string; value: number }[] = [];
+
         if (groupBy === "day") {
           let d = new Date(startDate);
           while (d <= endDate) {
@@ -1659,6 +1668,70 @@ export const useProviderBookingManagement =
           }
         }
         return result;
+      },
+      [providerBookings],
+    );
+
+    // Status counts by period for dashboard pie chart
+    const getStatusCountsByPeriod = useCallback(
+      (
+        period: "7d" | "30d" | "12m" | "all",
+      ): {
+        accepted: number;
+        completed: number;
+        pending: number;
+        cancelled: number;
+        disputed: number;
+      } => {
+        let startDate: Date | null = null;
+        const now = new Date();
+        switch (period) {
+          case "7d":
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case "30d":
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case "12m":
+            startDate = new Date(
+              now.getFullYear(),
+              now.getMonth() - 12,
+              now.getDate(),
+            );
+            break;
+          case "all":
+          default:
+            startDate = null;
+        }
+
+        const inRange = (b: ProviderEnhancedBooking) => {
+          if (!startDate) return true;
+          try {
+            const d = new Date(b.createdAt);
+            return d >= startDate;
+          } catch {
+            return false;
+          }
+        };
+
+        const lower = (s?: string) => (s || "").toLowerCase();
+        let accepted = 0,
+          completed = 0,
+          pending = 0,
+          cancelled = 0,
+          disputed = 0;
+
+        providerBookings.forEach((b) => {
+          if (!inRange(b)) return;
+          const s = lower(b.status);
+          if (s === "accepted" || s === "confirmed") accepted++;
+          else if (s === "completed") completed++;
+          else if (s === "pending" || s === "requested") pending++;
+          else if (s === "cancelled" || s === "declined") cancelled++;
+          else if (s === "disputed") disputed++;
+        });
+
+        return { accepted, completed, pending, cancelled, disputed };
       },
       [providerBookings],
     );
@@ -1850,6 +1923,7 @@ export const useProviderBookingManagement =
       getBookingCountByPeriod,
       getMonthlyRevenue,
       getBookingCountByDay,
+      getStatusCountsByPeriod,
 
       // Utility functions
       formatBookingDate,

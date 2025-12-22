@@ -31,14 +31,6 @@ type BookingStatusTab =
   | "IN_PROGRESS"
   | "COMPLETED"
   | "CANCELLED";
-const TAB_ITEMS: BookingStatusTab[] = [
-  "ALL",
-  "PENDING",
-  "CONFIRMED",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "CANCELLED",
-];
 
 const MyBookingsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -48,16 +40,14 @@ const MyBookingsPage: React.FC = () => {
     autoLoadUserReviews: false,
   });
 
-  const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
+  // Status filter (now inside dropdown)
+  const [statusFilter, setStatusFilter] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   // Provider-style filter states
   type BookingTimingFilter = "All" | "Same Day" | "Scheduled";
-  const TIMING_FILTERS: BookingTimingFilter[] = [
-    "All",
-    "Same Day",
-    "Scheduled",
-  ];
-  const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
+  // Primary view toggle placed at the top bar
+  const [timingFilter, setTimingFilter] =
+    useState<BookingTimingFilter>("Scheduled");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const timingDropdownRef = useRef<HTMLDivElement>(null);
@@ -68,16 +58,9 @@ const MyBookingsPage: React.FC = () => {
   useEffect(() => {
     const queryTab = searchParams.get("tab");
     if (queryTab && typeof queryTab === "string") {
-      const upperCaseQueryTab = queryTab
-        .toUpperCase()
-        .replace("-", "_") as BookingStatusTab;
-      if (TAB_ITEMS.includes(upperCaseQueryTab)) {
-        setActiveTab(upperCaseQueryTab);
-      } else {
-        setSearchParams({ tab: "all" });
-      }
-    } else {
-      setActiveTab("ALL");
+      const normalized = queryTab.toLowerCase();
+      if (normalized === "same-day") setTimingFilter("Same Day");
+      else if (normalized === "scheduled") setTimingFilter("Scheduled");
     }
   }, [searchParams, setSearchParams]);
 
@@ -105,36 +88,22 @@ const MyBookingsPage: React.FC = () => {
     let processedBookings = bookingManagement.bookings.filter(
       (booking) => booking && typeof booking.status === "string",
     );
-    if (activeTab !== "ALL") {
+    // Apply status filter from dropdown
+    if (statusFilter !== "ALL") {
       const statusMapping: Record<BookingStatusTab, string[]> = {
         ALL: [],
         PENDING: ["Requested", "Pending"],
         CONFIRMED: ["Accepted", "Confirmed"],
-        IN_PROGRESS: ["In Progress", "In_Progress"],
+        IN_PROGRESS: ["In Progress", "In_Progress", "InProgress"],
         COMPLETED: ["Completed"],
         CANCELLED: ["Cancelled", "Declined"],
       };
-      const statusesToMatch = statusMapping[activeTab] || [];
+      const statusesToMatch = statusMapping[statusFilter] || [];
       processedBookings = processedBookings.filter((booking) =>
         statusesToMatch.some(
-          (status) => booking.status.toLowerCase() === status.toLowerCase(),
+          (status) => booking.status?.toLowerCase() === status.toLowerCase(),
         ),
       );
-    }
-    if (timingFilter !== "All") {
-      processedBookings = processedBookings.filter((booking) => {
-        const bookingDate = new Date(
-          booking.requestedDate || booking.createdAt,
-        );
-        if (isNaN(bookingDate.getTime())) return false;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        bookingDate.setHours(0, 0, 0, 0);
-        const isSameDay = bookingDate.getTime() === today.getTime();
-        if (timingFilter === "Same Day") return isSameDay;
-        if (timingFilter === "Scheduled") return !isSameDay;
-        return false;
-      });
     }
     if (selectedCategory) {
       processedBookings = processedBookings.filter(
@@ -162,7 +131,7 @@ const MyBookingsPage: React.FC = () => {
       });
     }
 
-    if (activeTab === "ALL") {
+    if (statusFilter === "ALL") {
       const toLower = (s?: string) => (s || "").toLowerCase();
 
       const inProgress = processedBookings.filter((b) => {
@@ -234,13 +203,7 @@ const MyBookingsPage: React.FC = () => {
     }
 
     return processedBookings;
-  }, [
-    activeTab,
-    bookingManagement.bookings,
-    searchTerm,
-    timingFilter,
-    selectedCategory,
-  ]);
+  }, [statusFilter, bookingManagement.bookings, searchTerm, selectedCategory]);
 
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
     const today = new Date();
@@ -372,45 +335,7 @@ const MyBookingsPage: React.FC = () => {
     if (filteredBookings.length > 0) fetchStatsForServices();
   }, [filteredBookings]);
 
-  const tabCounts = useMemo(() => {
-    const statusMapping: Record<BookingStatusTab, string[]> = {
-      ALL: [],
-      PENDING: ["Requested", "Pending"],
-      CONFIRMED: ["Accepted", "Confirmed"],
-      IN_PROGRESS: ["In Progress", "In_Progress"],
-      COMPLETED: ["Completed"],
-      CANCELLED: ["Cancelled", "Declined"],
-    };
-    const all = bookingManagement.bookings || [];
-    return {
-      ALL: all.length,
-      PENDING: all.filter((b) =>
-        statusMapping.PENDING.some(
-          (s) => b.status?.toLowerCase() === s.toLowerCase(),
-        ),
-      ).length,
-      CONFIRMED: all.filter((b) =>
-        statusMapping.CONFIRMED.some(
-          (s) => b.status?.toLowerCase() === s.toLowerCase(),
-        ),
-      ).length,
-      IN_PROGRESS: all.filter((b) =>
-        statusMapping.IN_PROGRESS.some(
-          (s) => b.status?.toLowerCase() === s.toLowerCase(),
-        ),
-      ).length,
-      COMPLETED: all.filter((b) =>
-        statusMapping.COMPLETED.some(
-          (s) => b.status?.toLowerCase() === s.toLowerCase(),
-        ),
-      ).length,
-      CANCELLED: all.filter((b) =>
-        statusMapping.CANCELLED.some(
-          (s) => b.status?.toLowerCase() === s.toLowerCase(),
-        ),
-      ).length,
-    };
-  }, [bookingManagement.bookings]);
+  // Removed tab counts; status filters are now within the dropdown
 
   const handleCancelBooking = async (reason: string) => {
     if (!cancellingBooking) return;
@@ -455,16 +380,16 @@ const MyBookingsPage: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* Filters: Timing + Category */}
+            {/* Filters button: Status + Category */}
             <div className="flex gap-2">
-              {/* Timing & Category Filter Dropdown (Provider-style) */}
+              {/* Filter Dropdown: Status + Category */}
               <div className="relative" ref={timingDropdownRef}>
                 <button
                   className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
                 >
                   <FunnelIcon className="mr-1 h-5 w-5" />
-                  <span className="hidden md:inline">{timingFilter}</span>
+                  <span className="hidden md:inline">Filters</span>
                   <span className="ml-2 text-xs text-gray-400">
                     {selectedCategory ? `| ${selectedCategory}` : ""}
                   </span>
@@ -490,21 +415,33 @@ const MyBookingsPage: React.FC = () => {
                       aria-orientation="vertical"
                       aria-labelledby="options-menu"
                     >
-                      {/* Timing filters */}
-                      {TIMING_FILTERS.map((filter) => (
+                      {/* Status filters */}
+                      <div className="px-4 pb-1 text-xs font-medium text-gray-500">
+                        Status
+                      </div>
+                      {(
+                        [
+                          "ALL",
+                          "PENDING",
+                          "CONFIRMED",
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "CANCELLED",
+                        ] as BookingStatusTab[]
+                      ).map((filter) => (
                         <button
                           key={filter}
                           onClick={() => {
-                            setTimingFilter(filter);
+                            setStatusFilter(filter);
                             setIsTimingDropdownOpen(false);
                           }}
-                          className={`${timingFilter === filter ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                          className={`${statusFilter === filter ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
                           role="menuitem"
                         >
-                          {filter}
+                          {filter.replace("_", " ")}
                         </button>
                       ))}
-                      {/* Border between timing and categories */}
+                      {/* Border between status and categories */}
                       <div className="border-t px-2 pt-2">
                         <div className="px-4 pb-1 text-xs font-medium text-gray-500">
                           Categories
@@ -537,26 +474,38 @@ const MyBookingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="w-full overflow-x-auto">
-            <nav className="flex px-4 pb-4 text-sm">
-              <div className="flex w-full min-w-max justify-between space-x-2">
-                {TAB_ITEMS.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      setActiveTab(tab);
-                    }}
-                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${
-                      activeTab === tab
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-600 hover:bg-yellow-200"
-                    }`}
-                  >
-                    {tab} ({tabCounts[tab as keyof typeof tabCounts]})
-                  </button>
-                ))}
-              </div>
-            </nav>
+          {/* Top toggle: Same Day / Scheduled */}
+          <div className="w-full">
+            <div className="flex items-center justify-center gap-2 px-4 pb-3">
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                  timingFilter === "Same Day"
+                    ? "bg-yellow-500 text-white"
+                    : "text-gray-700 hover:bg-yellow-200"
+                }`}
+                onClick={() => {
+                  setTimingFilter("Same Day");
+                  setSearchParams({ tab: "same-day" });
+                }}
+              >
+                Same Day
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                  timingFilter === "Scheduled"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-yellow-200"
+                }`}
+                onClick={() => {
+                  setTimingFilter("Scheduled");
+                  setSearchParams({ tab: "scheduled" });
+                }}
+              >
+                Scheduled
+              </button>
+            </div>
           </div>
         </div>
 
@@ -581,7 +530,7 @@ const MyBookingsPage: React.FC = () => {
             </div>
           ) : filteredBookings.length > 0 ? (
             <div className="my-4 space-y-4 pb-16">
-              {sameDayBookings.length > 0 && (
+              {timingFilter === "Same Day" && sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
                     <SparklesIcon className="mr-2 h-6 w-6 text-yellow-500" />
@@ -619,7 +568,7 @@ const MyBookingsPage: React.FC = () => {
                   </div>
                 </section>
               )}
-              {scheduledBookings.length > 0 && (
+              {timingFilter === "Scheduled" && scheduledBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
                     <CalendarDaysIcon className="mr-2 h-6 w-6 text-blue-500" />

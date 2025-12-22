@@ -1,5 +1,10 @@
 import React from "react";
-import { BriefcaseIcon, PlusIcon } from "@heroicons/react/24/solid";
+import {
+  BriefcaseIcon,
+  PlusIcon,
+  BanknotesIcon,
+  TagIcon,
+} from "@heroicons/react/24/solid";
 import Tooltip from "../../common/Tooltip";
 import { ServicePackage } from "../../../services/serviceCanisterService";
 
@@ -206,33 +211,51 @@ const PackagesSection: React.FC<Props> = ({
             packages.map((pkg) => (
               <div
                 key={pkg.id}
-                className="group rounded-2xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-300 hover:border-blue-200 hover:shadow-xl"
+                className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl"
               >
-                <div className="mb-4">
-                  <div className="min-w-0">
-                    <h3 className="mb-2 truncate text-xl font-bold text-gray-900">
-                      {pkg.title}
-                    </h3>
-                    <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
-                      {pkg.description}
-                    </p>
+                {/* Header ribbon */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-blue-50 via-white to-yellow-50" />
+
+                <div className="relative z-10 p-4 pb-3 sm:p-5">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">
+                    <TagIcon className="h-3.5 w-3.5" /> Package
                   </div>
 
-                  <div className="mt-3">
-                    <div className="mb-1 text-xl font-bold text-blue-600">
-                      ₱{pkg.price.toFixed(2)}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-extrabold tracking-tight text-gray-900 sm:text-xl">
+                        {pkg.title}
+                      </h3>
+                      <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-gray-600 sm:text-sm">
+                        {pkg.description}
+                      </p>
                     </div>
-                    <div className="mb-1 text-xs text-gray-500">
+                    <div className="shrink-0 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <BanknotesIcon className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
+                        <span className="text-xl font-extrabold tracking-tight text-blue-700 sm:text-2xl">
+                          ₱{pkg.price.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-gray-500">
+                        Base price
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 sm:text-xs">
                       + ₱{pkg.commissionFee.toFixed(2)} commission
-                    </div>
-                    <div className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-sm font-semibold text-green-700">
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 sm:text-xs">
                       ₱{(pkg.price + pkg.commissionFee).toFixed(2)} total
-                    </div>
+                    </span>
                   </div>
                 </div>
-                <div className="my-4 border-t border-gray-100"></div>
 
-                <div className="flex flex-col gap-4 xl:flex-row">
+                <div className="border-t border-gray-100" />
+
+                <div className="relative z-10 flex flex-col gap-2 p-3 sm:gap-3 sm:p-4 xl:flex-row">
                   <Tooltip
                     content="Cannot edit when another package form is open."
                     showWhenDisabled={isAddingOrEditingPackage}
@@ -242,10 +265,10 @@ const PackagesSection: React.FC<Props> = ({
                       onClick={() =>
                         hasActiveBookings ? undefined : onEditPackage(pkg)
                       }
-                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
                         hasActiveBookings || isAddingOrEditingPackage
                           ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                          : "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 active:scale-95"
+                          : "bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:scale-95"
                       }`}
                       aria-label={`Edit ${pkg.title}`}
                       disabled={hasActiveBookings || isAddingOrEditingPackage}
@@ -265,12 +288,12 @@ const PackagesSection: React.FC<Props> = ({
                           ? undefined
                           : onDeletePackage(pkg.id)
                       }
-                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 font-medium transition-all duration-200 ${
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
                         hasActiveBookings ||
                         isAddingOrEditingPackage ||
                         packages.length <= 1
                           ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                          : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95"
+                          : "bg-white text-red-600 ring-1 ring-red-200 hover:bg-red-50 active:scale-95"
                       }`}
                       aria-label={`Delete ${pkg.title}`}
                       disabled={

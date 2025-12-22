@@ -33,6 +33,14 @@ interface ProviderStatsProps {
   reviewAnalytics: any;
   reviewsLoading: any;
   reviewsError: any;
+  getStatusCountsByPeriod: (period: "7d" | "30d" | "12m" | "all") => {
+    accepted: number;
+    completed: number;
+    pending: number;
+    cancelled: number;
+    disputed: number;
+  };
+  providerReviews: any[];
 }
 
 // Dedicated mobile carousel component so hooks aren't called conditionally
@@ -43,6 +51,8 @@ const MobileChartsCarousel: React.FC<{
   getMonthlyRevenue: any;
   getBookingCountByDay: any;
   ratingData: { averageRating: number; totalReviews: number };
+  getStatusCountsByPeriod: ProviderStatsProps["getStatusCountsByPeriod"];
+  providerReviews: any[];
 }> = ({
   className = "",
   isLoading,
@@ -50,6 +60,8 @@ const MobileChartsCarousel: React.FC<{
   getMonthlyRevenue,
   getBookingCountByDay,
   ratingData,
+  getStatusCountsByPeriod,
+  providerReviews,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [index, setIndex] = useState(0);
@@ -80,7 +92,10 @@ const MobileChartsCarousel: React.FC<{
                 <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
               }
             >
-              <BookingStatusPieChart analytics={analytics} />
+              <BookingStatusPieChart
+                analytics={analytics}
+                getStatusCountsByPeriod={getStatusCountsByPeriod}
+              />
             </Suspense>
           </div>
         </div>,
@@ -113,7 +128,10 @@ const MobileChartsCarousel: React.FC<{
         </div>,
         <div key="rating" className="w-full shrink-0 snap-center px-1">
           <div className="flex h-72 items-center justify-center rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
-            <CustomerRatingStars analytics={ratingData} />
+            <CustomerRatingStars
+              analytics={ratingData}
+              reviews={providerReviews}
+            />
           </div>
         </div>,
       ];
@@ -158,6 +176,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   reviewAnalytics,
   reviewsLoading,
   reviewsError,
+  getStatusCountsByPeriod,
+  providerReviews,
 }) => {
   const { balance } = useWallet();
 
@@ -309,7 +329,10 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
                 <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
               }
             >
-              <BookingStatusPieChart analytics={analytics} />
+              <BookingStatusPieChart
+                analytics={analytics}
+                getStatusCountsByPeriod={getStatusCountsByPeriod}
+              />
             </Suspense>
           </div>
           <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
@@ -336,7 +359,10 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
             </Suspense>
           </div>
           <div className="flex h-80 items-center justify-center rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
-            <CustomerRatingStars analytics={ratingData} />
+            <CustomerRatingStars
+              analytics={ratingData}
+              reviews={providerReviews}
+            />
           </div>
         </>
       )}
@@ -401,6 +427,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
           getMonthlyRevenue={getMonthlyRevenue}
           getBookingCountByDay={getBookingCountByDay}
           ratingData={ratingData}
+          getStatusCountsByPeriod={getStatusCountsByPeriod}
+          providerReviews={providerReviews}
         />
       ) : (
         renderCharts()

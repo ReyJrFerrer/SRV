@@ -127,12 +127,14 @@ const ProviderHomePage: React.FC = () => {
     getMonthlyRevenue,
     getBookingCountByDay,
     getRevenueByPeriod,
+    getStatusCountsByPeriod,
   } = useProviderBookingManagement();
 
   const {
     analytics: reviewAnalytics,
     loading: reviewsLoading,
     error: reviewsError,
+    reviews,
   } = useProviderReviews();
 
   // Only create a legacy provider object for components that still need the old interface
@@ -357,6 +359,8 @@ const ProviderHomePage: React.FC = () => {
                 reviewAnalytics={reviewAnalytics}
                 reviewsLoading={reviewsLoading}
                 reviewsError={reviewsError}
+                getStatusCountsByPeriod={getStatusCountsByPeriod}
+                providerReviews={reviews}
               />
             )}
 

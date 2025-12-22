@@ -23,9 +23,17 @@ const placeholderData = [{ name: "No Data", value: 100 }];
 
 interface BookingStatusPieChartsProps {
   analytics: any;
+  getStatusCountsByPeriod?: (period: "7d" | "30d" | "12m" | "all") => {
+    accepted: number;
+    completed: number;
+    pending: number;
+    cancelled: number;
+    disputed: number;
+  };
 }
 const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
   analytics,
+  getStatusCountsByPeriod,
 }) => {
   // Check if there is no analytics data at all.
   const hasAnalyticsData =
@@ -68,12 +76,28 @@ const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
     );
   }
 
+  const [period, setPeriod] = React.useState<"7d" | "30d" | "12m" | "all">(
+    "30d",
+  );
+  const counts = React.useMemo(() => {
+    if (getStatusCountsByPeriod) {
+      return getStatusCountsByPeriod(period);
+    }
+    return {
+      accepted: analytics.acceptedBookings,
+      completed: analytics.completedBookings,
+      pending: analytics.pendingRequests,
+      cancelled: analytics.cancelledBookings,
+      disputed: analytics.disputedBookings,
+    };
+  }, [getStatusCountsByPeriod, period, analytics]);
+
   const data = [
-    { name: "Accepted", value: analytics.acceptedBookings },
-    { name: "Completed", value: analytics.completedBookings },
-    { name: "Pending", value: analytics.pendingRequests },
-    { name: "Cancelled", value: analytics.cancelledBookings },
-    { name: "Disputed", value: analytics.disputedBookings },
+    { name: "Accepted", value: counts.accepted },
+    { name: "Completed", value: counts.completed },
+    { name: "Pending", value: counts.pending },
+    { name: "Cancelled", value: counts.cancelled },
+    { name: "Disputed", value: counts.disputed },
   ];
 
   return (
@@ -88,7 +112,21 @@ const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
           <InformationCircleIcon className="h-6 w-6 text-blue-400" />
           Booking Status
         </h3>
-        <span className="text-xs text-gray-400">Last 30 days</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">Timeframe</span>
+          <select
+            value={period}
+            onChange={(e) =>
+              setPeriod(e.target.value as "7d" | "30d" | "12m" | "all")
+            }
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="12m">Last 12 months</option>
+            <option value="all">All time</option>
+          </select>
+        </div>
       </div>
       <div className="flex h-full w-full flex-1 items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">

@@ -41,26 +41,22 @@ type BookingStatusTab =
 // Filter for "Same Day" or "Scheduled" booking types
 type BookingTimingFilter = "All" | "Same Day" | "Scheduled";
 
-const TAB_ITEMS: BookingStatusTab[] = [
-  "ALL",
-  "PENDING",
-  "CONFIRMED",
-  "IN PROGRESS",
-  "COMPLETED",
-  "CANCELLED",
-];
+// Removed status tabs from the top bar; status is now a filter option
 
 // Options for the timing filter
-const TIMING_FILTERS: BookingTimingFilter[] = ["All", "Same Day", "Scheduled"];
+// Timing filters are controlled by the top toggle; no constant mapping needed here
 
 const ProviderBookingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryTab = searchParams.get("tab");
 
-  const [activeTab, setActiveTab] = useState<BookingStatusTab>("ALL");
+  // Status filter inside dropdown
+  const [statusFilter, setStatusFilter] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("All");
+  // Primary view toggle on top bar
+  const [timingFilter, setTimingFilter] =
+    useState<BookingTimingFilter>("Scheduled");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] =
     useState<boolean>(false);
 
@@ -80,10 +76,6 @@ const ProviderBookingsPage: React.FC = () => {
   const {
     bookings,
     loading,
-    getPendingBookings,
-    getUpcomingBookings,
-    getCompletedBookings,
-    getBookingsByStatus,
     refreshBookings,
     declineBookingById,
     isBookingActionInProgress,
@@ -158,13 +150,10 @@ const ProviderBookingsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (
-      typeof queryTab === "string" &&
-      TAB_ITEMS.includes(queryTab as BookingStatusTab)
-    ) {
-      setActiveTab(queryTab as BookingStatusTab);
-    } else if (!queryTab) {
-      setActiveTab("ALL");
+    if (typeof queryTab === "string") {
+      const normalized = queryTab.toLowerCase();
+      if (normalized === "same-day") setTimingFilter("Same Day");
+      else if (normalized === "scheduled") setTimingFilter("Scheduled");
     }
   }, [queryTab]);
 
@@ -214,48 +203,31 @@ const ProviderBookingsPage: React.FC = () => {
     }
   }, [bookings]);
 
-  const categorizedBookings = useMemo(() => {
-    const cancelledBookings = getBookingsByStatus("Cancelled");
-    const declinedBookings = getBookingsByStatus("Declined");
-    const combinedCancelledBookings = [
-      ...cancelledBookings,
-      ...declinedBookings,
-    ];
-
-    const allBookings = bookings;
-
-    return {
-      ALL: allBookings,
-      PENDING: getPendingBookings(),
-      CONFIRMED: getUpcomingBookings(),
-      COMPLETED: getCompletedBookings(),
-      CANCELLED: combinedCancelledBookings,
-      "IN PROGRESS": bookings.filter(
-        (booking) => booking.status === "InProgress",
-      ),
-    };
-  }, [
-    getPendingBookings,
-    getUpcomingBookings,
-    getCompletedBookings,
-    getBookingsByStatus,
-    bookings,
-  ]);
-
-  const tabCounts = useMemo(() => {
-    return {
-      ALL: categorizedBookings.ALL.length,
-      PENDING: categorizedBookings.PENDING.length,
-      CONFIRMED: categorizedBookings.CONFIRMED.length,
-      "IN PROGRESS": categorizedBookings["IN PROGRESS"].length,
-      COMPLETED: categorizedBookings.COMPLETED.length,
-      CANCELLED: categorizedBookings.CANCELLED.length,
-    };
-  }, [categorizedBookings]);
+  // Status-based filtering (replaces tab logic)
+  const statusMatches = (status: string | undefined, targets: string[]) => {
+    if (!status) return false;
+    const s = status.toLowerCase();
+    return targets.some((t) => s === t.toLowerCase());
+  };
 
   // --- Custom sort for ALL tab: requested > accepted > inprogress > others ---
   const currentBookings: ProviderEnhancedBooking[] = useMemo(() => {
-    let filteredBookings = categorizedBookings[activeTab] || [];
+    let filteredBookings = bookings || [];
+
+    if (statusFilter !== "ALL") {
+      const mapping: Record<BookingStatusTab, string[]> = {
+        ALL: [],
+        PENDING: ["requested", "pending"],
+        CONFIRMED: ["accepted", "confirmed"],
+        "IN PROGRESS": ["inprogress", "in_progress", "in progress"],
+        COMPLETED: ["completed"],
+        CANCELLED: ["cancelled", "declined"],
+      };
+      const targets = mapping[statusFilter] || [];
+      filteredBookings = filteredBookings.filter((b) =>
+        statusMatches(b.status, targets),
+      );
+    }
 
     if (timingFilter !== "All") {
       filteredBookings = filteredBookings.filter((booking) => {
@@ -318,8 +290,8 @@ const ProviderBookingsPage: React.FC = () => {
       });
     }
 
-    // --- Custom sort for ALL tab: requested > accepted > inprogress > others ---
-    if (activeTab === "ALL") {
+    // --- Custom sort when statusFilter is ALL: requested > accepted > inprogress > others ---
+    if (statusFilter === "ALL") {
       const inProgress = filteredBookings.filter(
         (b) => b.status?.toLowerCase() === "inprogress",
       );
@@ -390,13 +362,7 @@ const ProviderBookingsPage: React.FC = () => {
     }
 
     return filteredBookings;
-  }, [
-    activeTab,
-    categorizedBookings,
-    searchTerm,
-    timingFilter,
-    selectedCategoryId,
-  ]);
+  }, [statusFilter, bookings, searchTerm, timingFilter, selectedCategoryId]);
 
   // Section: Separate Same Day vs Scheduled, based on date (scheduledDateTime || requestedDate || requestedDateTime || createdAt)
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
@@ -551,14 +517,14 @@ const ProviderBookingsPage: React.FC = () => {
             </div>
             {/* Filters: Timing + Category */}
             <div className="flex gap-2">
-              {/* Timing Filter Dropdown */}
+              {/* Filter Dropdown: Status + Category */}
               <div className="relative" ref={timingDropdownRef}>
                 <button
                   className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
                 >
                   <FunnelIcon className="mr-1 h-5 w-5" />
-                  <span className="hidden md:inline">{timingFilter}</span>
+                  <span className="hidden md:inline">Filters</span>
                   <ChevronDownIcon
                     className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${
                       isTimingDropdownOpen ? "rotate-180" : "rotate-0"
@@ -573,15 +539,28 @@ const ProviderBookingsPage: React.FC = () => {
                       aria-orientation="vertical"
                       aria-labelledby="options-menu"
                     >
-                      {TIMING_FILTERS.map((filter) => (
+                      {/* Status filters */}
+                      <div className="px-4 pb-1 text-xs font-medium text-gray-500">
+                        Status
+                      </div>
+                      {(
+                        [
+                          "ALL",
+                          "PENDING",
+                          "CONFIRMED",
+                          "IN PROGRESS",
+                          "COMPLETED",
+                          "CANCELLED",
+                        ] as BookingStatusTab[]
+                      ).map((filter) => (
                         <button
                           key={filter}
                           onClick={() => {
-                            setTimingFilter(filter);
+                            setStatusFilter(filter);
                             setIsTimingDropdownOpen(false);
                           }}
                           className={`${
-                            timingFilter === filter
+                            statusFilter === filter
                               ? "bg-blue-100 text-blue-900"
                               : "text-gray-700"
                           } block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
@@ -590,7 +569,6 @@ const ProviderBookingsPage: React.FC = () => {
                           {filter}
                         </button>
                       ))}
-
                       <div className="border-t px-2 pt-2">
                         <div className="px-4 pb-1 text-xs font-medium text-gray-500">
                           Categories
@@ -623,26 +601,36 @@ const ProviderBookingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="w-full overflow-x-auto">
-            <nav className="flex px-4 pb-4 text-sm">
-              <div className="flex w-full min-w-max justify-between space-x-2">
-                {TAB_ITEMS.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      setActiveTab(tab);
-                    }}
-                    className={`min-w-fit flex-1 whitespace-nowrap rounded-full px-4 py-2 text-center font-medium transition-colors ${
-                      activeTab === tab
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-600 hover:bg-yellow-200"
-                    }`}
-                  >
-                    {tab} ({tabCounts[tab as keyof typeof tabCounts]})
-                  </button>
-                ))}
-              </div>
-            </nav>
+          {/* Top toggle: Same Day / Scheduled */}
+          <div className="w-full">
+            <div className="flex items-center justify-center gap-2 px-4 pb-3">
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                  timingFilter === "Same Day"
+                    ? "bg-yellow-500 text-white"
+                    : "text-gray-700 hover:bg-yellow-200"
+                }`}
+                onClick={() => {
+                  setTimingFilter("Same Day");
+                }}
+              >
+                Same Day
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                  timingFilter === "Scheduled"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-yellow-200"
+                }`}
+                onClick={() => {
+                  setTimingFilter("Scheduled");
+                }}
+              >
+                Scheduled
+              </button>
+            </div>
           </div>
         </div>
 
@@ -653,7 +641,7 @@ const ProviderBookingsPage: React.FC = () => {
             </div>
           ) : sameDayBookings.length > 0 || scheduledBookings.length > 0 ? (
             <div className="space-y-10 px-4 py-4">
-              {sameDayBookings.length > 0 && (
+              {timingFilter === "Same Day" && sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
                     <SparklesIcon className="mr-2 h-6 w-6 text-yellow-500" />
@@ -679,9 +667,8 @@ const ProviderBookingsPage: React.FC = () => {
                           <div
                             onClick={() => {
                               if (
-                                (activeTab === "IN PROGRESS" ||
-                                  booking.status?.toLowerCase() ===
-                                    "inprogress") &&
+                                booking.status?.toLowerCase() ===
+                                  "inprogress" &&
                                 booking.id
                               ) {
                                 navigate(
@@ -728,8 +715,7 @@ const ProviderBookingsPage: React.FC = () => {
                   </div>
                 </section>
               )}
-
-              {scheduledBookings.length > 0 && (
+              {timingFilter === "Scheduled" && scheduledBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
                     <CalendarDaysIcon className="mr-2 h-6 w-6 text-blue-500" />
@@ -797,9 +783,8 @@ const ProviderBookingsPage: React.FC = () => {
                             <div
                               onClick={() => {
                                 if (
-                                  (activeTab === "IN PROGRESS" ||
-                                    booking.status?.toLowerCase() ===
-                                      "inprogress") &&
+                                  booking.status?.toLowerCase() ===
+                                    "inprogress" &&
                                   booking.id
                                 ) {
                                   navigate(
