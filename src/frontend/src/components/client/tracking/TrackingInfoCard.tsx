@@ -236,8 +236,9 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
             )}
             {/* Online indicator */}
             <div
-              className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${isStale ? "bg-yellow-400" : "bg-green-500"
-                }`}
+              className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${
+                isStale ? "bg-yellow-400" : "bg-green-500"
+              }`}
             />
           </div>
 

@@ -151,7 +151,10 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
               const currentDistanceMeters = leg?.distance?.value || null;
 
               // Set initial distance only on first calculation
-              if (initialDistanceRef.current === null && currentDistanceMeters !== null) {
+              if (
+                initialDistanceRef.current === null &&
+                currentDistanceMeters !== null
+              ) {
                 initialDistanceRef.current = currentDistanceMeters;
               }
 
@@ -212,7 +215,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
             }
           }
           if (acc.length > 1) return acc;
-        } catch { }
+        } catch {}
         const poly = (route as any).overview_polyline?.points;
         if (typeof poly === "string" && poly.length > 0) {
           return decodePolyline(poly);
@@ -308,20 +311,20 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
               try {
                 if (pos) altInfoWindowRef.current.setPosition(pos as any);
                 altInfoWindowRef.current.open(map);
-              } catch { }
-            } catch { }
+              } catch {}
+            } catch {}
           },
         );
 
         const overLn = google.maps.event.addListener(pl, "mouseover", () => {
           try {
             pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
-          } catch { }
+          } catch {}
         });
         const outLn = google.maps.event.addListener(pl, "mouseout", () => {
           try {
             pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
-          } catch { }
+          } catch {}
         });
 
         altRouteListenersRef.current.push(clickLn, overLn, outLn);
@@ -363,19 +366,19 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
               try {
                 if (pos) altInfoWindowRef.current.setPosition(pos as any);
                 altInfoWindowRef.current.open(map);
-              } catch { }
-            } catch { }
+              } catch {}
+            } catch {}
           },
         );
         const overLn = google.maps.event.addListener(pl, "mouseover", () => {
           try {
             pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
-          } catch { }
+          } catch {}
         });
         const outLn = google.maps.event.addListener(pl, "mouseout", () => {
           try {
             pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
-          } catch { }
+          } catch {}
         });
 
         altRoutePolylinesRef.current.push(pl);
@@ -387,13 +390,13 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
       if (routePolylineRef.current) {
         try {
           routePolylineRef.current.setMap(null);
-        } catch { }
+        } catch {}
         routePolylineRef.current = null;
       }
       for (const pl of altRoutePolylinesRef.current) {
         try {
           pl.setMap(null);
-        } catch { }
+        } catch {}
       }
       altRoutePolylinesRef.current = [];
     }
@@ -463,7 +466,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
       map.panTo(providerLocation);
       lastPanTimeRef.current = now;
       lastPanPosRef.current = providerLocation;
-    } catch { }
+    } catch {}
   }, [providerLocation, autoFollow]);
 
   const handleMapLoad = (map: google.maps.Map) => {

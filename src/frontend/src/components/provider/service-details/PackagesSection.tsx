@@ -91,10 +91,11 @@ const PackagesSection: React.FC<Props> = ({
                   ? undefined
                   : onAddPackage
               }
-              className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 ${hasActiveBookings || packages.length >= 5
-                ? "cursor-not-allowed opacity-50"
-                : ""
-                }`}
+              className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 ${
+                hasActiveBookings || packages.length >= 5
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
+              }`}
               disabled={hasActiveBookings || packages.length >= 5}
             >
               <PlusIcon className="h-4 w-4" />
@@ -264,10 +265,11 @@ const PackagesSection: React.FC<Props> = ({
                       onClick={() =>
                         hasActiveBookings ? undefined : onEditPackage(pkg)
                       }
-                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${hasActiveBookings || isAddingOrEditingPackage
-                        ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                        : "bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:scale-95"
-                        }`}
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                        hasActiveBookings || isAddingOrEditingPackage
+                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                          : "bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:scale-95"
+                      }`}
                       aria-label={`Edit ${pkg.title}`}
                       disabled={hasActiveBookings || isAddingOrEditingPackage}
                     >
@@ -286,12 +288,13 @@ const PackagesSection: React.FC<Props> = ({
                           ? undefined
                           : onDeletePackage(pkg.id)
                       }
-                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${hasActiveBookings ||
+                      className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                        hasActiveBookings ||
                         isAddingOrEditingPackage ||
                         packages.length <= 1
-                        ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                        : "bg-white text-red-600 ring-1 ring-red-200 hover:bg-red-50 active:scale-95"
-                        }`}
+                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                          : "bg-white text-red-600 ring-1 ring-red-200 hover:bg-red-50 active:scale-95"
+                      }`}
                       aria-label={`Delete ${pkg.title}`}
                       disabled={
                         hasActiveBookings ||
