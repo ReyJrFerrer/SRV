@@ -32,6 +32,7 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
   // State
   const [showMap, setShowMap] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [isExplicitOpen, setIsExplicitOpen] = useState(false); // Track if user explicitly opened the modal
   const [gmapsAddress, setGmapsAddress] = useState<string>(
     "Detecting location...",
   );
@@ -163,11 +164,13 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
     if (mapsApiLoaded && geoLocation) {
       setShowMap(true);
     } else if (locationStatus === "denied" || locationStatus === "not_set") {
+      setIsExplicitOpen(true);
       setShowLocationModal(true);
     }
   };
 
   const openChangeLocation = () => {
+    setIsExplicitOpen(true);
     setShowLocationModal(true);
   };
 
@@ -180,6 +183,7 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
       prevStatus !== "denied" &&
       !showLocationModal
     ) {
+      setIsExplicitOpen(false); // Auto-opened, not explicit
       setShowLocationModal(true);
     }
     // When permission transitions to allowed, force a fresh reverse geocode
@@ -279,10 +283,12 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
       )}
 
       <LocationBlockedModal
-        visible={
-          showLocationModal && locationStatus === "denied" && isInitialized
-        }
-        onClose={() => setShowLocationModal(false)}
+        visible={showLocationModal && isInitialized}
+        onClose={() => {
+          setShowLocationModal(false);
+          setIsExplicitOpen(false);
+        }}
+        forceShow={isExplicitOpen}
       />
     </>
   );

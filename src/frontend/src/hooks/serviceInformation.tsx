@@ -221,12 +221,25 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
   const [error, setError] = useState<Error | null>(null);
 
   // User location for area-based filtering
-  const { userAddress, userProvince, location } = useLocationStore();
+  // Subscribe to all relevant location values so component re-renders when they change
+  const { location, addressMode, manualFields, userProvince, userAddress } =
+    useLocationStore();
 
   const filterAndSortByArea = useCallback(
     (items: EnrichedService[]): EnrichedService[] => {
+      // Get effective values based on current mode
+      const effectiveProvince =
+        addressMode === "manual"
+          ? manualFields.province || userProvince || ""
+          : userProvince;
+      const effectiveAddress =
+        addressMode === "manual"
+          ? manualFields.municipality || userAddress || ""
+          : userAddress;
+
+
       // If we don't have any user geo context, don't filter
-      if (!userProvince && !userAddress) return items;
+      if (!effectiveProvince && !effectiveAddress) return items;
 
       const RADIUS_KM = 25; // treat "near municipalities" within 25 km
       const hasUserCoords = !!location?.latitude && !!location?.longitude;
@@ -242,9 +255,9 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
 
       const inSameProvince = (svc: EnrichedService) =>
         normalizeProvince(svc.location.state) ===
-        normalizeProvince(userProvince || "");
+        normalizeProvince(effectiveProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
+        normalizeCity(svc.location.city) === normalizeCity(effectiveAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
         const lat = svc.location?.latitude;
@@ -303,7 +316,7 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
 
       return withDistance.map(({ svc }) => svc);
     },
-    [userAddress, userProvince, location],
+    [addressMode, location, manualFields, userProvince, userAddress],
   );
 
   useEffect(() => {
@@ -374,11 +387,22 @@ export const useServicesByCategory = (
   const [services, setServices] = useState<EnrichedService[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const { userAddress, userProvince, location } = useLocationStore();
+  const { location, addressMode, manualFields, userProvince, userAddress } =
+    useLocationStore();
 
   const filterAndSortByArea = useCallback(
     (items: EnrichedService[]): EnrichedService[] => {
-      if (!userProvince && !userAddress) return items;
+      // Get effective values based on current mode
+      const effectiveProvince =
+        addressMode === "manual"
+          ? manualFields.province || userProvince || ""
+          : userProvince;
+      const effectiveAddress =
+        addressMode === "manual"
+          ? manualFields.municipality || userAddress || ""
+          : userAddress;
+
+      if (!effectiveProvince && !effectiveAddress) return items;
       const RADIUS_KM = 25;
       const hasUserCoords = !!location?.latitude && !!location?.longitude;
       const normalizeCity = (val: string) =>
@@ -391,9 +415,9 @@ export const useServicesByCategory = (
         (val || "").toLowerCase().trim();
       const inSameProvince = (svc: EnrichedService) =>
         normalizeProvince(svc.location.state) ===
-        normalizeProvince(userProvince || "");
+        normalizeProvince(effectiveProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
+        normalizeCity(svc.location.city) === normalizeCity(effectiveAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
         const lat = svc.location?.latitude;
@@ -444,7 +468,7 @@ export const useServicesByCategory = (
       });
       return withDistance.map(({ svc }) => svc);
     },
-    [userAddress, userProvince, location],
+    [addressMode, location, manualFields, userProvince, userAddress],
   );
 
   const fetchServices = useCallback(async () => {
@@ -503,11 +527,22 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
   const [services, setServices] = useState<EnrichedService[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const { userAddress, userProvince, location } = useLocationStore();
+  const { location, addressMode, manualFields, userProvince, userAddress } =
+    useLocationStore();
 
   const filterAndSortByArea = useCallback(
     (items: EnrichedService[]): EnrichedService[] => {
-      if (!userProvince && !userAddress) return items;
+      // Get effective values based on current mode
+      const effectiveProvince =
+        addressMode === "manual"
+          ? manualFields.province || userProvince || ""
+          : userProvince;
+      const effectiveAddress =
+        addressMode === "manual"
+          ? manualFields.municipality || userAddress || ""
+          : userAddress;
+
+      if (!effectiveProvince && !effectiveAddress) return items;
       const RADIUS_KM = 25;
       const hasUserCoords = !!location?.latitude && !!location?.longitude;
       const normalizeCity = (val: string) =>
@@ -520,9 +555,9 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
         (val || "").toLowerCase().trim();
       const inSameProvince = (svc: EnrichedService) =>
         normalizeProvince(svc.location.state) ===
-        normalizeProvince(userProvince || "");
+        normalizeProvince(effectiveProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        normalizeCity(svc.location.city) === normalizeCity(userAddress || "");
+        normalizeCity(svc.location.city) === normalizeCity(effectiveAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
         const lat = svc.location?.latitude;
@@ -573,7 +608,7 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
       });
       return withDistance.map(({ svc }) => svc);
     },
-    [userAddress, userProvince, location],
+    [addressMode, location, manualFields, userProvince, userAddress],
   );
 
   const fetchServices = useCallback(async () => {

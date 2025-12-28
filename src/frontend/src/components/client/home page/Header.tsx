@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   // --- Use Zustand location store ---
-  const { locationLoading, locationStatus } = useLocationStore();
+  const { locationLoading, locationStatus, addressMode } = useLocationStore();
 
   // Get requestLocation function separately to avoid dependency issues
   const locationStore = useLocationStore();
@@ -150,6 +150,56 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     }
   }, [isAuthenticated, isAuthLoading, locationStore]);
 
+  // Effect: Monitor permission state changes to detect when user enables/disables location
+  useEffect(() => {
+    let isMounted = true;
+    let permissionStatus: PermissionStatus | null = null;
+    let previousState: PermissionState | null = null;
+    
+    const checkPermission = async () => {
+      if (typeof navigator === "undefined" || !(navigator as any).permissions) return;
+      
+      try {
+        permissionStatus = await (navigator as any).permissions.query({ name: "geolocation" });
+        previousState = permissionStatus!.state;
+        
+        const handlePermissionChange = () => {
+          if (!isMounted || !permissionStatus) return;
+          
+          const currentState = permissionStatus.state;
+          
+          // When permission changes from denied/prompt to granted, fetch location automatically
+          if (
+            (previousState === "denied" || previousState === "prompt") &&
+            currentState === "granted"
+          ) {
+            // Automatically request location and switch to automatic mode
+            locationStore.requestLocation(true);
+          }
+          // When permission changes to denied, trigger the store handler
+          else if (currentState === "denied") {
+            locationStore.handlePermissionDenied();
+          }
+          
+          previousState = currentState;
+        };
+        
+        permissionStatus!.onchange = handlePermissionChange;
+      } catch {
+        // Ignore errors (older browsers)
+      }
+    };
+    
+    checkPermission();
+    
+    return () => {
+      isMounted = false;
+      if (permissionStatus) {
+        permissionStatus.onchange = null;
+      }
+    };
+  }, [locationStore]);
+
   // --- Effect: Randomize search bar placeholder after location loads ---
   useEffect(() => {
     if (
@@ -269,7 +319,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               <button
                 type="button"
                 onClick={handleLocationClick}
-                className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none"
+                disabled={addressMode === "context" && locationStatus === "allowed"}
+                className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none disabled:cursor-not-allowed"
                 aria-label="Open my location details"
               >
                 <MapPinIcon className="h-6 w-6 text-blue-600" />

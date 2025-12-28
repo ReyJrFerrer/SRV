@@ -71,25 +71,49 @@ const ClientHomePage: React.FC = () => {
   const [permissionApiDenied, setPermissionApiDenied] = useState(false);
   useEffect(() => {
     let mounted = true;
-    if (typeof navigator !== "undefined" && (navigator as any).permissions) {
-      try {
-        (navigator as any).permissions
-          .query({ name: "geolocation" })
-          .then((p: any) => {
-            if (!mounted) return;
-            if (p && p.state === "denied") setPermissionApiDenied(true);
-            if (p && typeof p.onchange === "function") {
-              p.onchange = () => {
-                if (!mounted) return;
-                setPermissionApiDenied(p.state === "denied");
-              };
-            }
-          })
-          .catch(() => {});
-      } catch {}
-    }
+
+    const checkPermission = async () => {
+      if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+        try {
+          const p = await (navigator as any).permissions.query({ name: "geolocation" });
+          if (!mounted) return;
+
+          if (p.state === "denied") {
+            setPermissionApiDenied(true);
+            useLocationStore.getState().handlePermissionDenied();
+          } else {
+            setPermissionApiDenied(false);
+          }
+
+          if (typeof p.onchange === "function") {
+            p.onchange = () => {
+              if (!mounted) return;
+              if (p.state === "denied") {
+                setPermissionApiDenied(true);
+                useLocationStore.getState().handlePermissionDenied();
+              } else {
+                setPermissionApiDenied(false);
+              }
+            };
+          }
+        } catch { }
+      }
+    };
+
+    checkPermission();
+
+    // Re-check permission when tab becomes visible (user might have changed it in settings)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkPermission();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       mounted = false;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
   useEffect(() => {
@@ -111,7 +135,7 @@ const ClientHomePage: React.FC = () => {
       showPostLoginLocationPrompt();
       try {
         navigate(location.pathname, { replace: true, state: {} });
-      } catch {}
+      } catch { }
     }
   }, [location, showPostLoginLocationPrompt]);
 
@@ -125,7 +149,7 @@ const ClientHomePage: React.FC = () => {
         onEnable={async () => {
           try {
             await requestLocationFromPrompt();
-          } catch {}
+          } catch { }
         }}
         onSkip={() => {
           skipPostLoginLocationPrompt();
@@ -154,7 +178,7 @@ const ClientHomePage: React.FC = () => {
           setDismissedLocationBlock(true);
           try {
             sessionStorage.setItem("dismissedLocationBlock", "1");
-          } catch {}
+          } catch { }
           if (postLoginBlockedModalVisible) {
             acknowledgePostLoginBlockedModal();
           }

@@ -52,6 +52,12 @@ interface LocationState {
   requestLocation: (force?: boolean) => Promise<void>;
   clearLocation: () => void;
   initialize: () => Promise<void>;
+
+  // Helper methods to get effective values based on mode
+  getEffectiveProvince: () => string;
+  getEffectiveAddress: () => string;
+  // Handle permission denial from external permission check
+  handlePermissionDenied: () => void;
 }
 
 const fetchWithRetry = async (
@@ -278,6 +284,7 @@ export const useLocationStore = create<LocationState>()(
               location: newLocation,
               locationStatus: "allowed",
               locationLoading: false, // Location acquired, maps can work
+              addressMode: "context", // Switch to automatic mode when GPS is enabled
             });
             localStorage.setItem("userLocation", JSON.stringify(newLocation));
             localStorage.setItem("locationPermission", "allowed");
@@ -288,12 +295,10 @@ export const useLocationStore = create<LocationState>()(
             if (cached) {
               try {
                 const { address, province } = JSON.parse(cached);
-                if (get().addressMode !== "manual") {
-                  set({
-                    userAddress: address,
-                    userProvince: province,
-                  });
-                }
+                set({
+                  userAddress: address,
+                  userProvince: province,
+                });
                 return;
               } catch {
                 // Continue to fetch if cache is invalid
@@ -310,53 +315,52 @@ export const useLocationStore = create<LocationState>()(
               const normalized = normalizeLocationData(data);
 
               if (normalized) {
-                if (get().addressMode !== "manual") {
-                  set({
-                    userAddress: normalized.address,
-                    userProvince: normalized.province,
-                  });
-                }
+                set({
+                  userAddress: normalized.address,
+                  userProvince: normalized.province,
+                });
                 // Cache the result
                 localStorage.setItem(cacheKey, JSON.stringify(normalized));
-              } else if (get().addressMode !== "manual") {
+              } else {
                 set({
                   userAddress: "Could not determine city",
                   userProvince: "",
                 });
               }
             } catch (error) {
-              if (get().addressMode !== "manual") {
-                set({
-                  userAddress: "Failed to resolve address",
-                  userProvince: "",
-                });
-              }
+              set({
+                userAddress: "Failed to resolve address",
+                userProvince: "",
+              });
             }
           },
           (error) => {
+            // When permission is denied, clear old location data so modal will appear
             if (error.code === error.PERMISSION_DENIED) {
-              if (get().addressMode === "manual") {
-                set({ locationStatus: "denied", locationLoading: false });
-              } else {
-                set({
-                  locationStatus: "denied",
-                  userAddress: "Location not shared",
-                  userProvince: "",
-                  locationLoading: false,
-                });
-              }
+              set({
+                locationStatus: "denied",
+                userAddress: "",
+                userProvince: "",
+                addressMode: "context", // Reset to context mode
+                locationLoading: false,
+                location: null,
+              });
               localStorage.setItem("locationPermission", "denied");
+              localStorage.removeItem("userLocation");
+              // Clear modal suppression flag so it can appear again
+              try {
+                localStorage.removeItem("loc_block_modal_suppress");
+              } catch { }
             } else {
-              if (get().addressMode === "manual") {
-                set({ locationStatus: "denied", locationLoading: false });
-              } else {
-                set({
-                  locationStatus: "denied",
-                  userAddress: "Could not determine location",
-                  userProvince: "",
-                  locationLoading: false,
-                });
-              }
+              set({
+                locationStatus: "denied",
+                userAddress: "",
+                userProvince: "",
+                addressMode: "context",
+                locationLoading: false,
+                location: null,
+              });
+              localStorage.removeItem("userLocation");
             }
           },
           {
@@ -382,6 +386,41 @@ export const useLocationStore = create<LocationState>()(
       initialize: async () => {
         const state = get();
         if (state.isInitialized) return;
+
+        // Check live permission status first
+        let isDenied = false;
+        try {
+          if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+            const p = await (navigator as any).permissions.query({ name: "geolocation" });
+            if (p.state === "denied") {
+              isDenied = true;
+            }
+          }
+        } catch { }
+
+        // If explicitly denied in browser, override any stored "allowed" state
+        if (isDenied) {
+          // If in manual mode with valid location, preserve it
+          if (state.addressMode === "manual" && state.userAddress && state.userProvince) {
+            set({
+              locationStatus: "denied",
+              isInitialized: true,
+              location: null,
+            });
+          } else {
+            set({
+              locationStatus: "denied",
+              userAddress: "",
+              userProvince: "",
+              addressMode: "context",
+              isInitialized: true,
+              location: null,
+            });
+          }
+          localStorage.setItem("locationPermission", "denied");
+          localStorage.removeItem("userLocation");
+          return;
+        }
 
         // Check for stored GPS location and permission first
         const storedLocation = localStorage.getItem("userLocation");
@@ -426,6 +465,54 @@ export const useLocationStore = create<LocationState>()(
         }
 
         set({ isInitialized: true });
+      },
+
+      // Helper methods to get effective values based on current mode
+      getEffectiveProvince: () => {
+        const state = get();
+        // In manual mode, use manual fields; otherwise use automatic location
+        if (state.addressMode === "manual") {
+          return state.manualFields.province || "";
+        }
+        return state.userProvince;
+      },
+
+      getEffectiveAddress: () => {
+        const state = get();
+        if (state.addressMode === "manual") {
+          return state.manualFields.municipality || state.userAddress;
+        }
+        return state.userAddress;
+      },
+
+      // Handle permission denial detected by Permissions API
+      handlePermissionDenied: () => {
+        const currentMode = get().addressMode;
+        // Only clear if in context (GPS) mode; preserve manual location
+        if (currentMode === "context") {
+          set({
+            locationStatus: "denied",
+            userAddress: "",
+            userProvince: "",
+            locationLoading: false,
+            location: null,
+          });
+          localStorage.removeItem("userLocation");
+        } else {
+          // In manual mode, just update the status
+          set({
+            locationStatus: "denied",
+            locationLoading: false,
+            location: null,
+          });
+          localStorage.removeItem("userLocation");
+        }
+        localStorage.setItem("locationPermission", "denied");
+        // Clear modal suppression flags so modal can appear
+        try {
+          localStorage.removeItem("loc_block_modal_suppress");
+          sessionStorage.removeItem("dismissedLocationBlock");
+        } catch { }
       },
     }),
     {
