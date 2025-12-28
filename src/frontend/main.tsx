@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./src/App";
@@ -15,6 +15,10 @@ import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
 import GlobalChatDock from "./src/components/chat/GlobalChatDock";
+import LocationBlockedModal from "./src/components/common/locationAccessPermission/LocationBlockedModal";
+import LocationPermissionPromptModal from "./src/components/common/locationAccessPermission/LocationPermissionPromptModal";
+import { useLocationStore } from "./src/store/locationStore";
+import { useAuth } from "../frontend/src/context/AuthContext";
 
 const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -66,7 +70,10 @@ const MapsProviderWrapper: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <APIProvider apiKey={mapsApiKey} libraries={["places"]} version="weekly">
-      {children}
+      <>
+        {children}
+        <GlobalLocationModals />
+      </>
     </APIProvider>
   );
 };
@@ -249,6 +256,145 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Global Location Modal Manager Component
+const GlobalLocationModals: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { locationStatus, userProvince, userAddress, isInitialized } =
+    useLocationStore();
+  const { 
+    postLoginLocationPromptVisible,
+    requestLocationFromPrompt,
+    skipPostLoginLocationPrompt,
+    postLoginBlockedModalVisible,
+    acknowledgePostLoginBlockedModal,
+    showPostLoginLocationPrompt,
+  } = useAuth();
+
+  // Handle post-login location prompt trigger from route state
+  React.useEffect(() => {
+    const shouldShow = (location.state as any)?.postLoginLocationPrompt;
+    if (shouldShow) {
+      showPostLoginLocationPrompt();
+      try {
+        navigate(location.pathname, { replace: true, state: {} });
+      } catch {}
+    }
+  }, [location, showPostLoginLocationPrompt, navigate]);
+
+  const [dismissedLocationBlock, setDismissedLocationBlock] = React.useState<boolean>(
+    () => {
+      try {
+        return sessionStorage.getItem("dismissedLocationBlock") === "1";
+      } catch {
+        return false;
+      }
+    },
+  );
+
+  const [permissionApiDenied, setPermissionApiDenied] = React.useState(false);
+
+  // Check permission state via Permissions API
+  React.useEffect(() => {
+    let mounted = true;
+
+    const checkPermission = async () => {
+      if (typeof navigator !== "undefined" && (navigator as any).permissions) {
+        try {
+          const p = await (navigator as any).permissions.query({
+            name: "geolocation",
+          });
+          if (!mounted) return;
+
+          if (p.state === "denied") {
+            setPermissionApiDenied(true);
+            useLocationStore.getState().handlePermissionDenied();
+          } else {
+            setPermissionApiDenied(false);
+          }
+
+          if (typeof p.onchange === "function") {
+            p.onchange = () => {
+              if (!mounted) return;
+              if (p.state === "denied") {
+                setPermissionApiDenied(true);
+                useLocationStore.getState().handlePermissionDenied();
+              } else {
+                setPermissionApiDenied(false);
+              }
+            };
+          }
+        } catch {}
+      }
+    };
+
+    checkPermission();
+
+    // Re-check permission when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkPermission();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      mounted = false;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  const realDenied =
+    locationStatus === "denied" &&
+    !userProvince &&
+    !userAddress &&
+    isInitialized;
+
+  const blockedModalVisible =
+    (realDenied && !dismissedLocationBlock) ||
+    (permissionApiDenied &&
+      !dismissedLocationBlock &&
+      !userProvince &&
+      !userAddress &&
+      isInitialized) ||
+    (postLoginBlockedModalVisible && realDenied);
+
+  const handleBlockedClose = () => {
+    setDismissedLocationBlock(true);
+    try {
+      sessionStorage.setItem("dismissedLocationBlock", "1");
+    } catch {}
+    if (postLoginBlockedModalVisible) {
+      acknowledgePostLoginBlockedModal();
+    }
+  };
+
+  return (
+    <>
+      <LocationPermissionPromptModal
+        visible={postLoginLocationPromptVisible && locationStatus === "not_set"}
+        onEnable={async () => {
+          try {
+            await requestLocationFromPrompt();
+          } catch {}
+        }}
+        onSkip={() => {
+          skipPostLoginLocationPrompt();
+        }}
+        onClose={() => {
+          skipPostLoginLocationPrompt();
+        }}
+      />
+
+      <LocationBlockedModal
+        visible={blockedModalVisible}
+        onClose={handleBlockedClose}
+      />
+    </>
+  );
+};
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
