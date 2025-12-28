@@ -18,7 +18,6 @@ const ProviderHomePage: React.FC = () => {
   const [initializationAttempts, setInitializationAttempts] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-
   const [showOneSignalBlockedModal, setShowOneSignalBlockedModal] =
     useState(false);
 
@@ -202,7 +201,6 @@ const ProviderHomePage: React.FC = () => {
 
   return (
     <>
-
       {/* OneSignal Blocked Modal */}
       {showOneSignalBlockedModal && (
         <OneSignalBlockedModal

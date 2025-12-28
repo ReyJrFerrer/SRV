@@ -1,6 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { HashRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  HashRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./src/App";
@@ -263,7 +269,7 @@ const GlobalLocationModals: React.FC = () => {
   const navigate = useNavigate();
   const { locationStatus, userProvince, userAddress, isInitialized } =
     useLocationStore();
-  const { 
+  const {
     postLoginLocationPromptVisible,
     requestLocationFromPrompt,
     skipPostLoginLocationPrompt,
@@ -283,15 +289,14 @@ const GlobalLocationModals: React.FC = () => {
     }
   }, [location, showPostLoginLocationPrompt, navigate]);
 
-  const [dismissedLocationBlock, setDismissedLocationBlock] = React.useState<boolean>(
-    () => {
+  const [dismissedLocationBlock, setDismissedLocationBlock] =
+    React.useState<boolean>(() => {
       try {
         return sessionStorage.getItem("dismissedLocationBlock") === "1";
       } catch {
         return false;
       }
-    },
-  );
+    });
 
   const [permissionApiDenied, setPermissionApiDenied] = React.useState(false);
 
