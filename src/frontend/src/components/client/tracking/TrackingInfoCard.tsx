@@ -87,6 +87,69 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
     return 80;
   };
 
+  // Get dynamic status text based on progress and distance
+  const getProgressStatus = () => {
+    const progress = getProgressPercent();
+    const distanceInMeters = distanceMeters ?? 0;
+
+    // High priority: Very close to destination
+    if (distanceInMeters < 200) {
+      return { start: "Arriving now", end: "Destination" };
+    }
+    if (distanceInMeters < 500) {
+      return { start: "Arriving soon", end: "Almost there" };
+    }
+
+    // Progress-based status
+    if (progress < 15) {
+      return { start: "Getting ready", end: "Starting journey" };
+    }
+    if (progress < 30) {
+      return { start: "Provider departed", end: "On the way" };
+    }
+    if (progress < 70) {
+      return { start: "En route", end: "Traveling" };
+    }
+    if (progress < 90) {
+      return { start: "Approaching", end: "Almost there" };
+    }
+    return { start: "Arriving soon", end: "About to arrive" };
+  };
+
+  // Get provider status based on distance and staleness
+  const getProviderStatus = () => {
+    const distanceInMeters = distanceMeters ?? 0;
+
+    if (isStale) {
+      return "Updating location...";
+    }
+
+    // Distance-based status
+    if (distanceInMeters < 200) {
+      return "Arriving Now";
+    }
+    if (distanceInMeters < 500) {
+      return "Nearly There";
+    }
+    if (distanceInMeters < 1000) {
+      return "Approaching";
+    }
+
+    // Progress-based status
+    const progress = getProgressPercent();
+    if (progress < 15) {
+      return "Preparing";
+    }
+    if (progress < 30) {
+      return "Departed";
+    }
+    if (progress >= 70) {
+      return "On The Way";
+    }
+
+    return "En Route";
+  };
+
   return (
     <div className="absolute bottom-6 left-1/2 z-10 w-[90%] max-w-md -translate-x-1/2 space-y-3">
       {/* Street View Button - positioned above the card */}
@@ -173,9 +236,8 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
             )}
             {/* Online indicator */}
             <div
-              className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${
-                isStale ? "bg-yellow-400" : "bg-green-500"
-              }`}
+              className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${isStale ? "bg-yellow-400" : "bg-green-500"
+                }`}
             />
           </div>
 
@@ -194,7 +256,7 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
                   <span
                     className={isStale ? "text-yellow-600" : "text-green-600"}
                   >
-                    {isStale ? "Updating..." : "En Route"}
+                    {getProviderStatus()}
                   </span>
                   {lastUpdated && (
                     <>
@@ -217,8 +279,8 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
             />
           </div>
           <div className="mt-1 flex justify-between text-xs text-gray-500">
-            <span>Provider departed</span>
-            <span>Arriving soon</span>
+            <span>{getProgressStatus().start}</span>
+            <span>{getProgressStatus().end}</span>
           </div>
         </div>
 

@@ -53,6 +53,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
   const altInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
   const lastRouteTimeRef = useRef<number>(0);
+  const initialDistanceRef = useRef<number | null>(null); // Store initial distance for progress calculation
 
   // Throttle auto-pan: track last pan time and position
   const lastPanTimeRef = useRef<number>(0);
@@ -147,13 +148,19 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
               const leg = result.routes[0]?.legs[0];
               const eta = leg?.duration?.text || null;
               const distance = leg?.distance?.text || null;
-              const distanceMeters = leg?.distance?.value || null;
-              const totalDistanceMeters = leg?.distance?.value || null;
+              const currentDistanceMeters = leg?.distance?.value || null;
+
+              // Set initial distance only on first calculation
+              if (initialDistanceRef.current === null && currentDistanceMeters !== null) {
+                initialDistanceRef.current = currentDistanceMeters;
+              }
+
+              // Use initial distance as total, current as remaining
               onRouteCalculated(
                 eta,
                 distance,
-                distanceMeters,
-                totalDistanceMeters,
+                currentDistanceMeters, // remaining distance
+                initialDistanceRef.current, // total/initial distance
               );
             }
           } else {
@@ -205,7 +212,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
             }
           }
           if (acc.length > 1) return acc;
-        } catch {}
+        } catch { }
         const poly = (route as any).overview_polyline?.points;
         if (typeof poly === "string" && poly.length > 0) {
           return decodePolyline(poly);
@@ -301,20 +308,20 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
               try {
                 if (pos) altInfoWindowRef.current.setPosition(pos as any);
                 altInfoWindowRef.current.open(map);
-              } catch {}
-            } catch {}
+              } catch { }
+            } catch { }
           },
         );
 
         const overLn = google.maps.event.addListener(pl, "mouseover", () => {
           try {
             pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
-          } catch {}
+          } catch { }
         });
         const outLn = google.maps.event.addListener(pl, "mouseout", () => {
           try {
             pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
-          } catch {}
+          } catch { }
         });
 
         altRouteListenersRef.current.push(clickLn, overLn, outLn);
@@ -356,19 +363,19 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
               try {
                 if (pos) altInfoWindowRef.current.setPosition(pos as any);
                 altInfoWindowRef.current.open(map);
-              } catch {}
-            } catch {}
+              } catch { }
+            } catch { }
           },
         );
         const overLn = google.maps.event.addListener(pl, "mouseover", () => {
           try {
             pl.setOptions({ strokeOpacity: 0.8, strokeWeight: 6 });
-          } catch {}
+          } catch { }
         });
         const outLn = google.maps.event.addListener(pl, "mouseout", () => {
           try {
             pl.setOptions({ strokeOpacity: 0, strokeWeight: 4 });
-          } catch {}
+          } catch { }
         });
 
         altRoutePolylinesRef.current.push(pl);
@@ -380,13 +387,13 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
       if (routePolylineRef.current) {
         try {
           routePolylineRef.current.setMap(null);
-        } catch {}
+        } catch { }
         routePolylineRef.current = null;
       }
       for (const pl of altRoutePolylinesRef.current) {
         try {
           pl.setMap(null);
-        } catch {}
+        } catch { }
       }
       altRoutePolylinesRef.current = [];
     }
@@ -456,7 +463,7 @@ const ProviderTrackingMap: React.FC<ProviderTrackingMapProps> = ({
       map.panTo(providerLocation);
       lastPanTimeRef.current = now;
       lastPanPosRef.current = providerLocation;
-    } catch {}
+    } catch { }
   }, [providerLocation, autoFollow]);
 
   const handleMapLoad = (map: google.maps.Map) => {
