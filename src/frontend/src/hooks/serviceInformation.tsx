@@ -237,8 +237,6 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
           ? manualFields.municipality || userAddress || ""
           : userAddress;
 
-      // If we don't have any user geo context, don't filter
-      if (!effectiveProvince && !effectiveAddress) return items;
 
       const RADIUS_KM = 25; // treat "near municipalities" within 25 km
       const hasUserCoords = !!location?.latitude && !!location?.longitude;
