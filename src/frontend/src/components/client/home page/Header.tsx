@@ -155,19 +155,22 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     let isMounted = true;
     let permissionStatus: PermissionStatus | null = null;
     let previousState: PermissionState | null = null;
-    
+
     const checkPermission = async () => {
-      if (typeof navigator === "undefined" || !(navigator as any).permissions) return;
-      
+      if (typeof navigator === "undefined" || !(navigator as any).permissions)
+        return;
+
       try {
-        permissionStatus = await (navigator as any).permissions.query({ name: "geolocation" });
+        permissionStatus = await (navigator as any).permissions.query({
+          name: "geolocation",
+        });
         previousState = permissionStatus!.state;
-        
+
         const handlePermissionChange = () => {
           if (!isMounted || !permissionStatus) return;
-          
+
           const currentState = permissionStatus.state;
-          
+
           // When permission changes from denied/prompt to granted, fetch location automatically
           if (
             (previousState === "denied" || previousState === "prompt") &&
@@ -180,18 +183,18 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           else if (currentState === "denied") {
             locationStore.handlePermissionDenied();
           }
-          
+
           previousState = currentState;
         };
-        
+
         permissionStatus!.onchange = handlePermissionChange;
       } catch {
         // Ignore errors (older browsers)
       }
     };
-    
+
     checkPermission();
-    
+
     return () => {
       isMounted = false;
       if (permissionStatus) {
@@ -319,7 +322,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               <button
                 type="button"
                 onClick={handleLocationClick}
-                disabled={addressMode === "context" && locationStatus === "allowed"}
+                disabled={
+                  addressMode === "context" && locationStatus === "allowed"
+                }
                 className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none disabled:cursor-not-allowed"
                 aria-label="Open my location details"
               >

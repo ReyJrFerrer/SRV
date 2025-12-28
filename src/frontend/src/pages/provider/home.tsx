@@ -88,7 +88,9 @@ const ProviderHomePage: React.FC = () => {
     const checkPermission = async () => {
       if (typeof navigator !== "undefined" && (navigator as any).permissions) {
         try {
-          const p = await (navigator as any).permissions.query({ name: "geolocation" });
+          const p = await (navigator as any).permissions.query({
+            name: "geolocation",
+          });
           if (!mounted) return;
 
           if (p.state === "denied") {
@@ -109,7 +111,7 @@ const ProviderHomePage: React.FC = () => {
               }
             };
           }
-        } catch { }
+        } catch {}
       }
     };
 
@@ -190,7 +192,7 @@ const ProviderHomePage: React.FC = () => {
       showPostLoginLocationPrompt();
       try {
         navigate(location.pathname, { replace: true, state: {} });
-      } catch { }
+      } catch {}
     }
 
     const loadProviderData = async () => {
@@ -304,7 +306,7 @@ const ProviderHomePage: React.FC = () => {
         onEnable={async () => {
           try {
             await requestLocationFromPrompt();
-          } catch { }
+          } catch {}
         }}
         onSkip={() => {
           skipPostLoginLocationPrompt();
@@ -335,7 +337,7 @@ const ProviderHomePage: React.FC = () => {
           setDismissedLocationBlock(true);
           try {
             sessionStorage.setItem("providerDismissedLocationBlock", "1");
-          } catch { }
+          } catch {}
           if (postLoginBlockedModalVisible) {
             acknowledgePostLoginBlockedModal();
           }

@@ -350,7 +350,7 @@ export const useLocationStore = create<LocationState>()(
               // Clear modal suppression flag so it can appear again
               try {
                 localStorage.removeItem("loc_block_modal_suppress");
-              } catch { }
+              } catch {}
             } else {
               set({
                 locationStatus: "denied",
@@ -390,18 +390,27 @@ export const useLocationStore = create<LocationState>()(
         // Check live permission status first
         let isDenied = false;
         try {
-          if (typeof navigator !== "undefined" && (navigator as any).permissions) {
-            const p = await (navigator as any).permissions.query({ name: "geolocation" });
+          if (
+            typeof navigator !== "undefined" &&
+            (navigator as any).permissions
+          ) {
+            const p = await (navigator as any).permissions.query({
+              name: "geolocation",
+            });
             if (p.state === "denied") {
               isDenied = true;
             }
           }
-        } catch { }
+        } catch {}
 
         // If explicitly denied in browser, override any stored "allowed" state
         if (isDenied) {
           // If in manual mode with valid location, preserve it
-          if (state.addressMode === "manual" && state.userAddress && state.userProvince) {
+          if (
+            state.addressMode === "manual" &&
+            state.userAddress &&
+            state.userProvince
+          ) {
             set({
               locationStatus: "denied",
               isInitialized: true,
@@ -512,7 +521,7 @@ export const useLocationStore = create<LocationState>()(
         try {
           localStorage.removeItem("loc_block_modal_suppress");
           sessionStorage.removeItem("dismissedLocationBlock");
-        } catch { }
+        } catch {}
       },
     }),
     {

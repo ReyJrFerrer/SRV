@@ -9,7 +9,11 @@ interface Props {
   forceShow?: boolean; // When true, show modal even if manual location is already set
 }
 
-const LocationBlockedModal: React.FC<Props> = ({ visible, onClose, forceShow = false }) => {
+const LocationBlockedModal: React.FC<Props> = ({
+  visible,
+  onClose,
+  forceShow = false,
+}) => {
   const {
     userAddress,
     userProvince,
@@ -32,7 +36,7 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose, forceShow = f
     try {
       const sup = localStorage.getItem("loc_block_modal_suppress");
       if (sup === "1") setSuppressed(true);
-    } catch { }
+    } catch {}
   }, []);
 
   // Observe geolocation permission; auto-dismiss when not denied
@@ -51,23 +55,23 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose, forceShow = f
         const handleChange = () => {
           if (!isMounted) return;
           const newState = status.state;
-          
+
           // If permission changed from granted/prompt to denied, clear suppression
           if (prevPermission !== "denied" && newState === "denied") {
             try {
               localStorage.removeItem("loc_block_modal_suppress");
               setSuppressed(false);
-            } catch { }
+            } catch {}
           }
-          
+
           setGeoPermission(newState);
           setPrevPermission(newState);
-          
+
           if (newState !== "denied") {
             // Close and suppress modal when user allows or reverts permission
             try {
               localStorage.setItem("loc_block_modal_suppress", "1");
-            } catch { }
+            } catch {}
             if (visible) onClose();
           }
         };
@@ -86,20 +90,33 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose, forceShow = f
   // But don't auto-dismiss when forceShow is true (user explicitly opened it)
   useEffect(() => {
     if (!visible || forceShow) return;
-    
+
     // If manual location is set with valid data, don't show modal
-    const hasManualLocation = addressMode === "manual" && !!userAddress && !!userProvince;
-    
+    const hasManualLocation =
+      addressMode === "manual" && !!userAddress && !!userProvince;
+
     // If GPS location is set and permission is not denied, don't show modal
-    const hasGpsLocation = addressMode === "context" && !!userAddress && !!userProvince && geoPermission !== "denied";
-    
+    const hasGpsLocation =
+      addressMode === "context" &&
+      !!userAddress &&
+      !!userProvince &&
+      geoPermission !== "denied";
+
     if (hasManualLocation || hasGpsLocation) {
       try {
         localStorage.setItem("loc_block_modal_suppress", "1");
-      } catch { }
+      } catch {}
       onClose();
     }
-  }, [visible, forceShow, userAddress, userProvince, geoPermission, addressMode, onClose]);
+  }, [
+    visible,
+    forceShow,
+    userAddress,
+    userProvince,
+    geoPermission,
+    addressMode,
+    onClose,
+  ]);
 
   // Prefill from any existing values
   useEffect(() => {
@@ -133,23 +150,25 @@ const LocationBlockedModal: React.FC<Props> = ({ visible, onClose, forceShow = f
       landmark: "",
     });
     setDisplayAddress(`${city}, ${province}`);
-    
+
     // Suppress modal since manual location is now set
     try {
       localStorage.setItem("loc_block_modal_suppress", "1");
-    } catch { }
-    
+    } catch {}
+
     onClose();
   };
 
   // Guard: show when explicitly requested (forceShow) or when permission is denied and no manual location is set
   const permissionDenied =
     geoPermission === "denied" || locationStatus === "denied";
-  const hasValidManualLocation = 
+  const hasValidManualLocation =
     addressMode === "manual" && !!userAddress && !!userProvince;
-  
+
   // Show if forceShow is true (user explicitly clicked button), or if permission denied and no valid manual location
-  const shouldShow = visible && (forceShow || (!suppressed && permissionDenied && !hasValidManualLocation));
+  const shouldShow =
+    visible &&
+    (forceShow || (!suppressed && permissionDenied && !hasValidManualLocation));
 
   if (!shouldShow) return null;
 

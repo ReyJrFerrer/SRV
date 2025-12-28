@@ -237,7 +237,6 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
           ? manualFields.municipality || userAddress || ""
           : userAddress;
 
-
       // If we don't have any user geo context, don't filter
       if (!effectiveProvince && !effectiveAddress) return items;
 
@@ -257,7 +256,8 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
         normalizeProvince(svc.location.state) ===
         normalizeProvince(effectiveProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        normalizeCity(svc.location.city) === normalizeCity(effectiveAddress || "");
+        normalizeCity(svc.location.city) ===
+        normalizeCity(effectiveAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
         const lat = svc.location?.latitude;
@@ -417,7 +417,8 @@ export const useServicesByCategory = (
         normalizeProvince(svc.location.state) ===
         normalizeProvince(effectiveProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        normalizeCity(svc.location.city) === normalizeCity(effectiveAddress || "");
+        normalizeCity(svc.location.city) ===
+        normalizeCity(effectiveAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
         const lat = svc.location?.latitude;
@@ -557,7 +558,8 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
         normalizeProvince(svc.location.state) ===
         normalizeProvince(effectiveProvince || "");
       const inSameCity = (svc: EnrichedService) =>
-        normalizeCity(svc.location.city) === normalizeCity(effectiveAddress || "");
+        normalizeCity(svc.location.city) ===
+        normalizeCity(effectiveAddress || "");
       const withinRadius = (svc: EnrichedService) => {
         if (!hasUserCoords) return false;
         const lat = svc.location?.latitude;
