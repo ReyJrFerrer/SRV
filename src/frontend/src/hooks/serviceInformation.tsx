@@ -237,7 +237,6 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
           ? manualFields.municipality || userAddress || ""
           : userAddress;
 
-
       const RADIUS_KM = 25; // treat "near municipalities" within 25 km
       const hasUserCoords = !!location?.latitude && !!location?.longitude;
 
