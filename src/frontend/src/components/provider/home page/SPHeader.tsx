@@ -21,8 +21,13 @@ export interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  // location status is handled by MapFunctions; no direct usage here
-  useLocationStore();
+  
+  // --- Use Zustand location store ---
+  const { locationStatus, addressMode } = useLocationStore();
+  
+  // Get requestLocation function separately to avoid dependency issues
+  const locationStore = useLocationStore();
+  
   const [profile, setProfile] = useState<any>(null);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
   const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
@@ -45,6 +50,59 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
       loadInitialData();
     }
   }, [isAuthenticated, isAuthLoading]);
+
+  // Effect: Monitor permission state changes to detect when user enables/disables location
+  useEffect(() => {
+    let isMounted = true;
+    let permissionStatus: PermissionStatus | null = null;
+    let previousState: PermissionState | null = null;
+
+    const checkPermission = async () => {
+      if (typeof navigator === "undefined" || !(navigator as any).permissions)
+        return;
+
+      try {
+        permissionStatus = await (navigator as any).permissions.query({
+          name: "geolocation",
+        });
+        previousState = permissionStatus!.state;
+
+        const handlePermissionChange = () => {
+          if (!isMounted || !permissionStatus) return;
+
+          const currentState = permissionStatus.state;
+
+          // When permission changes from denied/prompt to granted, fetch location automatically
+          if (
+            (previousState === "denied" || previousState === "prompt") &&
+            currentState === "granted"
+          ) {
+            // Automatically request location and switch to automatic mode
+            locationStore.requestLocation(true);
+          }
+          // When permission changes to denied, trigger the store handler
+          else if (currentState === "denied") {
+            locationStore.handlePermissionDenied();
+          }
+
+          previousState = currentState;
+        };
+
+        permissionStatus!.onchange = handlePermissionChange;
+      } catch {
+        // Ignore errors (older browsers)
+      }
+    };
+
+    checkPermission();
+
+    return () => {
+      isMounted = false;
+      if (permissionStatus) {
+        permissionStatus.onchange = null;
+      }
+    };
+  }, [locationStore]);
 
   const handleProfileClick = () => {
     navigate("/provider/profile");
@@ -211,16 +269,17 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           {/* --- Location Section --- */}
           <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <button
-                type="button"
-                onClick={handleLocationClick}
-                className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none"
-                aria-label="Open my location details"
-              >
-                <MapPinIcon className="h-6 w-6 text-blue-600" />
-                <span className="text-base font-bold text-gray-800">
-                  My Location
-                </span>
+                 <button
+                  type="button"
+                  onClick={handleLocationClick}
+                  disabled={addressMode === "context" && locationStatus === "allowed"}
+                  className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none disabled:cursor-not-allowed"
+                  aria-label="Open my location details"
+                >
+                  <MapPinIcon className="h-6 w-6 text-blue-600" />
+                  <span className="text-base font-bold text-gray-800">
+                    My Location
+                  </span>
               </button>
             </div>
             <div className="mt-2 flex items-center gap-2">
