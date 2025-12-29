@@ -61,7 +61,7 @@ export const useImageLoader = (
 
       return result;
     },
-    enabled: opts.enabled && !!mediaUrl,
+    enabled: (opts.enabled !== false) && !!mediaUrl,
     staleTime: opts.staleTime,
     gcTime: opts.gcTime,
     retry: opts.retry,
@@ -310,7 +310,7 @@ export const useServiceImages = (
 
       return await Promise.all(imagePromises);
     },
-    enabled: !!serviceId && validUrls.length > 0,
+    enabled: (options.enabled !== false) && !!serviceId && validUrls.length > 0,
     staleTime: 1000 * 60 * 60, // 1 hour
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
     refetchOnWindowFocus: false,
