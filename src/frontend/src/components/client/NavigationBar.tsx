@@ -78,12 +78,7 @@ const BottomNavigation: React.FC = () => {
     if (next && stableProfileSrc !== next) {
       setStableProfileSrc(next);
     }
-  }, [
-    profileImageUrl,
-    isUsingDefaultAvatar,
-    isImageLoading,
-    profile,
-  ]);
+  }, [profileImageUrl, isUsingDefaultAvatar, isImageLoading, profile]);
 
   // Persist the last good avatar so we can show it instantly on next mount
   React.useEffect(() => {

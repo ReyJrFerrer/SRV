@@ -34,7 +34,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   const [serviceDataMap, setServiceDataMap] = useState<
     Record<string, ServiceData>
   >({});
-  
+
   // Track which services are currently being fetched to prevent duplicate requests
   const fetchingRef = useRef<Set<string>>(new Set());
 
@@ -43,14 +43,14 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
       const servicesToDisplay = services.slice(0, displayCount);
       const serviceIds = servicesToDisplay.map((s) => s.id);
       const toFetch = serviceIds.filter(
-        (id) => !serviceDataMap[id] && !fetchingRef.current.has(id)
+        (id) => !serviceDataMap[id] && !fetchingRef.current.has(id),
       );
 
       if (toFetch.length === 0) return;
-      
+
       // Mark these services as being fetched
       toFetch.forEach((id) => fetchingRef.current.add(id));
-      
+
       // Initialize with placeholder data immediately to prevent undefined errors
       const placeholderEntries: Record<string, ServiceData> = {};
       toFetch.forEach((serviceId) => {
