@@ -102,6 +102,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     service?.id,
   );
   const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [packagesLoading, setPackagesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -274,6 +275,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       }
 
       setLoading(true);
+      setPackagesLoading(true);
       setError(null);
 
       try {
@@ -297,6 +299,8 @@ const ProviderServiceDetailPage: React.FC = () => {
             setPackages(servicePackages || []);
           } catch (packageError) {
             setPackages([]);
+          } finally {
+            setPackagesLoading(false);
           }
           setError(null);
         } else {
@@ -304,6 +308,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load service");
+        setPackagesLoading(false);
       } finally {
         setLoading(false);
       }
@@ -1402,6 +1407,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 packageFormPrice={packageFormPrice}
                 packageFormLoading={packageFormLoading}
                 currentPackageId={currentPackageId}
+                isLoading={packagesLoading}
                 onAddPackage={handleAddPackage}
                 onCancelPackageEdit={handleCancelPackageEdit}
                 onSavePackage={handleSavePackage}

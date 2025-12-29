@@ -18,6 +18,7 @@ interface Props {
   packageFormPrice: string;
   packageFormLoading: boolean;
   currentPackageId: string | null;
+  isLoading?: boolean;
   onAddPackage: () => void;
   onCancelPackageEdit: () => void;
   onSavePackage: () => void;
@@ -38,6 +39,7 @@ const PackagesSection: React.FC<Props> = ({
   packageFormPrice,
   packageFormLoading,
   currentPackageId,
+  isLoading = false,
   onAddPackage,
   onCancelPackageEdit,
   onSavePackage,
@@ -207,7 +209,59 @@ const PackagesSection: React.FC<Props> = ({
         )}
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          {packages.length > 0 ? (
+          {isLoading ? (
+            // Skeleton loading state
+            <>
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="group relative overflow-visible rounded-2xl border border-blue-100 bg-white shadow-sm"
+                >
+                  {/* Header ribbon */}
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-blue-50 via-white to-yellow-50" />
+
+                  <div className="relative z-10 animate-pulse p-4 pb-3 sm:p-5">
+                    {/* Package badge skeleton */}
+                    <div className="mb-2 h-5 w-20 rounded-full bg-gray-200"></div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1 space-y-2">
+                        {/* Title skeleton */}
+                        <div className="h-6 w-3/4 rounded bg-gray-200 sm:h-7"></div>
+                        {/* Description skeleton */}
+                        <div className="space-y-1">
+                          <div className="h-4 w-full rounded bg-gray-200"></div>
+                          <div className="h-4 w-2/3 rounded bg-gray-200"></div>
+                        </div>
+                      </div>
+                      <div className="shrink-0 space-y-1 text-right">
+                        {/* Price skeleton */}
+                        <div className="flex items-center justify-end gap-1">
+                          <div className="h-5 w-5 rounded bg-gray-200 sm:h-6 sm:w-6"></div>
+                          <div className="h-7 w-24 rounded bg-gray-200 sm:h-8"></div>
+                        </div>
+                        <div className="h-3 w-16 rounded bg-gray-200"></div>
+                      </div>
+                    </div>
+
+                    {/* Badges skeleton */}
+                    <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+                      <div className="h-6 w-32 rounded-full bg-gray-200"></div>
+                      <div className="h-6 w-28 rounded-full bg-gray-200"></div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-100" />
+
+                  {/* Buttons skeleton */}
+                  <div className="relative z-10 flex animate-pulse flex-col gap-2 p-3 sm:gap-3 sm:p-4 xl:flex-row">
+                    <div className="h-10 flex-1 rounded-xl bg-gray-200"></div>
+                    <div className="h-10 flex-1 rounded-xl bg-gray-200"></div>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : packages.length > 0 ? (
             packages.map((pkg) => (
               <div
                 key={pkg.id}
