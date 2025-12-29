@@ -1,5 +1,5 @@
 // Imports
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import ServiceListItem from "./ServiceListingCard";
 import {
   EnrichedService,
@@ -34,26 +34,34 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   const [serviceDataMap, setServiceDataMap] = useState<
     Record<string, ServiceData>
   >({});
+  
+  // Track which services are currently being fetched to prevent duplicate requests
+  const fetchingRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchServiceData = async () => {
       const servicesToDisplay = services.slice(0, displayCount);
       const serviceIds = servicesToDisplay.map((s) => s.id);
-      const toFetch = serviceIds.filter((id) => !serviceDataMap[id]);
+      const toFetch = serviceIds.filter(
+        (id) => !serviceDataMap[id] && !fetchingRef.current.has(id)
+      );
 
       if (toFetch.length === 0) return;
-      const newEntries: Record<string, ServiceData> = {};
+      
+      // Mark these services as being fetched
+      toFetch.forEach((id) => fetchingRef.current.add(id));
+      
+      // Initialize with placeholder data immediately to prevent undefined errors
+      const placeholderEntries: Record<string, ServiceData> = {};
       toFetch.forEach((serviceId) => {
         const service = services.find((s) => s.id === serviceId);
-        newEntries[serviceId] = {
+        placeholderEntries[serviceId] = {
           isVerified: false,
           averageRating: 0,
           totalReviews: 0,
           mediaUrls: service?.media || [],
         };
       });
-
-      setServiceDataMap((prev) => ({ ...prev, ...newEntries }));
 
       const fetchedData = await Promise.all(
         toFetch.map(async (serviceId) => {
@@ -117,15 +125,18 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
       const updatedData: Record<string, ServiceData> = {};
       fetchedData.forEach(({ serviceId, data }) => {
         updatedData[serviceId] = data;
+        // Remove from fetching set when complete
+        fetchingRef.current.delete(serviceId);
       });
 
+      // Single state update with complete data to prevent flickering
       setServiceDataMap((prev) => ({ ...prev, ...updatedData }));
     };
 
     if (services.length > 0) {
       fetchServiceData();
     }
-  }, [services, displayCount, fetchUserReputation]); // Only depend on services and displayCount
+  }, [services, displayCount, fetchUserReputation, serviceDataMap]);
 
   const enhanceService = useMemo(
     () =>
