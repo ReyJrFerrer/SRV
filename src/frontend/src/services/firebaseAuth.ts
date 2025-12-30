@@ -8,7 +8,7 @@ import {
   signOut,
   signInWithCustomToken,
 } from "firebase/auth";
-import { getStoredICCustomToken } from "./firebaseApp";
+import { sessionManager } from "../utils/sessionPersistence";
 
 interface FirebaseConfig {
   apiKey: string;
@@ -186,14 +186,15 @@ class FirebaseAuthService {
       const result = await confirmationResult.confirm(otpCode);
 
       if (result.user) {
-        const icToken = getStoredICCustomToken();
-        if (icToken && this.auth) {
+        // Restore IC-based session after phone verification
+        // This ensures users don't lose their IC authentication
+        const session = await sessionManager.getSession();
+        if (session && session.firebaseToken && this.auth) {
           try {
-            await signInWithCustomToken(this.auth, icToken);
+            await signInWithCustomToken(this.auth, session.firebaseToken);
           } catch (restoreError) {
-            throw new Error(
-              "Failed to restore authentication session. Please refresh and try again.",
-            );
+            // Silent fail - user is still authenticated with phone
+            // but IC session restoration failed
           }
         }
         return true;
