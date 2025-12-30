@@ -211,7 +211,8 @@ export class SessionManager {
 
     // Refresh if we're past 80% of lifetime OR haven't refreshed in 2 hours
     const pastThreshold =
-      timeSinceRefresh > session.sessionDuration * SessionManager.REFRESH_THRESHOLD;
+      timeSinceRefresh >
+      session.sessionDuration * SessionManager.REFRESH_THRESHOLD;
     const pastMinInterval =
       timeSinceRefresh > SessionManager.MIN_REFRESH_INTERVAL;
 

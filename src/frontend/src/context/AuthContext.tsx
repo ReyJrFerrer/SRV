@@ -131,13 +131,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Handle visibility change to refresh session when app becomes visible
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible" && isAuthenticated && identity) {
+      if (
+        document.visibilityState === "visible" &&
+        isAuthenticated &&
+        identity
+      ) {
         try {
           const needsRefresh = await sessionManager.needsRefresh();
           if (needsRefresh) {
             // Refresh Firebase token
             const principal = identity.getPrincipal().toString();
-            const sessionDuration = getRecommendedSessionDuration() / (1000 * 1000); // Convert ns to ms
+            const sessionDuration =
+              getRecommendedSessionDuration() / (1000 * 1000); // Convert ns to ms
             await signInWithInternetIdentity(principal, sessionDuration);
             await sessionManager.updateLastRefresh();
           }
@@ -179,7 +184,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     window.addEventListener("session-refresh-needed", handleSessionRefresh);
     return () => {
-      window.removeEventListener("session-refresh-needed", handleSessionRefresh);
+      window.removeEventListener(
+        "session-refresh-needed",
+        handleSessionRefresh,
+      );
     };
   }, [isAuthenticated, identity, isRefreshingSession, authClient]);
 
@@ -350,7 +358,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         identityProvider:
           process.env.DFX_NETWORK === "ic" ||
           process.env.DFX_NETWORK === "playground"
-            ? `https://identity.ic0.app`
+            ? `https://id.ai`
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
         // Set session duration based on platform (7 days mobile/PWA, 30 days desktop)
         maxTimeToLive: BigInt(sessionDurationNs),
