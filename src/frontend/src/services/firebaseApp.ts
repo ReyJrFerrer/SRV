@@ -45,12 +45,6 @@ let firebaseFirestore: Firestore | null = null;
 let firebaseDatabase: Database | null = null;
 let emulatorsConnected = false;
 
-// Store the IC custom token for restoration after phone verification
-// We use localStorage to persist across page reloads
-const IC_TOKEN_KEY = "ic_custom_token";
-const IC_TOKEN_TIMESTAMP_KEY = "ic_custom_token_timestamp";
-const TOKEN_VALIDITY_DURATION = 55 * 60 * 1000; // 55 minutes (tokens expire after 1 hour)
-
 /**
  * Initialize Firebase App
  * This should be called once at app startup
@@ -238,53 +232,13 @@ export function isFirebaseInitialized(): boolean {
 }
 
 /**
- * Store the IC custom token for later restoration
- * This is used to restore the IC-based Firebase session after phone verification
- * Stores in localStorage with timestamp to check validity
- * @param token - The Firebase custom token from IC authentication
- */
-export function storeICCustomToken(token: string): void {
-  try {
-    localStorage.setItem(IC_TOKEN_KEY, token);
-    localStorage.setItem(IC_TOKEN_TIMESTAMP_KEY, Date.now().toString());
-  } catch (error) {}
-}
-
-/**
- * Get the stored IC custom token if it's still valid
- * @returns The stored IC custom token or null if expired/missing
- */
-export function getStoredICCustomToken(): string | null {
-  try {
-    const token = localStorage.getItem(IC_TOKEN_KEY);
-    const timestampStr = localStorage.getItem(IC_TOKEN_TIMESTAMP_KEY);
-
-    if (!token || !timestampStr) {
-      return null;
-    }
-
-    const timestamp = parseInt(timestampStr, 10);
-    const now = Date.now();
-    const age = now - timestamp;
-
-    // Check if token is still valid (less than 55 minutes old)
-    if (age > TOKEN_VALIDITY_DURATION) {
-      clearICCustomToken();
-      return null;
-    }
-
-    return token;
-  } catch (error) {
-    return null;
-  }
-}
-
-/**
- * Clear the stored IC custom token
+ * Clear any legacy session storage
+ * @deprecated Use SessionManager instead
  */
 export function clearICCustomToken(): void {
   try {
-    localStorage.removeItem(IC_TOKEN_KEY);
-    localStorage.removeItem(IC_TOKEN_TIMESTAMP_KEY);
+    // Clear old token storage keys for backward compatibility
+    localStorage.removeItem("ic_custom_token");
+    localStorage.removeItem("ic_custom_token_timestamp");
   } catch (error) {}
 }

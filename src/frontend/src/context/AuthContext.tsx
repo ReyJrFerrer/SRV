@@ -14,6 +14,10 @@ import {
 } from "firebase/auth";
 import { getFirebaseAuth, clearICCustomToken } from "../services/firebaseApp";
 import { updateReputationActor } from "../services/reputationCanisterService";
+import {
+  sessionManager,
+  getRecommendedSessionDuration,
+} from "../utils/sessionPersistence";
 
 import {
   useLocationStore,
@@ -106,6 +110,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isExplicitLogin, setIsExplicitLogin] = useState(false);
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
   // Post-login location prompt state
   const [postLoginLocationPromptVisible, setPostLoginLocationPromptVisible] =
     useState(false);
@@ -117,6 +122,66 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     locationStore.initialize();
   }, [locationStore]);
+
+  // Initialize session manager on mount
+  useEffect(() => {
+    sessionManager.initialize().catch(() => {});
+  }, []);
+
+  // Handle visibility change to refresh session when app becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible" && isAuthenticated && identity) {
+        try {
+          const needsRefresh = await sessionManager.needsRefresh();
+          if (needsRefresh) {
+            // Refresh Firebase token
+            const principal = identity.getPrincipal().toString();
+            const sessionDuration = getRecommendedSessionDuration() / (1000 * 1000); // Convert ns to ms
+            await signInWithInternetIdentity(principal, sessionDuration);
+            await sessionManager.updateLastRefresh();
+          }
+        } catch (error) {
+          // Silent fail - will retry on next visibility change
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isAuthenticated, identity]);
+
+  // Handle automatic session refresh events
+  useEffect(() => {
+    const handleSessionRefresh = async () => {
+      if (isRefreshingSession || !isAuthenticated || !identity) return;
+
+      setIsRefreshingSession(true);
+      try {
+        const principal = identity.getPrincipal().toString();
+        const sessionDuration = getRecommendedSessionDuration() / (1000 * 1000); // Convert ns to ms
+        await signInWithInternetIdentity(principal, sessionDuration);
+        await sessionManager.updateLastRefresh();
+      } catch (error) {
+        // If refresh fails, only logout if IC delegation expired
+        try {
+          const isAuth = await authClient?.isAuthenticated();
+          if (!isAuth) {
+            await logout();
+          }
+        } catch {}
+      } finally {
+        setIsRefreshingSession(false);
+      }
+    };
+
+    window.addEventListener("session-refresh-needed", handleSessionRefresh);
+    return () => {
+      window.removeEventListener("session-refresh-needed", handleSessionRefresh);
+    };
+  }, [isAuthenticated, identity, isRefreshingSession, authClient]);
 
   // Auto-request location if permission already granted
   useEffect(() => {
@@ -277,14 +342,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsExplicitLogin(true);
 
     try {
+      // Get platform-specific session duration
+      const sessionDurationNs = getRecommendedSessionDuration();
+      const sessionDurationMs = sessionDurationNs / (1000 * 1000); // Convert ns to ms
+
       await authClient.login({
         identityProvider:
           process.env.DFX_NETWORK === "ic" ||
           process.env.DFX_NETWORK === "playground"
-            ? `https://id.ai`
+            ? `https://identity.ic0.app`
             : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
-        // Set session duration to 24 hours (in nanoseconds)
-        maxTimeToLive: BigInt(24 * 60 * 60 * 1000 * 1000 * 1000),
+        // Set session duration based on platform (7 days mobile/PWA, 30 days desktop)
+        maxTimeToLive: BigInt(sessionDurationNs),
 
         onSuccess: async () => {
           const identity = authClient.getIdentity();
@@ -297,7 +366,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Get the principal and exchange for Firebase token
           try {
             const principal = identity.getPrincipal().toString();
-            const result = await signInWithInternetIdentity(principal);
+            const result = await signInWithInternetIdentity(
+              principal,
+              sessionDurationMs,
+            );
             setFirebaseUser(result.user);
             // Store profile status from backend response (avoids race condition with Firestore)
             setProfileStatus({
@@ -332,7 +404,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authCanisterService.updateUserActiveStatus(false);
     } catch (error) {}
 
-    // Clear stored IC custom token
+    // Clear session from SessionManager
+    await sessionManager.clearSession();
+
+    // Clear stored IC custom token (legacy)
     clearICCustomToken();
 
     // Logout from Firebase

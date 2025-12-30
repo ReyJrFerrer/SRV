@@ -12,8 +12,8 @@ import {
   getFirebaseAuth,
   getFirebaseFunctions,
   initializeFirebase,
-  storeICCustomToken,
 } from "./firebaseApp";
+import { sessionManager, SessionData } from "../utils/sessionPersistence";
 
 // Cached instances
 let auth: Auth | null = null;
@@ -55,15 +55,18 @@ interface SignInResult {
   hasProfile: boolean;
   needsProfile: boolean;
   message: string;
+  customToken: string; // Return token for session storage
 }
 
 /**
  * Exchange Internet Identity Principal for Firebase Auth
  * @param principal - The Internet Identity Principal as string
+ * @param sessionDuration - Session duration in milliseconds
  * @returns SignInResult with Firebase User and profile status
  */
 export async function signInWithInternetIdentity(
   principal: string,
+  sessionDuration: number = 7 * 24 * 60 * 60 * 1000, // Default 7 days in ms
 ): Promise<SignInResult> {
   try {
     // Call the Identity Bridge Cloud Function using Firebase SDK
@@ -79,9 +82,6 @@ export async function signInWithInternetIdentity(
     if (!data.success || !data.customToken) {
       throw new Error("Error signing in with Internet Identity");
     }
-
-    // Store the custom token for potential restoration after phone verification
-    storeICCustomToken(data.customToken);
 
     // Sign in to Firebase with the custom token
     const authInstance = ensureAuth();
@@ -107,11 +107,24 @@ export async function signInWithInternetIdentity(
       }, 2000);
     });
 
+    // Store session in SessionManager
+    const sessionData: SessionData = {
+      principal: data.principal,
+      firebaseToken: data.customToken,
+      expiresAt: Date.now() + sessionDuration,
+      lastRefresh: Date.now(),
+      hasProfile: data.hasProfile,
+      needsProfile: data.needsProfile,
+      sessionDuration,
+    };
+    await sessionManager.storeSession(sessionData);
+
     return {
       user: userCredential.user,
       hasProfile: data.hasProfile,
       needsProfile: data.needsProfile,
       message: data.message,
+      customToken: data.customToken,
     };
   } catch (error) {
     throw error;
