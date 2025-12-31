@@ -653,7 +653,10 @@ export const serviceCanisterService = {
    */
   async getAllCategories(): Promise<ServiceCategory[]> {
     try {
-      const getAllCategoriesFn = httpsCallable(getFunctions(), "getAllCategories");
+      const getAllCategoriesFn = httpsCallable(
+        getFunctions(),
+        "getAllCategories",
+      );
       const result = await getAllCategoriesFn({});
 
       const data = result.data as {

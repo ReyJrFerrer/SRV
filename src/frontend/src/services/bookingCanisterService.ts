@@ -266,7 +266,10 @@ export const bookingCanisterService = {
    */
   async getClientBookings(clientId: Principal): Promise<Booking[]> {
     try {
-      const getClientBookingsFn = httpsCallable(getFunctions(), "getClientBookings");
+      const getClientBookingsFn = httpsCallable(
+        getFunctions(),
+        "getClientBookings",
+      );
 
       const result = await getClientBookingsFn({
         clientId: clientId.toString(),
@@ -421,7 +424,10 @@ export const bookingCanisterService = {
    */
   async startNavigation(bookingId: string): Promise<Booking | null> {
     try {
-      const startNavigationFn = httpsCallable(getFunctions(), "startNavigation");
+      const startNavigationFn = httpsCallable(
+        getFunctions(),
+        "startNavigation",
+      );
 
       const result = await startNavigationFn({ bookingId });
       const responseData = (result.data as { success: boolean; data: Booking })
@@ -440,7 +446,10 @@ export const bookingCanisterService = {
     amountPaid?: number,
   ): Promise<Booking | null> {
     try {
-      const completeBookingFn = httpsCallable(getFunctions(), "completeBooking");
+      const completeBookingFn = httpsCallable(
+        getFunctions(),
+        "completeBooking",
+      );
 
       const result = await completeBookingFn({
         bookingId,

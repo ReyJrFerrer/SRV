@@ -102,7 +102,10 @@ export const reviewCanisterService = {
    */
   async getBookingReviews(bookingId: string): Promise<Review[]> {
     try {
-      const getBookingReviewsFn = httpsCallable(getFunctions(), "getBookingReviews");
+      const getBookingReviewsFn = httpsCallable(
+        getFunctions(),
+        "getBookingReviews",
+      );
 
       const result = await getBookingReviewsFn({
         data: { bookingId },
@@ -387,7 +390,10 @@ export const reviewCanisterService = {
     offset?: number,
   ): Promise<Review[]> {
     try {
-      const getServiceReviewsFn = httpsCallable(getFunctions(), "getServiceReviews");
+      const getServiceReviewsFn = httpsCallable(
+        getFunctions(),
+        "getServiceReviews",
+      );
 
       const result = await getServiceReviewsFn({
         data: { serviceId, limit, offset },

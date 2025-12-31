@@ -380,7 +380,10 @@ export const chatCanisterService = {
     conversationId: string,
   ): Promise<FrontendConversation | null> {
     try {
-      const getConversationFn = httpsCallable(getFunctions(), "getConversation");
+      const getConversationFn = httpsCallable(
+        getFunctions(),
+        "getConversation",
+      );
 
       const result = await getConversationFn({
         conversationId,
