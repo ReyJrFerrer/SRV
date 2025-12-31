@@ -2,7 +2,6 @@
 import { Principal } from "@dfinity/principal";
 import { httpsCallable } from "firebase/functions";
 import {
-  getFirestore,
   collection,
   doc,
   onSnapshot,
@@ -10,11 +9,11 @@ import {
   where,
   Unsubscribe,
 } from "firebase/firestore";
-import { initializeFirebase } from "./firebaseApp";
+import { getFirebaseFunctions, getFirebaseFirestore } from "./firebaseApp";
 
-// Initialize Firebase
-const { functions } = initializeFirebase();
-const db = getFirestore();
+// Get Firebase instances using proper helpers
+const getFunctions = () => getFirebaseFunctions();
+const getDb = () => getFirebaseFirestore();
 
 // Firebase authentication will be handled automatically by httpsCallable functions
 
@@ -213,7 +212,7 @@ export const bookingCanisterService = {
     attachments?: string[],
   ): Promise<Booking | null> {
     try {
-      const createBookingFn = httpsCallable(functions, "createBooking");
+      const createBookingFn = httpsCallable(getFunctions(), "createBooking");
 
       const result = await createBookingFn({
         serviceId,
@@ -244,7 +243,7 @@ export const bookingCanisterService = {
    */
   async getBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const getBookingFn = httpsCallable(functions, "getBooking");
+      const getBookingFn = httpsCallable(getFunctions(), "getBooking");
 
       const result = await getBookingFn({ bookingId });
       const responseData = (
@@ -267,7 +266,7 @@ export const bookingCanisterService = {
    */
   async getClientBookings(clientId: Principal): Promise<Booking[]> {
     try {
-      const getClientBookingsFn = httpsCallable(functions, "getClientBookings");
+      const getClientBookingsFn = httpsCallable(getFunctions(), "getClientBookings");
 
       const result = await getClientBookingsFn({
         clientId: clientId.toString(),
@@ -291,7 +290,7 @@ export const bookingCanisterService = {
   async getProviderBookings(providerId: Principal): Promise<Booking[]> {
     try {
       const getProviderBookingsFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getProviderBookings",
       );
 
@@ -317,7 +316,7 @@ export const bookingCanisterService = {
   async getBookingsByStatus(status: BookingStatus): Promise<Booking[]> {
     try {
       const getBookingsByStatusFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getBookingsByStatus",
       );
 
@@ -342,7 +341,7 @@ export const bookingCanisterService = {
     scheduledDate: Date,
   ): Promise<Booking | null> {
     try {
-      const acceptBookingFn = httpsCallable(functions, "acceptBooking");
+      const acceptBookingFn = httpsCallable(getFunctions(), "acceptBooking");
 
       const result = await acceptBookingFn({
         bookingId,
@@ -362,7 +361,7 @@ export const bookingCanisterService = {
    */
   async declineBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const declineBookingFn = httpsCallable(functions, "declineBooking");
+      const declineBookingFn = httpsCallable(getFunctions(), "declineBooking");
 
       const result = await declineBookingFn({ bookingId });
       const responseData = (result.data as { success: boolean; data: Booking })
@@ -383,7 +382,7 @@ export const bookingCanisterService = {
     cancelReason: string,
   ): Promise<Booking | null> {
     try {
-      const cancelBookingFn = httpsCallable(functions, "cancelBooking");
+      const cancelBookingFn = httpsCallable(getFunctions(), "cancelBooking");
 
       if (!cancelReason || cancelReason.trim() === "") {
         throw new Error("A reason for cancellation is required");
@@ -406,7 +405,7 @@ export const bookingCanisterService = {
    */
   async startBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const startBookingFn = httpsCallable(functions, "startBooking");
+      const startBookingFn = httpsCallable(getFunctions(), "startBooking");
 
       const result = await startBookingFn({ bookingId });
       const responseData = (result.data as { success: boolean; data: Booking })
@@ -422,7 +421,7 @@ export const bookingCanisterService = {
    */
   async startNavigation(bookingId: string): Promise<Booking | null> {
     try {
-      const startNavigationFn = httpsCallable(functions, "startNavigation");
+      const startNavigationFn = httpsCallable(getFunctions(), "startNavigation");
 
       const result = await startNavigationFn({ bookingId });
       const responseData = (result.data as { success: boolean; data: Booking })
@@ -441,7 +440,7 @@ export const bookingCanisterService = {
     amountPaid?: number,
   ): Promise<Booking | null> {
     try {
-      const completeBookingFn = httpsCallable(functions, "completeBooking");
+      const completeBookingFn = httpsCallable(getFunctions(), "completeBooking");
 
       const result = await completeBookingFn({
         bookingId,
@@ -460,7 +459,7 @@ export const bookingCanisterService = {
    */
   async disputeBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const disputeBookingFn = httpsCallable(functions, "disputeBooking");
+      const disputeBookingFn = httpsCallable(getFunctions(), "disputeBooking");
 
       const result = await disputeBookingFn({ bookingId });
       const responseData = (result.data as { success: boolean; data: Booking })
@@ -482,7 +481,7 @@ export const bookingCanisterService = {
   ): Promise<AvailableSlot[] | null> {
     try {
       const getServiceAvailableSlotsFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getServiceAvailableSlots",
       );
 
@@ -510,7 +509,7 @@ export const bookingCanisterService = {
   ): Promise<boolean | null> {
     try {
       const checkServiceAvailabilityFn = httpsCallable(
-        functions,
+        getFunctions(),
         "checkServiceAvailability",
       );
 
@@ -538,7 +537,7 @@ export const bookingCanisterService = {
   ): Promise<ClientAnalytics | null> {
     try {
       const getClientAnalyticsFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getClientAnalytics",
       );
 
@@ -569,7 +568,7 @@ export const bookingCanisterService = {
     payoutId?: string,
   ): Promise<Booking | null> {
     try {
-      const releasePaymentFn = httpsCallable(functions, "releasePayment");
+      const releasePaymentFn = httpsCallable(getFunctions(), "releasePayment");
 
       const result = await releasePaymentFn({
         bookingId,
@@ -630,7 +629,7 @@ export const bookingCanisterService = {
     clientId: Principal,
     callback: (bookings: Booking[]) => void,
   ): Unsubscribe {
-    const bookingsRef = collection(db, "bookings");
+    const bookingsRef = collection(getDb(), "bookings");
     const q = query(bookingsRef, where("clientId", "==", clientId.toString()));
 
     return onSnapshot(
@@ -656,7 +655,7 @@ export const bookingCanisterService = {
     providerId: Principal,
     callback: (bookings: Booking[]) => void,
   ): Unsubscribe {
-    const bookingsRef = collection(db, "bookings");
+    const bookingsRef = collection(getDb(), "bookings");
     const q = query(
       bookingsRef,
       where("providerId", "==", providerId.toString()),
@@ -685,7 +684,7 @@ export const bookingCanisterService = {
     bookingId: string,
     callback: (booking: Booking | null) => void,
   ): Unsubscribe {
-    const bookingRef = doc(db, "bookings", bookingId);
+    const bookingRef = doc(getDb(), "bookings", bookingId);
 
     return onSnapshot(
       bookingRef,
@@ -710,7 +709,7 @@ export const bookingCanisterService = {
     status: BookingStatus,
     callback: (bookings: Booking[]) => void,
   ): Unsubscribe {
-    const bookingsRef = collection(db, "bookings");
+    const bookingsRef = collection(getDb(), "bookings");
     const q = query(bookingsRef, where("status", "==", status));
 
     return onSnapshot(

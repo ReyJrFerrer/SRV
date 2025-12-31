@@ -1,9 +1,9 @@
 // Review Service (Firebase Cloud Functions)
 import { httpsCallable } from "firebase/functions";
-import { initializeFirebase } from "./firebaseApp";
+import { getFirebaseFunctions } from "./firebaseApp";
 
-// Initialize Firebase
-const { functions } = initializeFirebase();
+// Get Firebase Functions instance using proper helper
+const getFunctions = () => getFirebaseFunctions();
 
 // Firebase authentication will be handled automatically by httpsCallable functions
 
@@ -65,7 +65,7 @@ export const reviewCanisterService = {
     comment: string,
   ): Promise<Review> {
     try {
-      const submitReviewFn = httpsCallable(functions, "submitReview");
+      const submitReviewFn = httpsCallable(getFunctions(), "submitReview");
 
       const result = await submitReviewFn({
         data: { bookingId, rating, comment },
@@ -83,7 +83,7 @@ export const reviewCanisterService = {
    */
   async getReview(reviewId: string): Promise<Review> {
     try {
-      const getReviewFn = httpsCallable(functions, "getReview");
+      const getReviewFn = httpsCallable(getFunctions(), "getReview");
 
       const result = await getReviewFn({
         data: { reviewId },
@@ -102,7 +102,7 @@ export const reviewCanisterService = {
    */
   async getBookingReviews(bookingId: string): Promise<Review[]> {
     try {
-      const getBookingReviewsFn = httpsCallable(functions, "getBookingReviews");
+      const getBookingReviewsFn = httpsCallable(getFunctions(), "getBookingReviews");
 
       const result = await getBookingReviewsFn({
         data: { bookingId },
@@ -120,7 +120,7 @@ export const reviewCanisterService = {
    */
   async getUserReviews(userId?: string): Promise<Review[]> {
     try {
-      const getUserReviewsFn = httpsCallable(functions, "getUserReviews");
+      const getUserReviewsFn = httpsCallable(getFunctions(), "getUserReviews");
 
       const result = await getUserReviewsFn({
         data: { userId },
@@ -142,7 +142,7 @@ export const reviewCanisterService = {
     comment: string,
   ): Promise<Review> {
     try {
-      const updateReviewFn = httpsCallable(functions, "updateReview");
+      const updateReviewFn = httpsCallable(getFunctions(), "updateReview");
 
       const result = await updateReviewFn({
         data: { reviewId, rating, comment },
@@ -159,7 +159,7 @@ export const reviewCanisterService = {
    */
   async deleteReview(reviewId: string): Promise<void> {
     try {
-      const deleteReviewFn = httpsCallable(functions, "deleteReview");
+      const deleteReviewFn = httpsCallable(getFunctions(), "deleteReview");
 
       const result = await deleteReviewFn({
         data: { reviewId },
@@ -178,7 +178,7 @@ export const reviewCanisterService = {
   ): Promise<ProviderRatingResponse> {
     try {
       const calculateProviderRatingFn = httpsCallable(
-        functions,
+        getFunctions(),
         "calculateProviderRating",
       );
 
@@ -219,7 +219,7 @@ export const reviewCanisterService = {
   ): Promise<ServiceRatingResponse> {
     try {
       const calculateServiceRatingFn = httpsCallable(
-        functions,
+        getFunctions(),
         "calculateServiceRating",
       );
 
@@ -260,7 +260,7 @@ export const reviewCanisterService = {
   ): Promise<UserRatingResponse> {
     try {
       const calculateUserAverageRatingFn = httpsCallable(
-        functions,
+        getFunctions(),
         "calculateUserAverageRating",
       );
 
@@ -302,7 +302,7 @@ export const reviewCanisterService = {
     status?: string,
   ): Promise<Review[]> {
     try {
-      const getAllReviewsFn = httpsCallable(functions, "getAllReviews");
+      const getAllReviewsFn = httpsCallable(getFunctions(), "getAllReviews");
 
       const result = await getAllReviewsFn({
         data: { limit, offset, status },
@@ -321,7 +321,7 @@ export const reviewCanisterService = {
   async getReviewStatistics(): Promise<ReviewStatistics> {
     try {
       const getReviewStatisticsFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getReviewStatistics",
       );
 
@@ -341,7 +341,7 @@ export const reviewCanisterService = {
    */
   async flagReview(reviewId: string, reason?: string): Promise<void> {
     try {
-      const flagReviewFn = httpsCallable(functions, "flagReview");
+      const flagReviewFn = httpsCallable(getFunctions(), "flagReview");
 
       const result = await flagReviewFn({
         data: { reviewId, reason },
@@ -363,7 +363,7 @@ export const reviewCanisterService = {
   ): Promise<Review[]> {
     try {
       const getProviderReviewsFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getProviderReviews",
       );
 
@@ -387,7 +387,7 @@ export const reviewCanisterService = {
     offset?: number,
   ): Promise<Review[]> {
     try {
-      const getServiceReviewsFn = httpsCallable(functions, "getServiceReviews");
+      const getServiceReviewsFn = httpsCallable(getFunctions(), "getServiceReviews");
 
       const result = await getServiceReviewsFn({
         data: { serviceId, limit, offset },
@@ -494,7 +494,7 @@ export const reviewCanisterService = {
   ): Promise<Review> {
     try {
       const submitProviderReviewFn = httpsCallable(
-        functions,
+        getFunctions(),
         "submitProviderReview",
       );
 
@@ -520,7 +520,7 @@ export const reviewCanisterService = {
   ): Promise<Review[]> {
     try {
       const getClientProviderReviewsFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getClientProviderReviews",
       );
 

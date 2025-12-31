@@ -7,7 +7,6 @@
 
 import { httpsCallable } from "firebase/functions";
 import {
-  getFirestore,
   collection,
   doc,
   onSnapshot,
@@ -15,11 +14,11 @@ import {
   where,
   Unsubscribe,
 } from "firebase/firestore";
-import { initializeFirebase } from "./firebaseApp";
+import { getFirebaseFunctions, getFirebaseFirestore } from "./firebaseApp";
 
-// Initialize Firebase
-const { functions } = initializeFirebase();
-const db = getFirestore();
+// Get Firebase instances using proper helpers
+const getFunctions = () => getFirebaseFunctions();
+const getDb = () => getFirebaseFirestore();
 
 // Type definitions matching the backend
 export type ServiceStatus = "Available" | "Suspended" | "Unavailable";
@@ -155,7 +154,7 @@ export const serviceCanisterService = {
     }>,
   ): Promise<Service | null> {
     try {
-      const createServiceFn = httpsCallable(functions, "createService");
+      const createServiceFn = httpsCallable(getFunctions(), "createService");
       const result = await createServiceFn({
         title,
         description,
@@ -184,7 +183,7 @@ export const serviceCanisterService = {
     serviceId: string,
     callback: (service: Service | null) => void,
   ): Unsubscribe {
-    const serviceRef = doc(db, "services", serviceId);
+    const serviceRef = doc(getDb(), "services", serviceId);
     return onSnapshot(
       serviceRef,
       (snapshot) => {
@@ -205,7 +204,7 @@ export const serviceCanisterService = {
    */
   async getService(serviceId: string): Promise<Service | null> {
     try {
-      const getServiceFn = httpsCallable(functions, "getService");
+      const getServiceFn = httpsCallable(getFunctions(), "getService");
       const result = await getServiceFn({ serviceId });
 
       const data = result.data as { success: boolean; service: Service };
@@ -222,7 +221,7 @@ export const serviceCanisterService = {
     providerId: string,
     callback: (services: Service[]) => void,
   ): Unsubscribe {
-    const servicesRef = collection(db, "services");
+    const servicesRef = collection(getDb(), "services");
     const q = query(servicesRef, where("providerId", "==", providerId));
 
     return onSnapshot(
@@ -246,7 +245,7 @@ export const serviceCanisterService = {
   async getServicesByProvider(providerId: string): Promise<Service[]> {
     try {
       const getServicesByProviderFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getServicesByProvider",
       );
       const result = await getServicesByProviderFn({ providerId });
@@ -265,7 +264,7 @@ export const serviceCanisterService = {
     categoryId: string,
     callback: (services: Service[]) => void,
   ): Unsubscribe {
-    const servicesRef = collection(db, "services");
+    const servicesRef = collection(getDb(), "services");
     const q = query(servicesRef, where("category.id", "==", categoryId));
 
     return onSnapshot(
@@ -289,7 +288,7 @@ export const serviceCanisterService = {
   async getServicesByCategory(categoryId: string): Promise<Service[]> {
     try {
       const getServicesByCategoryFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getServicesByCategory",
       );
       const result = await getServicesByCategoryFn({ categoryId });
@@ -310,7 +309,7 @@ export const serviceCanisterService = {
   ): Promise<Service | null> {
     try {
       const updateServiceStatusFn = httpsCallable(
-        functions,
+        getFunctions(),
         "updateServiceStatus",
       );
       const result = await updateServiceStatusFn({ serviceId, status });
@@ -332,7 +331,7 @@ export const serviceCanisterService = {
   ): Promise<Service[]> {
     try {
       const searchServicesByLocationFn = httpsCallable(
-        functions,
+        getFunctions(),
         "searchServicesByLocation",
       );
       const result = await searchServicesByLocationFn({
@@ -364,7 +363,7 @@ export const serviceCanisterService = {
     maxBookingsPerDay?: number,
   ): Promise<Service | null> {
     try {
-      const updateServiceFn = httpsCallable(functions, "updateService");
+      const updateServiceFn = httpsCallable(getFunctions(), "updateService");
       const result = await updateServiceFn({
         serviceId,
         categoryId,
@@ -390,7 +389,7 @@ export const serviceCanisterService = {
    */
   async deleteService(serviceId: string): Promise<string | null> {
     try {
-      const deleteServiceFn = httpsCallable(functions, "deleteService");
+      const deleteServiceFn = httpsCallable(getFunctions(), "deleteService");
       const result = await deleteServiceFn({ serviceId });
 
       const data = result.data as { success: boolean; message: string };
@@ -405,7 +404,7 @@ export const serviceCanisterService = {
    * Returns raw service data from Firestore without formatting
    */
   subscribeToAllServices(callback: (services: Service[]) => void): Unsubscribe {
-    const servicesRef = collection(db, "services");
+    const servicesRef = collection(getDb(), "services");
 
     return onSnapshot(
       servicesRef,
@@ -476,7 +475,7 @@ export const serviceCanisterService = {
    */
   async getAllServices(): Promise<Service[]> {
     try {
-      const getAllServicesFn = httpsCallable(functions, "getAllServices");
+      const getAllServicesFn = httpsCallable(getFunctions(), "getAllServices");
       const result = await getAllServicesFn({});
 
       const data = result.data as { success: boolean; services: Service[] };
@@ -499,7 +498,7 @@ export const serviceCanisterService = {
   ): Promise<Service | null> {
     try {
       const uploadServiceImagesFn = httpsCallable(
-        functions,
+        getFunctions(),
         "uploadServiceImages",
       );
       const result = await uploadServiceImagesFn({ serviceId, serviceImages });
@@ -520,7 +519,7 @@ export const serviceCanisterService = {
   ): Promise<Service | null> {
     try {
       const removeServiceImageFn = httpsCallable(
-        functions,
+        getFunctions(),
         "removeServiceImage",
       );
       const result = await removeServiceImageFn({ serviceId, imageUrl });
@@ -541,7 +540,7 @@ export const serviceCanisterService = {
   ): Promise<Service | null> {
     try {
       const reorderServiceImagesFn = httpsCallable(
-        functions,
+        getFunctions(),
         "reorderServiceImages",
       );
       const result = await reorderServiceImagesFn({
@@ -569,7 +568,7 @@ export const serviceCanisterService = {
   ): Promise<Service | null> {
     try {
       const uploadServiceCertificatesFn = httpsCallable(
-        functions,
+        getFunctions(),
         "uploadServiceCertificates",
       );
       const result = await uploadServiceCertificatesFn({
@@ -593,7 +592,7 @@ export const serviceCanisterService = {
   ): Promise<Service | null> {
     try {
       const removeServiceCertificateFn = httpsCallable(
-        functions,
+        getFunctions(),
         "removeServiceCertificate",
       );
       const result = await removeServiceCertificateFn({
@@ -616,7 +615,7 @@ export const serviceCanisterService = {
     isVerified: boolean,
   ): Promise<Service | null> {
     try {
-      const verifyServiceFn = httpsCallable(functions, "verifyService");
+      const verifyServiceFn = httpsCallable(getFunctions(), "verifyService");
       const result = await verifyServiceFn({ serviceId, isVerified });
 
       const data = result.data as { success: boolean; service: Service };
@@ -632,7 +631,7 @@ export const serviceCanisterService = {
   subscribeToAllCategories(
     callback: (categories: ServiceCategory[]) => void,
   ): Unsubscribe {
-    const categoriesRef = collection(db, "categories");
+    const categoriesRef = collection(getDb(), "categories");
 
     return onSnapshot(
       categoriesRef,
@@ -654,7 +653,7 @@ export const serviceCanisterService = {
    */
   async getAllCategories(): Promise<ServiceCategory[]> {
     try {
-      const getAllCategoriesFn = httpsCallable(functions, "getAllCategories");
+      const getAllCategoriesFn = httpsCallable(getFunctions(), "getAllCategories");
       const result = await getAllCategoriesFn({});
 
       const data = result.data as {
@@ -678,7 +677,7 @@ export const serviceCanisterService = {
   ): Promise<ServicePackage | null> {
     try {
       const createServicePackageFn = httpsCallable(
-        functions,
+        getFunctions(),
         "createServicePackage",
       );
       const result = await createServicePackageFn({
@@ -705,7 +704,7 @@ export const serviceCanisterService = {
     serviceId: string,
     callback: (packages: ServicePackage[]) => void,
   ): Unsubscribe {
-    const packagesRef = collection(db, "service_packages");
+    const packagesRef = collection(getDb(), "service_packages");
     const q = query(packagesRef, where("serviceId", "==", serviceId));
 
     return onSnapshot(
@@ -729,7 +728,7 @@ export const serviceCanisterService = {
   async getServicePackages(serviceId: string): Promise<ServicePackage[]> {
     try {
       const getServicePackagesFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getServicePackages",
       );
       const result = await getServicePackagesFn({ serviceId });
@@ -749,7 +748,7 @@ export const serviceCanisterService = {
    */
   async getPackage(packageId: string): Promise<ServicePackage | null> {
     try {
-      const getPackageFn = httpsCallable(functions, "getPackage");
+      const getPackageFn = httpsCallable(getFunctions(), "getPackage");
       const result = await getPackageFn({ packageId });
 
       const data = result.data as {
@@ -773,7 +772,7 @@ export const serviceCanisterService = {
   ): Promise<ServicePackage | null> {
     try {
       const updateServicePackageFn = httpsCallable(
-        functions,
+        getFunctions(),
         "updateServicePackage",
       );
       const result = await updateServicePackageFn({
@@ -799,7 +798,7 @@ export const serviceCanisterService = {
   async deleteServicePackage(packageId: string): Promise<string | null> {
     try {
       const deleteServicePackageFn = httpsCallable(
-        functions,
+        getFunctions(),
         "deleteServicePackage",
       );
       const result = await deleteServicePackageFn({ packageId });
@@ -820,7 +819,7 @@ export const serviceCanisterService = {
   ): Promise<CommissionQuote | null> {
     try {
       const getCommissionQuoteFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getCommissionQuote",
       );
       const result = await getCommissionQuoteFn({ categoryName, price });
@@ -842,7 +841,7 @@ export const serviceCanisterService = {
   ): Promise<Service | null> {
     try {
       const updateServiceRatingFn = httpsCallable(
-        functions,
+        getFunctions(),
         "updateServiceRating",
       );
       const result = await updateServiceRatingFn({
@@ -870,7 +869,7 @@ export const serviceCanisterService = {
   ): Promise<ProviderAvailability | null> {
     try {
       const setServiceAvailabilityFn = httpsCallable(
-        functions,
+        getFunctions(),
         "setServiceAvailability",
       );
       const result = await setServiceAvailabilityFn({
@@ -899,7 +898,7 @@ export const serviceCanisterService = {
   ): Promise<ProviderAvailability | null> {
     try {
       const getServiceAvailabilityFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getServiceAvailability",
       );
       const result = await getServiceAvailabilityFn({ serviceId });
@@ -923,7 +922,7 @@ export const serviceCanisterService = {
   ): Promise<AvailableSlot[]> {
     try {
       const getAvailableTimeSlotsFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getAvailableTimeSlots",
       );
       const result = await getAvailableTimeSlotsFn({ serviceId, date });

@@ -1,10 +1,10 @@
 // Wallet Service (Firebase Cloud Functions)
 import { Principal } from "@dfinity/principal";
 import { httpsCallable } from "firebase/functions";
-import { initializeFirebase } from "./firebaseApp";
+import { getFirebaseFunctions } from "./firebaseApp";
 
-// Initialize Firebase
-const { functions } = initializeFirebase();
+// Get Firebase Functions instance using proper helper
+const getFunctions = () => getFirebaseFunctions();
 
 // Firebase authentication will be handled automatically by httpsCallable functions
 
@@ -32,7 +32,7 @@ export const walletCanisterService = {
    */
   async getBalanceOf(userId: string): Promise<number> {
     try {
-      const getBalanceFn = httpsCallable(functions, "getBalance");
+      const getBalanceFn = httpsCallable(getFunctions(), "getBalance");
 
       const result = await getBalanceFn({
         data: { userId },
@@ -59,7 +59,7 @@ export const walletCanisterService = {
     availableBalance: number;
   }> {
     try {
-      const getBalanceFn = httpsCallable(functions, "getBalance");
+      const getBalanceFn = httpsCallable(getFunctions(), "getBalance");
 
       const result = await getBalanceFn({
         data: { userId },
@@ -101,7 +101,7 @@ export const walletCanisterService = {
     amount: number,
   ): Promise<string | null> {
     try {
-      const transferFundsFn = httpsCallable(functions, "transferFunds");
+      const transferFundsFn = httpsCallable(getFunctions(), "transferFunds");
 
       const result = await transferFundsFn({
         data: { fromUserId, toUserId, amount },
@@ -129,7 +129,7 @@ export const walletCanisterService = {
     description?: string,
   ): Promise<number> {
     try {
-      const creditBalanceFn = httpsCallable(functions, "creditBalance");
+      const creditBalanceFn = httpsCallable(getFunctions(), "creditBalance");
 
       const result = await creditBalanceFn({
         data: { userId, amount, paymentChannel, description },
@@ -156,7 +156,7 @@ export const walletCanisterService = {
     paymentChannel?: string,
   ): Promise<number> {
     try {
-      const debitBalanceFn = httpsCallable(functions, "debitBalance");
+      const debitBalanceFn = httpsCallable(getFunctions(), "debitBalance");
 
       const result = await debitBalanceFn({
         data: { userId, amount, description, paymentChannel },
@@ -177,7 +177,7 @@ export const walletCanisterService = {
   async getTransactionHistory(userId: string): Promise<Transaction[]> {
     try {
       const getTransactionHistoryFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getTransactionHistory",
       );
 
