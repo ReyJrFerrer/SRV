@@ -1,5 +1,5 @@
 // Chat Service (Firebase Cloud Functions & Firestore Real-time)
-import { initializeFirebase } from "./firebaseApp";
+import { getFirebaseFunctions, getFirebaseFirestore } from "./firebaseApp";
 import { httpsCallable } from "firebase/functions";
 import {
   collection,
@@ -11,8 +11,9 @@ import {
   Unsubscribe,
 } from "firebase/firestore";
 
-// Initialize Firebase
-const { functions, firestore } = initializeFirebase();
+// Get Firebase instances using proper helpers
+const getFunctions = () => getFirebaseFunctions();
+const getDb = () => getFirebaseFirestore();
 
 // Custom type for async unsubscribe functions
 export type AsyncUnsubscribe = () => Promise<void>;
@@ -225,7 +226,7 @@ export const chatCanisterService = {
   ): Promise<FrontendConversation | null> {
     try {
       const createConversationFn = httpsCallable(
-        functions,
+        getFunctions(),
         "createConversation",
       );
 
@@ -262,7 +263,7 @@ export const chatCanisterService = {
         throw new Error("Message cannot be empty");
       }
 
-      const sendMessageFn = httpsCallable(functions, "sendMessage");
+      const sendMessageFn = httpsCallable(getFunctions(), "sendMessage");
 
       const result = await sendMessageFn({
         conversationId,
@@ -284,7 +285,7 @@ export const chatCanisterService = {
   async getMyConversations(): Promise<FrontendConversationSummary[]> {
     try {
       const getMyConversationsFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getMyConversations",
       );
 
@@ -311,7 +312,7 @@ export const chatCanisterService = {
   ): Promise<FrontendMessagePage> {
     try {
       const getConversationMessagesFn = httpsCallable(
-        functions,
+        getFunctions(),
         "getConversationMessages",
       );
 
@@ -354,7 +355,7 @@ export const chatCanisterService = {
   async markMessagesAsRead(conversationId: string): Promise<boolean> {
     try {
       const markMessagesAsReadFn = httpsCallable(
-        functions,
+        getFunctions(),
         "markMessagesAsRead",
       );
 
@@ -379,7 +380,7 @@ export const chatCanisterService = {
     conversationId: string,
   ): Promise<FrontendConversation | null> {
     try {
-      const getConversationFn = httpsCallable(functions, "getConversation");
+      const getConversationFn = httpsCallable(getFunctions(), "getConversation");
 
       const result = await getConversationFn({
         conversationId,
@@ -427,7 +428,7 @@ export const chatCanisterService = {
     try {
       // Query for conversations where user is client
       const clientQuery = query(
-        collection(firestore, "conversations"),
+        collection(getDb(), "conversations"),
         where("clientId", "==", userId),
       );
 
@@ -463,7 +464,7 @@ export const chatCanisterService = {
 
       // Query for conversations where user is provider
       const providerQuery = query(
-        collection(firestore, "conversations"),
+        collection(getDb(), "conversations"),
         where("providerId", "==", userId),
       );
 
@@ -543,7 +544,7 @@ export const chatCanisterService = {
 
     try {
       const messagesQuery = query(
-        collection(firestore, "messages"),
+        collection(getDb(), "messages"),
         where("conversationId", "==", conversationId),
         orderBy("createdAt", "desc"),
         firestoreLimit(messageLimit),
