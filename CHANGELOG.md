@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix desktop browser auto-logout at 30 minutes by implementing Firebase-specific token refresh interval (50 minutes) while preserving long IC session durations (7 days mobile, 30 days desktop)
+
 ### Added
 
 - Store client problem attachments on booking records and show them on provider booking details; moved client problem media section below location on wide screens.
