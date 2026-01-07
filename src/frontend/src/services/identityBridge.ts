@@ -113,6 +113,7 @@ export async function signInWithInternetIdentity(
       firebaseToken: data.customToken,
       expiresAt: Date.now() + sessionDuration,
       lastRefresh: Date.now(),
+      lastFirebaseRefresh: Date.now(),
       hasProfile: data.hasProfile,
       needsProfile: data.needsProfile,
       sessionDuration,
