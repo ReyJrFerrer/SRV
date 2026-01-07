@@ -2,6 +2,7 @@
 // Run with: node test-backend-fixes.cjs
 // Assumes Firebase emulator is running: firebase emulators:start --only functions,
 // firestore (from project root)
+// Includes stress testing with 50 messages
 
 const admin = require("firebase-admin");
 const functionsTest = require("firebase-functions-test")({
@@ -136,6 +137,34 @@ async function testSendMessage() {
 }
 
 /**
+ * Stress tests sending multiple messages to measure performance.
+ * Sends 50 messages sequentially and measures total time.
+ */
+async function testStressSendMessages() {
+  console.log("Stress testing sendMessage with 50 messages...");
+  const start = Date.now();
+
+  try {
+    for (let i = 0; i < 50; i++) {
+      await wrappedSendMessage(
+        {
+          data: {
+            conversationId: "test-conversation-id",
+            receiverId: "test-provider-id",
+            content: `Test message ${i + 1}`,
+          },
+        },
+        mockContext,
+      );
+    }
+    const end = Date.now();
+    console.log(`Stress test completed in ${end - start}ms for 50 messages`);
+  } catch (error) {
+    console.error("Error in stress test:", error);
+  }
+}
+
+/**
  * Tests the performance of the markMessagesAsRead function.
  * Measures execution time for marking messages as read.
  */
@@ -166,6 +195,7 @@ async function runTests() {
   await setupTestData();
   await testGetMyConversations();
   await testSendMessage();
+  await testStressSendMessages();
   await testMarkMessagesAsRead();
   console.log("Tests completed.");
 }
