@@ -215,16 +215,19 @@ export class SessionManager {
 
     const now = Date.now();
     const timeUntilExpiry = session.expiresAt - now;
-    const timeSinceFirebaseRefresh = now - (session.lastFirebaseRefresh || session.lastRefresh);
+    const timeSinceFirebaseRefresh =
+      now - (session.lastFirebaseRefresh || session.lastRefresh);
 
     // Refresh if Firebase token is older than 50 minutes OR we're past 80% of IC session lifetime
     const firebaseTokenNeedsRefresh =
       timeSinceFirebaseRefresh > SessionManager.FIREBASE_TOKEN_REFRESH;
     const pastICThreshold =
-      (now - session.lastRefresh) >
+      now - session.lastRefresh >
       session.sessionDuration * SessionManager.REFRESH_THRESHOLD;
 
-    return (firebaseTokenNeedsRefresh || pastICThreshold) && timeUntilExpiry > 60000; // At least 1 min remaining
+    return (
+      (firebaseTokenNeedsRefresh || pastICThreshold) && timeUntilExpiry > 60000
+    ); // At least 1 min remaining
   }
 
   /**
