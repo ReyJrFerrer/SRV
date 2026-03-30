@@ -40,3 +40,6 @@ database-debug.log
 !.firebaserc
 !firebase.json
 !**/firebase.json
+
+src/sui/build/srv_reputation
+.kilo
