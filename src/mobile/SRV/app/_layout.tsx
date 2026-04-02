@@ -59,6 +59,97 @@ function RootLayoutNav() {
         <Stack.Screen name="(client-tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(provider-tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="wallet"
+          options={{ title: "Wallet", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="book/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="booking/[id]" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="booking/confirmation"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="booking/payment-pending"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="booking/receipt/[id]"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="categories/[slug]"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="service/view-all"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="service/reviews/[id]"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+        <Stack.Screen name="help" options={{ headerShown: false }} />
+        <Stack.Screen name="profile/reviews" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="tracking/[bookingId]"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="active-service/[bookingId]"
+          options={{ title: "Active Service", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="complete-service/[bookingId]"
+          options={{ title: "Complete Service", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="receipt/[bookingId]"
+          options={{ title: "Receipt", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="rate-client/[bookingId]"
+          options={{ title: "Rate Client", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="directions/[bookingId]"
+          options={{ title: "Directions", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen name="review/[id]" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="payout-settings"
+          options={{ title: "Payout Settings", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="service-details/[id]"
+          options={{ title: "Service Details", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="service-add"
+          options={{ title: "Add Service", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="service-reviews/[id]"
+          options={{ title: "Service Reviews", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="settings/profile"
+          options={{ title: "Profile", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="settings/help"
+          options={{ title: "Help & Support", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="settings/terms"
+          options={{ title: "Terms of Service", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="settings/report"
+          options={{ title: "Report Issue", headerBackTitle: "Back" }}
+        />
       </Stack>
     </ThemeProvider>
   );

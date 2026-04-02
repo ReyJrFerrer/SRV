@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   TextInput,
 } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "../../constants/Colors";
 import { Booking, mockBookings } from "../../mock/data";
@@ -83,7 +84,12 @@ export default function MyBookingsScreen() {
           : booking.status;
 
     return (
-      <TouchableOpacity key={booking.id} style={styles.bookingCard}>
+      <TouchableOpacity
+        key={booking.id}
+        style={styles.bookingCard}
+        // @ts-ignore
+        onPress={() => router.push(`/booking/${booking.id}`)}
+      >
         <View style={styles.bookingHeader}>
           <View
             style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}
@@ -137,7 +143,11 @@ export default function MyBookingsScreen() {
               <TouchableOpacity style={styles.cancelButton}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.detailsButton}>
+              <TouchableOpacity
+                style={styles.detailsButton}
+                // @ts-ignore
+                onPress={() => router.push(`/booking/${booking.id}`)}
+              >
                 <Text style={styles.detailsButtonText}>View Details</Text>
               </TouchableOpacity>
             </>
@@ -145,7 +155,11 @@ export default function MyBookingsScreen() {
           {booking.status === "Accepted" ||
             (booking.status === "Confirmed" && (
               <>
-                <TouchableOpacity style={styles.trackButton}>
+                <TouchableOpacity
+                  style={styles.trackButton}
+                  // @ts-ignore
+                  onPress={() => router.push(`/tracking/${booking.id}`)}
+                >
                   <Ionicons
                     name="navigate"
                     size={16}
@@ -153,7 +167,11 @@ export default function MyBookingsScreen() {
                   />
                   <Text style={styles.trackButtonText}>Track</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.chatButton}>
+                <TouchableOpacity
+                  style={styles.chatButton}
+                  // @ts-ignore
+                  onPress={() => router.push("/chat/conv-1")}
+                >
                   <Ionicons
                     name="chatbubbles"
                     size={16}
@@ -163,7 +181,11 @@ export default function MyBookingsScreen() {
               </>
             ))}
           {booking.status === "Completed" && (
-            <TouchableOpacity style={styles.reviewButton}>
+            <TouchableOpacity
+              style={styles.reviewButton}
+              // @ts-ignore
+              onPress={() => router.push(`/review/${booking.id}`)}
+            >
               <Ionicons name="star" size={16} color={Colors.light.yellow} />
               <Text style={styles.reviewButtonText}>Leave Review</Text>
             </TouchableOpacity>

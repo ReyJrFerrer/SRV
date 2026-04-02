@@ -9,42 +9,96 @@ import {
   TextInput,
   Image,
 } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "../../constants/Colors";
 import { mockServices, mockCategories, mockProfile } from "../../mock/data";
 
 const CATEGORIES = [
-  { id: "1", name: "Cleaning", icon: "sparkles", color: "#FACC15" },
-  { id: "2", name: "Plumbing", icon: "water", color: "#3B82F6" },
-  { id: "3", name: "Electrical", icon: "flash", color: "#F97316" },
-  { id: "4", name: "Aircon", icon: "snow", color: "#06B6D4" },
-  { id: "5", name: "Carpentry", icon: "hammer", color: "#8B5CF6" },
-  { id: "6", name: "Painting", icon: "color-palette", color: "#EC4899" },
-  { id: "7", name: "Gardening", icon: "leaf", color: "#22C55E" },
-  { id: "8", name: "Appliance", icon: "construct", color: "#6366F1" },
+  {
+    id: "1",
+    name: "Cleaning",
+    slug: "cleaning",
+    icon: "sparkles",
+    color: "#FACC15",
+  },
+  {
+    id: "2",
+    name: "Plumbing",
+    slug: "plumbing",
+    icon: "water",
+    color: "#3B82F6",
+  },
+  {
+    id: "3",
+    name: "Electrical",
+    slug: "electrical",
+    icon: "flash",
+    color: "#F97316",
+  },
+  {
+    id: "4",
+    name: "Aircon",
+    slug: "aircon-services",
+    icon: "snow",
+    color: "#06B6D4",
+  },
+  {
+    id: "5",
+    name: "Carpentry",
+    slug: "carpentry",
+    icon: "hammer",
+    color: "#8B5CF6",
+  },
+  {
+    id: "6",
+    name: "Painting",
+    slug: "painting",
+    icon: "color-palette",
+    color: "#EC4899",
+  },
+  {
+    id: "7",
+    name: "Gardening",
+    slug: "gardening",
+    icon: "leaf",
+    color: "#22C55E",
+  },
+  {
+    id: "8",
+    name: "Appliance",
+    slug: "appliance-repair",
+    icon: "construct",
+    color: "#6366F1",
+  },
 ];
 
 export default function ClientHomeScreen() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = () => {
-    // Navigate to search results
+    // @ts-ignore
+    router.push("/(client-tabs)/search");
   };
 
   const handleCategoryPress = (category: any) => {
-    // Navigate to category
+    // @ts-ignore
+    router.push(`/categories/${category.slug}`);
   };
 
   const handleServicePress = (serviceId: string) => {
-    // Navigate to service detail
+    // @ts-ignore
+    router.push(`/service/${serviceId}`);
   };
 
   const handleNotificationPress = () => {
-    // Navigate to notifications
+    // @ts-ignore
+    router.push("/notifications");
   };
 
   const handleSeeAllServices = () => {
-    // Navigate to all services
+    // @ts-ignore
+    router.push("/service/view-all");
   };
 
   return (
@@ -236,7 +290,13 @@ export default function ClientHomeScreen() {
                         ...service.packages.map((p) => p.price),
                       ).toLocaleString()}
                     </Text>
-                    <TouchableOpacity style={styles.bookButton}>
+                    <TouchableOpacity
+                      style={styles.bookButton}
+                      onPress={() => {
+                        // @ts-ignore
+                        router.push(`/book/${service.id}`);
+                      }}
+                    >
                       <Text style={styles.bookButtonText}>Book</Text>
                     </TouchableOpacity>
                   </View>

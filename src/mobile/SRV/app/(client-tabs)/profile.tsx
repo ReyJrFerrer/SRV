@@ -104,12 +104,22 @@ export default function ClientProfileScreen() {
     {
       icon: "time-outline",
       title: "Booking History",
-      onPress: () => {},
+      onPress: () => {
+        // @ts-ignore
+        router.push("/(client-tabs)/bookings");
+      },
+    },
+    {
+      icon: "star-outline",
+      title: "My Reviews",
+      // @ts-ignore
+      onPress: () => router.push("/profile/reviews"),
     },
     {
       icon: "help-circle-outline",
       title: "Help & Support",
-      onPress: () => {},
+      // @ts-ignore
+      onPress: () => router.push("/help"),
     },
     {
       icon: "document-text-outline",
@@ -127,7 +137,11 @@ export default function ClientProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity style={styles.settingsButton}>
+        <TouchableOpacity
+          style={styles.settingsButton}
+          // @ts-ignore
+          onPress={() => router.push("/settings")}
+        >
           <Ionicons
             name="settings-outline"
             size={24}
@@ -164,7 +178,11 @@ export default function ClientProfileScreen() {
             <Text style={styles.statLabel}>Favorites</Text>
           </TouchableOpacity>
           <View style={styles.statDivider} />
-          <TouchableOpacity style={styles.statItem}>
+          <TouchableOpacity
+            style={styles.statItem}
+            // @ts-ignore
+            onPress={() => router.push("/profile/reviews")}
+          >
             <Text style={styles.statValue}>2</Text>
             <Text style={styles.statLabel}>Reviews</Text>
           </TouchableOpacity>
@@ -192,7 +210,7 @@ export default function ClientProfileScreen() {
         {/* Menu Section - Payments */}
         <View style={styles.menuSection}>
           <Text style={styles.menuSectionTitle}>Payments & Favorites</Text>
-          {menuItems.slice(4, 7).map((item, index) => (
+          {menuItems.slice(4, 8).map((item, index) => (
             <View key={item.title}>
               <MenuItem
                 icon={item.icon}
@@ -203,7 +221,7 @@ export default function ClientProfileScreen() {
                 onSwitchChange={item.onSwitchChange}
                 showChevron={item.showChevron}
               />
-              {index < 2 && <View style={styles.menuDivider} />}
+              {index < 3 && <View style={styles.menuDivider} />}
             </View>
           ))}
         </View>
@@ -211,7 +229,7 @@ export default function ClientProfileScreen() {
         {/* Menu Section - Support */}
         <View style={styles.menuSection}>
           <Text style={styles.menuSectionTitle}>Support</Text>
-          {menuItems.slice(7).map((item, index) => (
+          {menuItems.slice(8).map((item, index) => (
             <View key={item.title}>
               <MenuItem
                 icon={item.icon}

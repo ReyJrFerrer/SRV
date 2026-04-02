@@ -9,6 +9,7 @@ import {
   TextInput,
   Image,
 } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "../../constants/Colors";
 import { mockServices, mockCategories } from "../../mock/data";
@@ -151,7 +152,12 @@ export default function SearchScreen() {
           {filteredServices.length > 0 ? (
             <View style={styles.resultsList}>
               {filteredServices.map((service) => (
-                <TouchableOpacity key={service.id} style={styles.resultCard}>
+                <TouchableOpacity
+                  key={service.id}
+                  style={styles.resultCard}
+                  // @ts-ignore
+                  onPress={() => router.push(`/service/${service.id}`)}
+                >
                   <Image
                     source={{
                       uri:
@@ -188,7 +194,13 @@ export default function SearchScreen() {
                           ...service.packages.map((p) => p.price),
                         ).toLocaleString()}
                       </Text>
-                      <TouchableOpacity style={styles.bookButton}>
+                      <TouchableOpacity
+                        style={styles.bookButton}
+                        onPress={() => {
+                          // @ts-ignore
+                          router.push(`/book/${service.id}`);
+                        }}
+                      >
                         <Text style={styles.bookButtonText}>Book Now</Text>
                       </TouchableOpacity>
                     </View>
