@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import * as Location from 'expo-location';
+import React, { useEffect, useState } from "react";
+import { StyleSheet, View, Text, ActivityIndicator } from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import * as Location from "expo-location";
 
 interface MapProps {
   initialLocation?: {
@@ -15,18 +15,27 @@ interface MapProps {
     title?: string;
     description?: string;
   }>;
-  onLocationSelect?: (location: { latitude: number; longitude: number }) => void;
+  onLocationSelect?: (location: {
+    latitude: number;
+    longitude: number;
+  }) => void;
 }
 
-export default function AppMap({ initialLocation, markers = [], onLocationSelect }: MapProps) {
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+export default function AppMap({
+  initialLocation,
+  markers = [],
+  onLocationSelect,
+}: MapProps) {
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    null,
+  );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
         return;
       }
 
@@ -39,7 +48,8 @@ export default function AppMap({ initialLocation, markers = [], onLocationSelect
 
   const region = {
     latitude: initialLocation?.latitude || location?.coords.latitude || 14.6495, // Default to QC
-    longitude: initialLocation?.longitude || location?.coords.longitude || 121.0509,
+    longitude:
+      initialLocation?.longitude || location?.coords.longitude || 121.0509,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   };
@@ -54,16 +64,21 @@ export default function AppMap({ initialLocation, markers = [], onLocationSelect
 
   return (
     <View style={styles.container}>
-      <MapView 
+      <MapView
         style={styles.map}
         initialRegion={region}
         showsUserLocation={true}
-        onPress={(e) => onLocationSelect && onLocationSelect(e.nativeEvent.coordinate)}
+        onPress={(e) =>
+          onLocationSelect && onLocationSelect(e.nativeEvent.coordinate)
+        }
       >
-        {markers.map(marker => (
+        {markers.map((marker) => (
           <Marker
             key={marker.id}
-            coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
+            coordinate={{
+              latitude: marker.latitude,
+              longitude: marker.longitude,
+            }}
             title={marker.title}
             description={marker.description}
           />
@@ -81,28 +96,28 @@ export default function AppMap({ initialLocation, markers = [], onLocationSelect
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   center: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   map: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   errorBox: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: 'rgba(255, 50, 50, 0.9)',
+    backgroundColor: "rgba(255, 50, 50, 0.9)",
     padding: 10,
     borderRadius: 8,
   },
   errorText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  }
+    color: "white",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
 });
