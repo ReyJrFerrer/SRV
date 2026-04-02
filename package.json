@@ -6,7 +6,8 @@
   "type": "module",
   "workspaces": [
     "src/frontend",
-    "src/admin"
+    "src/admin",
+    "src/mobile/SRV"
   ],
   "scripts": {
     "lint": "prettier --check .",
