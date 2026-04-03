@@ -40,15 +40,15 @@ export default function ProviderHomeScreen() {
   const activeServices = mockServices.filter((s) => s.status === "Available");
 
   const handleWalletPress = () => {
-    router.push("/wallet");
+
   };
 
   const handleServicePress = (serviceId: string) => {
-    router.push(`/service/${serviceId}`);
+    
   };
 
   const handleAddService = () => {
-    router.push("/service/add");
+
   };
 
   const handleBookingsPress = () => {
@@ -56,7 +56,7 @@ export default function ProviderHomeScreen() {
   };
 
   const handleProfilePress = () => {
-    router.push("/settings/profile");
+
   };
 
   return (
@@ -71,41 +71,6 @@ export default function ProviderHomeScreen() {
           />
         }
       >
-        {/* Header - Provider Profile */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.profileSection}
-            onPress={handleProfilePress}
-          >
-            <Image
-              source={{
-                uri:
-                  mockProfile.profileImageUrl ||
-                  "https://i.pravatar.cc/150?img=68",
-              }}
-              style={styles.profileImage}
-            />
-            <View style={styles.profileInfo}>
-              <Text style={styles.greeting}>Good day!</Text>
-              <Text style={styles.providerName}>{mockProfile.name}</Text>
-              <View style={styles.locationRow}>
-                <Ionicons
-                  name="location"
-                  size={14}
-                  color={Colors.light.gray500}
-                />
-                <Text style={styles.locationText}>{mockProfile.location}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons
-              name="notifications-outline"
-              size={24}
-              color={Colors.light.blue900}
-            />
-          </TouchableOpacity>
-        </View>
 
         {/* Wallet Balance Card */}
         <TouchableOpacity style={styles.walletCard} onPress={handleWalletPress}>
