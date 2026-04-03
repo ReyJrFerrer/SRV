@@ -65,6 +65,7 @@ export default function ActiveServiceScreen() {
   };
 
   const handleGetDirections = () => {
+    // @ts-ignore
     router.push(`/directions/${booking.id}`);
   };
 

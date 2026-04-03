@@ -132,24 +132,19 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="service-reviews/[id]"
-          options={{ title: "Service Reviews", headerBackTitle: "Back" }}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="service-details/reviews/[id]"
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="settings/profile"
           options={{ title: "Profile", headerBackTitle: "Back" }}
         />
-        <Stack.Screen
-          name="settings/help"
-          options={{ title: "Help & Support", headerBackTitle: "Back" }}
-        />
-        <Stack.Screen
-          name="settings/terms"
-          options={{ title: "Terms of Service", headerBackTitle: "Back" }}
-        />
-        <Stack.Screen
-          name="settings/report"
-          options={{ title: "Report Issue", headerBackTitle: "Back" }}
-        />
+        <Stack.Screen name="settings/help" options={{ headerShown: false }} />
+        <Stack.Screen name="settings/terms" options={{ headerShown: false }} />
+        <Stack.Screen name="settings/report" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

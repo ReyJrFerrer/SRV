@@ -1387,3 +1387,364 @@ export const mockNotificationsDetailed: Notification[] = [
     createdAt: "2026-03-25T12:00:00Z",
   },
 ];
+
+// ==================== Provider Page Mock Data ====================
+
+export interface ReputationBreakdown {
+  score: number;
+  level: "New" | "Building Trust" | "Reliable" | "Trusted" | "Premium";
+  totalBookings: number;
+  completedBookings: number;
+  averageRating: number;
+  totalReviews: number;
+  responseRate: number;
+  completionRate: number;
+}
+
+export interface TicketCategory {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+export interface PayoutFormData {
+  gcashNumber: string;
+  gcashName: string;
+  businessName: string;
+  businessType: "INDIVIDUAL" | "CORPORATION" | "PARTNERSHIP";
+  email: string;
+  phoneNumber: string;
+}
+
+export interface ReceiptData {
+  bookingId: string;
+  dateCompleted: string;
+  serviceTitle: string;
+  packageName: string;
+  clientName: string;
+  duration: string;
+  price: number;
+  commission: number;
+  amountPaid: number;
+  paymentMethod: string;
+  changeGiven: number;
+}
+
+export interface ServiceDetail {
+  id: string;
+  title: string;
+  category: string;
+  categorySlug: string;
+  description: string;
+  imageUrls: string[];
+  certificateUrls: string[];
+  status: "Available" | "Unavailable";
+  rating: number;
+  reviewCount: number;
+  packages: Package[];
+  location: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  weeklySchedule: {
+    day: string;
+    isAvailable: boolean;
+    slots: { start: string; end: string }[];
+  }[];
+}
+
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface ReviewDetailed {
+  id: string;
+  clientName: string;
+  clientImage?: string;
+  rating: number;
+  comment: string;
+  date: string;
+  serviceTitle: string;
+  packageName: string;
+  qualityScore: number;
+  status: "Visible" | "Hidden" | "Flagged";
+}
+
+export const mockReputationBreakdown: ReputationBreakdown = {
+  score: 87,
+  level: "Trusted",
+  totalBookings: 456,
+  completedBookings: 429,
+  averageRating: 4.8,
+  totalReviews: 124,
+  responseRate: 96,
+  completionRate: 94,
+};
+
+export const mockTicketCategories: TicketCategory[] = [
+  {
+    id: "technical",
+    name: "Technical Issue",
+    description: "App crashes, bugs, or performance problems",
+    icon: "construct-outline",
+  },
+  {
+    id: "billing",
+    name: "Billing & Payments",
+    description: "Payment issues, refunds, or wallet concerns",
+    icon: "card-outline",
+  },
+  {
+    id: "account",
+    name: "Account Problem",
+    description: "Login, profile, or verification issues",
+    icon: "person-circle-outline",
+  },
+  {
+    id: "service",
+    name: "Service Concern",
+    description: "Issues with bookings or service delivery",
+    icon: "briefcase-outline",
+  },
+  {
+    id: "other",
+    name: "Other",
+    description: "General feedback or other concerns",
+    icon: "help-circle-outline",
+  },
+];
+
+export const mockPayoutForm: PayoutFormData = {
+  gcashNumber: "",
+  gcashName: "",
+  businessName: "",
+  businessType: "INDIVIDUAL",
+  email: "juan@example.com",
+  phoneNumber: "+63 912 345 6789",
+};
+
+export const mockReceiptData: ReceiptData[] = [
+  {
+    bookingId: "booking-1",
+    dateCompleted: "Mar 28, 2026",
+    serviceTitle: "Home Cleaning Service",
+    packageName: "Deep Cleaning",
+    clientName: "Maria Santos",
+    duration: "4 hours",
+    price: 1200,
+    commission: 120,
+    amountPaid: 1200,
+    paymentMethod: "Cash on Hand",
+    changeGiven: 0,
+  },
+  {
+    bookingId: "booking-2",
+    dateCompleted: "Mar 27, 2026",
+    serviceTitle: "Aircon Installation & Repair",
+    packageName: "Repair",
+    clientName: "Pedro Garcia",
+    duration: "2 hours",
+    price: 800,
+    commission: 80,
+    amountPaid: 1000,
+    paymentMethod: "Cash on Hand",
+    changeGiven: 200,
+  },
+  {
+    bookingId: "booking-3",
+    dateCompleted: "Mar 25, 2026",
+    serviceTitle: "Plumbing Services",
+    packageName: "Standard Repair",
+    clientName: "Ana Reyes",
+    duration: "1.5 hours",
+    price: 600,
+    commission: 60,
+    amountPaid: 600,
+    paymentMethod: "GCash",
+    changeGiven: 0,
+  },
+];
+
+export const mockServiceCategories: ServiceCategory[] = [
+  { id: "cat-1", name: "Cleaning", slug: "cleaning" },
+  { id: "cat-2", name: "Aircon Services", slug: "aircon-services" },
+  { id: "cat-3", name: "Plumbing", slug: "plumbing" },
+  { id: "cat-4", name: "Electrical", slug: "electrical" },
+  { id: "cat-5", name: "Painting", slug: "painting" },
+  { id: "cat-6", name: "Carpentry", slug: "carpentry" },
+  { id: "cat-7", name: "Pest Control", slug: "pest-control" },
+  { id: "cat-8", name: "Gardening", slug: "gardening" },
+];
+
+export const mockServiceDetail: ServiceDetail = {
+  id: "service-1",
+  title: "Home Cleaning Service",
+  category: "Cleaning",
+  categorySlug: "cleaning",
+  description:
+    "Professional home cleaning service for apartments, houses, and condos. We bring our own eco-friendly cleaning supplies and equipment.",
+  imageUrls: [
+    "https://images.unsplash.com/photo-1581578731548-c64695b69535?w=400",
+    "https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?w=400",
+    "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400",
+  ],
+  certificateUrls: [
+    "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=200",
+    "https://images.unsplash.com/photo-1450101499163-c8848e66ad74?w=200",
+  ],
+  status: "Available",
+  rating: 4.8,
+  reviewCount: 45,
+  packages: [
+    {
+      id: "pkg-1",
+      name: "Standard Cleaning",
+      price: 500,
+      description: "Basic cleaning for 2-bedroom apartment",
+    },
+    {
+      id: "pkg-2",
+      name: "Deep Cleaning",
+      price: 1200,
+      description: "Thorough cleaning including appliances",
+    },
+    {
+      id: "pkg-3",
+      name: "Move-in/Move-out",
+      price: 2000,
+      description: "Complete cleaning for moving",
+    },
+  ],
+  location: {
+    address: "123 Quezon Avenue, Quezon City, Metro Manila",
+    latitude: 14.6488,
+    longitude: 121.0509,
+  },
+  weeklySchedule: [
+    {
+      day: "Monday",
+      isAvailable: true,
+      slots: [{ start: "8:00 AM", end: "5:00 PM" }],
+    },
+    {
+      day: "Tuesday",
+      isAvailable: true,
+      slots: [{ start: "8:00 AM", end: "5:00 PM" }],
+    },
+    {
+      day: "Wednesday",
+      isAvailable: true,
+      slots: [{ start: "8:00 AM", end: "5:00 PM" }],
+    },
+    {
+      day: "Thursday",
+      isAvailable: true,
+      slots: [{ start: "8:00 AM", end: "5:00 PM" }],
+    },
+    {
+      day: "Friday",
+      isAvailable: true,
+      slots: [{ start: "8:00 AM", end: "5:00 PM" }],
+    },
+    {
+      day: "Saturday",
+      isAvailable: true,
+      slots: [{ start: "9:00 AM", end: "3:00 PM" }],
+    },
+    { day: "Sunday", isAvailable: false, slots: [] },
+  ],
+};
+
+export const mockReviewsDetailed: ReviewDetailed[] = [
+  {
+    id: "rev-1",
+    clientName: "Maria Santos",
+    clientImage: "https://i.pravatar.cc/150?img=1",
+    rating: 5,
+    comment:
+      "Absolutely fantastic service! The cleaning was thorough and the team was very professional. Will definitely book again.",
+    date: "2026-03-28",
+    serviceTitle: "Home Cleaning Service",
+    packageName: "Deep Cleaning",
+    qualityScore: 98,
+    status: "Visible",
+  },
+  {
+    id: "rev-2",
+    clientName: "Pedro Garcia",
+    clientImage: "https://i.pravatar.cc/150?img=3",
+    rating: 4,
+    comment:
+      "Good service overall. Arrived on time and did a decent job. Could improve on attention to detail in the kitchen area.",
+    date: "2026-03-25",
+    serviceTitle: "Home Cleaning Service",
+    packageName: "Standard Cleaning",
+    qualityScore: 85,
+    status: "Visible",
+  },
+  {
+    id: "rev-3",
+    clientName: "Ana Reyes",
+    clientImage: "https://i.pravatar.cc/150?img=5",
+    rating: 5,
+    comment:
+      "Best cleaning service in Metro Manila! They even cleaned areas I didn't expect. Highly recommended!",
+    date: "2026-03-20",
+    serviceTitle: "Home Cleaning Service",
+    packageName: "Move-in/Move-out",
+    qualityScore: 100,
+    status: "Visible",
+  },
+  {
+    id: "rev-4",
+    clientName: "Carlos Mendoza",
+    clientImage: "https://i.pravatar.cc/150?img=7",
+    rating: 3,
+    comment:
+      "Average service. The cleaning was okay but they missed some spots under the furniture.",
+    date: "2026-03-15",
+    serviceTitle: "Home Cleaning Service",
+    packageName: "Standard Cleaning",
+    qualityScore: 65,
+    status: "Visible",
+  },
+  {
+    id: "rev-5",
+    clientName: "Lisa Tan",
+    clientImage: "https://i.pravatar.cc/150?img=9",
+    rating: 5,
+    comment:
+      "Superb! My apartment has never been this clean. The team was punctual, friendly, and very thorough.",
+    date: "2026-03-10",
+    serviceTitle: "Home Cleaning Service",
+    packageName: "Deep Cleaning",
+    qualityScore: 95,
+    status: "Visible",
+  },
+];
+
+export const mockDirectionsBooking = {
+  bookingId: "booking-accept-1",
+  clientName: "Maria Santos",
+  clientPhone: "+63 917 123 4567",
+  serviceTitle: "Home Cleaning Service",
+  packageName: "Deep Cleaning",
+  scheduledDate: "Apr 2, 2026",
+  scheduledTime: "2:00 PM",
+  price: 1200,
+  paymentMethod: "Cash on Hand",
+  status: "Accepted" as const,
+  location: {
+    address: "456 Ayala Avenue, Makati City, Metro Manila",
+    latitude: 14.5547,
+    longitude: 121.0244,
+  },
+  providerLocation: {
+    latitude: 14.6091,
+    longitude: 121.0223,
+  },
+};
