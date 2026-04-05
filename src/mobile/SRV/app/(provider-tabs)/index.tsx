@@ -18,6 +18,7 @@ import {
   mockServices,
   mockBookings,
 } from "../../mock/data";
+import Header from "../../components/shared/Header";
 
 function formatCurrency(amount: number): string {
   return `₱${amount.toLocaleString()}`;
@@ -39,28 +40,26 @@ export default function ProviderHomeScreen() {
   );
   const activeServices = mockServices.filter((s) => s.status === "Available");
 
-  const handleWalletPress = () => {
+  const handleWalletPress = () => {};
 
-  };
+  const handleServicePress = (serviceId: string) => {};
 
-  const handleServicePress = (serviceId: string) => {
-    
-  };
-
-  const handleAddService = () => {
-
-  };
+  const handleAddService = () => {};
 
   const handleBookingsPress = () => {
     router.push("/(provider-tabs)/bookings");
   };
 
-  const handleProfilePress = () => {
-
-  };
+  const handleProfilePress = () => {};
 
   return (
     <SafeAreaView style={styles.container}>
+      <Header
+        name={mockProfile.name}
+        location={mockProfile.location}
+        profileImageUrl={mockProfile.profileImageUrl}
+        onProfilePress={handleProfilePress}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -71,7 +70,6 @@ export default function ProviderHomeScreen() {
           />
         }
       >
-
         {/* Wallet Balance Card */}
         <TouchableOpacity style={styles.walletCard} onPress={handleWalletPress}>
           <View style={styles.walletLeft}>

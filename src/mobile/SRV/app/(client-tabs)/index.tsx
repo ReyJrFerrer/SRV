@@ -13,6 +13,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "../../constants/Colors";
 import { mockServices, mockCategories, mockProfile } from "../../mock/data";
+import Header from "../../components/shared/Header";
 
 const CATEGORIES = [
   {
@@ -100,9 +101,16 @@ export default function ClientHomeScreen() {
     // @ts-ignore
     router.push("/service/view-all");
   };
+  const handleProfilePress = () => {};
 
   return (
     <SafeAreaView style={styles.container}>
+      <Header
+        name={mockProfile.name}
+        location={mockProfile.location}
+        profileImageUrl={mockProfile.profileImageUrl}
+        onProfilePress={handleProfilePress}
+      />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
