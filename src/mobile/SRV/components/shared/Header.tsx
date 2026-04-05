@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { mockProfile } from "../../mock/data";
-import { SvgXml } from "react-native-svg";
+import { SvgXml, Defs, LinearGradient, Stop } from "react-native-svg";
 import { logoSvgString } from "./LogoSvgString";
 
 interface HeaderProps {
