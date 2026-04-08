@@ -15,12 +15,6 @@ const {
 const {
   checkUserReputationInternal,
 } = require("./reputation");
-const {
-  holdBalanceInternal,
-  releaseHoldInternal,
-  convertHoldToDebitInternal,
-} = require("./wallet");
-
 const db = admin.firestore();
 const rtdb = admin.database();
 
@@ -142,59 +136,6 @@ async function checkBookingConflicts(
     return false; // Default to no conflict if check fails
   }
 }
-
-/**
- * Validate provider wallet balance for commission (cash jobs only)
- * Now accounts for held balance to prevent over-acceptance of bookings
- * @param {object} booking - Booking object
- * @return {Promise<boolean>} True if sufficient available balance
- */
-async function validateCommissionBalance(booking) {
-  if (booking.paymentMethod !== "CashOnHand") {
-    return true; // No commission validation needed for digital payments
-  }
-
-  try {
-    // Get service details to calculate commission
-    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
-    if (!serviceDoc.exists) {
-      return false;
-    }
-
-    const service = serviceDoc.data();
-    let commissionFee = 0;
-
-    // Calculate commission based on packages or service price
-    if (booking.servicePackageIds && booking.servicePackageIds.length > 0) {
-      for (const packageId of booking.servicePackageIds) {
-        const packageDoc = await db.collection("service_packages").doc(packageId).get();
-        if (packageDoc.exists) {
-          commissionFee += packageDoc.data().commissionFee || 0;
-        }
-      }
-    } else {
-      commissionFee = service.commissionFee || 0;
-    }
-
-    // Check provider wallet balance - now accounting for held amounts
-    const walletDoc = await db.collection("wallets").doc(booking.providerId).get();
-    if (!walletDoc.exists) {
-      return false;
-    }
-
-    const walletData = walletDoc.data();
-    const walletBalance = walletData.balance || 0;
-    const heldBalance = walletData.heldBalance || 0;
-
-    // Calculate available balance = total balance - held balance
-    const availableBalance = walletBalance - heldBalance;
-    return availableBalance >= commissionFee;
-  } catch (error) {
-    console.error("Error validating commission balance:", error);
-    return false;
-  }
-}
-
 /**
  * Check if service is active based on multiple possible field formats
  * @param {object} service - Service object
@@ -620,7 +561,6 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
       paymentId: paymentId || null,
       heldAmount: paymentId ? finalPrice : null,
       releasedAmount: null,
-      commissionRetained: null,
       paymentReleased: null,
       releasedAt: null,
       payoutId: null,
@@ -731,53 +671,6 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
         "failed-precondition",
         "The scheduled time conflicts with an existing booking",
       );
-    }
-
-    // Validate commission balance for cash jobs
-    const hasValidBalance = await validateCommissionBalance(booking);
-    if (!hasValidBalance) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Insufficient wallet balance to cover commission fee",
-      );
-    }
-
-    // Hold commission for cash jobs to prevent over-acceptance
-    if (booking.paymentMethod === "CashOnHand") {
-      // Calculate commission amount
-      const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
-      if (!serviceDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Service not found");
-      }
-
-      const service = serviceDoc.data();
-      let totalCommission = 0;
-
-      if (booking.servicePackageIds && booking.servicePackageIds.length > 0) {
-        for (const packageId of booking.servicePackageIds) {
-          const packageDoc = await db.collection("service_packages").doc(packageId).get();
-          if (packageDoc.exists) {
-            totalCommission += packageDoc.data().commissionFee || 0;
-          }
-        }
-      } else {
-        totalCommission = service.commissionFee || 0;
-      }
-
-      // Hold the commission amount
-      try {
-        await holdBalanceInternal(
-          booking.providerId,
-          totalCommission,
-          bookingId,
-          `Commission hold for booking #${bookingId}`,
-        );
-      } catch (holdError) {
-        throw new functions.https.HttpsError(
-          "internal",
-          `Failed to hold commission: ${holdError.message}`,
-        );
-      }
     }
 
     const updatedBooking = {
@@ -1251,69 +1144,6 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
       amountPaid: amountPaid || booking.amountPaid,
       updatedAt: completedDate,
     });
-    // Handle commission deduction for cash jobs
-    if (booking.paymentMethod === "CashOnHand") {
-      // Get service details to calculate commission
-      const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
-      if (!serviceDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Service not found");
-      }
-
-      const service = serviceDoc.data();
-      let totalCommission = 0;
-      const serviceDescriptions = [];
-
-      // Calculate commission based on packages or service
-      if (booking.servicePackageIds && booking.servicePackageIds.length > 0) {
-        // Multiple package booking - get commission from all packages
-        for (const packageId of booking.servicePackageIds) {
-          const packageDoc = await db.collection("service_packages").doc(packageId).get();
-          if (packageDoc.exists) {
-            const pkg = packageDoc.data();
-            totalCommission += pkg.commissionFee || 0; // Convert to cents
-            serviceDescriptions.push(pkg.title || packageId);
-          }
-        }
-      } else {
-        // Regular service booking - get commission from service
-        totalCommission = (service.commissionFee || 0); // Convert to cents
-        serviceDescriptions.push(service.title || booking.serviceId);
-      }
-
-      // Convert held commission to debit (creates transaction record)
-      if (totalCommission > 0) {
-        const serviceDescriptionsText = serviceDescriptions.length > 0 ?
-          serviceDescriptions.join(", ") :
-          "Unknown Service";
-
-        const commissionDescription =
-          `Commission fee for booking #${bookingId} - ${serviceDescriptionsText}`;
-
-        try {
-          // Convert hold to debit - this releases the hold and creates transaction
-          await convertHoldToDebitInternal(
-            booking.providerId,
-            bookingId,
-            commissionDescription,
-            "SRV_COMMISSION",
-          );
-        } catch (debitError) {
-          // If conversion fails, try to release the hold
-          try {
-            await releaseHoldInternal(booking.providerId, bookingId);
-          } catch (releaseError) {
-            console.error(
-              `[completeBooking] Failed to release hold: ${releaseError.message}`,
-            );
-          }
-          throw new functions.https.HttpsError(
-            "internal",
-            `Failed to deduct commission: ${debitError.message}`,
-          );
-        }
-      }
-    }
-
     // TODO: Handle digital payment release here
     // This would integrate with the releaseHeldPayment Cloud Function
 
@@ -1480,15 +1310,6 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
         updatedAt: new Date().toISOString(),
       });
     });
-    // Release held commission for cash jobs (if booking was accepted)
-    if (booking.paymentMethod === "CashOnHand" &&
-      (booking.status === "Accepted" || booking.status === "InProgress")) {
-      try {
-        await releaseHoldInternal(booking.providerId, bookingId);
-      } catch (releaseError) {
-        // caputre holding error
-      }
-    }
 
     // Fetch service details and user names for notification
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
@@ -2469,14 +2290,6 @@ exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
         await deductReputationForCancellationInternal(booking.providerId);
       } catch (error) {
         // Don't fail the cancellation if reputation update fails, just log it
-      }
-      if (booking.paymentMethod === "CashOnHand" &&
-      (booking.status === "Accepted" || booking.status === "InProgress")) {
-        try {
-          await releaseHoldInternal(booking.providerId, booking.id);
-        } catch (releaseError) {
-        // caputre holding error
-        }
       }
 
 

@@ -125,41 +125,6 @@ function validateLocation(location) {
 }
 
 /**
- * Calculate commission fee and rate for a service
- * @param {string} categoryName - Service category name
- * @param {number} price - Service price
- * @return {Promise<object>} Commission fee and rate
- */
-async function calculateCommissionInfo(categoryName, price) {
-  const {
-    getCategoryTier,
-    getFeeStructure,
-    calculateDynamicCommission,
-  } = require("./commission-utils");
-
-  try {
-    const tier = getCategoryTier(categoryName);
-    const structure = getFeeStructure(tier);
-    const commissionFee = calculateDynamicCommission(price, structure);
-
-    // Calculate commission rate as percentage
-    const commissionRate = ((commissionFee / price) * 100);
-
-    return {
-      commissionFee: commissionFee,
-      commissionRate: parseFloat(commissionRate.toFixed(2)),
-    };
-  } catch (error) {
-    console.error("Error calculating commission:", error);
-    // Fallback to default commission
-    return {
-      commissionFee: Math.floor(price * 0.05),
-      commissionRate: 5.0,
-    };
-  }
-}
-
-/**
  * Upload images using media.js for consistent handling
  * This ensures all uploads are tracked in Firestore with proper metadata
  * @param {string} ownerId - Owner ID (provider ID)
@@ -347,11 +312,6 @@ exports.createService = functions.https.onCall(async (data, context) => {
         "ServiceCertificate");
     }
 
-    // Calculate commission
-    const {commissionFee, commissionRate} = await calculateCommissionInfo(
-      category.name,
-      price);
-
     const timestamp = new Date().toISOString();
 
     const newService = {
@@ -363,8 +323,6 @@ exports.createService = functions.https.onCall(async (data, context) => {
       description,
       category,
       price,
-      commissionFee,
-      commissionRate,
       location,
       status: "Available",
       rating: null,
@@ -757,21 +715,6 @@ exports.updateService = functions.https.onCall(async (data, context) => {
       updatedMaxBookingsPerDay = service.maxBookingsPerDay;
     }
 
-    // Calculate commission if price or category changed
-    let commissionFee;
-    let commissionRate;
-    const priceChanged = (price !== undefined && price !== null);
-    const categoryChanged = (categoryId !== undefined && categoryId !== null &&
-      categoryId !== service.category.id);
-
-    if (priceChanged || categoryChanged) {
-      const commissionInfo = await calculateCommissionInfo(updatedCategory.name, updatedPrice);
-      commissionFee = commissionInfo.commissionFee;
-      commissionRate = commissionInfo.commissionRate;
-    } else {
-      commissionFee = service.commissionFee;
-      commissionRate = service.commissionRate;
-    }
 
     // Build the updates object with all values (including preserved ones)
     const updates = {
@@ -779,8 +722,6 @@ exports.updateService = functions.https.onCall(async (data, context) => {
       description: updatedDescription,
       category: updatedCategory,
       price: updatedPrice,
-      commissionFee: commissionFee,
-      commissionRate: commissionRate,
       location: updatedLocation,
       weeklySchedule: updatedWeeklySchedule,
       instantBookingEnabled: updatedInstantBookingEnabled,
@@ -1668,12 +1609,6 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Calculate commission
-    const {commissionFee, commissionRate} = await calculateCommissionInfo(
-      service.category.name,
-      price,
-    );
-
     const packageRef = db.collection("service_packages").doc();
     const timestamp = new Date().toISOString();
 
@@ -1683,8 +1618,6 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
       title,
       description,
       price,
-      commissionFee,
-      commissionRate,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -1830,14 +1763,6 @@ exports.updateServicePackage = functions.https.onCall(async (data, context) => {
         );
       }
       updates.price = price;
-
-      // Recalculate commission
-      const {commissionFee, commissionRate} = await calculateCommissionInfo(
-        service.category.name,
-        price,
-      );
-      updates.commissionFee = commissionFee;
-      updates.commissionRate = commissionRate;
     }
 
     await packageRef.update(updates);
@@ -1914,34 +1839,6 @@ exports.deleteServicePackage = functions.https.onCall(async (data, context) => {
 /**
  * Get commission quote for a given category and price
  */
-exports.getCommissionQuote = functions.https.onCall(async (data, _context) => {
-  const payload = data.data || data;
-  const {categoryName, price} = payload;
-
-  if (!categoryName || !price) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Category name and price are required",
-    );
-  }
-
-  try {
-    const {commissionFee, commissionRate} = await calculateCommissionInfo(
-      categoryName,
-      price,
-    );
-
-    return {
-      success: true,
-      commissionFee,
-      commissionRate,
-      totalAmount: price + commissionFee,
-    };
-  } catch (error) {
-    console.error("Error getting commission quote:", error);
-    throw new functions.https.HttpsError("internal", error.message);
-  }
-});
 
 /**
  * Update service rating (called by Review system)

@@ -11,8 +11,6 @@ import {
 interface Props {
   formData: any;
   categories: any[];
-  commissionQuotes: Record<string, any>;
-  loadingCommissions: boolean;
   serviceImageFiles: File[];
   imagePreviews: string[];
   certificationFiles: File[];
@@ -23,8 +21,6 @@ interface Props {
 const ReviewSubmit: React.FC<Props> = ({
   formData,
   categories,
-  commissionQuotes,
-  loadingCommissions,
   serviceImageFiles,
   imagePreviews,
   certificationFiles,
@@ -117,7 +113,6 @@ const ReviewSubmit: React.FC<Props> = ({
                     pkg.name.trim() && pkg.description.trim() && pkg.price,
                 )
                 .map((pkg: any) => {
-                  const commissionQuote = commissionQuotes[pkg.id];
                   return (
                     <div
                       key={pkg.id}
@@ -134,26 +129,6 @@ const ReviewSubmit: React.FC<Props> = ({
                         <p className="text-lg font-semibold text-green-600">
                           ₱{Number(pkg.price).toLocaleString()}
                         </p>
-                        {loadingCommissions && (
-                          <p className="text-xs text-gray-500">
-                            Loading commission...
-                          </p>
-                        )}
-                        {commissionQuote && (
-                          <div className="mt-1 text-base text-gray-600">
-                            <p>
-                              Commission: ₱
-                              {commissionQuote.commissionFee.toLocaleString()}
-                            </p>
-                            <p className="font-medium text-blue-600">
-                              Total: ₱
-                              {(
-                                Number(pkg.price) +
-                                commissionQuote.commissionFee
-                              ).toLocaleString()}
-                            </p>
-                          </div>
-                        )}
                       </div>
                     </div>
                   );

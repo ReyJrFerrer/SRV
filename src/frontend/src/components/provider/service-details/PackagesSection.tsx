@@ -291,18 +291,12 @@ const PackagesSection: React.FC<Props> = ({
                           ₱{pkg.price.toFixed(2)}
                         </span>
                       </div>
-                      <div className="mt-0.5 text-[11px] text-gray-500">
-                        Base price
-                      </div>
                     </div>
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
-                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 sm:text-xs">
-                      + ₱{pkg.commissionFee.toFixed(2)} commission
-                    </span>
                     <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 sm:text-xs">
-                      ₱{(pkg.price + pkg.commissionFee).toFixed(2)} total
+                      ₱{pkg.price.toFixed(2)} total
                     </span>
                   </div>
                 </div>

@@ -80,7 +80,6 @@ const ProviderBookingsPage: React.FC = () => {
     declineBookingById,
     isBookingActionInProgress,
     acceptBookingById,
-    checkCommissionValidation,
     startBookingById,
     startNavigationById,
   } = useProviderBookingManagement();
@@ -702,9 +701,6 @@ const ProviderBookingsPage: React.FC = () => {
                               isBookingActionInProgress={
                                 isBookingActionInProgress
                               }
-                              checkCommissionValidation={
-                                checkCommissionValidation
-                              }
                               startBookingById={startBookingById}
                               startNavigationById={startNavigationById}
                             />
@@ -817,9 +813,6 @@ const ProviderBookingsPage: React.FC = () => {
                                 acceptBookingById={acceptBookingById}
                                 isBookingActionInProgress={
                                   isBookingActionInProgress
-                                }
-                                checkCommissionValidation={
-                                  checkCommissionValidation
                                 }
                                 startBookingById={startBookingById}
                                 startNavigationById={startNavigationById}

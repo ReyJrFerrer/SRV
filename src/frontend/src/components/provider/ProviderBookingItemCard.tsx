@@ -25,7 +25,6 @@ interface ProviderBookingItemCardProps {
   isDeclining: boolean;
   acceptBookingById: any;
   isBookingActionInProgress: any;
-  checkCommissionValidation: any;
   startBookingById: any;
   startNavigationById: any;
 }
@@ -38,7 +37,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   onCancelClick,
   acceptBookingById,
   isBookingActionInProgress,
-  checkCommissionValidation,
   startNavigationById,
 }) => {
   const { identity } = useAuth();
@@ -55,58 +53,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   // Determine if client data has been loaded
   const hasClientData = review.length > 0 || reputation !== null;
 
-  // Commission validation state for cash bookings
-  const [commissionValidation, setCommissionValidation] = useState<{
-    estimatedCommission: number;
-    hasInsufficientBalance: boolean;
-    commissionValidationMessage?: string;
-    loading: boolean;
-  }>({
-    estimatedCommission: 0,
-    hasInsufficientBalance: false,
-    commissionValidationMessage: "",
-    loading: false,
-  });
-
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [isStartingService, setIsStartingService] = useState<boolean>(false);
-
-  // Check commission validation for cash bookings that can be accepted
-  useEffect(() => {
-    const validateCommission = async () => {
-      if (
-        !booking ||
-        booking.paymentMethod !== "CashOnHand" ||
-        !booking.canAccept
-      ) {
-        setCommissionValidation({
-          estimatedCommission: 0,
-          hasInsufficientBalance: false,
-          commissionValidationMessage: "",
-          loading: false,
-        });
-        return;
-      }
-
-      try {
-        setCommissionValidation((prev) => ({ ...prev, loading: true }));
-        const validation = await checkCommissionValidation(booking);
-        setCommissionValidation({
-          ...validation,
-          loading: false,
-        });
-      } catch (error) {
-        setCommissionValidation({
-          estimatedCommission: 0,
-          hasInsufficientBalance: true,
-          commissionValidationMessage: "Error checking commission",
-          loading: false,
-        });
-      }
-    };
-
-    validateCommission();
-  }, [booking, checkCommissionValidation]);
 
   // Refetch provider avatar if changed
   useEffect(() => {
@@ -154,7 +102,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // If profilePicture is an object, use its imageUrl property
   const duration = booking.serviceDuration || "N/A";
-  const price = booking.price + commissionValidation.estimatedCommission;
+  const price = booking.price;
   const amountToPay = booking.amountPaid ? booking.amountPaid : 0;
   const locationAddress = booking.formattedLocation || "Location not specified";
   const status = booking.status;
@@ -233,20 +181,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const handleAccept = async () => {
     // optimistic: emit interaction immediately so badges update in UI
     emitInteraction();
-    // Check commission validation for cash bookings before accepting
-    if (booking.paymentMethod === "CashOnHand") {
-      if (commissionValidation.loading) {
-        alert("Please wait while we validate commission requirements.");
-        return;
-      }
-
-      if (commissionValidation.hasInsufficientBalance) {
-        alert(
-          `Cannot accept booking: ${commissionValidation.commissionValidationMessage || "Insufficient wallet balance for commission fee."}\n\nPlease top up your wallet and try again.`,
-        );
-        return;
-      }
-    }
 
     const scheduledDate = new Date(booking.scheduledDate);
     const success = await acceptBookingById(booking.id, scheduledDate);
@@ -517,7 +451,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
             }}
             canStartServiceNow={() => !isScheduledForFuture}
             isBookingActionInProgress={isBookingActionInProgress}
-            commissionValidation={commissionValidation}
           />
         </div>
       </div>

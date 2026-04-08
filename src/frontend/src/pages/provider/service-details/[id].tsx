@@ -1145,8 +1145,6 @@ const ProviderServiceDetailPage: React.FC = () => {
                           <div className="mt-3 space-y-2">
                             {/* Main Price */}
                             <div className="h-7 w-24 rounded bg-gray-200"></div>
-                            {/* Commission Text */}
-                            <div className="h-3 w-32 rounded bg-gray-200"></div>
                             {/* Total Badge */}
                             <div className="h-6 w-28 rounded-full bg-gray-200"></div>
                           </div>

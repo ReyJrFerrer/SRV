@@ -15,12 +15,6 @@ import {
   color,
 } from "../../shared/buttonStyles";
 
-interface CommissionValidation {
-  estimatedCommission: number;
-  hasInsufficientBalance: boolean;
-  loading: boolean;
-}
-
 interface Props {
   booking: ProviderEnhancedBooking;
   onChat: () => void;
@@ -32,7 +26,6 @@ interface Props {
   status?: string | null;
   canStartServiceNow: () => boolean;
   isBookingActionInProgress: (bookingId: string, action: string) => boolean;
-  commissionValidation: CommissionValidation;
   onReport: () => void;
   onBookAgain?: () => void;
   bookAgainLabel?: string;
@@ -50,7 +43,6 @@ const ActionButtons: React.FC<Props> = ({
   onComplete,
   canStartServiceNow,
   isBookingActionInProgress,
-  commissionValidation,
   isStartingService,
   onBookAgain,
   bookAgainLabel = "Book Again",
@@ -61,10 +53,6 @@ const ActionButtons: React.FC<Props> = ({
   const showChat = typeof onChat === "function" && !isRequested;
   const showBookAgain = !!onBookAgain && !isRequested;
 
-  const acceptDisabledBecauseCommission =
-    booking?.paymentMethod === "CashOnHand" &&
-    (commissionValidation.loading ||
-      commissionValidation.hasInsufficientBalance);
   // Show decline if booking explicitly allows declining and not currently processing
   const showDecline = !!(
     booking?.canDecline &&
@@ -90,10 +78,6 @@ const ActionButtons: React.FC<Props> = ({
   // validation fails or an accept action is in progress. This ensures the button is
   // visible for Requested bookings even when a decline-only flag is absent.
   const showAccept = !!booking?.canAccept;
-  const acceptInProgress = isBookingActionInProgress(
-    booking?.id || "",
-    "accept",
-  );
   const showStart = !!(booking?.canStart && canStartServiceNow());
   const showComplete = !!booking?.canComplete;
   const showViewReview = booking?.status === "Completed";
@@ -193,101 +177,25 @@ const ActionButtons: React.FC<Props> = ({
   }
 
   if (showAccept) {
-    const acceptDisabled = acceptDisabledBecauseCommission || acceptInProgress;
-
-    // Tooltip message for disabled state
-    const tooltipMessage = commissionValidation.hasInsufficientBalance
-      ? "You don't have available balance in your wallet."
-      : commissionValidation.loading
-        ? "Please wait while we validate commission requirements."
-        : "";
-
-    const AcceptButtonWithTooltip = () => {
-      const [isTooltipVisible, setIsTooltipVisible] = React.useState(false);
-      const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
-      const handleMouseEnter = () => {
-        if (acceptDisabled) {
-          setIsTooltipVisible(true);
-        }
-      };
-
-      const handleMouseLeave = () => {
-        setIsTooltipVisible(false);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-      };
-
-      const handleClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (acceptDisabled) {
-          // Show tooltip on click for mobile/tablet
-          setIsTooltipVisible(true);
-          // Clear any existing timeout
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-          // Auto-hide tooltip after 3 seconds
-          timeoutRef.current = setTimeout(() => {
-            setIsTooltipVisible(false);
-          }, 3000);
-          return;
-        }
-        onAccept && onAccept();
-      };
-
-      React.useEffect(() => {
-        return () => {
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-        };
-      }, []);
-
-      return (
-        <div
-          className="relative w-full"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          <button
-            onClick={handleClick}
-            disabled={acceptDisabled}
-            aria-disabled={acceptDisabled}
-            aria-label={acceptDisabled ? tooltipMessage : "Accept booking"}
-            className={`${baseButtonClass} w-full ${color.accept} ${
-              acceptDisabled ? "cursor-not-allowed opacity-50" : ""
-            }`}
-          >
-            {acceptInProgress ? (
-              <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
-            ) : (
-              <CheckCircleIcon className="mr-2 h-5 w-5" />
-            )}
-            Accept
-          </button>
-
-          {/* Tooltip */}
-          {acceptDisabledBecauseCommission && isTooltipVisible && (
-            <div
-              className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-64 -translate-x-1/2 animate-[fadeIn_0.2s_ease-in] rounded-lg bg-gray-900 px-4 py-3 text-center text-sm leading-relaxed text-white shadow-xl"
-              role="tooltip"
-            >
-              {tooltipMessage}
-              {/* Tooltip arrow */}
-              <div className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-px">
-                <div className="h-0 w-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-gray-900"></div>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    buttons.push(<AcceptButtonWithTooltip key="accept" />);
+    const acceptInProgress = isBookingActionInProgress(booking?.id || "", "accept");
+    buttons.push(
+      <button
+        key="accept"
+        onClick={stopAndRun(onAccept)}
+        disabled={acceptInProgress}
+        aria-disabled={acceptInProgress}
+        className={`${baseButtonClass} w-full ${color.accept} ${
+          acceptInProgress ? "cursor-not-allowed opacity-50" : ""
+        }`}
+      >
+        {acceptInProgress ? (
+          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
+          <CheckCircleIcon className="mr-2 h-5 w-5" />
+        )}
+        Accept
+      </button>,
+    );
   }
 
   if (showStart) {

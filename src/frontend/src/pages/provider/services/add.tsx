@@ -28,10 +28,7 @@ import {
   ServiceCreateRequest,
 } from "../../../hooks/serviceManagement";
 
-import {
-  ServiceCategory,
-  CommissionQuote,
-} from "../../../services/serviceCanisterService";
+import { ServiceCategory } from "../../../services/serviceCanisterService";
 import { processServiceCertificateFiles } from "../../../services/mediaService";
 
 // Type for time slots
@@ -128,7 +125,6 @@ const AddServicePage: React.FC = () => {
     createPackage,
     processImageFilesForService,
     validateImageFiles,
-    getCommissionQuote,
   } = useServiceManagement();
 
   // State for stepper and form data
@@ -153,12 +149,6 @@ const AddServicePage: React.FC = () => {
 
   // Used to trigger scroll/highlight on error
   const [scrollToErrorTrigger, setScrollToErrorTrigger] = useState(0);
-
-  // Commission state
-  const [commissionQuotes, setCommissionQuotes] = useState<{
-    [packageId: string]: CommissionQuote;
-  }>({});
-  const [loadingCommissions, setLoadingCommissions] = useState(false);
 
   // Local draft autosave key (used by submission to clear saved draft)
   const ADD_SERVICE_DRAFT_KEY = "add_service_draft_v1";
@@ -265,34 +255,6 @@ const AddServicePage: React.FC = () => {
     setCertificationPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Commission handlers
-  const fetchCommissionQuotes = useCallback(async () => {
-    if (!getCommissionQuote || !formData.categoryId) return;
-
-    setLoadingCommissions(true);
-    const quotes: { [packageId: string]: CommissionQuote } = {};
-
-    const categoryForCommission =
-      categories.find((cat) => cat.id === formData.categoryId)?.name ||
-      "Default Category";
-
-    try {
-      for (const pkg of formData.servicePackages) {
-        if (pkg.name.trim() && pkg.description.trim() && pkg.price) {
-          const quote = await getCommissionQuote(
-            categoryForCommission,
-            Number(pkg.price),
-          );
-          quotes[pkg.id] = quote;
-        }
-      }
-      setCommissionQuotes(quotes);
-    } catch (error) {
-    } finally {
-      setLoadingCommissions(false);
-    }
-  }, [formData.servicePackages, formData.categoryId, getCommissionQuote]);
-
   // --- Initial Data Fetch ---
   useEffect(() => {
     getCategories();
@@ -309,13 +271,6 @@ const AddServicePage: React.FC = () => {
       }
     }
   }, [categories, formData.categoryId]);
-
-  // Fetch commission quotes when reaching the review step
-  useEffect(() => {
-    if (currentStep === 4) {
-      fetchCommissionQuotes();
-    }
-  }, [currentStep, fetchCommissionQuotes]);
 
   // --- Validation for Each Step ---
   const validateCurrentStep = useCallback((): ValidationErrors => {
@@ -945,12 +900,6 @@ const AddServicePage: React.FC = () => {
             formData={formData}
             categories={categories}
             loadingCategories={loadingCategories}
-            // provide the commission computation function so ServiceDetails can
-            // calculate commission/total live as the user types
-            computeCommission={getCommissionQuote}
-            onCommissionComputed={(pkgId, quote) =>
-              setCommissionQuotes((prev) => ({ ...prev, [pkgId]: quote }))
-            }
             handleChange={handleChange}
             handlePackageChange={handlePackageChange}
             addPackage={addPackage}
@@ -1018,8 +967,6 @@ const AddServicePage: React.FC = () => {
           <ReviewSubmit
             formData={formData}
             categories={categories}
-            commissionQuotes={commissionQuotes}
-            loadingCommissions={loadingCommissions}
             serviceImageFiles={serviceImageFiles}
             imagePreviews={imagePreviews}
             certificationFiles={certificationFiles}
@@ -1049,8 +996,6 @@ const AddServicePage: React.FC = () => {
         setCertificationFiles={setCertificationFiles}
         certificationPreviews={certificationPreviews}
         setCertificationPreviews={setCertificationPreviews}
-        commissionQuotes={commissionQuotes}
-        setCommissionQuotes={setCommissionQuotes}
         initialServiceState={initialServiceState}
         navigate={navigate}
       />

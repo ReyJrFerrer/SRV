@@ -356,9 +356,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       await authClient.login({
         identityProvider:
-          // NOTE FOR FUTURE REY - the localhost internet identity does not work anymore because  
+          // NOTE FOR FUTURE REY - the localhost internet identity does not work anymore because
           // it gives the error value - Response verification failed: Certification values not found
-          // Intuition tells me it's the dfx version and since they're we're using the latest localhost internet identity 
+          // Intuition tells me it's the dfx version and since they're we're using the latest localhost internet identity
           // then it might be deprecated already.
           // process.env.DFX_NETWORK === "ic" ||
           // process.env.DFX_NETWORK === "playground"

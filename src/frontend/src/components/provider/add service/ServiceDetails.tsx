@@ -1,10 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
-import {
-  ServiceCategory,
-  CommissionQuote,
-} from "../../../services/serviceCanisterService";
-import { toast } from "sonner";
+import { ServiceCategory } from "../../../services/serviceCanisterService";
 
 // Validation errors interface
 interface ValidationErrors {
@@ -53,18 +49,6 @@ interface ServiceDetailsProps {
   removePackage: (id: string) => void;
   validationErrors?: ValidationErrors;
   scrollToErrorTrigger?: number;
-  // Optional helper to compute commission for a given category and price
-  // The project provides getCommissionQuote which returns a CommissionQuote
-  // so we accept that shape and compute total locally.
-  computeCommission?: (
-    categoryName: string,
-    price: number,
-  ) => Promise<{
-    commissionFee: number;
-  }>;
-  // Called when a commission quote is retrieved for a package so parent
-  // can persist/use the result (lifting the live value to `commissionQuotes`).
-  onCommissionComputed?: (pkgId: string, quote: CommissionQuote) => void;
 }
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
@@ -77,97 +61,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   removePackage,
   validationErrors = {},
   scrollToErrorTrigger,
-  computeCommission,
-  onCommissionComputed,
 }) => {
-  // Local live commission map per package id
-  const [liveCommission, setLiveCommission] = useState<{
-    [pkgId: string]: { commissionFee: number; total: number } | undefined;
-  }>({});
-
-  // Debounce timers per package
-  const commissionTimers = useRef<{ [pkgId: string]: number | undefined }>({});
-
-  // Loading state for per-package commission fetches
-  const [commissionLoading, setCommissionLoading] = useState<{
-    [pkgId: string]: boolean | undefined;
-  }>({});
-
-  // When the component mounts or when formData changes (for example after
-  // restoring a draft), precompute live commission for any packages that
-  // already have a price so the UI shows the commission value immediately.
-  useEffect(() => {
-    let mounted = true;
-
-    const computeInitial = async () => {
-      for (const pkg of formData.servicePackages) {
-        const pkgId = pkg.id;
-        const priceNum = Number(pkg.price) || 0;
-        // Only compute when there is a price and we don't already have a value
-        if (priceNum > 0 && !liveCommission[pkgId]) {
-          if (!mounted) return;
-          setCommissionLoading((prev) => ({ ...prev, [pkgId]: true }));
-          try {
-            const categoryName =
-              categories.find((c) => c.id === formData.categoryId)?.name ||
-              "Default Category";
-            if (computeCommission) {
-              const quote = await computeCommission(categoryName, priceNum);
-              const fee = (quote as any).commissionFee || 0;
-              if (!mounted) return;
-              setLiveCommission((prev) => ({
-                ...prev,
-                [pkgId]: { commissionFee: fee, total: priceNum + fee },
-              }));
-              if (onCommissionComputed) {
-                try {
-                  onCommissionComputed(pkgId, quote as CommissionQuote);
-                } catch (e) {
-                  // ignore
-                }
-              }
-            } else {
-              const fee = Math.round(priceNum * 0.05 * 100) / 100;
-              if (!mounted) return;
-              setLiveCommission((prev) => ({
-                ...prev,
-                [pkgId]: { commissionFee: fee, total: priceNum + fee },
-              }));
-              if (onCommissionComputed) {
-                try {
-                  onCommissionComputed(pkgId, {
-                    commissionFee: fee,
-                  } as CommissionQuote);
-                } catch (e) {}
-              }
-            }
-          } catch (e) {
-            // ignore failures here - live commission is best-effort
-          } finally {
-            if (!mounted) return;
-            setCommissionLoading((prev) => ({ ...prev, [pkgId]: false }));
-          }
-        }
-      }
-    };
-
-    computeInitial();
-
-    return () => {
-      mounted = false;
-    };
-    // Intentionally include formData.servicePackages and category so this
-    // re-runs when the parent restores the draft (which updates formData).
-  }, [formData.servicePackages, formData.categoryId, computeCommission]);
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(commissionTimers.current).forEach((t) => {
-        if (t) window.clearTimeout(t);
-      });
-    };
-  }, []);
   // Local state to control error visibility
   const [hideTitleError, setHideTitleError] = useState(false);
   const [hideCategoryError, setHideCategoryError] = useState(false);
@@ -271,65 +165,6 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
       [pkgId]: { ...prev[pkgId], [field]: true },
     }));
     handlePackageChange(index, field, value);
-    // If the price field changed, kick off live commission calculation
-    if (field === "price") {
-      const pkg = formData.servicePackages[index];
-      const pkgId = pkg.id;
-      // clear existing timer
-      if (commissionTimers.current[pkgId]) {
-        window.clearTimeout(commissionTimers.current[pkgId]);
-      }
-      // schedule debounce
-      commissionTimers.current[pkgId] = window.setTimeout(async () => {
-        // indicate loading for this package
-        setCommissionLoading((prev) => ({ ...prev, [pkgId]: true }));
-        try {
-          const priceNum = Number(String(value).replace(/[^0-9]/g, "")) || 0;
-          const categoryName =
-            categories.find((c) => c.id === formData.categoryId)?.name ||
-            "Default Category";
-          if (computeCommission) {
-            const quote = await computeCommission(categoryName, priceNum);
-            const fee = quote.commissionFee;
-            setLiveCommission((prev) => ({
-              ...prev,
-              [pkgId]: { commissionFee: fee, total: priceNum + fee },
-            }));
-            // lift to parent if requested
-            if (onCommissionComputed) {
-              try {
-                // treat returned shape as CommissionQuote when possible
-                onCommissionComputed(
-                  pkgId,
-                  quote as unknown as CommissionQuote,
-                );
-              } catch (e) {
-                // ignore lifting errors
-              }
-            }
-          } else {
-            // Fallback: simple percentage (5%)
-            const fee = Math.round(priceNum * 0.05 * 100) / 100;
-            setLiveCommission((prev) => ({
-              ...prev,
-              [pkgId]: { commissionFee: fee, total: priceNum + fee },
-            }));
-            if (onCommissionComputed) {
-              try {
-                onCommissionComputed(pkgId, {
-                  commissionFee: fee,
-                } as CommissionQuote);
-              } catch (e) {}
-            }
-          }
-        } catch (e) {
-          // show a subtle toast on failure
-          toast.error("Failed to fetch commission quote");
-        }
-        // clear loading flag
-        setCommissionLoading((prev) => ({ ...prev, [pkgId]: false }));
-      }, 400);
-    }
   };
 
   // Modify the handlePackageInputChange function
@@ -564,38 +399,6 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
                           />
-                          {/* Live commission display or loading state */}
-                          {commissionLoading[pkg.id] ? (
-                            <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-                              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
-                              <span>Calculating…</span>
-                            </div>
-                          ) : (
-                            liveCommission[pkg.id] && (
-                              <div className="mt-2 text-sm text-green-600">
-                                <div className="flex flex-col">
-                                  <span className="mb-1">
-                                    Commission: ₱
-                                    {liveCommission[
-                                      pkg.id
-                                    ]!.commissionFee.toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}
-                                  </span>
-                                  <span className="font-semibold">
-                                    Total: ₱
-                                    {liveCommission[
-                                      pkg.id
-                                    ]!.total.toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          )}
                           {pkgError &&
                             pkgError.price &&
                             !hidePackageFieldError[pkg.id]?.price && (

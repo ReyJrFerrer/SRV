@@ -24,7 +24,6 @@ import { useReputation } from "../../../hooks/useReputation";
 import ClientInfoCard from "../../../components/provider/booking-details/ClientInfoCard";
 import ServiceDetailsCard from "../../../components/provider/booking-details/ServiceDetailsCard";
 import BookingProgressSection from "../../../components/provider/booking-details/BookingProgressSection";
-import CommissionInfo from "../../../components/provider/booking-details/CommissionInfo";
 import DeclineConfirmDialog from "../../../components/provider/booking-details/DeclineConfirmDialog";
 import ActionButtons from "../../../components/provider/booking-details/ActionButtons";
 import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
@@ -88,30 +87,10 @@ const ProviderBookingDetailsPage: React.FC = () => {
     error: hookError,
     refreshBookings,
     clearError,
-    checkCommissionValidation,
     startNavigationById,
     // canAcceptCashBooking,
     // getWalletBalance,
   } = useProviderBookingManagement();
-
-  // Commission validation state
-  const [commissionValidation, setCommissionValidation] = useState<{
-    estimatedCommission: number;
-    hasInsufficientBalance: boolean;
-    commissionValidationMessage?: string;
-    totalBalance?: number;
-    heldBalance?: number;
-    availableBalance?: number;
-    loading: boolean;
-  }>({
-    estimatedCommission: 0,
-    hasInsufficientBalance: false,
-    commissionValidationMessage: "",
-    totalBalance: 0,
-    heldBalance: 0,
-    availableBalance: 0,
-    loading: false,
-  });
 
   // Find specific booking from the hook's bookings array
   useEffect(() => {
@@ -168,45 +147,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
     fetchClientData();
   }, [clientId, getUserReviews, fetchUserReputation]);
 
-  // Check commission validation when booking changes
-  useEffect(() => {
-    const validateCommission = async () => {
-      if (!specificBooking) {
-        setCommissionValidation({
-          estimatedCommission: 0,
-          hasInsufficientBalance: false,
-          commissionValidationMessage: "",
-          totalBalance: 0,
-          heldBalance: 0,
-          availableBalance: 0,
-          loading: false,
-        });
-        return;
-      }
-
-      try {
-        setCommissionValidation((prev) => ({ ...prev, loading: true }));
-        const validation = await checkCommissionValidation(specificBooking);
-        setCommissionValidation({
-          ...validation,
-          loading: false,
-        });
-      } catch (error) {
-        setCommissionValidation({
-          estimatedCommission: 0,
-          hasInsufficientBalance: true,
-          commissionValidationMessage: "Error checking commission requirements",
-          totalBalance: 0,
-          heldBalance: 0,
-          availableBalance: 0,
-          loading: false,
-        });
-      }
-    };
-
-    validateCommission();
-  }, [specificBooking, checkCommissionValidation]);
-
   // Handle retry functionality
   const handleRetry = async () => {
     setLocalError(null);
@@ -222,20 +162,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const handleAcceptBooking = useCallback(async () => {
     if (!specificBooking) return;
 
-    // Check commission validation for cash bookings before accepting
-    if (specificBooking.paymentMethod === "CashOnHand") {
-      if (commissionValidation.loading) {
-        alert("Please wait while we validate commission requirements.");
-        return;
-      }
-
-      if (commissionValidation.hasInsufficientBalance) {
-        alert(
-          `Cannot accept booking: ${commissionValidation.commissionValidationMessage || "Insufficient wallet balance for commission fee."}\n\nPlease top up your wallet and try again.`,
-        );
-        return;
-      }
-    }
     const scheduledDate = new Date(specificBooking.scheduledDate ?? Date.now());
     const success = await acceptBookingById(specificBooking.id, scheduledDate);
     if (success) {
@@ -247,13 +173,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         setSpecificBooking(updatedBooking);
       }
     }
-  }, [
-    specificBooking,
-    commissionValidation,
-    acceptBookingById,
-    refreshBookings,
-    bookings,
-  ]);
+  }, [specificBooking, acceptBookingById, refreshBookings, bookings]);
 
   const handleDeclineBooking = useCallback(() => {
     if (!specificBooking) return;
@@ -796,11 +716,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 geocodedAddress={geocodedAddress}
                 hasExplicitCoords={hasExplicitCoords}
                 clientLocation={clientLocation}
-                price={
-                  price !== undefined
-                    ? price + commissionValidation.estimatedCommission
-                    : undefined
-                }
+                price={price !== undefined ? price : undefined}
                 amountToPay={amountToPay}
                 duration={duration}
                 formatDateRange={formatDateRange}
@@ -808,14 +724,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
             </div>
             {/* Booking Progress Section */}
             <BookingProgressSection status={specificBooking?.status} />
-            {/* Commission Validation Section for Cash Bookings */}
-            <CommissionInfo
-              show={Boolean(
-                specificBooking?.paymentMethod === "CashOnHand" &&
-                  specificBooking?.canAccept,
-              )}
-              commissionValidation={commissionValidation}
-            />
             {/* Map Section */}
             <MapSection
               mapsReady={mapsReady}
@@ -852,7 +760,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 onComplete={handleCompleteService}
                 canStartServiceNow={canStartServiceNow}
                 isBookingActionInProgress={isBookingActionInProgress}
-                commissionValidation={commissionValidation}
                 status={specificBooking.status}
                 onReport={() =>
                   navigate("/provider/report", {

@@ -20,8 +20,6 @@ interface Props {
   setCertificationFiles: (files: File[]) => void;
   certificationPreviews: string[];
   setCertificationPreviews: (p: string[]) => void;
-  commissionQuotes: { [k: string]: any };
-  setCommissionQuotes: (q: { [k: string]: any }) => void;
   initialServiceState: any;
   navigate: (to: any, opts?: any) => void;
 }
@@ -40,8 +38,6 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
     setCertificationFiles,
     certificationPreviews,
     setCertificationPreviews,
-    commissionQuotes,
-    setCommissionQuotes,
     initialServiceState,
     navigate,
   } = props;
@@ -84,16 +80,15 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
             ...formData,
           },
           imagePreviews: imagePreviews || [],
-          certificationPreviews: certificationPreviews || [],
-          commissionQuotes: commissionQuotes || {},
-        };
+          certificationPreviews: certificationPreviews || []
+};
         localStorage.setItem(ADD_SERVICE_DRAFT_KEY, JSON.stringify(toSave));
       } catch (e) {
         // ignore quota errors
       }
     }, 700);
     return () => clearTimeout(handler);
-  }, [formData, imagePreviews, certificationPreviews, commissionQuotes]);
+  }, [formData, imagePreviews, certificationPreviews]);
 
   // Helper: save draft including file blobs to IndexedDB
   const saveDraftIncludingFiles = async () => {
@@ -104,7 +99,6 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
         // previews are already serializable
         imagePreviews: imagePreviews || [],
         certificationPreviews: certificationPreviews || [],
-        commissionQuotes: commissionQuotes || {},
       };
       localStorage.setItem(ADD_SERVICE_DRAFT_KEY, JSON.stringify(toSave));
 
@@ -204,8 +198,6 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
         if (loadedDraft.certificationPreviews)
           setCertificationPreviews(loadedDraft.certificationPreviews);
       }
-      if (loadedDraft.commissionQuotes)
-        setCommissionQuotes(loadedDraft.commissionQuotes);
     } catch (e) {
       // ignore
     }
