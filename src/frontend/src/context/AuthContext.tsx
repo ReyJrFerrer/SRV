@@ -356,10 +356,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       await authClient.login({
         identityProvider:
-          process.env.DFX_NETWORK === "ic" ||
-          process.env.DFX_NETWORK === "playground"
-            ? `https://id.ai`
-            : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
+          // process.env.DFX_NETWORK === "ic" ||
+          // process.env.DFX_NETWORK === "playground"
+            // ? 
+            `https://id.ai`
+            // : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`
+            ,
         // Set session duration based on platform (7 days mobile/PWA, 30 days desktop)
         maxTimeToLive: BigInt(sessionDurationNs),
 
