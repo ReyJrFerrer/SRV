@@ -177,7 +177,10 @@ const ActionButtons: React.FC<Props> = ({
   }
 
   if (showAccept) {
-    const acceptInProgress = isBookingActionInProgress(booking?.id || "", "accept");
+    const acceptInProgress = isBookingActionInProgress(
+      booking?.id || "",
+      "accept",
+    );
     buttons.push(
       <button
         key="accept"

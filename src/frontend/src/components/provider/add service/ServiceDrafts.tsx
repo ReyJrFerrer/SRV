@@ -80,8 +80,8 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
             ...formData,
           },
           imagePreviews: imagePreviews || [],
-          certificationPreviews: certificationPreviews || []
-};
+          certificationPreviews: certificationPreviews || [],
+        };
         localStorage.setItem(ADD_SERVICE_DRAFT_KEY, JSON.stringify(toSave));
       } catch (e) {
         // ignore quota errors

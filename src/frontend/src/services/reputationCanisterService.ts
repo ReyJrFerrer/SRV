@@ -14,8 +14,7 @@ const createReputationActor = (
   return createActor(canisterId, {
     agentOptions: {
       identity: identity || undefined,
-      host:
-        "https://id.ai",
+      host: "https://id.ai",
     },
   }) as ReputationService;
 };
