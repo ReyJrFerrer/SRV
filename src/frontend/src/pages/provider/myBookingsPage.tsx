@@ -56,7 +56,7 @@ const ProviderBookingsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   // Primary view toggle on top bar
   const [timingFilter, setTimingFilter] =
-    useState<BookingTimingFilter>("Scheduled");
+    useState<BookingTimingFilter>("Same Day");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] =
     useState<boolean>(false);
 
