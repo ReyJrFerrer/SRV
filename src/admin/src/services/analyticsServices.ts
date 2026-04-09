@@ -79,7 +79,7 @@ export const getBookingsData = async (): Promise<{
 
     const idToken = await user.getIdToken();
     const functionsInstance = getFirebaseFunctions();
-    const projectId = functionsInstance.app.options.projectId || "devsrv-rey";
+    const projectId = functionsInstance.app.options.projectId || "srve-7133d";
     const region = "us-central1";
 
     const isLocal =

@@ -6,8 +6,8 @@
 
 const admin = require("firebase-admin");
 const functionsTest = require("firebase-functions-test")({
-  projectId: "devsrv-rey",
-  databaseURL: "http://localhost:8080?ns=devsrv-rey",
+  projectId: "srve-7133d",
+  databaseURL: "http://localhost:8080?ns=srve-7133d",
 });
 
 // Set emulator host for Firestore
@@ -15,8 +15,8 @@ process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 
 // Initialize Firebase Admin SDK for testing
 admin.initializeApp({
-  projectId: "devsrv-rey",
-  databaseURL: "http://localhost:8080?ns=devsrv-rey",
+  projectId: "srve-7133d",
+  databaseURL: "http://localhost:8080?ns=srve-7133d",
 });
 
 const db = admin.firestore();

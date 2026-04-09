@@ -21,7 +21,7 @@ function initializeFirebaseAdmin() {
 
     // Initialize with emulator settings
     admin.initializeApp({
-      projectId: "devsrv-rey",
+      projectId: "srve-7133d",
     });
 
     // Connect to Firestore emulator
@@ -36,7 +36,7 @@ function initializeFirebaseAdmin() {
     console.log("Initializing for production environment");
 
     // Initialize for production with explicit project configuration
-    const projectId = process.env.GCLOUD_PROJECT || "devsrv-rey";
+    const projectId = process.env.GCLOUD_PROJECT || "srve-7133d";
 
     admin.initializeApp({
       projectId: projectId,

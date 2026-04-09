@@ -14,12 +14,12 @@ importScripts(
 // Initialize Firebase (same config as sw.js)
 try {
   firebase.initializeApp({
-    apiKey: "AIzaSyDRyQ38qXdEDDF1gcw33UhyAXocHAtnQzs",
-    authDomain: "devsrv-rey.firebaseapp.com",
-    projectId: "devsrv-rey",
-    storageBucket: "devsrv-rey.firebasestorage.app",
-    messagingSenderId: "851522429469",
-    appId: "1:851522429469:web:e0737ae9bdedb4f27edcf4",
+    apiKey: "AIzaSyAFcM9CreLogkp7mqv0e_ySK_ipP6JQ4Wk",
+    authDomain: "srve-7133d.firebaseapp.com",
+    projectId: "srve-7133d",
+    storageBucket: "srve-7133d.firebasestorage.app",
+    messagingSenderId: "197983300433",
+    appId: "1:197983300433:web:9c995f3b51357255cf8170",
   });
 
   const messaging = firebase.messaging();

@@ -7,7 +7,7 @@ if (admin.apps.length === 0) {
   if (process.env.FUNCTIONS_EMULATOR) {
     console.log("Running in emulator mode");
     admin.initializeApp({
-      projectId: "devsrv-rey",
+      projectId: "srve-7133d",
     });
 
     // Set Firestore emulator settings
@@ -34,8 +34,8 @@ exports.getPaymentData = functions.https.onRequest(async (req, res) => {
   const allowedOrigins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://devsrv-rey.web.app",
-    "https://devsrv-rey.firebaseapp.com",
+    "https://srve-7133d.web.app",
+    "https://srve-7133d.firebaseapp.com",
   ];
 
   const origin = req.headers.origin;
