@@ -13,7 +13,7 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { getFirebaseAuth, clearICCustomToken } from "../services/firebaseApp";
-import { updateReputationActor } from "../services/reputationCanisterService";
+
 import {
   sessionManager,
   getRecommendedSessionDuration,
@@ -70,9 +70,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Updates all canister actors with the current user identity
-const updateAllActors = (identity: Identity | null) => {
+const updateAllActors = (_identity: Identity | null) => {
   try {
-    updateReputationActor(identity);
+    // Reputation uses Firebase now
   } catch (error) {}
 };
 

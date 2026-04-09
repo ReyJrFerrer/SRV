@@ -358,26 +358,20 @@ export const useReviewManagement = (
         let clientReputationScore: number | undefined = undefined;
         let clientReputationLevel: string | undefined = undefined;
         try {
-          const reputationCanisterService = (
-            await import("../services/reputationCanisterService")
+          const reputationService = (
+            await import("../services/reputationService")
           ).default;
-          const reputationData =
-            await reputationCanisterService.getReputationScore(
-              review.clientId.toString(),
-            );
+          const reputationData = await reputationService.getReputationScore(
+            review.clientId.toString(),
+          );
           if (reputationData) {
             clientReputationScore = Math.round(
               Number(reputationData.trustScore),
             );
-            if (reputationData.trustLevel.hasOwnProperty("New"))
-              clientReputationLevel = "New";
-            else if (reputationData.trustLevel.hasOwnProperty("Low"))
-              clientReputationLevel = "Low";
-            else if (reputationData.trustLevel.hasOwnProperty("Medium"))
-              clientReputationLevel = "Medium";
-            else if (reputationData.trustLevel.hasOwnProperty("High"))
-              clientReputationLevel = "High";
-            else clientReputationLevel = "VeryHigh";
+            clientReputationLevel =
+              typeof reputationData.trustLevel === "string"
+                ? reputationData.trustLevel
+                : "New";
           }
         } catch (err) {
           // Fallback: leave undefined

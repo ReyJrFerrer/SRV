@@ -67,6 +67,17 @@ service cloud.firestore {
       allow delete: if false; // Messages are immutable
     }
 
+    // Reputations can be read by anyone, but only written by the backend (Admin SDK).
+    match /reputations/{userId} {
+        allow read: if true;
+        allow write: if false;
+        
+        match /history/{historyId} {
+            allow read: if true;
+            allow write: if false;
+        }
+    }
+
     // Default deny all other collections
     match /{path=**} {
       allow read, write: if false;

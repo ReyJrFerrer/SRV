@@ -17,7 +17,7 @@ import { getFirebaseAuth, getFirebaseFirestore } from "../services/firebaseApp";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import { updateAdminActor } from "../services/adminServiceCanister";
 import { createAdminProfile } from "../services/adminAuthHelper";
-import { updateReputationActor } from "../../../frontend/src/services/reputationCanisterService";
+
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseFunctions } from "../services/firebaseApp";
 
@@ -41,7 +41,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Updates all canister actors with the current admin identity
 const updateAllAdminActors = (identity: Identity | null) => {
   updateAdminActor(identity);
-  updateReputationActor(identity);
 };
 
 export const useAuth = () => {

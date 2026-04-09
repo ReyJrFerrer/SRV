@@ -2,7 +2,7 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "./coreUtils";
 import { callFirebaseFunction, requireAuth } from "./coreUtils";
 import { AdminServiceError, FrontendUserRoleAssignment } from "./serviceTypes";
-import reputationCanisterService from "../../../frontend/src/services/reputationCanisterService";
+import reputationService from "../../../frontend/src/services/reputationService";
 import { mapTrustLevel } from "../utils/reputationUtils";
 import { extractFulfilledArrayResults } from "../utils/promiseUtils";
 
@@ -305,8 +305,7 @@ export const getUserReputation = async (
   completedBookings: number;
 }> => {
   try {
-    const reputationData =
-      await reputationCanisterService.getReputationScore(userId);
+    const reputationData = await reputationService.getReputationScore(userId);
 
     if (reputationData) {
       return {
