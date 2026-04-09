@@ -1,9 +1,7 @@
 // Imports
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
-import reputationCanisterService, {
-  updateReputationActor,
-} from "../services/reputationCanisterService";
+import reputationService from "../services/reputationService";
 
 // Types
 export interface ReputationScore {
@@ -15,6 +13,7 @@ export interface ReputationScore {
   detectionFlags: string[];
   lastUpdated: number;
 }
+
 // Hook
 export const useReputation = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -27,31 +26,22 @@ export const useReputation = () => {
     () =>
       async (userId: string): Promise<ReputationScore | null> => {
         try {
-          updateReputationActor(identity || null);
-
           try {
             const reputationData =
-              await reputationCanisterService.getReputationScore(userId);
+              await reputationService.getReputationScore(userId);
 
             const formattedReputation: ReputationScore = {
-              userId: reputationData.userId.toString(),
+              userId: reputationData.userId?.toString() || userId,
               trustScore: Number(reputationData.trustScore),
-              trustLevel: reputationData.trustLevel.hasOwnProperty("New")
-                ? "New"
-                : reputationData.trustLevel.hasOwnProperty("Low")
-                  ? "Low"
-                  : reputationData.trustLevel.hasOwnProperty("Medium")
-                    ? "Medium"
-                    : reputationData.trustLevel.hasOwnProperty("High")
-                      ? "High"
-                      : "VeryHigh",
+              trustLevel:
+                typeof reputationData.trustLevel === "string"
+                  ? reputationData.trustLevel
+                  : "New",
               completedBookings: Number(reputationData.completedBookings),
               averageRating: reputationData.averageRating
-                ? Number(reputationData.averageRating[0])
+                ? Number(reputationData.averageRating)
                 : undefined,
-              detectionFlags: reputationData.detectionFlags.map(
-                (flag: any) => Object.keys(flag)[0],
-              ),
+              detectionFlags: reputationData.detectionFlags || [],
               lastUpdated: Number(reputationData.lastUpdated),
             };
 
@@ -107,42 +97,35 @@ export const useReputation = () => {
     setError(null);
 
     try {
-      updateReputationActor(identity);
-
       try {
+        const userId = identity.getPrincipal().toString();
         const reputationData =
-          await reputationCanisterService.getMyReputationScore();
+          await reputationService.getMyReputationScore(userId);
 
         const formattedReputation: ReputationScore = {
-          userId: reputationData.userId.toString(),
+          userId: reputationData.userId?.toString() || userId,
           trustScore: Number(reputationData.trustScore),
-          trustLevel: reputationData.trustLevel.hasOwnProperty("New")
-            ? "New"
-            : reputationData.trustLevel.hasOwnProperty("Low")
-              ? "Low"
-              : reputationData.trustLevel.hasOwnProperty("Medium")
-                ? "Medium"
-                : reputationData.trustLevel.hasOwnProperty("High")
-                  ? "High"
-                  : "VeryHigh",
+          trustLevel:
+            typeof reputationData.trustLevel === "string"
+              ? reputationData.trustLevel
+              : "New",
           completedBookings: Number(reputationData.completedBookings),
           averageRating: reputationData.averageRating
-            ? Number(reputationData.averageRating[0])
+            ? Number(reputationData.averageRating)
             : undefined,
-          detectionFlags: reputationData.detectionFlags.map(
-            (flag: any) => Object.keys(flag)[0],
-          ),
+          detectionFlags: reputationData.detectionFlags || [],
           lastUpdated: Number(reputationData.lastUpdated),
         };
 
         setReputation(formattedReputation);
       } catch (fetchError: any) {
         if (fetchError.message.includes("No reputation score found")) {
+          const userId = identity.getPrincipal().toString();
           const initialReputation =
-            await reputationCanisterService.initializeMyReputation();
+            await reputationService.initializeMyReputation(userId);
 
           const formattedReputation: ReputationScore = {
-            userId: initialReputation.userId.toString(),
+            userId: initialReputation.userId?.toString() || userId,
             trustScore: Number(initialReputation.trustScore),
             trustLevel: "New",
             completedBookings: 0,
