@@ -75,7 +75,7 @@ const transformToEnrichedService = (
   const getLowestPrice = (): number => {
     if (servicePackages && servicePackages.length > 0) {
       return Math.min(
-        ...servicePackages.map((pkg) => pkg.price + pkg.commissionFee),
+        ...servicePackages.map((pkg) => pkg.price),
       );
     }
     return service.price;
