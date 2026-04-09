@@ -452,6 +452,8 @@ Deploy only the AI-related canisters for reputation intelligence:
 dfx start --clean
 
 # Deploy reputation and auth canisters
+dfx deploy - to deploy all
+dfx deploy internet_identity
 dfx deploy auth
 dfx deploy reputation
 
