@@ -5,7 +5,7 @@ import {
   ChartBarIcon,
   BanknotesIcon,
   ChartPieIcon,
-  WalletIcon,
+  // WalletIcon,
 } from "@heroicons/react/24/solid";
 // Import your new chart components
 const BookingStatusPieChart = React.lazy(
@@ -18,8 +18,8 @@ const DailyBookingsBarChart = React.lazy(
   () => import("./DailyBookingsBarChart"),
 );
 import CustomerRatingStars from "./CustomerRatingStars";
-import { useNavigate } from "react-router-dom";
-import { useWallet } from "../../../../hooks/useWallet";
+// import { useNavigate } from "react-router-dom";
+// import { useWallet } from "../../../../hooks/useWallet";
 
 interface ProviderStatsProps {
   className?: string;
@@ -179,13 +179,13 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   getStatusCountsByPeriod,
   providerReviews,
 }) => {
-  const { balance } = useWallet();
+  // const { balance } = useWallet();
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
-  const handleWalletClick = () => {
-    navigate("/provider/wallet");
-  };
+  // const handleWalletClick = () => {
+  //   navigate("/provider/wallet");
+  // };
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -369,29 +369,29 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
     </div>
   );
 
-  // --- Improved Outstanding Commission Card ---
-  const WalletCard = () => (
-    <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-lg md:flex-row">
-      <div className="flex items-center gap-4">
-        <BanknotesIcon className="h-10 w-10 text-blue-500 drop-shadow" />
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-blue-700">SRV Wallet</p>
-          </div>
-          <p className="text-3xl font-extrabold tracking-tight text-gray-900">
-            ₱ {balance.toFixed(2)}
-          </p>
-        </div>
-      </div>
-      <button
-        onClick={handleWalletClick}
-        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-      >
-        <WalletIcon className="h-5 w-5 text-white" />
-        View Wallet
-      </button>
-    </div>
-  );
+  // // --- Improved Outstanding Commission Card ---
+  // const WalletCard = () => (
+  //   <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-lg md:flex-row">
+  //     <div className="flex items-center gap-4">
+  //       <BanknotesIcon className="h-10 w-10 text-blue-500 drop-shadow" />
+  //       <div>
+  //         <div className="flex items-center gap-2">
+  //           <p className="text-sm font-semibold text-blue-700">SRV Wallet</p>
+  //         </div>
+  //         <p className="text-3xl font-extrabold tracking-tight text-gray-900">
+  //           ₱ {balance.toFixed(2)}
+  //         </p>
+  //       </div>
+  //     </div>
+  //     <button
+  //       onClick={handleWalletClick}
+  //       className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+  //     >
+  //       <WalletIcon className="h-5 w-5 text-white" />
+  //       View Wallet
+  //     </button>
+  //   </div>
+  // );
 
   if (hasError) {
     return (
@@ -415,9 +415,10 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
         Dashboard
       </h1>
 
-      <div className="mb-8">
+      {/*<div className="mb-8">
         <WalletCard />
       </div>
+      */}
 
       {isMobile ? (
         <MobileChartsCarousel
