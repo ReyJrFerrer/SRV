@@ -13,7 +13,7 @@ if (!admin.apps.length) {
   if (process.env.FUNCTIONS_EMULATOR) {
     // In emulator mode, initialize without credentials
     admin.initializeApp({
-      projectId: "devsrv-rey",
+      projectId: "srve-7133d",
     });
 
     // Use Auth emulator

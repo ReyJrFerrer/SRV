@@ -20,7 +20,7 @@ const {
 if (!admin.apps.length) {
   if (process.env.FUNCTIONS_EMULATOR) {
     admin.initializeApp({
-      projectId: "devsrv-rey",
+      projectId: "srve-7133d",
     });
     process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
   } else {

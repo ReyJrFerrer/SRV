@@ -39,8 +39,8 @@ exports.checkProviderOnboarding = functions.https.onRequest(
     const allowedOrigins = [
       "http://localhost:5173",
       "http://127.0.0.1:5173",
-      "https://devsrv-rey.web.app",
-      "https://devsrv-rey.firebaseapp.com",
+      "https://srve-7133d.web.app",
+      "https://srve-7133d.firebaseapp.com",
     ];
 
     const origin = req.headers.origin;

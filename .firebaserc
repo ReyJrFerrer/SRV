@@ -1,16 +1,16 @@
 {
   "projects": {
-    "default": "devsrv-rey",
-    "srv": "devsrv-rey"
+    "default": "srve-7133d",
+    "srv": "srve-7133d"
   },
   "targets": {
-    "devsrv-rey": {
+    "srve-7133d": {
       "hosting": {
         "client": [
-          "srvepinoy"
+          "srve-7133d"
         ],
         "admin": [
-          "srveadmin"
+          "srvadmin"
         ]
       }
     }

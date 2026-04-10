@@ -30,7 +30,7 @@ if (admin.apps.length === 0) {
   if (process.env.FUNCTIONS_EMULATOR) {
     console.log("Running in emulator mode");
     admin.initializeApp({
-      projectId: "devsrv-rey",
+      projectId: "srve-7133d",
     });
 
     // Set Firestore emulator settings
