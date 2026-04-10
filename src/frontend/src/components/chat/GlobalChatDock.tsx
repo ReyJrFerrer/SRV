@@ -49,7 +49,7 @@ const GlobalChatDock: React.FC = () => {
   const [isDesktop, setIsDesktop] = useState<boolean>(
     window.innerWidth >= DESKTOP_MIN_WIDTH,
   );
-  const prevUnreadRef = useRef<number>(0);
+  const prevUnreadRef = useRef<number>(-1);
   const prevUnreadMapRef = useRef<Map<string, number>>(new Map());
   const defaultTitleRef = useRef<string>(document.title);
   const [sending, setSending] = useState(false);
@@ -267,7 +267,7 @@ const GlobalChatDock: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated || !isDesktop) return;
     const unread = unreadTotal;
-    if (unread > prevUnreadRef.current) {
+    if (prevUnreadRef.current !== -1 && unread > prevUnreadRef.current) {
       // A new message arrived
       if (!isVisible) setIsVisible(true);
       if (isMinimized) setIsMinimized(false);
@@ -286,7 +286,9 @@ const GlobalChatDock: React.FC = () => {
 
   // On first load, prime unread ref
   useEffect(() => {
-    prevUnreadRef.current = unreadTotal;
+    if (prevUnreadRef.current === -1) {
+      prevUnreadRef.current = unreadTotal;
+    }
   }, [unreadTotal]);
 
   // Restore title on unmount
