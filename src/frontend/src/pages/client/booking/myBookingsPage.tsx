@@ -47,7 +47,7 @@ const MyBookingsPage: React.FC = () => {
   type BookingTimingFilter = "All" | "Same Day" | "Scheduled";
   // Primary view toggle placed at the top bar
   const [timingFilter, setTimingFilter] =
-    useState<BookingTimingFilter>("Scheduled");
+    useState<BookingTimingFilter>("Same Day");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const timingDropdownRef = useRef<HTMLDivElement>(null);
