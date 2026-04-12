@@ -3,3 +3,4 @@ node_modules/
 .runtimeconfig.json
 
 bun.lock
+package-lock.json
