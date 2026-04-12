@@ -30,8 +30,10 @@ export default function CreateProfilePage() {
     phone: "",
   });
   const [reauthRequired, setReauthRequired] = useState(false);
-  const [isPhoneVerificationInitialized, setIsPhoneVerificationInitialized] =
-    useState(false);
+  // --- TEMPORARILY DISABLED FOR BETA TESTING ---
+  // const [isPhoneVerificationInitialized, setIsPhoneVerificationInitialized] =
+  //   useState(false);
+  // --- END TEMPORARILY DISABLED ---
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
@@ -66,14 +68,16 @@ export default function CreateProfilePage() {
     };
   }, [navigate]);
 
-  // Initialize phone verification service
-  useEffect(() => {
-    const initPhoneVerification = async () => {
-      const success = await phoneVerificationService.initialize();
-      setIsPhoneVerificationInitialized(success);
-    };
-    initPhoneVerification();
-  }, []);
+  // --- TEMPORARILY DISABLED FOR BETA TESTING ---
+  // // Initialize phone verification service
+  // useEffect(() => {
+  //   const initPhoneVerification = async () => {
+  //     const success = await phoneVerificationService.initialize();
+  //     setIsPhoneVerificationInitialized(success);
+  //   };
+  //   initPhoneVerification();
+  // }, []);
+  // --- END TEMPORARILY DISABLED ---
 
   // Check if user already has a profile and redirect accordingly
   useEffect(() => {
@@ -200,13 +204,15 @@ export default function CreateProfilePage() {
       return;
     }
 
-    // Check if phone verification service is initialized
-    if (!isPhoneVerificationInitialized) {
-      setError(
-        "Phone verification service is not available. Please try again.",
-      );
-      return;
-    }
+    // --- TEMPORARILY DISABLED FOR BETA TESTING ---
+    // // Check if phone verification service is initialized
+    // if (!isPhoneVerificationInitialized) {
+    //   setError(
+    //     "Phone verification service is not available. Please try again.",
+    //   );
+    //   return;
+    // }
+    // --- END TEMPORARILY DISABLED ---
 
     // Start phone verification process
     setIsLoading(true);
@@ -224,23 +230,28 @@ export default function CreateProfilePage() {
         return;
       }
 
+      // --- TEMPORARILY DISABLED FOR BETA TESTING ---
       // If phone is available, proceed with OTP verification
-      const result = await phoneVerificationService.startVerification(
-        formData.phone.trim(),
-        "recaptcha-container-profile",
-      );
+      // const result = await phoneVerificationService.startVerification(
+      //   formData.phone.trim(),
+      //   "recaptcha-container-profile",
+      // );
 
-      if (result.step === "otp-input") {
-        setShowOtpModal(true);
-      } else if (result.step === "error") {
-        const errorMessage = result.error || "Failed to send verification code";
-        setError(errorMessage);
+      // if (result.step === "otp-input") {
+      //   setShowOtpModal(true);
+      // } else if (result.step === "error") {
+      //   const errorMessage = result.error || "Failed to send verification code";
+      //   setError(errorMessage);
 
-        // Show reload suggestion for Firebase service errors
-        if (errorMessage.includes("reload the page")) {
-          // The error message already contains the reload instruction
-        }
-      }
+      //   // Show reload suggestion for Firebase service errors
+      //   if (errorMessage.includes("reload the page")) {
+      //     // The error message already contains the reload instruction
+      //   }
+      // }
+      // --- END TEMPORARILY DISABLED ---
+
+      // AUTO-VERIFY FOR BETA TESTING
+      handlePhoneVerified();
     } catch (error: any) {
       const errorMessage = error.message || "Failed to send verification code";
       setError(errorMessage);
@@ -516,12 +527,12 @@ export default function CreateProfilePage() {
                         ) : isLoading && !reauthRequired ? (
                           <>
                             <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
-                            <span>Sending Verification...</span>
+                            <span>Loading</span>
                           </>
                         ) : (
                           <>
                             <UserPlusIcon className="tex mr-2 h-6 w-6" />
-                            Verify Phone & Create Profile
+                           Create Profile
                           </>
                         )}
                       </button>

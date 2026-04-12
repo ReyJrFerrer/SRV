@@ -810,6 +810,7 @@ async function uploadMediaInternal({
 
   // Generate unique media ID
   const mediaId = await generateUuid();
+  const downloadToken = await generateUuid();
   const timestamp = new Date().toISOString();
 
   // Generate file path
@@ -825,23 +826,22 @@ async function uploadMediaInternal({
         ownerId: ownerId,
         mediaType: mediaType,
         uploadedAt: timestamp,
+        firebaseStorageDownloadTokens: downloadToken,
       },
     },
   });
-
-  // Make file publicly accessible
-  await file.makePublic();
 
   // Get public URL - handle both emulator and production
   let publicUrl;
   if (process.env.FUNCTIONS_EMULATOR === "true" || process.env.FIREBASE_STORAGE_EMULATOR_HOST) {
     // Emulator environment - use emulator URL format
     const encodedPath = encodeURIComponent(filePath);
-    publicUrl = `http://127.0.0.1:9199/v0/b/${bucket.name}/o/${encodedPath}?alt=media`;
+    publicUrl = `http://127.0.0.1:9199/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
     console.log("Using emulator storage URL:", publicUrl);
   } else {
     // Production environment - use googleapis URL
-    publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+    const encodedPath = encodeURIComponent(filePath);
+    publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
   }
 
   // Create media metadata document
