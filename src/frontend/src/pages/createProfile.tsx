@@ -532,7 +532,7 @@ export default function CreateProfilePage() {
                         ) : (
                           <>
                             <UserPlusIcon className="tex mr-2 h-6 w-6" />
-                           Create Profile
+                            Create Profile
                           </>
                         )}
                       </button>
