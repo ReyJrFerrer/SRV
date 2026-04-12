@@ -208,11 +208,11 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
 window.OneSignalDeferred.push(async function (OneSignal) {
   try {
     await OneSignal.init({
-      appId: "6ca84c57-1e6b-466d-b792-64df97dea60b",
-      safari_web_id: "web.onesignal.auto.514888af-c9d7-482b-90d4-9de98d872128",
+      appId: "7bd5300e-16ce-4334-8462-93e1a1458579",
+      safari_web_id: "web.onesignal.auto.0d6d1ede-d24a-45d0-ba73-2f88839c0735",
       allowLocalhostAsSecureOrigin: true, // Enable for local development
       notifyButton: {
-        enable: false,
+        enable: true,
       },
       // Let OneSignal use default scope "/" for push notifications to work properly
       // Our custom sw.js will be disabled to avoid conflicts
