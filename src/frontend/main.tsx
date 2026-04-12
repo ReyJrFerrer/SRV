@@ -212,7 +212,7 @@ window.OneSignalDeferred.push(async function (OneSignal) {
       safari_web_id: "web.onesignal.auto.0d6d1ede-d24a-45d0-ba73-2f88839c0735",
       allowLocalhostAsSecureOrigin: true, // Enable for local development
       notifyButton: {
-        enable: true,
+        enable: false,
       },
       // Let OneSignal use default scope "/" for push notifications to work properly
       // Our custom sw.js will be disabled to avoid conflicts
