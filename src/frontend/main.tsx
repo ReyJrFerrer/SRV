@@ -20,7 +20,7 @@ import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
-import GlobalChatDock from "./src/components/chat/GlobalChatDock";
+// import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 import LocationBlockedModal from "./src/components/common/locationAccessPermission/LocationBlockedModal";
 import LocationPermissionPromptModal from "./src/components/common/locationAccessPermission/LocationPermissionPromptModal";
 import { useLocationStore } from "./src/store/locationStore";
@@ -594,7 +594,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
-              <GlobalChatDock />
+              {/* <GlobalChatDock /> */}
             </BookingCacheProvider>
           </AuthProvider>
         </HashRouter>
