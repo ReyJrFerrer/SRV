@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import phLocations from "../data/ph_locations.json";
+import { reverseGeocode } from "../utils/googleMapsGeocoding";
 
 export type LocationStatus = "not_set" | "allowed" | "denied" | "unsupported";
 
@@ -59,101 +59,6 @@ interface LocationState {
   // Handle permission denial from external permission check
   handlePermissionDenied: () => void;
 }
-
-const fetchWithRetry = async (
-  url: string,
-  attempts: number = 3,
-  delayMs: number = 1500,
-): Promise<any> => {
-  for (let i = 0; i < attempts; i++) {
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Fetch failed");
-      return await res.json();
-    } catch (err) {
-      if (i < attempts - 1) {
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-      }
-    }
-  }
-  throw new Error("All fetch attempts failed");
-};
-
-const normalizeLocationData = (data: any) => {
-  // Handle BigDataCloud API response format
-  if (data?.city || data?.locality) {
-    const cityPart = data.city || data.locality || "";
-    let provinceVal = data.principalSubdivision || data.countryName || "";
-
-    // Try to refine province for PH using localityInfo + known provinces
-    try {
-      const isPH = (data.countryName || "").toLowerCase() === "philippines";
-      const admin = data.localityInfo?.administrative || [];
-      if (isPH && Array.isArray(admin)) {
-        const provinces: string[] = Array.isArray(
-          (phLocations as any)?.provinces,
-        )
-          ? (phLocations as any).provinces.map((p: any) => p.name)
-          : [];
-        const match = admin.find((a: any) =>
-          provinces.some(
-            (prov) => a?.name?.toLowerCase?.() === prov.toLowerCase(),
-          ),
-        );
-        if (match?.name) {
-          provinceVal = match.name;
-        }
-      }
-    } catch {
-      // ignore refinement errors
-    }
-
-    // Special case: Baguio normalization
-    if (
-      (cityPart.toLowerCase() === "baguio" ||
-        cityPart.toLowerCase() === "baguio city") &&
-      (provinceVal.toLowerCase().includes("cordillera administrative region") ||
-        provinceVal.toLowerCase().includes("car") ||
-        provinceVal.toLowerCase() === "region")
-    ) {
-      return {
-        address: "Baguio City",
-        province: "Benguet",
-      };
-    }
-
-    return {
-      address: cityPart || "Could not determine city",
-      province: provinceVal,
-    };
-  }
-
-  // Handle Nominatim API response format (fallback)
-  if (!data?.address) return null;
-
-  const { city, town, village, municipality, county, state, region, province } =
-    data.address;
-
-  let cityPart = city || town || village || municipality || "";
-  let provinceVal = county || state || region || province || "";
-
-  // Special case: Baguio normalization
-  if (
-    (cityPart.toLowerCase() === "baguio" ||
-      cityPart.toLowerCase() === "baguio city") &&
-    (provinceVal.toLowerCase().includes("cordillera administrative region") ||
-      provinceVal.toLowerCase().includes("car") ||
-      provinceVal.toLowerCase() === "region")
-  ) {
-    cityPart = "Baguio City";
-    provinceVal = "Benguet";
-  }
-
-  return {
-    address: cityPart || "Could not determine city",
-    province: provinceVal,
-  };
-};
 
 export const useLocationStore = create<LocationState>()(
   persist(
@@ -305,29 +210,23 @@ export const useLocationStore = create<LocationState>()(
               }
             }
 
-            // Fetch address in background
+            // Fetch address in background using Google Maps geocoding
             try {
-              // Use BigDataCloud's free reverse geocoding API (supports CORS)
-              const data = await fetchWithRetry(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+              const result = await reverseGeocode(latitude, longitude);
+
+              set({
+                userAddress: result.locality,
+                userProvince: result.province,
+              });
+              // Cache the result
+              localStorage.setItem(
+                cacheKey,
+                JSON.stringify({
+                  address: result.locality,
+                  province: result.province,
+                }),
               );
-
-              const normalized = normalizeLocationData(data);
-
-              if (normalized) {
-                set({
-                  userAddress: normalized.address,
-                  userProvince: normalized.province,
-                });
-                // Cache the result
-                localStorage.setItem(cacheKey, JSON.stringify(normalized));
-              } else {
-                set({
-                  userAddress: "Could not determine city",
-                  userProvince: "",
-                });
-              }
-            } catch (error) {
+            } catch {
               set({
                 userAddress: "Failed to resolve address",
                 userProvince: "",

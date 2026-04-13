@@ -8,8 +8,11 @@ const LocationMapModal = React.lazy(() => import("./LocationMapModal"));
 import { useLocationStore } from "../../../store/locationStore";
 import EnableLocationButton from "../locationAccessPermission/EnableLocationButton";
 import LocationBlockedModal from "../locationAccessPermission/LocationBlockedModal";
+import {
+  reverseGeocode,
+  isGoogleMapsApiLoaded,
+} from "../../../utils/googleMapsGeocoding";
 
-// Constants
 const ADDR_CACHE_KEY = "GMAPS_ADDR_CACHE_COMMON_V1";
 const ADDR_CACHE_TTL_MS = 2 * 60 * 1000;
 
@@ -18,7 +21,6 @@ export type MapFunctionsHandle = {
   openChangeLocation: () => void;
 };
 
-// Component
 const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
   const {
     location: geoLocation,
@@ -29,10 +31,9 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
     isInitialized,
   } = useLocationStore();
 
-  // State
   const [showMap, setShowMap] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [isExplicitOpen, setIsExplicitOpen] = useState(false); // Track if user explicitly opened the modal
+  const [isExplicitOpen, setIsExplicitOpen] = useState(false);
   const [gmapsAddress, setGmapsAddress] = useState<string>(
     "Detecting location...",
   );
@@ -42,7 +43,6 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
   const [mapsApiLoaded, setMapsApiLoaded] = useState(false);
   const [lastRefreshTs, setLastRefreshTs] = useState<number>(0);
 
-  // Effects
   useEffect(() => {
     const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 
@@ -84,80 +84,30 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
         }
       }
     } catch {}
-    if ((window as any).google?.maps) setMapsApiLoaded(true);
+    if (isGoogleMapsApiLoaded()) setMapsApiLoaded(true);
   }, []);
 
   useEffect(() => {
-    const isApiReady = !!(window as any).google?.maps;
+    const isApiReady = isGoogleMapsApiLoaded();
     if (isApiReady && !mapsApiLoaded) setMapsApiLoaded(true);
     if (!mapsApiLoaded || !geoLocation) return;
     if (gmapsStatus !== "idle") return;
-    try {
-      const geocoder = new (window as any).google.maps.Geocoder();
-      setGmapsStatus("loading");
-      geocoder.geocode(
-        { location: { lat: geoLocation.latitude, lng: geoLocation.longitude } },
-        (results: any, status: string) => {
-          if (status === "OK" && results && results[0]) {
-            const comps = results[0].address_components || [];
-            const find = (type: string) => {
-              const c = comps.find(
-                (cc: any) => cc.types && cc.types.indexOf(type) !== -1,
-              );
-              return c ? c.long_name : undefined;
-            };
 
-            const premise =
-              find("premise") ||
-              find("subpremise") ||
-              find("establishment") ||
-              find("point_of_interest");
-            const streetNumber = find("street_number");
-            const route = find("route");
-            const barangay =
-              find("sublocality_level_2") ||
-              find("sublocality") ||
-              find("neighborhood");
-            const locality =
-              find("locality") ||
-              find("postal_town") ||
-              find("administrative_area_level_3") ||
-              find("administrative_area_level_2");
-            const province =
-              find("administrative_area_level_2") ||
-              find("administrative_area_level_1");
+    setGmapsStatus("loading");
 
-            const line1 =
-              premise ||
-              (streetNumber && route
-                ? `${streetNumber} ${route}`
-                : route || streetNumber);
-            const parts: string[] = [];
-            if (line1) parts.push(line1);
-            if (barangay) parts.push(barangay);
-            if (locality) parts.push(locality);
-            if (province) parts.push(province);
-
-            const displayAddress =
-              parts.length > 0
-                ? parts.join(", ")
-                : (results[0].formatted_address as string);
-            setGmapsAddress(displayAddress);
-            setGmapsStatus("ok");
-            try {
-              const payload = { address: displayAddress, ts: Date.now() };
-              localStorage.setItem(ADDR_CACHE_KEY, JSON.stringify(payload));
-            } catch {}
-          } else {
-            setGmapsStatus("failed");
-            setGmapsAddress("Unable to resolve address");
-          }
-        },
-      );
-    } catch {
-      setGmapsStatus("failed");
-      setGmapsAddress("Address not found");
-    }
+    reverseGeocode(geoLocation.latitude, geoLocation.longitude)
+      .then((result) => {
+        setGmapsAddress(result.displayAddress);
+        setGmapsStatus("ok");
+        try {
+          const payload = { address: result.displayAddress, ts: Date.now() };
+          localStorage.setItem(ADDR_CACHE_KEY, JSON.stringify(payload));
+        } catch {}
+      })
+      .catch(() => {
+        setGmapsStatus("failed");
+        setGmapsAddress("Unable to resolve address");
+      });
   }, [mapsApiLoaded, geoLocation, gmapsStatus]);
 
   const openMap = () => {
@@ -174,7 +124,6 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
     setShowLocationModal(true);
   };
 
-  // Auto-show blocked modal immediately on transition to denied
   const [prevStatus, setPrevStatus] = useState(locationStatus);
   useEffect(() => {
     if (
@@ -183,18 +132,16 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
       prevStatus !== "denied" &&
       !showLocationModal
     ) {
-      setIsExplicitOpen(false); // Auto-opened, not explicit
+      setIsExplicitOpen(false);
       setShowLocationModal(true);
     }
-    // When permission transitions to allowed, force a fresh reverse geocode
-    // and prefer detected location over any previously manually chosen address.
     if (
       isInitialized &&
       prevStatus !== "allowed" &&
       (prevStatus === "denied" || prevStatus === "not_set") &&
       locationStatus === "allowed"
     ) {
-      setGmapsStatus("idle"); // trigger geocode effect
+      setGmapsStatus("idle");
     }
     if (prevStatus !== locationStatus) setPrevStatus(locationStatus);
   }, [locationStatus, prevStatus, isInitialized, showLocationModal]);
@@ -208,7 +155,6 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
     [mapsApiLoaded, geoLocation, locationStatus],
   );
 
-  // Render
   return (
     <>
       <div className="flex w-full items-center justify-start">
@@ -223,7 +169,6 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
               {gmapsAddress}
             </button>
           ) : userAddress && userProvince ? (
-            // Show locationStore address while Google Maps is loading
             <span
               className="text-left text-sm font-medium text-blue-900"
               title={`${userAddress}, ${userProvince}`}
@@ -257,7 +202,6 @@ const MapFunctions = React.forwardRef<MapFunctionsHandle>((_, ref) => {
       </div>
       {(locationStatus === "denied" || locationStatus === "not_set") && (
         <div className="ml-3 flex items-center gap-2">
-          {/* Controls */}
           {locationStatus === "not_set" && <EnableLocationButton />}
         </div>
       )}
