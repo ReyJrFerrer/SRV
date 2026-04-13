@@ -6,7 +6,7 @@ const {FieldValue} = require("firebase-admin/firestore");
 const db = admin.firestore();
 
 // OneSignal Configuration
-const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "6ca84c57-1e6b-466d-b792-64df97dea60b";
+const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "7bd5300e-16ce-4334-8462-93e1a1458579";
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "";
 
 // Base URL for building absolute push URLs (used only for push payloads)

@@ -210,7 +210,7 @@ const ActionButtons: React.FC<Props> = ({
     );
     const startLabel = alreadyNotified
       ? "Continue Navigation"
-      : "Start Driving";
+      : "Start Navigating";
 
     buttons.push(
       <button

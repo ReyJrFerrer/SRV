@@ -20,7 +20,7 @@ const {
 if (!admin.apps.length) {
   if (process.env.FUNCTIONS_EMULATOR) {
     admin.initializeApp({
-      projectId: "devsrv-rey",
+      projectId: "srve-7133d",
     });
     process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
   } else {
@@ -32,6 +32,7 @@ const db = admin.firestore();
 
 /**
  * Fetch user data from Firestore
+ * @param {string} userId - The user ID
  */
 async function fetchUserData(userId) {
   try {
@@ -70,7 +71,7 @@ async function fetchUserData(userId) {
 
     const averageRating = ratingCount > 0 ? totalRating / ratingCount : null;
 
-    return { completedBookings, averageRating, accountAgeMs };
+    return {completedBookings, averageRating, accountAgeMs};
   } catch (error) {
     console.error("Error fetching user data:", error);
     throw error;
@@ -79,6 +80,7 @@ async function fetchUserData(userId) {
 
 /**
  * Fetch provider data from Firestore
+ * @param {string} providerId - The provider ID
  */
 async function fetchProviderData(providerId) {
   try {
@@ -115,7 +117,7 @@ async function fetchProviderData(providerId) {
 
     const averageRating = ratingCount > 0 ? totalRating / ratingCount : null;
 
-    return { completedBookings, averageRating, accountAgeMs };
+    return {completedBookings, averageRating, accountAgeMs};
   } catch (error) {
     console.error("Error fetching provider data:", error);
     throw error;
@@ -124,6 +126,8 @@ async function fetchProviderData(providerId) {
 
 /**
  * Write reputation and its history subcollection entry
+ * @param {string} userId - The user ID
+ * @param {Object} reputationData - The reputation data
  */
 async function writeReputationAndHistory(userId, reputationData) {
   const timestamp = Date.now();
@@ -131,7 +135,7 @@ async function writeReputationAndHistory(userId, reputationData) {
   await repRef.set({
     ...reputationData,
     lastUpdated: timestamp,
-  }, { merge: true });
+  }, {merge: true});
 
   const historyRef = repRef.collection("history").doc(timestamp.toString());
   await historyRef.set({
@@ -142,6 +146,7 @@ async function writeReputationAndHistory(userId, reputationData) {
 
 /**
  * Internal function to initialize reputation
+ * @param {string} userId - The user ID
  */
 async function initializeReputationInternal(userId) {
   if (!userId) throw new Error("User ID is required");
@@ -149,15 +154,15 @@ async function initializeReputationInternal(userId) {
   try {
     const repRef = db.collection("reputations").doc(userId);
     const doc = await repRef.get();
-    
+
     if (doc.exists) {
-      return { success: true, data: doc.data(), message: "Reputation already exists" };
+      return {success: true, data: doc.data(), message: "Reputation already exists"};
     }
 
     const defaultRep = {
       userId,
       trustScore: BASE_SCORE,
-      trustLevel: 'New',
+      trustLevel: "New",
       completedBookings: 0,
       averageRating: null,
       detectionFlags: [],
@@ -165,7 +170,7 @@ async function initializeReputationInternal(userId) {
 
     await writeReputationAndHistory(userId, defaultRep);
 
-    return { success: true, data: defaultRep, message: "Reputation initialized successfully" };
+    return {success: true, data: defaultRep, message: "Reputation initialized successfully"};
   } catch (error) {
     console.error("Error initializing reputation:", error);
     throw error;
@@ -176,7 +181,7 @@ exports.initializeReputation = functions.https.onCall(async (data, _context) => 
   const payload = data.data || data;
   const {userId} = payload;
   if (!userId) throw new functions.https.HttpsError("invalid-argument", "User ID is required");
-  
+
   try {
     return await initializeReputationInternal(userId);
   } catch (error) {
@@ -187,6 +192,7 @@ exports.initializeReputationInternal = initializeReputationInternal;
 
 /**
  * Internal function to update user reputation
+ * @param {string} userId - The user ID
  */
 async function updateUserReputationInternal(userId) {
   if (!userId) throw new Error("User ID is required");
@@ -195,7 +201,7 @@ async function updateUserReputationInternal(userId) {
 
     const repRef = db.collection("reputations").doc(userId);
     const doc = await repRef.get();
-    
+
     let detectionFlags = [];
     if (doc.exists && doc.data().detectionFlags) {
       detectionFlags = doc.data().detectionFlags;
@@ -205,7 +211,7 @@ async function updateUserReputationInternal(userId) {
       userData.completedBookings,
       userData.averageRating,
       userData.accountAgeMs,
-      detectionFlags
+      detectionFlags,
     );
 
     const updatedScore = {
@@ -219,7 +225,7 @@ async function updateUserReputationInternal(userId) {
 
     await writeReputationAndHistory(userId, updatedScore);
 
-    return { success: true, data: updatedScore, message: "User reputation updated successfully" };
+    return {success: true, data: updatedScore, message: "User reputation updated successfully"};
   } catch (error) {
     console.error("Error updating user reputation:", error);
     throw error;
@@ -240,6 +246,7 @@ exports.updateUserReputationInternal = updateUserReputationInternal;
 
 /**
  * Internal function to update provider reputation
+ * @param {string} providerId - The provider ID
  */
 async function updateProviderReputationInternal(providerId) {
   if (!providerId) throw new Error("Provider ID is required");
@@ -248,7 +255,7 @@ async function updateProviderReputationInternal(providerId) {
 
     const repRef = db.collection("reputations").doc(providerId);
     const doc = await repRef.get();
-    
+
     let detectionFlags = [];
     if (doc.exists && doc.data().detectionFlags) {
       detectionFlags = doc.data().detectionFlags;
@@ -258,7 +265,7 @@ async function updateProviderReputationInternal(providerId) {
       providerData.completedBookings,
       providerData.averageRating,
       providerData.accountAgeMs,
-      detectionFlags
+      detectionFlags,
     );
 
     const updatedScore = {
@@ -272,7 +279,7 @@ async function updateProviderReputationInternal(providerId) {
 
     await writeReputationAndHistory(providerId, updatedScore);
 
-    return { success: true, data: updatedScore, message: "Provider reputation updated successfully" };
+    return {success: true, data: updatedScore, message: "Provider reputation updated successfully"};
   } catch (error) {
     console.error("Error updating provider reputation:", error);
     throw error;
@@ -282,7 +289,9 @@ async function updateProviderReputationInternal(providerId) {
 exports.updateProviderReputation = functions.https.onCall(async (data, _context) => {
   const payload = data.data || data;
   const {providerId} = payload;
-  if (!providerId) throw new functions.https.HttpsError("invalid-argument", "Provider ID is required");
+  if (!providerId) {
+    throw new functions.https.HttpsError("invalid-argument", "Provider ID is required");
+  }
   try {
     return await updateProviderReputationInternal(providerId);
   } catch (error) {
@@ -293,16 +302,17 @@ exports.updateProviderReputationInternal = updateProviderReputationInternal;
 
 /**
  * Internal function to process review for reputation
+ * @param {Object} review - The review object
  */
-async function processReviewForReputationInternal(review, useLLM = false) {
+async function processReviewForReputationInternal(review) {
   if (!review || !review.id) throw new Error("Review object with ID is required");
-  
+
   try {
     // Update both reputations whenever a review is processed
     await updateUserReputationInternal(review.clientId);
     await updateProviderReputationInternal(review.providerId);
 
-    return { success: true, data: { status: "Visible" } };
+    return {success: true, data: {status: "Visible"}};
   } catch (error) {
     console.error("Error in processReviewForReputationInternal:", error);
     throw error;
@@ -311,10 +321,12 @@ async function processReviewForReputationInternal(review, useLLM = false) {
 
 exports.processReviewForReputation = functions.https.onCall(async (data, _context) => {
   const payload = data.data || data;
-  const {review, useLLM = false} = payload;
-  if (!review || !review.id) throw new functions.https.HttpsError("invalid-argument", "Review object is required");
+  const {review} = payload;
+  if (!review || !review.id) {
+    throw new functions.https.HttpsError("invalid-argument", "Review object is required");
+  }
   try {
-    return await processReviewForReputationInternal(review, useLLM);
+    return await processReviewForReputationInternal(review);
   } catch (error) {
     throw new functions.https.HttpsError("internal", error.message);
   }
@@ -323,18 +335,19 @@ exports.processReviewForReputationInternal = processReviewForReputationInternal;
 
 /**
  * Deduct reputation points for a user who cancelled a booking
+ * @param {string} userId - The user ID
  */
 async function deductReputationForCancellationInternal(userId) {
   try {
     const repRef = db.collection("reputations").doc(userId);
     const doc = await repRef.get();
-    
+
     let currentScore = BASE_SCORE;
     let data = {
       userId,
       completedBookings: 0,
       averageRating: null,
-      detectionFlags: []
+      detectionFlags: [],
     };
 
     if (doc.exists) {
@@ -343,7 +356,7 @@ async function deductReputationForCancellationInternal(userId) {
     }
 
     const newTrustScore = Math.max(0, currentScore - CANCELLATION_PENALTY);
-    
+
     const updatedScore = {
       ...data,
       trustScore: newTrustScore,
@@ -370,7 +383,7 @@ exports.deductReputationForCancellation = functions.https.onCall(async (data, _c
   if (!userId) throw new functions.https.HttpsError("invalid-argument", "User ID is required");
   try {
     const result = await deductReputationForCancellationInternal(userId);
-    return { success: true, data: result };
+    return {success: true, data: result};
   } catch (error) {
     throw new functions.https.HttpsError("internal", "Failed to deduct reputation points", error);
   }
@@ -379,6 +392,7 @@ exports.deductReputationForCancellationInternal = deductReputationForCancellatio
 
 /**
  * Internal function to check the user reputation
+ * @param {string} userId - The user ID
  */
 async function checkUserReputationInternal(userId) {
   try {

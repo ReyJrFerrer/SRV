@@ -32,6 +32,16 @@ export default function MyBookingsScreen() {
     return { bg: Colors.light.gray100, color: Colors.light.gray600 };
   };
 
+  const getStatusPriority = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === "inprogress") return 0;
+    if (s === "requested" || s === "pending") return 1;
+    if (s === "accepted" || s === "confirmed") return 2;
+    if (s === "completed") return 3;
+    if (s === "cancelled" || s === "declined") return 4;
+    return 5;
+  };
+
   const filteredBookings = useMemo(() => {
     let filtered = [...mockBookings];
 
@@ -62,6 +72,15 @@ export default function MyBookingsScreen() {
           b.clientName?.toLowerCase().includes(q),
       );
     }
+
+    filtered.sort((a, b) => {
+      const priorityA = getStatusPriority(a.status);
+      const priorityB = getStatusPriority(b.status);
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      const dateA = new Date(a.scheduledDate).getTime();
+      const dateB = new Date(b.scheduledDate).getTime();
+      return dateA - dateB;
+    });
 
     return filtered;
   }, [statusFilter, searchTerm]);

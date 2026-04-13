@@ -1,6 +1,6 @@
 /**
  * Reputation Math Utility
- * 
+ *
  * Contains all mathematical constants and functions ported from the Motoko canister.
  * Used for calculating trust scores and trust levels for users and providers.
  */
@@ -8,7 +8,8 @@
 /**
  * @typedef {'Low' | 'Medium' | 'High' | 'VeryHigh' | 'New'} TrustLevel
  *
- * @typedef {'ReviewBomb' | 'CompetitiveManipulation' | 'FakeEvidence' | 'IdentityFraud' | 'Other' | 'AbusiveContent'} DetectionFlag
+ * @typedef {'ReviewBomb' | 'CompetitiveManipulation' | 'FakeEvidence' | 'IdentityFraud' |
+ * 'Other' | 'AbusiveContent'} DetectionFlag
  */
 
 const BASE_SCORE = 50.0;
@@ -19,10 +20,10 @@ const MAX_TRUST_SCORE = 100.0;
 const CANCELLATION_PENALTY = 5.0;
 
 const TRUST_LEVEL_THRESHOLDS = [
-  { level: 'Low', threshold: 20.0 },
-  { level: 'Medium', threshold: 50.0 },
-  { level: 'High', threshold: 80.0 },
-  { level: 'VeryHigh', threshold: 100.0 },
+  {level: "Low", threshold: 20.0},
+  {level: "Medium", threshold: 50.0},
+  {level: "High", threshold: 80.0},
+  {level: "VeryHigh", threshold: 100.0},
 ];
 
 const RECENCY_WEIGHT = 0.3;
@@ -32,21 +33,17 @@ const ACTIVITY_FREQUENCY_WEIGHT = 0.1;
 const BAYESIAN_CONFIDENCE_THRESHOLD = 2.0;
 const BAYESIAN_PRIOR_MEAN = 3.0;
 
-const MAX_REVIEW_WEIGHT = 2.0;
-const MIN_REVIEW_WEIGHT = 0.1;
-const REVIEW_AGE_HALFLIFE_DAYS = 180.0;
-
 const ABUSIVE_KEYWORDS = [
   "scam", "fraud", "thief", "stole", "liar", "idiot",
   "stupid", "fuck", "shit", "asshole", "bitch", "damn",
-  "hell", "crap"
+  "hell", "crap",
 ];
 
 /**
  * Calculate Bayesian Average
  * @param {number} currentAverage
  * @param {number} count
- * @returns {number}
+ * @returns {number} The calculated Bayesian average
  */
 function calculateBayesianAverage(currentAverage, count) {
   const n = count;
@@ -59,7 +56,7 @@ function calculateBayesianAverage(currentAverage, count) {
  * Calculate Recency Score
  * @param {number} completedBookings
  * @param {number} accountAgeMs - timestamp in ms of account creation
- * @returns {number}
+ * @returns {number} The calculated recency score
  */
 function calculateRecencyScore(completedBookings, accountAgeMs) {
   if (completedBookings === 0) return 0.0;
@@ -78,7 +75,7 @@ function calculateRecencyScore(completedBookings, accountAgeMs) {
  * Calculate Activity Frequency
  * @param {number} completedBookings
  * @param {number} accountAgeMs - timestamp in ms of account creation
- * @returns {number}
+ * @returns {number} The activity frequency score
  */
 function calculateActivityFrequency(completedBookings, accountAgeMs) {
   if (completedBookings < 3) return 0.0;
@@ -99,15 +96,15 @@ function calculateActivityFrequency(completedBookings, accountAgeMs) {
 /**
  * Determine Trust Level based on score
  * @param {number} trustScore
- * @returns {TrustLevel}
+ * @returns {TrustLevel} The determined trust level
  */
 function determineTrustLevel(trustScore) {
-  for (const { level, threshold } of TRUST_LEVEL_THRESHOLDS) {
+  for (const {level, threshold} of TRUST_LEVEL_THRESHOLDS) {
     if (trustScore <= threshold) {
       return level;
     }
   }
-  return 'VeryHigh';
+  return "VeryHigh";
 }
 
 /**
@@ -116,7 +113,7 @@ function determineTrustLevel(trustScore) {
  * @param {number|null} averageRating
  * @param {number} accountAgeMs - timestamp in ms of account creation
  * @param {DetectionFlag[]} flags
- * @returns {number}
+ * @returns {number} The client trust score
  */
 function calculateTrustScore(completedBookings, averageRating, accountAgeMs, flags = []) {
   let score = BASE_SCORE;
@@ -159,24 +156,24 @@ function calculateTrustScore(completedBookings, averageRating, accountAgeMs, fla
   let penaltyPoints = 0.0;
   for (const flag of flags) {
     switch (flag) {
-      case 'ReviewBomb':
-        penaltyPoints += 15.0 + (flags.length > 1 ? 5.0 : 0);
-        break;
-      case 'CompetitiveManipulation':
-        penaltyPoints += 15.0 + (flags.length > 1 ? 5.0 : 0);
-        break;
-      case 'FakeEvidence':
-        penaltyPoints += 10.0 + (flags.length > 1 ? 3.0 : 0);
-        break;
-      case 'IdentityFraud':
-        penaltyPoints += 15.0 + (flags.length > 1 ? 10.0 : 0);
-        break;
-      case 'Other':
-        penaltyPoints += 5.0;
-        break;
-      case 'AbusiveContent':
-        penaltyPoints += 20.0 + (flags.length > 1 ? 10.0 : 0);
-        break;
+    case "ReviewBomb":
+      penaltyPoints += 15.0 + (flags.length > 1 ? 5.0 : 0);
+      break;
+    case "CompetitiveManipulation":
+      penaltyPoints += 15.0 + (flags.length > 1 ? 5.0 : 0);
+      break;
+    case "FakeEvidence":
+      penaltyPoints += 10.0 + (flags.length > 1 ? 3.0 : 0);
+      break;
+    case "IdentityFraud":
+      penaltyPoints += 15.0 + (flags.length > 1 ? 10.0 : 0);
+      break;
+    case "Other":
+      penaltyPoints += 5.0;
+      break;
+    case "AbusiveContent":
+      penaltyPoints += 20.0 + (flags.length > 1 ? 10.0 : 0);
+      break;
     }
   }
 
@@ -196,7 +193,7 @@ function calculateTrustScore(completedBookings, averageRating, accountAgeMs, fla
  * @param {number|null} averageRating
  * @param {number} accountAgeMs - timestamp in ms of account creation
  * @param {DetectionFlag[]} flags
- * @returns {number}
+ * @returns {number} The provider trust score
  */
 function calculateProviderTrustScore(completedBookings, averageRating, accountAgeMs, flags = []) {
   let score = BASE_SCORE;
@@ -272,24 +269,24 @@ function calculateProviderTrustScore(completedBookings, averageRating, accountAg
   let penaltyPoints = 0.0;
   for (const flag of flags) {
     switch (flag) {
-      case 'ReviewBomb':
-        penaltyPoints += 15.0 + (flags.length > 1 ? 5.0 : 0);
-        break;
-      case 'CompetitiveManipulation':
-        penaltyPoints += 15.0 + (flags.length > 1 ? 5.0 : 0);
-        break;
-      case 'FakeEvidence':
-        penaltyPoints += 10.0 + (flags.length > 1 ? 3.0 : 0);
-        break;
-      case 'IdentityFraud':
-        penaltyPoints += 15.0 + (flags.length > 1 ? 10.0 : 0);
-        break;
-      case 'Other':
-        penaltyPoints += 5.0;
-        break;
-      case 'AbusiveContent':
-        penaltyPoints += 20.0 + (flags.length > 1 ? 10.0 : 0);
-        break;
+    case "ReviewBomb":
+      penaltyPoints += 15.0 + (flags.length > 1 ? 5.0 : 0);
+      break;
+    case "CompetitiveManipulation":
+      penaltyPoints += 15.0 + (flags.length > 1 ? 5.0 : 0);
+      break;
+    case "FakeEvidence":
+      penaltyPoints += 10.0 + (flags.length > 1 ? 3.0 : 0);
+      break;
+    case "IdentityFraud":
+      penaltyPoints += 15.0 + (flags.length > 1 ? 10.0 : 0);
+      break;
+    case "Other":
+      penaltyPoints += 5.0;
+      break;
+    case "AbusiveContent":
+      penaltyPoints += 20.0 + (flags.length > 1 ? 10.0 : 0);
+      break;
     }
   }
 
