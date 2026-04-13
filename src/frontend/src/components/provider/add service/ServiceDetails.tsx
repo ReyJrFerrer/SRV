@@ -434,7 +434,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 ? "border-red-400 bg-red-50 focus:border-red-500"
                                 : "border-gray-300 bg-gray-50 focus:border-blue-500"
                             }`}
-                            placeholder="Describe what's included in this package. 150 words maximum"
+                            placeholder="Describe what's included in this package. 150 characters maximum"
                             maxLength={150}
                           />
                           {pkgError &&
