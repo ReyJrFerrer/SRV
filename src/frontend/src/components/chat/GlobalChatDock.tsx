@@ -634,7 +634,7 @@ const GlobalChatDock: React.FC = () => {
                             className={`max-w-[70%] ${isMine ? "text-right" : "text-left"}`}
                           >
                             <span
-                              className={`inline-block rounded-lg px-3 py-2 text-sm shadow ${isMine ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"}`}
+                              className={`overflow-wrap-anywhere inline-block break-words rounded-lg px-3 py-2 text-sm shadow ${isMine ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"}`}
                             >
                               {typeof m.content === "string"
                                 ? m.content

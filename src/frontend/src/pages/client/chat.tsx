@@ -512,7 +512,7 @@ const ClientChatPage: React.FC = () => {
                                 <div
                                   className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
                                 >
-                                  <p className="text-sm">
+                                  <p className="overflow-wrap-anywhere break-words text-sm">
                                     {typeof message.content === "string"
                                       ? message.content
                                       : message.content?.encryptedText}
