@@ -43,3 +43,5 @@ database-debug.log
 
 src/sui/build/srv_reputation
 .kilo
+
+package-lock.json
