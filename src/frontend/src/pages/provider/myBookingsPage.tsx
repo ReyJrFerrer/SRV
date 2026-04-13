@@ -148,6 +148,8 @@ const ProviderBookingsPage: React.FC = () => {
     }
   };
 
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
   useEffect(() => {
     if (typeof queryTab === "string") {
       const normalized = queryTab.toLowerCase();
@@ -155,6 +157,37 @@ const ProviderBookingsPage: React.FC = () => {
       else if (normalized === "scheduled") setTimingFilter("Scheduled");
     }
   }, [queryTab]);
+
+  useEffect(() => {
+    if (!loading && !initialLoadDone) {
+      const bookingsData = bookings || [];
+
+      if (bookingsData.length > 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const hasSameDay = bookingsData.some((b) => {
+          const dateStr =
+            (b as any).scheduledDateTime ||
+            (b as any).requestedDate ||
+            (b as any).requestedDateTime ||
+            (b as any).createdAt;
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime() === today.getTime();
+        });
+
+        if (hasSameDay) {
+          setTimingFilter("Same Day");
+        } else {
+          setTimingFilter("Scheduled");
+        }
+      } else {
+        setTimingFilter("Same Day");
+      }
+      setInitialLoadDone(true);
+    }
+  }, [loading, bookings, initialLoadDone]);
 
   useEffect(() => {
     document.title = "My Bookings | SRV Provider";

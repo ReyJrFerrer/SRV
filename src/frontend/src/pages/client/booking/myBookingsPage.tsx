@@ -55,6 +55,8 @@ const MyBookingsPage: React.FC = () => {
     useState<EnhancedBooking | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
   useEffect(() => {
     const queryTab = searchParams.get("tab");
     if (queryTab && typeof queryTab === "string") {
@@ -63,6 +65,31 @@ const MyBookingsPage: React.FC = () => {
       else if (normalized === "scheduled") setTimingFilter("Scheduled");
     }
   }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (!bookingManagement.loading && !initialLoadDone) {
+      const bookings = bookingManagement.bookings || [];
+
+      if (bookings.length > 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const hasSameDay = bookings.some((b) => {
+          const d = new Date(b.requestedDate || b.createdAt);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime() === today.getTime();
+        });
+
+        if (hasSameDay) {
+          setTimingFilter("Same Day");
+        } else {
+          setTimingFilter("Scheduled");
+        }
+      } else {
+        setTimingFilter("Same Day");
+      }
+      setInitialLoadDone(true);
+    }
+  }, [bookingManagement.loading, bookingManagement.bookings, initialLoadDone]);
 
   useEffect(() => {
     document.title = "My Bookings | SRV";

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -26,8 +26,9 @@ type BookingStatusFilter =
 export default function MyBookingsScreen() {
   const [searchTerm, setSearchTerm] = useState("");
   const [timingFilter, setTimingFilter] =
-    useState<BookingTimingFilter>("Scheduled");
+    useState<BookingTimingFilter>("Same Day");
   const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("All");
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const getStatusPriority = (status: string) => {
     const s = status.toLowerCase();
@@ -111,6 +112,31 @@ export default function MyBookingsScreen() {
 
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
+
+  useEffect(() => {
+    if (!initialLoadDone) {
+      const bookingsData = mockBookings || [];
+
+      if (bookingsData.length > 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const hasSameDay = bookingsData.some((b) => {
+          const d = new Date(b.scheduledDate);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime() === today.getTime();
+        });
+
+        if (hasSameDay) {
+          setTimingFilter("Same Day");
+        } else {
+          setTimingFilter("Scheduled");
+        }
+      } else {
+        setTimingFilter("Same Day");
+      }
+      setInitialLoadDone(true);
+    }
+  }, [initialLoadDone]);
 
   const handleBookingPress = (bookingId: string) => {
     // @ts-ignore
