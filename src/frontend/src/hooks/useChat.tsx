@@ -65,16 +65,6 @@ export const useChat = () => {
   // Real-time listener unsubscribe functions (now async)
   const conversationsUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
   const messagesUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, []);
 
   /**
    * Get user name from cache or fetch from auth service
@@ -162,52 +152,6 @@ export const useChat = () => {
   );
 
   /**
-   * Adapt backend message format to frontend format
-   */
-  const adaptBackendMessage = useCallback(
-    (backendMessage: any): FrontendMessage => {
-      const getMessageType = (type: any): "Text" | "File" => {
-        if (type?.Text !== undefined) return "Text";
-        if (type?.File !== undefined) return "File";
-        return "Text";
-      };
-
-      const getMessageStatus = (status: any): "Sent" | "Delivered" | "Read" => {
-        if (status?.Sent !== undefined) return "Sent";
-        if (status?.Delivered !== undefined) return "Delivered";
-        if (status?.Read !== undefined) return "Read";
-        return "Sent";
-      };
-
-      return {
-        id: backendMessage.id,
-        conversationId: backendMessage.conversationId,
-        senderId: backendMessage.senderId,
-        receiverId: backendMessage.receiverId,
-        messageType: getMessageType(backendMessage.messageType),
-        content:
-          backendMessage.content?.encryptedText || backendMessage.content,
-        attachment:
-          backendMessage.attachment && backendMessage.attachment.length > 0
-            ? {
-                fileName: backendMessage.attachment[0].fileName,
-                fileSize: Number(backendMessage.attachment[0].fileSize),
-                fileType: backendMessage.attachment[0].fileType,
-                fileUrl: backendMessage.attachment[0].fileUrl,
-              }
-            : undefined,
-        status: getMessageStatus(backendMessage.status),
-        createdAt: backendMessage.createdAt,
-        readAt:
-          backendMessage.readAt && backendMessage.readAt.length > 0
-            ? backendMessage.readAt[0]
-            : undefined,
-      };
-    },
-    [],
-  );
-
-  /**
    * Setup real-time listener for conversations
    */
   const setupConversationsListener = useCallback(async () => {
@@ -288,9 +232,6 @@ export const useChat = () => {
 
   /**
    * Fetch messages for a specific conversation
-   * @param conversationId The ID of the conversation
-   * @param limit Number of messages to fetch (default: 50)
-   * @param offset Starting position for pagination (default: 0)
    */
   const fetchMessages = useCallback(
     async (
@@ -317,8 +258,7 @@ export const useChat = () => {
   );
 
   /**
-   * Load messages for the current conversation with real-time listener + polling fallback
-   * @param conversationId The ID of the conversation
+   * Load messages for the current conversation with real-time listener
    */
   const loadConversation = useCallback(
     async (conversationId: string) => {
@@ -353,13 +293,11 @@ export const useChat = () => {
               if (!isMountedRef.current) return;
 
               try {
-                // Adapt messages to frontend format
-                const adaptedMessages = rawMessages.map(adaptBackendMessage);
                 if (isMountedRef.current) {
-                  setMessages(adaptedMessages);
+                  // The service now directly returns FrontendMessage format
+                  setMessages(rawMessages as FrontendMessage[]);
                   // notify global listeners messages updated for this conversation
                   try {
-                    // conversationId is available via closure
                     dispatchMessagesUpdated(conversationId);
                   } catch (e) {}
                   setLoading(false);
@@ -380,34 +318,6 @@ export const useChat = () => {
             },
           );
 
-        // Polling fallback (every 3 seconds)
-        if (pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current);
-        }
-
-        pollingIntervalRef.current = setInterval(async () => {
-          if (!isMountedRef.current) return;
-          try {
-            // Fetch latest messages to ensure we don't miss anything
-            const messagePage =
-              await chatCanisterService.getConversationMessages(
-                conversationId,
-                50, // Limit
-                0, // Offset
-              );
-
-            if (
-              isMountedRef.current &&
-              messagePage &&
-              messagePage.messages.length > 0
-            ) {
-              setMessages(messagePage.messages);
-            }
-          } catch (e) {
-            // Silent fail on polling error
-          }
-        }, 3000);
-
         // Fetch conversation details after setting up listener
         const conversation =
           await chatCanisterService.getConversation(conversationId);
@@ -418,7 +328,10 @@ export const useChat = () => {
 
         // Mark messages as read
         if (isMountedRef.current) {
-          await chatCanisterService.markMessagesAsRead(conversationId);
+          await chatCanisterService.markMessagesAsRead(
+            conversationId,
+            identity.getPrincipal().toString(),
+          );
           try {
             dispatchChatsRead();
           } catch (e) {}
@@ -430,13 +343,11 @@ export const useChat = () => {
         }
       }
     },
-    [isAuthenticated, identity, adaptBackendMessage, isMountedRef],
+    [isAuthenticated, identity, isMountedRef],
   );
 
   /**
    * Send a message in the current conversation
-   * @param content The message content (max 500 characters)
-   * @param receiverId The receiver's Principal ID
    */
   const sendMessage = useCallback(
     async (content: string, receiverId: string) => {
@@ -444,7 +355,6 @@ export const useChat = () => {
         throw new Error("Authentication and active conversation required");
       }
 
-      // Validate message content
       if (content.trim().length === 0) {
         throw new Error("Message cannot be empty");
       }
@@ -453,28 +363,6 @@ export const useChat = () => {
         throw new Error("Message cannot exceed 500 characters");
       }
 
-      // Optimistic update
-      const tempId = `temp-${Date.now()}`;
-      const optimisticMessage: FrontendMessage = {
-        id: tempId,
-        conversationId: currentConversation.id,
-        senderId: identity.getPrincipal().toString(),
-        receiverId: receiverId,
-        messageType: "Text",
-        content: {
-          encryptedText: content.trim(),
-          encryptionKey: "",
-        },
-        status: "Sent",
-        createdAt: new Date().toISOString(),
-      };
-
-      // Add optimistic message to state immediately
-      setMessages((prev) => [...prev, optimisticMessage]);
-
-      // Don't block UI with loading state for too long
-      // We still set it briefly to prevent double submission if needed,
-      // but the UI should feel instant because of the optimistic update
       setSendingMessage(true);
       setError(null);
 
@@ -483,16 +371,11 @@ export const useChat = () => {
           currentConversation.id,
           receiverId,
           content.trim(),
+          identity.getPrincipal().toString(),
         );
-
-        // The real-time listener will eventually replace our optimistic message
-        // But if it's slow, we might want to update the ID of our local message
-        // For now, we rely on the listener to refresh the list
 
         return newMessage;
       } catch (err) {
-        // Remove optimistic message on error
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
         setError(
           err instanceof Error ? err.message : "Could not send message.",
         );
@@ -506,9 +389,6 @@ export const useChat = () => {
 
   /**
    * Create a new conversation
-   * @param clientId Client's Principal ID
-   * @param providerId Provider's Principal ID
-   * @param bookingId Booking ID that initiated this conversation
    */
   const createConversation = useCallback(
     async (clientId: string, providerId: string) => {
@@ -525,11 +405,6 @@ export const useChat = () => {
           providerId,
         );
 
-        if (newConversation) {
-          // Real-time listener will automatically add the new conversation
-          // No need to manually refresh
-        }
-
         return newConversation;
       } catch (err) {
         setError("Could not create conversation.");
@@ -543,7 +418,6 @@ export const useChat = () => {
 
   /**
    * Mark messages in a conversation as read
-   * @param conversationId The ID of the conversation
    */
   const markAsRead = useCallback(
     async (conversationId: string) => {
@@ -552,8 +426,10 @@ export const useChat = () => {
       }
 
       try {
-        await chatCanisterService.markMessagesAsRead(conversationId);
-        // Real-time listener will automatically update unread counts
+        await chatCanisterService.markMessagesAsRead(
+          conversationId,
+          identity.getPrincipal().toString(),
+        );
         try {
           dispatchChatsRead();
         } catch (e) {}
@@ -570,7 +446,6 @@ export const useChat = () => {
 
     const currentUserId = identity.getPrincipal().toString();
 
-    // Return the NUMBER of conversations that have unread messages for the current user
     return conversations.reduce((total, convoSummary) => {
       const count = convoSummary.conversation.unreadCount?.[currentUserId] || 0;
       return total + (count > 0 ? 1 : 0);
@@ -600,7 +475,6 @@ export const useChat = () => {
    * Clear current conversation and messages
    */
   const clearCurrentConversation = useCallback(async () => {
-    // Cleanup messages listener
     try {
       if (messagesUnsubscribe.current) {
         await messagesUnsubscribe.current();
@@ -627,7 +501,6 @@ export const useChat = () => {
       clearCurrentConversation();
     }
 
-    // Cleanup on unmount or auth change
     return () => {
       cleanupListeners();
     };
@@ -641,22 +514,17 @@ export const useChat = () => {
   ]);
 
   return {
-    // State
     conversations,
     currentConversation,
     messages,
-    loading, // Only shows for initial loads
+    loading,
     error,
     sendingMessage,
-
-    // Actions
     loadConversation,
     sendMessage,
     createConversation,
     markAsRead,
     clearCurrentConversation,
-
-    // Utilities
     getUnreadCount,
     fetchMessages,
     getUserName,
