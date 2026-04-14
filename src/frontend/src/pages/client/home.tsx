@@ -92,7 +92,7 @@ const ClientHomePage: React.FC = () => {
       </div>
       {/* SECTION: Provider CTA */}
       <div className="flex w-full flex-col items-center justify-center">
-        <div className="mx-auto flex w-full max-w-md flex-col items-center rounded-2xl border border-blue-100 bg-white p-6 shadow-lg">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <h3 className="mb-2 text-center text-lg font-semibold text-blue-700">
             Not enough services in your area?
           </h3>
@@ -102,7 +102,7 @@ const ClientHomePage: React.FC = () => {
             add more to your City/Municipality!
           </p>
           <button
-            className="group flex w-full items-center justify-between rounded-2xl bg-yellow-300 p-4 text-left transition-all hover:bg-blue-600"
+            className="group flex w-full items-center justify-between rounded-xl bg-blue-600 p-4 text-left transition-all hover:bg-blue-700"
             onClick={async () => {
               setBeProviderLoading(true);
               const success = await switchRole();
@@ -116,16 +116,16 @@ const ClientHomePage: React.FC = () => {
           >
             <div className="flex items-center">
               <ArrowPathRoundedSquareIcon
-                className={`mr-4 h-7 w-7 text-black transition-transform duration-300 group-hover:text-white ${beProviderLoading ? "animate-spin" : ""}`}
+                className={`mr-4 h-7 w-7 text-white transition-transform duration-300 ${beProviderLoading ? "animate-spin" : ""}`}
               />
               <span
-                className={`text-sm font-semibold text-gray-800 group-hover:text-white md:text-lg lg:text-xl ${beProviderLoading ? "opacity-70" : ""}`}
+                className={`text-sm font-medium text-white md:text-lg lg:text-xl ${beProviderLoading ? "opacity-70" : ""}`}
               >
                 {beProviderLoading ? "Switching..." : "Be a SRVice Provider"}
               </span>
             </div>
             <ChevronRightIcon
-              className={`h-6 w-6 text-black group-hover:text-white ${beProviderLoading ? "opacity-70" : ""}`}
+              className={`h-6 w-6 text-white ${beProviderLoading ? "opacity-70" : ""}`}
             />
           </button>
         </div>

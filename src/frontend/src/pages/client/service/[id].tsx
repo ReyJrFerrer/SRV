@@ -30,6 +30,7 @@ import CredentialsSection from "../../../components/client/service-detail/Creden
 import AvailabilitySection, {
   Availability,
 } from "../../../components/client/service-detail/AvailabilitySection";
+import EmptyState from "../../../components/common/EmptyState";
 
 function formatTime12Hour(time: string): string {
   if (!time) return "";
@@ -170,8 +171,8 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const isOwnService = Boolean(
     identity &&
-      service &&
-      identity.getPrincipal().toString() === service.providerId,
+    service &&
+    identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -292,7 +293,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         <main className="relative z-10 -mt-24 p-4">
           <div className="mx-auto mt-6 w-full max-w-5xl">
             {/* Main Card Skeleton */}
-            <div className="rounded-3xl border border-blue-100 bg-white/70 p-6 shadow-2xl backdrop-blur-md">
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
                 {/* Provider Info Skeleton */}
                 <div className="flex flex-col justify-center">
@@ -336,7 +337,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Packages Section Skeleton */}
-          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <div className="h-6 w-6 animate-pulse rounded bg-gray-300"></div>
               <div className="h-6 w-32 animate-pulse rounded bg-gray-300"></div>
@@ -345,7 +346,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md md:flex-row"
+                  className="group relative flex flex-col items-stretch overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row"
                 >
                   <div className="flex flex-1 items-center gap-4">
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -364,7 +365,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Availability Section Skeleton */}
-          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
             <div className="flex flex-wrap gap-2">
               {[1, 2, 3, 4].map((i) => (
@@ -377,7 +378,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Gallery Section Skeleton */}
-          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-300"></div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
@@ -390,7 +391,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Credentials Section Skeleton */}
-          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
             <div className="flex flex-wrap gap-4">
               {[1, 2].map((i) => (
@@ -403,7 +404,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Reviews Section Skeleton */}
-          <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
+          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div className="h-6 w-32 animate-pulse rounded bg-gray-300"></div>
               <div className="h-6 w-24 animate-pulse rounded bg-gray-300"></div>
@@ -634,13 +635,13 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
         )}
         <div className="mx-auto mt-6 w-full max-w-5xl">
-          <div className="rounded-3xl border border-blue-100 bg-white/70 p-6 shadow-2xl backdrop-blur-md">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
               <div className="flex flex-col justify-center">
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex flex-col items-center">
                     <div
-                      className="overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-blue-200 via-white to-blue-100 shadow-xl"
+                      className="overflow-hidden rounded-full border-4 border-white bg-gray-100 shadow-sm"
                       style={{
                         width: "96px",
                         height: "96px",
@@ -734,10 +735,10 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl bg-white p-4 shadow-2xl backdrop-blur-md">
-          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
-            <Squares2X2Icon className="h-6 w-6 text-blue-400" /> Packages
-            Offered
+        <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+            <Squares2X2Icon className="h-6 w-6 text-blue-600" />
+            Packages Offered
           </h3>
           {loadingPackages ? (
             <div className="p-4 text-center text-gray-500">
@@ -748,7 +749,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               {packages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="md:flow-center group relative flex flex-col items-stretch overflow-hidden rounded-2xl border border-yellow-300 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-5 shadow-md md:flex-row"
+                  className="group relative flex flex-col items-stretch overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row md:items-center"
                 >
                   <div className="flex flex-1 items-center gap-4">
                     <div className="flex min-w-0 flex-1 flex-col">
@@ -761,7 +762,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="ml-0 mt-4 flex min-w-[120px] flex-col items-end justify-between md:ml-6 md:mt-0">
-                    <span className="rounded-lg border border-blue-200 bg-blue-100 px-4 py-2 text-xl font-extrabold text-blue-700 shadow-sm">
+                    <span className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xl font-extrabold text-blue-700 shadow-sm">
                       ₱
                       {Number(pkg.price).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -769,13 +770,16 @@ const ClientServiceDetailsPage: React.FC = () => {
                       })}
                     </span>
                   </div>
-                  <span className="absolute right-0 top-0 h-2 w-2 rounded-bl-2xl bg-yellow-300"></span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-4 text-center text-gray-500">
-              No packages available for this service.
+            <div className="py-8">
+              <EmptyState
+                icon={<Squares2X2Icon className="h-12 w-12" />}
+                title="No packages available"
+                message="No packages are currently available for this service."
+              />
             </div>
           )}
         </div>
@@ -802,41 +806,37 @@ const ClientServiceDetailsPage: React.FC = () => {
         />
       </main>
 
-      <div className="shadow-t-lg bottom-15 fixed left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
-        <div className="mx-auto flex w-full items-center justify-between gap-3">
-          <button
-            onClick={handleChatProviderClick}
-            disabled={
-              isOwnService ||
-              !hasSufficientReputation ||
-              isCheckingReputation ||
-              isCreatingChat
-            }
-            className="group relative flex flex-shrink items-center justify-center rounded-lg bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-blue-100 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
-            style={{ minWidth: 0, flexBasis: "32%" }}
-          >
-            {chatLoading ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-400"></div>
-                <span className="text-base font-semibold">
-                  Creating Chat...
+      <div className="bottom-15 fixed left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
+          <div className="w-1/3">
+            <button
+              onClick={handleChatProviderClick}
+              disabled={
+                isOwnService ||
+                !hasSufficientReputation ||
+                isCheckingReputation ||
+                isCreatingChat
+              }
+              className="group relative flex w-full items-center justify-center rounded-xl bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-gray-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
+            >
+              {chatLoading ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                  <span className="text-base font-semibold">Creating...</span>
+                </>
+              ) : (
+                <span className="text-sm font-semibold md:text-lg lg:text-xl">
+                  Chat
                 </span>
-              </>
-            ) : (
-              <span className="text-sm font-semibold md:text-lg lg:text-xl">
-                Chat
-              </span>
-            )}
-            {isOwnService && (
-              <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                You cannot chat with your own service.
-              </span>
-            )}
-          </button>
-          <div
-            className="group relative flex flex-grow justify-end"
-            style={{ flexBasis: "68%" }}
-          >
+              )}
+              {isOwnService && (
+                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  You cannot chat with your own service.
+                </span>
+              )}
+            </button>
+          </div>
+          <div className="group relative flex w-2/3 justify-end">
             <button
               onClick={handleBookNow}
               disabled={
@@ -846,7 +846,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                 !hasSufficientReputation ||
                 isCheckingReputation
               }
-              className="group relative w-full rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 px-6 py-3 text-sm font-extrabold text-white shadow-lg ring-2 ring-blue-200 transition-all duration-200 hover:from-yellow-400 hover:to-yellow-300 hover:text-blue-900 hover:ring-yellow-200 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400 md:text-lg lg:text-xl"
+              className="group relative w-full rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 md:text-lg lg:text-xl"
             >
               {isCheckingReputation
                 ? "Checking..."

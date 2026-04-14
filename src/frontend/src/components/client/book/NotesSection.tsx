@@ -12,7 +12,7 @@ const NotesSection: React.FC<NotesSectionProps> = ({
   onChange,
   limit,
 }) => (
-  <div className="glass-card rounded-2xl border border-blue-100 bg-white/70 p-6 shadow-xl backdrop-blur-md">
+  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
     <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
       <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
       <ChatBubbleLeftRightIcon
@@ -27,7 +27,7 @@ const NotesSection: React.FC<NotesSectionProps> = ({
       onChange={onChange}
       rows={4}
       maxLength={limit}
-      className="w-full resize-none rounded-xl border border-gray-200 bg-white/80 p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500"
+      className="w-full resize-none rounded-xl border border-gray-200 bg-white p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500"
     />
   </div>
 );

@@ -11,6 +11,7 @@ import ServiceListItem from "../../components/client/home page/ServiceListingCar
 import BottomNavigation from "../../components/client/NavigationBar";
 import SearchBar from "../../components/client/SearchBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
+import EmptyState from "../../components/common/EmptyState";
 import {
   useAllServicesWithProviders,
   EnrichedService,
@@ -289,23 +290,24 @@ const SearchResultsPage: React.FC = () => {
           !error &&
           searchQuery &&
           sortedAndFilteredResults.length === 0 && (
-            <div className="py-16 text-center">
-              <MagnifyingGlassIcon className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-              <p className="text-lg text-gray-500">
-                No services found matching your criteria.
-              </p>
-              <p className="mt-2 text-sm text-gray-400">
-                Try adjusting your search or filters.
-              </p>
+            <div className="py-8">
+              <EmptyState
+                icon={<MagnifyingGlassIcon className="h-12 w-12" />}
+                title="No services found"
+                message="No services matched your search criteria. Try adjusting your search or filters."
+                actionLabel="Clear Search"
+                onAction={() => handleSearchOnPage("")}
+              />
             </div>
           )}
 
         {!loading && !error && !searchQuery && (
-          <div className="py-16 text-center">
-            <MagnifyingGlassIcon className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-            <p className="text-lg text-gray-500">
-              Enter a term above to search for services.
-            </p>
+          <div className="py-8">
+            <EmptyState
+              icon={<MagnifyingGlassIcon className="h-12 w-12" />}
+              title="Search Services"
+              message="Enter a term above to search for services."
+            />
           </div>
         )}
 

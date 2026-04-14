@@ -250,7 +250,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       <header
         ref={headerRef}
         // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
-        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-lg backdrop-blur ${className}`}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-yellow-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-sm ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
         <div
@@ -279,7 +279,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             {isAuthenticated && (
               <button
                 onClick={handleProfileClick}
-                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-2 shadow-sm transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
               >
                 <UserCircleIcon className="h-10 w-10 text-yellow-500 transition-colors group-hover:text-blue-700" />
               </button>
@@ -299,7 +299,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               {isAuthenticated && (
                 <button
                   onClick={handleProfileClick}
-                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-2 shadow-sm transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
                 >
                   <UserCircleIcon className="h-8 w-8 text-yellow-500 transition-colors group-hover:text-blue-700" />
                 </button>
@@ -317,7 +317,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </div>
 
           {/* --- Location & Search Section --- */}
-          <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
+         <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <button
                 type="button"
@@ -349,10 +349,10 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 }
               }}
             >
-              <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-3 shadow-md transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
+              <div className="relative flex w-full items-center rounded-xl border border-gray-300 bg-white p-3 shadow-sm transition-all duration-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
                 <input
                   type="text"
-                  className="w-full border-none bg-transparent text-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:text-lg lg:text-xl"
+                  className="w-full border-none bg-transparent text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 md:text-lg lg:text-xl"
                   placeholder={placeholder}
                   value={searchQuery}
                   onChange={handleSearchInputChange}
@@ -364,7 +364,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   }
                 />
                 {showSuggestions && filteredSuggestions.length > 0 && (
-                  <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                  <ul className="absolute left-0 top-full z-10 w-full rounded-b-xl border border-gray-200 bg-white shadow-md">
                     {filteredSuggestions.map((suggestion, idx) => (
                       <li
                         key={idx}
@@ -384,7 +384,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
         <div className="mini-header fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)]">
-          <div className="w-full rounded-b-xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+          <div className="w-full rounded-b-xl border-b border-yellow-200 bg-yellow-50 p-3 shadow-sm">
             {/* Location row (reveals on slight scroll-up) */}
             <div
               className={`overflow-hidden transition-all duration-300 ${
@@ -410,15 +410,15 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 }
               }}
             >
-              <div className="relative flex w-full items-center rounded-xl border border-blue-100 bg-white p-3 shadow transition-all duration-300 focus-within:ring-2 focus-within:ring-yellow-300">
+              <div className="relative flex w-full items-center rounded-xl border border-gray-300 bg-white p-3 shadow-sm transition-all duration-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500">
                 <input
                   value={searchQuery}
                   onChange={handleSearchInputChange}
-                  className="w-full border-none bg-transparent text-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 md:text-lg lg:text-xl"
+                  className="w-full border-none bg-transparent text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 md:text-lg lg:text-xl"
                   placeholder={placeholder}
                 />
                 {showSuggestions && filteredSuggestions.length > 0 && (
-                  <ul className="absolute left-0 top-full z-50 w-full rounded-b-xl border border-blue-100 bg-white shadow-lg">
+                  <ul className="absolute left-0 top-full z-50 w-full rounded-b-xl border border-gray-200 bg-white shadow-md">
                     {filteredSuggestions.map((suggestion, idx) => (
                       <li
                         key={idx}

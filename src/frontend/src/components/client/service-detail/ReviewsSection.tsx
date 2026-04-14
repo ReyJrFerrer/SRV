@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { ChatBubbleLeftEllipsisIcon } from "@heroicons/react/24/outline";
+import EmptyState from "../../common/EmptyState";
 
 export const StarRatingDisplay: React.FC<{
   rating: number;
@@ -25,7 +26,7 @@ export const ReviewItem: React.FC<{ review: any }> = ({ review }) => {
     review.clientProfile?.profilePicture?.imageUrl || "/default-client.svg";
 
   return (
-    <div className="rounded-2xl border border-blue-100 bg-white/80 p-5 shadow-md transition-all hover:shadow-lg">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
       <div className="mb-3 flex items-center gap-3">
         <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-yellow-50 shadow">
           <img
@@ -80,13 +81,13 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
 }) => {
   if (loading)
     return (
-      <div className="mt-8 rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 text-center text-gray-500 shadow-2xl">
+      <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 text-center text-gray-500 shadow-sm">
         Loading reviews...
       </div>
     );
   if (error)
     return (
-      <div className="mt-8 rounded-3xl border border-red-200 bg-gradient-to-br from-red-50 via-white to-yellow-50 p-6 text-center text-red-500 shadow-2xl">
+      <div className="mt-8 rounded-2xl border border-gray-200 bg-red-50 p-6 text-center text-red-500 shadow-sm">
         Could not load reviews.
       </div>
     );
@@ -97,11 +98,11 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   // Using Heroicons for chat bubble icon
 
   return (
-    <div className="my-8 rounded-xl bg-white p-4 shadow-2xl">
+    <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ChatBubbleLeftEllipsisIcon className="h-7 w-7 text-yellow-400" />
-          <h3 className="text-lg font-semibold text-gray-800">
+          <ChatBubbleLeftEllipsisIcon className="h-6 w-6 text-blue-600" />
+          <h3 className="text-xl font-bold text-gray-900">
             Reviews{" "}
             <span className="ml-1 text-base font-semibold text-gray-500">
               ({totalReviews})
@@ -163,11 +164,12 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12">
-          <ChatBubbleLeftEllipsisIcon className="mb-4 h-12 w-12 text-gray-300" />
-          <p className="text-lg font-semibold text-gray-400">
-            No reviews yet for this service.
-          </p>
+        <div className="py-12">
+          <EmptyState
+            icon={<ChatBubbleLeftEllipsisIcon className="h-12 w-12" />}
+            title="No reviews yet"
+            message="No reviews have been left for this service yet."
+          />
         </div>
       )}
     </div>

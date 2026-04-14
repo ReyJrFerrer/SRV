@@ -36,7 +36,7 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
       className={`group relative flex flex-col items-center transition-all duration-300 ${className}`}
     >
       <div
-        className={`service-card relative block w-full overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg`}
+        className={`service-card relative block w-full overflow-hidden rounded-xl border border-gray-200 bg-white pb-1 shadow-sm`}
       >
         <div className="relative">
           <div className="h-32 w-full animate-pulse rounded-t-2xl bg-gray-200" />
@@ -63,7 +63,7 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
         </div>
 
         <div className="mt-2 h-0 overflow-hidden transition-all duration-300 ease-in-out group-hover:mt-3 group-hover:h-10">
-          <div className="flex h-10 items-center justify-center rounded-xl border border-yellow-300 bg-yellow-200 px-2 shadow-sm">
+          <div className="flex h-10 items-center justify-center rounded-lg border border-gray-200 bg-gray-100 px-2 shadow-sm">
             <div className="h-4 w-36 animate-pulse rounded bg-gray-200" />
           </div>
         </div>
@@ -266,7 +266,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       <div className="group relative flex flex-col items-center">
         <Link
           to={`/client/service/${service.id}`}
-          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-2xl border border-blue-100 bg-white/90 pb-1 shadow-lg  hover:-translate-y-0.5 hover:scale-[1.02] hover:border-yellow-400 hover:shadow-xl group-hover:pb-2`}
+          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-xl border border-gray-200 bg-white pb-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group-hover:pb-2`}
         >
           <div className="relative">
             <div className="aspect-video w-full rounded-t-2xl bg-blue-50">
@@ -398,8 +398,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           </div>
 
           <div className="mt-2 h-0 overflow-hidden transition-all duration-300 ease-in-out group-hover:mt-3 group-hover:h-10">
-            <div className="flex h-10 items-center justify-center rounded-xl border border-yellow-300 bg-yellow-200 px-2 shadow-sm">
-              <span className="text-base font-bold tracking-wide text-blue-800">
+            <div className="flex h-10 items-center justify-center rounded-lg bg-yellow-600 px-2 transition-colors group-hover:bg-yellow-500">
+              <span className="text-base font-medium tracking-wide text-white">
                 Check service
               </span>
             </div>

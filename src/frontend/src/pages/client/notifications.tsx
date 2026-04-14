@@ -7,6 +7,7 @@ import {
 } from "../../hooks/useNotificationsWithPush";
 import BottomNavigation from "../../components/client/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
+import EmptyState from "../../components/common/EmptyState";
 import {
   EnvelopeOpenIcon,
   InboxIcon,
@@ -288,7 +289,7 @@ const NotificationsPage = () => {
   }, [stableNotifications, deletedIds, activeTab]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <header className="sticky top-0 z-20 bg-white">
         <div className="relative flex w-full items-center justify-center px-4 py-3">
           <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
@@ -480,20 +481,20 @@ const NotificationsPage = () => {
           </div>
         ) : error ? (
           <div className="p-10 text-center text-red-500">{String(error)}</div>
-        ) : stableNotifications.length === 0 ? (
-          <div className="flex flex-col items-center p-10 text-center text-gray-500">
-            <InboxIcon className="mb-4 h-16 w-16 text-gray-300" />
-            <h3 className="text-lg font-semibold">No Notifications Yet</h3>
-            <p className="text-sm">
-              We'll let you know when something important happens.
-            </p>
+        ) : unread.length === 0 && read.length === 0 ? (
+          <div className="py-12">
+            <EmptyState
+              icon={<InboxIcon className="h-12 w-12" />}
+              title="No Notifications Yet"
+              message="We'll let you know when something important happens."
+            />
           </div>
         ) : (
           <div className="mx-auto mt-6 max-w-2xl">
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (
                 <section>
-                  <h2 className="flex items-center justify-between border-b bg-gradient-to-r from-blue-500 to-blue-400 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-sm">
+                  <h2 className="flex items-center justify-between border-b bg-blue-600 px-4 py-2 text-sm font-medium tracking-wide text-white shadow-sm">
                     <span>New</span>
                     <span
                       aria-label={`${unread.length} new notifications`}
@@ -526,7 +527,7 @@ const NotificationsPage = () => {
               {unread.length > 0 && read.length > 0 && <div className="my-4" />}
               {read.length > 0 && (
                 <section>
-                  <h2 className="bg-gradient-to-r from-gray-200 to-gray-100 px-4 py-2 text-sm font-semibold tracking-wide text-gray-700 shadow-sm">
+                  <h2 className="border-b border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium tracking-wide text-gray-700">
                     Earlier
                   </h2>
                   <div className="divide-y divide-gray-100">

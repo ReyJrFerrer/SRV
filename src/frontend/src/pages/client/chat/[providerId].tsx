@@ -167,7 +167,7 @@ const ConversationPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
+      <div className="flex h-screen flex-col bg-gray-50">
         <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
           <button
             onClick={() => navigate("/client/chat")}
@@ -198,7 +198,7 @@ const ConversationPage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-b from-blue-50 to-gray-100">
+    <div className="flex h-screen flex-col bg-gray-50">
       <header className="sticky top-0 z-10 flex items-center border-b border-gray-200 bg-white p-3 shadow-sm">
         <button
           onClick={() => navigate(-1)}
@@ -234,7 +234,7 @@ const ConversationPage: React.FC = () => {
       </header>
 
       {showServicePreview && servicePreview && (
-        <div className="z-10 border-b border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur">
+        <div className="z-10 border-b border-gray-200 bg-white p-3 shadow-sm">
           <div
             role="button"
             onClick={() => navigate(`/client/service/${servicePreview.id}`)}

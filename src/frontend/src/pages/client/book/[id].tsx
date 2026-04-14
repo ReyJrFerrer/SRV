@@ -1503,7 +1503,7 @@ const BookingPage: React.FC = () => {
           .booking-calendar-wrapper .react-datepicker__current-month { font-weight: 600; color: #1e293b; }
         `}</style>
         <main className="flex-1">
-          <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
+          <div className="flex min-h-screen flex-col bg-gray-50">
             {/* Header Skeleton */}
             <header className="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm md:sticky">
               <div className="relative flex w-full items-center px-5 py-4">
@@ -1648,7 +1648,7 @@ const BookingPage: React.FC = () => {
             </div>
 
             {/* Bottom Sticky Bar Skeleton */}
-            <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white/80 p-4 shadow-xl backdrop-blur-md">
+            <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white p-4 shadow-md">
               <div className="relative mx-auto max-w-5xl">
                 <div className="h-12 w-full animate-pulse rounded-xl bg-gray-300"></div>
               </div>
@@ -1684,7 +1684,7 @@ const BookingPage: React.FC = () => {
         onDiscard={handleDiscardDraft}
       />
       <main className="flex-1">
-        <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50">
+        <div className="flex min-h-screen flex-col bg-gray-50">
           <style>{`
           .booking-calendar-wrapper .react-datepicker { width: 100%; border: none; box-shadow: none; }
           .booking-calendar-wrapper .react-datepicker__month-container { width: 100%; }
@@ -2040,7 +2040,7 @@ const BookingPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-300 bg-white/80 p-4 shadow-xl backdrop-blur-md">
+                <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white p-4 shadow-md">
                   <div className="relative mx-auto max-w-5xl">
                     {lastSavedAt && (
                       <div className="absolute left-4 top-3 hidden text-xs text-gray-600 sm:block">

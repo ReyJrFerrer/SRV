@@ -9,6 +9,7 @@ import { useReputation } from "../../../hooks/useReputation";
 import { getCategoryImage } from "../../../utils/serviceHelpers";
 import reviewCanisterService from "../../../services/reviewCanisterService";
 import serviceCanisterService from "../../../services/serviceCanisterService";
+import EmptyState from "../../common/EmptyState";
 
 // Types
 interface ServicesListProps {
@@ -193,13 +194,39 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
         <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {servicesWithData.map(({ service, serviceData }) => (
-          <div key={service.id}>
-            <ServiceListItem service={service} serviceData={serviceData} />
-          </div>
-        ))}
-      </div>
+      {!loading && services.length === 0 ? (
+        <div className="mb-8 mt-8">
+          <EmptyState
+            icon={
+              <svg
+                className="h-12 w-12"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                />
+              </svg>
+            }
+            title="No services found"
+            message="There are currently no services available in your selected location."
+            actionLabel="Explore Categories"
+            onAction={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {servicesWithData.map(({ service, serviceData }) => (
+            <div key={service.id}>
+              <ServiceListItem service={service} serviceData={serviceData} />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Load More Button */}
       {!loading && services.length > 0 && hasMore && (

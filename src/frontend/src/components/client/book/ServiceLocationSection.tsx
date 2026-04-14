@@ -189,7 +189,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   }, [showFullScreenMap]);
   return (
     <div
-      className={`glass-card rounded-2xl border bg-white/70 p-6 shadow-xl backdrop-blur-md ${
+      className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm ${
         highlight
           ? "border-2 border-red-500 ring-2 ring-red-200"
           : "border-gray-100"

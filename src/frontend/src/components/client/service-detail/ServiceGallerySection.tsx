@@ -47,9 +47,10 @@ const ServiceGallerySection: React.FC<{
   const displayImages = images?.slice(0, 5) || [];
 
   return (
-    <div className="mt-8 rounded-xl bg-white p-4 shadow-lg">
-      <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
-        <CameraIcon className="h-6 w-6 text-blue-400" /> Service Gallery
+    <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+        <CameraIcon className="h-6 w-6 text-blue-600" />
+        Service Gallery
       </h3>
       {isLoading ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">

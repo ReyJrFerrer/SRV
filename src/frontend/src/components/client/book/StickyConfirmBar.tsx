@@ -20,7 +20,7 @@ const StickyConfirmBar: React.FC<StickyConfirmBarProps> = ({
     )}
     <button
       onClick={onConfirm}
-      className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-yellow-400 px-8 py-4 text-lg font-bold text-white shadow-lg transition-colors hover:from-yellow-400 hover:to-blue-600 disabled:bg-gray-300 disabled:text-gray-400"
+      className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-8 py-4 text-lg font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-400"
     >
       {isSubmitting && (
         <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>

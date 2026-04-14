@@ -65,7 +65,7 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-4 py-3">
           <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
@@ -78,7 +78,7 @@ const SettingsPage: React.FC = () => {
         {isAuthenticated ? (
           <div className="space-y-6">
             {/* SECTION: Profile header */}
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <button
                 onClick={() => navigate("/client/profile")}
                 className="flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-50"
@@ -105,30 +105,30 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {/* SECTION: Switch to service provider */}
-            <div className="rounded-2xl border border-yellow-200 bg-gradient-to-r from-yellow-300 to-yellow-200 shadow-md">
+            <div className="mt-4">
               <button
                 onClick={handleSwitchToProvider}
-                className="group flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-600"
+                className="group flex w-full items-center justify-between rounded-xl bg-blue-600 p-4 text-left transition-all hover:bg-blue-700"
                 disabled={switching}
               >
                 <div className="flex items-center">
                   <ArrowPathRoundedSquareIcon
-                    className={`mr-4 h-7 w-7 text-black transition-transform duration-300 group-hover:text-white ${switching ? "animate-spin" : ""}`}
+                    className={`mr-4 h-7 w-7 text-white transition-transform duration-300 ${switching ? "animate-spin" : ""}`}
                   />
                   <span
-                    className={`text-lg font-semibold text-gray-800 group-hover:text-white ${switching ? "opacity-70" : ""}`}
+                    className={`text-lg font-medium text-white ${switching ? "opacity-70" : ""}`}
                   >
                     {switching ? "Switching..." : "Switch into SRVice Provider"}
                   </span>
                 </div>
                 <ChevronRightIcon
-                  className={`h-6 w-6 text-black group-hover:text-white ${switching ? "opacity-70" : ""}`}
+                  className={`h-6 w-6 text-white ${switching ? "opacity-70" : ""}`}
                 />
               </button>
             </div>
 
             {/* SECTION: Menu items including app settings */}
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <ul className="divide-y divide-gray-100">
                 {/* SECTION: PWA install (collapsible) */}
                 <li>

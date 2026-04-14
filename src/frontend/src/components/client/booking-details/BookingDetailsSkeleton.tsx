@@ -107,7 +107,7 @@ const BookingDetailsSkeleton: React.FC = () => {
       </div>
 
       {/* Booking Progress Skeleton */}
-      <div className="animate-pulse rounded-2xl border border-blue-100 bg-white/90 p-5 shadow-2xl backdrop-blur-md">
+      <div className="animate-pulse rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-6 flex items-center gap-2">
           <CalendarDaysIcon className="h-5 w-5 text-gray-300" />
           <div className="h-5 w-40 rounded bg-gray-300"></div>

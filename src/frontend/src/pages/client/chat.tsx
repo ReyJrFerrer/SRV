@@ -5,7 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
 import BottomNavigation from "../../components/client/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
-import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
+import {
+  PaperAirplaneIcon,
+  ChatBubbleLeftRightIcon,
+} from "@heroicons/react/24/solid";
+import EmptyState from "../../components/common/EmptyState";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -558,21 +562,24 @@ const ClientChatPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex h-full items-center justify-center p-8 text-gray-500">
-                      Select a conversation to view messages
+                    <div className="flex h-full items-center justify-center py-12">
+                      <EmptyState
+                        icon={<ChatBubbleLeftRightIcon className="h-12 w-12" />}
+                        title="Select a conversation"
+                        message="Choose a conversation from the list to view messages"
+                      />
                     </div>
                   )}
                 </div>
               )}
             </div>
           ) : (
-            <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
-              <div className="mb-3 text-4xl">💬</div>
-              <p className="mb-4 text-lg text-gray-600">No conversations yet</p>
-              <p className="text-sm text-gray-500">
-                Your conversations with service providers will appear here after
-                booking a service.
-              </p>
+            <div className="py-12">
+              <EmptyState
+                icon={<ChatBubbleLeftRightIcon className="h-12 w-12" />}
+                title="No conversations yet"
+                message="Your conversations with service providers will appear here after booking a service."
+              />
             </div>
           )
         ) : (

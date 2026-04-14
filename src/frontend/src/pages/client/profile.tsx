@@ -378,7 +378,7 @@ const ClientStats: React.FC = () => {
           return (
             <div
               key={stat.name}
-              className={`flex flex-col items-center rounded-2xl border border-gray-100 bg-white p-6 shadow-md transition-shadow hover:shadow-lg duration-200${isMemberSince ? "w-full text-center" : ""}`}
+              className={`flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md duration-200${isMemberSince ? "w-full text-center" : ""}`}
             >
               <div
                 className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${stat.bg} shadow-inner`}
@@ -442,14 +442,14 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
         }}
       >
         {isLoading && !hasValidImage ? (
-          <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-lg">
+          <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-sm">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
           </div>
         ) : (
           <img
             src={displaySrc}
             alt="Profile Picture"
-            className="h-32 w-32 rounded-full border-4 border-yellow-200 object-cover shadow-lg transition-all duration-200 hover:border-blue-700 focus:border-blue-700"
+            className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-sm transition-all duration-200"
             tabIndex={-1}
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/default-client.svg";
@@ -647,7 +647,7 @@ const ClientProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {toast && (
         <Toast
           message={toast.message}
@@ -824,7 +824,7 @@ const ClientProfilePage: React.FC = () => {
               </div>
             </div>
             <div className="mt-1 lg:col-span-2 lg:mt-0">
-              <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
+              <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
                 <div className="mb-6 flex items-center justify-center gap-2">
                   <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
                     Your Reputation Score
