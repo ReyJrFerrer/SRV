@@ -943,7 +943,6 @@ const BookingPage: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (window.innerWidth > 768) return;
     let ref: HTMLElement | null = null;
     if (highlightInput === "barangay") ref = barangayRef.current;
     if (highlightInput === "otherBarangay") ref = otherBarangayRef.current;
@@ -957,9 +956,13 @@ const BookingPage: React.FC = () => {
     if (highlightInput === "problemMedia")
       ref = problemMediaSectionRef.current as any;
     if (ref) {
-      setTimeout(() => {
-        ref?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 150);
+      const rect = ref.getBoundingClientRect();
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+      window.scrollTo({
+        top: scrollTop + rect.top - 100,
+        behavior: "smooth",
+      });
     }
   }, [highlightInput]);
 
@@ -1051,6 +1054,7 @@ const BookingPage: React.FC = () => {
           highlightField = "paymentSection";
           setIsSubmitting(false);
           setHighlightInput(highlightField);
+          document.getElementById("amount-paid-input")?.focus();
           return;
         }
         if (isNaN(paidAmount) || paidAmount < totalPrice) {
@@ -1060,6 +1064,7 @@ const BookingPage: React.FC = () => {
           highlightField = "paymentSection";
           setIsSubmitting(false);
           setHighlightInput(highlightField);
+          document.getElementById("amount-paid-input")?.focus();
           return;
         }
       }

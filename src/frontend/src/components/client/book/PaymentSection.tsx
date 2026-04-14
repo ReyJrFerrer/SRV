@@ -78,6 +78,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             Change for how much?
           </label>
           <input
+            id="amount-paid-input"
             type="text"
             inputMode="decimal"
             value={amountPaid}
@@ -86,6 +87,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             className={`mt-1 w-full rounded-md border p-2 ${
               paymentError ? "border-red-500" : "border-gray-300"
             }`}
+            autoFocus={highlight}
           />
           {paymentError && amountPaid && (
             <p className="mt-1 flex items-center text-xs text-red-600">
