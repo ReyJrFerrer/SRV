@@ -12,11 +12,10 @@ const NotesSection: React.FC<NotesSectionProps> = ({
   onChange,
   limit,
 }) => (
-  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
-      <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+  <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
       <ChatBubbleLeftRightIcon
-        className="h-5 w-5 text-blue-600"
+        className="h-6 w-6 text-blue-600"
         aria-hidden="true"
       />
       <span>Notes for Provider</span>

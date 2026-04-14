@@ -26,7 +26,7 @@ const LockableSection: React.FC<{
   children: React.ReactNode;
 }> = ({ locked, children }) => {
   return (
-    <div className={locked ? "pointer-events-none opacity-50 blur-sm" : ""}>
+    <div className={locked ? "pointer-events-none opacity-50" : ""}>
       {children}
     </div>
   );
@@ -67,10 +67,16 @@ const BookingPage: React.FC = () => {
   const streetRef = useRef<HTMLInputElement>(null);
   const houseNumberRef = useRef<HTMLInputElement>(null);
   const packageSectionRef = useRef<HTMLDivElement>(null);
-  const bookingSectionRef = useRef<HTMLDivElement>(null);
-  const paymentSectionRef = useRef<HTMLDivElement>(null);
+  const bookingSectionDesktopRef = useRef<HTMLDivElement>(null);
+  const bookingSectionMobileRef = useRef<HTMLDivElement>(null);
+  const paymentSectionDesktopRef = useRef<HTMLDivElement>(null);
+  const paymentSectionMobileRef = useRef<HTMLDivElement>(null);
   const locationMobileRef = useRef<HTMLDivElement>(null);
+  const locationDesktopRef = useRef<HTMLDivElement>(null);
   const notesMobileRef = useRef<HTMLDivElement>(null);
+  const notesDesktopRef = useRef<HTMLDivElement>(null);
+  const problemMediaDesktopRef = useRef<HTMLDivElement>(null);
+  const problemMediaMobileRef = useRef<HTMLDivElement>(null);
 
   // Section: State
   const [packages, setPackages] = useState<
@@ -99,7 +105,6 @@ const BookingPage: React.FC = () => {
   const [notes, setNotes] = useState<string>("");
   const [problemMediaFiles, setProblemMediaFiles] = useState<File[]>([]);
   const NOTES_CHAR_LIMIT = 50;
-  const problemMediaSectionRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
     "CashOnHand" | "GCash" | "SRVWallet"
@@ -943,23 +948,46 @@ const BookingPage: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (window.innerWidth > 768) return;
     let ref: HTMLElement | null = null;
+    const isDesktop = window.innerWidth > 768;
+
     if (highlightInput === "barangay") ref = barangayRef.current;
     if (highlightInput === "otherBarangay") ref = otherBarangayRef.current;
     if (highlightInput === "street") ref = streetRef.current;
     if (highlightInput === "houseNumber") ref = houseNumberRef.current;
     if (highlightInput === "package") ref = packageSectionRef.current as any;
     if (highlightInput === "bookingOption" || highlightInput === "selectedTime")
-      ref = bookingSectionRef.current as any;
+      ref = isDesktop
+        ? (bookingSectionDesktopRef.current as any)
+        : (bookingSectionMobileRef.current as any);
     if (highlightInput === "paymentSection")
-      ref = paymentSectionRef.current as any;
+      ref = isDesktop
+        ? (paymentSectionDesktopRef.current as any)
+        : (paymentSectionMobileRef.current as any);
     if (highlightInput === "problemMedia")
-      ref = problemMediaSectionRef.current as any;
+      ref = isDesktop
+        ? (problemMediaDesktopRef.current as any)
+        : (problemMediaMobileRef.current as any);
+    if (highlightInput === "mapLocation")
+      ref = isDesktop
+        ? (locationDesktopRef.current as any)
+        : (locationMobileRef.current as any);
+
     if (ref) {
+      // Add a small delay to ensure the state update and render are complete
       setTimeout(() => {
-        ref?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 150);
+        // Scroll behavior: for desktop, use 'start' to align to top of viewport
+        // For mobile, use 'center' to bring the element to the center
+        if (isDesktop) {
+          ref!.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+            inline: "nearest",
+          });
+        } else {
+          ref!.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 300);
     }
   }, [highlightInput]);
 
@@ -1458,13 +1486,13 @@ const BookingPage: React.FC = () => {
         setTimeout(() => {
           let target: HTMLElement | null = null;
           if (currentMobileStep === 1)
-            target = bookingSectionRef.current as any;
+            target = bookingSectionMobileRef.current as any;
           else if (currentMobileStep === 2)
             target = locationMobileRef.current as any;
           else if (currentMobileStep === 3)
-            target = paymentSectionRef.current as any;
+            target = paymentSectionMobileRef.current as any;
           else if (currentMobileStep === 4)
-            target = problemMediaSectionRef.current as any;
+            target = problemMediaMobileRef.current as any;
           else if (currentMobileStep === 5)
             target = notesMobileRef.current as any;
           try {
@@ -1733,7 +1761,7 @@ const BookingPage: React.FC = () => {
                       lockReason="complete Packages first"
                     >
                       <ScheduleSection
-                        innerRef={bookingSectionRef}
+                        innerRef={bookingSectionDesktopRef}
                         bookingOption={bookingOption}
                         isSameDayAvailable={!!isSameDayAvailable}
                         onChangeBookingOption={handleBookingOptionChange}
@@ -1756,7 +1784,7 @@ const BookingPage: React.FC = () => {
                   </div>
 
                   {/* Location locked until Schedule complete (Desktop) */}
-                  <div className="hidden md:block">
+                  <div className="hidden md:block" ref={locationDesktopRef}>
                     <LockableSection
                       locked={!packagesComplete || !scheduleComplete}
                       lockReason={
@@ -1832,7 +1860,10 @@ const BookingPage: React.FC = () => {
                             : "complete Location first"
                       }
                     >
-                      <div ref={paymentSectionRef}>
+                      <div
+                        ref={paymentSectionDesktopRef}
+                        className="scroll-mt-20"
+                      >
                         <PaymentSection
                           paymentMethod={paymentMethod}
                           setPaymentMethod={setPaymentMethod}
@@ -1855,7 +1886,7 @@ const BookingPage: React.FC = () => {
                     paymentComplete && (
                       <div
                         className="hidden md:block"
-                        ref={problemMediaSectionRef}
+                        ref={problemMediaDesktopRef}
                       >
                         <ProblemMediaSection
                           files={problemMediaFiles}
@@ -1867,7 +1898,7 @@ const BookingPage: React.FC = () => {
                     )}
 
                   {/* Desktop: Notes locked until all prior sections complete */}
-                  <div className="hidden md:block">
+                  <div className="hidden md:block" ref={notesDesktopRef}>
                     <LockableSection locked={!notesPreconditionsComplete}>
                       <div className="mb-6">
                         <NotesSection
@@ -1887,7 +1918,7 @@ const BookingPage: React.FC = () => {
                     >
                       <LockableSection locked={!packagesComplete}>
                         <ScheduleSection
-                          innerRef={bookingSectionRef}
+                          innerRef={bookingSectionMobileRef}
                           bookingOption={bookingOption}
                           isSameDayAvailable={!!isSameDayAvailable}
                           onChangeBookingOption={handleBookingOptionChange}
@@ -1987,7 +2018,10 @@ const BookingPage: React.FC = () => {
                               : "complete Schedule first"
                         }
                       >
-                        <div ref={paymentSectionRef}>
+                        <div
+                          ref={paymentSectionMobileRef}
+                          className="scroll-mt-24"
+                        >
                           <PaymentSection
                             paymentMethod={paymentMethod}
                             setPaymentMethod={setPaymentMethod}
@@ -2008,7 +2042,7 @@ const BookingPage: React.FC = () => {
                   {currentMobileStep >= 4 && (
                     <div
                       className={`mb-6 md:hidden ${popIndex === 4 ? "animate-pop" : ""}`}
-                      ref={problemMediaSectionRef}
+                      ref={problemMediaMobileRef}
                     >
                       <LockableSection
                         locked={!paymentComplete}
@@ -2040,7 +2074,7 @@ const BookingPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white p-4 shadow-md">
+                <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                   <div className="relative mx-auto max-w-5xl">
                     {lastSavedAt && (
                       <div className="absolute left-4 top-3 hidden text-xs text-gray-600 sm:block">

@@ -171,8 +171,8 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const isOwnService = Boolean(
     identity &&
-    service &&
-    identity.getPrincipal().toString() === service.providerId,
+      service &&
+      identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {

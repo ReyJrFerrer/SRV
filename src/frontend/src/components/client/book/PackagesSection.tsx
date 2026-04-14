@@ -25,16 +25,13 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
 }) => (
   <div
     ref={innerRef}
-    className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm ${
-      highlight
-        ? "border-2 border-red-500 ring-2 ring-red-200"
-        : "border-blue-100"
+    className={`scroll-mt-20 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ${
+      highlight ? "border-2 border-red-500 ring-2 ring-red-200" : ""
     }`}
   >
-    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
-      <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+    <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
       <ClipboardDocumentListIcon
-        className="h-5 w-5 text-blue-600"
+        className="h-6 w-6 text-blue-600"
         aria-hidden="true"
       />
       <span>
@@ -45,7 +42,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     {packages.map((pkg) => (
       <label
         key={pkg.id}
-        className="mb-3 flex cursor-pointer items-start space-x-3 rounded-xl bg-blue-50 p-3 transition hover:bg-blue-100 md:bg-blue-50"
+        className="mb-3 flex cursor-pointer items-start space-x-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:bg-gray-100"
       >
         <input
           type="checkbox"

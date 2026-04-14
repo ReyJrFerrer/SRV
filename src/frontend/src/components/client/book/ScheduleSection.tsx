@@ -69,16 +69,13 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
   return (
     <div
       ref={innerRef}
-      className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm ${
-        highlight
-          ? "border-2 border-red-500 ring-2 ring-red-200"
-          : "border-yellow-100"
+      className={`scroll-mt-20 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ${
+        highlight ? "border-2 border-red-500 ring-2 ring-red-200" : ""
       }`}
     >
-      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
-        <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
+      <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
         <CalendarDaysIcon
-          className="h-5 w-5 text-blue-600"
+          className="h-6 w-6 text-blue-600"
           aria-hidden="true"
         />
         <span>
@@ -90,10 +87,10 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
         <button
           className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
             !isSameDayAvailable
-              ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+              ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
               : bookingOption === "sameday"
                 ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+                : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50"
           }`}
           onClick={() => isSameDayAvailable && onChangeBookingOption("sameday")}
           disabled={!isSameDayAvailable}
@@ -112,7 +109,7 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
           className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
             bookingOption === "scheduled"
               ? "border-blue-600 bg-blue-600 text-white"
-              : "border-gray-200 bg-gray-50 text-gray-700 hover:border-yellow-200 hover:bg-yellow-100"
+              : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50"
           }`}
           onClick={() => onChangeBookingOption("scheduled")}
         >

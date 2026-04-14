@@ -189,15 +189,12 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   }, [showFullScreenMap]);
   return (
     <div
-      className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm ${
-        highlight
-          ? "border-2 border-red-500 ring-2 ring-red-200"
-          : "border-gray-100"
+      className={`scroll-mt-20 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ${
+        highlight ? "border-2 border-red-500 ring-2 ring-red-200" : ""
       }`}
     >
-      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900 md:text-xl">
-        <span className="mr-2 inline-block h-6 w-2 rounded-full bg-blue-400"></span>
-        <MapPinIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+      <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+        <MapPinIcon className="h-6 w-6 text-blue-600" />
         <span>
           Service Location <span className="text-red-500">*</span>
         </span>

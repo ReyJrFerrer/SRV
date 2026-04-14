@@ -39,15 +39,16 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
 
   return (
     <section
-      className={`rounded-2xl border ${highlight ? "border-red-400 ring-2 ring-red-200" : "border-gray-200"} bg-white p-5 shadow-sm`}
+      className={`scroll-mt-20 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ${
+        highlight ? "border-2 border-red-500 ring-2 ring-red-200" : ""
+      }`}
     >
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-base font-bold text-gray-900">
-          <span className="h-4 w-1 rounded bg-blue-600" aria-hidden="true" />
-          <PhotoIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
+        <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+          <PhotoIcon className="h-6 w-6 text-blue-600" aria-hidden="true" />
           <span>Attach Proof</span>
           {required && (
-            <span className="ml-1 text-red-600" aria-hidden="true">
+            <span className="ml-1 text-red-500" aria-hidden="true">
               *
             </span>
           )}
