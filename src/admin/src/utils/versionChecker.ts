@@ -125,7 +125,8 @@ function showUpdateNotification(): void {
         font-weight: 600;
         cursor: pointer;
         white-space: nowrap;
-      ">
+      "
+      onclick="(async()=>{try{if('caches' in window){const k=await caches.keys();await Promise.all(k.map(n=>caches.delete(n)));}if('serviceWorker' in navigator){const r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(s=>s.unregister()));}localStorage.removeItem('app-version');}catch(e){console.error('Failed to clear caches:',e);}finally{window.location.reload();}})()">
         Reload Now
       </button>
       <button id="dismiss-update-btn" style="

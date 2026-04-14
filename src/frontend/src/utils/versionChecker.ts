@@ -153,6 +153,7 @@ function showUpdateNotification(): void {
         "
         onmouseover="this.style.background='#fdd761'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(253, 204, 56, 0.4)';"
         onmouseout="this.style.background='#fdcc38'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(253, 204, 56, 0.3)';"
+        onclick="(async()=>{try{if('caches' in window){const k=await caches.keys();await Promise.all(k.map(n=>caches.delete(n)));}if('serviceWorker' in navigator){const r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(s=>s.unregister()));}localStorage.removeItem('app-version');}finally{window.location.reload();}})()"
         >
           Reload Now
         </button>
