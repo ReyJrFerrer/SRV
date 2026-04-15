@@ -441,7 +441,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
       <div className="shadow-xly rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-100 via-white to-blue-100 p-6">
         {/* --- Header & Days --- */}
         <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-xl font-bold text-gray-800">Availability</h2>
               <p className="text-sm text-gray-500">
@@ -449,7 +449,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               </p>
             </div>
             {/* Shortcuts */}
-            <div className="hidden space-x-3 text-sm sm:block">
+            <div className="flex flex-wrap items-center gap-2 space-x-0 text-sm sm:gap-0 sm:space-x-3">
               <button
                 type="button"
                 onClick={() => togglePreset(weekdays)}
@@ -510,7 +510,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   key={day}
                   type="button"
                   onClick={() => handleDayToggle(day)}
-                  className={`flex h-10 min-w-[3rem] flex-1 items-center justify-center rounded-full border px-4 text-sm font-medium transition-all ${
+                  className={`flex h-10 min-w-[3rem] items-center justify-center rounded-full border px-4 text-sm font-medium transition-all ${
                     isSelected
                       ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200"
                       : "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50"
