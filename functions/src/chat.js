@@ -1,4 +1,4 @@
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
 const {
@@ -10,6 +10,10 @@ const {
 
 const db = admin.firestore();
 
+/**
+ * Generates a unique ID based on timestamp and random string.
+ * @return {string} Unique identifier
+ */
 function generateId() {
   return Date.now().toString() + Math.random().toString(36).substring(2, 9);
 }
@@ -18,18 +22,23 @@ function generateId() {
  * Triggered when a new message is created.
  * Creates an in-app notification and sends a push notification.
  */
-exports.onMessageCreated = onDocumentCreated("messages/{messageId}", async (event) => {
+exports.onMessageCreated = onDocumentCreated(
+  "messages/{messageId}",
+  async (event) => {
     const snap = event.data;
     if (!snap) return;
     const message = snap.data();
-    const { conversationId, senderId, receiverId, content } = message;
-    
+    const {conversationId, senderId, receiverId, content} = message;
+
     if (!content || !content.encryptedText) return;
 
     try {
       const senderDoc = await db.collection("users").doc(senderId).get();
       const receiverDoc = await db.collection("users").doc(receiverId).get();
-      const conversationDoc = await db.collection("conversations").doc(conversationId).get();
+      const conversationDoc = await db
+        .collection("conversations")
+        .doc(conversationId)
+        .get();
 
       if (senderDoc.exists && receiverDoc.exists && conversationDoc.exists) {
         const senderData = senderDoc.data();
@@ -41,9 +50,11 @@ exports.onMessageCreated = onDocumentCreated("messages/{messageId}", async (even
             USER_TYPES.CLIENT :
             USER_TYPES.PROVIDER;
 
-        const senderName = senderData.displayName || senderData.name || "Someone";
+        const senderName =
+          senderData.displayName || senderData.name || "Someone";
         const textContent = content.encryptedText;
-        const messagePreview = textContent.trim().substring(0, 50) +
+        const messagePreview =
+          textContent.trim().substring(0, 50) +
           (textContent.length > 50 ? "..." : "");
 
         // Create notification in Firestore
@@ -71,7 +82,10 @@ exports.onMessageCreated = onDocumentCreated("messages/{messageId}", async (even
           },
         };
 
-        await db.collection("notifications").doc(notificationId).set(notificationData);
+        await db
+          .collection("notifications")
+          .doc(notificationId)
+          .set(notificationData);
 
         console.log(`Chat notification created in Firestore:`, {
           notificationId,
@@ -82,13 +96,21 @@ exports.onMessageCreated = onDocumentCreated("messages/{messageId}", async (even
         });
 
         // Send OneSignal push notification (non-blocking)
-        sendOneSignalNotification(receiverId, notificationData).catch((error) => {
-          console.error("Failed to send OneSignal notification for chat message:", error);
-        });
+        sendOneSignalNotification(receiverId, notificationData).catch(
+          (error) => {
+            console.error(
+              "Failed to send OneSignal notification for chat message:",
+              error,
+            );
+          },
+        );
 
-        console.log(`Chat notification created and push initiated for ${receiverId}`);
+        console.log(
+          `Chat notification created and push initiated for ${receiverId}`,
+        );
       }
     } catch (notificationError) {
       console.error("Error creating chat notification:", notificationError);
     }
-  });
+  },
+);
