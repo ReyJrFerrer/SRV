@@ -1,4 +1,3 @@
-// SECTION: Imports — dependencies for this page
 import React, { useState, useEffect, useRef } from "react";
 import { toast, Toaster } from "sonner";
 import { useUserImage } from "../../../hooks/useMediaLoader";
@@ -239,13 +238,13 @@ const BookingDetailsPage: React.FC = () => {
 
   const getStatusPillStyle = (status: string) => {
     const styles: { [key: string]: string } = {
-      REQUESTED: "bg-yellow-100 text-yellow-700",
-      ACCEPTED: "bg-green-100 text-green-700",
-      INPROGRESS: "bg-blue-100 text-blue-700",
-      COMPLETED: "bg-indigo-100 text-indigo-700",
-      CANCELLED: "bg-red-100 text-red-700",
+      REQUESTED: "bg-yellow-50 text-yellow-700",
+      ACCEPTED: "bg-green-50 text-green-700",
+      INPROGRESS: "bg-blue-50 text-blue-700",
+      COMPLETED: "bg-indigo-50 text-indigo-700",
+      CANCELLED: "bg-red-50 text-red-700",
     };
-    return styles[status?.toUpperCase()] || "bg-gray-100 text-gray-700";
+    return styles[status?.toUpperCase()] || "bg-gray-50 text-gray-700";
   };
 
   const getReviewButtonContent = () => {
@@ -264,14 +263,14 @@ const BookingDetailsPage: React.FC = () => {
         text: "View Your Review",
         icon: <CheckCircleIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />,
         onClick: handleViewReviews,
-        className: "bg-green-500 hover:bg-green-600",
+        className: "bg-green-500 hover:bg-green-600 text-white",
       };
     return {
       text: "Rate Provider",
       icon: <StarIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />,
       to: `/client/review/${specificBooking.id}`,
       state: { providerName: specificBooking.providerProfile?.name },
-      className: "bg-yellow-500 hover:bg-yellow-600",
+      className: "bg-yellow-500 hover:bg-yellow-600 text-white",
     };
   };
 
@@ -288,34 +287,36 @@ const BookingDetailsPage: React.FC = () => {
   const reviewButtonContent = getReviewButtonContent();
   const isLoading = hookLoading || isInitialLoad || loadingStats;
   return (
-    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
-      <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-100 bg-white shadow-sm">
         <div className="flex max-w-4xl items-center px-4 py-3.5 sm:px-6 md:pl-24 lg:pl-24">
           <button
             onClick={() => navigate(-1)}
-            className="flex-shrink-0 rounded-full hover:bg-gray-100 lg:mr-4"
+            className="flex-shrink-0 rounded-full p-1 transition-colors hover:bg-gray-50 lg:mr-4"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
             Booking Details
           </h1>
         </div>
       </header>
 
-      <main className="sm:pt-13 mx-auto space-y-6 p-4 pt-10 sm:p-6">
+      <main className="sm:pt-13 mx-auto max-w-4xl space-y-5 p-4 pt-20 sm:p-6">
         {isLoading ? (
           <BookingDetailsSkeleton />
         ) : (
           <>
             {/* Cancellation reasons (frontend-only / informational) */}
-            <div>
-              <CancellationReasons
-                bookingId={specificBooking?.id ?? null}
-                cancelledBy={(specificBooking as any)?.cancelledBy}
-                cancellationReason={(specificBooking as any)?.cancelReason}
-              />
-            </div>
+            {specificBooking?.status === "Cancelled" && (
+              <div>
+                <CancellationReasons
+                  bookingId={specificBooking?.id ?? null}
+                  cancelledBy={(specificBooking as any)?.cancelledBy}
+                  cancellationReason={(specificBooking as any)?.cancelReason}
+                />
+              </div>
+            )}
 
             {/* Track Provider Banner - shows when provider has started navigation */}
             {status === "Accepted" &&
@@ -324,7 +325,7 @@ const BookingDetailsPage: React.FC = () => {
                   onClick={() =>
                     navigate(`/client/tracking/${specificBooking?.id}`)
                   }
-                  className="group cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 p-4 shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-xl"
+                  className="group cursor-pointer overflow-hidden rounded-2xl bg-blue-600 p-4 shadow-sm transition-all hover:bg-blue-700"
                 >
                   <div className="flex items-center gap-4">
                     <div className="relative">
@@ -349,15 +350,15 @@ const BookingDetailsPage: React.FC = () => {
               )}
 
             <div>
-              <div className="relative rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-7">
+              <div className="relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
                 <span
-                  className={`absolute right-4 top-5 rounded-full px-3 py-1 text-xs font-bold shadow-lg lg:top-4 lg:px-4 lg:py-2 lg:text-base ${getStatusPillStyle(status || "")}`}
+                  className={`absolute right-5 top-5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusPillStyle(status || "")}`}
                   aria-label="Booking status"
                 >
                   {status?.replace("_", " ")}
                 </span>
 
-                <div className="grid grid-cols-1 gap-1 lg:grid-cols-5">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
                   <ProviderInfo
                     providerProfile={providerProfile}
                     userImageUrl={userImageUrl ?? null}
@@ -380,9 +381,9 @@ const BookingDetailsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-blue-100 bg-white/90 p-5 shadow-2xl backdrop-blur-md">
-              <h3 className="mb-6 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-                <CalendarDaysIcon className="h-5 w-5 text-blue-400" /> Booking
+            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+              <h3 className="mb-6 flex items-center gap-2 text-base font-bold text-gray-900">
+                <CalendarDaysIcon className="h-5 w-5 text-blue-600" /> Booking
                 Progress
               </h3>
               <div className="px-2 sm:px-8">
@@ -393,17 +394,19 @@ const BookingDetailsPage: React.FC = () => {
             </div>
 
             {/* Client Attachments */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl">
-              <ClientAttachments
-                attachments={(specificBooking as any)?.attachments}
-                notes={(specificBooking as any)?.notes}
-              />
-            </div>
+            {(specificBooking as any)?.attachments?.length > 0 && (
+              <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+                <ClientAttachments
+                  attachments={(specificBooking as any)?.attachments}
+                  notes={(specificBooking as any)?.notes}
+                />
+              </div>
+            )}
 
             <BookingNotes notes={(specificBooking as any)?.notes} />
 
             {chatErrorMessage && (
-              <div className="mx-4 my-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+              <div className="mx-4 my-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
                 <span className="block sm:inline">{chatErrorMessage}</span>
                 <button
                   onClick={() => setChatErrorMessage(null)}

@@ -25,7 +25,7 @@ const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
   if (currentIndex === -1) {
     return (
       <div className="py-4 text-center">
-        <p className="font-medium text-gray-600">
+        <p className="font-medium text-gray-500">
           This booking is not in an active progress state.
         </p>
       </div>
@@ -48,14 +48,14 @@ const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
                   style={{ width: "56px" }}
                 >
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border-4 shadow-lg transition-all duration-300 sm:h-12 sm:w-12 ${
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300 sm:h-12 sm:w-12 ${
                       isAllCompleted
-                        ? "border-yellow-400 bg-yellow-400 text-white"
+                        ? "border-yellow-500 bg-yellow-500 text-white"
                         : isCompleted
-                          ? "border-yellow-400 bg-yellow-400 text-white"
+                          ? "border-yellow-500 bg-yellow-500 text-white"
                           : isActive
-                            ? "border-blue-600 bg-blue-600 text-white"
-                            : "border-gray-300 bg-gray-100 text-gray-400"
+                            ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                            : "border-gray-200 bg-gray-50 text-gray-400"
                     }`}
                   >
                     {(isAllCompleted && isLast) ||
@@ -84,14 +84,14 @@ const BookingProgressTracker: React.FC<{ currentStatus: BookingStatus }> = ({
                 {index < statuses.length - 1 && (
                   <div className="flex h-8 min-w-[10px] flex-1 items-center sm:h-12 lg:min-w-[80px]">
                     <div
-                      className={`h-1 w-full rounded-full transition-colors duration-300 sm:h-2 ${
+                      className={`h-1 w-full rounded-full transition-colors duration-300 sm:h-1.5 ${
                         isAllCompleted
-                          ? "bg-yellow-400"
+                          ? "bg-yellow-500"
                           : index < currentIndex - 1
-                            ? "bg-yellow-400"
+                            ? "bg-yellow-500"
                             : index === currentIndex - 1
                               ? "bg-blue-600"
-                              : "bg-gray-200"
+                              : "bg-gray-100"
                       }`}
                     ></div>
                   </div>

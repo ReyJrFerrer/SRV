@@ -47,16 +47,16 @@ const ProviderInfo: React.FC<ProviderInfoProps> = ({
   providerId,
 }) => {
   return (
-    <div className="border-r-0 border-gray-200 pr-0 lg:col-span-2 lg:border-r lg:pr-8">
-      <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
-        <PhoneIcon className="h-5 w-5 text-blue-400" /> Provider Details
+    <div className="border-r-0 border-gray-100 pr-0 lg:col-span-2 lg:border-r lg:pr-8">
+      <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
+        <PhoneIcon className="h-5 w-5 text-blue-600" /> Provider Details
       </h3>
       <div className="flex items-center gap-5">
         <div className="flex-shrink-0">
           <img
             src={userImageUrl || "/default-provider.svg"}
             alt={providerProfile?.name || "Provider"}
-            className="h-20 w-20 rounded-full border-4 border-blue-100 object-cover shadow"
+            className="h-20 w-20 rounded-full border border-gray-100 bg-gray-50 object-cover shadow-sm"
           />
         </div>
         <div className="flex-1">
@@ -82,10 +82,9 @@ const ProviderInfo: React.FC<ProviderInfoProps> = ({
             )}
           </div>
           <p className="mt-1 flex items-center text-sm text-gray-500">
-            <PhoneIcon className="mr-1.5 h-4 w-4" />
+            <PhoneIcon className="mr-1.5 h-4 w-4 text-gray-400" />
             {providerProfile?.phone || "No contact number"}
           </p>
-          <p className="mt-1 flex items-center text-sm text-gray-500"></p>
         </div>
       </div>
     </div>

@@ -5,14 +5,13 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
-import {
-  containerDefault,
-  containerCompact,
-  baseButtonDefault,
-  baseButtonCompact,
-  color,
-} from "../../shared/buttonStyles";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+
+// Re-implement simplified styling directly here to avoid dependency bugs while refactoring to minimalist look
+// but we'll stick to mostly existing setup for safety, overriding classes for better design.
+const buttonClassShared =
+  "flex items-center justify-center rounded-xl px-4 py-3 font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2";
+const baseButtonClass = `${buttonClassShared} text-sm`;
 
 type ReviewButtonContent = {
   text: string | React.ReactNode;
@@ -64,8 +63,7 @@ const ActionButtons: React.FC<{
   );
   const showReport = !!(status === "Completed" || status === "Cancelled");
 
-  const baseContainer = compact ? containerCompact : containerDefault;
-  const baseButtonClass = compact ? baseButtonCompact : baseButtonDefault;
+  const baseContainer = compact ? "" : "pb-4";
 
   // Section: Helpers
   const stopAndRun = (fn?: () => void) => (e: React.MouseEvent) => {
@@ -81,9 +79,9 @@ const ActionButtons: React.FC<{
       <button
         key="chat"
         onClick={stopAndRun(onChat)}
-        className={`${baseButtonClass} w-full ${color.chat}`}
+        className={`${baseButtonClass} w-full bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-600`}
       >
-        <ChatBubbleLeftRightIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />
+        <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" />
         {!compact ? "Chat with Provider" : "Chat"}
       </button>,
     );
@@ -94,32 +92,36 @@ const ActionButtons: React.FC<{
       <button
         key="cancel"
         onClick={stopAndRun(onRequestCancel)}
-        className={`${baseButtonClass} w-full ${color.cancel}`}
+        className={`${baseButtonClass} w-full border border-red-200 bg-white text-red-600 hover:bg-red-50 focus:ring-red-500`}
       >
         <span className="flex items-center">
-          <XCircleIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />
-          {!compact ? "Cancel" : "Cancel"}
+          <XCircleIcon className="mr-2 h-5 w-5 text-red-500" />
+          {!compact ? "Cancel Booking" : "Cancel"}
         </span>
       </button>,
     );
   }
 
-  // Report button (for Completed/Cancelled) - place near the top so order becomes: chat, report, review, book again
+  // Report button
   if (showReport) {
     buttons.push(
       <button
         key="report"
         onClick={stopAndRun(onReport)}
-        className={`${baseButtonClass} w-full ${color.report}`}
+        className={`${baseButtonClass} w-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500`}
         title="Report this booking"
       >
-        <ExclamationTriangleIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />
+        <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-gray-500" />
         Report
       </button>,
     );
   }
 
   if (showReview) {
+    const customClasses = reviewButtonContent?.className?.includes("bg-green")
+      ? "bg-green-600 text-white hover:bg-green-700 focus:ring-green-600"
+      : "bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-500";
+
     if (reviewButtonContent?.to) {
       buttons.push(
         <Link
@@ -127,7 +129,7 @@ const ActionButtons: React.FC<{
           to={reviewButtonContent.to}
           state={reviewButtonContent.state}
           onClick={(e) => e.stopPropagation()}
-          className={`${baseButtonClass} w-full ${reviewButtonContent.className}`}
+          className={`${baseButtonClass} w-full ${customClasses}`}
         >
           {reviewButtonContent.icon} {reviewButtonContent.text}
         </Link>,
@@ -137,7 +139,7 @@ const ActionButtons: React.FC<{
         <button
           key="reviewBtn"
           onClick={stopAndRun(reviewButtonContent?.onClick)}
-          className={`${baseButtonClass} w-full ${reviewButtonContent?.className}`}
+          className={`${baseButtonClass} w-full ${customClasses}`}
         >
           {reviewButtonContent?.icon} {reviewButtonContent?.text}
         </button>,
@@ -145,16 +147,14 @@ const ActionButtons: React.FC<{
     }
   }
 
-  // Book Again button placed last so it becomes the 4th button in the 4-button layout
   if (showBookAgain) {
     buttons.push(
       <button
         key="bookAgain"
         onClick={stopAndRun(onBookAgain)}
-        className={`${baseButtonClass} w-full ${color.bookAgain}`}
+        className={`${baseButtonClass} w-full bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-900`}
       >
-        <ArrowPathIcon className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />{" "}
-        {bookAgainLabel}
+        <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
       </button>,
     );
   }
@@ -177,7 +177,7 @@ const ActionButtons: React.FC<{
   if (visibleCount === 4) {
     return (
       <div className={`${baseContainer} w-full`}>
-        <div className="grid w-full grid-cols-2 gap-2">
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
           {buttons.map((b, i) => (
             <div key={`button-${i}`} className="w-full">
               {b}
@@ -188,10 +188,10 @@ const ActionButtons: React.FC<{
     );
   }
 
-  // Default: 2 or 3 or 5+ buttons — center and distribute equally
+  // Default: 2 or 3 or 5+ buttons — stack on mobile, flex on desktop
   return (
     <div className={`${baseContainer} w-full`}>
-      <div className="flex w-full flex-col justify-center gap-2 lg:flex-row">
+      <div className="flex w-full flex-col justify-center gap-3 sm:flex-row">
         {buttons.map((b, i) => (
           <div key={`btn-${i}`} className="flex-1">
             {b}
