@@ -8,21 +8,15 @@ import { authCanisterService } from "../../services/authCanisterService";
 import {
   CalendarDaysIcon,
   MapPinIcon,
-  CurrencyDollarIcon,
   XCircleIcon,
   StarIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
-import {
-  PhoneIcon,
-  StarIcon as StarIconOutline,
-  UserIcon,
-} from "@heroicons/react/24/solid";
+import { UserIcon } from "@heroicons/react/24/solid";
 import { useUserImage } from "../../hooks/useMediaLoader";
 import { useChat } from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
-import ReputationScore from "./service-detail/ReputationScore";
 import ActionButtons from "./booking-details/ActionButtons";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 
@@ -432,7 +426,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   return (
     <Link
       to={`/client/booking/${booking.id}`}
-      className="block cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow duration-300 hover:border-blue-300 hover:shadow-md focus:border-blue-300 focus:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      className="block cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
       onClick={() => {
         // If this booking is Accepted we trigger interaction so badge decrements
         if (booking.status === "Accepted") {
@@ -440,136 +434,110 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         }
       }}
     >
-      <div className="md:flex">
-        {fallbackImage && (
-          <div className="md:flex-shrink-0">
-            <div className="relative h-full w-full object-cover md:w-48">
-              <img
-                src={fallbackImage}
-                alt={providerName || serviceTitle || "Provider"}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/default-provider.svg";
-                }}
-              />
-            </div>
-          </div>
-        )}
+      <div className="flex flex-col">
+        {/* Header Section */}
+        <div className="flex items-start gap-3">
+          {/* Thumbnail */}
+          {fallbackImage && (
+            <img
+              src={fallbackImage}
+              alt={providerName || serviceTitle || "Provider"}
+              className="h-16 w-16 shrink-0 rounded-xl bg-gray-50 object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/default-provider.svg";
+              }}
+            />
+          )}
 
-        <div className="flex flex-grow flex-col justify-between p-4 sm:p-5">
-          <div>
-            <div className="flex items-start justify-between">
-              <p className="break-words text-xs font-semibold uppercase tracking-wider text-indigo-500">
+          {/* Right Details */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex items-start justify-between gap-2">
+              <p className="truncate text-xs font-bold uppercase tracking-wider text-indigo-500">
                 {serviceTitle}
               </p>
               <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusColor(booking.status)}`}
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getStatusColor(booking.status)}`}
               >
                 {booking.status.replace("_", " ")}
               </span>
             </div>
 
             <h3
-              className="mt-1 break-words text-lg font-bold text-slate-800 md:text-xl"
-              title={serviceTitle}
+              className="mt-0.5 truncate text-base font-bold text-gray-900"
+              title={booking.packageName}
             >
               {booking.packageName}
             </h3>
 
-            {/* Rating below service name */}
-            {providerId && (
-              <div>
-                {hasProviderData ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, i) =>
-                        i < Math.round(averageRating ?? 0) ? (
-                          <StarIcon
-                            key={i}
-                            className="h-4 w-4 text-yellow-400"
-                          />
-                        ) : (
-                          <StarIconOutline
-                            key={i}
-                            className="h-4 w-4 text-gray-300"
-                          />
-                        ),
-                      )}
-                    </div>
-                    <span className="font-bold">
-                      {(averageRating as number).toFixed(1)}
-                    </span>
-                    <span className="text-xs text-gray-500">
+            {/* Provider details inline horizontally */}
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-600">
+              <span className="flex items-center gap-1 font-medium text-gray-800">
+                <UserIcon className="h-3 w-3 shrink-0 text-gray-400" />
+                <span className="max-w-[120px] truncate">{providerName}</span>
+              </span>
+
+              {providerId && hasProviderData && (
+                <>
+                  <span className="text-gray-300">•</span>
+                  <div className="flex items-center gap-1 font-semibold text-gray-800">
+                    <StarIcon className="h-3.5 w-3.5 text-yellow-400" />
+                    <span>{(averageRating as number).toFixed(1)}</span>
+                    <span className="font-normal text-gray-500">
                       ({reviewCount})
                     </span>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
-                    <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Provider Name + Reputation Score (side by side) */}
-            <div className="mb-1 flex flex-wrap-reverse items-center gap-0 md:mb-0 md:gap-3">
-              <p className="flex items-center text-sm text-gray-600">
-                <UserIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
-                {providerName}
-              </p>
-              {providerId && hasProviderData && (
-                <div>
-                  <ReputationScore reputation={reputation} />
-                </div>
+                </>
               )}
             </div>
-
-            {/* Provider Contact */}
-            <p className="flex items-center text-sm text-gray-600">
-              <PhoneIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
-              {booking.providerProfile?.phone}
-            </p>
-
-            <div className="mt-1 space-y-1 text-sm text-gray-600">
-              <p className="flex items-start">
-                <CalendarDaysIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
-                {booking.scheduledDate
-                  ? formatDateRange(
-                      booking.requestedDate || booking.createdAt,
-                      booking.scheduledDate,
-                    )
-                  : formatDate(booking.requestedDate || booking.createdAt)}
-              </p>
-
-              <p className="flex items-start">
-                <MapPinIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
-                <span className="wrap">{bookingLocation}</span>
-              </p>
-
-              {booking.price && (
-                <p className="flex items-start">
-                  <CurrencyDollarIcon className="mr-1.5 h-4 w-4 shrink-0 text-gray-400" />
-                  <span className="font-semibold text-green-600">
-                    ₱
-                    {(
-                      booking.price + commissionValidation.estimatedCommission
-                    ).toFixed(2)}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            {/* Booking Notes (if any) */}
-            {notes && (
-              <div className="wrap mt-2 rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-xs text-blue-900">
-                <span className="font-semibold">Note:</span> {notes}
-              </div>
-            )}
           </div>
+        </div>
 
-          <div className="mt-4 flex flex-col space-y-2 border-t border-gray-200 pt-3 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
-            {/* Map our existing reviewButtonContent to the shape ActionButtons expects */}
+        {/* Booking Details Pill */}
+        <div className="mt-3 grid grid-cols-1 gap-2 rounded-xl bg-gray-50 p-3 sm:grid-cols-2 md:flex md:items-start md:justify-between md:gap-4">
+          <div className="flex items-start gap-2 text-sm text-gray-700">
+            <CalendarDaysIcon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+            <span className="font-medium leading-snug">
+              {booking.scheduledDate
+                ? formatDateRange(
+                    booking.requestedDate || booking.createdAt,
+                    booking.scheduledDate,
+                  )
+                : formatDate(booking.requestedDate || booking.createdAt)}
+            </span>
+          </div>
+          <div className="flex items-start gap-2 text-sm text-gray-600 md:flex-1">
+            <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+            <span className="line-clamp-2 leading-snug">{bookingLocation}</span>
+          </div>
+          {notes && (
+            <div className="mt-2 flex items-start gap-2 border-t border-gray-200/60 pt-2 text-xs text-gray-500 sm:col-span-2 md:border-t-0 md:pt-0">
+              <span className="shrink-0 font-semibold text-gray-700">
+                Note:
+              </span>
+              <span className="line-clamp-2">{notes}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Area: Price & Actions */}
+        <div className="mt-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          {booking.price ? (
+            <div className="flex flex-col">
+              <span className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Total Amount
+              </span>
+              <span className="text-lg font-bold leading-none text-gray-900">
+                ₱
+                {(
+                  booking.price + commissionValidation.estimatedCommission
+                ).toFixed(2)}
+              </span>
+            </div>
+          ) : (
+            <div className="hidden sm:block"></div>
+          )}
+
+          <div className="flex w-full shrink-0 justify-end sm:w-auto">
             <ActionButtons
               compact={true}
               onChat={() => {
@@ -582,7 +550,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 onCancelClick(booking);
               }}
               canCancel={canCancel}
-              // provide Book Again handler so the shared component renders it
               onBookAgain={
                 isCompleted && booking.serviceId
                   ? () => {
@@ -596,8 +563,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 reviewButtonContent
                   ? (() => {
                       const r = reviewButtonContent as any;
-                      // If the original review content provided a navigation href, intercept
-                      // and navigate programmatically so we can emit interaction first.
                       if (r.href) {
                         return {
                           text: r.text,
