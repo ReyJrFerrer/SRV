@@ -81,7 +81,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
 }) => {
   if (loading)
     return (
-      <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 text-center text-gray-500 shadow-sm">
+      <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 text-center text-gray-500 shadow-sm">
         Loading reviews...
       </div>
     );
@@ -98,7 +98,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   // Using Heroicons for chat bubble icon
 
   return (
-    <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ChatBubbleLeftEllipsisIcon className="h-6 w-6 text-blue-600" />

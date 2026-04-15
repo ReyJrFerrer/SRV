@@ -25,7 +25,7 @@ const AvailabilitySection: React.FC<AvailabilitySectionProps> = ({
   const hasDays = days.length > 0;
 
   return (
-    <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
       <div className="mb-6 flex items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 text-xl font-bold text-gray-900">
           <CalendarDaysIcon className="h-6 w-6 text-blue-600" />

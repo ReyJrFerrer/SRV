@@ -74,12 +74,7 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
 
 // Component
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
-  ({
-    service,
-    serviceData,
-    retainMobileLayout = false,
-    isGridItem = false,
-  }) => {
+  ({ service, serviceData, isGridItem = false }) => {
     const [imageLoaded, setImageLoaded] = React.useState(false);
     const [imageSrc, setImageSrc] = React.useState<string>(
       `/images/ai-sp/${service.category?.slug || "others"}.svg`,
@@ -117,11 +112,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     const itemWidthClass = isGridItem ? "w-full" : "w-full";
 
-    const priceLocationContainerClass = retainMobileLayout
-      ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100"
-      : "flex flex-col items-start sm:flex-row sm:justify-between sm:items-center mt-auto pt-2 border-t border-gray-100";
-
-    const priceMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
+    const priceLocationContainerClass =
+      "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100";
 
     const renderRatingStars = (rating: number, size: string = "h-3 w-3") => {
       const fullStars = Math.floor(rating);
@@ -360,40 +352,38 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             </div>
 
             <div className={priceLocationContainerClass}>
-              <div className="mb-1 flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p
-                  className={`text-xl font-bold text-gray-900 ${priceMarginClass} flex items-center gap-2`}
-                >
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-blue-600">
                   {`₱${service.price.amount.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}`}
-                </p>
-                <div className="flex items-center text-sm text-gray-600">
-                  {serviceRating.count > 0 ? (
-                    <>
-                      {renderRatingStars(serviceRating.average, "h-5 w-5")}
-                      <span className="ml-1 font-semibold">
-                        {serviceRating.average.toFixed(1)}
-                      </span>
-                      <span className="ml-1 text-gray-400">
-                        ({serviceRating.count})
-                      </span>
-                    </>
-                  ) : (
-                    <div className="flex items-center text-gray-400">
-                      {renderRatingStars(0, "h-5 w-5")}
-                      <span className="ml-1">(0)</span>
-                    </div>
-                  )}
-                </div>
+                </span>
+              </div>
+              <div className="flex items-center text-sm">
+                {serviceRating.count > 0 ? (
+                  <>
+                    {renderRatingStars(serviceRating.average, "h-4 w-4")}
+                    <span className="ml-1 font-semibold text-blue-600">
+                      {serviceRating.average.toFixed(1)}
+                    </span>
+                    <span className="ml-1 text-xs text-blue-400">
+                      ({serviceRating.count})
+                    </span>
+                  </>
+                ) : (
+                  <div className="flex items-center text-blue-400">
+                    {renderRatingStars(0, "h-4 w-4")}
+                    <span className="ml-1 text-xs">(0)</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           <div className="mt-2 h-0 overflow-hidden transition-all duration-300 ease-in-out group-hover:mt-3 group-hover:h-10">
-            <div className="flex h-10 items-center justify-center rounded-lg bg-blue-600 px-2 transition-colors group-hover:bg-blue-700">
-              <span className="text-base font-medium tracking-wide text-white">
+            <div className="flex h-10 items-center justify-center rounded-lg bg-yellow-300 px-2 transition-colors group-hover:bg-yellow-400">
+              <span className="text-base font-medium tracking-wide text-black">
                 Check service
               </span>
             </div>

@@ -293,7 +293,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         <main className="relative z-10 -mt-24 p-4">
           <div className="mx-auto mt-6 w-full max-w-5xl">
             {/* Main Card Skeleton */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
                 {/* Provider Info Skeleton */}
                 <div className="flex flex-col justify-center">
@@ -309,7 +309,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 border-t border-gray-200 lg:hidden"></div>
+                <div className="mt-4 border-t border-gray-100 lg:hidden"></div>
 
                 {/* Service Details Skeleton */}
                 <div className="mt-4 flex flex-col justify-center lg:mt-0 lg:border-l lg:border-blue-200 lg:pl-8">
@@ -337,7 +337,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Packages Section Skeleton */}
-          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <div className="h-6 w-6 animate-pulse rounded bg-gray-300"></div>
               <div className="h-6 w-32 animate-pulse rounded bg-gray-300"></div>
@@ -346,7 +346,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="group relative flex flex-col items-stretch overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row"
+                  className="group relative flex flex-col items-stretch overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm md:flex-row"
                 >
                   <div className="flex flex-1 items-center gap-4">
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -365,7 +365,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Availability Section Skeleton */}
-          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
             <div className="flex flex-wrap gap-2">
               {[1, 2, 3, 4].map((i) => (
@@ -378,7 +378,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Gallery Section Skeleton */}
-          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-300"></div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
@@ -391,7 +391,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Credentials Section Skeleton */}
-          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-300"></div>
             <div className="flex flex-wrap gap-4">
               {[1, 2].map((i) => (
@@ -404,7 +404,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
 
           {/* Reviews Section Skeleton */}
-          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div className="h-6 w-32 animate-pulse rounded bg-gray-300"></div>
               <div className="h-6 w-24 animate-pulse rounded bg-gray-300"></div>
@@ -413,7 +413,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="border-b border-gray-200 pb-4 last:border-0"
+                  className="border-b border-gray-100 pb-4 last:border-0"
                 >
                   <div className="mb-2 flex items-center gap-2">
                     <div className="h-10 w-10 animate-pulse rounded-full bg-gray-300"></div>
@@ -433,7 +433,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         </main>
 
         {/* Bottom Navigation Skeleton */}
-        <div className="shadow-t-lg bottom-15 fixed left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
+        <div className="shadow-t-lg bottom-15 fixed left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-100 bg-white p-3 md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
           <div className="mx-auto flex w-full items-center justify-between gap-3">
             <div
               className="h-12 w-24 animate-pulse rounded-lg bg-gray-300"
@@ -593,7 +593,7 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28 md:pb-20">
-      <div className="relative h-60 w-full">
+      <div className="relative h-64 w-full md:h-80">
         {/* Accept any valid URL (data:, http(s), or local path) for hero images */}
         <img
           src={(() => {
@@ -614,17 +614,18 @@ const ClientServiceDetailsPage: React.FC = () => {
             return "/default-provider.svg";
           })()}
           alt={name}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-center"
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = "/default-provider.svg";
           }}
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent"></div>
       </div>
 
-      <main className="relative z-10 -mt-24 p-4">
+      <main className="relative z-10 -mt-24 p-4 md:-mt-32">
         {chatErrorMessage && (
-          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+          <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 shadow-sm">
             <span className="block sm:inline">{chatErrorMessage}</span>
             <button
               onClick={() => setChatErrorMessage(null)}
@@ -634,239 +635,226 @@ const ClientServiceDetailsPage: React.FC = () => {
             </button>
           </div>
         )}
-        <div className="mx-auto mt-6 w-full max-w-5xl">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
-              <div className="flex flex-col justify-center">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className="overflow-hidden rounded-full border-4 border-white bg-gray-100 shadow-sm"
-                      style={{
-                        width: "96px",
-                        height: "96px",
-                        minWidth: "96px",
-                        minHeight: "96px",
-                        maxWidth: "104px",
-                        maxHeight: "104px",
-                      }}
-                    >
+        <div className="mx-auto mt-2 w-full max-w-5xl">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between md:gap-8">
+              {/* Left: Service Details */}
+              <div className="flex-1">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
+                    {category?.slug ? (
                       <img
-                        src={(() => {
-                          const isValidUrl = (
-                            url?: string | null,
-                          ): url is string =>
-                            !!url &&
-                            (url.startsWith("data:") ||
-                              url.startsWith("http") ||
-                              url.startsWith("/")) &&
-                            url.length > 20;
-
-                          if (isValidUrl(userImageUrl)) {
-                            return userImageUrl;
-                          }
-                          return "/default-provider.svg";
-                        })()}
-                        alt={providerName}
-                        className="h-full w-full rounded-full object-cover"
-                        style={{ borderRadius: "50%" }}
+                        src={`/images/categories/${category.slug}.svg`}
+                        alt={category.name || "Category"}
+                        className="h-4 w-4 object-contain"
                         onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = "/default-provider.svg";
+                          (e.currentTarget as HTMLImageElement).src =
+                            "/images/categories/others.svg";
                         }}
                       />
-                    </div>
-                    <div className="mt-2 flex items-center">
-                      <h2 className="m-0 p-0 text-2xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
-                        {providerName}
-                      </h2>
-                      {service.isActive && (
-                        <span className="ml-2 inline-block h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow"></span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-1 flex w-full flex-col items-center gap-0">
-                    <ReputationScore reputation={providerRep} />
-                    {isVerified === true && (
-                      <span className="mt-1 flex items-center rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-600">
-                        <CheckBadgeIcon className="mr-2 h-5 w-5" />
-                        <span>This service provider is verified.</span>
-                      </span>
-                    )}
+                    ) : null}
+                    {category?.name ?? "General"}
+                  </span>
+                  <div className="flex items-center text-sm font-medium text-gray-500">
+                    <MapPinIcon className="mr-1 h-4 w-4 text-gray-400" />
+                    <span>{location?.address || "Baguio City"}</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-4 border-t border-gray-200 lg:hidden"></div>
-
-              <div className="mt-4 flex flex-col justify-center lg:mt-0 lg:border-l lg:border-blue-200 lg:pl-8">
-                <h1 className="mb-2 text-center text-xl font-extrabold text-gray-900 drop-shadow-sm lg:text-left lg:text-3xl">
+                <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
                   {name}
                 </h1>
-                <p className="mb-2 flex items-center gap-2 text-lg font-semibold text-yellow-700">
-                  {category?.slug ? (
-                    <img
-                      src={`/images/categories/${category.slug}.svg`}
-                      alt={category.name || "Category"}
-                      className="h-6 w-6 object-contain"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src =
-                          "/images/categories/others.svg";
-                      }}
-                    />
-                  ) : null}
-                  {category?.name ?? "General"}
-                </p>
-                <div className="mb-2 flex items-center text-base text-gray-600">
-                  <MapPinIcon className="mr-2 h-6 w-6 text-blue-700" />
-                  <span>{location?.address || "Baguio City"}</span>
-                </div>
-                <div className="mb-2 flex flex-wrap items-center gap-2 text-base text-gray-600">
-                  <span className="flex items-center">
-                    <StarIcon className="mr-1 h-6 w-6 text-yellow-300" />
-                    <span className="text-lg font-bold">
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <StarIcon className="h-6 w-6 text-yellow-400" />
+                    <span className="text-xl font-bold text-gray-900">
                       {averageRating.toFixed(1)}
                     </span>
-                    <span className="ml-1">({reviewCount} reviews)</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-500">
+                    ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
                   </span>
                 </div>
               </div>
+
+              {/* Right: Provider Details */}
+              <div className="flex min-w-[280px] flex-col rounded-xl border border-gray-100 bg-gray-50 p-5 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm">
+                    <img
+                      src={(() => {
+                        const isValidUrl = (
+                          url?: string | null,
+                        ): url is string =>
+                          !!url &&
+                          (url.startsWith("data:") ||
+                            url.startsWith("http") ||
+                            url.startsWith("/")) &&
+                          url.length > 20;
+
+                        if (isValidUrl(userImageUrl)) {
+                          return userImageUrl;
+                        }
+                        return "/default-provider.svg";
+                      })()}
+                      alt={providerName}
+                      className="h-full w-full rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/default-provider.svg";
+                      }}
+                    />
+                    {service.isActive && (
+                      <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow-sm"></span>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      {providerName}
+                    </h2>
+                    <ReputationScore reputation={providerRep} />
+                  </div>
+                </div>
+                {isVerified === true && (
+                  <div className="mt-4 flex items-center justify-center rounded-lg bg-blue-50/50 py-2 text-xs font-semibold text-blue-600">
+                    <CheckBadgeIcon className="mr-1.5 h-4 w-4" />
+                    Verified Provider
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
-            <Squares2X2Icon className="h-6 w-6 text-blue-600" />
-            Packages Offered
-          </h3>
-          {loadingPackages ? (
-            <div className="p-4 text-center text-gray-500">
-              Loading packages...
-            </div>
-          ) : packages.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {packages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className="group relative flex flex-col items-stretch overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm md:flex-row md:items-center"
-                >
-                  <div className="flex flex-1 items-center gap-4">
-                    <div className="flex min-w-0 flex-1 flex-col">
-                      <h4 className="truncate text-lg font-bold text-gray-900">
+        <div className="mx-auto w-full max-w-5xl">
+          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+            <h3 className="mb-6 flex items-center gap-2 text-xl font-bold text-gray-900">
+              <Squares2X2Icon className="h-6 w-6 text-yellow-500" />
+              Packages Offered
+            </h3>
+            {loadingPackages ? (
+              <div className="p-4 text-center text-sm font-medium text-gray-500">
+                Loading packages...
+              </div>
+            ) : packages.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {packages.map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className="flex flex-col justify-between rounded-xl border border-gray-100 bg-gray-50 p-5 transition-colors hover:border-blue-200 hover:bg-white"
+                  >
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">
                         {pkg.title}
                       </h4>
-                      <p className="mt-1 break-words text-sm text-gray-600 md:line-clamp-2">
+                      <p className="mt-2 line-clamp-3 text-sm text-gray-600">
                         {pkg.description}
                       </p>
                     </div>
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-2xl font-extrabold text-blue-600">
+                        ₱
+                        {Number(pkg.price).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
                   </div>
-                  <div className="ml-0 mt-4 flex min-w-[120px] flex-col items-end justify-between md:ml-6 md:mt-0">
-                    <span className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xl font-extrabold text-blue-700 shadow-sm">
-                      ₱
-                      {Number(pkg.price).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-8">
-              <EmptyState
-                icon={<Squares2X2Icon className="h-12 w-12" />}
-                title="No packages available"
-                message="No packages are currently available for this service."
-              />
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="py-4">
+                <EmptyState
+                  icon={<Squares2X2Icon className="h-10 w-10 text-gray-300" />}
+                  title="No packages available"
+                  message="No packages are currently available for this service."
+                />
+              </div>
+            )}
+          </div>
+
+          <AvailabilitySection
+            availability={mappedAvailability}
+            isActive={service?.isActive}
+          />
+          <ServiceGallerySection
+            serviceId={service.id}
+            imageUrls={service.media || []}
+          />
+          <CredentialsSection
+            isVerified={isVerified}
+            hasCertificates={hasCertificates}
+            hasPendingCertificates={hasPendingCertificates}
+          />
+          <ReviewsSection
+            serviceId={service.id}
+            reviews={reviews}
+            loading={reviewsLoading}
+            error={reviewsError}
+            averageRating={getAverageRating(reviews)}
+            ratingDistribution={getRatingDistribution(reviews)}
+          />
         </div>
-        <AvailabilitySection
-          availability={mappedAvailability}
-          isActive={service?.isActive}
-        />
-        <ServiceGallerySection
-          serviceId={service.id}
-          imageUrls={service.media || []}
-        />
-        <CredentialsSection
-          isVerified={isVerified}
-          hasCertificates={hasCertificates}
-          hasPendingCertificates={hasPendingCertificates}
-        />
-        <ReviewsSection
-          serviceId={service.id}
-          reviews={reviews}
-          loading={reviewsLoading}
-          error={reviewsError}
-          averageRating={getAverageRating(reviews)}
-          ratingDistribution={getRatingDistribution(reviews)}
-        />
       </main>
 
-      <div className="bottom-15 fixed left-0 z-40 flex w-full flex-row items-center gap-x-3 border-t border-gray-200 bg-white p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
-          <div className="w-1/3">
-            <button
-              onClick={handleChatProviderClick}
-              disabled={
-                isOwnService ||
-                !hasSufficientReputation ||
-                isCheckingReputation ||
-                isCreatingChat
-              }
-              className="group relative flex w-full items-center justify-center rounded-xl bg-gray-100 px-4 py-3 font-bold text-gray-700 shadow-sm transition-colors hover:bg-gray-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200"
-            >
-              {chatLoading ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  <span className="text-base font-semibold">Creating...</span>
-                </>
-              ) : (
-                <span className="text-sm font-semibold md:text-lg lg:text-xl">
-                  Chat
-                </span>
-              )}
-              {isOwnService && (
-                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  You cannot chat with your own service.
-                </span>
-              )}
-            </button>
-          </div>
-          <div className="group relative flex w-2/3 justify-end">
-            <button
-              onClick={handleBookNow}
-              disabled={
-                packages.length === 0 ||
-                isOwnService ||
-                !service.isActive ||
-                !hasSufficientReputation ||
-                isCheckingReputation
-              }
-              className="group relative w-full rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 md:text-lg lg:text-xl"
-            >
-              {isCheckingReputation
-                ? "Checking..."
-                : service.isActive
-                  ? hasSufficientReputation
-                    ? "Book Now"
-                    : "Reputation Too Low"
-                  : "Service Unavailable"}
-              {isOwnService && (
-                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-gray-800 px-3 py-2 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  You cannot book your own service.
-                </span>
-              )}
-              {reputationError && (
-                <span className="pointer-events-none absolute left-1/2 top-0 z-50 w-max -translate-x-1/2 -translate-y-full rounded bg-red-100 px-3 py-2 text-xs font-semibold text-red-800 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  {reputationError}
-                </span>
-              )}
-            </button>
-          </div>
+      <div className="shadow-t-lg bottom-15 fixed left-0 z-40 flex w-full items-center border-t border-gray-100 bg-white/95 p-4 backdrop-blur-sm md:bottom-0 md:left-20 md:w-[calc(100%-5rem)]">
+        <div className="mx-auto flex w-full max-w-5xl items-center gap-4">
+          <button
+            onClick={handleChatProviderClick}
+            disabled={
+              isOwnService ||
+              !hasSufficientReputation ||
+              isCheckingReputation ||
+              isCreatingChat
+            }
+            className="group relative flex w-1/3 items-center justify-center rounded-xl bg-gray-100 px-4 py-3.5 font-bold text-gray-700 transition-colors hover:bg-gray-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {chatLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-current"></div>
+                <span className="hidden sm:inline">Creating...</span>
+              </div>
+            ) : (
+              <span>Chat</span>
+            )}
+            {isOwnService && (
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max -translate-x-1/2 rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                You cannot chat with your own service.
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={handleBookNow}
+            disabled={
+              packages.length === 0 ||
+              isOwnService ||
+              !service.isActive ||
+              !hasSufficientReputation ||
+              isCheckingReputation
+            }
+            className="group relative flex w-2/3 items-center justify-center rounded-xl bg-yellow-400 px-4 py-3.5 font-bold text-gray-900 shadow-sm transition-all duration-200 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+          >
+            {isCheckingReputation
+              ? "Checking..."
+              : service.isActive
+                ? hasSufficientReputation
+                  ? "Book Now"
+                  : "Reputation Too Low"
+                : "Service Unavailable"}
+            {isOwnService && (
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max -translate-x-1/2 rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                You cannot book your own service.
+              </span>
+            )}
+            {reputationError && (
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max -translate-x-1/2 rounded bg-red-100 px-3 py-1.5 text-xs font-medium text-red-800 opacity-0 transition-opacity group-hover:opacity-100">
+                {reputationError}
+              </span>
+            )}
+          </button>
         </div>
       </div>
       <BottomNavigation />

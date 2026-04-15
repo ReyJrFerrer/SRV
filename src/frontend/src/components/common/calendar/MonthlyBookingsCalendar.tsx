@@ -2,10 +2,10 @@ import React from "react";
 
 export interface CalendarItem {
   id: string;
-  date: Date; // full Date object (used for day + time)
-  title: string; // service or package name
-  subtitle?: string; // client/provider name
-  status?: string; // booking status raw string
+  date: Date;
+  title: string;
+  subtitle?: string;
+  status?: string;
 }
 
 interface MonthlyBookingsCalendarProps {
@@ -96,28 +96,38 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
   const isSameMonth = (a: Date, b: Date) =>
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 
+  const isToday = (d: Date) => {
+    const today = new Date();
+    return (
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear()
+    );
+  };
+
   const formatTime = (d: Date) =>
     d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   const statusClasses = (status?: string) => {
-    if (!status) return "border-gray-200 bg-gray-100 text-gray-700";
+    if (!status)
+      return "border-gray-100 bg-gray-50 text-gray-700 hover:bg-gray-100";
     const s = status.toLowerCase();
     if (s.includes("pending") || s.includes("requested")) {
-      return "border-orange-300 bg-orange-50 text-orange-700";
+      return "border-yellow-200 bg-yellow-50 text-yellow-800 hover:bg-yellow-100";
     }
     if (s.includes("confirm") || s.includes("accept")) {
-      return "border-green-300 bg-green-50 text-green-700";
+      return "border-green-200 bg-green-50 text-green-800 hover:bg-green-100";
     }
     if (s.includes("progress")) {
-      return "border-blue-300 bg-blue-50 text-blue-700";
+      return "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100";
     }
     if (s.includes("complete")) {
-      return "border-gray-300 bg-gray-100 text-gray-600";
+      return "border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200";
     }
     if (s.includes("cancel") || s.includes("declin")) {
-      return "border-gray-300 bg-gray-100 text-gray-500";
+      return "border-red-100 bg-red-50 text-red-600 hover:bg-red-100";
     }
-    return "border-gray-200 bg-gray-100 text-gray-700";
+    return "border-gray-100 bg-gray-50 text-gray-700 hover:bg-gray-100";
   };
 
   const openDetailForDay = (items: CalendarItem[]) => {
@@ -129,40 +139,53 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
   const closeDetail = () => setDetailDayItems(null);
 
   return (
-    <div className={`relative w-full ${className}`}>
-      <div className="mb-3 flex items-center justify-between">
-        <button
-          type="button"
-          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-          onClick={() =>
-            setCurrentMonth(
-              (m) => new Date(m.getFullYear(), m.getMonth() - 1, 1),
-            )
-          }
-          aria-label="Previous month"
-        >
-          ‹ Prev
-        </button>
-        <div className="text-sm font-semibold text-blue-900">{monthLabel}</div>
-        <button
-          type="button"
-          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-          onClick={() =>
-            setCurrentMonth(
-              (m) => new Date(m.getFullYear(), m.getMonth() + 1, 1),
-            )
-          }
-          aria-label="Next month"
-        >
-          Next ›
-        </button>
+    <div
+      className={`relative w-full rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ${className}`}
+    >
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-xl font-bold tracking-tight text-gray-800">
+          {monthLabel}
+        </h2>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="flex h-9 items-center justify-center rounded-xl border border-gray-100 bg-gray-50 px-4 text-sm font-semibold text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+            onClick={() =>
+              setCurrentMonth(
+                (m) => new Date(m.getFullYear(), m.getMonth() - 1, 1),
+              )
+            }
+            aria-label="Previous month"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            className="flex h-9 items-center justify-center rounded-xl border border-gray-100 bg-gray-50 px-4 text-sm font-semibold text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+            onClick={() => setCurrentMonth(new Date())}
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            className="flex h-9 items-center justify-center rounded-xl border border-gray-100 bg-gray-50 px-4 text-sm font-semibold text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+            onClick={() =>
+              setCurrentMonth(
+                (m) => new Date(m.getFullYear(), m.getMonth() + 1, 1),
+              )
+            }
+            aria-label="Next month"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
-      <div className="hidden grid-cols-7 gap-1 rounded-lg bg-white p-2 shadow sm:grid">
+      <div className="hidden grid-cols-7 gap-px overflow-hidden rounded-2xl border border-gray-100 bg-gray-100 sm:grid">
         {dayNames(weekStartsOn).map((d) => (
           <div
             key={d}
-            className="px-2 py-1 text-center text-xs font-semibold text-gray-500"
+            className="bg-gray-50 px-3 py-3 text-center text-xs font-bold uppercase tracking-wider text-gray-500"
           >
             {d}
           </div>
@@ -170,55 +193,64 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
         {days.map((d) => {
           const key = fmtKey(d);
           const dayItems = grouped[key] || [];
-          const faded = !isSameMonth(d, currentMonth);
+          const inMonth = isSameMonth(d, currentMonth);
+          const today = isToday(d);
+
           return (
             <div
               key={key}
-              className={`min-h-28 rounded-md border border-gray-100 p-1.5 ${
-                faded ? "bg-gray-50 opacity-60" : "bg-white"
-              }`}
+              className={`min-h-[120px] p-2 transition-colors duration-200 ${
+                !inMonth ? "bg-gray-50/50" : "bg-white"
+              } hover:bg-gray-50/80`}
             >
-              <div className="mb-1 flex items-center justify-between">
-                <div className="text-xs font-semibold text-gray-700">
+              <div className="mb-2 flex items-center justify-between px-1">
+                <span
+                  className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold ${
+                    today
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                      : inMonth
+                        ? "text-gray-700"
+                        : "text-gray-400"
+                  }`}
+                >
                   {d.getDate()}
-                </div>
+                </span>
                 {dayItems.length > 0 && (
-                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                  <span className="flex h-5 items-center justify-center rounded-full bg-yellow-100 px-2 text-xs font-bold text-yellow-700">
                     {dayItems.length}
                   </span>
                 )}
               </div>
-              <div className="space-y-1">
-                {dayItems.slice(0, 2).map((it) => (
+              <div className="space-y-1.5">
+                {dayItems.slice(0, 3).map((it) => (
                   <button
                     key={it.id}
                     type="button"
                     onClick={() => onItemClick && onItemClick(it.id)}
-                    className={`w-full truncate rounded-md border px-2 py-1 text-left text-[10px] hover:brightness-95 ${statusClasses(it.status)}`}
-                    title={`${formatTime(it.date)} • ${it.title}${it.subtitle ? ` — ${it.subtitle}` : ""}`}
+                    className={`group w-full truncate rounded-xl border px-2.5 py-1.5 text-left transition-all ${statusClasses(
+                      it.status,
+                    )}`}
+                    title={`${formatTime(it.date)} • ${it.title}${
+                      it.subtitle ? ` — ${it.subtitle}` : ""
+                    }`}
                   >
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-semibold">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-bold opacity-80">
                         {formatTime(it.date)}
                       </span>
-                      <span className="truncate text-[10px] font-medium">
+                      <span className="truncate text-xs font-semibold text-gray-900 group-hover:text-current">
                         {it.title}
                       </span>
                     </div>
-                    {it.subtitle && (
-                      <div className="truncate text-[9px] opacity-80">
-                        {it.subtitle}
-                      </div>
-                    )}
                   </button>
                 ))}
-                {dayItems.length > 2 && (
+                {dayItems.length > 3 && (
                   <button
                     type="button"
                     onClick={() => openDetailForDay(dayItems)}
-                    className="w-full rounded bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600 hover:bg-gray-200"
+                    className="w-full rounded-xl bg-gray-50 px-2.5 py-1.5 text-center text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
                   >
-                    +{dayItems.length - 2} more
+                    +{dayItems.length - 3} more
                   </button>
                 )}
               </div>
@@ -228,76 +260,81 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
       </div>
 
       {/* Mobile: compact grid */}
-      <div className="grid grid-cols-7 gap-0.5 rounded-lg border border-gray-200 sm:hidden">
+      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl border border-gray-100 bg-gray-100 sm:hidden">
         {dayNames(weekStartsOn).map((d) => (
           <div
             key={d}
-            className="bg-gray-50 py-1 text-center text-[10px] font-medium text-gray-500"
+            className="bg-gray-50 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-gray-500"
           >
-            {d}
+            {d.charAt(0)}
           </div>
         ))}
         {days.map((d) => {
           const key = fmtKey(d);
           const dayItems = grouped[key] || [];
-          const faded = !isSameMonth(d, currentMonth);
+          const inMonth = isSameMonth(d, currentMonth);
+          const today = isToday(d);
+
           return (
             <div
               key={key}
-              className={`min-h-12 p-0.5 ${faded ? "bg-gray-50 opacity-60" : "bg-white"}`}
+              className={`min-h-[60px] p-1 ${
+                !inMonth ? "bg-gray-50/50" : "bg-white"
+              }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="pl-0.5 text-[10px] font-semibold text-gray-700">
+              <div className="flex flex-col items-center justify-center gap-1">
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
+                    today
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : inMonth
+                        ? "text-gray-700"
+                        : "text-gray-400"
+                  }`}
+                >
                   {d.getDate()}
-                </div>
+                </span>
                 {dayItems.length > 0 && (
-                  <span className="mr-0.5 rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">
-                    {dayItems.length}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => openDetailForDay(dayItems)}
+                    className="flex h-2 w-2 rounded-full bg-yellow-400 ring-2 ring-white"
+                    aria-label={`${dayItems.length} items`}
+                  />
                 )}
               </div>
-              {dayItems.slice(0, 1).map((it) => (
-                <button
-                  key={it.id}
-                  type="button"
-                  onClick={() => onItemClick && onItemClick(it.id)}
-                  className={`mt-0.5 w-full truncate rounded border px-1.5 py-0.5 text-left text-[9px] hover:brightness-95 ${statusClasses(it.status)}`}
-                  title={`${formatTime(it.date)} • ${it.title}${it.subtitle ? ` — ${it.subtitle}` : ""}`}
-                >
-                  <span className="font-semibold">{formatTime(it.date)}</span>{" "}
-                  {it.title}
-                </button>
-              ))}
-              {dayItems.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => openDetailForDay(dayItems)}
-                  className="mt-0.5 w-full rounded bg-gray-100 px-1.5 py-0.5 text-[9px] text-gray-600 hover:bg-gray-200"
-                >
-                  +{dayItems.length - 1} more
-                </button>
-              )}
             </div>
           );
         })}
       </div>
 
       {detailDayItems && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-4 shadow-lg">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-800">
-                Bookings ({detailDayItems.length})
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 p-4 backdrop-blur-sm transition-opacity">
+          <div className="w-full max-w-md scale-100 transform rounded-3xl bg-white p-6 shadow-2xl transition-all">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {detailDayItems[0]?.date.toLocaleDateString(undefined, {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </h3>
+                <p className="text-sm font-medium text-gray-500">
+                  {detailDayItems.length} booking
+                  {detailDayItems.length !== 1 && "s"}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={closeDetail}
-                className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close"
               >
-                Close
+                ✕
               </button>
             </div>
-            <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+            <div className="custom-scrollbar max-h-[60vh] space-y-3 overflow-y-auto pr-2">
               {detailDayItems.map((it) => (
                 <button
                   key={it.id}
@@ -306,25 +343,32 @@ const MonthlyBookingsCalendar: React.FC<MonthlyBookingsCalendarProps> = ({
                     if (onItemClick) onItemClick(it.id);
                     closeDetail();
                   }}
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-[12px] hover:brightness-95 ${statusClasses(it.status)}`}
-                  title={`${formatTime(it.date)} • ${it.title}${it.subtitle ? ` — ${it.subtitle}` : ""}`}
+                  className={`group w-full rounded-2xl border p-4 text-left transition-all hover:shadow-md ${statusClasses(
+                    it.status,
+                  )}`}
                 >
-                  <div className="mb-0.5 flex items-center gap-2">
-                    <span className="whitespace-nowrap font-semibold">
-                      {formatTime(it.date)}
-                    </span>
-                    <span className="truncate font-medium">{it.title}</span>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="rounded-md bg-white/60 px-2 py-1 text-xs font-bold text-gray-700 shadow-sm backdrop-blur-sm">
+                          {formatTime(it.date)}
+                        </span>
+                        <h4 className="truncate text-sm font-bold text-gray-900">
+                          {it.title}
+                        </h4>
+                      </div>
+                      {it.subtitle && (
+                        <p className="mt-1 truncate text-xs font-medium text-gray-600">
+                          {it.subtitle}
+                        </p>
+                      )}
+                    </div>
+                    {it.status && (
+                      <span className="rounded-lg bg-white/60 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-600 shadow-sm backdrop-blur-sm">
+                        {it.status}
+                      </span>
+                    )}
                   </div>
-                  {it.subtitle && (
-                    <div className="truncate text-[11px] opacity-80">
-                      {it.subtitle}
-                    </div>
-                  )}
-                  {it.status && (
-                    <div className="mt-0.5 text-[10px] uppercase tracking-wide opacity-70">
-                      {it.status}
-                    </div>
-                  )}
                 </button>
               ))}
             </div>

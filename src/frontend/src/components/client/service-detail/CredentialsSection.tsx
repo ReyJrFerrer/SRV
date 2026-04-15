@@ -60,7 +60,7 @@ const CredentialsSection: React.FC<CredentialsSectionProps> = ({
   }
 
   return (
-    <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
       <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
         <DocumentCheckIcon className="h-6 w-6 text-blue-600" />
         Credentials
