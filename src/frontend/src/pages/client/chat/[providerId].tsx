@@ -4,7 +4,7 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { ArrowLeftIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../../components/client/NavigationBar";
-import { useChat } from "../../../hooks/useChat";
+import { useChat } from "../../../hooks/useChatMobile";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { ProfileImage } from "../../../components/common/ProfileImage";
