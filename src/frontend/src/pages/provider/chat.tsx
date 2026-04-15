@@ -1,16 +1,14 @@
+// SECTION: Imports — dependencies for this page
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
-
-// Components
 import BottomNavigation from "../../components/provider/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 
-const ProviderChatPage: React.FC = () => {
+const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
-  const [, setTick] = React.useState(0);
   const navigate = useNavigate();
   const {
     conversations,
@@ -23,6 +21,19 @@ const ProviderChatPage: React.FC = () => {
     sendMessage,
     sendingMessage,
   } = useChat();
+  const [, setTick] = React.useState(0);
+  const [isDesktop, setIsDesktop] = useState<boolean>(
+    window.innerWidth >= 1024,
+  );
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
+  const [selectedOtherUserName, setSelectedOtherUserName] =
+    useState<string>("");
+  const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
+    useState<string>("");
+  const [messageText, setMessageText] = useState<string>("");
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const ensureAudioReady = React.useCallback(() => {
     try {
@@ -61,18 +72,6 @@ const ProviderChatPage: React.FC = () => {
       osc.stop(now + 0.24);
     } catch {}
   }, [soundEnabled, ensureAudioReady]);
-  const [isDesktop, setIsDesktop] = useState<boolean>(
-    window.innerWidth >= 1024,
-  );
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(null);
-  const [selectedOtherUserName, setSelectedOtherUserName] =
-    useState<string>("");
-  const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
-    useState<string>("");
-  const [messageText, setMessageText] = useState<string>("");
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const lastMarkedRef = useRef<{ id: string; t: number } | null>(null);
   const prevUnreadRef = useRef<number>(0);
   const prevUnreadMapRef = useRef<Map<string, number>>(new Map());
@@ -87,6 +86,10 @@ const ProviderChatPage: React.FC = () => {
       window.removeEventListener("conversations-updated", onConv);
       window.removeEventListener("messages-updated", onMsg);
     };
+  }, []);
+
+  useEffect(() => {
+    document.title = "Messages | SRV";
   }, []);
 
   useEffect(() => {
@@ -125,7 +128,6 @@ const ProviderChatPage: React.FC = () => {
     setSelectedConversationId(conversationId);
     setSelectedOtherUserName(otherUserName);
     setSelectedOtherUserImageUrl(imageToUse);
-    loadConversation(conversationId);
     markAsRead(conversationId).catch(() => {});
   }, [
     isDesktop,
@@ -134,6 +136,13 @@ const ProviderChatPage: React.FC = () => {
     loadConversation,
     markAsRead,
   ]);
+
+  // Reload conversation when selectedConversationId changes (handles returning from sub-page)
+  useEffect(() => {
+    if (selectedConversationId && identity) {
+      loadConversation(selectedConversationId);
+    }
+  }, [selectedConversationId, identity, loadConversation]);
 
   // Scroll to bottom on message updates (robust: after layout and assets)
   useEffect(() => {
@@ -168,10 +177,12 @@ const ProviderChatPage: React.FC = () => {
       const imageToUse =
         otherUserImageUrl && otherUserImageUrl !== "" ? otherUserImageUrl : "";
       if (isDesktop) {
+        if (selectedConversationId === conversationId) {
+          loadConversation(conversationId);
+        }
         setSelectedConversationId(conversationId);
         setSelectedOtherUserName(otherUserName);
         setSelectedOtherUserImageUrl(imageToUse);
-        loadConversation(conversationId);
       } else {
         navigate(`/provider/chat/${conversationId}`, {
           state: {
@@ -181,7 +192,7 @@ const ProviderChatPage: React.FC = () => {
           },
         });
       }
-    } catch (error) {}
+    } catch {}
   };
 
   // Compute unread total for current user
@@ -200,7 +211,7 @@ const ProviderChatPage: React.FC = () => {
     }
   }, [conversations, identity]);
 
-  // Play sound and update title on new unread
+  // Play sound on new unread
   useEffect(() => {
     if (!isAuthenticated || !isDesktop) return;
     const unread = unreadTotal;
@@ -210,7 +221,7 @@ const ProviderChatPage: React.FC = () => {
     prevUnreadRef.current = unread;
   }, [unreadTotal, isAuthenticated, isDesktop, playMessageSound]);
 
-  // Update tab title with sender name on unread increments
+  // Update tab title with sender name
   useEffect(() => {
     if (!isAuthenticated || !isDesktop) return;
     let updated = false;
@@ -236,7 +247,7 @@ const ProviderChatPage: React.FC = () => {
     }
   }, [conversations, identity, isAuthenticated, isDesktop, unreadTotal]);
 
-  // Prime unread ref on load
+  // Prime unread ref
   useEffect(() => {
     prevUnreadRef.current = unreadTotal;
   }, [unreadTotal]);
@@ -250,7 +261,7 @@ const ProviderChatPage: React.FC = () => {
     };
   }, []);
 
-  // Mark active conversation as read on interaction (debounced)
+  // Mark current conversation read on interaction
   const handlePageInteract = React.useCallback(() => {
     // Resume audio context via user gesture so sounds can play
     try {
@@ -267,7 +278,7 @@ const ProviderChatPage: React.FC = () => {
     }
   }, [selectedConversationId, markAsRead, ensureAudioReady]);
 
-  // Keep title and unread trackers in sync when chats are marked as read elsewhere
+  // Sync trackers on global chats-read events
   useEffect(() => {
     const onChatsRead = () => {
       try {
@@ -282,7 +293,6 @@ const ProviderChatPage: React.FC = () => {
     return () => window.removeEventListener("chats-read", onChatsRead);
   }, [unreadTotal]);
 
-  // Helper for timestamp formatting (accepts string or Date)
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
     const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
@@ -318,48 +328,61 @@ const ProviderChatPage: React.FC = () => {
     }
   };
 
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !messageText.trim() ||
+      !currentConversation ||
+      !identity ||
+      sendingMessage
+    )
+      return;
+    try {
+      const currentUserId = identity.getPrincipal().toString();
+      const receiverId =
+        currentConversation.clientId === currentUserId
+          ? currentConversation.providerId
+          : currentConversation.clientId;
+      await sendMessage(messageText.trim(), receiverId);
+      setMessageText("");
+    } catch {}
+  };
+
   return (
     <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex w-full items-center justify-center px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
           <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Messages
           </h1>
-          {/* Add a button for starting a new chat in the future */}
-          {/* <button className="rounded-full bg-blue-600 px-3 py-1 text-white font-semibold shadow hover:bg-blue-700 transition-colors text-sm">
-            New Chat
-          </button> */}
         </div>
       </header>
 
-      <main className="mt-0 w-full px-2 md:px-4">
+      <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (
-          loading ? (
-            <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
-              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-              <p className="text-lg font-medium text-blue-700">
-                Loading conversations...
-              </p>
+          loading && conversations.length === 0 ? (
+            <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
+              <p className="text-lg text-gray-600">Loading conversations...</p>
             </div>
           ) : error ? (
-            <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
+            <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
               <p className="mb-4 text-lg text-red-600">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white shadow transition-colors hover:bg-blue-700"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
               >
                 Retry
               </button>
             </div>
           ) : conversations.length > 0 ? (
-            <section
+            <div
               className={`w-full ${isDesktop ? "md:flex md:h-[calc(100vh-64px)] md:overflow-hidden" : ""}`}
             >
               <ul
-                className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} divide-y divide-blue-50`}
+                className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} divide-y divide-gray-100`}
               >
                 {conversations
-                  .slice() // copy array to avoid mutating original
+                  .slice()
                   .sort((a, b) => {
                     const aTime = a.lastMessage?.[0]?.createdAt
                       ? new Date(a.lastMessage[0].createdAt).getTime()
@@ -380,8 +403,10 @@ const ProviderChatPage: React.FC = () => {
                       conversationSummary.otherUserName ||
                       `User ${otherUserId.slice(0, 8)}...`;
                     const otherUserImageUrl =
-                      conversationSummary.otherUserImageUrl;
-                    // Get unread count for current user (unreadCount is now an object)
+                      conversationSummary.otherUserImageUrl &&
+                      conversationSummary.otherUserImageUrl !== ""
+                        ? conversationSummary.otherUserImageUrl
+                        : "";
                     const unreadCount =
                       conversation.unreadCount[currentUserId] || 0;
 
@@ -395,40 +420,34 @@ const ProviderChatPage: React.FC = () => {
                             otherUserImageUrl,
                           )
                         }
-                        className={`group flex cursor-pointer items-center space-x-4 px-5 py-4 transition-colors hover:bg-blue-50/70 ${
-                          unreadCount > 0 ? "bg-blue-50/60" : ""
-                        }`}
+                        className="group flex cursor-pointer items-center space-x-4 p-4 transition-all hover:bg-blue-50"
                       >
                         <div className="relative h-14 w-14 flex-shrink-0">
                           <ProfileImage
                             profilePictureUrl={otherUserImageUrl}
                             userName={otherUserName}
                             size="h-14 w-14"
-                            className="ring-2 ring-blue-200 transition group-hover:ring-blue-400"
+                            className=""
                           />
                           {unreadCount > 0 && (
-                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow">
+                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
                               {unreadCount}
                             </span>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between">
-                            <p
-                              className={`truncate text-base font-semibold ${unreadCount > 0 ? "text-blue-900" : "text-gray-900"}`}
-                            >
+                            <p className="truncate text-base font-semibold text-blue-900 group-hover:text-yellow-600">
                               {otherUserName}
                             </p>
                             <p
-                              className={`ml-2 text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
+                              className={`ml-2 whitespace-nowrap text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
                             >
                               {formatTimestamp(lastMessage?.createdAt)}
                             </p>
                           </div>
                           <div className="mt-1 flex items-start justify-between">
-                            <p
-                              className={`truncate text-sm ${unreadCount > 0 ? "font-medium text-blue-800" : "text-gray-500"}`}
-                            >
+                            <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
                               {lastMessage?.content?.encryptedText ? (
                                 lastMessage.content.encryptedText
                               ) : (
@@ -444,11 +463,11 @@ const ProviderChatPage: React.FC = () => {
                   })}
               </ul>
               {isDesktop && (
-                <div className="md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-blue-100">
+                <div className="md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100">
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
                       {/* Header */}
-                      <div className="flex items-center justify-between border-b border-blue-100 px-4 py-3">
+                      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="relative h-10 w-10">
                             <ProfileImage
@@ -518,28 +537,9 @@ const ProviderChatPage: React.FC = () => {
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="border-t border-blue-100 p-3 md:sticky md:bottom-0 md:bg-white">
+                      <div className="border-t border-gray-200 p-3 md:sticky md:bottom-0 md:bg-white">
                         <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            if (
-                              !messageText.trim() ||
-                              !currentConversation ||
-                              !identity ||
-                              sendingMessage
-                            )
-                              return;
-                            const currentUserId = identity
-                              .getPrincipal()
-                              .toString();
-                            const receiverId =
-                              currentConversation.clientId === currentUserId
-                                ? currentConversation.providerId
-                                : currentConversation.clientId;
-                            sendMessage(messageText.trim(), receiverId)
-                              .then(() => setMessageText(""))
-                              .catch(() => {});
-                          }}
+                          onSubmit={handleSendMessage}
                           className="flex items-center gap-3"
                         >
                           <input
@@ -572,13 +572,11 @@ const ProviderChatPage: React.FC = () => {
                   )}
                 </div>
               )}
-            </section>
+            </div>
           ) : (
-            <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
+            <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
               <div className="mb-3 text-4xl">💬</div>
-              <p className="mb-2 text-lg font-semibold text-blue-900">
-                No conversations yet
-              </p>
+              <p className="mb-4 text-lg text-gray-600">No conversations yet</p>
               <p className="text-sm text-gray-500">
                 Your conversations with service providers will appear here after
                 booking a service.
@@ -586,24 +584,23 @@ const ProviderChatPage: React.FC = () => {
             </div>
           )
         ) : (
-          <div className="m-4 rounded-2xl bg-white/80 p-8 text-center shadow-lg">
-            <div className="mb-3 text-4xl">🔒</div>
-            <p className="mb-2 text-lg font-semibold text-red-600">
+          <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
+            <p className="mb-4 text-lg text-red-600">
               Please log in to access your messages
             </p>
             <button
               onClick={() => navigate("/login")}
-              className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white shadow transition-colors hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
             >
               Log In
             </button>
           </div>
         )}
-      </main>
+      </div>
 
       <BottomNavigation />
     </div>
   );
 };
 
-export default ProviderChatPage;
+export default ClientChatPage;

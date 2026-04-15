@@ -294,8 +294,7 @@ const PackagesSection: React.FC<Props> = ({
                     </div>
                   </div>
 
-
-                {/**
+                  {/**
                  * Commenting the breakdown of price since we removed the commission functionalities
                  * 
                  *   <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
@@ -306,7 +305,6 @@ const PackagesSection: React.FC<Props> = ({
                  * 
                  * 
                  */}
-                
                 </div>
 
                 <div className="border-t border-gray-100" />
