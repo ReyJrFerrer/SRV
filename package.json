@@ -19,7 +19,8 @@
     "test": "npm run test:backend && npm run test:frontend",
     "test:frontend": "npm test --workspace=frontend",
     "test:backend": "vitest run -c tests/vitest.config.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "emulators:kill": "lsof -ti:5001 -ti:5002 -ti:8080 -ti:8085 -ti:9000 -ti:9099 -ti:9199 -ti:4000 | xargs kill -9 2>/dev/null || true"
   },
   "keywords": [],
   "author": "",

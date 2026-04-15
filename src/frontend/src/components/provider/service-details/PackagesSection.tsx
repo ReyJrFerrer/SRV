@@ -294,11 +294,17 @@ const PackagesSection: React.FC<Props> = ({
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+                  {/**
+                 * Commenting the breakdown of price since we removed the commission functionalities
+                 * 
+                 *   <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
                     <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 sm:text-xs">
                       ₱{pkg.price.toFixed(2)} total
                     </span>
                   </div>
+                 * 
+                 * 
+                 */}
                 </div>
 
                 <div className="border-t border-gray-100" />

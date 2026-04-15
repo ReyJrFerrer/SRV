@@ -132,7 +132,6 @@ const ClientChatPage: React.FC = () => {
     setSelectedConversationId(conversationId);
     setSelectedOtherUserName(otherUserName);
     setSelectedOtherUserImageUrl(imageToUse);
-    loadConversation(conversationId);
     markAsRead(conversationId).catch(() => {});
   }, [
     isDesktop,
@@ -141,6 +140,13 @@ const ClientChatPage: React.FC = () => {
     loadConversation,
     markAsRead,
   ]);
+
+  // Reload conversation when selectedConversationId changes (handles returning from sub-page)
+  useEffect(() => {
+    if (selectedConversationId && identity) {
+      loadConversation(selectedConversationId);
+    }
+  }, [selectedConversationId, identity, loadConversation]);
 
   // Scroll to bottom on message updates (robust: after layout and assets)
   useEffect(() => {
@@ -175,10 +181,12 @@ const ClientChatPage: React.FC = () => {
       const imageToUse =
         otherUserImageUrl && otherUserImageUrl !== "" ? otherUserImageUrl : "";
       if (isDesktop) {
+        if (selectedConversationId === conversationId) {
+          loadConversation(conversationId);
+        }
         setSelectedConversationId(conversationId);
         setSelectedOtherUserName(otherUserName);
         setSelectedOtherUserImageUrl(imageToUse);
-        loadConversation(conversationId);
       } else {
         navigate(`/client/chat/${conversationId}`, {
           state: {
@@ -356,7 +364,7 @@ const ClientChatPage: React.FC = () => {
 
       <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (
-          loading ? (
+          loading && conversations.length === 0 ? (
             <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
               <p className="text-lg text-gray-600">Loading conversations...</p>
             </div>

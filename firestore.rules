@@ -59,10 +59,11 @@ service cloud.firestore {
     // A user can read messages in a conversation they are part of.
     // A user can create a message if they are the sender.
     match /messages/{messageId} {
-      allow read: if (get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.clientId == request.auth.uid ||
-                     get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.providerId == request.auth.uid) ||
+      allow read: if ('participants' in resource.data && request.auth.uid in resource.data.participants) || 
+                     (!('participants' in resource.data) && (get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.clientId == request.auth.uid ||
+                     get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.providerId == request.auth.uid)) ||
                      request.auth.token.isAdmin == true;
-      allow create: if request.auth.uid == request.resource.data.senderId;
+      allow create: if request.auth.uid == request.resource.data.senderId && ('participants' in request.resource.data) && (request.auth.uid in request.resource.data.participants);
       allow update: if request.auth.uid == resource.data.receiverId; // For updating read status
       allow delete: if false; // Messages are immutable
     }

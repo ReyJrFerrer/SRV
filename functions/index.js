@@ -207,12 +207,7 @@ const {
 
 // Import Chat Management functions
 const {
-  createConversation,
-  sendMessage,
-  getMyConversations,
-  getConversationMessages,
-  markMessagesAsRead,
-  getConversation,
+  onMessageCreated,
 } = require("./src/chat");
 
 // Import Notification Management functions
@@ -384,12 +379,7 @@ exports.getReportById = getReportById;
 exports.getRecentReports = getRecentReports;
 
 // Export Chat Management Functions
-exports.createConversation = createConversation;
-exports.sendMessage = sendMessage;
-exports.getMyConversations = getMyConversations;
-exports.getConversationMessages = getConversationMessages;
-exports.markMessagesAsRead = markMessagesAsRead;
-exports.getConversation = getConversation;
+exports.onMessageCreated = onMessageCreated;
 
 // Export Notification Management Functions
 exports.createNotification = createNotification;

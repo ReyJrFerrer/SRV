@@ -1,6 +1,5 @@
 // Chat Service (Firebase Cloud Functions & Firestore Real-time)
-import { getFirebaseFunctions, getFirebaseFirestore } from "./firebaseApp";
-import { httpsCallable } from "firebase/functions";
+import { getFirebaseFirestore } from "./firebaseApp";
 import {
   collection,
   query,
@@ -9,10 +8,15 @@ import {
   limit as firestoreLimit,
   onSnapshot,
   Unsubscribe,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  runTransaction,
+  writeBatch,
 } from "firebase/firestore";
 
 // Get Firebase instances using proper helpers
-const getFunctions = () => getFirebaseFunctions();
 const getDb = () => getFirebaseFirestore();
 
 // Custom type for async unsubscribe functions
@@ -107,6 +111,7 @@ const adaptBackendMessage = (backendMessage: any): FrontendMessage => {
   const getMessageType = (type: any): "Text" | "File" => {
     if (type?.Text !== undefined) return "Text";
     if (type?.File !== undefined) return "File";
+    if (typeof type === "string") return type as "Text" | "File";
     return "Text";
   };
 
@@ -114,6 +119,8 @@ const adaptBackendMessage = (backendMessage: any): FrontendMessage => {
     if (status?.Sent !== undefined) return "Sent";
     if (status?.Delivered !== undefined) return "Delivered";
     if (status?.Read !== undefined) return "Read";
+    if (typeof status === "string")
+      return status as "Sent" | "Delivered" | "Read";
     return "Sent";
   };
 
@@ -124,7 +131,11 @@ const adaptBackendMessage = (backendMessage: any): FrontendMessage => {
     receiverId: backendMessage.receiverId,
     messageType: getMessageType(backendMessage.messageType),
     content: {
-      encryptedText: backendMessage.content?.encryptedText || "",
+      encryptedText:
+        backendMessage.content?.encryptedText ||
+        (typeof backendMessage.content === "string"
+          ? backendMessage.content
+          : ""),
       encryptionKey: backendMessage.content?.encryptionKey || "",
     },
     attachment:
@@ -216,27 +227,49 @@ function debounce<T extends (...args: any[]) => void>(
 // Chat Service Functions
 export const chatCanisterService = {
   /**
-   * Create a new conversation (usually called after booking completion)
-   * @param clientId Principal ID of the client
-   * @param providerId Principal ID of the service provider
+   * Create a new conversation
    */
   async createConversation(
     clientId: string,
     providerId: string,
   ): Promise<FrontendConversation | null> {
     try {
-      const createConversationFn = httpsCallable(
-        getFunctions(),
-        "createConversation",
+      const db = getDb();
+
+      const existingQuery = query(
+        collection(db, "conversations"),
+        where("clientId", "==", clientId),
+        where("providerId", "==", providerId),
+        where("isActive", "==", true),
       );
 
-      const result = await createConversationFn({
+      const existingConversations = await getDocs(existingQuery);
+      if (!existingConversations.empty) {
+        const existing = existingConversations.docs[0];
+        return adaptBackendConversation({
+          id: existing.id,
+          ...existing.data(),
+        });
+      }
+
+      const id =
+        Date.now().toString() + Math.random().toString(36).substring(2, 9);
+      const now = new Date().toISOString();
+      const newConversation = {
+        id,
         clientId,
         providerId,
-      });
-      const responseData = (result.data as { success: boolean; data: any })
-        .data;
-      return adaptBackendConversation(responseData);
+        createdAt: now,
+        lastMessageAt: null,
+        isActive: true,
+        unreadCount: {
+          [clientId]: 0,
+          [providerId]: 0,
+        },
+      };
+
+      await setDoc(doc(db, "conversations", id), newConversation);
+      return adaptBackendConversation(newConversation);
     } catch (error) {
       throw new Error(`Failed to create conversation: ${error}`);
     }
@@ -244,17 +277,14 @@ export const chatCanisterService = {
 
   /**
    * Send a message in a conversation
-   * @param conversationId ID of the conversation
-   * @param receiverId Principal ID of the message receiver
-   * @param content Message content (max 500 characters)
    */
   async sendMessage(
     conversationId: string,
     receiverId: string,
     content: string,
+    senderId: string,
   ): Promise<FrontendMessage | null> {
     try {
-      // Validate message length
       if (content.length > 500) {
         throw new Error("Message cannot exceed 500 characters");
       }
@@ -263,17 +293,57 @@ export const chatCanisterService = {
         throw new Error("Message cannot be empty");
       }
 
-      const sendMessageFn = httpsCallable(getFunctions(), "sendMessage");
+      const db = getDb();
+      const messageId =
+        Date.now().toString() + Math.random().toString(36).substring(2, 9);
+      const now = new Date().toISOString();
 
-      const result = await sendMessageFn({
+      const newMessage = {
+        id: messageId,
         conversationId,
+        senderId,
         receiverId,
-        content: content.trim(),
+        participants: [senderId, receiverId],
+        messageType: { Text: null },
+        content: {
+          encryptedText: content.trim(),
+          encryptionKey: "",
+        },
+        attachment: [],
+        status: { Sent: null },
+        createdAt: now,
+        readAt: [],
+      };
+
+      await runTransaction(db, async (transaction) => {
+        const convRef = doc(db, "conversations", conversationId);
+        const convDoc = await transaction.get(convRef);
+        if (!convDoc.exists()) {
+          throw new Error("Conversation not found");
+        }
+
+        const convData = convDoc.data();
+        const updatedUnreadCount = { ...convData.unreadCount };
+        updatedUnreadCount[receiverId] =
+          (updatedUnreadCount[receiverId] || 0) + 1;
+
+        transaction.update(convRef, {
+          lastMessageAt: now,
+          unreadCount: updatedUnreadCount,
+          lastMessagePreview: {
+            id: messageId,
+            content: content.trim(),
+            senderId,
+            messageType: "Text",
+            createdAt: now,
+          },
+        });
+
+        const messageRef = doc(db, "messages", messageId);
+        transaction.set(messageRef, newMessage);
       });
 
-      const responseData = (result.data as { success: boolean; data: any })
-        .data;
-      return adaptBackendMessage(responseData);
+      return adaptBackendMessage(newMessage);
     } catch (error) {
       throw new Error(`Failed to send message: ${error}`);
     }
@@ -282,28 +352,57 @@ export const chatCanisterService = {
   /**
    * Get all conversations for the current user
    */
-  async getMyConversations(): Promise<FrontendConversationSummary[]> {
+  async getMyConversations(
+    userId: string,
+  ): Promise<FrontendConversationSummary[]> {
     try {
-      const getMyConversationsFn = httpsCallable(
-        getFunctions(),
-        "getMyConversations",
+      const db = getDb();
+      const clientQuery = query(
+        collection(db, "conversations"),
+        where("clientId", "==", userId),
+        where("isActive", "==", true),
+      );
+      const providerQuery = query(
+        collection(db, "conversations"),
+        where("providerId", "==", userId),
+        where("isActive", "==", true),
       );
 
-      const result = await getMyConversationsFn({});
+      const [clientSnap, providerSnap] = await Promise.all([
+        getDocs(clientQuery),
+        getDocs(providerQuery),
+      ]);
+      const conversations = new Map();
 
-      const responseData = (result.data as { success: boolean; data: any[] })
-        .data;
-      return (responseData || []).map(adaptBackendConversationSummary);
+      clientSnap.forEach((doc) =>
+        conversations.set(doc.id, { id: doc.id, ...doc.data() }),
+      );
+      providerSnap.forEach((doc) =>
+        conversations.set(doc.id, { id: doc.id, ...doc.data() }),
+      );
+
+      const summaries = Array.from(conversations.values()).map((conv) =>
+        adaptBackendConversationSummary({
+          conversation: conv,
+          lastMessage: [],
+        }),
+      );
+
+      summaries.sort((a, b) => {
+        const timeA = a.conversation.lastMessageAt || a.conversation.createdAt;
+        const timeB = b.conversation.lastMessageAt || b.conversation.createdAt;
+        return new Date(timeB).getTime() - new Date(timeA).getTime();
+      });
+
+      return summaries;
     } catch (error) {
+      console.error("Failed to get my conversations:", error);
       return [];
     }
   },
 
   /**
    * Get messages for a specific conversation with pagination
-   * @param conversationId ID of the conversation
-   * @param limit Number of messages to fetch (default: 20)
-   * @param offset Starting position for pagination (default: 0)
    */
   async getConversationMessages(
     conversationId: string,
@@ -311,34 +410,29 @@ export const chatCanisterService = {
     offset: number = 0,
   ): Promise<FrontendMessagePage> {
     try {
-      const getConversationMessagesFn = httpsCallable(
-        getFunctions(),
-        "getConversationMessages",
+      const db = getDb();
+      // Notice: offset is tricky in firestore without a cursor, but we can just fetch limit + offset
+      // and slice it. A better approach is usually real-time snapshot anyway.
+      // We will maintain simple compatibility for the polling fallback if any is left.
+      const messagesQuery = query(
+        collection(db, "messages"),
+        where("conversationId", "==", conversationId),
+        orderBy("createdAt", "desc"),
+        firestoreLimit(limit + offset + 1),
       );
 
-      const result = await getConversationMessagesFn({
-        conversationId,
-        limit,
-        offset,
-      });
+      const snapshot = await getDocs(messagesQuery);
+      const docs = snapshot.docs.slice(offset);
+      const hasMore = docs.length > limit;
+      const paginatedDocs = docs.slice(0, limit);
 
-      const responseData = (
-        result.data as {
-          success: boolean;
-          data: {
-            messages: any[];
-            hasMore: boolean;
-            nextPageToken: string[];
-          };
-        }
-      ).data;
+      const messages = paginatedDocs.map((d) => ({ id: d.id, ...d.data() }));
+      messages.reverse();
+
       return {
-        messages: (responseData?.messages || []).map(adaptBackendMessage),
-        hasMore: responseData?.hasMore || false,
-        nextPageToken:
-          responseData?.nextPageToken && responseData.nextPageToken.length > 0
-            ? responseData.nextPageToken[0]
-            : undefined,
+        messages: messages.map(adaptBackendMessage),
+        hasMore,
+        nextPageToken: hasMore ? String(offset + limit) : undefined,
       };
     } catch (error) {
       return {
@@ -350,47 +444,65 @@ export const chatCanisterService = {
 
   /**
    * Mark all messages in a conversation as read
-   * @param conversationId ID of the conversation
    */
-  async markMessagesAsRead(conversationId: string): Promise<boolean> {
+  async markMessagesAsRead(
+    conversationId: string,
+    currentUserId: string,
+  ): Promise<boolean> {
     try {
-      const markMessagesAsReadFn = httpsCallable(
-        getFunctions(),
-        "markMessagesAsRead",
-      );
+      const db = getDb();
 
-      const result = await markMessagesAsReadFn({
-        conversationId,
+      await runTransaction(db, async (transaction) => {
+        const convRef = doc(db, "conversations", conversationId);
+        const convDoc = await transaction.get(convRef);
+        if (!convDoc.exists()) return;
+
+        const data = convDoc.data();
+        const updatedUnreadCount = { ...data.unreadCount };
+        updatedUnreadCount[currentUserId] = 0;
+
+        transaction.update(convRef, { unreadCount: updatedUnreadCount });
       });
 
-      const responseData = (result.data as { success: boolean; data: boolean })
-        .data;
+      const messagesQuery = query(
+        collection(db, "messages"),
+        where("conversationId", "==", conversationId),
+        where("receiverId", "==", currentUserId),
+        where("readAt", "==", []),
+      );
 
-      return responseData;
+      const snapshot = await getDocs(messagesQuery);
+      if (!snapshot.empty) {
+        const batch = writeBatch(db);
+        const now = new Date().toISOString();
+        snapshot.forEach((docSnap) => {
+          batch.update(docSnap.ref, {
+            status: { Read: null },
+            readAt: [now],
+          });
+        });
+        await batch.commit();
+      }
+
+      return true;
     } catch (error) {
-      throw new Error(`Failed to mark messages as read: ${error}`);
+      console.error(`Failed to mark messages as read:`, error);
+      return false;
     }
   },
 
   /**
    * Get a specific conversation by ID
-   * @param conversationId ID of the conversation
    */
   async getConversation(
     conversationId: string,
   ): Promise<FrontendConversation | null> {
     try {
-      const getConversationFn = httpsCallable(
-        getFunctions(),
-        "getConversation",
-      );
-
-      const result = await getConversationFn({
-        conversationId,
-      });
-      const responseData = (result.data as { success: boolean; data: any })
-        .data;
-      return adaptBackendConversation(responseData);
+      const db = getDb();
+      const docRef = doc(db, "conversations", conversationId);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) return null;
+      return adaptBackendConversation({ id: docSnap.id, ...docSnap.data() });
     } catch (error) {
       throw new Error(`Failed to fetch conversation: ${error}`);
     }
@@ -398,9 +510,6 @@ export const chatCanisterService = {
 
   /**
    * Subscribe to real-time updates for user's conversations
-   * @param userId Current user's ID
-   * @param onUpdate Callback function to handle conversation updates
-   * @returns Unsubscribe function to stop listening
    */
   async subscribeToConversations(
     userId: string,
@@ -520,10 +629,6 @@ export const chatCanisterService = {
 
   /**
    * Subscribe to real-time updates for messages in a conversation
-   * @param conversationId ID of the conversation
-   * @param onUpdate Callback function to handle message updates
-   * @param messageLimit Maximum number of messages to listen to (default: 50)
-   * @returns Unsubscribe function to stop listening
    */
   async subscribeToMessages(
     conversationId: string,
@@ -595,9 +700,6 @@ export const chatCanisterService = {
 
   /**
    * Subscribe to real-time updates for conversation summaries (including last messages)
-   * @param userId Current user's ID
-   * @param onUpdate Callback function to handle conversation summary updates
-   * @returns Unsubscribe function to stop listening
    */
   async subscribeToConversationSummaries(
     userId: string,
@@ -612,11 +714,9 @@ export const chatCanisterService = {
 
       try {
         const summaries = conversations.map((conv) => {
-          // Use the helper to adapt the conversation summary
-          // We construct a backend-like summary object to reuse the adapter
           const backendSummary = {
             conversation: conv,
-            lastMessage: [], // The adapter will look at conversation.lastMessagePreview
+            lastMessage: [],
           };
           return adaptBackendConversationSummary(backendSummary);
         });
@@ -637,7 +737,6 @@ export const chatCanisterService = {
     }, 300);
 
     try {
-      // Just subscribe to conversations. The lastMessagePreview is now inside the conversation document.
       const unsubscribe = await this.subscribeToConversations(
         userId,
         (conversations) => {

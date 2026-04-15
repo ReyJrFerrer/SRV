@@ -57,53 +57,44 @@ export const useChat = () => {
   const [error, setError] = useState<string | null>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  // Cache for user names to avoid repeated API calls without callback churn
-  const userNameCacheRef = useRef<Map<string, string>>(new Map());
-  const userNamePendingRef = useRef<Map<string, Promise<string>>>(new Map());
+  // Cache for user names to avoid repeated API calls
+  const [userNameCache, setUserNameCache] = useState<Map<string, string>>(
+    new Map(),
+  );
 
   // Real-time listener unsubscribe functions (now async)
   const conversationsUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
   const messagesUnsubscribe = useRef<AsyncUnsubscribe | null>(null);
-  const activeConversationIdRef = useRef<string | null>(null);
-  const loadConversationRequestIdRef = useRef(0);
 
   /**
    * Get user name from cache or fetch from auth service
    */
-  const getUserName = useCallback(async (userId: string): Promise<string> => {
-    // Check cache first
-    const cached = userNameCacheRef.current.get(userId);
-    if (cached) {
-      return cached;
-    }
+  const getUserName = useCallback(
+    async (userId: string): Promise<string> => {
+      // Check cache first
+      if (userNameCache.has(userId)) {
+        return userNameCache.get(userId)!;
+      }
 
-    // Reuse in-flight request for this user to avoid duplicate fetches
-    const pending = userNamePendingRef.current.get(userId);
-    if (pending) {
-      return pending;
-    }
-
-    const loadNamePromise = (async (): Promise<string> => {
       try {
         const profile = await authCanisterService.getProfile(userId);
         const userName = profile?.name || `User ${userId.slice(0, 8)}...`;
 
-        userNameCacheRef.current.set(userId, userName);
+        // Update cache
+        setUserNameCache((prev) => new Map(prev).set(userId, userName));
+
         return userName;
       } catch (error) {
         const fallbackName = `User ${userId.slice(0, 8)}...`;
 
         // Cache the fallback name to avoid repeated failed requests
-        userNameCacheRef.current.set(userId, fallbackName);
-        return fallbackName;
-      } finally {
-        userNamePendingRef.current.delete(userId);
-      }
-    })();
+        setUserNameCache((prev) => new Map(prev).set(userId, fallbackName));
 
-    userNamePendingRef.current.set(userId, loadNamePromise);
-    return loadNamePromise;
-  }, []);
+        return fallbackName;
+      }
+    },
+    [userNameCache],
+  );
 
   /**
    * Enhance conversation summaries with user names
@@ -273,8 +264,6 @@ export const useChat = () => {
     async (conversationId: string) => {
       if (!isAuthenticated || !identity) {
         if (isMountedRef.current) {
-          loadConversationRequestIdRef.current += 1;
-          activeConversationIdRef.current = null;
           setCurrentConversation(null);
           setMessages([]);
         }
@@ -282,9 +271,6 @@ export const useChat = () => {
       }
 
       if (!isMountedRef.current) return;
-
-      const requestId = ++loadConversationRequestIdRef.current;
-      activeConversationIdRef.current = conversationId;
 
       setLoading(true);
       setError(null);
@@ -305,12 +291,6 @@ export const useChat = () => {
             conversationId,
             (rawMessages) => {
               if (!isMountedRef.current) return;
-              if (
-                loadConversationRequestIdRef.current !== requestId ||
-                activeConversationIdRef.current !== conversationId
-              ) {
-                return;
-              }
 
               try {
                 if (isMountedRef.current) {
@@ -331,12 +311,6 @@ export const useChat = () => {
             },
             () => {
               if (!isMountedRef.current) return;
-              if (
-                loadConversationRequestIdRef.current !== requestId ||
-                activeConversationIdRef.current !== conversationId
-              ) {
-                return;
-              }
               if (isMountedRef.current) {
                 setError("Could not load messages.");
                 setLoading(false);
@@ -344,35 +318,16 @@ export const useChat = () => {
             },
           );
 
-        if (
-          loadConversationRequestIdRef.current !== requestId ||
-          activeConversationIdRef.current !== conversationId
-        ) {
-          try {
-            await messagesUnsubscribe.current?.();
-          } catch (error) {}
-          messagesUnsubscribe.current = null;
-          return;
-        }
-
         // Fetch conversation details after setting up listener
         const conversation =
           await chatCanisterService.getConversation(conversationId);
 
-        if (
-          isMountedRef.current &&
-          loadConversationRequestIdRef.current === requestId &&
-          activeConversationIdRef.current === conversationId
-        ) {
+        if (isMountedRef.current) {
           setCurrentConversation(conversation);
         }
 
         // Mark messages as read
-        if (
-          isMountedRef.current &&
-          loadConversationRequestIdRef.current === requestId &&
-          activeConversationIdRef.current === conversationId
-        ) {
+        if (isMountedRef.current) {
           await chatCanisterService.markMessagesAsRead(
             conversationId,
             identity.getPrincipal().toString(),
@@ -520,9 +475,6 @@ export const useChat = () => {
    * Clear current conversation and messages
    */
   const clearCurrentConversation = useCallback(async () => {
-    loadConversationRequestIdRef.current += 1;
-    activeConversationIdRef.current = null;
-
     try {
       if (messagesUnsubscribe.current) {
         await messagesUnsubscribe.current();
