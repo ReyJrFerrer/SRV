@@ -109,15 +109,16 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   const { locationStatus, location } = useLocationStore();
   const [showFullScreenMap, setShowFullScreenMap] = React.useState(false);
 
-  // Effects
   useEffect(() => {
-    if (locationStatus === "denied") {
-      try {
-        setShowFallbackForms(true);
-        setLocationInputMode("manual");
-      } catch {}
+    if (locationStatus === "allowed") {
+      setMapMode("custom"); // Force map to interactive mode automatically
+      setLocationInputMode("hidden");
+      setShowFallbackForms(false);
+    } else if (locationStatus === "denied") {
+      setShowFallbackForms(true);
+      setLocationInputMode("manual");
     }
-  }, [locationStatus, setLocationInputMode, setShowFallbackForms]);
+  }, [locationStatus, setMapMode, setLocationInputMode, setShowFallbackForms]);
 
   // Helpers
   const rawAccuracy = location?.accuracy;
@@ -201,58 +202,73 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
       </h3>
 
       {!showFallbackForms && locationStatus !== "denied" && (
-        <div className="mb-4 flex flex-col gap-2 text-xs font-medium sm:flex-row sm:gap-3">
-          <div
-            onClick={() => setMapMode("detected")}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition ${
-              mapMode === "detected"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
-          >
-            <MapPinIcon className="h-4 w-4 shrink-0" />
-            <span>Use Detected Location</span>
-          </div>
-
+        <div className="mb-4 flex flex-col gap-2 text-sm font-medium sm:flex-row sm:gap-3">
           <div
             onClick={() => setMapMode("custom")}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 py-2 transition ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border p-3 transition-all duration-200 ${
               mapMode === "custom"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
+                ? "border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600"
+                : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
             }`}
           >
-            <MapIcon className="hrink-0 h-4 w-4" />
+            <MapIcon className="h-5 w-5 shrink-0" />
             <span>Pin / Search Location</span>
           </div>
 
           <div
             onClick={() => {
               setShowFallbackForms(true);
-              setLocationInputMode("detected");
+              setLocationInputMode(
+                locationStatus === "allowed" ? "manual" : "detected",
+              );
             }}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 "
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white p-3 text-gray-600 transition-all duration-200 hover:border-gray-300 hover:bg-gray-50"
           >
-            <PencilSquareIcon className="h-4 w-4 shrink-0" />
-            <span>Use Manual Address Form</span>
+            <PencilSquareIcon className="h-5 w-5 shrink-0" />
+            <span>Use Manual Address</span>
           </div>
         </div>
       )}
 
-      {/* Inline banner */}
-      {locationStatus === "denied" && (
-        <div className="mb-4 flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          <div>
-            <strong className="block font-semibold">
-              Location permission blocked
-            </strong>
-            <div className="text-xs">
-              Detected / Map options are hidden — please choose your
-              city/province or enable location.
+      {/* Inline banner - only show when location is not yet set (not yet requested) */}
+      {locationStatus === "not_set" && (
+        <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50">
+              <MapPinIcon className="h-5 w-5 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-base font-semibold text-gray-900">
+                Enable location access
+              </h4>
+              <p className="mt-1 text-sm text-gray-600">
+                Allow location access for automatic detection, or use the manual
+                address form below.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <EnableLocationButton />
             </div>
           </div>
-          <div className="ml-4">
-            <EnableLocationButton />
+        </div>
+      )}
+
+      {/* Inline banner - location blocked by browser settings */}
+      {locationStatus === "denied" && (
+        <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50">
+              <MapPinIcon className="h-5 w-5 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-base font-semibold text-gray-900">
+                Location access is blocked
+              </h4>
+              <p className="mt-1 text-sm text-gray-600">
+                Enable location in your browser settings to use automatic
+                detection, or use the manual address form below.
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -383,340 +399,330 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
         </div>
       )}
 
-      {showFallbackForms && (
+      {showFallbackForms && locationStatus !== "denied" && (
         <div className="mb-4 flex flex-wrap gap-4">
-          {locationStatus === "denied" ? (
+          {locationStatus !== "allowed" && (
             <label className="flex items-center gap-2 text-xs">
               <input
                 type="radio"
                 name="locationInputMode"
-                value="manual"
-                checked={true}
-                onChange={() => setLocationInputMode("manual")}
+                value="detected"
+                checked={locationInputMode === "detected"}
+                onChange={() => setLocationInputMode("detected")}
                 className="h-4 w-4 text-blue-600"
               />
-              <span className="text-gray-700">Choose City/Province</span>
+              <span className="text-gray-700">Use Detected</span>
             </label>
-          ) : (
-            <>
-              <label className="flex items-center gap-2 text-xs">
-                <input
-                  type="radio"
-                  name="locationInputMode"
-                  value="detected"
-                  checked={locationInputMode === "detected"}
-                  onChange={() => setLocationInputMode("detected")}
-                  className="h-4 w-4 text-blue-600"
-                />
-                <span className="text-gray-700">Use Detected</span>
-              </label>
-
-              <label className="flex items-center gap-2 text-xs">
-                <input
-                  type="radio"
-                  name="locationInputMode"
-                  value="manual"
-                  checked={locationInputMode === "manual"}
-                  onChange={() => setLocationInputMode("manual")}
-                  className="h-4 w-4 text-blue-600"
-                />
-                <span className="text-gray-700">Choose City/Province</span>
-              </label>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowFallbackForms(false);
-                  setLocationInputMode("hidden");
-                }}
-                className="flex w-full items-center justify-center gap-1 rounded-lg border bg-blue-700 px-3 py-2 text-xs text-white sm:w-auto md:w-full lg:ml-auto lg:w-fit"
-              >
-                <MapPinIcon className="h-4 w-4 shrink-0" />
-                <span>Use Maps</span>
-              </button>
-            </>
           )}
+
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="radio"
+              name="locationInputMode"
+              value="manual"
+              checked={locationInputMode === "manual"}
+              onChange={() => setLocationInputMode("manual")}
+              className="h-4 w-4 text-blue-600"
+            />
+            <span className="text-gray-700">Choose City/Province</span>
+          </label>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowFallbackForms(false);
+              setLocationInputMode("hidden");
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-auto md:w-full lg:ml-auto lg:w-fit"
+          >
+            <MapPinIcon className="h-5 w-5 shrink-0" />
+            <span>Use Maps</span>
+          </button>
         </div>
       )}
 
-      {showFallbackForms && locationInputMode === "detected" && (
-        <div className="mt-2 space-y-3">
-          <p className="text-xs text-gray-600">
-            Your location is automatically detected.
-          </p>
-          <div className="mb-3 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="mb-1 block text-xs text-blue-700">
-                  Municipality/City
-                </label>
-                <input
-                  type="text"
-                  value={displayMunicipality || ""}
-                  readOnly
-                  className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
-                  placeholder="Municipality/City"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="mb-1 block text-xs text-blue-700">
-                  Province
-                </label>
-                <input
-                  type="text"
-                  value={displayProvince || ""}
-                  readOnly
-                  className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
-                  placeholder="Province"
-                />
+      {showFallbackForms &&
+        locationStatus !== "denied" &&
+        locationInputMode === "detected" && (
+          <div className="mt-2 space-y-3">
+            <p className="text-xs text-gray-600">
+              Your location is automatically detected.
+            </p>
+            <div className="mb-3 w-full rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="mb-1 block text-xs text-blue-700">
+                    Municipality/City
+                  </label>
+                  <input
+                    type="text"
+                    value={displayMunicipality || ""}
+                    readOnly
+                    className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                    placeholder="Municipality/City"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="mb-1 block text-xs text-blue-700">
+                    Province
+                  </label>
+                  <input
+                    type="text"
+                    value={displayProvince || ""}
+                    readOnly
+                    className="w-full border-none bg-blue-50 font-semibold capitalize text-blue-900"
+                    placeholder="Province"
+                  />
+                </div>
               </div>
             </div>
+            <select
+              ref={barangayRef}
+              value={selectedBarangay}
+              onChange={(e) => setSelectedBarangay(e.target.value)}
+              className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                highlightInput === "barangay"
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : ""
+              }`}
+            >
+              <option value="" disabled>
+                Select Barangay *
+              </option>
+              {barangayOptions
+                .filter(
+                  (b) =>
+                    b &&
+                    b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+                )
+                .map((barangay, idx) => (
+                  <option key={idx} value={barangay}>
+                    {barangay}
+                  </option>
+                ))}
+              <option value="__other__">Others</option>
+            </select>
+            {selectedBarangay === "__other__" && (
+              <input
+                ref={otherBarangayRef}
+                type="text"
+                placeholder="Enter your Barangay *"
+                value={otherBarangay}
+                onChange={(e) => setOtherBarangay(e.target.value)}
+                className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+                  highlightInput === "otherBarangay" ||
+                  (otherBarangay &&
+                    (otherBarangay.trim().length < 3 ||
+                      otherBarangay.trim().length > 20))
+                    ? "border-2 border-red-500 ring-2 ring-red-200"
+                    : "border-blue-400"
+                }`}
+                minLength={3}
+                maxLength={20}
+                required
+              />
+            )}
+            <input
+              ref={streetRef}
+              type="text"
+              placeholder="Street Name *"
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                !selectedBarangay
+                  ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                  : "border-gray-300 bg-white text-gray-700"
+              } ${
+                highlightInput === "street" ||
+                (street &&
+                  (street.trim().length < 3 || street.trim().length > 20))
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : ""
+              }`}
+              disabled={!selectedBarangay}
+              minLength={3}
+              maxLength={20}
+            />
+            <input
+              ref={houseNumberRef}
+              type="text"
+              placeholder="House/Unit No. *"
+              value={houseNumber}
+              onChange={(e) => setHouseNumber(e.target.value)}
+              className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                !street
+                  ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                  : "border-gray-300 bg-white text-gray-700"
+              } ${
+                highlightInput === "houseNumber" ||
+                (houseNumber &&
+                  (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : ""
+              }`}
+              disabled={!street}
+              maxLength={15}
+            />
+            <input
+              type="text"
+              placeholder="Building / Subdivision / Sitio / etc. (optional)"
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+              className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+            />
           </div>
-          <select
-            ref={barangayRef}
-            value={selectedBarangay}
-            onChange={(e) => setSelectedBarangay(e.target.value)}
-            className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-              highlightInput === "barangay"
-                ? "border-2 border-red-500 ring-2 ring-red-200"
-                : ""
-            }`}
-          >
-            <option value="" disabled>
-              Select Barangay *
-            </option>
-            {barangayOptions
-              .filter(
-                (b) =>
-                  b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
-              )
-              .map((barangay, idx) => (
+        )}
+
+      {showFallbackForms &&
+        (locationStatus === "denied" || locationInputMode === "manual") && (
+          <div className="mt-2 space-y-3">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="mb-2 block text-xs text-blue-700">
+                  Province *
+                </label>
+                <select
+                  value={manualProvince}
+                  onChange={(e) => {
+                    setManualProvince(e.target.value);
+                  }}
+                  className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                >
+                  <option value="" disabled>
+                    Select Province
+                  </option>
+                  {phLocations &&
+                    Array.isArray((phLocations as any).provinces) &&
+                    (phLocations as any).provinces.map((prov: any) => (
+                      <option key={prov.name} value={prov.name}>
+                        {prov.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="mb-2 block text-xs text-blue-700">
+                  City/Municipality *
+                </label>
+                <select
+                  value={manualCity}
+                  onChange={(e) => setManualCity(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+                  disabled={!manualProvince}
+                >
+                  <option value="" disabled>
+                    Select City/Municipality
+                  </option>
+                  {manualProvince &&
+                    phLocations &&
+                    Array.isArray((phLocations as any).provinces) &&
+                    (() => {
+                      const prov = (phLocations as any).provinces.find(
+                        (p: any) => p.name === manualProvince,
+                      );
+                      if (prov && Array.isArray(prov.municipalities)) {
+                        return prov.municipalities.map((m: any) => (
+                          <option key={m.name} value={m.name}>
+                            {m.name}
+                          </option>
+                        ));
+                      }
+                      return null;
+                    })()}
+                </select>
+              </div>
+            </div>
+            <select
+              ref={barangayRef}
+              value={selectedBarangay}
+              onChange={(e) => setSelectedBarangay(e.target.value)}
+              className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
+                highlightInput === "barangay"
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : ""
+              }`}
+              disabled={!manualCity}
+            >
+              <option value="" disabled>
+                Select Barangay *
+              </option>
+              {manualBarangayOptions.map((barangay, idx) => (
                 <option key={idx} value={barangay}>
                   {barangay}
                 </option>
               ))}
-            <option value="__other__">Others</option>
-          </select>
-          {selectedBarangay === "__other__" && (
+              <option value="__other__">Others</option>
+            </select>
+            {selectedBarangay === "__other__" && (
+              <input
+                ref={otherBarangayRef}
+                type="text"
+                placeholder="Enter your Barangay *"
+                value={otherBarangay}
+                onChange={(e) => setOtherBarangay(e.target.value)}
+                className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
+                  highlightInput === "otherBarangay" ||
+                  (otherBarangay &&
+                    (otherBarangay.trim().length < 3 ||
+                      otherBarangay.trim().length > 20))
+                    ? "border-2 border-red-500 ring-2 ring-red-200"
+                    : "border-blue-400"
+                }`}
+                minLength={3}
+                maxLength={20}
+                required
+              />
+            )}
             <input
-              ref={otherBarangayRef}
+              ref={streetRef}
               type="text"
-              placeholder="Enter your Barangay *"
-              value={otherBarangay}
-              onChange={(e) => setOtherBarangay(e.target.value)}
-              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                highlightInput === "otherBarangay" ||
-                (otherBarangay &&
-                  (otherBarangay.trim().length < 3 ||
-                    otherBarangay.trim().length > 20))
+              placeholder="Street Name *"
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                !selectedBarangay
+                  ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                  : "border-gray-300 bg-white text-gray-700"
+              } ${
+                highlightInput === "street" ||
+                (street &&
+                  (street.trim().length < 3 || street.trim().length > 20))
                   ? "border-2 border-red-500 ring-2 ring-red-200"
-                  : "border-blue-400"
+                  : ""
               }`}
+              disabled={!selectedBarangay}
               minLength={3}
               maxLength={20}
-              required
             />
-          )}
-          <input
-            ref={streetRef}
-            type="text"
-            placeholder="Street Name *"
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-              !selectedBarangay
-                ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                : "border-gray-300 bg-white text-gray-700"
-            } ${
-              highlightInput === "street" ||
-              (street &&
-                (street.trim().length < 3 || street.trim().length > 20))
-                ? "border-2 border-red-500 ring-2 ring-red-200"
-                : ""
-            }`}
-            disabled={!selectedBarangay}
-            minLength={3}
-            maxLength={20}
-          />
-          <input
-            ref={houseNumberRef}
-            type="text"
-            placeholder="House/Unit No. *"
-            value={houseNumber}
-            onChange={(e) => setHouseNumber(e.target.value)}
-            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-              !street
-                ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                : "border-gray-300 bg-white text-gray-700"
-            } ${
-              highlightInput === "houseNumber" ||
-              (houseNumber &&
-                (houseNumber.length > 15 || !/\d/.test(houseNumber)))
-                ? "border-2 border-red-500 ring-2 ring-red-200"
-                : ""
-            }`}
-            disabled={!street}
-            maxLength={15}
-          />
-          <input
-            type="text"
-            placeholder="Building / Subdivision / Sitio / etc. (optional)"
-            value={landmark}
-            onChange={(e) => setLandmark(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-          />
-        </div>
-      )}
-
-      {showFallbackForms && locationInputMode === "manual" && (
-        <div className="mt-2 space-y-3">
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="mb-2 block text-xs text-blue-700">
-                Province *
-              </label>
-              <select
-                value={manualProvince}
-                onChange={(e) => {
-                  setManualProvince(e.target.value);
-                }}
-                className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-              >
-                <option value="" disabled>
-                  Select Province
-                </option>
-                {phLocations &&
-                  Array.isArray((phLocations as any).provinces) &&
-                  (phLocations as any).provinces.map((prov: any) => (
-                    <option key={prov.name} value={prov.name}>
-                      {prov.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="mb-2 block text-xs text-blue-700">
-                City/Municipality *
-              </label>
-              <select
-                value={manualCity}
-                onChange={(e) => setManualCity(e.target.value)}
-                className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-                disabled={!manualProvince}
-              >
-                <option value="" disabled>
-                  Select City/Municipality
-                </option>
-                {manualProvince &&
-                  phLocations &&
-                  Array.isArray((phLocations as any).provinces) &&
-                  (() => {
-                    const prov = (phLocations as any).provinces.find(
-                      (p: any) => p.name === manualProvince,
-                    );
-                    if (prov && Array.isArray(prov.municipalities)) {
-                      return prov.municipalities.map((m: any) => (
-                        <option key={m.name} value={m.name}>
-                          {m.name}
-                        </option>
-                      ));
-                    }
-                    return null;
-                  })()}
-              </select>
-            </div>
+            <input
+              ref={houseNumberRef}
+              type="text"
+              placeholder="House/Unit No. *"
+              value={houseNumber}
+              onChange={(e) => setHouseNumber(e.target.value)}
+              className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
+                !street
+                  ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
+                  : "border-gray-300 bg-white text-gray-700"
+              } ${
+                highlightInput === "houseNumber" ||
+                (houseNumber &&
+                  (houseNumber.length > 15 || !/\d/.test(houseNumber)))
+                  ? "border-2 border-red-500 ring-2 ring-red-200"
+                  : ""
+              }`}
+              disabled={!street}
+              maxLength={15}
+            />
+            <input
+              type="text"
+              placeholder="Building / Subdivision / Sitio / etc. (optional)"
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+              className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
+            />
           </div>
-          <select
-            ref={barangayRef}
-            value={selectedBarangay}
-            onChange={(e) => setSelectedBarangay(e.target.value)}
-            className={`w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize ${
-              highlightInput === "barangay"
-                ? "border-2 border-red-500 ring-2 ring-red-200"
-                : ""
-            }`}
-            disabled={!manualCity}
-          >
-            <option value="" disabled>
-              Select Barangay *
-            </option>
-            {manualBarangayOptions.map((barangay, idx) => (
-              <option key={idx} value={barangay}>
-                {barangay}
-              </option>
-            ))}
-            <option value="__other__">Others</option>
-          </select>
-          {selectedBarangay === "__other__" && (
-            <input
-              ref={otherBarangayRef}
-              type="text"
-              placeholder="Enter your Barangay *"
-              value={otherBarangay}
-              onChange={(e) => setOtherBarangay(e.target.value)}
-              className={`w-full rounded-xl border bg-white p-3 text-sm capitalize text-gray-700 ${
-                highlightInput === "otherBarangay" ||
-                (otherBarangay &&
-                  (otherBarangay.trim().length < 3 ||
-                    otherBarangay.trim().length > 20))
-                  ? "border-2 border-red-500 ring-2 ring-red-200"
-                  : "border-blue-400"
-              }`}
-              minLength={3}
-              maxLength={20}
-              required
-            />
-          )}
-          <input
-            ref={streetRef}
-            type="text"
-            placeholder="Street Name *"
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-              !selectedBarangay
-                ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                : "border-gray-300 bg-white text-gray-700"
-            } ${
-              highlightInput === "street" ||
-              (street &&
-                (street.trim().length < 3 || street.trim().length > 20))
-                ? "border-2 border-red-500 ring-2 ring-red-200"
-                : ""
-            }`}
-            disabled={!selectedBarangay}
-            minLength={3}
-            maxLength={20}
-          />
-          <input
-            ref={houseNumberRef}
-            type="text"
-            placeholder="House/Unit No. *"
-            value={houseNumber}
-            onChange={(e) => setHouseNumber(e.target.value)}
-            className={`w-full rounded-xl border p-3 text-sm capitalize transition-colors ${
-              !street
-                ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400"
-                : "border-gray-300 bg-white text-gray-700"
-            } ${
-              highlightInput === "houseNumber" ||
-              (houseNumber &&
-                (houseNumber.length > 15 || !/\d/.test(houseNumber)))
-                ? "border-2 border-red-500 ring-2 ring-red-200"
-                : ""
-            }`}
-            disabled={!street}
-            maxLength={15}
-          />
-          <input
-            type="text"
-            placeholder="Building / Subdivision / Sitio / etc. (optional)"
-            value={landmark}
-            onChange={(e) => setLandmark(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm capitalize"
-          />
-        </div>
-      )}
+        )}
 
       {showFullScreenMap && (
         <FullScreenLocationMapModal

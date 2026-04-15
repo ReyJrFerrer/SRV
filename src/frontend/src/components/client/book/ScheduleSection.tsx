@@ -85,12 +85,12 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
 
       <div className="mb-4 flex gap-3">
         <button
-          className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
+          className={`flex-1 rounded-xl border p-4 text-center transition-all duration-200 ${
             !isSameDayAvailable
-              ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+              ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400"
               : bookingOption === "sameday"
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50"
+                ? "border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600"
+                : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
           }`}
           onClick={() => isSameDayAvailable && onChangeBookingOption("sameday")}
           disabled={!isSameDayAvailable}
@@ -102,14 +102,16 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
         >
           <div className="text-base font-semibold">Same Day</div>
           {!isSameDayAvailable && (
-            <div className="text-xs text-gray-400">Not Available Today</div>
+            <div className="mt-1 text-xs text-gray-400">
+              Not Available Today
+            </div>
           )}
         </button>
         <button
-          className={`flex-1 rounded-xl border p-3 text-center font-semibold shadow-sm transition-colors ${
+          className={`flex-1 rounded-xl border p-4 text-center transition-all duration-200 ${
             bookingOption === "scheduled"
-              ? "border-blue-600 bg-blue-600 text-white"
-              : "border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50"
+              ? "border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600"
+              : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
           }`}
           onClick={() => onChangeBookingOption("scheduled")}
         >
@@ -172,14 +174,14 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                           setSelectedTime(time)
                         }
                         disabled={!isSlotAvailable || isUserBooked}
-                        className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
+                        className={`rounded-xl border px-4 py-3 text-sm font-medium transition-all duration-200 ${
                           !isSlotAvailable || isUserBooked
                             ? isUserBooked
-                              ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
-                              : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                              ? "cursor-not-allowed border-orange-200 bg-orange-50 text-orange-600"
+                              : "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400"
                             : selectedTime === time
-                              ? "border-blue-600 bg-blue-600 text-white"
-                              : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                              ? "border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600"
+                              : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                         }`}
                         title={
                           !isSlotAvailable || isUserBooked
@@ -230,24 +232,24 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                   prevMonthButtonDisabled,
                   nextMonthButtonDisabled,
                 }) => (
-                  <div className="flex items-center justify-between rounded-t-lg bg-gray-100 px-2 py-2">
+                  <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3">
                     <button
                       onClick={decreaseMonth}
                       disabled={prevMonthButtonDisabled}
-                      className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
+                      className="rounded-full p-1.5 transition-colors hover:bg-gray-100 disabled:opacity-30"
                       type="button"
                       aria-label="Previous Month"
                     >
                       <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
                     </button>
-                    <span className="text-base font-semibold text-gray-800">
+                    <span className="text-base font-semibold text-gray-900">
                       {date.toLocaleString("default", { month: "long" })}{" "}
                       {date.getFullYear()}
                     </span>
                     <button
                       onClick={increaseMonth}
                       disabled={nextMonthButtonDisabled}
-                      className="rounded-full p-1 hover:bg-gray-200 disabled:opacity-30"
+                      className="rounded-full p-1.5 transition-colors hover:bg-gray-100 disabled:opacity-30"
                       type="button"
                       aria-label="Next Month"
                     >
@@ -266,14 +268,18 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                       )
                     : false;
                   return [
-                    "transition-colors duration-150",
-                    isSelected ? "!bg-blue-600 !text-white !font-bold" : "",
-                    isAvailable
-                      ? "hover:bg-blue-100 cursor-pointer"
-                      : "opacity-40 cursor-not-allowed",
+                    "transition-all duration-200 rounded-lg m-0.5",
+                    isSelected
+                      ? "!bg-blue-600 !text-white !font-semibold shadow-sm"
+                      : "",
+                    isAvailable && !isSelected
+                      ? "hover:bg-blue-50 text-gray-700 cursor-pointer"
+                      : isSelected
+                        ? ""
+                        : "text-gray-300 cursor-not-allowed",
                   ].join(" ");
                 }}
-                calendarClassName="rounded-lg shadow-lg border border-gray-200 bg-white"
+                calendarClassName="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden font-sans"
                 wrapperClassName="w-full"
               />
             </Suspense>
@@ -316,14 +322,14 @@ const ScheduleSection: React.FC<ScheduleSectionProps> = ({
                             setSelectedTime(time)
                           }
                           disabled={!isSlotAvailable || isUserBooked}
-                          className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
+                          className={`rounded-xl border px-4 py-3 text-sm font-medium transition-all duration-200 ${
                             !isSlotAvailable || isUserBooked
                               ? isUserBooked
-                                ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-600"
-                                : "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                                ? "cursor-not-allowed border-orange-200 bg-orange-50 text-orange-600"
+                                : "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400"
                               : selectedTime === time
-                                ? "border-blue-600 bg-blue-600 text-white"
-                                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                ? "border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                           }`}
                           title={
                             !isSlotAvailable || isUserBooked

@@ -42,19 +42,29 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({
     {packages.map((pkg) => (
       <label
         key={pkg.id}
-        className="mb-3 flex cursor-pointer items-start space-x-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:bg-gray-100"
+        className={`mb-3 flex cursor-pointer items-start space-x-4 rounded-xl border p-4 transition-all duration-200 ${
+          pkg.checked
+            ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600"
+            : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+        }`}
       >
-        <input
-          type="checkbox"
-          checked={pkg.checked}
-          onChange={() => onToggle(pkg.id)}
-          className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
-        />
+        <div className="flex h-6 items-center">
+          <input
+            type="checkbox"
+            checked={pkg.checked}
+            onChange={() => onToggle(pkg.id)}
+            className="h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
+          />
+        </div>
         <div className="min-w-0 flex-1">
-          <div className="break-words text-lg font-semibold text-gray-900">
+          <div
+            className={`break-words text-lg font-semibold ${pkg.checked ? "text-blue-900" : "text-gray-900"}`}
+          >
             {pkg.title}
           </div>
-          <div className="mb-1 break-words text-sm text-gray-600">
+          <div
+            className={`mb-1 break-words text-sm ${pkg.checked ? "text-blue-700" : "text-gray-500"}`}
+          >
             {pkg.description}
           </div>
           <div className="text-base font-bold text-blue-600">

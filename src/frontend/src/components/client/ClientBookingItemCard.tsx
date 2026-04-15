@@ -230,23 +230,23 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     switch (status.toUpperCase()) {
       case "REQUESTED":
       case "PENDING":
-        return "text-yellow-600 bg-yellow-100";
+        return "text-amber-700 bg-amber-50 border border-amber-100";
       case "ACCEPTED":
       case "CONFIRMED":
-        return "text-green-600 bg-green-100";
+        return "text-emerald-700 bg-emerald-50 border border-emerald-100";
       case "INPROGRESS":
       case "IN_PROGRESS":
-        return "text-blue-600 bg-blue-100";
+        return "text-blue-700 bg-blue-50 border border-blue-100";
       case "COMPLETED":
-        return "text-indigo-600 bg-indigo-100";
+        return "text-indigo-700 bg-indigo-50 border border-indigo-100";
       case "CANCELLED":
-        return "text-red-600 bg-red-100";
+        return "text-rose-700 bg-rose-50 border border-rose-100";
       case "DECLINED":
-        return "text-gray-600 bg-gray-100";
+        return "text-slate-700 bg-slate-50 border border-slate-100";
       case "DISPUTED":
-        return "text-orange-600 bg-orange-100";
+        return "text-orange-700 bg-orange-50 border border-orange-100";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "text-slate-700 bg-slate-50 border border-slate-100";
     }
   };
 
@@ -432,7 +432,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   return (
     <Link
       to={`/client/booking/${booking.id}`}
-      className="block cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      className="block cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow duration-300 hover:border-blue-300 hover:shadow-md focus:border-blue-300 focus:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
       onClick={() => {
         // If this booking is Accepted we trigger interaction so badge decrements
         if (booking.status === "Accepted") {
@@ -562,8 +562,8 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
             {/* Booking Notes (if any) */}
             {notes && (
-              <div className="wrap mt-2 rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900">
-                <strong>Booking Notes:</strong> {notes}
+              <div className="wrap mt-2 rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-xs text-blue-900">
+                <span className="font-semibold">Note:</span> {notes}
               </div>
             )}
           </div>

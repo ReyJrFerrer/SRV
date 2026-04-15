@@ -155,100 +155,106 @@ const ReceiptPage: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4 sm:p-6">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 sm:p-6">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         {/* Receipt Header */}
-        <div className="mb-8 text-center">
-          <img
-            src="/images/srv characters (SVG)/girl.svg"
-            alt="Confirmation"
-            className="mx-auto mb-4 h-24 w-24"
-          />
-          <h1 className="text-3xl font-bold text-gray-800">
-            Service is complete!
+        <div className="mb-6 text-center">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+            <img
+              src="/images/srv characters (SVG)/girl.svg"
+              alt="Confirmation"
+              className="h-16 w-16 object-contain"
+            />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Service Complete!
           </h1>
-          <p className="text-gray-500">
-            Thank you for using SRV, until the next SRVice!
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Thank you for using SRV.</p>
         </div>
 
         {/* Booking Details */}
-        <div className="mb-6 border-b border-dashed border-gray-300 pb-6">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="font-bold text-gray-600">Booking ID:</span>
-            <span className="font-mono text-gray-800">{booking.id}</span>
+        <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="font-medium text-gray-500">Booking ID</span>
+            <span className="font-mono font-medium text-gray-900">
+              {booking.id.slice(0, 8)}...
+            </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-bold text-gray-600">Date Completed:</span>
-            <span className="text-gray-800">
+            <span className="font-medium text-gray-500">Date Completed</span>
+            <span className="font-medium text-gray-900">
               {formatDate(booking.updatedAt)}
             </span>
           </div>
         </div>
 
         {/* Service and People Details */}
-        <div className="mb-6 border-b border-dashed border-gray-300 pb-6">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="mb-1 font-bold text-gray-600">Service</p>
-            <p className="text-gray-900">
-              {booking.serviceName} - {booking.packageName}
-            </p>
+        <div className="mb-6 border-b border-dashed border-gray-200 pb-6 text-sm">
+          <div className="mb-3 flex items-start justify-between">
+            <span className="font-medium text-gray-500">Service</span>
+            <span className="text-right font-medium text-gray-900">
+              {booking.serviceName}
+              <span className="block text-xs font-normal text-gray-500">
+                {booking.packageName}
+              </span>
+            </span>
           </div>
           <div className="mb-3 flex items-center justify-between">
-            <span className="font-bold text-gray-600">Provider:</span>
-            <span className="text-gray-800">
+            <span className="font-medium text-gray-500">Provider</span>
+            <span className="font-medium text-gray-900">
               {booking.providerProfile?.name || "N/A"}
             </span>
           </div>
           {booking.serviceTime && (
             <div className="mb-3 flex items-center justify-between">
-              <span className="font-bold text-gray-600">Service Duration:</span>
-              <span className="text-gray-800">
+              <span className="font-medium text-gray-500">Duration</span>
+              <span className="font-medium text-gray-900">
                 {formatServiceTime(booking.serviceTime)}
               </span>
             </div>
           )}
           {userRating && (
-            <div className="mb-3 flex items-center justify-between">
-              <span className="font-bold text-gray-600">Your Rating:</span>
-              <span className="flex items-center">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-gray-500">Your Rating</span>
+              <span className="flex items-center gap-1">
                 {[...Array(userRating)].map((_, i) => (
-                  <StarIcon key={i} className="h-5 w-5 text-yellow-400" />
+                  <StarIcon key={i} className="h-4 w-4 text-yellow-400" />
                 ))}
-                <span className="ml-2 text-sm text-gray-700">
-                  ({userRating} star{userRating > 1 ? "s" : ""})
-                </span>
               </span>
             </div>
           )}
         </div>
 
         {/* Payment Summary */}
-        <div>
-          <h2 className="mb-4 text-lg font-bold text-gray-800">
+        <div className="text-sm">
+          <h2 className="mb-3 text-base font-bold text-gray-900">
             Payment Summary
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="font-bold text-gray-600">Service Total:</span>
-              <span className="text-gray-800">
-                ₱{totalServiceCost.toFixed(2)}
+              <span className="text-gray-500">Service Total</span>
+              <span className="font-medium text-gray-900">
+                ₱ {totalServiceCost.toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="font-bold text-gray-600">Amount Paid:</span>
-              <span className="text-gray-800">₱{amountPaid.toFixed(2)}</span>
+              <span className="text-gray-500">Amount Paid</span>
+              <span className="font-medium text-gray-900">
+                ₱ {amountPaid.toFixed(2)}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="font-bold text-gray-600">Change:</span>
-              <span className="text-gray-800">₱{changeGiven.toFixed(2)}</span>
+              <span className="text-gray-500">Change Given</span>
+              <span className="font-medium text-gray-900">
+                ₱ {changeGiven.toFixed(2)}
+              </span>
             </div>
-            <div className="mt-3 flex justify-between border-t border-gray-300 pt-3">
-              <span className="text-xl font-bold text-gray-900">
+            <div className="mt-4 flex items-center justify-between rounded-xl bg-blue-50 p-4">
+              <span className="text-base font-bold text-blue-900">
                 Total Paid
               </span>
-              <span className="text-xl font-bold text-green-600">
-                ₱{amountPaid.toFixed(2)}
+              <span className="text-xl font-bold text-blue-700">
+                ₱ {amountPaid.toFixed(2)}
               </span>
             </div>
           </div>
@@ -256,21 +262,19 @@ const ReceiptPage: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-6 w-full max-w-md">
-        <div className="flex gap-3">
-          <button
-            onClick={handleShare}
-            className="flex w-1/2 items-center justify-center rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
-          >
-            <ShareIcon className="mr-2 h-5 w-5" /> Share
-          </button>
-          <Link
-            to="/client/booking"
-            className="flex w-1/2 items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
-          >
-            <ArrowUturnLeftIcon className="mr-2 h-5 w-5" /> Done
-          </Link>
-        </div>
+      <div className="mt-6 flex w-full max-w-md gap-3">
+        <button
+          onClick={handleShare}
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+        >
+          <ShareIcon className="h-4 w-4" /> Share
+        </button>
+        <Link
+          to="/client/booking"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+        >
+          <ArrowUturnLeftIcon className="h-4 w-4" /> Done
+        </Link>
       </div>
     </div>
   );

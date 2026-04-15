@@ -43,25 +43,19 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
         highlight ? "border-2 border-red-500 ring-2 ring-red-200" : ""
       }`}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-xl font-bold text-gray-900">
           <PhotoIcon className="h-6 w-6 text-blue-600" aria-hidden="true" />
-          <span>Attach Proof</span>
-          {required && (
-            <span className="ml-1 text-red-500" aria-hidden="true">
-              *
-            </span>
-          )}
-        </h2>
-        <span className="text-xs text-gray-500">
-          Up to {maxFiles} attachments
-        </span>
+          <span>
+            Attach Proof {required && <span className="text-red-500">*</span>}
+          </span>
+        </h3>
       </div>
-      <p className="mb-4 text-sm text-gray-600">
+      <p className="mb-4 text-sm text-gray-500">
         Add clear photos showing the issue. This helps the provider prepare
-        tools and parts.
+        tools and parts. Up to {maxFiles} attachments.
       </p>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3">
         <input
           ref={inputRef}
           type="file"
@@ -73,18 +67,15 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 sm:w-auto"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-sm font-medium text-gray-600 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20"
         >
-          <PaperClipIcon className="h-4 w-4" aria-hidden="true" />
-          Add Attachments
+          <PaperClipIcon className="h-5 w-5" aria-hidden="true" />
+          Click to add attachments (JPG/PNG)
         </button>
-        <span className="text-xs text-gray-500">
-          Accepted: images (JPG/PNG/HEIC)
-        </span>
       </div>
 
       {files.length > 0 && (
-        <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {files.map((f, idx) => {
             const url = URL.createObjectURL(f);
             return (

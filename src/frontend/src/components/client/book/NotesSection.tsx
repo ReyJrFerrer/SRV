@@ -21,12 +21,12 @@ const NotesSection: React.FC<NotesSectionProps> = ({
       <span>Notes for Provider</span>
     </h3>
     <textarea
-      placeholder="e.g., Beware of the dog, please bring a ladder, etc. (max 30 characters)"
+      placeholder="e.g., Beware of the dog, please bring a ladder, etc."
       value={notes}
       onChange={onChange}
       rows={4}
       maxLength={limit}
-      className="w-full resize-none rounded-xl border border-gray-200 bg-white p-3 text-base shadow-sm focus:border-blue-500 focus:ring-blue-500"
+      className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 text-base text-gray-900 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
     />
   </div>
 );

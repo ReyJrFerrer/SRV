@@ -300,15 +300,22 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
     setIsLoadingPred(true);
 
     if (autocompleteRef.current?.getPlacePredictions) {
-      const bias: any = {
-        center: new g.maps.LatLng(baguioCenter.lat, baguioCenter.lng),
-        radius: 15000,
-      };
       try {
         autocompleteRef.current.getPlacePredictions(
-          { input: query, locationBias: bias },
-          (preds: any[] | null) => {
+          {
+            input: query,
+            componentRestrictions: { country: "ph" },
+          },
+          (preds: any[] | null, status: any) => {
             setIsLoadingPred(false);
+            const PlacesServiceStatus = (window as any).google?.maps?.places
+              ?.PlacesServiceStatus;
+            if (
+              status !== PlacesServiceStatus?.OK &&
+              status !== PlacesServiceStatus?.ZERO_RESULTS
+            ) {
+              console.warn("Places API Autocomplete status:", status);
+            }
             if (preds && preds.length) {
               setPredictions(preds as any);
               setShowDropdown(true);
@@ -319,7 +326,9 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
           },
         );
         return;
-      } catch {}
+      } catch (e) {
+        console.error("Places API error:", e);
+      }
     }
 
     // No legacy fallback: if Autocomplete is unavailable, clear results

@@ -357,8 +357,8 @@ const MyBookingsPage: React.FC = () => {
 
   return (
     <>
-      <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+      <div className="flex min-h-screen flex-col bg-gray-50">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
           <div className="flex w-full items-center justify-center px-4 py-3">
             <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
               My Bookings
@@ -366,7 +366,7 @@ const MyBookingsPage: React.FC = () => {
           </div>
         </header>
 
-        <div className="sticky z-10 bg-white px-4 pt-4">
+        <div className="sticky z-10 bg-white px-4 pt-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div className="relative mr-2 flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -375,7 +375,7 @@ const MyBookingsPage: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search bookings..."
-                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm font-medium text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -385,12 +385,12 @@ const MyBookingsPage: React.FC = () => {
               {/* Filter Dropdown: Status + Category */}
               <div className="relative" ref={timingDropdownRef}>
                 <button
-                  className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
                 >
-                  <FunnelIcon className="mr-1 h-5 w-5" />
+                  <FunnelIcon className="mr-1.5 h-4 w-4 text-gray-500" />
                   <span className="hidden md:inline">Filters</span>
-                  <span className="ml-2 text-xs text-gray-400">
+                  <span className="ml-1 text-xs text-gray-400">
                     {selectedCategory ? `| ${selectedCategory}` : ""}
                   </span>
                   <svg
@@ -479,10 +479,10 @@ const MyBookingsPage: React.FC = () => {
             <div className="flex items-center justify-center gap-2 px-4 pb-3">
               <button
                 type="button"
-                className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
                   timingFilter === "Same Day"
-                    ? "bg-yellow-500 text-white"
-                    : "text-gray-700 hover:bg-yellow-200"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                 }`}
                 onClick={() => {
                   setTimingFilter("Same Day");
@@ -493,10 +493,10 @@ const MyBookingsPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
                   timingFilter === "Scheduled"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 hover:bg-yellow-200"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                 }`}
                 onClick={() => {
                   setTimingFilter("Scheduled");
@@ -529,16 +529,16 @@ const MyBookingsPage: React.FC = () => {
               </button>
             </div>
           ) : filteredBookings.length > 0 ? (
-            <div className="my-4 space-y-4 pb-16">
+            <div className="my-4 space-y-6 pb-16">
               {timingFilter === "Same Day" && sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
-                    <SparklesIcon className="mr-2 h-6 w-6 text-yellow-500" />
-                    <h2 className="text-lg font-bold tracking-wide text-yellow-600">
-                      Same Day Bookings
+                    <SparklesIcon className="mr-2 h-5 w-5 text-blue-600" />
+                    <h2 className="text-base font-bold tracking-wide text-gray-900">
+                      Same Day
                     </h2>
                   </div>
-                  <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
+                  <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:space-y-4">
                     {sameDayBookings.map((booking, idx) => (
                       <Appear
                         key={booking.id}
@@ -568,12 +568,25 @@ const MyBookingsPage: React.FC = () => {
                   </div>
                 </section>
               )}
+              {timingFilter === "Same Day" &&
+                sameDayBookings.length === 0 &&
+                filteredBookings.length > 0 && (
+                  <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+                    <SparklesIcon className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+                    <p className="text-sm font-medium text-gray-500">
+                      No Same Day bookings yet.
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Book a service for today to see it here.
+                    </p>
+                  </div>
+                )}
               {timingFilter === "Scheduled" && scheduledBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
-                    <CalendarDaysIcon className="mr-2 h-6 w-6 text-blue-500" />
-                    <h2 className="text-lg font-bold tracking-wide text-blue-700">
-                      Scheduled Bookings
+                    <CalendarDaysIcon className="mr-2 h-5 w-5 text-blue-600" />
+                    <h2 className="text-base font-bold tracking-wide text-gray-900">
+                      Scheduled
                     </h2>
                     <div className="ml-auto flex items-center gap-2">
                       <button
@@ -581,7 +594,7 @@ const MyBookingsPage: React.FC = () => {
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
                           scheduledView === "calendar"
                             ? "bg-blue-600 text-white"
-                            : "text-gray-600 hover:bg-yellow-200"
+                            : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                         }`}
                         onClick={() => setScheduledView("calendar")}
                       >
@@ -592,7 +605,7 @@ const MyBookingsPage: React.FC = () => {
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
                           scheduledView === "list"
                             ? "bg-blue-600 text-white"
-                            : "text-gray-600 hover:bg-yellow-200"
+                            : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                         }`}
                         onClick={() => setScheduledView("list")}
                       >
@@ -601,7 +614,7 @@ const MyBookingsPage: React.FC = () => {
                     </div>
                   </div>
                   {scheduledView === "calendar" ? (
-                    <div className="rounded-2xl border border-blue-200 bg-white p-3 shadow-sm">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
                       <MonthlyBookingsCalendar
                         items={toCalendarItems(scheduledBookings)}
                         initialMonth={new Date()}
@@ -622,7 +635,7 @@ const MyBookingsPage: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
+                    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:space-y-4">
                       {scheduledBookings.map((booking, idx) => (
                         <Appear
                           key={booking.id}
@@ -654,12 +667,28 @@ const MyBookingsPage: React.FC = () => {
                   )}
                 </section>
               )}
+              {timingFilter === "Scheduled" &&
+                scheduledBookings.length === 0 &&
+                filteredBookings.length > 0 && (
+                  <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+                    <CalendarDaysIcon className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+                    <p className="text-sm font-medium text-gray-500">
+                      No Scheduled bookings yet.
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Book a service for a future date to see it here.
+                    </p>
+                  </div>
+                )}
             </div>
           ) : (
-            <div className="rounded-2xl border border-gray-100 bg-white py-16 text-center shadow-md">
-              <ClipboardDocumentListIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-              <p className="px-3 text-lg text-gray-500">
-                No bookings found with the current filters.
+            <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+              <ClipboardDocumentListIcon className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+              <p className="text-sm font-medium text-gray-500">
+                No bookings found.
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                Try adjusting your search or filters.
               </p>
             </div>
           )}

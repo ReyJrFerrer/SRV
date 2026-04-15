@@ -308,24 +308,19 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
               {typeof serviceData.reputationScore === "number" &&
                 (() => {
                   const score = Math.round(serviceData.reputationScore || 0);
-                  // Color mapping based on reputation ranges:
-                  // 0.00 - 20.00 => Building Trust (red)
-                  // 20.01 - 50.00 => Reliable (yellow)
-                  // 50.01 - 80.00 => Trusted (light blue)
-                  // 80.01 - 100.00 => Premium (green)
                   const strongBg =
                     score > 80
-                      ? "bg-green-600"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : score > 50
-                        ? "bg-sky-500"
+                        ? "bg-sky-50 text-sky-700 border border-sky-200"
                         : score > 20
-                          ? "bg-yellow-500"
-                          : "bg-red-600";
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : "bg-rose-50 text-rose-700 border border-rose-200";
 
                   return (
                     <div
                       title={`Reputation: ${score}`}
-                      className={`z-10 flex items-center justify-center ${strongBg} rounded-full px-3 py-1 text-sm font-semibold text-white`}
+                      className={`z-10 flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${strongBg}`}
                     >
                       {`Reputation: ${score}`}
                     </div>
@@ -336,11 +331,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
           <div className="service-content relative flex flex-grow flex-col p-4">
             <div className="flex-grow">
-              <div className="mb-2 flex min-w-0 flex-col items-start gap-x-2 gap-y-1 text-base text-blue-700">
-                <p className="mb-1 mt-2 w-full truncate text-lg font-bold leading-tight text-blue-800 transition-colors duration-200 group-hover:text-yellow-500">
+              <div className="mb-2 flex min-w-0 flex-col items-start gap-x-2 gap-y-1 text-base">
+                <p className="mb-1 mt-2 w-full truncate text-lg font-bold leading-tight text-gray-900 transition-colors duration-200 group-hover:text-blue-600">
                   {service.title}
                 </p>
-                <p className="flex min-w-0 items-center gap-1 truncate font-bold">
+                <p className="flex min-w-0 items-center gap-1 truncate font-medium text-gray-600">
                   {service.providerName}
                   {isVerified && (
                     <CheckBadgeIcon
@@ -349,11 +344,10 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                     />
                   )}
                 </p>
-                {/* Reputation shown in top-right badge; removed inline score below name per UX request */}
               </div>
               {service.location &&
                 (service.location.city || service.location.address) && (
-                  <div className="mb-2 flex items-center text-sm text-blue-700">
+                  <div className="mb-2 flex items-center text-sm text-gray-500">
                     <MapPinIcon className="mr-1 h-4 w-4 flex-shrink-0" />
                     <span className="truncate">
                       {service.location.city}
@@ -368,21 +362,21 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
             <div className={priceLocationContainerClass}>
               <div className="mb-1 flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p
-                  className={`text-xl font-bold text-blue-800 ${priceMarginClass} flex items-center gap-2`}
+                  className={`text-xl font-bold text-gray-900 ${priceMarginClass} flex items-center gap-2`}
                 >
                   {`₱${service.price.amount.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}`}
                 </p>
-                <div className="flex items-center text-sm text-blue-800">
+                <div className="flex items-center text-sm text-gray-600">
                   {serviceRating.count > 0 ? (
                     <>
                       {renderRatingStars(serviceRating.average, "h-5 w-5")}
                       <span className="ml-1 font-semibold">
                         {serviceRating.average.toFixed(1)}
                       </span>
-                      <span className="ml-1 text-gray-500">
+                      <span className="ml-1 text-gray-400">
                         ({serviceRating.count})
                       </span>
                     </>
@@ -398,7 +392,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           </div>
 
           <div className="mt-2 h-0 overflow-hidden transition-all duration-300 ease-in-out group-hover:mt-3 group-hover:h-10">
-            <div className="flex h-10 items-center justify-center rounded-lg bg-yellow-600 px-2 transition-colors group-hover:bg-yellow-500">
+            <div className="flex h-10 items-center justify-center rounded-lg bg-blue-600 px-2 transition-colors group-hover:bg-blue-700">
               <span className="text-base font-medium tracking-wide text-white">
                 Check service
               </span>

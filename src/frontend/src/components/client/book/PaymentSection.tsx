@@ -55,58 +55,74 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
     <div className="space-y-3">
       <div
         onClick={() => setPaymentMethod("CashOnHand")}
-        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors ${
+        className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all duration-200 ${
           paymentMethod === "CashOnHand"
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-200 bg-white hover:border-blue-300"
+            ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600"
+            : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
         }`}
       >
         <div className="flex items-center">
-          <CurrencyDollarIcon className="mr-3 h-6 w-6 text-green-600" />
-          <span className="font-semibold text-gray-800">Cash</span>
+          <CurrencyDollarIcon
+            className={`mr-3 h-6 w-6 ${paymentMethod === "CashOnHand" ? "text-blue-600" : "text-green-600"}`}
+          />
+          <span
+            className={`font-medium ${paymentMethod === "CashOnHand" ? "text-blue-900" : "text-gray-900"}`}
+          >
+            Cash
+          </span>
         </div>
         {paymentMethod === "CashOnHand" && (
           <CheckCircleIcon className="h-6 w-6 text-blue-600" />
         )}
       </div>
       {paymentMethod === "CashOnHand" && packages.some((p) => p.checked) && (
-        <div className="pl-4 pt-0">
-          <label className="text-sm font-medium text-gray-700">
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 shadow-sm">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Change for how much?
           </label>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={amountPaid}
-            onChange={handleAmountChange}
-            placeholder={`e.g., ${totalPrice.toFixed(2)}`}
-            className={`mt-1 w-full rounded-md border p-2 ${
-              paymentError ? "border-red-500" : "border-gray-300"
-            }`}
-          />
+          <div className="relative mt-1 rounded-md shadow-sm">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <span className="text-gray-500 sm:text-sm">₱</span>
+            </div>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={amountPaid}
+              onChange={handleAmountChange}
+              placeholder={`${totalPrice.toFixed(2)}`}
+              className={`block w-full rounded-lg border py-3 pl-8 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm ${
+                paymentError
+                  ? "border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500"
+                  : "border-gray-300 text-gray-900 focus:border-blue-500"
+              }`}
+            />
+          </div>
           {paymentError && amountPaid && (
-            <p className="mt-1 flex items-center text-xs text-red-600">
-              <ExclamationCircleIcon className="mr-1 h-4 w-4" />
+            <p className="mt-2 flex items-center text-sm text-red-600">
+              <ExclamationCircleIcon className="mr-1.5 h-4 w-4" />
               {paymentError}
             </p>
           )}
         </div>
       )}
       <div
-        className={`flex cursor-not-allowed items-center justify-between rounded-lg border border-gray-200 bg-white p-3 opacity-50`}
+        className={`flex cursor-not-allowed items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4 opacity-60 transition-colors`}
       >
         <div className="flex items-center">
-          <WalletIcon className="mr-3 h-6 w-6 text-blue-500" />
+          <WalletIcon className="mr-3 h-6 w-6 text-blue-400" />
           <div className="flex flex-col">
-            <span className="font-semibold text-gray-800">
-              E-Wallet (GCash and PayMaya)
+            <span className="font-medium text-gray-500">
+              E-Wallet{" "}
+              <span className="hidden sm:inline">(GCash & PayMaya)</span>
             </span>
           </div>
         </div>
-        <span className="text-xs text-gray-400">Soon</span>
+        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-400">
+          Soon
+        </span>
       </div>
       <div
-        className={`flex cursor-not-allowed items-center justify-between rounded-lg border border-gray-200 bg-white p-3 opacity-50`}
+        className={`flex cursor-not-allowed items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4 opacity-60 transition-colors`}
       >
         <div className="flex items-center">
           <img
@@ -114,25 +130,31 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             alt="SRV"
             width={24}
             height={24}
-            className="mr-3"
+            className="mr-3 opacity-60 grayscale"
           />
-          <span className="font-medium text-gray-800">SRV Wallet</span>
+          <span className="font-medium text-gray-500">SRV Wallet</span>
         </div>
-        <span className="text-xs text-gray-400">Soon</span>
+        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-400">
+          Soon
+        </span>
       </div>
-      <div className="flex cursor-not-allowed items-center justify-between rounded-lg border border-gray-200 bg-white p-3 opacity-50">
+      <div className="flex cursor-not-allowed items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4 opacity-60 transition-colors">
         <div className="flex items-center">
           <CreditCardIcon className="mr-3 h-6 w-6 text-gray-400" />
-          <span className="font-semibold text-gray-500">Debit/Credit Card</span>
+          <span className="font-medium text-gray-500">Debit/Credit Card</span>
         </div>
-        <span className="text-xs text-gray-400">Soon</span>
+        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-400">
+          Soon
+        </span>
       </div>
-      <div className="flex cursor-not-allowed items-center justify-between rounded-lg border border-gray-200 bg-white p-3 opacity-50">
+      <div className="flex cursor-not-allowed items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4 opacity-60 transition-colors">
         <div className="flex items-center">
           <GlobeAltIcon className="mr-3 h-6 w-6 text-gray-400" />
-          <span className="font-semibold text-gray-500">Web3 Wallet</span>
+          <span className="font-medium text-gray-500">Web3 Wallet</span>
         </div>
-        <span className="text-xs text-gray-400">Soon</span>
+        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-400">
+          Soon
+        </span>
       </div>
     </div>
   </div>

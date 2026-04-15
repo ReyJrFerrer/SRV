@@ -395,8 +395,11 @@ export const useLocationStore = create<LocationState>()(
 
       // Handle permission denial detected by Permissions API
       handlePermissionDenied: () => {
-        const currentMode = get().addressMode;
-        // Only clear if in context (GPS) mode; preserve manual location
+        const state = get();
+        // If it was already denied, do nothing to preserve manual location state
+        if (state.locationStatus === "denied") return;
+
+        const currentMode = state.addressMode;
         if (currentMode === "context") {
           set({
             locationStatus: "denied",
@@ -416,7 +419,7 @@ export const useLocationStore = create<LocationState>()(
           localStorage.removeItem("userLocation");
         }
         localStorage.setItem("locationPermission", "denied");
-        // Clear modal suppression flags so modal can appear
+        // Clear modal suppression flags so modal can appear ONLY on new denial
         try {
           localStorage.removeItem("loc_block_modal_suppress");
           sessionStorage.removeItem("dismissedLocationBlock");

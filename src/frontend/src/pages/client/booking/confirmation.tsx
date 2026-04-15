@@ -76,82 +76,87 @@ const BookingConfirmationPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="sticky top-0 z-20 w-full border-b border-gray-200 bg-white px-4 py-3 shadow-sm sm:px-6">
-        <h1 className="text-center text-2xl font-bold tracking-tight text-gray-900">
-          Booking Request Sent!
+      <header className="sticky top-0 z-20 w-full border-b border-gray-200 bg-white px-4 py-4 shadow-sm sm:px-6">
+        <h1 className="text-center text-xl font-bold tracking-tight text-gray-900">
+          Booking Request Sent
         </h1>
       </header>
 
       <main className="flex flex-1 items-center justify-center p-4">
         {bookingDetails ? (
-          <div className="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-lg">
-            <div className="relative mx-auto mb-4 h-24 w-24">
-              <img
-                src="/images/srv characters (SVG)/girl.svg"
-                alt="Success"
-                className="h-full w-full object-cover"
-              />
-            </div>
-
-            <h2 className="mb-2 text-xl font-semibold text-gray-900">
-              Your request has been sent to {bookingDetails.providerName}!
-            </h2>
-            <p className="mb-6 text-gray-600">
-              You will be notified of your booking status.
-            </p>
-
-            <div className="mb-6 rounded-lg bg-gray-50 p-4 text-left">
-              <h3 className="mb-3 border-b border-gray-200 pb-2 font-semibold text-gray-900">
-                Booking Summary:
-              </h3>
-
-              <div className="space-y-2 text-sm">
-                <p className="break-words">
-                  <span className="font-bold text-gray-700">Provider:</span>{" "}
-                  {bookingDetails.providerName}
+          <div className="w-full max-w-md">
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+              <div className="mb-6 text-center">
+                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+                  <img
+                    src="/images/srv characters (SVG)/girl.svg"
+                    alt="Success"
+                    className="h-16 w-16 object-contain"
+                  />
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                  Request Sent!
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your request has been sent to{" "}
+                  <span className="font-medium text-gray-700">
+                    {bookingDetails.providerName}
+                  </span>
+                  . You will be notified of your booking status.
                 </p>
-                <p className="break-words">
-                  <span className="font-bold text-gray-700">Service:</span>{" "}
-                  {bookingDetails.serviceName}
-                </p>
+              </div>
+
+              <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="font-medium text-gray-500">Service</span>
+                  <span className="font-medium text-gray-900">
+                    {bookingDetails.serviceName}
+                  </span>
+                </div>
                 {bookingDetails.packages &&
                   bookingDetails.packages.length > 0 && (
-                    <div>
-                      <span className="font-bold text-gray-700">Packages:</span>
-                      <ul className="ml-4 mt-1 list-outside list-disc">
+                    <div className="flex items-start justify-between">
+                      <span className="font-medium text-gray-500">
+                        Packages
+                      </span>
+                      <div className="text-right font-medium text-gray-900">
                         {bookingDetails.packages.map((pkg) => (
-                          <li
-                            key={pkg.id}
-                            className="break-words text-gray-600"
-                          >
-                            {pkg.title}
-                          </li>
+                          <div key={pkg.id}>{pkg.title}</div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   )}
-                <div className="pt-2">
-                  <span className="font-bold text-gray-700">
-                    Booking Details:
-                  </span>
-                  <ul className="ml-3 mt-1 list-inside list-disc">
-                    <li>
-                      <span className="font-semibold">Type:</span>{" "}
+              </div>
+
+              <div className="mb-6 border-b border-dashed border-gray-200 pb-6 text-sm">
+                <h3 className="mb-3 text-base font-bold text-gray-900">
+                  Booking Details
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Type</span>
+                    <span className="font-medium text-gray-900">
                       {bookingDetails.bookingType === "sameday"
                         ? "Same Day"
                         : "Scheduled"}
-                    </li>
-                    <li>
-                      <span className="font-semibold">Date:</span>{" "}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Date</span>
+                    <span className="font-medium text-gray-900">
                       {bookingDetails.date}
-                    </li>
-                    <li>
-                      <span className="font-semibold">Time:</span>{" "}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Time</span>
+                    <span className="font-medium text-gray-900">
                       {formatTo12Hour(bookingDetails.time)}
-                    </li>
-                    {bookingDetails.location && (
-                      <li>
-                        <span className="font-semibold">Location:</span>{" "}
+                    </span>
+                  </div>
+                  {bookingDetails.location && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Location</span>
+                      <span className="w-2/3 text-right font-medium text-gray-900">
                         {bookingDetails.location
                           .split(",")
                           .map((part) =>
@@ -164,16 +169,22 @@ const BookingConfirmationPage: React.FC = () => {
                         bookingDetails.landmark !== "None"
                           ? ` (${bookingDetails.landmark})`
                           : ""}
-                      </li>
-                    )}
-                  </ul>
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="pt-2">
-                  <span className="font-bold text-gray-700">Payment:</span>
-                  <ul className="ml-3 mt-1 list-inside list-disc">
-                    {bookingDetails.packagePrice && (
-                      <li>
-                        <span className="font-semibold">Package Price:</span> ₱{" "}
+              </div>
+
+              <div className="mb-6 border-b border-dashed border-gray-200 pb-6 text-sm">
+                <h3 className="mb-3 text-base font-bold text-gray-900">
+                  Payment Summary
+                </h3>
+                <div className="space-y-3">
+                  {bookingDetails.packagePrice && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Package Price</span>
+                      <span className="font-medium text-gray-900">
+                        ₱{" "}
                         {Number(bookingDetails.packagePrice).toLocaleString(
                           undefined,
                           {
@@ -181,14 +192,16 @@ const BookingConfirmationPage: React.FC = () => {
                             maximumFractionDigits: 2,
                           },
                         )}
-                      </li>
-                    )}
-                    {bookingDetails.amountToPay &&
-                      bookingDetails.amountToPay !== "N/A" && (
-                        <li>
-                          <span className="font-semibold">
-                            Amount To Pay In Cash:
-                          </span>{" "}
+                      </span>
+                    </div>
+                  )}
+                  {bookingDetails.amountToPay &&
+                    bookingDetails.amountToPay !== "N/A" && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">
+                          Amount To Pay In Cash
+                        </span>
+                        <span className="font-medium text-gray-900">
                           ₱{" "}
                           {Number(bookingDetails.amountToPay).toLocaleString(
                             undefined,
@@ -197,12 +210,15 @@ const BookingConfirmationPage: React.FC = () => {
                               maximumFractionDigits: 2,
                             },
                           )}
-                        </li>
-                      )}
-                    {bookingDetails.expectedChange &&
-                    bookingDetails.expectedChange !== "0.00" ? (
-                      <li>
-                        <span className="font-semibold">Expected Change:</span>{" "}
+                        </span>
+                      </div>
+                    )}
+
+                  {bookingDetails.expectedChange &&
+                  bookingDetails.expectedChange !== "0.00" ? (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Expected Change</span>
+                      <span className="font-medium text-gray-900">
                         ₱{" "}
                         {Number(bookingDetails.expectedChange).toLocaleString(
                           undefined,
@@ -211,66 +227,83 @@ const BookingConfirmationPage: React.FC = () => {
                             maximumFractionDigits: 2,
                           },
                         )}
-                      </li>
-                    ) : (
-                      bookingDetails.amountToPay &&
-                      bookingDetails.amountToPay !== "N/A" &&
-                      bookingDetails.packagePrice &&
-                      (() => {
-                        const paid = parseFloat(bookingDetails.amountToPay);
-                        const price = parseFloat(bookingDetails.packagePrice);
-                        if (!isNaN(paid) && !isNaN(price) && paid > price) {
-                          return (
-                            <li>
-                              <span className="font-semibold">
-                                Expected Change:
-                              </span>{" "}
+                      </span>
+                    </div>
+                  ) : (
+                    bookingDetails.amountToPay &&
+                    bookingDetails.amountToPay !== "N/A" &&
+                    bookingDetails.packagePrice &&
+                    (() => {
+                      const paid = parseFloat(bookingDetails.amountToPay);
+                      const price = parseFloat(bookingDetails.packagePrice);
+                      if (!isNaN(paid) && !isNaN(price) && paid > price) {
+                        return (
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">
+                              Expected Change
+                            </span>
+                            <span className="font-medium text-gray-900">
                               ₱{" "}
                               {(paid - price).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
-                            </li>
-                          );
-                        }
-                        return null;
-                      })()
-                    )}
-                  </ul>
-                </div>
-                {bookingDetails.notes && (
-                  <p className="break-words">
-                    <span className="font-bold text-gray-700">
-                      Notes for Provider:
-                    </span>{" "}
-                    {bookingDetails.notes}
-                  </p>
-                )}
-
-                {/* Attachments (images/videos) */}
-                <div className="mt-4">
-                  <ClientAttachments
-                    attachments={bookingDetails.attachments}
-                    notes={bookingDetails.notes}
-                  />
+                            </span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()
+                  )}
                 </div>
               </div>
+
+              {/* Notes & Attachments */}
+              {(bookingDetails.notes ||
+                (bookingDetails.attachments &&
+                  bookingDetails.attachments.length > 0)) && (
+                <div className="text-sm">
+                  {bookingDetails.notes && (
+                    <div className="mb-3">
+                      <span className="mb-1 block font-bold text-gray-900">
+                        Notes for Provider:
+                      </span>
+                      <p className="text-gray-700">{bookingDetails.notes}</p>
+                    </div>
+                  )}
+                  {bookingDetails.attachments &&
+                    bookingDetails.attachments.length > 0 && (
+                      <div className="mt-4">
+                        <span className="mb-2 block font-bold text-gray-900">
+                          Attachments:
+                        </span>
+                        <ClientAttachments
+                          attachments={bookingDetails.attachments}
+                          notes={bookingDetails.notes}
+                        />
+                      </div>
+                    )}
+                </div>
+              )}
             </div>
-            <Link
-              to="/client/home"
-              className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-yellow-500"
-            >
-              Back to Home
-            </Link>
+
+            <div className="mt-6 flex gap-3">
+              <Link
+                to="/client/home"
+                className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              >
+                Back to Home
+              </Link>
+            </div>
           </div>
         ) : (
-          <div className="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-lg">
-            <p className="mb-4 text-gray-600">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <p className="mb-6 text-gray-500">
               Loading booking details or an error occurred.
             </p>
             <Link
               to="/client/home"
-              className="inline-block w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-yellow-500"
+              className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
               Back to Home
             </Link>
