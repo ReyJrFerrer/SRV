@@ -841,7 +841,7 @@ export const useProviderBookingManagement =
 
               // Check if a conversation already exists between these users
               const existingConversations =
-                await chatCanisterService.getMyConversations();
+                await chatCanisterService.getMyConversations(providerIdStr);
               const conversationExists = existingConversations.some(
                 (conversationSummary) => {
                   const conversation = conversationSummary.conversation;

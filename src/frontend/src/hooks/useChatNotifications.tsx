@@ -25,8 +25,9 @@ export const useChatNotifications = () => {
     }
 
     try {
-      const conversations = await chatCanisterService.getMyConversations();
       const currentUserId = identity.getPrincipal().toString();
+      const conversations =
+        await chatCanisterService.getMyConversations(currentUserId);
 
       return conversations.reduce((total, convoSummary) => {
         // unreadCount is now an object: { [userId: string]: number }
@@ -106,13 +107,16 @@ export const useChatNotifications = () => {
 
     try {
       // Get all conversations and mark them as read
-      const conversations = await chatCanisterService.getMyConversations();
+      const currentUserId = identity.getPrincipal().toString();
+      const conversations =
+        await chatCanisterService.getMyConversations(currentUserId);
 
       // Mark each conversation as read (in parallel for better performance)
       await Promise.all(
         conversations.map((conversationSummary) =>
           chatCanisterService.markMessagesAsRead(
             conversationSummary.conversation.id,
+            currentUserId,
           ),
         ),
       );
