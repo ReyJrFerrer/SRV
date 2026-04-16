@@ -212,7 +212,7 @@ const LocationAvailabilitySection: React.FC<Props> = ({
               <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
               Availability
             </label>
-            <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
+            <div className="flex w-full flex-col gap-3">
               {service.weeklySchedule?.filter(
                 (entry: any) =>
                   entry.availability.isAvailable &&
@@ -230,31 +230,31 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                   .map((entry: any) => (
                     <div
                       key={entry.day}
-                      className="flex w-full flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow sm:w-auto sm:min-w-[140px]"
+                      className="grid grid-cols-1 items-start gap-3 rounded-xl border border-blue-100 bg-white p-4 shadow-sm sm:grid-cols-3 lg:grid-cols-4"
                     >
-                      <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
-                        <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                      <div className="flex items-center gap-2 text-sm font-bold text-blue-800 sm:col-span-1 sm:pt-1.5">
+                        <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
                         {entry.day}
-                      </span>
-                      <ul className="ml-1 space-y-1">
+                      </div>
+                      <div className="flex flex-wrap justify-start gap-2 sm:col-span-2 lg:col-span-3 lg:justify-end">
                         {entry.availability.slots.map(
                           (slot: any, idx: number) => (
-                            <li
+                            <span
                               key={idx}
-                              className="flex items-center gap-2 text-xs text-blue-900"
+                              className="inline-block whitespace-nowrap rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
                             >
-                              <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
-                                {formatTime(slot.startTime)} -{" "}
-                                {formatTime(slot.endTime)}
-                              </span>
-                            </li>
+                              {formatTime(slot.startTime)} -{" "}
+                              {formatTime(slot.endTime)}
+                            </span>
                           ),
                         )}
-                      </ul>
+                      </div>
                     </div>
                   ))
               ) : (
-                <span className="text-blue-400">Not specified</span>
+                <div className="rounded-xl border border-blue-100 bg-blue-50/50 py-4 text-center text-sm text-blue-400">
+                  Not specified
+                </div>
               )}
             </div>
           </div>

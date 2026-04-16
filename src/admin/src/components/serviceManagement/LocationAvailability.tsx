@@ -74,7 +74,7 @@ export const LocationAvailability: React.FC<LocationAvailabilityProps> = ({
             <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
             Availability
           </label>
-          <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
+          <div className="flex w-full flex-col gap-3">
             {availableDays.length > 0 ? (
               availableDays.map((day, index) => {
                 const availability = day.availability || {
@@ -87,34 +87,34 @@ export const LocationAvailability: React.FC<LocationAvailabilityProps> = ({
                 return (
                   <div
                     key={index}
-                    className="flex min-w-[140px] flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow"
+                    className="grid grid-cols-1 items-start gap-3 rounded-xl border border-blue-100 bg-white p-4 shadow-sm sm:grid-cols-3 lg:grid-cols-4"
                   >
-                    <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
-                      <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                    <div className="flex items-center gap-2 text-sm font-bold text-blue-800 sm:col-span-1 sm:pt-1.5">
+                      <CalendarDaysIcon className="h-5 w-5 text-blue-400" />
                       {dayName}
-                    </span>
-                    {availability.slots && availability.slots.length > 0 ? (
-                      <ul className="ml-1 space-y-1">
-                        {availability.slots.map((slot: any, idx: number) => (
-                          <li
+                    </div>
+                    <div className="flex flex-wrap justify-start gap-2 sm:col-span-2 lg:col-span-3 lg:justify-end">
+                      {availability.slots && availability.slots.length > 0 ? (
+                        availability.slots.map((slot: any, idx: number) => (
+                          <span
                             key={idx}
-                            className="flex items-center gap-2 text-xs text-blue-900"
+                            className="inline-block whitespace-nowrap rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
                           >
-                            <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
-                              {formatTime(slot.startTime)} -{" "}
-                              {formatTime(slot.endTime)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span className="text-xs text-blue-400">No slots</span>
-                    )}
+                            {formatTime(slot.startTime)} -{" "}
+                            {formatTime(slot.endTime)}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-blue-400">No slots</span>
+                      )}
+                    </div>
                   </div>
                 );
               })
             ) : (
-              <span className="text-blue-400">Not specified</span>
+              <div className="rounded-xl border border-blue-100 bg-blue-50/50 py-4 text-center text-sm text-blue-400">
+                Not specified
+              </div>
             )}
           </div>
         </div>
