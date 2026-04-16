@@ -181,20 +181,20 @@ const SearchResultsPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="sticky top-0 z-40 bg-white px-4 py-3 shadow-sm">
-        <div className="mb-3 flex items-center gap-3">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white px-4 py-4 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 transition-colors hover:bg-gray-100"
+            className="rounded-xl bg-gray-50 p-2.5 text-gray-700 transition-colors hover:bg-gray-100 hover:text-blue-600"
             aria-label="Go back"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
-          <h1 className="flex-grow truncate text-lg font-semibold text-gray-800">
+          <h1 className="flex-grow truncate text-xl font-black text-gray-900">
             {searchQuery ? `Results for "${searchQuery}"` : "Search Services"}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="flex-grow">
             <SearchBar
               placeholder="Search for another service..."
@@ -206,17 +206,21 @@ const SearchResultsPage: React.FC = () => {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="relative rounded-lg bg-gray-100 p-3 text-gray-600 hover:bg-gray-200"
+            className={`relative rounded-xl p-3 transition-colors ${
+              showFilters
+                ? "bg-blue-600 text-white"
+                : "bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+            }`}
           >
             <AdjustmentsHorizontalIcon className="h-6 w-6" />
           </button>
         </div>
       </header>
 
-      <main className="flex-grow overflow-y-auto p-2 pb-20 sm:p-4">
+      <main className="flex-grow space-y-4 overflow-y-auto p-4 pb-24">
         {error && (
-          <div className="py-16 text-center">
-            <p className="text-lg text-red-500">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 py-16 text-center shadow-sm">
+            <p className="text-lg font-bold text-red-500">
               Error loading services. Please try again.
             </p>
           </div>
@@ -224,16 +228,16 @@ const SearchResultsPage: React.FC = () => {
 
         {/* SECTION: Filter and sort controls */}
         {showFilters && !loading && !error && results.length > 0 && (
-          <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
-            <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="grid grid-cols-1 items-end gap-5 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-bold text-gray-900">
                   Sort By
                 </label>
                 <select
                   value={pendingSortBy}
                   onChange={(e) => setPendingSortBy(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="rating">Best Rating</option>
                   <option value="price_asc">Price: Low to High</option>
@@ -242,8 +246,11 @@ const SearchResultsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Max Price: ₱{pendingMaxPrice.toLocaleString()}
+                <label className="mb-2 block flex justify-between text-sm font-bold text-gray-900">
+                  <span>Max Price</span>
+                  <span className="text-blue-600">
+                    ₱{pendingMaxPrice.toLocaleString()}
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -252,12 +259,15 @@ const SearchResultsPage: React.FC = () => {
                   step="100"
                   value={pendingMaxPrice}
                   onChange={(e) => setPendingMaxPrice(Number(e.target.value))}
-                  className="mt-2 block w-full"
+                  className="block h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-blue-600"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Min Rating: {pendingMinRating.toFixed(1)} ★
+                <label className="mb-2 block flex justify-between text-sm font-bold text-gray-900">
+                  <span>Min Rating</span>
+                  <span className="text-yellow-500">
+                    {pendingMinRating.toFixed(1)} ★
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -266,10 +276,10 @@ const SearchResultsPage: React.FC = () => {
                   step="0.5"
                   value={pendingMinRating}
                   onChange={(e) => setPendingMinRating(Number(e.target.value))}
-                  className="mt-2 block w-full"
+                  className="block h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-yellow-400"
                 />
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 <button
                   onClick={() => {
                     setSortBy(pendingSortBy);
@@ -277,7 +287,7 @@ const SearchResultsPage: React.FC = () => {
                     setMinRating(pendingMinRating);
                     setShowFilters(false);
                   }}
-                  className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-400"
+                  className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 active:bg-blue-800"
                 >
                   Apply Filters
                 </button>
@@ -290,9 +300,11 @@ const SearchResultsPage: React.FC = () => {
           !error &&
           searchQuery &&
           sortedAndFilteredResults.length === 0 && (
-            <div className="py-8">
+            <div className="mt-4 rounded-3xl border border-gray-100 bg-white py-8 shadow-sm">
               <EmptyState
-                icon={<MagnifyingGlassIcon className="h-12 w-12" />}
+                icon={
+                  <MagnifyingGlassIcon className="h-12 w-12 text-gray-400" />
+                }
                 title="No services found"
                 message="No services matched your search criteria. Try adjusting your search or filters."
                 actionLabel="Clear Search"
@@ -302,9 +314,9 @@ const SearchResultsPage: React.FC = () => {
           )}
 
         {!loading && !error && !searchQuery && (
-          <div className="py-8">
+          <div className="mt-4 rounded-3xl border border-gray-100 bg-white py-8 shadow-sm">
             <EmptyState
-              icon={<MagnifyingGlassIcon className="h-12 w-12" />}
+              icon={<MagnifyingGlassIcon className="h-12 w-12 text-gray-400" />}
               title="Search Services"
               message="Enter a term above to search for services."
             />
@@ -312,7 +324,7 @@ const SearchResultsPage: React.FC = () => {
         )}
 
         {!loading && !error && sortedAndFilteredResults.length > 0 && (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+          <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
             {sortedAndFilteredResults.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
                 <ServiceListItem

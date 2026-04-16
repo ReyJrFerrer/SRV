@@ -211,8 +211,8 @@ const ConversationPage: React.FC = () => {
                 <div
                   className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${
                     fromCurrentUser
-                      ? "rounded-br-sm shadow-sm bg-blue-600 text-white"
-                      : "rounded-bl-sm border border-gray-100 shadow-sm bg-white text-gray-800"
+                      ? "rounded-br-sm bg-blue-600 text-white shadow-sm"
+                      : "rounded-bl-sm border border-gray-100 bg-white text-gray-800 shadow-sm"
                   }`}
                 >
                   <p className="text-sm">

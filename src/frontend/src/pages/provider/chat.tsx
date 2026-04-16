@@ -350,7 +350,7 @@ const ClientChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm">
+      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white shadow-sm">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
           <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Messages
@@ -376,7 +376,7 @@ const ClientChatPage: React.FC = () => {
             </div>
           ) : conversations.length > 0 ? (
             <div
-              className={`w-full ${isDesktop ? "mx-auto max-w-6xl my-4 md:rounded-2xl border border-gray-100 shadow-sm bg-white overflow-hidden flex h-[calc(100vh-80px)]" : ""}`}
+              className={`w-full ${isDesktop ? "mx-auto my-4 flex h-[calc(100vh-80px)] max-w-6xl overflow-hidden border border-gray-100 bg-white shadow-sm md:rounded-2xl" : ""}`}
             >
               <ul
                 className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} space-y-1 py-2`}
@@ -420,7 +420,7 @@ const ClientChatPage: React.FC = () => {
                             otherUserImageUrl,
                           )
                         }
-                        className={`group flex cursor-pointer items-center space-x-4 p-3 mx-2 rounded-xl transition-all ${selectedConversationId === conversation.id ? "bg-blue-50 text-blue-900 border border-blue-100" : "hover:bg-gray-50"}`}
+                        className={`group mx-2 flex cursor-pointer items-center space-x-4 rounded-xl p-3 transition-all ${selectedConversationId === conversation.id ? "border border-blue-100 bg-blue-50 text-blue-900" : "hover:bg-gray-50"}`}
                       >
                         <div className="relative h-14 w-14 flex-shrink-0">
                           <ProfileImage
@@ -467,7 +467,7 @@ const ClientChatPage: React.FC = () => {
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
                       {/* Header */}
-                      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 shadow-sm bg-white">
+                      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3 shadow-sm">
                         <div className="flex items-center gap-3">
                           <div className="relative h-10 w-10">
                             <ProfileImage
@@ -518,7 +518,7 @@ const ClientChatPage: React.FC = () => {
                                   </div>
                                 )}
                                 <div
-                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-sm shadow-sm bg-blue-600 text-white" : "rounded-bl-sm border border-gray-100 shadow-sm bg-white text-gray-800"}`}
+                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-sm bg-blue-600 text-white shadow-sm" : "rounded-bl-sm border border-gray-100 bg-white text-gray-800 shadow-sm"}`}
                                 >
                                   <p className="text-sm">
                                     {typeof message.content === "string"
@@ -537,7 +537,7 @@ const ClientChatPage: React.FC = () => {
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="p-3 md:sticky md:bottom-0 bg-white border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                      <div className="border-t border-gray-100 bg-white p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:sticky md:bottom-0">
                         <form
                           onSubmit={handleSendMessage}
                           className="flex items-center gap-3"

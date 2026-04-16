@@ -109,15 +109,15 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
     switch (level) {
       case "New":
         return {
-          color: "bg-blue-50 text-blue-900 border-blue-200",
+          color: "bg-blue-50 text-blue-700 shadow-sm border-blue-100",
           icon: SparklesIcon,
           description: (
             <>
-              <span className="mb-1 flex items-center justify-center gap-2 text-lg font-bold text-blue-700">
-                <SparklesIcon className="h-6 w-6 text-blue-500" /> Welcome to
+              <span className="mb-2 flex items-center justify-center gap-2 text-lg font-black tracking-tight text-blue-600">
+                <SparklesIcon className="h-5 w-5 text-blue-500" /> Welcome to
                 SRV!
               </span>
-              <span className="block text-gray-700">
+              <span className="block text-sm font-medium text-blue-800/70">
                 Complete your first booking to start building your reputation.
               </span>
             </>
@@ -125,35 +125,35 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         };
       case "Low":
         return {
-          color: "bg-red-100 text-red-800 border-red-300",
+          color: "bg-red-50 text-red-700 shadow-sm border-red-100",
           icon: ExclamationTriangleIcon,
           description:
             "Building trust - Focus on completing bookings and maintaining good conduct to improve your client rating.",
         };
       case "Medium":
         return {
-          color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+          color: "bg-yellow-50 text-yellow-700 shadow-sm border-yellow-100",
           icon: StarIcon,
           description:
             "Reliable client - You're building a good reputation! Keep up the excellent conduct.",
         };
       case "High":
         return {
-          color: "bg-blue-100 text-blue-800 border-blue-300",
+          color: "bg-blue-50 text-blue-700 shadow-sm border-blue-100",
           icon: TrophyIcon,
           description:
             "Trusted client - Excellent reputation! Service providers trust you as a reliable client.",
         };
       case "VeryHigh":
         return {
-          color: "bg-green-100 text-green-800 border-green-300",
+          color: "bg-green-50 text-green-700 shadow-sm border-green-100",
           icon: ShieldCheckIcon,
           description:
             "Premium client - Outstanding reputation! You're among the top-rated clients on our platform.",
         };
       default:
         return {
-          color: "bg-gray-100 text-gray-800 border-gray-300",
+          color: "bg-gray-50 text-gray-700 shadow-sm border-gray-200",
           icon: InformationCircleIcon,
           description: "Trust level not available.",
         };
@@ -162,11 +162,11 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
   const config = getTrustLevelConfig(trustLevel);
   const IconComponent = config.icon;
   return (
-    <div className="mt-4 flex flex-col items-center">
+    <div className="flex w-full flex-col items-center">
       <div
-        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
+        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-bold uppercase tracking-wide ${config.color}`}
       >
-        <IconComponent className="mr-2 h-5 w-5" />
+        <IconComponent className="mr-2 h-4 w-4" />
         {trustLevel === "VeryHigh"
           ? "Premium"
           : trustLevel === "High"
@@ -181,21 +181,21 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         <button
           type="button"
           aria-label="Show badge info"
-          className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="ml-2 rounded-full p-1 transition-colors hover:bg-black/5 focus:outline-none"
           onClick={onInfoClick}
         >
           <InformationCircleIcon
-            className={`h-5 w-5 text-blue-500 transition-transform ${infoOpen ? "rotate-90" : ""}`}
+            className={`h-5 w-5 text-current opacity-60 transition-transform hover:opacity-100 ${infoOpen ? "rotate-90" : ""}`}
           />
         </button>
       </div>
-      <div className="mt-3 flex w-full max-w-md flex-col items-center">
+      <div className="mt-4 flex w-full flex-col items-center">
         {trustLevel === "New" ? (
-          <div className="w-full rounded-lg border border-blue-100 bg-blue-50 p-4 text-center shadow-sm">
+          <div className="w-full rounded-2xl border-none bg-gradient-to-br from-blue-50 to-indigo-50 p-5 text-center shadow-sm">
             {config.description}
           </div>
         ) : (
-          <p className="max-w-sm text-center text-xs leading-relaxed text-gray-600">
+          <p className="max-w-sm text-center text-sm font-medium leading-relaxed text-gray-500">
             {config.description}
           </p>
         )}
@@ -670,115 +670,106 @@ const ClientProfilePage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-8">
             <div className="flex flex-col space-y-4 lg:col-span-1">
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative mb-4">
-                    <ProfilePictureModal
-                      src={previewImage || profileImageUrl}
-                      isLoading={isImageLoading}
-                    />
-                    {isEditing && (
-                      <>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          className="hidden"
-                          accept="image/png, image/jpeg"
-                        />
-                        <button
-                          onClick={handleImageUploadClick}
-                          className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
-                        >
-                          <CameraIcon className="h-5 w-5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                  {!isEditing ? (
+              <div className="flex flex-col items-center rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div className="relative mb-4">
+                  <ProfilePictureModal
+                    src={previewImage || profileImageUrl}
+                    isLoading={isImageLoading}
+                  />
+                  {isEditing && (
                     <>
-                      <h2 className="text-2xl font-bold text-gray-800">
-                        {profile?.name || "Client Name"}
-                      </h2>
-                      <p className="text-md text-gray-500">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/png, image/jpeg"
+                      />
+                      <button
+                        onClick={handleImageUploadClick}
+                        className="absolute bottom-0 right-0 rounded-full border-2 border-white bg-blue-600 p-2.5 text-white shadow-sm transition-colors hover:bg-blue-700"
+                      >
+                        <CameraIcon className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {!isEditing ? (
+                  <div className="w-full text-center">
+                    <h2 className="text-2xl font-black tracking-tight text-gray-900">
+                      {profile?.name || "Client Name"}
+                    </h2>
+                    <p className="mt-1 text-sm font-medium text-gray-500">
+                      {profile?.phone || "No phone number"}
+                    </p>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="mt-6 flex w-full items-center justify-center rounded-xl bg-gray-50 px-4 py-3 text-sm font-bold text-gray-800 transition hover:bg-gray-100"
+                    >
+                      <PencilIcon className="mr-2 h-4 w-4 text-gray-500" />
+                      Edit Profile
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-4 w-full space-y-4">
+                    <div>
+                      <label
+                        htmlFor="name"
+                        className="block text-left text-xs font-bold uppercase tracking-wider text-gray-500"
+                      >
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (nameError) setNameError("");
+                          if (editError) setEditError("");
+                        }}
+                        className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      {nameError && (
+                        <p className="mt-1 text-xs font-medium text-red-500">
+                          {nameError}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <label
+                        htmlFor="phone"
+                        className="block text-xs font-bold uppercase tracking-wider text-gray-500"
+                      >
+                        Phone Number
+                      </label>
+                      <p className="mt-1 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-bold text-gray-900">
                         {profile?.phone || "No phone number"}
                       </p>
-                    </>
-                  ) : (
-                    <div className="mt-4 w-full max-w-sm space-y-4">
-                      <div>
-                        <label
-                          htmlFor="name"
-                          className="block text-left text-sm font-medium text-gray-700"
-                        >
-                          Full Name
-                        </label>
-                        <input
-                          type="text"
-                          id="name"
-                          value={name}
-                          onChange={(e) => {
-                            setName(e.target.value);
-                            if (nameError) setNameError("");
-                            if (editError) setEditError("");
-                          }}
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                        />
-                        {nameError && (
-                          <p className="mt-1 text-sm text-red-500">
-                            {nameError}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <label
-                          htmlFor="phone"
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Phone Number
-                        </label>
-                        <p className="mt-1 text-gray-800">
-                          {profile?.phone || "No phone number"}
-                        </p>
-                        <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
-                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
-                          <p className="text-xs text-blue-800">
-                            Your phone number is linked to your account for
-                            security and cannot be changed here. Please contact
-                            support for assistance if you need to update it.
-                          </p>
-                        </div>
-                      </div>
+                      <p className="mt-2 flex items-start gap-1.5 px-1 text-xs text-gray-500">
+                        <InformationCircleIcon className="h-4 w-4 shrink-0 text-blue-500" />
+                        Phone number is linked for security. Contact support to
+                        update.
+                      </p>
                     </div>
-                  )}
-                  <div className="mt-6">
-                    {!isEditing ? (
+                    <div className="flex gap-3 pt-2">
                       <button
-                        onClick={() => setIsEditing(true)}
-                        className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                        onClick={handleCancelEdit}
+                        className="flex-1 rounded-xl bg-gray-100 px-4 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-200"
                       >
-                        <PencilIcon className="mr-2 h-4 w-4" />
-                        Edit Profile
+                        Cancel
                       </button>
-                    ) : (
-                      <div className="flex space-x-3">
-                        <button
-                          onClick={handleCancelEdit}
-                          className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleSaveChanges}
-                          disabled={loading}
-                          className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
-                        >
-                          {loading ? "Saving..." : "Save Changes"}
-                        </button>
-                      </div>
-                    )}
+                      <button
+                        onClick={handleSaveChanges}
+                        disabled={loading}
+                        className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {loading ? "Saving..." : "Save"}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               <div className="rounded-2xl bg-yellow-400 p-1 shadow-sm transition-transform hover:-translate-y-1">
                 <button
@@ -860,88 +851,86 @@ const ClientProfilePage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-6">
-                    <div className="mb-2 flex items-center justify-center gap-2">
+                    <div className="relative mb-2 flex items-center justify-center">
                       <ReputationScore score={reputationScore} />
                     </div>
                     {reputationDisplay && (
-                      <>
-                        <div className="flex w-full justify-center">
-                          <TrustLevelBadge
-                            trustLevel={reputationDisplay.level}
-                            onInfoClick={() => setShowBadgeInfo(true)}
-                            infoOpen={showBadgeInfo}
-                          />
-                        </div>
+                      <div className="flex w-full flex-col items-center gap-4">
+                        <TrustLevelBadge
+                          trustLevel={reputationDisplay.level}
+                          onInfoClick={() => setShowBadgeInfo(true)}
+                          infoOpen={showBadgeInfo}
+                        />
                         <TrustLevelInfoModal
                           show={showBadgeInfo}
                           onClose={() => setShowBadgeInfo(false)}
                         />
-                        <AboutReputationScoreModal
-                          show={showAboutInfo}
-                          onClose={() => setShowAboutInfo(false)}
-                          reputationDisplay={reputationDisplay}
-                        />
-                      </>
+                      </div>
                     )}
                   </div>
                 )}
+
                 <div className="mt-8 space-y-6">
-                  <div className="rounded-2xl border border-yellow-100 bg-yellow-50 p-5 shadow-sm">
-                    <div className="mb-4 flex items-center justify-between">
-                      <h4 className="text-sm font-bold uppercase tracking-wider text-yellow-800">
+                  <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                    {/* Decorative background element */}
+                    <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-yellow-50 opacity-50 blur-2xl"></div>
+
+                    <div className="relative z-10 mb-6 flex items-center justify-between">
+                      <h4 className="text-sm font-black uppercase tracking-wider text-gray-900">
                         Your Ratings
                       </h4>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          aria-label="About ratings"
-                          className="rounded-full bg-yellow-100 p-1.5 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                          onClick={() => setShowRatingInfo(true)}
-                        >
-                          <InformationCircleIcon className="h-4 w-4 text-yellow-700" />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        aria-label="About ratings"
+                        className="rounded-full bg-gray-50 p-2 text-gray-400 transition-colors hover:bg-yellow-50 hover:text-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        onClick={() => setShowRatingInfo(true)}
+                      >
+                        <InformationCircleIcon className="h-5 w-5" />
+                      </button>
                     </div>
+
                     {ratingsLoading ? (
-                      <div className="flex items-center justify-center py-6 text-sm text-gray-500">
-                        Loading...
+                      <div className="flex animate-pulse items-center justify-center py-8">
+                        <div className="h-16 w-16 rounded-2xl bg-gray-100"></div>
                       </div>
                     ) : ratingsError ? (
-                      <div className="py-4 text-sm text-red-500">
+                      <div className="py-6 text-center text-sm font-medium text-red-500">
                         {ratingsError}
                       </div>
                     ) : (
-                      <div className="flex items-end justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-yellow-400 text-2xl font-black text-gray-900 shadow-sm">
+                      <div className="relative z-10 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-400 text-2xl font-black text-gray-900 shadow-sm">
                             {avgRating.toFixed(1)}
                           </div>
                           <div>
-                            <div className="flex items-center text-yellow-600">
-                              <StarIcon className="h-4 w-4" />
-                              <StarIcon className="h-4 w-4" />
-                              <StarIcon className="h-4 w-4" />
-                              <StarIcon className="h-4 w-4" />
-                              <StarIcon className="h-4 w-4" />
+                            <div className="mb-1 flex items-center gap-0.5 text-yellow-400">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <StarIcon
+                                  key={star}
+                                  className={`h-5 w-5 ${star <= Math.round(avgRating) ? "text-yellow-400" : "text-gray-200"}`}
+                                />
+                              ))}
                             </div>
-                            <div className="mt-1 text-xs font-medium text-yellow-800">
-                              Average rating
+                            <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                              Average Rating
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-xl font-bold text-gray-900">
+                          <div className="text-2xl font-black text-gray-900">
                             {reviewsCount}
                           </div>
-                          <div className="text-xs font-medium text-yellow-800">
+                          <div className="text-xs font-bold uppercase tracking-wider text-gray-500">
                             Reviews
                           </div>
                         </div>
                       </div>
                     )}
+
                     <button
                       onClick={() => navigate("/client/profile/reviews")}
-                      className="mt-5 w-full rounded-xl border border-yellow-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition-colors hover:bg-gray-50"
+                      className="relative z-10 mt-6 w-full rounded-xl bg-gray-50 px-4 py-3.5 text-sm font-bold text-gray-900 transition-all hover:bg-gray-100 active:bg-gray-200"
                     >
                       View All Reviews
                     </button>
@@ -988,11 +977,17 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   const offset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="relative flex h-48 w-48 items-center justify-center">
-      <svg className="absolute h-full w-full" viewBox="0 0 100 100">
+    <div className="relative flex h-56 w-56 items-center justify-center">
+      {/* Outer subtle glow */}
+      <div className="absolute inset-0 rounded-full bg-gray-50 opacity-70 blur-xl"></div>
+
+      <svg
+        className="absolute h-full w-full drop-shadow-sm"
+        viewBox="0 0 100 100"
+      >
         <circle
-          className="text-gray-200"
-          strokeWidth="10"
+          className="text-gray-100"
+          strokeWidth="8"
           stroke="currentColor"
           fill="transparent"
           r="45"
@@ -1001,7 +996,7 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
         />
         <circle
           stroke={color}
-          strokeWidth="10"
+          strokeWidth="8"
           strokeLinecap="round"
           fill="transparent"
           r="45"
@@ -1012,12 +1007,17 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
             strokeDashoffset: offset,
             transform: "rotate(-90deg)",
             transformOrigin: "50% 50%",
-            transition: "stroke-dashoffset 0.5s ease-in-out",
+            transition: "stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         />
       </svg>
-      <div className="text-center">
-        <span className="text-5xl font-bold text-gray-800">{score}</span>
+      <div className="z-10 flex h-36 w-36 flex-col items-center justify-center rounded-full bg-white shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+        <span className="text-5xl font-black tracking-tighter text-gray-900">
+          {score}
+        </span>
+        <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+          Trust Score
+        </span>
       </div>
     </div>
   );
