@@ -199,12 +199,14 @@ const BookingDetailsPage: React.FC = () => {
             conv.conversation.clientId === providerIdString),
       );
       if (existingConversation) {
-        navigate(`/client/chat/${existingConversation.conversation.id}`, {
+        navigate(`/client/chat`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
           },
         });
+        
+        
         return;
       }
       const newConv = await createConversation(currentUserId, providerIdString);
