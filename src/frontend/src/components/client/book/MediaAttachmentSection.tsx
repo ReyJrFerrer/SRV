@@ -67,7 +67,7 @@ const ProblemMediaSection: React.FC<ProblemMediaSectionProps> = ({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex w-full items-center justify-center gapx-5 py-3.5 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-5 text-sm font-black text-gray-600 transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+          className="gapx-5 flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-5 py-3.5 text-sm font-black text-gray-600 transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20"
         >
           <PaperClipIcon className="h-5 w-5" aria-hidden="true" />
           Click to add attachments (JPG/PNG)

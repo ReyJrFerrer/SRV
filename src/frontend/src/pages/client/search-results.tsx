@@ -185,7 +185,7 @@ const SearchResultsPage: React.FC = () => {
         <div className="mb-4 flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-2xl bg-gray-50 px-5 py-3.5 text-gray-700 transition-all hover:bg-gray-100 hover:text-blue-600 font-bold active:scale-95"
+            className="rounded-2xl bg-gray-50 px-5 py-3.5 font-bold text-gray-700 transition-all hover:bg-gray-100 hover:text-blue-600 active:scale-95"
             aria-label="Go back"
           >
             <ArrowLeftIcon className="h-5 w-5" />
@@ -287,7 +287,7 @@ const SearchResultsPage: React.FC = () => {
                     setMinRating(pendingMinRating);
                     setShowFilters(false);
                   }}
-                  className="w-full rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white transition-all hover:bg-blue-700 active:bg-blue-800 active:scale-95 shadow-sm"
+                  className="w-full rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95 active:bg-blue-800"
                 >
                   Apply Filters
                 </button>

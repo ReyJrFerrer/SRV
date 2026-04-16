@@ -373,7 +373,7 @@ const NotificationsPage = () => {
                           }
                           setMobileMenuOpen(false);
                         }}
-                        className="block w-full px-5 py-3.5 text-left text-sm font-black text-gray-700 hover:bg-gray-100 rounded-2xl active:scale-95 transition-all duration-300"
+                        className="block w-full rounded-2xl px-5 py-3.5 text-left text-sm font-black text-gray-700 transition-all duration-300 hover:bg-gray-100 active:scale-95"
                         role="menuitem"
                       >
                         {editMode ? "Done" : "Edit"}
@@ -384,7 +384,7 @@ const NotificationsPage = () => {
                           handleSelectAll();
                           setMobileMenuOpen(false);
                         }}
-                        className="block w-full px-5 py-3.5 text-left text-sm font-black text-gray-700 hover:bg-gray-100 rounded-2xl active:scale-95 transition-all duration-300"
+                        className="block w-full rounded-2xl px-5 py-3.5 text-left text-sm font-black text-gray-700 transition-all duration-300 hover:bg-gray-100 active:scale-95"
                         role="menuitem"
                       >
                         {selectedIds.length > 0 &&
@@ -402,7 +402,7 @@ const NotificationsPage = () => {
                             markAllAsRead();
                             setMobileMenuOpen(false);
                           }}
-                          className="flex w-full items-center px-5 py-3.5 text-left text-sm font-black text-blue-700 hover:bg-gray-100 rounded-2xl active:scale-95 transition-all duration-300"
+                          className="flex w-full items-center rounded-2xl px-5 py-3.5 text-left text-sm font-black text-blue-700 transition-all duration-300 hover:bg-gray-100 active:scale-95"
                           role="menuitem"
                         >
                           <EnvelopeOpenIcon className="mr-2 h-4 w-4" />

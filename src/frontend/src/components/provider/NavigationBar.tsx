@@ -243,26 +243,26 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   >
                     <div className="flex w-full flex-col items-center justify-center">
                       <div
-                        className={`flex items-center justify-center transition-all duration-300 ease-out \${
-                          active
-                            ? "h-8 w-14 rounded-2xl bg-blue-600 shadow-md"
-                            : "h-8 w-14 bg-transparent"
-                        }`}
+                        className={`\${ active ? "h-8 shadow-md" : "h-8
+                          bg-transparent"
+                            } flex w-14 w-14 items-center justify-center
+                            rounded-2xl bg-blue-600 transition-all duration-300
+                        ease-out`}
                       >
                         <Icon
-                          className={`transition-colors duration-300 \${
-                            active
-                              ? "h-5 w-5 text-yellow-400"
-                              : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
-                          }`}
+                          className={`\${ active ?
+                            "h-5
+                              text-yellow-400" : "h-6 group-hover:text-blue-600"
+                              } w-5 w-6 text-gray-400 transition-colors
+                          duration-300`}
                         />
                       </div>
                       <span
-                        className={`mt-1 text-[10px] tracking-wide transition-all duration-300 ease-out \${
-                          active
-                            ? "block font-black text-blue-700 opacity-100"
-                            : "hidden font-bold text-gray-500 opacity-80 group-hover:text-blue-600 sm:block"
-                        }`}
+                        className={`\${ active ? "block opacity-100" : "hidden
+                          sm:block"
+                            } mt-1 text-[10px] font-black font-bold
+                            tracking-wide text-blue-700 text-gray-500 opacity-80 transition-all duration-300 ease-out
+                        group-hover:text-blue-600`}
                       >
                         {label}
                       </span>
@@ -325,20 +325,20 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 {item.label === "Profile" ? (
                   <>
                     <div
-                      className={`flex items-center justify-center transition-all duration-300 ease-out \${
-                        isActive
-                          ? "h-12 w-12 rounded-2xl bg-blue-600 shadow-md"
-                          : "h-12 w-12 rounded-2xl bg-transparent hover:bg-gray-50"
-                      }`}
+                      className={`\${ isActive ? "h-12 shadow-md" : "h-12
+                        hover:bg-gray-50"
+                          } flex w-12 w-12 items-center justify-center
+                          rounded-2xl rounded-2xl bg-blue-600 bg-transparent transition-all duration-300
+                      ease-out`}
                     >
                       <img
                         src={stableProfileSrc}
                         alt="Profile"
-                        className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 \${
-                          isActive
-                            ? "h-9 w-9 border-2 border-yellow-400"
-                            : "h-8 w-8 md:group-hover:scale-105"
-                        }`}
+                        className={`\${ isActive ? "h-9 border-yellow-400" : "h-8
+                          md:group-hover:scale-105"
+                            } w-8 w-9 rounded-xl border-2
+                            object-cover transition-all duration-300 ease-out
+                        active:scale-95`}
                         draggable={false}
                       />
                     </div>
@@ -357,29 +357,29 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                               : HomeIcon;
                     return (
                       <div
-                        className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out \${
-                          isActive
-                            ? "rounded-2xl bg-blue-600 shadow-md"
-                            : "rounded-2xl bg-transparent hover:bg-gray-50"
-                        }`}
+                        className={`\${ isActive ? "rounded-2xl shadow-md" : "rounded-2xl hover:bg-gray-50" }
+                          flex
+                            h-12 w-12 items-center justify-center
+                            bg-blue-600 bg-transparent transition-all duration-300
+                        ease-out`}
                       >
                         <Icon
-                          className={`transition-colors duration-300 \${
-                            isActive
-                              ? "h-6 w-6 text-yellow-400"
-                              : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
-                          }`}
+                          className={`\${ isActive ?
+                            "h-6
+                              text-yellow-400" : "h-6 group-hover:text-blue-600"
+                              } w-6 w-6 text-gray-400 transition-colors
+                          duration-300`}
                         />
                       </div>
                     );
                   })()
                 )}
                 <span
-                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block \${
-                    isActive
-                      ? "font-black text-blue-700 opacity-100"
-                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
-                  }`}
+                  className={`\${ isActive ? "font-black opacity-100" : "font-bold group-hover:text-blue-600"
+                    }
+                      mt-1.5 hidden text-[10px] tracking-wide
+                      text-blue-700 text-gray-500 opacity-80 transition-all duration-300
+                  md:block`}
                 >
                   {item.label}
                 </span>
@@ -412,7 +412,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               }
               if (onNavigateAttempt) {
                 try {
-                  const result = await onNavigateAttempt("/provider/notifications");
+                  const result = await onNavigateAttempt(
+                    "/provider/notifications",
+                  );
                   if (result === false) return;
                 } catch {
                   return;
@@ -429,26 +431,26 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 onClick={onClick}
               >
                 <div
-                  className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out \${
-                    isActive
-                      ? "rounded-2xl bg-blue-600 shadow-md"
-                      : "rounded-2xl bg-transparent hover:bg-gray-50"
-                  }`}
+                  className={`\${ isActive ? "rounded-2xl shadow-md" : "rounded-2xl hover:bg-gray-50" }
+                    flex
+                      h-12 w-12 items-center justify-center
+                      bg-blue-600 bg-transparent transition-all duration-300
+                  ease-out`}
                 >
                   <BellIcon
-                    className={`transition-colors duration-300 \${
-                      isActive
-                        ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
-                    }`}
+                    className={`\${ isActive ?
+                      "h-6
+                        text-yellow-400" : "h-6 group-hover:text-blue-600"
+                        } w-6 w-6 text-gray-400 transition-colors
+                    duration-300`}
                   />
                 </div>
                 <span
-                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block \${
-                    isActive
-                      ? "font-black text-blue-700 opacity-100"
-                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
-                  }`}
+                  className={`\${ isActive ? "font-black opacity-100" : "font-bold group-hover:text-blue-600"
+                    }
+                      mt-1.5 hidden text-[10px] tracking-wide
+                      text-blue-700 text-gray-500 opacity-80 transition-all duration-300
+                  md:block`}
                 >
                   Notifications
                 </span>
@@ -461,7 +463,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     }
                     className="absolute right-2 top-1 flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-black text-white shadow-sm"
                   >
-                    {filteredNotificationUnreadCount > 99 ? "99+" : filteredNotificationUnreadCount}
+                    {filteredNotificationUnreadCount > 99
+                      ? "99+"
+                      : filteredNotificationUnreadCount}
                   </span>
                 )}
               </Link>
@@ -501,26 +505,26 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 onClick={onClick}
               >
                 <div
-                  className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out \${
-                    isActive
-                      ? "rounded-2xl bg-blue-600 shadow-md"
-                      : "rounded-2xl bg-transparent hover:bg-gray-50"
-                  }`}
+                  className={`\${ isActive ? "rounded-2xl shadow-md" : "rounded-2xl hover:bg-gray-50" }
+                    flex
+                      h-12 w-12 items-center justify-center
+                      bg-blue-600 bg-transparent transition-all duration-300
+                  ease-out`}
                 >
                   <Cog6ToothIcon
-                    className={`transition-colors duration-300 \${
-                      isActive
-                        ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
-                    }`}
+                    className={`\${ isActive ?
+                      "h-6
+                        text-yellow-400" : "h-6 group-hover:text-blue-600"
+                        } w-6 w-6 text-gray-400 transition-colors
+                    duration-300`}
                   />
                 </div>
                 <span
-                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block \${
-                    isActive
-                      ? "font-black text-blue-700 opacity-100"
-                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
-                  }`}
+                  className={`\${ isActive ? "font-black opacity-100" : "font-bold group-hover:text-blue-600"
+                    }
+                      mt-1.5 hidden text-[10px] tracking-wide
+                      text-blue-700 text-gray-500 opacity-80 transition-all duration-300
+                  md:block`}
                 >
                   {item.label}
                 </span>

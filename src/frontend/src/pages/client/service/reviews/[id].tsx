@@ -229,7 +229,7 @@ const ServiceReviewsPage: React.FC = () => {
         </h1>
         <button
           onClick={() => navigate(-1)}
-          className="rounded-2xl bg-blue-600 px-5 py-3.5 text-white transition-all hover:bg-blue-700 font-black active:scale-95 shadow-sm"
+          className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
         >
           Go Back
         </button>
@@ -249,7 +249,7 @@ const ServiceReviewsPage: React.FC = () => {
         </p>
         <button
           onClick={() => navigate("/client/home")}
-          className="rounded-2xl bg-blue-600 px-5 py-3.5 text-white transition-all hover:bg-blue-700 font-black active:scale-95 shadow-sm"
+          className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
         >
           Back to Home
         </button>

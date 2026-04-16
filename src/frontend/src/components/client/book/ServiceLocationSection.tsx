@@ -433,7 +433,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
               setShowFallbackForms(false);
               setLocationInputMode("hidden");
             }}
-            className="flex w-full items-center justify-center gapx-5 py-3.5 rounded-2xl bg-blue-600 px-5 text-sm font-black text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-auto md:w-full lg:ml-auto lg:w-fit active:scale-95 shadow-sm"
+            className="gapx-5 flex w-full items-center justify-center rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 active:scale-95 sm:w-auto md:w-full lg:ml-auto lg:w-fit"
           >
             <MapPinIcon className="h-5 w-5 shrink-0" />
             <span>Use Maps</span>

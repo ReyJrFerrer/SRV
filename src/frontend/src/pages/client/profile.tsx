@@ -705,7 +705,7 @@ const ClientProfilePage: React.FC = () => {
                     </p>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gray-50 px-5 py-3.5 text-sm font-bold text-gray-800 transition hover:bg-gray-100 active:scale-95 transition-all duration-300"
+                      className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gray-50 px-5 py-3.5 text-sm font-bold text-gray-800 transition transition-all duration-300 hover:bg-gray-100 active:scale-95"
                     >
                       <PencilIcon className="mr-2 h-4 w-4 text-gray-500" />
                       Edit Profile
@@ -756,14 +756,14 @@ const ClientProfilePage: React.FC = () => {
                     <div className="flex gap-3 pt-2">
                       <button
                         onClick={handleCancelEdit}
-                        className="flex-1 rounded-2xl bg-gray-100 px-5 py-3.5 text-sm font-bold text-gray-700 transition hover:bg-gray-200 active:scale-95 transition-all duration-300"
+                        className="flex-1 rounded-2xl bg-gray-100 px-5 py-3.5 text-sm font-bold text-gray-700 transition transition-all duration-300 hover:bg-gray-200 active:scale-95"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleSaveChanges}
                         disabled={loading}
-                        className="flex-1 rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-50 active:scale-95 shadow-sm transition-all duration-300"
+                        className="flex-1 rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition transition-all duration-300 hover:bg-blue-700 active:scale-95 disabled:opacity-50"
                       >
                         {loading ? "Saving..." : "Save"}
                       </button>
@@ -930,7 +930,7 @@ const ClientProfilePage: React.FC = () => {
 
                     <button
                       onClick={() => navigate("/client/profile/reviews")}
-                      className="relative z-10 mt-6 w-full rounded-2xl bg-gray-50 px-5 py-3.5 text-sm font-bold text-gray-900 transition-all hover:bg-gray-100 active:bg-gray-200 active:scale-95"
+                      className="relative z-10 mt-6 w-full rounded-2xl bg-gray-50 px-5 py-3.5 text-sm font-bold text-gray-900 transition-all hover:bg-gray-100 active:scale-95 active:bg-gray-200"
                     >
                       View All Reviews
                     </button>

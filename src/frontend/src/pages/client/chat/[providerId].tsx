@@ -184,7 +184,7 @@ const ConversationPage: React.FC = () => {
             <p className="mb-4 text-red-600">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="rounded-2xl bg-blue-600 px-5 py-3.5 text-white transition-all hover:bg-blue-700 font-black active:scale-95 shadow-sm"
+              className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
             >
               Retry
             </button>
@@ -273,7 +273,7 @@ const ConversationPage: React.FC = () => {
                   e.stopPropagation();
                   navigate(`/client/book/${servicePreview.id}`);
                 }}
-                className="rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-black text-white hover:bg-blue-700 active:scale-95 shadow-sm transition-all duration-300"
+                className="rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition-all duration-300 hover:bg-blue-700 active:scale-95"
               >
                 Book Now
               </button>

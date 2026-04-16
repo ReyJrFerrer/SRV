@@ -3,7 +3,11 @@ import BottomNavigation from "../../../components/client/NavigationBar";
 import useClientRating, {
   type ClientReview,
 } from "../../../hooks/useClientRating";
-import { StarIcon, InformationCircleIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
+import {
+  StarIcon,
+  InformationCircleIcon,
+  ChevronLeftIcon,
+} from "@heroicons/react/24/solid";
 import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
 import { useAuth } from "../../../context/AuthContext";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
@@ -28,7 +32,9 @@ const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="w-8 text-right text-sm font-bold text-gray-500">{value}</span>
+      <span className="w-8 text-right text-sm font-bold text-gray-500">
+        {value}
+      </span>
     </div>
   );
 };
@@ -128,7 +134,7 @@ const ReviewsPage: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 pb-24 md:pb-6">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-100">
+      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
           <button
             onClick={() => navigate(-1)}
@@ -175,7 +181,7 @@ const ReviewsPage: React.FC = () => {
             </div>
 
             {/* Right side: Progress bars */}
-            <div className="flex-1 w-full space-y-3">
+            <div className="w-full flex-1 space-y-3">
               {[5, 4, 3, 2, 1].map((r) => (
                 <StarBar
                   key={r}
@@ -211,50 +217,57 @@ const ReviewsPage: React.FC = () => {
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
                 <StarIconOutline className="h-8 w-8 text-blue-300" />
               </div>
-              <h3 className="text-lg font-black text-blue-950">No Reviews Yet</h3>
+              <h3 className="text-lg font-black text-blue-950">
+                No Reviews Yet
+              </h3>
               <p className="mt-2 max-w-sm text-sm text-gray-500">
-                When providers leave feedback after completing a service, their reviews will appear here.
+                When providers leave feedback after completing a service, their
+                reviews will appear here.
               </p>
             </div>
           )}
 
-          {!loading && reviews.map((rev) => (
-            <div key={rev.id} className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <h4 className="text-base font-black text-blue-950">
-                    {getReviewerName(rev)}
-                  </h4>
-                  <div className="mt-1 flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <React.Fragment key={s}>
-                        {s <= rev.rating ? (
-                          <StarIcon className="h-4 w-4 text-yellow-400" />
-                        ) : (
-                          <StarIconOutline className="h-4 w-4 text-gray-200" />
-                        )}
-                      </React.Fragment>
-                    ))}
+          {!loading &&
+            reviews.map((rev) => (
+              <div
+                key={rev.id}
+                className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md"
+              >
+                <div className="mb-3 flex items-start justify-between">
+                  <div>
+                    <h4 className="text-base font-black text-blue-950">
+                      {getReviewerName(rev)}
+                    </h4>
+                    <div className="mt-1 flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <React.Fragment key={s}>
+                          {s <= rev.rating ? (
+                            <StarIcon className="h-4 w-4 text-yellow-400" />
+                          ) : (
+                            <StarIconOutline className="h-4 w-4 text-gray-200" />
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
                   </div>
+                  <span className="rounded-xl bg-gray-50 px-3 py-1 text-xs font-bold text-gray-500">
+                    {new Date(rev.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
-                <span className="rounded-xl bg-gray-50 px-3 py-1 text-xs font-bold text-gray-500">
-                  {new Date(rev.createdAt).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </span>
+
+                {rev.comment && (
+                  <div className="mt-4 rounded-2xl bg-gray-50 p-4">
+                    <p className="text-sm leading-relaxed text-gray-700">
+                      "{rev.comment}"
+                    </p>
+                  </div>
+                )}
               </div>
-              
-              {rev.comment && (
-                <div className="mt-4 rounded-2xl bg-gray-50 p-4">
-                  <p className="text-sm leading-relaxed text-gray-700">
-                    "{rev.comment}"
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
+            ))}
         </section>
       </main>
 

@@ -146,7 +146,7 @@ const ReceiptPage: React.FC = () => {
         </h1>
         <Link
           to="/client/booking"
-          className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white hover:bg-blue-700 active:scale-95 shadow-sm transition-all duration-300"
+          className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all duration-300 hover:bg-blue-700 active:scale-95"
         >
           Back to My Bookings
         </Link>
@@ -271,7 +271,7 @@ const ReceiptPage: React.FC = () => {
         </button>
         <Link
           to="/client/booking"
-          className="flex flex-1 items-center justify-center gapx-5 py-3.5 rounded-2xl bg-blue-600 px-5 text-sm font-black text-white transition hover:bg-blue-700 active:scale-95 shadow-sm transition-all duration-300"
+          className="gapx-5 flex flex-1 items-center justify-center rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition transition-all duration-300 hover:bg-blue-700 active:scale-95"
         >
           <ArrowUturnLeftIcon className="h-4 w-4" /> Done
         </Link>

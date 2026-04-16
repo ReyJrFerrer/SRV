@@ -194,7 +194,7 @@ const PaymentPendingPage: React.FC = () => {
           <p className="text-gray-600">No payment information found.</p>
           <button
             onClick={() => navigate("/client")}
-            className="mt-4 rounded-2xl bg-blue-600 px-5 py-3.5 text-white hover:bg-blue-700 font-black active:scale-95 shadow-sm transition-all duration-300"
+            className="mt-4 rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all duration-300 hover:bg-blue-700 active:scale-95"
           >
             Go to Home
           </button>
@@ -339,7 +339,7 @@ const PaymentPendingPage: React.FC = () => {
                 <>
                   <button
                     onClick={handleRetryPayment}
-                    className="flex w-full items-center justify-center rounded-2xl bg-blue-600 py-3.5 font-black text-white transition-all hover:bg-blue-700 active:scale-95 shadow-sm"
+                    className="flex w-full items-center justify-center rounded-2xl bg-blue-600 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
                   >
                     <CreditCardIcon className="mr-2 h-5 w-5" />
                     Open Payment Page
@@ -407,7 +407,7 @@ const PaymentPendingPage: React.FC = () => {
                 <>
                   <button
                     onClick={handleRetryPayment}
-                    className="w-full rounded-2xl bg-blue-600 py-3.5 font-black text-white transition-all hover:bg-blue-700 active:scale-95 shadow-sm"
+                    className="w-full rounded-2xl bg-blue-600 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
                   >
                     Try Payment Again
                   </button>

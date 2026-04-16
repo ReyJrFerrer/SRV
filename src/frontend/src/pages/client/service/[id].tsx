@@ -458,7 +458,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         </h1>
         <button
           onClick={() => navigate("/client/home")}
-          className="rounded-2xl bg-blue-600 px-5 py-3.5 text-white transition-all hover:bg-blue-700 font-black active:scale-95 shadow-sm"
+          className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
         >
           Back to Home
         </button>
@@ -809,7 +809,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               isCheckingReputation ||
               isCreatingChat
             }
-            className="group relative flex w-1/3 items-center justify-center rounded-2xl bg-gray-100 px-5 py-3.5 font-bold text-gray-700 transition-all hover:bg-gray-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-70 active:scale-95"
+            className="group relative flex w-1/3 items-center justify-center rounded-2xl bg-gray-100 px-5 py-3.5 font-bold text-gray-700 transition-all hover:bg-gray-200 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {chatLoading ? (
               <div className="flex items-center gap-2">
