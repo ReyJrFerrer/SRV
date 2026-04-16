@@ -532,7 +532,7 @@ const MyBookingsPage: React.FC = () => {
               </p>
               <button
                 onClick={() => bookingManagement.retryOperation("loadBookings")}
-                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                className="rounded-2xl bg-blue-600 px-5 py-3.5 text-white hover:bg-blue-700 font-black active:scale-95 shadow-sm transition-all duration-300"
               >
                 Retry
               </button>

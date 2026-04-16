@@ -373,7 +373,7 @@ const NotificationsPage = () => {
                           }
                           setMobileMenuOpen(false);
                         }}
-                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        className="block w-full px-5 py-3.5 text-left text-sm font-black text-gray-700 hover:bg-gray-100 rounded-2xl active:scale-95 transition-all duration-300"
                         role="menuitem"
                       >
                         {editMode ? "Done" : "Edit"}
@@ -384,7 +384,7 @@ const NotificationsPage = () => {
                           handleSelectAll();
                           setMobileMenuOpen(false);
                         }}
-                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        className="block w-full px-5 py-3.5 text-left text-sm font-black text-gray-700 hover:bg-gray-100 rounded-2xl active:scale-95 transition-all duration-300"
                         role="menuitem"
                       >
                         {selectedIds.length > 0 &&
@@ -402,7 +402,7 @@ const NotificationsPage = () => {
                             markAllAsRead();
                             setMobileMenuOpen(false);
                           }}
-                          className="flex w-full items-center px-4 py-2 text-left text-sm font-medium text-blue-700 hover:bg-gray-100"
+                          className="flex w-full items-center px-5 py-3.5 text-left text-sm font-black text-blue-700 hover:bg-gray-100 rounded-2xl active:scale-95 transition-all duration-300"
                           role="menuitem"
                         >
                           <EnvelopeOpenIcon className="mr-2 h-4 w-4" />

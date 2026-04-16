@@ -65,7 +65,7 @@ const BookingDrafts: React.FC<Props> = ({
           </button>
           <button
             onClick={handleRestore}
-            className="w-full rounded-md bg-blue-600 px-2 py-2 text-xs font-medium text-white hover:bg-blue-700 lg:px-4 lg:py-2 lg:text-sm"
+            className="w-full rounded-2xl bg-blue-600 px-5 py-3.5 text-xs font-black text-white hover:bg-blue-700 lg:px-5 lg:py-3.5 lg:text-sm active:scale-95 shadow-sm transition-all duration-300"
           >
             {restoreLabel}
           </button>

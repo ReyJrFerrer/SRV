@@ -227,7 +227,7 @@ const SettingsPage: React.FC = () => {
             </p>
             <button
               onClick={() => navigate("/login")}
-              className="rounded-lg bg-blue-600 px-6 py-2.5 font-bold text-white transition-colors hover:bg-blue-700"
+              className="rounded-2xl bg-blue-600 px-5 py-3.5 font-bold text-white transition-all hover:bg-blue-700 active:scale-95 shadow-sm"
             >
               Log In
             </button>

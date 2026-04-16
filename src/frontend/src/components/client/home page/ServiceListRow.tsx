@@ -234,7 +234,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
           <button
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className="rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white transition-all duration-200 hover:bg-blue-700 hover: disabled:cursor-not-allowed disabled:bg-gray-400 active:scale-95 shadow-sm"
           >
             {isLoadingMore ? (
               <div className="flex items-center gap-2">

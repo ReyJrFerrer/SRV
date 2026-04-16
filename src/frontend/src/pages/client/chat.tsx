@@ -373,7 +373,7 @@ const ClientChatPage: React.FC = () => {
               <p className="mb-4 text-lg text-red-600">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+                className="rounded-2xl bg-blue-600 px-5 py-3.5 text-white transition-all hover:bg-blue-700 font-black active:scale-95 shadow-sm"
               >
                 Retry
               </button>
@@ -597,7 +597,7 @@ const ClientChatPage: React.FC = () => {
             </p>
             <button
               onClick={() => navigate("/login")}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              className="rounded-2xl bg-blue-600 px-5 py-3.5 text-white transition-all hover:bg-blue-700 font-black active:scale-95 shadow-sm"
             >
               Log In
             </button>

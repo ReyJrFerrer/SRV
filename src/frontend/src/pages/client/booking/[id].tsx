@@ -325,7 +325,7 @@ const BookingDetailsPage: React.FC = () => {
                   onClick={() =>
                     navigate(`/client/tracking/${specificBooking?.id}`)
                   }
-                  className="group cursor-pointer overflow-hidden rounded-2xl bg-blue-600 p-4 shadow-sm transition-all hover:bg-blue-700"
+                  className="group cursor-pointer overflow-hidden rounded-2xl bg-blue-600 px-5 py-3.5 transition-all hover:bg-blue-700 font-black active:scale-95 shadow-sm"
                 >
                   <div className="flex items-center gap-4">
                     <div className="relative">

@@ -290,7 +290,7 @@ const TrackingInfoCard: React.FC<TrackingInfoCardProps> = ({
           {onChat && (
             <button
               onClick={onChat}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-700"
+              className="flex flex-1 items-center justify-center gapx-5 py-3.5 rounded-2xl bg-blue-600 px-5 font-black text-white transition-all hover:bg-blue-700 active:scale-95 shadow-sm"
             >
               <ChatBubbleLeftIcon className="h-5 w-5" />
               <span>Chat</span>
