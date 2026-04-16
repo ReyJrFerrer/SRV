@@ -268,12 +268,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       );
 
       if (existingConversation) {
-         navigate(`/client/chat`, {
+        navigate(`/client/chat`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
-            otherUserImage: booking.providerProfile?.profilePicture?.imageUrl || undefined,
-      
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
           },
         });
         return;
@@ -281,12 +281,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
       const newConv = await createConversation(currentUserId, providerIdString);
       if (newConv && newConv.id) {
-             navigate(`/client/chat`, {
+        navigate(`/client/chat`, {
           state: {
             conversationId: newConv.id,
             otherUserName: booking.providerProfile?.name || "Provider",
-            otherUserImage: booking.providerProfile?.profilePicture?.imageUrl || undefined,
-           
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
           },
         });
         return;

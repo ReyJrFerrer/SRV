@@ -152,8 +152,8 @@ const ClientTrackingPage: React.FC = () => {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
-            otherUserImage: booking.providerProfile?.profilePicture?.imageUrl || undefined,
-      
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
           },
         });
         return;
@@ -162,12 +162,12 @@ const ClientTrackingPage: React.FC = () => {
       // Create new conversation
       const newConv = await createConversation(currentUserId, providerIdString);
       if (newConv?.id) {
-           navigate(`/client/chat`, {
+        navigate(`/client/chat`, {
           state: {
             conversationId: newConv.id,
             otherUserName: booking.providerProfile?.name || "Provider",
-            otherUserImage: booking.providerProfile?.profilePicture?.imageUrl || undefined,
-           
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
           },
         });
       }

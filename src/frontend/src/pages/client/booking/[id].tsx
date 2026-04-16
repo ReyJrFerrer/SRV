@@ -205,8 +205,7 @@ const BookingDetailsPage: React.FC = () => {
             otherUserName: existingConversation.otherUserName,
           },
         });
-        
-        
+
         return;
       }
       const newConv = await createConversation(currentUserId, providerIdString);
