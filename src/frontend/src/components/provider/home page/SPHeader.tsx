@@ -197,29 +197,26 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
     <>
       <header
         ref={headerRef}
-        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-blue-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 px-4 shadow-lg backdrop-blur ${className}`}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-b-2xl border-b border-gray-100 bg-white p-4 shadow-sm backdrop-blur-md ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
         <div
-          className={`space-y-6 transition-all duration-300 ease-in-out ${isMini ? "pointer-events-none invisible opacity-0" : "visible opacity-100"}`}
+          className={`space-y-4 transition-all duration-300 ease-in-out ${isMini ? "pointer-events-none invisible h-0 opacity-0" : "visible opacity-100"}`}
         >
-          {/* --- Desktop Header: Logo, Welcome, Notification Button --- */}
+          {/* --- Desktop Header: Logo, Welcome, Profile Button --- */}
           <div className="hidden items-center justify-between md:flex">
             <div className="flex items-center space-x-6">
               <Link to="/provider/home">
                 <img
                   src="/logo.svg"
                   alt="SRV Logo"
-                  className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
+                  className="h-12 w-auto transition-transform duration-300 hover:scale-105"
                 />
               </Link>
-              <div className="h-10 border-l-2 border-blue-100"></div>
+              <div className="h-8 border-l border-gray-200"></div>
               <div className="flex flex-col">
-                <span className="text-2xl font-semibold tracking-wide text-blue-700">
-                  Welcome,{" "}
-                  <span className="text-2xl font-bold text-gray-800">
-                    {displayName}
-                  </span>
+                <span className="text-xl font-bold tracking-tight text-gray-900">
+                  Welcome, {displayName}
                 </span>
               </div>
             </div>
@@ -227,47 +224,41 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
             {isAuthenticated && (
               <button
                 onClick={handleProfileClick}
-                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                className="group relative rounded-full bg-gray-50 p-2 transition-all hover:bg-gray-100"
                 aria-label="Profile"
               >
-                <UserCircleIcon className="h-10 w-10 text-blue-700 transition-colors group-hover:text-yellow-500" />
+                <UserCircleIcon className="h-8 w-8 text-gray-700 group-hover:text-blue-600" />
               </button>
             )}
           </div>
 
-          {/* --- Mobile Header: Logo, Welcome, Notification Button --- */}
-          <div className="md:hidden">
-            <div className="flex items-center justify-between">
-              <Link to="/provider/home">
-                <img
-                  src="/logo.svg"
-                  alt="SRV Logo"
-                  className="h-16 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
-                />
-              </Link>
+          {/* --- Mobile Header: Logo, Welcome, Profile Button --- */}
+          <div className="flex items-center justify-between md:hidden">
+            <Link to="/provider/home">
+              <img
+                src="/logo.svg"
+                alt="SRV Logo"
+                className="h-10 w-auto transition-transform duration-300 hover:scale-105"
+              />
+            </Link>
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-bold tracking-tight text-gray-900">
+                Hi, {displayName}
+              </span>
               {isAuthenticated && (
                 <button
                   onClick={handleProfileClick}
-                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-3 shadow transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                  className="group relative rounded-full bg-gray-50 p-1.5 transition-all hover:bg-gray-100"
                   aria-label="Profile"
                 >
-                  <UserCircleIcon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-yellow-500" />
+                  <UserCircleIcon className="h-7 w-7 text-gray-700 group-hover:text-blue-600" />
                 </button>
               )}
-            </div>
-            <hr className="my-4 border-blue-100" />
-            <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-              <span className="text-xl font-semibold tracking-wide text-blue-700">
-                Welcome Back,
-              </span>
-              <span className="text-xl font-bold text-gray-800">
-                {displayName}
-              </span>
             </div>
           </div>
 
           {/* --- Location Section --- */}
-          <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
+          <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-4 shadow-sm transition-all duration-300 ease-in-out">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <button
                 type="button"
@@ -275,16 +266,16 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 disabled={
                   addressMode === "context" && locationStatus === "allowed"
                 }
-                className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none disabled:cursor-not-allowed"
+                className="flex items-center gap-2 text-left focus:outline-none disabled:cursor-not-allowed"
                 aria-label="Open my location details"
               >
-                <MapPinIcon className="h-6 w-6 text-blue-600" />
-                <span className="text-base font-bold text-gray-800">
+                <MapPinIcon className="h-5 w-5 text-blue-600" />
+                <span className="text-sm font-bold uppercase tracking-wider text-gray-800">
                   My Location
                 </span>
               </button>
             </div>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2">
               <MapFunctions ref={primaryMapRef} />
             </div>
           </div>
@@ -293,10 +284,10 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
         <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)]">
-          <div className="w-full rounded-b-xl border border-blue-100 bg-yellow-100/90 p-3 shadow-xl backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+          <div className="w-full border-b border-gray-100 bg-white/95 p-3 shadow-sm backdrop-blur-md">
             <div className="flex items-center gap-2 pb-1">
               <MapPinIcon className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-semibold text-gray-800">
+              <span className="text-sm font-bold uppercase tracking-wider text-gray-800">
                 My Location
               </span>
             </div>

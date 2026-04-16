@@ -349,8 +349,8 @@ const ClientChatPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
           <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Messages
@@ -376,10 +376,10 @@ const ClientChatPage: React.FC = () => {
             </div>
           ) : conversations.length > 0 ? (
             <div
-              className={`w-full ${isDesktop ? "md:flex md:h-[calc(100vh-64px)] md:overflow-hidden" : ""}`}
+              className={`w-full ${isDesktop ? "mx-auto max-w-6xl my-4 md:rounded-2xl border border-gray-100 shadow-sm bg-white overflow-hidden flex h-[calc(100vh-80px)]" : ""}`}
             >
               <ul
-                className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} divide-y divide-gray-100`}
+                className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} space-y-1 py-2`}
               >
                 {conversations
                   .slice()
@@ -420,7 +420,7 @@ const ClientChatPage: React.FC = () => {
                             otherUserImageUrl,
                           )
                         }
-                        className="group flex cursor-pointer items-center space-x-4 p-4 transition-all hover:bg-blue-50"
+                        className={`group flex cursor-pointer items-center space-x-4 p-3 mx-2 rounded-xl transition-all ${selectedConversationId === conversation.id ? "bg-blue-50 text-blue-900 border border-blue-100" : "hover:bg-gray-50"}`}
                       >
                         <div className="relative h-14 w-14 flex-shrink-0">
                           <ProfileImage
@@ -467,7 +467,7 @@ const ClientChatPage: React.FC = () => {
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
                       {/* Header */}
-                      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 shadow-sm bg-white">
                         <div className="flex items-center gap-3">
                           <div className="relative h-10 w-10">
                             <ProfileImage
@@ -518,7 +518,7 @@ const ClientChatPage: React.FC = () => {
                                   </div>
                                 )}
                                 <div
-                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
+                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-sm shadow-sm bg-blue-600 text-white" : "rounded-bl-sm border border-gray-100 shadow-sm bg-white text-gray-800"}`}
                                 >
                                   <p className="text-sm">
                                     {typeof message.content === "string"
@@ -537,7 +537,7 @@ const ClientChatPage: React.FC = () => {
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="border-t border-gray-200 p-3 md:sticky md:bottom-0 md:bg-white">
+                      <div className="p-3 md:sticky md:bottom-0 bg-white border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                         <form
                           onSubmit={handleSendMessage}
                           className="flex items-center gap-3"
@@ -549,7 +549,7 @@ const ClientChatPage: React.FC = () => {
                             placeholder="Type a message..."
                             maxLength={500}
                             disabled={sendingMessage || !currentConversation}
-                            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="w-full flex-1 rounded-full border border-transparent bg-gray-50 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                           />
                           <button
                             type="submit"

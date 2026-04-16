@@ -66,10 +66,10 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
-      <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white py-3 shadow-sm">
+        <div className="flex w-full items-center justify-center px-4">
+          <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
             Settings
           </h1>
         </div>
@@ -79,10 +79,10 @@ const SettingsPage: React.FC = () => {
         {isAuthenticated ? (
           <div className="space-y-6">
             {/* --- Enhanced Profile Section --- */}
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
               <button
                 onClick={() => navigate("/provider/profile")}
-                className="flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-blue-50"
+                className="flex w-full items-center justify-between p-5 text-left transition-all hover:bg-gray-50"
               >
                 <div className="flex items-center">
                   {profileLoading ? (
@@ -91,65 +91,69 @@ const SettingsPage: React.FC = () => {
                     <img
                       src={profileImageUrl || "/default-provider.svg"} // fallback updated
                       alt="Profile"
-                      className="mr-4 h-14 w-14 rounded-full border-2 border-blue-100 object-cover shadow"
+                      className="mr-4 h-14 w-14 rounded-full border border-gray-200 object-cover"
                     />
                   )}
                   <div>
-                    <p className="text-lg font-semibold text-blue-900">
+                    <p className="text-lg font-bold text-gray-900">
                       {profileLoading ? "Loading..." : profile?.name || "User"}
                     </p>
                     <p className="text-sm text-gray-500">View Profile</p>
                   </div>
                 </div>
-                <ChevronRightIcon className="h-6 w-6 text-blue-400" />
+                <ChevronRightIcon className="h-5 w-5 text-gray-400" />
               </button>
             </div>
 
             {/* --- Switch to Service Provider Button --- */}
-            <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-md">
+            <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
               <button
                 onClick={handleSwitchToClient}
-                className="group flex w-full items-center justify-between rounded-2xl p-5 text-left transition-all hover:bg-yellow-400"
+                className="group flex w-full items-center justify-between p-4 text-left transition-all hover:bg-blue-50"
                 disabled={switching}
               >
                 <div className="flex items-center">
-                  <ArrowPathRoundedSquareIcon
-                    className={`mr-4 h-7 w-7 text-white transition-transform duration-300 group-hover:text-black ${switching ? "animate-spin" : ""}`}
-                  />
+                  <div className="mr-4 rounded-lg bg-blue-50 p-2 text-blue-600">
+                    <ArrowPathRoundedSquareIcon
+                      className={`h-6 w-6 transition-transform duration-300 ${switching ? "animate-spin" : ""}`}
+                    />
+                  </div>
                   <span
-                    className={`text-lg font-semibold text-white group-hover:text-gray-800 ${switching ? "opacity-70" : ""}`}
+                    className={`text-base font-bold text-blue-700 ${switching ? "opacity-70" : ""}`}
                   >
-                    {switching ? "Switching..." : "Switch into Client"}
+                    {switching ? "Switching..." : "Switch to Client"}
                   </span>
                 </div>
                 <ChevronRightIcon
-                  className={`h-6 w-6 text-white group-hover:text-black ${switching ? "opacity-70" : ""}`}
+                  className={`h-5 w-5 text-blue-400 ${switching ? "opacity-70" : ""}`}
                 />
               </button>
             </div>
 
             {/* --- Menu Items Including App Settings --- */}
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
               <ul className="divide-y divide-gray-100">
                 {/* PWA Install Section */}
                 <li>
                   <button
                     onClick={() => setPwaOpen((v) => !v)}
                     aria-expanded={pwaOpen}
-                    className="flex w-full items-center justify-between rounded-t-2xl p-5 text-left transition-all hover:bg-blue-50"
+                    className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                   >
                     <div className="flex items-center">
-                      <DevicePhoneMobileIcon className="mr-4 h-7 w-7 text-blue-400" />
-                      <span className="text-lg font-medium text-blue-900">
+                      <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                        <DevicePhoneMobileIcon className="h-6 w-6" />
+                      </div>
+                      <span className="text-base font-bold text-gray-900">
                         Install App
                       </span>
                     </div>
                     <ChevronRightIcon
-                      className={`h-6 w-6 transform text-blue-400 transition-transform ${pwaOpen ? "rotate-90" : ""}`}
+                      className={`h-5 w-5 transform text-gray-400 transition-transform ${pwaOpen ? "rotate-90" : ""}`}
                     />
                   </button>
                   {pwaOpen && (
-                    <div className="border-t border-gray-100 bg-blue-50 p-5">
+                    <div className="border-t border-gray-100 bg-gray-50 p-4">
                       <PWAInstallDetailed />
                     </div>
                   )}
@@ -160,20 +164,22 @@ const SettingsPage: React.FC = () => {
                   <button
                     onClick={() => setNotifOpen((v) => !v)}
                     aria-expanded={notifOpen}
-                    className="flex w-full items-center justify-between p-5 text-left transition-all hover:bg-blue-50"
+                    className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                   >
                     <div className="flex items-center">
-                      <BellIcon className="mr-4 h-7 w-7 text-blue-400" />
-                      <span className="text-lg font-medium text-blue-900">
+                      <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                        <BellIcon className="h-6 w-6" />
+                      </div>
+                      <span className="text-base font-bold text-gray-900">
                         Push Notifications
                       </span>
                     </div>
                     <ChevronRightIcon
-                      className={`h-6 w-6 transform text-blue-400 transition-transform ${notifOpen ? "rotate-90" : ""}`}
+                      className={`h-5 w-5 transform text-gray-400 transition-transform ${notifOpen ? "rotate-90" : ""}`}
                     />
                   </button>
                   {notifOpen && (
-                    <div className="border-t border-gray-100 bg-blue-50 p-5">
+                    <div className="border-t border-gray-100 bg-gray-50 p-4">
                       <NotificationSettingsDetailed />
                     </div>
                   )}
@@ -184,39 +190,45 @@ const SettingsPage: React.FC = () => {
                   <li key={item.name}>
                     <button
                       onClick={() => navigate(item.href)}
-                      className="flex w-full items-center justify-between p-5 text-left transition-all hover:bg-blue-50"
+                      className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                     >
                       <div className="flex items-center">
-                        <item.icon className="mr-4 h-7 w-7 text-blue-400" />
-                        <span className="text-lg font-medium text-blue-900">
+                        <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                          <item.icon className="h-6 w-6" />
+                        </div>
+                        <span className="text-base font-bold text-gray-900">
                           {item.name}
                         </span>
                       </div>
-                      <ChevronRightIcon className="h-6 w-6 text-blue-400" />
+                      <ChevronRightIcon className="h-5 w-5 text-gray-400" />
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
               <button
                 onClick={logout}
-                className="flex w-full items-center rounded-2xl p-5 text-left text-red-600 transition-all hover:bg-red-50"
+                className="flex w-full items-center p-4 text-left transition-all hover:bg-red-50"
               >
-                <ArrowRightOnRectangleIcon className="mr-4 h-7 w-7" />
-                <span className="text-lg font-semibold">Log Out</span>
+                <div className="mr-4 rounded-lg bg-red-50 p-2 text-red-600">
+                  <ArrowRightOnRectangleIcon className="h-6 w-6" />
+                </div>
+                <span className="text-base font-bold text-red-600">
+                  Log Out
+                </span>
               </button>
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-md">
-            <p className="mb-4 text-lg text-gray-700">
+          <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm">
+            <p className="mb-4 text-base text-gray-500">
               Please log in to manage your settings.
             </p>
             <button
               onClick={() => navigate("/login")}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              className="rounded-lg bg-blue-600 px-6 py-2.5 font-bold text-white transition-colors hover:bg-blue-700"
             >
               Log In
             </button>

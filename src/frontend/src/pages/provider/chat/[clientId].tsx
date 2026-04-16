@@ -211,8 +211,8 @@ const ConversationPage: React.FC = () => {
                 <div
                   className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-md lg:max-w-lg ${
                     fromCurrentUser
-                      ? "rounded-br-none bg-blue-600 text-white"
-                      : "rounded-bl-none border border-gray-200 bg-white text-gray-800"
+                      ? "rounded-br-sm shadow-sm bg-blue-600 text-white"
+                      : "rounded-bl-sm border border-gray-100 shadow-sm bg-white text-gray-800"
                   }`}
                 >
                   <p className="text-sm">
@@ -249,7 +249,7 @@ const ConversationPage: React.FC = () => {
               placeholder="Type a message..."
               maxLength={500}
               disabled={sendingMessage || !currentConversation}
-              className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full flex-1 rounded-full border border-transparent bg-gray-50 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
             <button
               type="submit"

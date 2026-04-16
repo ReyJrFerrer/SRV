@@ -369,30 +369,25 @@ const ClientStats: React.FC = () => {
 
   return (
     <div className="mt-8">
-      <h3 className="mb-4 text-center text-xl font-bold tracking-tight text-black">
+      <h3 className="mb-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">
         Your Booking & Activity Summary
       </h3>
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {stats.map((stat) => {
-          const isMemberSince = stat.name === "Member Since";
           return (
             <div
               key={stat.name}
-              className={`flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md duration-200${isMemberSince ? "w-full text-center" : ""}`}
+              className="flex flex-col items-center rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
             >
               <div
-                className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${stat.bg} shadow-inner`}
+                className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg} shadow-sm`}
               >
-                <stat.icon className="h-7 w-7" />
+                <stat.icon className="h-5 w-5" />
               </div>
-              <p
-                className={`text-2xl font-extrabold text-gray-900 mb-1${isMemberSince ? "w-full text-center" : ""}`}
-              >
+              <p className="mb-1 w-full text-center text-xl font-black text-gray-900">
                 {stat.value}
               </p>
-              <p
-                className={`text-xs font-medium text-gray-500 tracking-wide${isMemberSince || stat.name === "Services Completed" ? "w-full text-center" : "text-center"}`}
-              >
+              <p className="w-full text-center text-[10px] font-bold uppercase tracking-wide text-gray-500">
                 {stat.name}
               </p>
             </div>
@@ -655,15 +650,15 @@ const ClientProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3.5">
+      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-md">
+        <div className="relative flex w-full items-center px-4 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full hover:bg-gray-100"
+            className="rounded-full bg-gray-50 p-2 text-gray-700 hover:bg-gray-100"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-black tracking-tight text-gray-900">
             My Profile
           </h1>
         </div>
@@ -673,9 +668,9 @@ const ClientProfilePage: React.FC = () => {
         {loading || !profile ? (
           <ProfileSkeleton role="client" />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-8">
             <div className="flex flex-col space-y-4 lg:col-span-1">
-              <div className="rounded-xl bg-white p-6 shadow-md">
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                 <div className="flex flex-col items-center text-center">
                   <div className="relative mb-4">
                     <ProfilePictureModal
@@ -785,57 +780,57 @@ const ClientProfilePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg bg-yellow-300 shadow-sm">
+              <div className="rounded-2xl bg-yellow-400 p-1 shadow-sm transition-transform hover:-translate-y-1">
                 <button
                   onClick={handleSwitchToProvider}
                   disabled={isSwitchingRole}
-                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
+                  className={`group flex w-full items-center justify-between rounded-xl bg-yellow-400 p-4 text-left transition-colors ${
                     isSwitchingRole
                       ? "cursor-not-allowed opacity-50"
-                      : "hover:bg-blue-600"
+                      : "hover:bg-yellow-500"
                   }`}
                 >
                   <div className="flex items-center">
                     <ArrowPathRoundedSquareIcon
-                      className={`mr-4 h-6 w-6 ${
+                      className={`mr-3 h-5 w-5 ${
                         isSwitchingRole
-                          ? "animate-spin text-blue-600"
-                          : "text-black group-hover:text-white"
+                          ? "animate-spin text-gray-800"
+                          : "text-gray-900 group-hover:text-black"
                       }`}
                     />
-                    <span className="text-sm font-medium text-gray-800 group-hover:text-white md:text-base">
+                    <span className="text-sm font-bold text-gray-900 group-hover:text-black">
                       {isSwitchingRole
                         ? "Switching Role..."
-                        : "Switch into SRVice Provider"}
+                        : "Switch to SRVice Provider"}
                     </span>
                   </div>
                   {!isSwitchingRole && (
-                    <ChevronRightIcon className="h-5 w-5 text-black group-hover:text-white" />
+                    <ChevronRightIcon className="h-5 w-5 text-gray-900 group-hover:text-black" />
                   )}
                 </button>
               </div>
               <div className="hidden lg:block">
                 <button
                   onClick={logout}
-                  className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-red-100 bg-red-50 px-6 py-3 text-sm font-bold text-red-600 shadow-sm transition-colors hover:bg-red-100"
                 >
                   Log Out
                 </button>
               </div>
             </div>
-            <div className="mt-1 lg:col-span-2 lg:mt-0">
-              <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-                <div className="mb-6 flex items-center justify-center gap-2">
-                  <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
-                    Your Reputation Score
+            <div className="mt-2 lg:col-span-2 lg:mt-0">
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+                <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+                  <h3 className="text-xl font-bold tracking-tight text-gray-900">
+                    Your Reputation
                   </h3>
                   <button
                     type="button"
                     aria-label="What is reputation score?"
-                    className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="rounded-full bg-gray-50 p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     onClick={() => setShowAboutInfo(true)}
                   >
-                    <InformationCircleIcon className="h-6 w-6 text-blue-500" />
+                    <InformationCircleIcon className="h-5 w-5" />
                   </button>
                   <AboutReputationScoreModal
                     show={showAboutInfo}
@@ -890,21 +885,20 @@ const ClientProfilePage: React.FC = () => {
                     )}
                   </div>
                 )}
-                <div className="mt-8 space-y-6 border-t border-gray-200 pt-8">
-                  <div className="rounded-xl border border-yellow-200 bg-white p-5 shadow">
+                <div className="mt-8 space-y-6">
+                  <div className="rounded-2xl border border-yellow-100 bg-yellow-50 p-5 shadow-sm">
                     <div className="mb-4 flex items-center justify-between">
-                      <h4 className="text-lg font-bold text-yellow-700">
+                      <h4 className="text-sm font-bold uppercase tracking-wider text-yellow-800">
                         Your Ratings
                       </h4>
                       <div className="flex items-center gap-2">
-                        <StarIcon className="h-6 w-6 text-yellow-500" />
                         <button
                           type="button"
                           aria-label="About ratings"
-                          className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          className="rounded-full bg-yellow-100 p-1.5 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                           onClick={() => setShowRatingInfo(true)}
                         >
-                          <InformationCircleIcon className="h-5 w-5 text-gray-500" />
+                          <InformationCircleIcon className="h-4 w-4 text-yellow-700" />
                         </button>
                       </div>
                     </div>
@@ -918,29 +912,38 @@ const ClientProfilePage: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex items-end justify-between">
-                        <div>
-                          <div className="text-3xl font-extrabold text-gray-900">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-yellow-400 text-2xl font-black text-gray-900 shadow-sm">
                             {avgRating.toFixed(1)}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            Average rating
+                          <div>
+                            <div className="flex items-center text-yellow-600">
+                              <StarIcon className="h-4 w-4" />
+                              <StarIcon className="h-4 w-4" />
+                              <StarIcon className="h-4 w-4" />
+                              <StarIcon className="h-4 w-4" />
+                              <StarIcon className="h-4 w-4" />
+                            </div>
+                            <div className="mt-1 text-xs font-medium text-yellow-800">
+                              Average rating
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="text-xl font-bold text-gray-900">
                             {reviewsCount}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            Reviews received
+                          <div className="text-xs font-medium text-yellow-800">
+                            Reviews
                           </div>
                         </div>
                       </div>
                     )}
                     <button
                       onClick={() => navigate("/client/profile/reviews")}
-                      className="mt-5 w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
+                      className="mt-5 w-full rounded-xl border border-yellow-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition-colors hover:bg-gray-50"
                     >
-                      View Reviews & Ratings
+                      View All Reviews
                     </button>
                   </div>
                   <div>

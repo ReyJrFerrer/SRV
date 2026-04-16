@@ -86,10 +86,10 @@ const MobileChartsCarousel: React.FC<{
       ))
     : [
         <div key="pie" className="w-full shrink-0 snap-center px-1">
-          <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
+          <div className="h-72 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
             <Suspense
               fallback={
-                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-full w-full animate-pulse rounded-xl bg-gray-100" />
               }
             >
               <BookingStatusPieChart
@@ -100,10 +100,10 @@ const MobileChartsCarousel: React.FC<{
           </div>
         </div>,
         <div key="line" className="w-full shrink-0 snap-center px-1">
-          <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
+          <div className="h-72 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
             <Suspense
               fallback={
-                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-full w-full animate-pulse rounded-xl bg-gray-100" />
               }
             >
               <MonthlyRevenueLineChart
@@ -114,10 +114,10 @@ const MobileChartsCarousel: React.FC<{
           </div>
         </div>,
         <div key="bar" className="w-full shrink-0 snap-center px-1">
-          <div className="h-72 rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
+          <div className="h-72 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
             <Suspense
               fallback={
-                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-full w-full animate-pulse rounded-xl bg-gray-100" />
               }
             >
               <DailyBookingsBarChart
@@ -127,7 +127,7 @@ const MobileChartsCarousel: React.FC<{
           </div>
         </div>,
         <div key="rating" className="w-full shrink-0 snap-center px-1">
-          <div className="flex h-72 items-center justify-center rounded-2xl border border-blue-50 bg-white p-3 shadow-md">
+          <div className="flex h-72 items-center justify-center rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
             <CustomerRatingStars
               analytics={ratingData}
               reviews={providerReviews}
@@ -312,21 +312,21 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   // --- Improved Desktop Charts Layout ---
   const renderCharts = () => (
     <div
-      className={`grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 ${className}`}
+      className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-2 ${className}`}
     >
       {isLoading ? (
         <>
-          <div className="h-80 w-full animate-pulse rounded-lg bg-gray-200"></div>
-          <div className="h-80 w-full animate-pulse rounded-lg bg-gray-200"></div>
-          <div className="h-80 w-full animate-pulse rounded-lg bg-gray-200"></div>
-          <div className="h-80 w-full animate-pulse rounded-lg bg-gray-200"></div>
+          <div className="h-80 w-full animate-pulse rounded-2xl bg-gray-100"></div>
+          <div className="h-80 w-full animate-pulse rounded-2xl bg-gray-100"></div>
+          <div className="h-80 w-full animate-pulse rounded-2xl bg-gray-100"></div>
+          <div className="h-80 w-full animate-pulse rounded-2xl bg-gray-100"></div>
         </>
       ) : (
         <>
-          <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
+          <div className="h-80 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <Suspense
               fallback={
-                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-full w-full animate-pulse rounded-xl bg-gray-100" />
               }
             >
               <BookingStatusPieChart
@@ -335,10 +335,10 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
               />
             </Suspense>
           </div>
-          <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
+          <div className="h-80 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <Suspense
               fallback={
-                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-full w-full animate-pulse rounded-xl bg-gray-100" />
               }
             >
               <MonthlyRevenueLineChart
@@ -347,10 +347,10 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
               />
             </Suspense>
           </div>
-          <div className="h-80 rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
+          <div className="h-80 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <Suspense
               fallback={
-                <div className="h-full w-full animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-full w-full animate-pulse rounded-xl bg-gray-100" />
               }
             >
               <DailyBookingsBarChart
@@ -358,7 +358,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
               />
             </Suspense>
           </div>
-          <div className="flex h-80 items-center justify-center rounded-2xl border border-blue-50 bg-white p-6 shadow-md">
+          <div className="flex h-80 items-center justify-center rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <CustomerRatingStars
               analytics={ratingData}
               reviews={providerReviews}
@@ -407,11 +407,8 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-      <h1
-        className="my-6 text-xl font-extrabold
- tracking-tight text-blue-900 sm:text-3xl md:text-3xl lg:text-2xl"
-      >
+    <div className="container mx-auto mt-6 px-4 sm:px-6 lg:px-8">
+      <h1 className="my-4 text-xl font-bold tracking-tight text-gray-900">
         Dashboard
       </h1>
 
