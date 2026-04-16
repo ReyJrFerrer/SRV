@@ -53,9 +53,7 @@ const BottomNavigation: React.FC = () => {
   });
 
   React.useEffect(() => {
-    // Section: Avatar loading behavior
     if (isImageLoading) {
-      // If we have a raw profile URL, use it to avoid default flash
       const raw =
         (profile?.profilePicture?.imageUrl as string | undefined) || null;
       if (raw && stableProfileSrc !== raw) {
@@ -64,8 +62,6 @@ const BottomNavigation: React.FC = () => {
       return;
     }
 
-    // After loading completes, if we have a real image (not default), use it;
-    // otherwise, use cached previous or default
     const hasReal =
       !isUsingDefaultAvatar &&
       !!profileImageUrl &&
@@ -78,9 +74,8 @@ const BottomNavigation: React.FC = () => {
     if (next && stableProfileSrc !== next) {
       setStableProfileSrc(next);
     }
-  }, [profileImageUrl, isUsingDefaultAvatar, isImageLoading, profile]);
+  }, [profileImageUrl, isUsingDefaultAvatar, isImageLoading, profile, stableProfileSrc]);
 
-  // Persist the last good avatar so we can show it instantly on next mount
   React.useEffect(() => {
     try {
       if (stableProfileSrc) {
@@ -89,9 +84,7 @@ const BottomNavigation: React.FC = () => {
     } catch {}
   }, [stableProfileSrc]);
 
-  // Section: Navigation helpers
   const isRouteActive = (label: string, to: string) => {
-    // Profile should be active only on exact '/client/profile', not on nested pages like '/client/profile/reviews'
     if (label === "Profile") return location.pathname === to;
     return location.pathname.startsWith(to);
   };
@@ -115,7 +108,6 @@ const BottomNavigation: React.FC = () => {
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
 
-  // Separate Settings item to render at the bottom of the desktop sidebar
   const settingsItem = {
     to: "/client/settings",
     label: "Settings",
@@ -123,9 +115,6 @@ const BottomNavigation: React.FC = () => {
     count: 0,
   };
 
-  // No image sprite swapping; color and "active ring" handled via classes
-
-  // Section: Layout side-effect
   React.useEffect(() => {
     const apply = () => {
       if (window.matchMedia("(min-width: 768px)").matches) {
@@ -142,8 +131,6 @@ const BottomNavigation: React.FC = () => {
     };
   }, []);
 
-  // Section: Mobile order
-  // Requested: place Ratings between Chat and Notifications
   const mobileOrder = [
     "Home",
     "Booking",
@@ -152,6 +139,7 @@ const BottomNavigation: React.FC = () => {
     "Notifications",
     "Settings",
   ];
+  
   const mobileItems = mobileOrder
     .map((label) => {
       if (label === "Settings") return settingsItem;
@@ -162,7 +150,7 @@ const BottomNavigation: React.FC = () => {
   return (
     <>
       {!location.pathname.startsWith("/client/chat/") && (
-        <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
+        <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-100 bg-white/90 pb-2 pt-2 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] backdrop-blur-xl md:hidden">
           <nav className="mx-auto flex w-full max-w-full items-center justify-center">
             <div className="grid w-full grid-cols-6 font-medium">
               {mobileItems.map((item) => {
@@ -175,7 +163,7 @@ const BottomNavigation: React.FC = () => {
                   <Link
                     key={displayItem.label}
                     to={displayItem.to}
-                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center hover:bg-gray-50"
+                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center"
                     onClick={(e) => {
                       if (isActive) {
                         e.preventDefault();
@@ -187,10 +175,10 @@ const BottomNavigation: React.FC = () => {
                   >
                     <div className="flex w-full flex-col items-center justify-center">
                       <div
-                        className={`flex items-center justify-center transition-all duration-300 ${
+                        className={`flex items-center justify-center transition-all duration-300 ease-out ${
                           isActive
-                            ? "h-9 w-9 rounded-full bg-blue-600 sm:h-11 sm:w-11"
-                            : "h-6 w-6 sm:h-8 sm:w-8"
+                            ? "h-8 w-14 rounded-2xl bg-blue-600 shadow-md"
+                            : "h-8 w-14 bg-transparent"
                         }`}
                       >
                         {(() => {
@@ -210,20 +198,24 @@ const BottomNavigation: React.FC = () => {
                                         : HomeIcon;
                           return (
                             <Icon
-                              className={
+                              className={`transition-colors duration-300 ${
                                 isActive
-                                  ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                                  : "h-6 w-6 text-blue-700 transition-colors duration-200 group-hover:text-yellow-300 sm:h-8 sm:w-8"
-                              }
+                                  ? "h-5 w-5 text-yellow-400"
+                                  : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                              }`}
                             />
                           );
                         })()}
                       </div>
-                      {!isActive && (
-                        <span className="mt-1 hidden text-xs text-blue-700 transition duration-300 ease-in-out group-hover:text-yellow-300 sm:block">
-                          {item.label}
-                        </span>
-                      )}
+                      <span
+                        className={`mt-1 text-[10px] tracking-wide transition-all duration-300 ease-out ${
+                          isActive
+                            ? "block font-black text-blue-700 opacity-100"
+                            : "hidden font-bold text-gray-500 opacity-80 group-hover:text-blue-600 sm:block"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
                     </div>
                     {item.count > 0 &&
                       (item.label === "Booking" ||
@@ -234,12 +226,12 @@ const BottomNavigation: React.FC = () => {
                               ? `99+ new ${item.label.toLowerCase()}`
                               : `${item.count} new ${item.label.toLowerCase()}`
                           }
-                          className="absolute right-1 top-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
+                          className="absolute right-1 top-0 flex min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[9px] font-black text-white shadow-sm sm:right-2"
                         >
                           {item.count > 99 ? "99+" : item.count}
                         </span>
                       ) : (
-                        <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-red-500 sm:right-2 sm:top-2"></span>
+                        <span className="absolute right-2 top-1 block h-2.5 w-2.5 rounded-full border-2 border-white bg-red-500 shadow-sm sm:right-3 sm:top-1"></span>
                       ))}
                   </Link>
                 );
@@ -250,18 +242,16 @@ const BottomNavigation: React.FC = () => {
       )}
 
       {/* Desktop left sidebar */}
-      <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
-        {/* Top section: main nav items (Profile in place of Settings) */}
-        <div className="flex w-full flex-1 flex-col items-center gap-2">
+      <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-100 bg-white pt-4 shadow-[10px_0_30px_-15px_rgba(0,0,0,0.05)] md:flex md:flex-col">
+        {/* Top section: main nav items */}
+        <div className="flex w-full flex-1 flex-col items-center gap-3">
           {navItems.map((item) => {
             const isActive = isRouteActive(item.label, item.to);
             return (
               <Link
                 key={item.label}
                 to={item.to}
-                className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
-                  isActive ? "bg-gray-50" : ""
-                }`}
+                className="group relative flex w-full flex-col items-center justify-center py-2"
                 onClick={(e) => {
                   if (isActive) {
                     e.preventDefault();
@@ -274,18 +264,18 @@ const BottomNavigation: React.FC = () => {
                 {item.label === "Profile" ? (
                   <>
                     <div
-                      className={`flex items-center justify-center transition-all duration-300 ${
+                      className={`flex items-center justify-center transition-all duration-300 ease-out ${
                         isActive
-                          ? "h-12 w-12 rounded-full bg-blue-700"
-                          : "h-10 w-10"
+                          ? "h-12 w-12 rounded-2xl bg-blue-600 shadow-md"
+                          : "h-12 w-12 rounded-2xl bg-transparent hover:bg-gray-50"
                       }`}
                     >
                       <img
                         src={stableProfileSrc}
                         alt="Profile"
-                        className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
+                        className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
                           isActive
-                            ? "h-10 w-10 border-2 border-white"
+                            ? "h-9 w-9 border-2 border-yellow-400"
                             : "h-8 w-8 md:group-hover:scale-105"
                         }`}
                         draggable={false}
@@ -310,28 +300,32 @@ const BottomNavigation: React.FC = () => {
                                   : HomeIcon;
                     return (
                       <div
-                        className={
+                        className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
                           isActive
-                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
-                            : ""
-                        }
+                            ? "rounded-2xl bg-blue-600 shadow-md"
+                            : "rounded-2xl bg-transparent hover:bg-gray-50"
+                        }`}
                       >
                         <Icon
-                          className={
+                          className={`transition-colors duration-300 ${
                             isActive
-                              ? "h-6 w-6 text-yellow-300"
-                              : "h-6 w-6 text-blue-700 transition-colors duration-200 group-hover:text-yellow-500"
-                          }
+                              ? "h-6 w-6 text-yellow-400"
+                              : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                          }`}
                         />
                       </div>
                     );
                   })()
                 )}
-                {!isActive && (
-                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
-                    {item.label}
-                  </span>
-                )}
+                <span
+                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
+                    isActive
+                      ? "font-black text-blue-700 opacity-100"
+                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
+                  }`}
+                >
+                  {item.label}
+                </span>
                 {item.count > 0 && (
                   <span
                     aria-label={
@@ -339,7 +333,7 @@ const BottomNavigation: React.FC = () => {
                         ? "99+ new notifications"
                         : `${item.count} new notifications`
                     }
-                    className="absolute right-2 top-2 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white"
+                    className="absolute right-2 top-1 flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-black text-white shadow-sm"
                   >
                     {item.count > 99 ? "99+" : item.count}
                   </span>
@@ -350,7 +344,7 @@ const BottomNavigation: React.FC = () => {
         </div>
 
         {/* Bottom section: Settings anchored at bottom */}
-        <div className="mb-4 mt-auto flex w-full flex-col items-center border-gray-100 pt-2">
+        <div className="mb-6 mt-auto flex w-full flex-col items-center border-t border-gray-100 pt-4">
           {(() => {
             const item = settingsItem;
             const isActive = location.pathname.startsWith(item.to);
@@ -359,7 +353,7 @@ const BottomNavigation: React.FC = () => {
               <Link
                 key={item.label}
                 to={item.to}
-                className="group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50"
+                className="group relative flex w-full flex-col items-center justify-center py-2"
                 onClick={(e) => {
                   if (isActive) {
                     e.preventDefault();
@@ -370,25 +364,29 @@ const BottomNavigation: React.FC = () => {
                 }}
               >
                 <div
-                  className={`flex items-center justify-center transition-all duration-300 ${
+                  className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
                     isActive
-                      ? "h-12 w-12 rounded-full bg-blue-700"
-                      : "h-10 w-10"
+                      ? "rounded-2xl bg-blue-600 shadow-md"
+                      : "rounded-2xl bg-transparent hover:bg-gray-50"
                   }`}
                 >
                   <Cog6ToothIcon
-                    className={
+                    className={`transition-colors duration-300 ${
                       isActive
-                        ? "h-6 w-6 text-yellow-300"
-                        : "h-6 w-6 text-blue-700 transition-colors duration-200 group-hover:text-yellow-500"
-                    }
+                        ? "h-6 w-6 text-yellow-400"
+                        : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                    }`}
                   />
                 </div>
-                {!isActive && (
-                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
-                    {item.label}
-                  </span>
-                )}
+                <span
+                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
+                    isActive
+                      ? "font-black text-blue-700 opacity-100"
+                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
+                  }`}
+                >
+                  {item.label}
+                </span>
               </Link>
             );
           })()}
