@@ -404,7 +404,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               }
               if (onNavigateAttempt) {
                 try {
-                  const result = await onNavigateAttempt("/provider/notifications");
+                  const result = await onNavigateAttempt(
+                    "/provider/notifications",
+                  );
                   if (result === false) return;
                 } catch {
                   return;
@@ -453,7 +455,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     }
                     className="absolute right-2 top-1 flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-black text-white shadow-sm"
                   >
-                    {filteredNotificationUnreadCount > 99 ? "99+" : filteredNotificationUnreadCount}
+                    {filteredNotificationUnreadCount > 99
+                      ? "99+"
+                      : filteredNotificationUnreadCount}
                   </span>
                 )}
               </Link>

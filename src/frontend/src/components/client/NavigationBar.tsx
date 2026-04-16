@@ -74,7 +74,13 @@ const BottomNavigation: React.FC = () => {
     if (next && stableProfileSrc !== next) {
       setStableProfileSrc(next);
     }
-  }, [profileImageUrl, isUsingDefaultAvatar, isImageLoading, profile, stableProfileSrc]);
+  }, [
+    profileImageUrl,
+    isUsingDefaultAvatar,
+    isImageLoading,
+    profile,
+    stableProfileSrc,
+  ]);
 
   React.useEffect(() => {
     try {
@@ -139,7 +145,7 @@ const BottomNavigation: React.FC = () => {
     "Notifications",
     "Settings",
   ];
-  
+
   const mobileItems = mobileOrder
     .map((label) => {
       if (label === "Settings") return settingsItem;
