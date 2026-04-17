@@ -290,7 +290,7 @@ const BookingConfirmationPage: React.FC = () => {
             <div className="mt-6 flex gap-3">
               <Link
                 to="/client/home"
-                className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                className="flex w-full items-center justify-center rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition transition-all duration-300 hover:bg-blue-700 active:scale-95"
               >
                 Back to Home
               </Link>
@@ -303,7 +303,7 @@ const BookingConfirmationPage: React.FC = () => {
             </p>
             <Link
               to="/client/home"
-              className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="flex w-full items-center justify-center rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition transition-all duration-300 hover:bg-blue-700 active:scale-95"
             >
               Back to Home
             </Link>

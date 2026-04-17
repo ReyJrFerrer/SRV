@@ -151,7 +151,7 @@ const ActiveServicePage: React.FC = () => {
             conv.conversation.providerId === clientId),
       );
       if (existingConversation) {
-        navigate(`/provider/chat`, {
+        navigate(`/provider/chat/${clientId}`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: booking.clientName || "Client",
@@ -165,7 +165,7 @@ const ActiveServicePage: React.FC = () => {
           clientId,
         );
         if (newConversation) {
-          navigate(`/provider/chat`, {
+          navigate(`/provider/chat/${clientId}`, {
             state: {
               conversationId: newConversation.id,
               otherUserName: booking.clientName || "Client",

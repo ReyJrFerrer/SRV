@@ -491,25 +491,25 @@ const ProviderBookingsPage: React.FC = () => {
 
   return (
     <>
-      <div className="flex min-h-screen flex-col bg-gray-100">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
-          <div className="flex w-full items-center justify-center px-4 py-3">
-            <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+      <div className="flex min-h-screen flex-col bg-gray-50">
+        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
+          <div className="flex w-full items-center justify-center px-4 py-4">
+            <h1 className="text-xl font-black tracking-tight text-gray-900 lg:text-2xl">
               My Bookings
             </h1>
           </div>
         </header>
 
-        <div className="sticky z-10 bg-white px-4 pt-4">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="relative mr-2 flex-grow">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+        <div className="sticky z-10 border-b border-gray-100 bg-white px-4 pt-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="relative flex-grow">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
                 placeholder="Search bookings..."
-                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -519,19 +519,19 @@ const ProviderBookingsPage: React.FC = () => {
               {/* Filter Dropdown: Status + Category */}
               <div className="relative" ref={timingDropdownRef}>
                 <button
-                  className="flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-bold text-gray-700 transition-colors hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
                 >
                   <FunnelIcon className="mr-1 h-5 w-5" />
                   <span className="hidden md:inline">Filters</span>
                   <ChevronDownIcon
-                    className={`-mr-0.5 ml-2 h-4 w-4 transform transition-transform md:ml-2 ${
+                    className={`-mr-0.5 ml-1 h-4 w-4 transform transition-transform ${
                       isTimingDropdownOpen ? "rotate-180" : "rotate-0"
                     }`}
                   />
                 </button>
                 {isTimingDropdownOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-gray-100 bg-white p-2 shadow-lg focus:outline-none">
                     <div
                       className="py-1"
                       role="menu"
@@ -539,7 +539,7 @@ const ProviderBookingsPage: React.FC = () => {
                       aria-labelledby="options-menu"
                     >
                       {/* Status filters */}
-                      <div className="px-4 pb-1 text-xs font-medium text-gray-500">
+                      <div className="px-4 pb-2 pt-1 text-xs font-black uppercase tracking-wider text-gray-500">
                         Status
                       </div>
                       {(
@@ -560,16 +560,16 @@ const ProviderBookingsPage: React.FC = () => {
                           }}
                           className={`${
                             statusFilter === filter
-                              ? "bg-blue-100 text-blue-900"
-                              : "text-gray-700"
-                          } block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                              ? "bg-blue-50 font-bold text-blue-700"
+                              : "font-medium text-gray-700 hover:bg-gray-50"
+                          } block w-full rounded-xl px-4 py-2.5 text-left text-sm transition-colors`}
                           role="menuitem"
                         >
                           {filter}
                         </button>
                       ))}
-                      <div className="border-t px-2 pt-2">
-                        <div className="px-4 pb-1 text-xs font-medium text-gray-500">
+                      <div className="mt-2 border-t border-gray-100 pt-2">
+                        <div className="px-4 pb-2 pt-1 text-xs font-black uppercase tracking-wider text-gray-500">
                           Categories
                         </div>
                         <button
@@ -577,7 +577,11 @@ const ProviderBookingsPage: React.FC = () => {
                             setSelectedCategoryId(null);
                             setIsTimingDropdownOpen(false);
                           }}
-                          className={`${selectedCategoryId === null ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                          className={`${
+                            selectedCategoryId === null
+                              ? "bg-blue-50 font-bold text-blue-700"
+                              : "font-medium text-gray-700 hover:bg-gray-50"
+                          } block w-full rounded-xl px-4 py-2.5 text-left text-sm transition-colors`}
                         >
                           All Categories
                         </button>
@@ -588,7 +592,11 @@ const ProviderBookingsPage: React.FC = () => {
                               setSelectedCategoryId(cat.id);
                               setIsTimingDropdownOpen(false);
                             }}
-                            className={`${selectedCategoryId === cat.id ? "bg-blue-100 text-blue-900" : "text-gray-700"} block w-full px-4 py-2 text-left text-sm hover:bg-gray-100`}
+                            className={`${
+                              selectedCategoryId === cat.id
+                                ? "bg-blue-50 font-bold text-blue-700"
+                                : "font-medium text-gray-700 hover:bg-gray-50"
+                            } block w-full rounded-xl px-4 py-2.5 text-left text-sm transition-colors`}
                           >
                             {cat.name}
                           </button>
@@ -602,33 +610,42 @@ const ProviderBookingsPage: React.FC = () => {
           </div>
           {/* Top toggle: Same Day / Scheduled */}
           <div className="w-full">
-            <div className="flex items-center justify-center gap-2 px-4 pb-3">
-              <button
-                type="button"
-                className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                  timingFilter === "Same Day"
-                    ? "bg-yellow-500 text-white"
-                    : "text-gray-700 hover:bg-yellow-200"
-                }`}
-                onClick={() => {
-                  setTimingFilter("Same Day");
-                }}
-              >
-                Same Day
-              </button>
-              <button
-                type="button"
-                className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                  timingFilter === "Scheduled"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 hover:bg-yellow-200"
-                }`}
-                onClick={() => {
-                  setTimingFilter("Scheduled");
-                }}
-              >
-                Scheduled
-              </button>
+            <div className="flex items-center justify-center px-4 pb-4">
+              <div className="relative flex w-full max-w-sm rounded-2xl bg-gray-100 p-1.5">
+                <div
+                  className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
+                    timingFilter === "Scheduled"
+                      ? "translate-x-full bg-blue-600"
+                      : "translate-x-0 bg-yellow-400"
+                  }`}
+                />
+                <button
+                  type="button"
+                  className={`relative z-10 flex-1 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
+                    timingFilter === "Same Day"
+                      ? "text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => {
+                    setTimingFilter("Same Day");
+                  }}
+                >
+                  Same Day
+                </button>
+                <button
+                  type="button"
+                  className={`relative z-10 flex-1 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
+                    timingFilter === "Scheduled"
+                      ? "text-white"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => {
+                    setTimingFilter("Scheduled");
+                  }}
+                >
+                  Scheduled
+                </button>
+              </div>
             </div>
           </div>
         </div>

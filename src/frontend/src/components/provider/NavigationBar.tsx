@@ -57,7 +57,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   });
 
   React.useEffect(() => {
-    // Section: Avatar loading behavior
     if (isImageLoading) {
       const raw =
         (profile?.profilePicture?.imageUrl as string | undefined) || null;
@@ -67,8 +66,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       return;
     }
 
-    // After loading completes, if we have a real image (not default), use it;
-    // otherwise, use cached previous or default
     const hasReal =
       !isUsingDefaultAvatar &&
       !!profileImageUrl &&
@@ -89,7 +86,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     stableProfileSrc,
   ]);
 
-  // Persist the last good avatar so we can show it instantly on next mount
   React.useEffect(() => {
     try {
       if (stableProfileSrc) {
@@ -126,7 +122,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     },
   ];
 
-  // Separate Settings item to render at the bottom of the desktop sidebar
   const settingsItem = {
     to: "/provider/settings",
     label: "Settings",
@@ -136,13 +131,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   const navigate = useNavigate();
 
-  // Helper to determine active state
   const isActivePath = React.useCallback(
-    (to: string) => location.pathname.startsWith(to),
+    (to: string) => {
+      if (to === "/provider/profile") return location.pathname === to;
+      return location.pathname.startsWith(to);
+    },
     [location.pathname],
   );
 
-  // Section: Layout side-effect
   React.useEffect(() => {
     const apply = () => {
       if (window.matchMedia("(min-width: 768px)").matches) {
@@ -159,310 +155,251 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     };
   }, []);
 
-  // Section: Render
+  const mobileOrder = [
+    "Home",
+    "Booking",
+    "Chat",
+    "Services",
+    "Notifications",
+    "Settings",
+  ];
+
   return (
     <>
       {!location.pathname.startsWith("/provider/chat/") && (
-        <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white py-2 md:hidden">
+        <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-100 bg-white/90 pb-2 pt-2 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] backdrop-blur-xl md:hidden">
           <nav className="mx-auto flex w-full max-w-full items-center justify-center">
             <div className="grid w-full grid-cols-6 font-medium">
-              {navItems
-                .filter((it) =>
-                  ["Home", "Booking", "Chat", "Services"].includes(it.label),
-                )
-                .map((item) => {
-                  const active = isActivePath(item.to);
-                  const onClick = async (e: React.MouseEvent) => {
-                    e.preventDefault();
-                    if (active) {
-                      setTimeout(() => {
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }, 120);
+              {mobileOrder.map((label) => {
+                let to = "";
+                let count = 0;
+                let active = false;
+
+                if (label === "Notifications") {
+                  to = "/provider/notifications";
+                  count = filteredNotificationUnreadCount;
+                  active = isActivePath(to);
+                } else if (label === "Settings") {
+                  to = settingsItem.to;
+                  count = 0;
+                  active = isActivePath(to);
+                } else {
+                  const item = navItems.find((it) => it.label === label);
+                  if (item) {
+                    to = item.to;
+                    count = item.count;
+                    active = isActivePath(to);
+                  }
+                }
+
+                if (!to) return null;
+
+                const onClick = async (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  if (active) {
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 120);
+                    return;
+                  }
+                  if (onNavigateAttempt) {
+                    try {
+                      const result = await onNavigateAttempt(to);
+                      if (result === false) return;
+                    } catch {
                       return;
                     }
-                    if (onNavigateAttempt) {
-                      try {
-                        const result = await onNavigateAttempt(item.to);
-                        if (result === false) return;
-                      } catch {
-                        return;
-                      }
-                    }
-                    navigate(item.to);
-                  };
-                  const Icon =
-                    item.label === "Home"
-                      ? HomeIcon
-                      : item.label === "Booking"
-                        ? CalendarDaysIcon
-                        : item.label === "Chat"
-                          ? ChatBubbleOvalLeftEllipsisIcon
-                          : WrenchScrewdriverIcon;
-                  return (
-                    <Link
-                      key={item.label}
-                      to={item.to}
-                      className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center md:hover:bg-gray-50"
-                      onClick={onClick}
-                    >
-                      <div className="flex w-full items-center justify-center">
-                        <div
-                          className={
+                  }
+                  navigate(to);
+                };
+
+                const Icon =
+                  label === "Home"
+                    ? HomeIcon
+                    : label === "Booking"
+                      ? CalendarDaysIcon
+                      : label === "Chat"
+                        ? ChatBubbleOvalLeftEllipsisIcon
+                        : label === "Services"
+                          ? WrenchScrewdriverIcon
+                          : label === "Notifications"
+                            ? BellIcon
+                            : Cog6ToothIcon;
+
+                return (
+                  <Link
+                    key={label}
+                    to={to}
+                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center"
+                    onClick={onClick}
+                  >
+                    <div className="flex w-full flex-col items-center justify-center">
+                      <div
+                        className={`flex items-center justify-center transition-all duration-300 ease-out ${
+                          active
+                            ? "h-8 w-14 rounded-2xl bg-blue-600 shadow-md"
+                            : "h-8 w-14 bg-transparent"
+                        }`}
+                      >
+                        <Icon
+                          className={`transition-colors duration-300 ${
                             active
-                              ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
-                              : ""
-                          }
-                        >
-                          <Icon
-                            className={
-                              active
-                                ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                                : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
-                            }
-                          />
-                        </div>
+                              ? "h-5 w-5 text-yellow-400"
+                              : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                          }`}
+                        />
                       </div>
-                      {!active && (
-                        <span
-                          className="hidden text-xs text-blue-900 transition duration-300 ease-in-out sm:block md:group-hover:scale-105 md:group-hover:text-yellow-400"
-                          style={{ opacity: 0.9 }}
-                        >
-                          {item.label}
-                        </span>
-                      )}
-                      {item.count > 0 && (
+                      <span
+                        className={`mt-1 text-[10px] tracking-wide transition-all duration-300 ease-out ${
+                          active
+                            ? "block font-black text-blue-700 opacity-100"
+                            : "hidden font-bold text-gray-500 opacity-80 group-hover:text-blue-600 sm:block"
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </div>
+                    {count > 0 &&
+                      (label === "Booking" || label === "Notifications" ? (
                         <span
                           aria-label={
-                            item.count > 99
-                              ? "99+ new notifications"
-                              : `${item.count} new notifications`
+                            count > 99
+                              ? `99+ new ${label.toLowerCase()}`
+                              : `${count} new ${label.toLowerCase()}`
                           }
-                          className="absolute -top-1 right-1 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
+                          className="absolute right-1 top-0 flex min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[9px] font-black text-white shadow-sm sm:right-2"
                         >
-                          {item.count > 99 ? "99+" : item.count}
+                          {count > 99 ? "99+" : count}
                         </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              {/* Mobile: Notifications button (left of Settings) */}
-              {(() => {
-                const to = "/provider/notifications";
-                const active = isActivePath(to);
-                const onClick = async (e: React.MouseEvent) => {
-                  e.preventDefault();
-                  if (active) {
-                    setTimeout(() => {
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }, 120);
-                    return;
-                  }
-                  if (onNavigateAttempt) {
-                    try {
-                      const result = await onNavigateAttempt(to);
-                      if (result === false) return;
-                    } catch {
-                      return;
-                    }
-                  }
-                  navigate(to);
-                };
-                return (
-                  <Link
-                    key="Notifications-mobile"
-                    to={to}
-                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center md:hover:bg-gray-50"
-                    onClick={onClick}
-                  >
-                    <div className="flex w-full items-center justify-center">
-                      <div
-                        className={
-                          active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
-                            : ""
-                        }
-                      >
-                        <BellIcon
-                          className={
-                            active
-                              ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
-                          }
-                        />
-                      </div>
-                    </div>
-                    {!active && (
-                      <span
-                        className="hidden text-xs text-blue-900 transition duration-300 ease-in-out sm:block md:group-hover:scale-105 md:group-hover:text-yellow-400"
-                        style={{ opacity: 0.9 }}
-                      >
-                        Notifications
-                      </span>
-                    )}
-                    {filteredNotificationUnreadCount > 0 && (
-                      <span
-                        aria-label={
-                          filteredNotificationUnreadCount > 99
-                            ? "99+ new notifications"
-                            : `${filteredNotificationUnreadCount} new notifications`
-                        }
-                        className="absolute -top-0 right-2 flex min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white sm:right-2 sm:top-2"
-                      >
-                        {filteredNotificationUnreadCount > 99
-                          ? "99+"
-                          : filteredNotificationUnreadCount}
-                      </span>
-                    )}
+                      ) : (
+                        <span className="absolute right-2 top-1 block h-2.5 w-2.5 rounded-full border-2 border-white bg-red-500 shadow-sm sm:right-3 sm:top-1"></span>
+                      ))}
                   </Link>
                 );
-              })()}
-              {/* Mobile: Settings button (replaces Profile on mobile) */}
-              {(() => {
-                const to = settingsItem.to;
-                const active = location.pathname.startsWith(to);
-                const onClick = async (e: React.MouseEvent) => {
-                  e.preventDefault();
-                  if (active) {
-                    setTimeout(() => {
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }, 120);
-                    return;
-                  }
-                  if (onNavigateAttempt) {
-                    try {
-                      const result = await onNavigateAttempt(to);
-                      if (result === false) return;
-                    } catch {
-                      return;
-                    }
-                  }
-                  navigate(to);
-                };
-                return (
-                  <Link
-                    key="Settings-mobile"
-                    to={to}
-                    className="group relative flex min-h-[44px] touch-manipulation flex-col items-center justify-center md:hover:bg-gray-50"
-                    onClick={onClick}
-                  >
-                    <div className="flex w-full items-center justify-center">
-                      <div
-                        className={
-                          active
-                            ? "flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 sm:h-11 sm:w-11"
-                            : ""
-                        }
-                      >
-                        <Cog6ToothIcon
-                          className={
-                            active
-                              ? "h-7 w-7 text-yellow-300 sm:h-8 sm:w-8"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 sm:h-8 sm:w-8 md:group-hover:text-yellow-400"
-                          }
-                        />
-                      </div>
-                    </div>
-                    {!active && (
-                      <span
-                        className="hidden text-xs text-blue-900 transition duration-300 ease-in-out sm:block md:group-hover:scale-105 md:group-hover:text-yellow-400"
-                        style={{ opacity: 0.9 }}
-                      >
-                        Settings
-                      </span>
-                    )}
-                  </Link>
-                );
-              })()}
+              })}
             </div>
           </nav>
         </div>
       )}
 
       {/* Desktop left sidebar */}
-      <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-200 bg-white pt-4 md:flex md:flex-col">
-        {/* Top section: main nav items (Profile rendered separately so we can insert Notifications above it on desktop) */}
-        <div className="flex w-full flex-1 flex-col items-center gap-2">
-          {navItems
-            .filter((it) => it.label !== "Profile")
-            .map((item) => {
-              const isActive = location.pathname.startsWith(item.to);
-              return (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
-                    isActive ? "bg-gray-50" : ""
-                  }`}
-                  onClick={(e) => {
-                    if (isActive) {
-                      e.preventDefault();
-                      setTimeout(() => {
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }, 120);
-                    }
-                  }}
-                >
-                  {(() => {
+      <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-100 bg-white pt-4 shadow-[10px_0_30px_-15px_rgba(0,0,0,0.05)] md:flex md:flex-col">
+        {/* Top section: main nav items */}
+        <div className="flex w-full flex-1 flex-col items-center gap-3">
+          {navItems.map((item) => {
+            const isActive = isActivePath(item.to);
+            const onClick = async (e: React.MouseEvent) => {
+              e.preventDefault();
+              if (isActive) {
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }, 120);
+                return;
+              }
+              if (onNavigateAttempt) {
+                try {
+                  const result = await onNavigateAttempt(item.to);
+                  if (result === false) return;
+                } catch {
+                  return;
+                }
+              }
+              navigate(item.to);
+            };
+
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="group relative flex w-full flex-col items-center justify-center py-2"
+                onClick={onClick}
+              >
+                {item.label === "Profile" ? (
+                  <>
+                    <div
+                      className={`flex items-center justify-center transition-all duration-300 ease-out ${
+                        isActive
+                          ? "h-12 w-12 rounded-2xl bg-blue-600 shadow-md"
+                          : "h-12 w-12 rounded-2xl bg-transparent hover:bg-gray-50"
+                      }`}
+                    >
+                      <img
+                        src={stableProfileSrc}
+                        alt="Profile"
+                        className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
+                          isActive
+                            ? "h-9 w-9 border-2 border-yellow-400"
+                            : "h-8 w-8 md:group-hover:scale-105"
+                        }`}
+                        draggable={false}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  (() => {
                     const Icon =
                       item.label === "Home"
                         ? HomeIcon
                         : item.label === "Booking"
                           ? CalendarDaysIcon
-                          : item.label === "Chat"
-                            ? ChatBubbleOvalLeftEllipsisIcon
-                            : item.label === "Services"
-                              ? WrenchScrewdriverIcon
+                          : item.label === "Services"
+                            ? WrenchScrewdriverIcon
+                            : item.label === "Chat"
+                              ? ChatBubbleOvalLeftEllipsisIcon
                               : HomeIcon;
                     return (
                       <div
-                        className={
+                        className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
                           isActive
-                            ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
-                            : ""
-                        }
+                            ? "rounded-2xl bg-blue-600 shadow-md"
+                            : "rounded-2xl bg-transparent hover:bg-gray-50"
+                        }`}
                       >
                         <Icon
-                          className={
+                          className={`transition-colors duration-300 ${
                             isActive
-                              ? "h-6 w-6 text-yellow-300"
-                              : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
-                          }
+                              ? "h-6 w-6 text-yellow-400"
+                              : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                          }`}
                         />
                       </div>
                     );
-                  })()}
-                  {!isActive && (
-                    <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
-                      {item.label}
-                    </span>
-                  )}
-                  {item.count > 0 && (
-                    <span
-                      aria-label={
-                        item.count > 99
-                          ? "99+ new notifications"
-                          : `${item.count} new notifications`
-                      }
-                      className="absolute right-3 top-1 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
-                    >
-                      {item.count > 99 ? "99+" : item.count}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+                  })()
+                )}
+                <span
+                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
+                    isActive
+                      ? "font-black text-blue-700 opacity-100"
+                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
+                  }`}
+                >
+                  {item.label}
+                </span>
+                {item.count > 0 && (
+                  <span
+                    aria-label={
+                      item.count > 99
+                        ? "99+ new notifications"
+                        : `${item.count} new notifications`
+                    }
+                    className="absolute right-2 top-1 flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-black text-white shadow-sm"
+                  >
+                    {item.count > 99 ? "99+" : item.count}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
 
-          {/* Desktop-only Notifications button placed above profile */}
-          <Link
-            to="/provider/notifications"
-            className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
-              location.pathname.startsWith("/provider/notifications")
-                ? "bg-gray-50"
-                : ""
-            }`}
-            onClick={async (e) => {
+          {/* Notifications Button */}
+          {(() => {
+            const isActive = isActivePath("/provider/notifications");
+            const onClick = async (e: React.MouseEvent) => {
               e.preventDefault();
-              if (location.pathname.startsWith("/provider/notifications")) {
+              if (isActive) {
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }, 120);
                 return;
               }
               if (onNavigateAttempt) {
@@ -476,62 +413,65 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate("/provider/notifications");
-            }}
-            onMouseEnter={() => {}}
-            onMouseLeave={() => {}}
-          >
-            <div
-              className={
-                location.pathname.startsWith("/provider/notifications")
-                  ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
-                  : ""
-              }
-            >
-              <BellIcon
-                className={
-                  location.pathname.startsWith("/provider/notifications")
-                    ? "h-6 w-6 text-yellow-300"
-                    : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
-                }
-              />
-            </div>
-            {!location.pathname.startsWith("/provider/notifications") && (
-              <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
-                Notifications
-              </span>
-            )}
-            {filteredNotificationUnreadCount > 0 && (
-              <span
-                aria-label={
-                  filteredNotificationUnreadCount > 99
-                    ? "99+ new notifications"
-                    : `${filteredNotificationUnreadCount} new notifications`
-                }
-                className="absolute right-3 top-1 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white"
-              >
-                {filteredNotificationUnreadCount > 99
-                  ? "99+"
-                  : filteredNotificationUnreadCount}
-              </span>
-            )}
-          </Link>
+            };
 
-          {/* Profile rendered last */}
-          <Link
-            key="Profile"
-            to={navItems.find((i) => i.label === "Profile")!.to}
-            className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
-              location.pathname.startsWith(
-                navItems.find((i) => i.label === "Profile")!.to,
-              )
-                ? "bg-gray-50"
-                : ""
-            }`}
-            onClick={async (e) => {
+            return (
+              <Link
+                key="Notifications"
+                to="/provider/notifications"
+                className="group relative flex w-full flex-col items-center justify-center py-2"
+                onClick={onClick}
+              >
+                <div
+                  className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
+                    isActive
+                      ? "rounded-2xl bg-blue-600 shadow-md"
+                      : "rounded-2xl bg-transparent hover:bg-gray-50"
+                  }`}
+                >
+                  <BellIcon
+                    className={`transition-colors duration-300 ${
+                      isActive
+                        ? "h-6 w-6 text-yellow-400"
+                        : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                    }`}
+                  />
+                </div>
+                <span
+                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
+                    isActive
+                      ? "font-black text-blue-700 opacity-100"
+                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
+                  }`}
+                >
+                  Notifications
+                </span>
+                {filteredNotificationUnreadCount > 0 && (
+                  <span
+                    aria-label={
+                      filteredNotificationUnreadCount > 99
+                        ? "99+ new notifications"
+                        : `${filteredNotificationUnreadCount} new notifications`
+                    }
+                    className="absolute right-2 top-1 flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-black text-white shadow-sm"
+                  >
+                    {filteredNotificationUnreadCount > 99
+                      ? "99+"
+                      : filteredNotificationUnreadCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })()}
+        </div>
+
+        {/* Bottom section: Settings anchored at bottom */}
+        <div className="mb-6 mt-auto flex w-full flex-col items-center border-t border-gray-100 pt-4">
+          {(() => {
+            const item = settingsItem;
+            const isActive = location.pathname.startsWith(item.to);
+            const onClick = async (e: React.MouseEvent) => {
               e.preventDefault();
-              const isActive = location.pathname.startsWith(
-                navItems.find((i) => i.label === "Profile")!.to,
-              );
               if (isActive) {
                 setTimeout(() => {
                   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -540,91 +480,46 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
               }
               if (onNavigateAttempt) {
                 try {
-                  const result = await onNavigateAttempt(
-                    navItems.find((i) => i.label === "Profile")!.to,
-                  );
+                  const result = await onNavigateAttempt(item.to);
                   if (result === false) return;
                 } catch {
                   return;
                 }
               }
-              navigate(navItems.find((i) => i.label === "Profile")!.to);
-            }}
-          >
-            <img
-              src={stableProfileSrc}
-              alt="Profile"
-              className={`rounded-full object-cover transition-all duration-300 ease-in-out active:scale-95 ${
-                location.pathname.startsWith(
-                  navItems.find((i) => i.label === "Profile")!.to,
-                )
-                  ? "h-10 w-10 ring-2 ring-yellow-400"
-                  : "h-8 w-8 md:group-hover:scale-105 md:group-hover:ring-2 md:group-hover:ring-yellow-400"
-              }`}
-              draggable={false}
-            />
-            {!location.pathname.startsWith(
-              navItems.find((i) => i.label === "Profile")!.to,
-            ) && (
-              <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 md:block">
-                Profile
-              </span>
-            )}
-          </Link>
-        </div>
-
-        {/* Bottom section: Settings anchored at bottom */}
-        <div className="mb-4 mt-auto flex w-full flex-col items-center border-t border-gray-100 pt-2">
-          {(() => {
-            const item = settingsItem;
-            const isActive = location.pathname.startsWith(item.to);
+              navigate(item.to);
+            };
 
             return (
               <Link
                 key={item.label}
                 to={item.to}
-                className={`group relative flex w-full flex-col items-center justify-center py-3 md:hover:bg-gray-50 ${
-                  isActive ? "bg-gray-50" : ""
-                }`}
-                onClick={async (e) => {
-                  e.preventDefault();
-                  if (isActive) {
-                    setTimeout(() => {
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }, 120);
-                    return;
-                  }
-                  if (onNavigateAttempt) {
-                    try {
-                      const result = await onNavigateAttempt(item.to);
-                      if (result === false) return;
-                    } catch {
-                      return;
-                    }
-                  }
-                  navigate(item.to);
-                }}
+                className="group relative flex w-full flex-col items-center justify-center py-2"
+                onClick={onClick}
               >
                 <div
-                  className={
+                  className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
                     isActive
-                      ? "flex h-10 w-10 items-center justify-center rounded-full bg-blue-600"
-                      : ""
-                  }
+                      ? "rounded-2xl bg-blue-600 shadow-md"
+                      : "rounded-2xl bg-transparent hover:bg-gray-50"
+                  }`}
                 >
                   <Cog6ToothIcon
-                    className={
+                    className={`transition-colors duration-300 ${
                       isActive
-                        ? "h-6 w-6 text-yellow-300"
-                        : "h-6 w-6 text-blue-600 transition-colors duration-200 md:group-hover:text-yellow-400"
-                    }
+                        ? "h-6 w-6 text-yellow-400"
+                        : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                    }`}
                   />
                 </div>
-                {!isActive && (
-                  <span className="mt-1 hidden text-[10px] leading-tight text-blue-900 opacity-90 md:block md:group-hover:text-yellow-400">
-                    {item.label}
-                  </span>
-                )}
+                <span
+                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
+                    isActive
+                      ? "font-black text-blue-700 opacity-100"
+                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
+                  }`}
+                >
+                  {item.label}
+                </span>
               </Link>
             );
           })()}

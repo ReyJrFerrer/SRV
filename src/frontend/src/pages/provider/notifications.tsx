@@ -298,7 +298,7 @@ const NotificationsPageSP = () => {
   }, [stableNotifications, deletedIds, activeTab]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <header className="sticky top-0 z-20 bg-white">
         <div className="relative flex w-full items-center justify-center px-4 py-3">
           <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
@@ -428,20 +428,29 @@ const NotificationsPageSP = () => {
       </header>
 
       {/* Tabs navigation for notification categories */}
-      <div className="mb-5 border-t border-gray-200 bg-white">
-        <div className="hide-scrollbar flex justify-start overflow-x-auto whitespace-nowrap border-b border-gray-200 p-2 sm:justify-center">
-          <nav className="flex space-x-4 overflow-x-auto px-2 py-1">
+      <div className="mx-auto mb-6 mt-4 max-w-2xl px-4">
+        <div className="hide-scrollbar flex overflow-x-auto whitespace-nowrap pb-2">
+          <nav className="flex w-full space-x-2 rounded-xl border border-gray-100 bg-white p-1 shadow-sm sm:w-auto">
             {TAB_ITEMS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold sm:text-sm ${
+                className={`flex flex-1 items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold transition-all duration-200 sm:flex-none ${
                   activeTab === tab
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-gray-600 hover:bg-yellow-200"
+                    ? "bg-gray-100 text-blue-700 shadow-sm"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
-                {tab} ({getCountForTab(tab)})
+                {tab}
+                <span
+                  className={`ml-2 rounded-md px-2 py-0.5 text-[11px] font-bold ${
+                    activeTab === tab
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  {getCountForTab(tab)}
+                </span>
               </button>
             ))}
           </nav>
@@ -503,16 +512,16 @@ const NotificationsPageSP = () => {
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (
                 <section>
-                  <h2 className="flex items-center justify-between border-b bg-gradient-to-r from-blue-500 to-blue-400 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-sm">
+                  <h2 className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3 text-sm font-bold tracking-wide text-gray-900 shadow-sm">
                     <span>New</span>
                     <span
                       aria-label={`${unread.length} new notifications`}
-                      className="ml-2 inline-flex min-w-[20px] items-center justify-center rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white"
+                      className="ml-2 inline-flex min-w-[20px] items-center justify-center rounded-full bg-yellow-500 px-2 py-0.5 text-[11px] font-bold text-white"
                     >
                       {unread.length > 99 ? "99+" : unread.length}
                     </span>
                   </h2>
-                  <div className="divide-y divide-blue-100">
+                  <div className="divide-y divide-gray-100">
                     {unread.map((notif, idx) => (
                       <Appear
                         key={notif.id}
@@ -560,7 +569,7 @@ const NotificationsPageSP = () => {
               {unread.length > 0 && read.length > 0 && <div className="my-4" />}
               {read.length > 0 && (
                 <section>
-                  <h2 className="bg-gradient-to-r from-gray-200 to-gray-100 px-4 py-2 text-sm font-semibold tracking-wide text-gray-700 shadow-sm">
+                  <h2 className="border-b border-gray-100 bg-gray-50 px-5 py-3 text-sm font-bold tracking-wide text-gray-900 shadow-sm">
                     Earlier
                   </h2>
                   <div className="divide-y divide-gray-100">

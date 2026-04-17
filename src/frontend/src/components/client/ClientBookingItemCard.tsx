@@ -268,7 +268,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       );
 
       if (existingConversation) {
-        navigate(`/client/chat`, {
+        navigate(`/client/chat/${existingConversation.conversation.id}`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
@@ -281,7 +281,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
       const newConv = await createConversation(currentUserId, providerIdString);
       if (newConv && newConv.id) {
-        navigate(`/client/chat`, {
+        navigate(`/client/chat/${newConv.id}`, {
           state: {
             conversationId: newConv.id,
             otherUserName: booking.providerProfile?.name || "Provider",

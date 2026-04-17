@@ -1,21 +1,19 @@
 // SECTION: Imports — dependencies for this page
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
 import BottomNavigation from "../../components/client/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 import {
   PaperAirplaneIcon,
   ChatBubbleLeftRightIcon,
-  ArrowLeftIcon,
 } from "@heroicons/react/24/solid";
 import EmptyState from "../../components/common/EmptyState";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const {
     conversations,
     loading,
@@ -24,9 +22,7 @@ const ClientChatPage: React.FC = () => {
     loadConversation,
     currentConversation,
     messages,
-    optimisticMessages,
     sendMessage,
-    retryMessage,
     sendingMessage,
   } = useChat();
   const [, setTick] = React.useState(0);
@@ -35,25 +31,11 @@ const ClientChatPage: React.FC = () => {
   );
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >(location.state?.conversationId || null);
-  const [selectedOtherUserName, setSelectedOtherUserName] = useState<string>(
-    location.state?.otherUserName || "",
-  );
+  >(null);
+  const [selectedOtherUserName, setSelectedOtherUserName] =
+    useState<string>("");
   const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
-    useState<string>(location.state?.otherUserImage || "");
-
-  const servicePreview =
-    (location.state?.servicePreview as
-      | {
-          id: string;
-          name: string;
-          imageUrl?: string;
-          price?: number;
-          bookingsCount?: number;
-        }
-      | undefined) ?? undefined;
-  const [showServicePreview, setShowServicePreview] =
-    useState<boolean>(!!servicePreview);
+    useState<string>("");
   const [messageText, setMessageText] = useState<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -113,40 +95,6 @@ const ClientChatPage: React.FC = () => {
   useEffect(() => {
     document.title = "Messages | SRV";
   }, []);
-
-  const [servicePreviewData, setServicePreviewData] = useState<
-    | {
-        id: string;
-        name: string;
-        imageUrl?: string;
-        price?: number;
-        bookingsCount?: number;
-      }
-    | undefined
-  >(servicePreview);
-
-  useEffect(() => {
-    if (location.state?.conversationId) {
-      setSelectedConversationId(location.state.conversationId);
-      if (location.state.otherUserName) {
-        setSelectedOtherUserName(location.state.otherUserName);
-      }
-      if (location.state.otherUserImage) {
-        setSelectedOtherUserImageUrl(location.state.otherUserImage);
-      }
-      if (location.state.servicePreview) {
-        setServicePreviewData(location.state.servicePreview);
-        setShowServicePreview(true);
-      } else {
-        setShowServicePreview(false);
-      }
-      // Clear state so a subsequent reload doesn't re-trigger it unnecessarily
-      window.history.replaceState({}, document.title);
-    } else if (location.key !== "default") {
-      // If we navigate to this route without conversation state (e.g. from navbar), hide the preview
-      setShowServicePreview(false);
-    }
-  }, [location.state, location.key]);
 
   useEffect(() => {
     const onResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -232,15 +180,22 @@ const ClientChatPage: React.FC = () => {
       await markAsRead(conversationId);
       const imageToUse =
         otherUserImageUrl && otherUserImageUrl !== "" ? otherUserImageUrl : "";
-      if (selectedConversationId === conversationId) {
-        loadConversation(conversationId);
+      if (isDesktop) {
+        if (selectedConversationId === conversationId) {
+          loadConversation(conversationId);
+        }
+        setSelectedConversationId(conversationId);
+        setSelectedOtherUserName(otherUserName);
+        setSelectedOtherUserImageUrl(imageToUse);
       } else {
-        // Switching to a different conversation manually should hide the preview
-        setShowServicePreview(false);
+        navigate(`/client/chat/${conversationId}`, {
+          state: {
+            conversationId,
+            otherUserName,
+            otherUserImage: imageToUse,
+          },
+        });
       }
-      setSelectedConversationId(conversationId);
-      setSelectedOtherUserName(otherUserName);
-      setSelectedOtherUserImageUrl(imageToUse);
     } catch {}
   };
 
@@ -398,8 +353,8 @@ const ClientChatPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white shadow-sm">
         <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
           <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Messages
@@ -418,118 +373,106 @@ const ClientChatPage: React.FC = () => {
               <p className="mb-4 text-lg text-red-600">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+                className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
               >
                 Retry
               </button>
             </div>
           ) : conversations.length > 0 ? (
             <div
-              className={`w-full ${isDesktop ? "md:flex md:h-[calc(100vh-64px)] md:overflow-hidden" : "flex h-[calc(100vh-140px)] flex-col overflow-hidden md:h-[calc(100vh-64px)]"}`}
+              className={`w-full ${isDesktop ? "mx-auto my-4 flex h-[calc(100vh-80px)] max-w-6xl overflow-hidden border border-gray-100 bg-white shadow-sm md:rounded-2xl" : ""}`}
             >
-              {(!selectedConversationId || isDesktop) && (
-                <ul
-                  className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : "h-full overflow-y-auto"} divide-y divide-gray-100`}
-                >
-                  {conversations
-                    .slice()
-                    .sort((a, b) => {
-                      const aTime = a.lastMessage?.[0]?.createdAt
-                        ? new Date(a.lastMessage[0].createdAt).getTime()
-                        : 0;
-                      const bTime = b.lastMessage?.[0]?.createdAt
-                        ? new Date(b.lastMessage[0].createdAt).getTime()
-                        : 0;
-                      return bTime - aTime;
-                    })
-                    .map((conversationSummary) => {
-                      const conversation = conversationSummary.conversation;
-                      const lastMessage =
-                        conversationSummary.lastMessage?.[0] || undefined;
-                      const currentUserId =
-                        identity?.getPrincipal().toString() || "";
-                      const otherUserId = conversationSummary.otherUserId;
-                      const otherUserName =
-                        conversationSummary.otherUserName ||
-                        `User ${otherUserId.slice(0, 8)}...`;
-                      const otherUserImageUrl =
-                        conversationSummary.otherUserImageUrl &&
-                        conversationSummary.otherUserImageUrl !== ""
-                          ? conversationSummary.otherUserImageUrl
-                          : "";
-                      const unreadCount =
-                        conversation.unreadCount[currentUserId] || 0;
+              <ul
+                className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} space-y-1 py-2`}
+              >
+                {conversations
+                  .slice()
+                  .sort((a, b) => {
+                    const aTime = a.lastMessage?.[0]?.createdAt
+                      ? new Date(a.lastMessage[0].createdAt).getTime()
+                      : 0;
+                    const bTime = b.lastMessage?.[0]?.createdAt
+                      ? new Date(b.lastMessage[0].createdAt).getTime()
+                      : 0;
+                    return bTime - aTime;
+                  })
+                  .map((conversationSummary) => {
+                    const conversation = conversationSummary.conversation;
+                    const lastMessage =
+                      conversationSummary.lastMessage?.[0] || undefined;
+                    const currentUserId =
+                      identity?.getPrincipal().toString() || "";
+                    const otherUserId = conversationSummary.otherUserId;
+                    const otherUserName =
+                      conversationSummary.otherUserName ||
+                      `User ${otherUserId.slice(0, 8)}...`;
+                    const otherUserImageUrl =
+                      conversationSummary.otherUserImageUrl &&
+                      conversationSummary.otherUserImageUrl !== ""
+                        ? conversationSummary.otherUserImageUrl
+                        : "";
+                    const unreadCount =
+                      conversation.unreadCount[currentUserId] || 0;
 
-                      return (
-                        <li
-                          key={conversation.id}
-                          onClick={() =>
-                            handleConversationClick(
-                              conversation.id,
-                              otherUserName,
-                              otherUserImageUrl,
-                            )
-                          }
-                          className="group flex cursor-pointer items-center space-x-4 p-4 transition-all hover:bg-blue-50"
-                        >
-                          <div className="relative h-14 w-14 flex-shrink-0">
-                            <ProfileImage
-                              profilePictureUrl={otherUserImageUrl}
-                              userName={otherUserName}
-                              size="h-14 w-14"
-                              className=""
-                            />
-                            {unreadCount > 0 && (
-                              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
-                                {unreadCount}
-                              </span>
-                            )}
+                    return (
+                      <li
+                        key={conversation.id}
+                        onClick={() =>
+                          handleConversationClick(
+                            conversation.id,
+                            otherUserName,
+                            otherUserImageUrl,
+                          )
+                        }
+                        className={`group mx-2 flex cursor-pointer items-center space-x-4 rounded-xl p-3 transition-all ${selectedConversationId === conversation.id ? "border border-blue-100 bg-blue-50 text-blue-900" : "hover:bg-gray-50"}`}
+                      >
+                        <div className="relative h-14 w-14 flex-shrink-0">
+                          <ProfileImage
+                            profilePictureUrl={otherUserImageUrl}
+                            userName={otherUserName}
+                            size="h-14 w-14"
+                            className=""
+                          />
+                          {unreadCount > 0 && (
+                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
+                              {unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="truncate text-base font-semibold text-blue-900 group-hover:text-yellow-600">
+                              {otherUserName}
+                            </p>
+                            <p
+                              className={`ml-2 whitespace-nowrap text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
+                            >
+                              {formatTimestamp(lastMessage?.createdAt)}
+                            </p>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between">
-                              <p className="truncate text-base font-semibold text-blue-900 group-hover:text-yellow-600">
-                                {otherUserName}
-                              </p>
-                              <p
-                                className={`ml-2 whitespace-nowrap text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
-                              >
-                                {formatTimestamp(lastMessage?.createdAt)}
-                              </p>
-                            </div>
-                            <div className="mt-1 flex items-start justify-between">
-                              <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
-                                {lastMessage?.content?.encryptedText ? (
-                                  lastMessage.content.encryptedText
-                                ) : (
-                                  <span className="italic text-gray-400">
-                                    No messages yet
-                                  </span>
-                                )}
-                              </p>
-                            </div>
+                          <div className="mt-1 flex items-start justify-between">
+                            <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
+                              {lastMessage?.content?.encryptedText ? (
+                                lastMessage.content.encryptedText
+                              ) : (
+                                <span className="italic text-gray-400">
+                                  No messages yet
+                                </span>
+                              )}
+                            </p>
                           </div>
-                        </li>
-                      );
-                    })}
-                </ul>
-              )}
-              {(selectedConversationId || isDesktop) && (
-                <div
-                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "flex h-full flex-1 flex-col overflow-hidden"}`}
-                >
+                        </div>
+                      </li>
+                    );
+                  })}
+              </ul>
+              {isDesktop && (
+                <div className="md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100">
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
                       {/* Header */}
-                      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3 shadow-sm">
                         <div className="flex items-center gap-3">
-                          {!isDesktop && (
-                            <button
-                              onClick={() => setSelectedConversationId(null)}
-                              className="mr-1 rounded-full p-2 hover:bg-gray-100"
-                            >
-                              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
-                            </button>
-                          )}
                           <div className="relative h-10 w-10">
                             <ProfileImage
                               profilePictureUrl={selectedOtherUserImageUrl}
@@ -544,79 +487,6 @@ const ClientChatPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-
-                      {showServicePreview && servicePreviewData && (
-                        <div className="z-10 border-b border-gray-200 bg-white p-3 shadow-sm">
-                          <div
-                            role="button"
-                            onClick={() =>
-                              navigate(
-                                `/client/service/${servicePreviewData.id}`,
-                              )
-                            }
-                            className="relative flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:bg-gray-50"
-                          >
-                            <img
-                              src={
-                                servicePreviewData.imageUrl ||
-                                "/default-provider.svg"
-                              }
-                              alt={servicePreviewData.name}
-                              className="h-14 w-14 rounded-lg object-cover"
-                              onError={(e) => {
-                                e.currentTarget.onerror = null;
-                                e.currentTarget.src = "/default-provider.svg";
-                              }}
-                            />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-semibold text-gray-900">
-                                {servicePreviewData.name}
-                              </p>
-                              {typeof servicePreviewData.price === "number" &&
-                                !isNaN(servicePreviewData.price) && (
-                                  <p className="mt-0.5 text-sm font-bold text-blue-700">
-                                    ₱{servicePreviewData.price.toLocaleString()}
-                                  </p>
-                                )}
-                              {typeof servicePreviewData.bookingsCount ===
-                                "number" && (
-                                <p className="mt-0.5 text-xs text-gray-500">
-                                  {servicePreviewData.bookingsCount} booking
-                                  {servicePreviewData.bookingsCount !== 1
-                                    ? "s"
-                                    : ""}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(
-                                    `/client/book/${servicePreviewData.id}`,
-                                  );
-                                }}
-                                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow hover:bg-blue-700"
-                              >
-                                Book Now
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowServicePreview(false);
-                                }}
-                                aria-label="Close"
-                                className="rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
                       {/* Messages */}
                       <div
                         ref={messagesContainerRef}
@@ -624,84 +494,54 @@ const ClientChatPage: React.FC = () => {
                         onMouseDown={handlePageInteract}
                         onTouchStart={handlePageInteract}
                       >
-                        {messages.length === 0 &&
-                        optimisticMessages.length === 0 ? (
+                        {messages.length === 0 ? (
                           <div className="flex h-full items-center justify-center">
                             <p className="text-gray-500">
                               No messages yet. Start the conversation!
                             </p>
                           </div>
                         ) : (
-                          <>
-                            {messages.map((message) => {
-                              const isMine =
-                                identity?.getPrincipal().toString() ===
-                                message.senderId;
-                              return (
-                                <div
-                                  key={message.id}
-                                  className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}
-                                >
-                                  {!isMine && (
-                                    <div className="relative h-8 w-8 flex-shrink-0">
-                                      <ProfileImage
-                                        profilePictureUrl={
-                                          selectedOtherUserImageUrl
-                                        }
-                                        userName={selectedOtherUserName}
-                                        size="h-8 w-8"
-                                      />
-                                    </div>
-                                  )}
-                                  <div
-                                    className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
-                                  >
-                                    <p className="text-sm">
-                                      {typeof message.content === "string"
-                                        ? message.content
-                                        : message.content?.encryptedText}
-                                    </p>
-                                    <p
-                                      className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
-                                    >
-                                      {formatDateTime(message.createdAt)}
-                                    </p>
+                          messages.map((message) => {
+                            const isMine =
+                              identity?.getPrincipal().toString() ===
+                              message.senderId;
+                            return (
+                              <div
+                                key={message.id}
+                                className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}
+                              >
+                                {!isMine && (
+                                  <div className="relative h-8 w-8 flex-shrink-0">
+                                    <ProfileImage
+                                      profilePictureUrl={
+                                        selectedOtherUserImageUrl
+                                      }
+                                      userName={selectedOtherUserName}
+                                      size="h-8 w-8"
+                                    />
                                   </div>
-                                </div>
-                              );
-                            })}
-                            {optimisticMessages.map((message) => {
-                              return (
+                                )}
                                 <div
-                                  key={message.id}
-                                  onClick={() =>
-                                    message.status === "failed" &&
-                                    retryMessage(message.id)
-                                  }
-                                  className={`flex items-end justify-end gap-2 ${message.status === "failed" ? "cursor-pointer" : ""}`}
+                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-sm bg-blue-600 text-white shadow-sm" : "rounded-bl-sm border border-gray-100 bg-white text-gray-800 shadow-sm"}`}
                                 >
-                                  <div
-                                    className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white"}`}
+                                  <p className="text-sm">
+                                    {typeof message.content === "string"
+                                      ? message.content
+                                      : message.content?.encryptedText}
+                                  </p>
+                                  <p
+                                    className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
                                   >
-                                    <p className="text-sm">{message.content}</p>
-                                    <p
-                                      className={`mt-1 text-right text-xs ${message.status === "sending" ? "text-blue-200" : message.status === "failed" ? "text-red-200" : "text-blue-100"}`}
-                                    >
-                                      {message.status === "sending"
-                                        ? "Sending..."
-                                        : message.status === "failed"
-                                          ? "Failed - Tap to retry"
-                                          : "Sent"}
-                                    </p>
-                                  </div>
+                                    {formatDateTime(message.createdAt)}
+                                  </p>
                                 </div>
-                              );
-                            })}
-                          </>
+                              </div>
+                            );
+                          })
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="border-t border-gray-200 bg-white p-3 pb-1 md:sticky md:bottom-0 md:bg-white md:pb-3">
+                      <div className="border-t border-gray-100 bg-white p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:sticky md:bottom-0">
                         <form
                           onSubmit={handleSendMessage}
                           className="flex items-center gap-3"
@@ -713,7 +553,7 @@ const ClientChatPage: React.FC = () => {
                             placeholder="Type a message..."
                             maxLength={500}
                             disabled={sendingMessage || !currentConversation}
-                            className="w-full flex-1 rounded-full border border-transparent bg-gray-100 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                            className="w-full flex-1 rounded-full border border-transparent bg-gray-50 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                           />
                           <button
                             type="submit"
@@ -757,7 +597,7 @@ const ClientChatPage: React.FC = () => {
             </p>
             <button
               onClick={() => navigate("/login")}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
             >
               Log In
             </button>

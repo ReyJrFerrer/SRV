@@ -385,18 +385,20 @@ const WalletPage: React.FC = () => {
 
       <div className="mx-auto max-w-md px-4 py-6">
         {/* Wallet Balance Card - Sticky */}
-        <div className="sticky top-0 z-10 mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg">
+        <div className="sticky top-0 z-10 mb-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100">Available Balance</p>
-              <div className="flex items-baseline">
-                <span className="text-3xl font-bold">
+              <p className="text-sm font-bold uppercase tracking-wider text-gray-500">
+                Available Balance
+              </p>
+              <div className="mt-1 flex items-baseline">
+                <span className="text-4xl font-black tracking-tight text-gray-900">
                   {loading ? "..." : formatCurrency(balance)}
                 </span>
               </div>
             </div>
-            <div className="rounded-full bg-white/20 p-3">
-              <BanknotesIcon className="h-8 w-8 text-white" />
+            <div className="rounded-2xl bg-yellow-100 p-4">
+              <BanknotesIcon className="h-8 w-8 text-yellow-600" />
             </div>
           </div>
 
@@ -404,25 +406,25 @@ const WalletPage: React.FC = () => {
           <div className="mt-6 flex gap-3">
             <button
               onClick={handleTopUpClick}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white/20 px-4 py-3 text-sm font-medium text-white backdrop-blur-sm hover:bg-white/30"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
             >
-              <PlusIcon className="h-4 w-4" />
+              <PlusIcon className="h-5 w-5" />
               Top Up
             </button>
             <button
               onClick={() => navigate("/provider/bookings")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white/20 px-4 py-3 text-sm font-medium text-white backdrop-blur-sm hover:bg-white/30"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-gray-100"
             >
-              <CurrencyDollarIcon className="h-4 w-4" />
+              <CurrencyDollarIcon className="h-5 w-5 text-gray-600" />
               Earnings
             </button>
           </div>
 
           {/* Commission Info Button */}
-          <div className="mt-3 flex justify-center">
+          <div className="mt-4 flex justify-center">
             <button
               onClick={() => setShowCommissionModal(true)}
-              className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs font-medium text-white/80 backdrop-blur-sm hover:bg-white/20 hover:text-white"
+              className="flex items-center gap-2 rounded-xl border border-yellow-100 bg-yellow-50 px-4 py-2 text-xs font-bold text-yellow-800 transition hover:bg-yellow-100"
             >
               <ExclamationTriangleIcon className="h-4 w-4" />
               Commission Info

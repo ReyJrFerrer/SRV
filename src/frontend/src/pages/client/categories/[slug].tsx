@@ -221,7 +221,7 @@ const CategoryPage: React.FC = () => {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="relative rounded-lg bg-gray-100 p-3 text-gray-600 hover:bg-gray-200"
+            className="relative rounded-2xl bg-gray-100 px-5 py-3.5 font-bold text-gray-600 transition-all duration-300 hover:bg-gray-200 active:scale-95"
           >
             <AdjustmentsHorizontalIcon className="h-6 w-6" />
           </button>
@@ -285,7 +285,7 @@ const CategoryPage: React.FC = () => {
                     setMinRating(pendingMinRating);
                     setShowFilters(false);
                   }}
-                  className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-400"
+                  className="w-full rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition-all duration-300 hover:bg-yellow-400 active:scale-95"
                 >
                   Apply Filters
                 </button>

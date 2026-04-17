@@ -63,10 +63,10 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   );
 
   return (
-    <div className="group relative mt-8 flex flex-col items-center rounded-2xl border border-blue-100 bg-white p-5 shadow transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+    <div className="group relative mt-8 flex flex-col items-center rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
       <button
         type="button"
-        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none"
         style={{ background: "transparent", border: "none", padding: 0 }}
         onClick={() => navigate(`/provider/service-details/${service.id}`)}
         aria-label={`View details for ${service.title}`}
@@ -77,7 +77,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <img
           src={categoryImage}
           alt={service.category?.name || "Category"}
-          className="h-16 w-16 rounded-full border-4 border-white bg-white object-cover shadow-lg"
+          className="h-16 w-16 rounded-2xl border-4 border-white bg-yellow-50 object-cover shadow-sm"
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = "/images/categories/others.svg";
@@ -87,16 +87,16 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
       {isActive ? (
         <span
-          className="pointer-events-none absolute right-3 top-3 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 shadow"
+          className="pointer-events-none absolute right-3 top-3 rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700"
           title="Active"
         >
           Active
         </span>
       ) : (
         <span
-          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${
+          className={`pointer-events-none absolute right-3 top-3 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${
             getStatusDisplay(service.status).className
-          } pointer-events-none`}
+          }`}
         >
           {getStatusDisplay(service.status).text}
         </span>
@@ -104,35 +104,35 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
       <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
         <h4
-          className="mb-0 line-clamp-2 w-full break-words text-center text-lg font-bold text-blue-900"
+          className="mb-1 line-clamp-2 w-full break-words text-center text-sm font-bold text-gray-900"
           style={{ wordBreak: "break-word" }}
         >
           {service.title}
         </h4>
-        <div className="flex items-center justify-center gap-2">
-          <StarIcon className="h-5 w-5 text-yellow-400" />
-          <span className="font-semibold text-blue-900">
-            {averageRating || "0"} / 5{" "}
-            <span className="text-gray-500">({reviewCount})</span>
+        <div className="flex items-center justify-center gap-1.5">
+          <StarIcon className="h-4 w-4 text-yellow-500" />
+          <span className="text-xs font-bold text-gray-800">
+            {averageRating || "0"}{" "}
+            <span className="font-medium text-gray-500">({reviewCount})</span>
           </span>
         </div>
       </div>
 
-      <div className="relative z-10 mt-4 grid w-full grid-cols-2 gap-2">
+      <div className="relative z-10 mt-5 grid w-full grid-cols-2 gap-2">
         <Tooltip
           content={`Cannot ${isActive ? "deactivate" : "activate"} service with ${activeCount} active booking${plural}`}
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
             type="button"
-            className={`w-full rounded-lg px-2 py-2 text-sm font-semibold transition-colors ${
+            className={`w-full rounded-xl px-2 py-2.5 text-xs font-bold transition-colors ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
             } ${
               isActive
-                ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                : "bg-green-500 text-white hover:bg-green-600"
+                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                : "bg-blue-100 text-blue-800 hover:bg-blue-200"
             }`}
             onClick={async (e) => {
               e.stopPropagation();
@@ -151,7 +151,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         >
           <button
             type="button"
-            className={`w-full rounded-lg bg-red-500 px-2 py-2 text-sm font-semibold text-white hover:bg-red-600 ${
+            className={`w-full rounded-xl bg-red-50 px-2 py-2.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 ${
               hasActiveBookings(service.id)
                 ? "cursor-not-allowed opacity-50"
                 : ""
@@ -298,7 +298,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
       )}
 
       <div className="flex items-center justify-between py-4 md:py-5 lg:py-8">
-        <h2 className="text-xl font-extrabold tracking-tight text-blue-900 sm:text-2xl md:text-3xl">
+        <h2 className="text-xl font-bold tracking-tight text-gray-900">
           My Services
         </h2>
         <Tooltip
@@ -313,7 +313,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                 toast.error("You can only have a maximum of 5 services.");
               }
             }}
-            className={`flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:px-4 ${
+            className={`flex items-center rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700 sm:px-4 ${
               services.length >= 5 ? "cursor-not-allowed opacity-50" : ""
             }`}
             aria-label="Add new service"
@@ -374,7 +374,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
             <div className="mt-8 flex justify-center">
               <Link
                 to="/provider/services"
-                className="rounded-lg bg-yellow-300 px-6 py-2.5 text-base font-semibold text-black shadow transition hover:bg-blue-600 hover:text-white"
+                className="rounded-xl border border-gray-200 bg-white px-6 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-gray-50"
               >
                 View All Services
               </Link>

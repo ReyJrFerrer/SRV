@@ -3,10 +3,16 @@ import BottomNavigation from "../../../components/client/NavigationBar";
 import useClientRating, {
   type ClientReview,
 } from "../../../hooks/useClientRating";
-import { StarIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
+import {
+  StarIcon,
+  InformationCircleIcon,
+  ChevronLeftIcon,
+} from "@heroicons/react/24/solid";
+import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
 import { useAuth } from "../../../context/AuthContext";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 import authCanisterService from "../../../services/authCanisterService";
+import { useNavigate } from "react-router-dom";
 
 const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
   label,
@@ -16,14 +22,19 @@ const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
-      <span className="w-12 text-sm text-gray-600">{label}</span>
-      <div className="h-3 flex-1 rounded bg-gray-200">
+      <div className="flex w-8 items-center justify-end gap-1">
+        <span className="text-sm font-black text-gray-700">{label}</span>
+        <StarIcon className="h-3 w-3 text-yellow-400" />
+      </div>
+      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-gray-100">
         <div
-          className="h-3 rounded bg-yellow-400"
+          className="h-full rounded-full bg-yellow-400 transition-all duration-500 ease-out"
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="w-10 text-right text-sm text-gray-600">{value}</span>
+      <span className="w-8 text-right text-sm font-bold text-gray-500">
+        {value}
+      </span>
     </div>
   );
 };
@@ -41,6 +52,7 @@ const ReviewsPage: React.FC = () => {
   const [reviews, setReviews] = useState<ClientReview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showRatingInfo, setShowRatingInfo] = useState(false);
+  const navigate = useNavigate();
   // Cache reviewer names by user id to avoid repeated profile calls
   const reviewerNameCache = useRef<Map<string, string>>(new Map());
 
@@ -120,117 +132,152 @@ const ReviewsPage: React.FC = () => {
   }, [reviews]);
 
   return (
-    <>
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+    <div className="flex min-h-screen flex-col bg-gray-50 pb-24 md:pb-6">
+      {/* Header */}
+      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 active:scale-95"
+          >
+            <ChevronLeftIcon className="h-6 w-6" />
+          </button>
+          <h1 className="text-xl font-black tracking-tight text-blue-950">
             My Reviews
           </h1>
+          <button
+            onClick={() => setShowRatingInfo(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100 active:scale-95"
+            aria-label="About ratings"
+          >
+            <InformationCircleIcon className="h-6 w-6" />
+          </button>
         </div>
       </header>
-      <div className="mt-3 flex justify-center">
-        <button
-          type="button"
-          aria-label="About ratings"
-          className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm hover:bg-gray-50"
-          onClick={() => setShowRatingInfo(true)}
-        >
-          <InformationCircleIcon className="h-4 w-4 text-blue-500" />
-          About ratings
-        </button>
-      </div>
-      <div className="min-h-screen bg-gray-50 pb-20">
-        <main className="mx-auto w-full max-w-3xl p-4">
-          <section className="mb-6 rounded-xl bg-white p-5 shadow">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center">
+
+      <main className="mx-auto w-full max-w-2xl px-4 py-6">
+        {/* Rating Summary Card */}
+        <section className="mb-8 overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col items-center sm:flex-row sm:items-stretch sm:gap-8">
+            {/* Left side: Big number */}
+            <div className="mb-6 flex flex-col items-center justify-center sm:mb-0 sm:min-w-[140px] sm:border-r sm:border-gray-100 sm:pr-8">
+              <span className="text-6xl font-black tracking-tighter text-blue-950">
+                {stats.avg.toFixed(1)}
+              </span>
+              <div className="mt-2 flex gap-1">
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <StarIcon
-                    key={s}
-                    className={`h-6 w-6 ${
-                      s <= Math.round(stats.avg)
-                        ? "text-yellow-400"
-                        : "text-gray-200"
-                    }`}
-                  />
+                  <React.Fragment key={s}>
+                    {s <= Math.round(stats.avg) ? (
+                      <StarIcon className="h-5 w-5 text-yellow-400 drop-shadow-sm" />
+                    ) : (
+                      <StarIconOutline className="h-5 w-5 text-gray-300" />
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
-              <div className="text-2xl font-bold text-slate-800">
-                {stats.avg.toFixed(1)}
-              </div>
-              <div className="text-sm text-gray-600">
-                {stats.total} review{stats.total === 1 ? "" : "s"}
-              </div>
+              <span className="mt-2 text-sm font-bold text-gray-500">
+                {stats.total} Review{stats.total === 1 ? "" : "s"}
+              </span>
             </div>
-            <div className="mt-4 space-y-2">
+
+            {/* Right side: Progress bars */}
+            <div className="w-full flex-1 space-y-3">
               {[5, 4, 3, 2, 1].map((r) => (
                 <StarBar
                   key={r}
-                  label={`${r}★`}
+                  label={`${r}`}
                   value={stats.counts[r] || 0}
                   total={stats.total}
                 />
               ))}
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className="space-y-3">
-            {loading && (
-              <div className="flex justify-center p-6">
-                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600" />
+        {/* Reviews List */}
+        <section className="space-y-4">
+          <h2 className="mb-4 text-lg font-black text-blue-950">
+            Recent Feedback
+          </h2>
+
+          {loading && (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-100 border-t-blue-600" />
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center text-sm font-bold text-red-600 shadow-sm">
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && reviews.length === 0 && (
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-gray-100 bg-white px-6 py-16 text-center shadow-sm">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+                <StarIconOutline className="h-8 w-8 text-blue-300" />
               </div>
-            )}
-            {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-                {error}
-              </div>
-            )}
-            {reviews.length === 0 && !loading ? (
-              <div className="rounded-xl bg-white p-6 text-center text-gray-600 shadow">
-                You don't have any reviews yet.
-              </div>
-            ) : (
-              reviews.map((rev) => (
-                <div key={rev.id} className="rounded-xl bg-white p-5 shadow">
-                  <div className="mb-1 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="text-sm font-medium text-slate-800">
-                        {getReviewerName(rev)}
-                      </div>
-                      <div className="flex items-center">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <StarIcon
-                            key={s}
-                            className={`h-4 w-4 ${
-                              s <= rev.rating
-                                ? "text-yellow-400"
-                                : "text-gray-200"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(rev.createdAt).toLocaleDateString()}
+              <h3 className="text-lg font-black text-blue-950">
+                No Reviews Yet
+              </h3>
+              <p className="mt-2 max-w-sm text-sm text-gray-500">
+                When providers leave feedback after completing a service, their
+                reviews will appear here.
+              </p>
+            </div>
+          )}
+
+          {!loading &&
+            reviews.map((rev) => (
+              <div
+                key={rev.id}
+                className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md"
+              >
+                <div className="mb-3 flex items-start justify-between">
+                  <div>
+                    <h4 className="text-base font-black text-blue-950">
+                      {getReviewerName(rev)}
+                    </h4>
+                    <div className="mt-1 flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <React.Fragment key={s}>
+                          {s <= rev.rating ? (
+                            <StarIcon className="h-4 w-4 text-yellow-400" />
+                          ) : (
+                            <StarIconOutline className="h-4 w-4 text-gray-200" />
+                          )}
+                        </React.Fragment>
+                      ))}
                     </div>
                   </div>
-                  {rev.comment && (
-                    <p className="mt-2 text-sm text-gray-700">{rev.comment}</p>
-                  )}
+                  <span className="rounded-xl bg-gray-50 px-3 py-1 text-xs font-bold text-gray-500">
+                    {new Date(rev.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
-              ))
-            )}
-          </section>
-        </main>
 
-        <BottomNavigation />
-        <ClientRatingInfoModal
-          isOpen={showRatingInfo}
-          onClose={() => setShowRatingInfo(false)}
-          role="client"
-        />
-      </div>
-    </>
+                {rev.comment && (
+                  <div className="mt-4 rounded-2xl bg-gray-50 p-4">
+                    <p className="text-sm leading-relaxed text-gray-700">
+                      "{rev.comment}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+        </section>
+      </main>
+
+      <BottomNavigation />
+      <ClientRatingInfoModal
+        isOpen={showRatingInfo}
+        onClose={() => setShowRatingInfo(false)}
+        role="client"
+      />
+    </div>
   );
 };
 

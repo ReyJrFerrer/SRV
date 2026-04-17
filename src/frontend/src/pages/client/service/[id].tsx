@@ -246,7 +246,7 @@ const ClientServiceDetailsPage: React.FC = () => {
       }
 
       if (existingConversation) {
-        navigate(`/client/chat`, {
+        navigate(`/client/chat/${service.providerId}`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
@@ -264,7 +264,7 @@ const ClientServiceDetailsPage: React.FC = () => {
       );
 
       if (newConversation) {
-        navigate(`/client/chat`, {
+        navigate(`/client/chat/${service.providerId}`, {
           state: {
             conversationId: newConversation.id,
             otherUserName: service.providerName,
@@ -458,7 +458,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         </h1>
         <button
           onClick={() => navigate("/client/home")}
-          className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
+          className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
         >
           Back to Home
         </button>
@@ -809,7 +809,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               isCheckingReputation ||
               isCreatingChat
             }
-            className="group relative flex w-1/3 items-center justify-center rounded-xl bg-gray-100 px-4 py-3.5 font-bold text-gray-700 transition-colors hover:bg-gray-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
+            className="group relative flex w-1/3 items-center justify-center rounded-2xl bg-gray-100 px-5 py-3.5 font-bold text-gray-700 transition-all hover:bg-gray-200 hover:text-blue-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {chatLoading ? (
               <div className="flex items-center gap-2">

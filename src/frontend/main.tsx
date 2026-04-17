@@ -227,6 +227,12 @@ window.OneSignalDeferred.push(async function (OneSignal) {
   } catch (error) {}
 });
 
+const ConversationPage = lazy(
+  () => import("./src/pages/client/chat/[providerId]"),
+);
+const ProviderConversationPage = lazy(
+  () => import("./src/pages/provider/chat/[clientId]"),
+);
 const NotificationsPageSP = lazy(
   () => import("./src/pages/provider/notifications"),
 );
@@ -428,6 +434,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                     <Route index element={<ClientRedirect />} />
                     <Route path="home" element={<ClientHome />} />
                     <Route path="chat" element={<ClientChat />} />
+                    <Route
+                      path="chat/:providerId"
+                      element={<ConversationPage />}
+                    />
                     <Route path="settings" element={<SettingsPageC />} />
                     <Route path="profile" element={<ClientProfilePage />} />
                     <Route
@@ -504,6 +514,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                     <Route path="home" element={<ProviderHome />} />
                     <Route path="bookings" element={<ProviderBookings />} />
                     <Route path="chat" element={<ProviderChat />} />
+                    <Route
+                      path="chat/:clientId"
+                      element={<ProviderConversationPage />}
+                    />
                     <Route path="settings" element={<SettingsPageSP />} />
                     <Route path="profile" element={<ProviderProfilePage />} />
                     <Route

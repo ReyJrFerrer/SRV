@@ -87,7 +87,7 @@ const NotificationItemClient: React.FC<Props> = ({
         selectable ? "" : "hover:border-blue-200"
       } ${
         !notification.read
-          ? "bg-blue-50 hover:bg-blue-100"
+          ? "bg-blue-50/50 hover:bg-blue-50"
           : "bg-white hover:bg-gray-50"
       } ${
         notification.href && !selectable
@@ -118,24 +118,24 @@ const NotificationItemClient: React.FC<Props> = ({
         />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-blue-900">
+        <p className="text-sm font-bold text-gray-900">
           {getEnhancedMessage()}
         </p>
         {notification.message &&
           notification.type !== "system_announcement" &&
           notification.type !== "promo_offer" &&
           notification.message !== getEnhancedMessage() && (
-            <p className="mt-1 break-words text-xs italic text-gray-600">
+            <p className="mt-1 break-words text-xs text-gray-600">
               {notification.message}
             </p>
           )}
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-gray-400">
           {timeAgo(notification.timestamp)}
         </p>
       </div>
       <div className="ml-3 flex items-center gap-2">
         {!notification.read && !selectable && (
-          <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
+          <div className="h-2.5 w-2.5 self-center rounded-full bg-yellow-500"></div>
         )}
         <div className="relative">
           <NotificationMenu

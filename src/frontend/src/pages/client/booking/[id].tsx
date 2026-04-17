@@ -199,13 +199,12 @@ const BookingDetailsPage: React.FC = () => {
             conv.conversation.clientId === providerIdString),
       );
       if (existingConversation) {
-        navigate(`/client/chat`, {
+        navigate(`/client/chat/${existingConversation.conversation.id}`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: existingConversation.otherUserName,
           },
         });
-
         return;
       }
       const newConv = await createConversation(currentUserId, providerIdString);
@@ -326,7 +325,7 @@ const BookingDetailsPage: React.FC = () => {
                   onClick={() =>
                     navigate(`/client/tracking/${specificBooking?.id}`)
                   }
-                  className="group cursor-pointer overflow-hidden rounded-2xl bg-blue-600 p-4 shadow-sm transition-all hover:bg-blue-700"
+                  className="group cursor-pointer overflow-hidden rounded-2xl bg-blue-600 px-5 py-3.5 font-black shadow-sm transition-all hover:bg-blue-700 active:scale-95"
                 >
                   <div className="flex items-center gap-4">
                     <div className="relative">

@@ -102,7 +102,7 @@ const ClientHomePage: React.FC = () => {
             add more to your City/Municipality!
           </p>
           <button
-            className="group flex w-full items-center justify-between rounded-xl bg-blue-600 p-4 text-left transition-all hover:bg-blue-700"
+            className="group flex w-full items-center justify-between rounded-2xl bg-blue-600 px-5 py-3.5 text-left font-black shadow-sm transition-all hover:bg-blue-700 active:scale-95"
             onClick={async () => {
               setBeProviderLoading(true);
               const success = await switchRole();

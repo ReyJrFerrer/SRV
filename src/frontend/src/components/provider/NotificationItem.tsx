@@ -83,7 +83,7 @@ const NotificationItem: React.FC<Props> = ({
         notification.href ? "cursor-pointer" : "cursor-default"
       } ${
         !notification.read
-          ? "bg-blue-50 hover:bg-blue-100"
+          ? "bg-blue-50/50 hover:bg-blue-50"
           : "bg-white hover:bg-gray-50"
       }`}
       aria-selected={checked}
@@ -109,7 +109,7 @@ const NotificationItem: React.FC<Props> = ({
         />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-blue-900">
+        <p className="text-sm font-bold text-gray-900">
           {getEnhancedMessage()}
         </p>
         {notification.message &&
@@ -118,13 +118,13 @@ const NotificationItem: React.FC<Props> = ({
               {notification.message}
             </p>
           )}
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-gray-400">
           {timeAgo(notification.timestamp)}
         </p>
       </div>
       <div className="ml-3 flex items-center gap-2">
         {!notification.read && (
-          <div className="h-2.5 w-2.5 self-center rounded-full bg-blue-500"></div>
+          <div className="h-2.5 w-2.5 self-center rounded-full bg-yellow-500"></div>
         )}
         <div className="relative">
           <NotificationMenu
