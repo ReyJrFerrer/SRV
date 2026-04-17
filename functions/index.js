@@ -243,15 +243,6 @@ const {
 } = require("./src/media");
 
 
-// Export all functions
-exports.onboardProvider = onboardProvider;
-exports.createDirectPayment = createDirectPayment;
-exports.createTopupInvoice = createTopupInvoice;
-exports.xenditWebhook = xenditWebhook;
-exports.checkProviderOnboarding = checkProviderOnboarding;
-exports.getPaymentData = getPaymentData;
-exports.checkInvoiceStatus = checkInvoiceStatus;
-exports.releaseHeldPayment = releaseHeldPayment;
 
 // Export Identity Bridge function
 exports.signInWithInternetIdentity = signInWithInternetIdentity;
