@@ -1,113 +1,159 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  LifebuoyIcon,
+  EnvelopeIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
+import { StarIcon } from "@heroicons/react/24/solid";
 import BottomNavigation from "../../components/client/NavigationBar";
 
 const HelpSupportPage: React.FC = () => {
   const navigate = useNavigate();
 
   const goToReportPage = () => navigate("/client/report");
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-6 shadow-2xl">
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
-        >
-          <ArrowLeftIcon className="h-5 w-5" />
-          <span className="font-medium"></span>
-        </button>
-        <div className="mb-8 flex flex-col items-center">
-          <img src="/logo.svg" alt="SRV Logo" className="mb-2 h-16 w-16" />
-          <h1 className="text-center text-2xl font-extrabold tracking-tight text-blue-900">
+    <div className="flex min-h-screen flex-col bg-gray-50 pb-24 md:pb-6">
+      {/* Header */}
+      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 active:scale-95"
+          >
+            <ArrowLeftIcon className="h-6 w-6" />
+          </button>
+          <h1 className="text-xl font-black tracking-tight text-blue-950">
             Help & Support
           </h1>
+          <div className="w-10" />
         </div>
-        <div className="space-y-6 text-lg text-gray-700">
-          <p>
-            Need assistance or have questions? Here are some ways to get help:
-          </p>
-          <ul className="list-inside list-disc space-y-2 pl-4">
-            <li>
-              <span className="font-semibold">FAQ:</span> our Frequently Asked
-              Questions section for quick answers to common issues.
-            </li>
-            <li>
-              <span className="font-semibold">Contact Support:</span> Email us
-              at{" "}
-              <a
-                href="mailto:hello@srvpinoy.com"
-                className="text-blue-600 underline"
-              >
-                hello@srvpinoy.com
-              </a>{" "}
-              for personalized help.
-            </li>
-            <li>
-              <span className="font-semibold">Report a Problem:</span> Use the{" "}
-              <a className="text-blue-600 underline" onClick={goToReportPage}>
-                Report an Issue
-              </a>{" "}
-              page to let us know about bugs or feedback.
-            </li>
-            <li>
-              <span className="font-semibold">Community:</span> Join our user
-              community for tips and peer support (coming soon).
-            </li>
-          </ul>
-          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <h2 className="mb-2 text-lg font-bold text-yellow-700">
-              Follow us on Social Media
+      </header>
+
+      <main className="mx-auto w-full max-w-2xl px-4 py-6">
+        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+          {/* Logo and Title */}
+          <div className="mb-8 flex flex-col items-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+              <LifebuoyIcon className="h-8 w-8 text-blue-600" />
+            </div>
+            <h1 className="text-center text-2xl font-black tracking-tight text-blue-950">
+              How can we help?
+            </h1>
+            <p className="mt-1 text-center text-sm font-medium text-gray-500">
+              Here are ways to get assistance
+            </p>
+          </div>
+
+          {/* Help Options */}
+          <div className="space-y-4">
+            {/* FAQ Option */}
+            <button
+              onClick={() => {}}
+              className="flex w-full items-center rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-[0.99]"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                <DocumentTextIcon className="h-6 w-6" />
+              </div>
+              <div className="ml-4">
+                <div className="font-bold text-gray-900">
+                  Frequently Asked Questions
+                </div>
+                <div className="text-sm text-gray-500">
+                  Quick answers to common questions
+                </div>
+              </div>
+            </button>
+
+            {/* Email Support */}
+            <a
+              href="mailto:hello@srvpinoy.com"
+              className="flex w-full items-center rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-[0.99]"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                <EnvelopeIcon className="h-6 w-6" />
+              </div>
+              <div className="ml-4">
+                <div className="font-bold text-gray-900">Email Support</div>
+                <div className="text-sm text-gray-500">hello@srvpinoy.com</div>
+              </div>
+            </a>
+
+            {/* Report an Issue */}
+            <button
+              onClick={goToReportPage}
+              className="flex w-full items-center rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-[0.99]"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                <LifebuoyIcon className="h-6 w-6" />
+              </div>
+              <div className="ml-4">
+                <div className="font-bold text-gray-900">Report an Issue</div>
+                <div className="text-sm text-gray-500">
+                  Let us know about bugs or feedback
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Social Media Section */}
+          <div className="mt-8 rounded-2xl border border-yellow-100 bg-yellow-50/50 p-5">
+            <h2 className="mb-4 text-lg font-black text-yellow-900">
+              Follow Us
             </h2>
-            {/* 👇 KEY CHANGE HERE: flex-col for mobile, gap-4 for vertical spacing, md:flex-row to go back to horizontal on desktop */}
-            <div className="flex flex-col items-start gap-4 md:flex-row md:justify-center md:gap-6">
+            <div className="flex flex-col gap-3">
               <a
                 href="https://facebook.com/srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-blue-700 hover:text-blue-900"
+                className="flex items-center gap-3 rounded-xl bg-white p-3 text-blue-700 shadow-sm transition-all hover:translate-x-1 hover:shadow-md"
               >
                 <img
                   src="/images/external logo/fb.svg"
                   alt="Facebook"
-                  className="h-7 w-7"
-                />{" "}
-                Facebook
+                  className="h-6 w-6"
+                />
+                <span className="font-bold">Facebook</span>
               </a>
               <a
                 href="https://instagram.com/srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-pink-600 hover:text-pink-800"
+                className="flex items-center gap-3 rounded-xl bg-white p-3 text-pink-600 shadow-sm transition-all hover:translate-x-1 hover:shadow-md"
               >
                 <img
                   src="/images/external logo/instagram.svg"
                   alt="Instagram"
-                  className="h-7 w-7"
-                />{" "}
-                Instagram
+                  className="h-6 w-6"
+                />
+                <span className="font-bold">Instagram</span>
               </a>
               <a
                 href="https://tiktok.com/@srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-blue-400 hover:text-blue-600"
+                className="flex items-center gap-3 rounded-xl bg-white p-3 text-gray-800 shadow-sm transition-all hover:translate-x-1 hover:shadow-md"
               >
                 <img
                   src="/images/external logo/tiktok.svg"
                   alt="TikTok"
-                  className="h-7 w-7"
-                />{" "}
-                TikTok
+                  className="h-6 w-6"
+                />
+                <span className="font-bold">TikTok</span>
               </a>
             </div>
           </div>
-          <p className="text-base italic text-gray-600">
-            We aim to respond to all inquiries within 24 hours. Thank you for
-            using SRV!
-          </p>
+
+          {/* Response Time Note */}
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-500">
+            <StarIcon className="h-4 w-4 text-yellow-400" />
+            <span>We aim to respond within 24 hours</span>
+          </div>
         </div>
-      </div>
+      </main>
+
       <BottomNavigation />
     </div>
   );
