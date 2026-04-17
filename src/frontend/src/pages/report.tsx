@@ -14,7 +14,6 @@ import {
 import { useFeedback } from "../hooks/useFeedback";
 import { uploadReportAttachments } from "../services/mediaService";
 
-// Ticket-compatible interfaces
 interface TicketCategory {
   id: "technical" | "billing" | "account" | "service" | "other";
   name: string;
@@ -26,31 +25,31 @@ const TICKET_CATEGORIES: TicketCategory[] = [
   {
     id: "technical",
     name: "Technical Issue",
-    description: "App bugs, loading problems, feature malfunctions",
+    description: "App bugs, loading problems",
     icon: CogIcon,
   },
   {
     id: "billing",
     name: "Billing & Payments",
-    description: "Payment issues, commission problems, refunds",
+    description: "Payment issues, refunds",
     icon: BriefcaseIcon,
   },
   {
     id: "account",
     name: "Account Issues",
-    description: "Login problems, profile issues, restrictions",
+    description: "Login, profile issues",
     icon: UserIcon,
   },
   {
     id: "service",
     name: "Service Related",
-    description: "Service listings, bookings, interactions",
+    description: "Bookings, interactions",
     icon: BriefcaseIcon,
   },
   {
     id: "other",
     name: "Other",
-    description: "General feedback, suggestions, concerns",
+    description: "General feedback",
     icon: QuestionMarkCircleIcon,
   },
 ];
@@ -62,20 +61,15 @@ const ReportIssuePage: React.FC = () => {
   const [category, setCategory] = useState<TicketCategory["id"]>("other");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { submitReport, submitting, error, clearError } = useFeedback();
-
-  // Screenshots (optional)
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Generate/revoke object URLs for previews
   useEffect(() => {
     const urls = files.map((f) => URL.createObjectURL(f));
     setPreviews(urls);
-    return () => {
-      urls.forEach((u) => URL.revokeObjectURL(u));
-    };
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [files]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,7 +89,6 @@ const ReportIssuePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) return;
-
     clearError();
     setSuccessMessage(null);
     setUploadError(null);
@@ -106,9 +99,7 @@ const ReportIssuePage: React.FC = () => {
         setUploading(true);
         attachmentUrls = await uploadReportAttachments(files);
       } catch (err) {
-        setUploadError(
-          err instanceof Error ? err.message : "Failed to upload screenshots",
-        );
+        setUploadError(err instanceof Error ? err.message : "Failed to upload");
         setUploading(false);
         return;
       } finally {
@@ -127,15 +118,13 @@ const ReportIssuePage: React.FC = () => {
 
     if (success) {
       setSuccessMessage(
-        "Your report has been submitted successfully. Our support team will review it and respond as needed. Thank you!",
+        "Report submitted successfully. We'll review and respond soon.",
       );
       setTitle("");
       setDescription("");
       setCategory("other");
       setFiles([]);
-      setTimeout(() => {
-        navigate(-1);
-      }, 3000);
+      setTimeout(() => navigate(-1), 3000);
     }
   };
 
@@ -144,12 +133,11 @@ const ReportIssuePage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 pb-24 md:pb-6">
-      {/* Header */}
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-600 transition-colors hover:border-gray-300 active:scale-95"
           >
             <ArrowLeftIcon className="h-6 w-6" />
           </button>
@@ -162,38 +150,35 @@ const ReportIssuePage: React.FC = () => {
 
       <main className="mx-auto w-full max-w-2xl px-4 py-6">
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-          {/* Logo and Title */}
           <div className="mb-8 flex flex-col items-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-50">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-yellow-200 bg-white">
               <ExclamationTriangleIcon className="h-8 w-8 text-yellow-600" />
             </div>
             <h1 className="text-center text-2xl font-black tracking-tight text-yellow-900">
               Report an Issue
             </h1>
             <p className="mt-1 text-center text-sm font-medium text-gray-500">
-              Help us improve by reporting bugs or providing feedback
+              Help us improve by reporting bugs or feedback
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error/Success Messages */}
             {error && (
-              <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+              <div className="rounded-2xl border border-red-200 bg-white p-4 text-sm font-medium text-red-600">
                 {error}
               </div>
             )}
             {successMessage && (
-              <div className="rounded-2xl border border-green-100 bg-green-50 p-4 text-sm font-medium text-green-600">
+              <div className="rounded-2xl border border-green-200 bg-white p-4 text-sm font-medium text-green-600">
                 {successMessage}
               </div>
             )}
             {uploadError && (
-              <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+              <div className="rounded-2xl border border-red-200 bg-white p-4 text-sm font-medium text-red-600">
                 {uploadError}
               </div>
             )}
 
-            {/* Issue Title */}
             <div>
               <label
                 htmlFor="title"
@@ -206,14 +191,13 @@ const ReportIssuePage: React.FC = () => {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-800 transition-colors focus:border-yellow-400 focus:bg-white focus:ring-2 focus:ring-yellow-200"
-                placeholder="Brief summary of your issue..."
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-800 transition-colors focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+                placeholder="Brief summary..."
                 required
                 disabled={submitting}
               />
             </div>
 
-            {/* Category Selection */}
             <div>
               <label className="mb-3 block text-sm font-bold text-gray-700">
                 Category *
@@ -225,11 +209,7 @@ const ReportIssuePage: React.FC = () => {
                   return (
                     <label
                       key={cat.id}
-                      className={`relative flex cursor-pointer rounded-2xl border p-4 transition-all ${
-                        isSelected
-                          ? "border-yellow-400 bg-yellow-50 ring-2 ring-yellow-200"
-                          : "border-gray-100 bg-gray-50 hover:border-yellow-200 hover:bg-yellow-50"
-                      }`}
+                      className={`relative flex cursor-pointer rounded-2xl border p-4 transition-all ${isSelected ? "border-yellow-400 bg-white ring-2 ring-yellow-200" : "border-gray-200 bg-white hover:border-yellow-300"}`}
                     >
                       <input
                         type="radio"
@@ -261,7 +241,6 @@ const ReportIssuePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Issue Description */}
             <div>
               <label
                 htmlFor="description"
@@ -274,25 +253,24 @@ const ReportIssuePage: React.FC = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={6}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-800 transition-colors focus:border-yellow-400 focus:bg-white focus:ring-2 focus:ring-yellow-200"
-                placeholder="Please provide detailed information about your issue..."
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-800 transition-colors focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+                placeholder="Provide details..."
                 required
                 disabled={submitting}
               />
             </div>
 
-            {/* Screenshots (optional) */}
             <div>
               <label className="mb-2 block text-sm font-bold text-gray-700">
-                Attach Screenshots (optional)
+                Screenshots (optional)
               </label>
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 transition-colors hover:border-yellow-300 hover:bg-yellow-50">
+              <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-4 transition-colors hover:border-yellow-400">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-gray-500">
                     <PhotoIcon className="h-5 w-5" />
                     <span className="text-sm">Upload up to 5 images</span>
                   </div>
-                  <label className="cursor-pointer rounded-xl bg-yellow-400 px-4 py-2 text-sm font-bold text-yellow-900 transition-colors hover:bg-yellow-500 active:scale-95">
+                  <label className="cursor-pointer rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 transition-colors hover:border-yellow-400 hover:text-yellow-600 active:scale-95">
                     Choose Files
                     <input
                       type="file"
@@ -309,7 +287,7 @@ const ReportIssuePage: React.FC = () => {
                     {previews.map((src, idx) => (
                       <div
                         key={idx}
-                        className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white"
+                        className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white"
                       >
                         <img
                           src={src}
@@ -330,21 +308,20 @@ const ReportIssuePage: React.FC = () => {
                 )}
                 {uploading && (
                   <div className="mt-3 text-sm font-medium text-yellow-700">
-                    Uploading screenshots...
+                    Uploading...
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitDisabled}
-              className="flex w-full items-center justify-center rounded-2xl bg-yellow-400 px-6 py-4 text-lg font-black text-yellow-900 shadow-sm transition-all hover:bg-yellow-500 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center rounded-2xl border border-yellow-400 bg-white px-6 py-4 text-lg font-black text-yellow-700 shadow-sm transition-all hover:bg-yellow-50 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting || uploading ? (
                 <span className="flex items-center gap-2">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-yellow-900 border-t-transparent" />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-yellow-700 border-t-transparent" />
                   Submitting...
                 </span>
               ) : (

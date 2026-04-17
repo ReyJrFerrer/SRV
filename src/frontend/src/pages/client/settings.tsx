@@ -105,14 +105,14 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {/* SECTION: Switch to service provider */}
-            <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-sm">
               <button
                 onClick={handleSwitchToProvider}
-                className="group flex w-full items-center justify-between p-4 text-left transition-all hover:bg-blue-50"
+                className="group flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                 disabled={switching}
               >
                 <div className="flex items-center">
-                  <div className="mr-4 rounded-lg bg-blue-50 p-2 text-blue-600">
+                  <div className="mr-4 rounded-lg border border-blue-200 bg-white p-2 text-blue-600">
                     <ArrowPathRoundedSquareIcon
                       className={`h-6 w-6 transition-transform duration-300 ${switching ? "animate-spin" : ""}`}
                     />
@@ -140,7 +140,7 @@ const SettingsPage: React.FC = () => {
                     className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                   >
                     <div className="flex items-center">
-                      <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                      <div className="mr-4 rounded-lg border border-gray-200 bg-white p-2 text-blue-600">
                         <DevicePhoneMobileIcon className="h-6 w-6" />
                       </div>
                       <span className="text-base font-bold text-gray-900">
@@ -166,7 +166,7 @@ const SettingsPage: React.FC = () => {
                     className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                   >
                     <div className="flex items-center">
-                      <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                      <div className="mr-4 rounded-lg border border-gray-200 bg-white p-2 text-blue-600">
                         <BellIcon className="h-6 w-6" />
                       </div>
                       <span className="text-base font-bold text-gray-900">
@@ -192,7 +192,7 @@ const SettingsPage: React.FC = () => {
                       className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                     >
                       <div className="flex items-center">
-                        <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                        <div className="mr-4 rounded-lg border border-gray-200 bg-white p-2 text-blue-600">
                           <item.icon className="h-6 w-6" />
                         </div>
                         <span className="text-base font-bold text-gray-900">
@@ -211,7 +211,7 @@ const SettingsPage: React.FC = () => {
                 onClick={logout}
                 className="flex w-full items-center p-4 text-left transition-all hover:bg-red-50"
               >
-                <div className="mr-4 rounded-lg bg-red-50 p-2 text-red-600">
+                <div className="mr-4 rounded-lg border border-red-200 bg-white p-2 text-red-600">
                   <ArrowRightOnRectangleIcon className="h-6 w-6" />
                 </div>
                 <span className="text-base font-bold text-red-600">

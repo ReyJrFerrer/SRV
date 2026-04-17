@@ -27,7 +27,7 @@ const TermsAndConditionsPage: React.FC = () => {
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
           {/* Logo and Title */}
           <div className="mb-8 flex flex-col items-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-200 bg-white">
               <ShieldCheckIcon className="h-8 w-8 text-blue-600" />
             </div>
             <h1 className="text-center text-2xl font-black tracking-tight text-blue-950">

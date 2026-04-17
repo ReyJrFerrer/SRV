@@ -36,7 +36,7 @@ const HelpSupportPage: React.FC = () => {
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
           {/* Logo and Title */}
           <div className="mb-8 flex flex-col items-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-200 bg-white">
               <LifebuoyIcon className="h-8 w-8 text-blue-600" />
             </div>
             <h1 className="text-center text-2xl font-black tracking-tight text-blue-950">
@@ -52,9 +52,9 @@ const HelpSupportPage: React.FC = () => {
             {/* FAQ Option */}
             <button
               onClick={() => {}}
-              className="flex w-full items-center rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-[0.99]"
+              className="flex w-full items-center rounded-2xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-blue-400 active:scale-[0.99]"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-100 bg-white text-blue-600">
                 <DocumentTextIcon className="h-6 w-6" />
               </div>
               <div className="ml-4">
@@ -70,9 +70,9 @@ const HelpSupportPage: React.FC = () => {
             {/* Email Support */}
             <a
               href="mailto:hello@srvpinoy.com"
-              className="flex w-full items-center rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-[0.99]"
+              className="flex w-full items-center rounded-2xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-blue-400 active:scale-[0.99]"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-100 bg-white text-blue-600">
                 <EnvelopeIcon className="h-6 w-6" />
               </div>
               <div className="ml-4">
@@ -84,9 +84,9 @@ const HelpSupportPage: React.FC = () => {
             {/* Report an Issue */}
             <button
               onClick={goToReportPage}
-              className="flex w-full items-center rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-[0.99]"
+              className="flex w-full items-center rounded-2xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-blue-400 active:scale-[0.99]"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-100 bg-white text-blue-600">
                 <LifebuoyIcon className="h-6 w-6" />
               </div>
               <div className="ml-4">
@@ -99,16 +99,14 @@ const HelpSupportPage: React.FC = () => {
           </div>
 
           {/* Social Media Section */}
-          <div className="mt-8 rounded-2xl border border-yellow-100 bg-yellow-50/50 p-5">
-            <h2 className="mb-4 text-lg font-black text-yellow-900">
-              Follow Us
-            </h2>
+          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-5">
+            <h2 className="mb-4 text-lg font-black text-gray-700">Follow Us</h2>
             <div className="flex flex-col gap-3">
               <a
                 href="https://facebook.com/srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-xl bg-white p-3 text-blue-700 shadow-sm transition-all hover:translate-x-1 hover:shadow-md"
+                className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-blue-700 transition-all hover:translate-x-1 hover:border-blue-400"
               >
                 <img
                   src="/images/external logo/fb.svg"
@@ -121,7 +119,7 @@ const HelpSupportPage: React.FC = () => {
                 href="https://instagram.com/srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-xl bg-white p-3 text-pink-600 shadow-sm transition-all hover:translate-x-1 hover:shadow-md"
+                className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-pink-600 transition-all hover:translate-x-1 hover:border-pink-400"
               >
                 <img
                   src="/images/external logo/instagram.svg"
@@ -134,7 +132,7 @@ const HelpSupportPage: React.FC = () => {
                 href="https://tiktok.com/@srvpinoy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-xl bg-white p-3 text-gray-800 shadow-sm transition-all hover:translate-x-1 hover:shadow-md"
+                className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-800 transition-all hover:translate-x-1 hover:border-gray-400"
               >
                 <img
                   src="/images/external logo/tiktok.svg"
