@@ -109,7 +109,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
     switch (level) {
       case "New":
         return {
-          color: "bg-blue-50 text-blue-700 shadow-sm border-blue-100",
+          color: "bg-white text-blue-700 shadow-sm border-blue-200",
           icon: SparklesIcon,
           description: (
             <>
@@ -125,35 +125,35 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         };
       case "Low":
         return {
-          color: "bg-red-50 text-red-700 shadow-sm border-red-100",
+          color: "bg-white text-red-700 shadow-sm border-red-200",
           icon: ExclamationTriangleIcon,
           description:
             "Building trust - Focus on completing bookings and maintaining good conduct to improve your client rating.",
         };
       case "Medium":
         return {
-          color: "bg-yellow-50 text-yellow-700 shadow-sm border-yellow-100",
+          color: "bg-white text-yellow-700 shadow-sm border-yellow-200",
           icon: StarIcon,
           description:
             "Reliable client - You're building a good reputation! Keep up the excellent conduct.",
         };
       case "High":
         return {
-          color: "bg-blue-50 text-blue-700 shadow-sm border-blue-100",
+          color: "bg-white text-blue-700 shadow-sm border-blue-200",
           icon: TrophyIcon,
           description:
             "Trusted client - Excellent reputation! Service providers trust you as a reliable client.",
         };
       case "VeryHigh":
         return {
-          color: "bg-green-50 text-green-700 shadow-sm border-green-100",
+          color: "bg-white text-green-700 shadow-sm border-green-200",
           icon: ShieldCheckIcon,
           description:
             "Premium client - Outstanding reputation! You're among the top-rated clients on our platform.",
         };
       default:
         return {
-          color: "bg-gray-50 text-gray-700 shadow-sm border-gray-200",
+          color: "bg-white text-gray-700 shadow-sm border-gray-200",
           icon: InformationCircleIcon,
           description: "Trust level not available.",
         };
@@ -223,7 +223,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
           User Badge Levels
         </h2>
         <ul className="space-y-4">
-          <li className="flex flex-col gap-1 rounded-lg border border-blue-100 bg-blue-50 p-3">
+          <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-white p-3">
             <div className="flex items-center gap-3">
               <SparklesIcon className="h-6 w-6 text-blue-500" />
               <span className="font-semibold text-blue-700">New User</span>
@@ -234,7 +234,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
               start building your reputation and unlock higher trust levels.
             </span>
           </li>
-          <li className="flex flex-col gap-1 rounded-lg border border-red-100 bg-red-50 p-3">
+          <li className="flex flex-col gap-1 rounded-lg border border-red-200 bg-white p-3">
             <div className="flex items-center gap-3">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
               <span className="font-semibold text-red-700">Building Trust</span>
@@ -245,7 +245,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
               maintaining good conduct to improve your client rating.
             </span>
           </li>
-          <li className="flex flex-col gap-1 rounded-lg border border-yellow-100 bg-yellow-50 p-3">
+          <li className="flex flex-col gap-1 rounded-lg border border-yellow-200 bg-white p-3">
             <div className="flex items-center gap-3">
               <StarIcon className="h-6 w-6 text-yellow-500" />
               <span className="font-semibold text-yellow-700">Reliable</span>
@@ -308,25 +308,25 @@ const ClientStats: React.FC = () => {
       name: "Total Bookings",
       value: formattedStats.totalBookings,
       icon: BriefcaseIcon,
-      bg: "bg-blue-100 text-blue-700",
+      bg: "text-blue-700",
     },
     {
       name: "Services Completed",
       value: formattedStats.servicesCompleted,
       icon: CheckBadgeIcon,
-      bg: "bg-blue-100 text-blue-700",
+      bg: "text-blue-700",
     },
     {
       name: "Total Spent",
       value: formattedStats.totalSpent,
       icon: CurrencyEuroIcon,
-      bg: "bg-blue-100 text-blue-700",
+      bg: "text-blue-700",
     },
     {
       name: "Member Since",
       value: formattedStats.memberSince,
       icon: CalendarIcon,
-      bg: "bg-blue-100 text-blue-700",
+      bg: "text-blue-700",
     },
   ];
 
@@ -654,7 +654,7 @@ const ClientProfilePage: React.FC = () => {
         <div className="relative flex w-full items-center px-4 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full bg-gray-50 p-2 text-gray-700 hover:bg-gray-100"
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
           >
             <ArrowLeftIcon className="h-5 w-5" />
           </button>
@@ -705,7 +705,7 @@ const ClientProfilePage: React.FC = () => {
                     </p>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gray-50 px-5 py-3.5 text-sm font-bold text-gray-800 transition transition-all duration-300 hover:bg-gray-100 active:scale-95"
+                      className="mt-6 flex w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-800 transition transition-all duration-300 hover:border-gray-300 active:scale-95"
                     >
                       <PencilIcon className="mr-2 h-4 w-4 text-gray-500" />
                       Edit Profile
@@ -744,7 +744,7 @@ const ClientProfilePage: React.FC = () => {
                       >
                         Phone Number
                       </label>
-                      <p className="mt-1 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-bold text-gray-900">
+                      <p className="mt-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-900">
                         {profile?.phone || "No phone number"}
                       </p>
                       <p className="mt-2 flex items-start gap-1.5 px-1 text-xs text-gray-500">
@@ -803,7 +803,7 @@ const ClientProfilePage: React.FC = () => {
               <div className="hidden lg:block">
                 <button
                   onClick={logout}
-                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-red-100 bg-red-50 px-6 py-3 text-sm font-bold text-red-600 shadow-sm transition-colors hover:bg-red-100"
+                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-red-100  px-6 py-3 text-sm font-bold text-red-600 shadow-sm transition-colors hover:bg-red-100"
                 >
                   Log Out
                 </button>
@@ -818,7 +818,7 @@ const ClientProfilePage: React.FC = () => {
                   <button
                     type="button"
                     aria-label="What is reputation score?"
-                    className="rounded-full bg-gray-50 p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="rounded-full border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     onClick={() => setShowAboutInfo(true)}
                   >
                     <InformationCircleIcon className="h-5 w-5" />
@@ -873,7 +873,7 @@ const ClientProfilePage: React.FC = () => {
                 <div className="mt-8 space-y-6">
                   <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
                     {/* Decorative background element */}
-                    <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-yellow-50 opacity-50 blur-2xl"></div>
+                    <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-yellow-100 opacity-50 blur-2xl"></div>
 
                     <div className="relative z-10 mb-6 flex items-center justify-between">
                       <h4 className="text-sm font-black uppercase tracking-wider text-gray-900">
@@ -882,7 +882,7 @@ const ClientProfilePage: React.FC = () => {
                       <button
                         type="button"
                         aria-label="About ratings"
-                        className="rounded-full bg-gray-50 p-2 text-gray-400 transition-colors hover:bg-yellow-50 hover:text-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        className="rounded-full border border-gray-200 bg-white p-2 text-gray-400 transition-colors hover:bg-yellow-50 hover:text-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         onClick={() => setShowRatingInfo(true)}
                       >
                         <InformationCircleIcon className="h-5 w-5" />
@@ -930,7 +930,7 @@ const ClientProfilePage: React.FC = () => {
 
                     <button
                       onClick={() => navigate("/client/profile/reviews")}
-                      className="relative z-10 mt-6 w-full rounded-2xl bg-gray-50 px-5 py-3.5 text-sm font-bold text-gray-900 transition-all hover:bg-gray-100 active:scale-95 active:bg-gray-200"
+                      className="relative z-10 mt-6 w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 transition-all hover:border-gray-300 active:scale-95 active:bg-gray-50"
                     >
                       View All Reviews
                     </button>
@@ -979,7 +979,7 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   return (
     <div className="relative flex h-56 w-56 items-center justify-center">
       {/* Outer subtle glow */}
-      <div className="absolute inset-0 rounded-full bg-gray-50 opacity-70 blur-xl"></div>
+      <div className="absolute inset-0 rounded-full bg-gray-100 opacity-70 blur-xl"></div>
 
       <svg
         className="absolute h-full w-full drop-shadow-sm"
