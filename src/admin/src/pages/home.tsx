@@ -199,7 +199,7 @@ export const AdminHomePage: React.FC = () => {
     if (!settings) return;
 
     const parsedDays = parseInt(retentionDaysInput, 10);
-    if (isNaN(parsedDays) || parsedDays < 0) return;
+    if (isNaN(parsedDays) || parsedDays < 0 || parsedDays > 365) return;
 
     setUpdatingSettings(true);
     try {

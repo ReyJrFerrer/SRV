@@ -358,7 +358,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                 {currentServices.find((s) => s.id === deleteConfirmId)?.title ||
                   "this service"}
               </b>
-              ? This action cannot be undone.
+              ? This service will be archived and can be restored later.
             </p>
             <div className="flex gap-2">
               <button
