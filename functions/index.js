@@ -5,31 +5,11 @@
  * including Xendit integration for digital payments and wallet top-ups.
  */
 
-const {setGlobalOptions} = require("firebase-functions");
+const {setGlobalOptions} = require("firebase-functions/v2");
 const {admin} = require("./firebase-admin");
 
 // Set global options for all functions
-setGlobalOptions({maxInstances: 10});
-
-/**
- * Initialize categories on startup
- * This function runs automatically when Firebase Functions are deployed
- */
-async function initializeOnStartup() {
-  try {
-    console.log("Initializing categories on startup...");
-    const {initializeCategoriesDirectly} = require("./src/service");
-
-    // Call the direct initialization function
-    const result = await initializeCategoriesDirectly();
-    console.log("Categories initialization result:", result);
-  } catch (error) {
-    console.error("Error initializing categories on startup:", error);
-  }
-}
-
-// Run initialization
-initializeOnStartup();
+setGlobalOptions({maxInstances: 50, concurrency: 80, region: "us-central1"});
 // Import Identity Bridge function
 const {signInWithInternetIdentity} = require("./src/auth");
 

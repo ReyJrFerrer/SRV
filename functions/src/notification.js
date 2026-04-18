@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
@@ -315,7 +316,9 @@ async function sendOneSignalNotification(userId, notification) {
  * Create a new notification
  * HTTPS Callable Function
  */
-exports.createNotification = functions.https.onCall(async (data, context) => {
+exports.createNotification = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("createNotification called");
   // Extract payload from data.data
   const payload = data.data || data;
@@ -332,7 +335,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
   // Authentication (must be authenticated to create notifications)
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -340,14 +343,14 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
 
   // Validation (mirror Motoko logic)
   if (!targetUserId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Target user ID is required",
     );
   }
 
   if (!userType || !Object.values(USER_TYPES).includes(userType)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Valid user type is required (client or provider)",
     );
@@ -357,21 +360,21 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     !notificationType ||
     !Object.values(NOTIFICATION_TYPES).includes(notificationType)
   ) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Valid notification type is required",
     );
   }
 
   if (!title || title.length === 0) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Title is required",
     );
   }
 
   if (!message || message.length === 0) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Message is required",
     );
@@ -381,7 +384,7 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     // Check spam prevention
     const spamming = await isSpamming(targetUserId, notificationType);
     if (spamming) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "resource-exhausted",
         "Notification rate limit exceeded",
       );
@@ -439,11 +442,11 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     console.error("Error in createNotification:", error);
 
     // Re-throw HttpsError
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
 
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -451,7 +454,9 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
  * Get notifications for current user
  * HTTPS Callable Function
  */
-exports.getUserNotifications = functions.https.onCall(async (data, context) => {
+exports.getUserNotifications = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("getUserNotifications called");
   // Extract payload from data.data
   const payload = data.data || data;
@@ -460,7 +465,7 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -520,7 +525,7 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
     return {success: true, notifications};
   } catch (error) {
     console.error("Error in getUserNotifications:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -528,230 +533,235 @@ exports.getUserNotifications = functions.https.onCall(async (data, context) => {
  * Mark notification as read
  * HTTPS Callable Function
  */
-exports.markNotificationAsRead = functions.https.onCall(
-  async (data, context) => {
-    console.log("markNotificationAsRead called");
+exports.markNotificationAsRead = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  console.log("markNotificationAsRead called");
 
-    // Extract payload from data.data
-    const payload = data.data || data;
-    const {notificationId} = payload;
+  // Extract payload from data.data
+  const payload = data.data || data;
+  const {notificationId} = payload;
 
-    // Authentication
-    const authInfo = getAuthInfo(context, data);
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
 
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
-      );
-    }
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
 
-    // Validation
-    if (!notificationId) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Notification ID is required",
-      );
-    }
+  // Validation
+  if (!notificationId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Notification ID is required",
+    );
+  }
 
-    try {
-      console.log(`[markNotificationAsRead] Fetching notification ${notificationId}...`);
-      const notificationRef = db.collection("notifications").doc(notificationId);
+  try {
+    console.log(`[markNotificationAsRead] Fetching notification ${notificationId}...`);
+    const notificationRef = db.collection("notifications").doc(notificationId);
 
-      await db.runTransaction(async (transaction) => {
-        const notificationDoc = await transaction.get(notificationRef);
+    await db.runTransaction(async (transaction) => {
+      const notificationDoc = await transaction.get(notificationRef);
 
-        if (!notificationDoc.exists) {
-          throw new functions.https.HttpsError(
-            "not-found",
-            "Notification not found",
-          );
-        }
-
-        const notification = notificationDoc.data();
-
-        // Verify ownership
-        if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-          throw new functions.https.HttpsError(
-            "permission-denied",
-            "You can only mark your own notifications as read",
-          );
-        }
-
-        // Update status based on current state
-        let newStatus = NOTIFICATION_STATUS.READ;
-        if (notification.status === NOTIFICATION_STATUS.PUSH_SENT) {
-          newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
-        }
-
-        transaction.update(notificationRef, {
-          status: newStatus,
-          readAt: FieldValue.serverTimestamp(),
-        });
-      });
-
-      console.log("[markNotificationAsRead] Function finished successfully.");
-      return {success: true};
-    } catch (error) {
-      console.error("Error in markNotificationAsRead:", error);
-
-      // Re-throw HttpsError
-      if (error instanceof functions.https.HttpsError) {
-        throw error;
+      if (!notificationDoc.exists) {
+        throw new HttpsError(
+          "not-found",
+          "Notification not found",
+        );
       }
 
-      throw new functions.https.HttpsError("internal", error.message);
+      const notification = notificationDoc.data();
+
+      // Verify ownership
+      if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
+        throw new HttpsError(
+          "permission-denied",
+          "You can only mark your own notifications as read",
+        );
+      }
+
+      // Update status based on current state
+      let newStatus = NOTIFICATION_STATUS.READ;
+      if (notification.status === NOTIFICATION_STATUS.PUSH_SENT) {
+        newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
+      }
+
+      transaction.update(notificationRef, {
+        status: newStatus,
+        readAt: FieldValue.serverTimestamp(),
+      });
+    });
+
+    console.log("[markNotificationAsRead] Function finished successfully.");
+    return {success: true};
+  } catch (error) {
+    console.error("Error in markNotificationAsRead:", error);
+
+    // Re-throw HttpsError
+    if (error instanceof HttpsError) {
+      throw error;
     }
-  },
+
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Mark notification as push sent
  * HTTPS Callable Function
  */
-exports.markNotificationAsPushSent = functions.https.onCall(
-  async (data, context) => {
-    console.log("markNotificationAsPushSent called");
+exports.markNotificationAsPushSent = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  console.log("markNotificationAsPushSent called");
 
-    // Extract payload from data.data
-    const payload = data.data || data;
-    const {notificationId} = payload;
+  // Extract payload from data.data
+  const payload = data.data || data;
+  const {notificationId} = payload;
 
-    // Authentication
-    const authInfo = getAuthInfo(context, data);
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
 
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
-      );
-    }
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
 
-    // Validation
-    if (!notificationId) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Notification ID is required",
-      );
-    }
+  // Validation
+  if (!notificationId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Notification ID is required",
+    );
+  }
 
-    try {
-      const notificationRef = db.collection("notifications").doc(notificationId);
+  try {
+    const notificationRef = db.collection("notifications").doc(notificationId);
 
-      await db.runTransaction(async (transaction) => {
-        const notificationDoc = await transaction.get(notificationRef);
+    await db.runTransaction(async (transaction) => {
+      const notificationDoc = await transaction.get(notificationRef);
 
-        if (!notificationDoc.exists) {
-          throw new functions.https.HttpsError(
-            "not-found",
-            "Notification not found",
-          );
-        }
-
-        const notification = notificationDoc.data();
-
-        // Verify ownership
-        if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-          throw new functions.https.HttpsError(
-            "permission-denied",
-            "You can only update your own notifications",
-          );
-        }
-
-        // Update status based on current state
-        let newStatus = NOTIFICATION_STATUS.PUSH_SENT;
-        if (notification.status === NOTIFICATION_STATUS.READ) {
-          newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
-        }
-
-        transaction.update(notificationRef, {
-          status: newStatus,
-          pushSentAt: FieldValue.serverTimestamp(),
-        });
-      });
-
-      console.log("[markNotificationAsPushSent] Function finished successfully.");
-      return {success: true};
-    } catch (error) {
-      console.error("Error in markNotificationAsPushSent:", error);
-
-      // Re-throw HttpsError
-      if (error instanceof functions.https.HttpsError) {
-        throw error;
+      if (!notificationDoc.exists) {
+        throw new HttpsError(
+          "not-found",
+          "Notification not found",
+        );
       }
 
-      throw new functions.https.HttpsError("internal", error.message);
+      const notification = notificationDoc.data();
+
+      // Verify ownership
+      if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
+        throw new HttpsError(
+          "permission-denied",
+          "You can only update your own notifications",
+        );
+      }
+
+      // Update status based on current state
+      let newStatus = NOTIFICATION_STATUS.PUSH_SENT;
+      if (notification.status === NOTIFICATION_STATUS.READ) {
+        newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
+      }
+
+      transaction.update(notificationRef, {
+        status: newStatus,
+        pushSentAt: FieldValue.serverTimestamp(),
+      });
+    });
+
+    console.log("[markNotificationAsPushSent] Function finished successfully.");
+    return {success: true};
+  } catch (error) {
+    console.error("Error in markNotificationAsPushSent:", error);
+
+    // Re-throw HttpsError
+    if (error instanceof HttpsError) {
+      throw error;
     }
-  },
+
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Get notifications eligible for push (not yet sent)
  * HTTPS Callable Function
  */
-exports.getNotificationsForPush = functions.https.onCall(
-  async (data, context) => {
-    console.log("getNotificationsForPush called");
+exports.getNotificationsForPush = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  console.log("getNotificationsForPush called");
 
-    // Extract payload from data.data
-    const payload = data.data || data;
-    const {userId} = payload;
+  // Extract payload from data.data
+  const payload = data.data || data;
+  const {userId} = payload;
 
-    // Authentication
-    const authInfo = getAuthInfo(context, data);
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
 
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
-      );
-    }
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
 
-    // Use authenticated user's ID if not provided or if not admin
-    const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
+  // Use authenticated user's ID if not provided or if not admin
+  const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
 
-    try {
-      const snapshot = await db
-        .collection("notifications")
-        .where("userId", "==", targetUserId)
-        .where("status", "==", NOTIFICATION_STATUS.UNREAD)
-        .orderBy("createdAt", "desc")
-        .limit(50)
-        .get();
+  try {
+    const snapshot = await db
+      .collection("notifications")
+      .where("userId", "==", targetUserId)
+      .where("status", "==", NOTIFICATION_STATUS.UNREAD)
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get();
 
-      const notifications = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          userId: data.userId,
-          userType: data.userType,
-          notificationType: data.notificationType,
-          title: data.title,
-          message: data.message,
-          relatedEntityId: data.relatedEntityId,
-          metadata: data.metadata,
-          href: data.href,
-          status: data.status,
-          createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
-          readAt: data.readAt?.toDate().toISOString() || null,
-          pushSentAt: data.pushSentAt?.toDate().toISOString() || null,
-          expiresAt: data.expiresAt?.toDate().toISOString() || null,
-        };
-      });
+    const notifications = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        userId: data.userId,
+        userType: data.userType,
+        notificationType: data.notificationType,
+        title: data.title,
+        message: data.message,
+        relatedEntityId: data.relatedEntityId,
+        metadata: data.metadata,
+        href: data.href,
+        status: data.status,
+        createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+        readAt: data.readAt?.toDate().toISOString() || null,
+        pushSentAt: data.pushSentAt?.toDate().toISOString() || null,
+        expiresAt: data.expiresAt?.toDate().toISOString() || null,
+      };
+    });
 
-      return {success: true, notifications};
-    } catch (error) {
-      console.error("Error in getNotificationsForPush:", error);
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
+    return {success: true, notifications};
+  } catch (error) {
+    console.error("Error in getNotificationsForPush:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Store OneSignal Player ID for user
  * HTTPS Callable Function
  */
-exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) => {
+exports.storeOneSignalPlayerId = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("storeOneSignalPlayerId called");
 
   // Extract payload from data.data
@@ -763,7 +773,7 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
 
   if (!authInfo.hasAuth) {
     console.log("storeOneSignalPlayerId: User not authenticated");
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -771,7 +781,7 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
 
   // Validation
   if (!playerId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Player ID is required",
     );
@@ -817,11 +827,11 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
         return {success: true};
       } catch (createError) {
         console.error("Error creating user document:", createError);
-        throw new functions.https.HttpsError("internal", createError.message);
+        throw new HttpsError("internal", createError.message);
       }
     }
 
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -829,7 +839,9 @@ exports.storeOneSignalPlayerId = functions.https.onCall(async (data, context) =>
  * Remove OneSignal Player ID for user
  * HTTPS Callable Function
  */
-exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) => {
+exports.removeOneSignalPlayerId = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("removeOneSignalPlayerId called");
 
   // Extract payload from data.data
@@ -840,7 +852,7 @@ exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) =
   const authInfo = getAuthInfo(context, data);
 
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -867,7 +879,7 @@ exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) =
     return {success: true};
   } catch (error) {
     console.error("Error in removeOneSignalPlayerId:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -875,7 +887,9 @@ exports.removeOneSignalPlayerId = functions.https.onCall(async (data, context) =
  * Get notification statistics
  * HTTPS Callable Function
  */
-exports.getNotificationStats = functions.https.onCall(async (data, context) => {
+exports.getNotificationStats = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("getNotificationStats called");
   // Extract payload from data.data
   const payload = data.data || data;
@@ -885,7 +899,7 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
 
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -933,7 +947,7 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error in getNotificationStats:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -941,100 +955,104 @@ exports.getNotificationStats = functions.https.onCall(async (data, context) => {
  * Mark all notifications as read
  * HTTPS Callable Function
  */
-exports.markAllNotificationsAsRead = functions.https.onCall(
-  async (data, context) => {
-    console.log("markAllNotificationsAsRead called");
-    // Authentication
-    const authInfo = getAuthInfo(context, data);
+exports.markAllNotificationsAsRead = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  console.log("markAllNotificationsAsRead called");
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
 
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
-      );
-    }
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
 
-    try {
-      const snapshot = await db
-        .collection("notifications")
-        .where("userId", "==", authInfo.uid)
-        .where("status", "in", [
-          NOTIFICATION_STATUS.UNREAD,
-          NOTIFICATION_STATUS.PUSH_SENT,
-        ])
-        .get();
+  try {
+    const snapshot = await db
+      .collection("notifications")
+      .where("userId", "==", authInfo.uid)
+      .where("status", "in", [
+        NOTIFICATION_STATUS.UNREAD,
+        NOTIFICATION_STATUS.PUSH_SENT,
+      ])
+      .get();
 
-      const batch = db.batch();
-      let count = 0;
+    const batch = db.batch();
+    let count = 0;
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const newStatus =
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const newStatus =
           data.status === NOTIFICATION_STATUS.PUSH_SENT ?
             NOTIFICATION_STATUS.PUSH_SENT_AND_READ :
             NOTIFICATION_STATUS.READ;
 
-        batch.update(doc.ref, {
-          status: newStatus,
-          readAt: FieldValue.serverTimestamp(),
-        });
-        count++;
+      batch.update(doc.ref, {
+        status: newStatus,
+        readAt: FieldValue.serverTimestamp(),
       });
+      count++;
+    });
 
-      await batch.commit();
-      return {success: true, count};
-    } catch (error) {
-      console.error("Error in markAllNotificationsAsRead:", error);
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
+    await batch.commit();
+    return {success: true, count};
+  } catch (error) {
+    console.error("Error in markAllNotificationsAsRead:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Check if user can receive notification (rate limiting check)
  * HTTPS Callable Function
  */
-exports.canReceiveNotification = functions.https.onCall(
-  async (data, context) => {
-    console.log("canReceiveNotification called");
+exports.canReceiveNotification = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  console.log("canReceiveNotification called");
 
-    // Extract payload from data.data
-    const payload = data.data || data;
-    const {userId, notificationType} = payload;
+  // Extract payload from data.data
+  const payload = data.data || data;
+  const {userId, notificationType} = payload;
 
-    // Authentication
-    const authInfo = getAuthInfo(context, data);
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
 
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
-      );
-    }
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
 
-    // Validation
-    if (!userId || !notificationType) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "User ID and notification type are required",
-      );
-    }
+  // Validation
+  if (!userId || !notificationType) {
+    throw new HttpsError(
+      "invalid-argument",
+      "User ID and notification type are required",
+    );
+  }
 
-    try {
-      const canReceive = !(await isSpamming(userId, notificationType));
-      return {success: true, canReceive};
-    } catch (error) {
-      console.error("Error in canReceiveNotification:", error);
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
+  try {
+    const canReceive = !(await isSpamming(userId, notificationType));
+    return {success: true, canReceive};
+  } catch (error) {
+    console.error("Error in canReceiveNotification:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Delete a notification
  * HTTPS Callable Function
  */
-exports.deleteNotification = functions.https.onCall(async (data, context) => {
+exports.deleteNotification = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload from data.data
   const payload = data.data || data;
   const {notificationId} = payload;
@@ -1043,7 +1061,7 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
 
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1051,7 +1069,7 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
 
   // Validation
   if (!notificationId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Notification ID is required",
     );
@@ -1062,14 +1080,14 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
     const notificationDoc = await notificationRef.get();
 
     if (!notificationDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Notification not found");
+      throw new HttpsError("not-found", "Notification not found");
     }
 
     const notification = notificationDoc.data();
 
     // Security: Only allow user to delete their own notifications or admin
     if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to delete this notification",
       );
@@ -1083,11 +1101,11 @@ exports.deleteNotification = functions.https.onCall(async (data, context) => {
     console.error("Error in deleteNotification:", error);
 
     // Re-throw HttpsError
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
 
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 

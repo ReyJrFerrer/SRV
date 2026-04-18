@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 const db = admin.firestore();
@@ -44,13 +45,15 @@ function safeSub(a, b) {
  * Get balance for specific user
  * Cloud Function: getBalance
  */
-exports.getBalance = functions.https.onCall(async (data, context) => {
+exports.getBalance = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data.data || data;
   const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -59,7 +62,7 @@ exports.getBalance = functions.https.onCall(async (data, context) => {
 
   // Validation
   if (!userId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "userId is required",
     );
@@ -85,7 +88,7 @@ exports.getBalance = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error in getBalance:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -93,13 +96,15 @@ exports.getBalance = functions.https.onCall(async (data, context) => {
  * Credit a user's balance
  * Cloud Function: creditBalance
  */
-exports.creditBalance = functions.https.onCall(async (data, context) => {
+exports.creditBalance = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data.data || data;
   const {userId, amount, paymentChannel, description} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -108,14 +113,14 @@ exports.creditBalance = functions.https.onCall(async (data, context) => {
 
   // Validation - mirror Motoko validation logic
   if (!userId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "userId is required",
     );
   }
 
   if (!amount || amount <= 0) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid amount: Must be greater than 0",
     );
@@ -161,7 +166,7 @@ exports.creditBalance = functions.https.onCall(async (data, context) => {
     });
   } catch (error) {
     console.error("Error in creditBalance:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -475,13 +480,15 @@ async function debitBalanceInternal(userId, amount, description, paymentChannel)
  * Debit a user's balance
  * HTTP Cloud Function - can be called from client or other services via HTTP
  */
-exports.debitBalance = functions.https.onCall(async (data, context) => {
+exports.debitBalance = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data.data || data;
   const {userId, amount, description, paymentChannel} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -492,7 +499,7 @@ exports.debitBalance = functions.https.onCall(async (data, context) => {
     return result;
   } catch (error) {
     console.error("Error in debitBalance:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -577,13 +584,15 @@ exports.creditWalletInternal = creditWalletInternal;
  * Transfer funds between users
  * Cloud Function: transferFunds
  */
-exports.transferFunds = functions.https.onCall(async (data, context) => {
+exports.transferFunds = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data.data || data;
   const {fromUserId, toUserId, amount} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -591,21 +600,21 @@ exports.transferFunds = functions.https.onCall(async (data, context) => {
 
   // Validation - mirror Motoko validation logic
   if (!fromUserId || !toUserId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "fromUserId and toUserId are required",
     );
   }
 
   if (!amount || amount <= 0) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid amount: Must be greater than 0",
     );
   }
 
   if (fromUserId === toUserId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid transfer: Cannot transfer to the same account",
     );
@@ -628,7 +637,7 @@ exports.transferFunds = functions.https.onCall(async (data, context) => {
 
       const newFromBalance = safeSub(fromBalance, amount);
       if (newFromBalance === null) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "failed-precondition",
           "Insufficient balance: Cannot transfer more than available balance",
         );
@@ -675,7 +684,7 @@ exports.transferFunds = functions.https.onCall(async (data, context) => {
     });
   } catch (error) {
     console.error("Error in transferFunds:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -683,13 +692,15 @@ exports.transferFunds = functions.https.onCall(async (data, context) => {
  * Get transaction history for a user
  * Cloud Function: getTransactionHistory
  */
-exports.getTransactionHistory = functions.https.onCall(async (data, context) => {
+exports.getTransactionHistory = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data.data || data;
   const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -697,7 +708,7 @@ exports.getTransactionHistory = functions.https.onCall(async (data, context) => 
 
   // Validation
   if (!userId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "userId is required",
     );
@@ -734,7 +745,7 @@ exports.getTransactionHistory = functions.https.onCall(async (data, context) => 
     return {success: true, transactions: transactions};
   } catch (error) {
     console.error("Error in getTransactionHistory:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -742,13 +753,15 @@ exports.getTransactionHistory = functions.https.onCall(async (data, context) => 
  * Get wallet details including holds
  * Cloud Function: getWalletDetails
  */
-exports.getWalletDetails = functions.https.onCall(async (data, context) => {
+exports.getWalletDetails = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data.data || data;
   const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -756,7 +769,7 @@ exports.getWalletDetails = functions.https.onCall(async (data, context) => {
 
   // Only the user or admin can view wallet details
   if (userId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Not authorized to view this wallet",
     );
@@ -764,7 +777,7 @@ exports.getWalletDetails = functions.https.onCall(async (data, context) => {
 
   // Validation
   if (!userId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "userId is required",
     );
@@ -797,14 +810,16 @@ exports.getWalletDetails = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error in getWalletDetails:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
-exports.getAllWallets = functions.https.onCall(async (data, context) => {
+exports.getAllWallets = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only admins can view all wallets",
     );
@@ -826,6 +841,6 @@ exports.getAllWallets = functions.https.onCall(async (data, context) => {
     return {success: true, wallets};
   } catch (error) {
     console.error("Error in getAllWallets:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });

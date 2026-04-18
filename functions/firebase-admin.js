@@ -20,11 +20,7 @@ function initializeFirebaseAdmin() {
     console.log("Initializing for emulator environment");
 
     // Initialize with emulator settings
-    admin.initializeApp({
-      projectId: "srve-7133d",
-      storageBucket: "srve-7133d.appspot.com",
-      databaseURL: "http://localhost:8080?ns=srve-7133d",
-    });
+    admin.initializeApp();
 
     // Connect to Firestore emulator
     const db = admin.firestore();
@@ -37,22 +33,7 @@ function initializeFirebaseAdmin() {
   } else {
     console.log("Initializing for production environment");
 
-    // Initialize for production with explicit project configuration
-    const projectId = process.env.GCLOUD_PROJECT || "srve-7133d";
-
-    admin.initializeApp({
-      projectId: projectId,
-      // Firebase Functions automatically provides service account credentials
-      // No need to specify credential in production
-    });
-
-    // Get Firestore instance and ensure it's using the correct project
-    const db = admin.firestore();
-
-    // Verify the configuration
-    console.log(`Firebase Admin initialized for production`);
-    console.log(`Project ID: ${projectId}`);
-    console.log(`Firestore App: ${db.app.name}`);
+    admin.initializeApp();
   }
 
   isInitialized = true;

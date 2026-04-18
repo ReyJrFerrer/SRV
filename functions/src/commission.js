@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 
 /**
  * Commission tier definitions
@@ -103,18 +104,20 @@ function calculateDynamicCommission(bookingValue, structure) {
 /**
  * Main commission calculation function - migrated from commission.mo calculate_commission
  */
-exports.calculateCommission = functions.https.onCall(async (data, _context) => {
+exports.calculateCommission = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload from data.data
   const payload = data.data || data;
   const {categoryName, price} = payload;
 
   // Validation (mirror Motoko validation)
   if (!categoryName) {
-    throw new functions.https.HttpsError("invalid-argument", "Category name is required");
+    throw new HttpsError("invalid-argument", "Category name is required");
   }
 
   if (!price || price <= 0) {
-    throw new functions.https.HttpsError("invalid-argument", "Valid price is required");
+    throw new HttpsError("invalid-argument", "Valid price is required");
   }
 
   try {
@@ -133,20 +136,22 @@ exports.calculateCommission = functions.https.onCall(async (data, _context) => {
     };
   } catch (error) {
     console.error("Error calculating commission:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get category tier information - migrated from commission.mo get_category_tier
  */
-exports.getCategoryTier = functions.https.onCall(async (data, _context) => {
+exports.getCategoryTier = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload from data.data
   const payload = data.data || data;
   const {categoryName} = payload;
 
   if (!categoryName) {
-    throw new functions.https.HttpsError("invalid-argument", "Category name is required");
+    throw new HttpsError("invalid-argument", "Category name is required");
   }
 
   try {
@@ -157,25 +162,27 @@ exports.getCategoryTier = functions.https.onCall(async (data, _context) => {
     };
   } catch (error) {
     console.error("Error getting category tier:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get commission breakdown for transparency - migrated from commission.mo get_commission_breakdown
  */
-exports.getCommissionBreakdown = functions.https.onCall(async (data, _context) => {
+exports.getCommissionBreakdown = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload from data.data
   const payload = data.data || data;
   const {categoryName, price} = payload;
 
   // Validation (mirror Motoko validation)
   if (!categoryName) {
-    throw new functions.https.HttpsError("invalid-argument", "Category name is required");
+    throw new HttpsError("invalid-argument", "Category name is required");
   }
 
   if (!price || price <= 0) {
-    throw new functions.https.HttpsError("invalid-argument", "Valid price is required");
+    throw new HttpsError("invalid-argument", "Valid price is required");
   }
 
   try {
@@ -212,6 +219,6 @@ exports.getCommissionBreakdown = functions.https.onCall(async (data, _context) =
     };
   } catch (error) {
     console.error("Error getting commission breakdown:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });

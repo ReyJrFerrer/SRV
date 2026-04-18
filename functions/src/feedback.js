@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 const db = admin.firestore();
@@ -75,7 +76,9 @@ function validateDescription(description) {
 /**
  * Submit feedback
  */
-exports.submitFeedback = functions.https.onCall(async (data, context) => {
+exports.submitFeedback = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {rating, comment = null} = payload;
@@ -84,7 +87,7 @@ exports.submitFeedback = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "Anonymous principal not allowed",
     );
@@ -92,14 +95,14 @@ exports.submitFeedback = functions.https.onCall(async (data, context) => {
 
   // Validate input - mirror Motoko validation
   if (!validateRating(rating)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Invalid rating. Must be between ${MIN_RATING} and ${MAX_RATING}`,
     );
   }
 
   if (!validateComment(comment)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Comment too long. Maximum ${MAX_COMMENT_LENGTH} characters`,
     );
@@ -111,7 +114,7 @@ exports.submitFeedback = functions.https.onCall(async (data, context) => {
     const userSnap = await userRef.get();
 
     if (!userSnap.exists) {
-      throw new functions.https.HttpsError("not-found", "User profile not found");
+      throw new HttpsError("not-found", "User profile not found");
     }
 
     const userProfile = userSnap.data();
@@ -135,18 +138,20 @@ exports.submitFeedback = functions.https.onCall(async (data, context) => {
 
     return {success: true, data: newFeedback};
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     console.error("Error in submitFeedback:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get all feedback (admin function)
  */
-exports.getAllFeedback = functions.https.onCall(async (data, context) => {
+exports.getAllFeedback = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   console.log("Get All Feedback Payload", payload);
@@ -154,7 +159,7 @@ exports.getAllFeedback = functions.https.onCall(async (data, context) => {
   // Authentication - admin only
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
@@ -173,14 +178,16 @@ exports.getAllFeedback = functions.https.onCall(async (data, context) => {
     return {success: true, data: feedbackArray};
   } catch (error) {
     console.error("Error in getAllFeedback:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get feedback by user
  */
-exports.getMyFeedback = functions.https.onCall(async (data, context) => {
+exports.getMyFeedback = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   console.log("Get My Feedback Payload", payload);
@@ -188,7 +195,7 @@ exports.getMyFeedback = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "Anonymous principal not allowed",
     );
@@ -208,14 +215,16 @@ exports.getMyFeedback = functions.https.onCall(async (data, context) => {
     return {success: true, data: userFeedback};
   } catch (error) {
     console.error("Error in getMyFeedback:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get feedback statistics
  */
-exports.getFeedbackStats = functions.https.onCall(async (data, _context) => {
+exports.getFeedbackStats = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   console.log("Get Feedback Stats Payload", payload);
@@ -282,14 +291,16 @@ exports.getFeedbackStats = functions.https.onCall(async (data, _context) => {
     return {success: true, data: stats};
   } catch (error) {
     console.error("Error in getFeedbackStats:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get feedback by ID
  */
-exports.getFeedbackById = functions.https.onCall(async (data, _context) => {
+exports.getFeedbackById = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {feedbackId} = payload;
@@ -297,7 +308,7 @@ exports.getFeedbackById = functions.https.onCall(async (data, _context) => {
 
   // Validation
   if (!feedbackId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Feedback ID is required",
     );
@@ -307,23 +318,25 @@ exports.getFeedbackById = functions.https.onCall(async (data, _context) => {
     const feedbackSnap = await db.collection("app_feedback").doc(feedbackId).get();
 
     if (!feedbackSnap.exists) {
-      throw new functions.https.HttpsError("not-found", "Feedback not found");
+      throw new HttpsError("not-found", "Feedback not found");
     }
 
     return {success: true, data: feedbackSnap.data()};
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     console.error("Error in getFeedbackById:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get recent feedback (limited number)
  */
-exports.getRecentFeedback = functions.https.onCall(async (data, _context) => {
+exports.getRecentFeedback = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {limit} = payload;
@@ -331,7 +344,7 @@ exports.getRecentFeedback = functions.https.onCall(async (data, _context) => {
 
   // Validation
   if (!limit || limit <= 0) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Limit must be a positive number",
     );
@@ -351,7 +364,7 @@ exports.getRecentFeedback = functions.https.onCall(async (data, _context) => {
     return {success: true, data: recentFeedback};
   } catch (error) {
     console.error("Error in getRecentFeedback:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -360,7 +373,9 @@ exports.getRecentFeedback = functions.https.onCall(async (data, _context) => {
 /**
  * Submit report
  */
-exports.submitReport = functions.https.onCall(async (data, context) => {
+exports.submitReport = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {description, attachments = []} = payload;
@@ -368,7 +383,7 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "Anonymous principal not allowed",
     );
@@ -376,7 +391,7 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
 
   // Validate input - mirror Motoko validation
   if (!validateDescription(description)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Invalid description. Must be between 1 and ${MAX_COMMENT_LENGTH} characters`,
     );
@@ -384,14 +399,14 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
 
   // Validate attachments array
   if (attachments && !Array.isArray(attachments)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Attachments must be an array",
     );
   }
 
   if (attachments && attachments.length > 5) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Maximum 5 attachments allowed per report",
     );
@@ -403,7 +418,7 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
     const userSnap = await userRef.get();
 
     if (!userSnap.exists) {
-      throw new functions.https.HttpsError("not-found", "User profile not found");
+      throw new HttpsError("not-found", "User profile not found");
     }
 
     const userProfile = userSnap.data();
@@ -479,11 +494,11 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
 
     return {success: true, data: newReport};
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     console.error("Error in submitReport:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -491,11 +506,13 @@ exports.submitReport = functions.https.onCall(async (data, context) => {
  * Get all reports (admin function)
  * Mirrors the Motoko getAllReports function
  */
-exports.getAllReports = functions.https.onCall(async (data, context) => {
+exports.getAllReports = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Authentication - admin only
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
@@ -514,14 +531,16 @@ exports.getAllReports = functions.https.onCall(async (data, context) => {
     return {success: true, data: reportsArray};
   } catch (error) {
     console.error("Error in getAllReports:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get reports by user
  */
-exports.getMyReports = functions.https.onCall(async (data, context) => {
+exports.getMyReports = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   console.log("Get My Reports Payload", payload);
@@ -529,7 +548,7 @@ exports.getMyReports = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "Anonymous principal not allowed",
     );
@@ -549,14 +568,16 @@ exports.getMyReports = functions.https.onCall(async (data, context) => {
     return {success: true, data: userReports};
   } catch (error) {
     console.error("Error in getMyReports:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Update report status (admin function)
  */
-exports.updateReportStatus = functions.https.onCall(async (data, context) => {
+exports.updateReportStatus = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {reportId, newStatus} = payload;
@@ -565,7 +586,7 @@ exports.updateReportStatus = functions.https.onCall(async (data, context) => {
   // Authentication - admin only
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
@@ -573,14 +594,14 @@ exports.updateReportStatus = functions.https.onCall(async (data, context) => {
 
   // Validation
   if (!reportId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Report ID is required",
     );
   }
 
   if (!newStatus) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "New status is required",
     );
@@ -591,7 +612,7 @@ exports.updateReportStatus = functions.https.onCall(async (data, context) => {
     const reportSnap = await reportRef.get();
 
     if (!reportSnap.exists) {
-      throw new functions.https.HttpsError("not-found", "Report not found");
+      throw new HttpsError("not-found", "Report not found");
     }
 
     const existingReport = reportSnap.data();
@@ -604,18 +625,20 @@ exports.updateReportStatus = functions.https.onCall(async (data, context) => {
 
     return {success: true, data: updatedReport};
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     console.error("Error in updateReportStatus:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get report statistics
  */
-exports.getReportStats = functions.https.onCall(async (data, _context) => {
+exports.getReportStats = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   console.log("Get Report Stats Payload", payload);
@@ -651,14 +674,16 @@ exports.getReportStats = functions.https.onCall(async (data, _context) => {
     return {success: true, data: stats};
   } catch (error) {
     console.error("Error in getReportStats:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get report by ID
  */
-exports.getReportById = functions.https.onCall(async (data, _context) => {
+exports.getReportById = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {reportId} = payload;
@@ -666,7 +691,7 @@ exports.getReportById = functions.https.onCall(async (data, _context) => {
 
   // Validation
   if (!reportId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Report ID is required",
     );
@@ -676,23 +701,25 @@ exports.getReportById = functions.https.onCall(async (data, _context) => {
     const reportSnap = await db.collection("reports").doc(reportId).get();
 
     if (!reportSnap.exists) {
-      throw new functions.https.HttpsError("not-found", "Report not found");
+      throw new HttpsError("not-found", "Report not found");
     }
 
     return {success: true, data: reportSnap.data()};
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     console.error("Error in getReportById:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get recent reports (limited number)
  */
-exports.getRecentReports = functions.https.onCall(async (data, _context) => {
+exports.getRecentReports = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {limit} = payload;
@@ -700,7 +727,7 @@ exports.getRecentReports = functions.https.onCall(async (data, _context) => {
 
   // Validation
   if (!limit || limit <= 0) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Limit must be a positive number",
     );
@@ -720,6 +747,6 @@ exports.getRecentReports = functions.https.onCall(async (data, _context) => {
     return {success: true, data: recentReports};
   } catch (error) {
     console.error("Error in getRecentReports:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
