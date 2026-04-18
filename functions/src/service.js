@@ -1397,6 +1397,9 @@ exports.addCategory = functions.https.onCall(async (data, context) => {
  */
 exports.getAllCategories = functions.https.onCall(async (_data, _context) => {
   try {
+    // Defensively initialize categories if missing
+    await initializeCategoriesDirectly();
+
     const categoriesSnapshot = await db.collection("categories").get();
 
     const categories = [];
