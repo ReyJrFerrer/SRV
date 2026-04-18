@@ -89,86 +89,96 @@ export function stopVersionChecker(): void {
  * Show update notification to user
  */
 function showUpdateNotification(): void {
-  // Create a custom notification
+  if (document.getElementById("app-update-notification")) {
+    return;
+  }
+
   const notification = document.createElement("div");
   notification.id = "app-update-notification";
-  notification.innerHTML = `
-    <div style="
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #2563eb;
-      color: white;
-      padding: 16px 24px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-family: system-ui, -apple-system, sans-serif;
-      animation: slideDown 0.3s ease-out;
-    ">
-      <div>
-        <strong>New Version Available!</strong>
-        <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">
-          Please reload to get the latest updates.
-        </p>
-      </div>
-      <button id="reload-app-btn" style="
-        background: white;
-        color: #2563eb;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        white-space: nowrap;
-      ">
-        Reload Now
-      </button>
-      <button id="dismiss-update-btn" style="
-        background: transparent;
-        color: white;
-        border: 1px solid rgba(255,255,255,0.3);
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        white-space: nowrap;
-      ">
-        Later
-      </button>
-    </div>
-    <style>
-      @keyframes slideDown {
-        from {
-          transform: translateX(-50%) translateY(-100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(-50%) translateY(0);
-          opacity: 1;
-        }
-      }
-    </style>
+
+  const container = document.createElement("div");
+  container.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2563eb;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: system-ui, -apple-system, sans-serif;
+    animation: slideDown 0.3s ease-out;
   `;
 
-  document.body.appendChild(notification);
+  const content = document.createElement("div");
+  const title = document.createElement("strong");
+  title.textContent = "New Version Available!";
+  content.appendChild(title);
 
-  // Add reload handler
-  document.getElementById("reload-app-btn")?.addEventListener("click", () => {
-    clearAllCaches().then(() => {
-      window.location.reload();
-    });
+  const desc = document.createElement("p");
+  desc.style.cssText = "margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;";
+  desc.textContent = "Please reload to get the latest updates.";
+  content.appendChild(desc);
+
+  container.appendChild(content);
+
+  const reloadButton = document.createElement("button");
+  reloadButton.style.cssText = `
+    background: white;
+    color: #2563eb;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  `;
+  reloadButton.textContent = "Reload Now";
+  reloadButton.addEventListener("click", async () => {
+    await clearAllCaches();
+    window.location.reload();
   });
+  container.appendChild(reloadButton);
 
-  // Add dismiss handler
-  document
-    .getElementById("dismiss-update-btn")
-    ?.addEventListener("click", () => {
-      notification.remove();
-    });
+  const dismissButton = document.createElement("button");
+  dismissButton.style.cssText = `
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+  `;
+  dismissButton.textContent = "Later";
+  dismissButton.addEventListener("click", () => {
+    notification.remove();
+  });
+  container.appendChild(dismissButton);
+
+  notification.appendChild(container);
+
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes slideDown {
+      from {
+        transform: translateX(-50%) translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+  `;
+  notification.appendChild(style);
+
+  document.body.appendChild(notification);
 }
 
 /**
