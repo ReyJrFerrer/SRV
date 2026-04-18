@@ -104,6 +104,7 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
   const payload = data.data || data;
   const {
     restrictNewAdminLogins,
+    serviceRetentionDays,
   } = payload;
 
   const authInfo = getAuthInfo(context, data);
@@ -125,6 +126,10 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
       updatedAt: now,
       updatedBy: authInfo.uid,
     };
+
+    if (serviceRetentionDays !== undefined) {
+      settings.serviceRetentionDays = serviceRetentionDays;
+    }
 
     await db.collection("systemSettings").doc(SETTINGS_KEY).set(settings, {merge: true});
 
@@ -153,6 +158,7 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
     if (!settingsDoc.exists) {
       const defaultSettings = {
         restrictNewAdminLogins: false,
+        serviceRetentionDays: 30,
         updatedAt: new Date().toISOString(),
         updatedBy: "system",
       };
@@ -164,6 +170,9 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
     const settingsData = settingsDoc.data();
     if (settingsData.restrictNewAdminLogins === undefined) {
       settingsData.restrictNewAdminLogins = false;
+    }
+    if (settingsData.serviceRetentionDays === undefined) {
+      settingsData.serviceRetentionDays = 30;
     }
 
     return {success: true, data: settingsData};

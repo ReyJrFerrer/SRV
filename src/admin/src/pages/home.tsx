@@ -161,6 +161,8 @@ export const AdminHomePage: React.FC = () => {
     loadFeedbackStats();
   }, []);
 
+  const [retentionDaysInput, setRetentionDaysInput] = useState<string>("");
+
   const loadSettings = async () => {
     try {
       const functions = getFirebaseFunctions();
@@ -176,6 +178,9 @@ export const AdminHomePage: React.FC = () => {
           settingsData.updatedAt = new Date(settingsData.updatedAt as any);
         }
         setSettings(settingsData);
+        if (settingsData.serviceRetentionDays !== undefined) {
+          setRetentionDaysInput(settingsData.serviceRetentionDays.toString());
+        }
       }
 
       const isPasswordSetFn = httpsCallable(functions, "isAdminPasswordSet");
@@ -188,6 +193,27 @@ export const AdminHomePage: React.FC = () => {
         setIsPasswordSet(passwordData.isSet);
       }
     } catch (error) {}
+  };
+
+  const updateRetentionDays = async () => {
+    if (!settings) return;
+
+    const parsedDays = parseInt(retentionDaysInput, 10);
+    if (isNaN(parsedDays) || parsedDays < 0) return;
+
+    setUpdatingSettings(true);
+    try {
+      const functions = getFirebaseFunctions();
+      const updateSettingsFn = httpsCallable(functions, "setSettings");
+      await updateSettingsFn({
+        ...settings,
+        serviceRetentionDays: parsedDays,
+      });
+      setSettings({ ...settings, serviceRetentionDays: parsedDays });
+    } catch (error) {
+    } finally {
+      setUpdatingSettings(false);
+    }
   };
 
   const toggleRestrictNewLogins = async (enabled: boolean) => {
@@ -408,6 +434,64 @@ export const AdminHomePage: React.FC = () => {
                 >
                   Change Password
                 </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Data Retention Section */}
+          <section className="rounded-lg border border-blue-100 bg-white shadow-sm">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-yellow-50 px-6 py-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Data Retention
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Manage how long service data is retained in the system
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-gray-900">
+                    Service Retention Days
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Number of days to keep service records before they are
+                    automatically archived or deleted.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="0"
+                    value={retentionDaysInput}
+                    onChange={(e) => setRetentionDaysInput(e.target.value)}
+                    onBlur={updateRetentionDays}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        updateRetentionDays();
+                      }
+                    }}
+                    disabled={updatingSettings || !settings}
+                    className="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                    placeholder="Days"
+                  />
+                  <button
+                    onClick={updateRetentionDays}
+                    disabled={
+                      updatingSettings ||
+                      !settings ||
+                      settings.serviceRetentionDays?.toString() ===
+                        retentionDaysInput
+                    }
+                    className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
           </section>

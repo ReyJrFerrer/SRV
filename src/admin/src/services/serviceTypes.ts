@@ -89,6 +89,7 @@ export interface FrontendCommissionRuleDraft {
 
 export interface FrontendSystemSettings {
   restrictNewAdminLogins: boolean;
+  serviceRetentionDays?: number;
   updatedAt: Date;
   updatedBy: string;
 }

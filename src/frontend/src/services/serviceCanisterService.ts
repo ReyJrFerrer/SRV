@@ -101,6 +101,8 @@ export interface Service {
   maxBookingsPerDay?: number;
   createdAt: any; // Firestore Timestamp
   updatedAt: any; // Firestore Timestamp
+  isArchived?: boolean;
+  archivedAt?: any;
   // Additional UI fields
   providerName?: string;
   distance?: number;
@@ -222,7 +224,11 @@ export const serviceCanisterService = {
     callback: (services: Service[]) => void,
   ): Unsubscribe {
     const servicesRef = collection(getDb(), "services");
-    const q = query(servicesRef, where("providerId", "==", providerId));
+    const q = query(
+      servicesRef,
+      where("providerId", "==", providerId),
+      where("isArchived", "==", false),
+    );
 
     return onSnapshot(
       q,
@@ -242,13 +248,19 @@ export const serviceCanisterService = {
   /**
    * Get services by provider (one-time fetch)
    */
-  async getServicesByProvider(providerId: string): Promise<Service[]> {
+  async getServicesByProvider(
+    providerId: string,
+    archivedOnly?: boolean,
+  ): Promise<Service[]> {
     try {
       const getServicesByProviderFn = httpsCallable(
         getFunctions(),
         "getServicesByProvider",
       );
-      const result = await getServicesByProviderFn({ providerId });
+      const result = await getServicesByProviderFn({
+        providerId,
+        archivedOnly,
+      });
 
       const data = result.data as { success: boolean; services: Service[] };
       return data.success ? data.services : [];
@@ -265,7 +277,11 @@ export const serviceCanisterService = {
     callback: (services: Service[]) => void,
   ): Unsubscribe {
     const servicesRef = collection(getDb(), "services");
-    const q = query(servicesRef, where("category.id", "==", categoryId));
+    const q = query(
+      servicesRef,
+      where("category.id", "==", categoryId),
+      where("isArchived", "==", false),
+    );
 
     return onSnapshot(
       q,
@@ -400,14 +416,29 @@ export const serviceCanisterService = {
   },
 
   /**
+   * Restore an archived service
+   */
+  async restoreService(serviceId: string): Promise<boolean> {
+    try {
+      const restoreServiceFn = httpsCallable(getFunctions(), "restoreService");
+      const result = await restoreServiceFn({ serviceId });
+      const data = result.data as { success: boolean };
+      return data.success;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Get all services (real-time listener)
    * Returns raw service data from Firestore without formatting
    */
   subscribeToAllServices(callback: (services: Service[]) => void): Unsubscribe {
     const servicesRef = collection(getDb(), "services");
+    const q = query(servicesRef, where("isArchived", "==", false));
 
     return onSnapshot(
-      servicesRef,
+      q,
       (snapshot) => {
         const services: Service[] = snapshot.docs.map((doc) => {
           const data = doc.data();

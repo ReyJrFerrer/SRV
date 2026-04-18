@@ -7,7 +7,10 @@ import {
   LockOpenIcon,
   LockClosedIcon,
 } from "@heroicons/react/24/solid";
-import { useServiceManagement } from "../../hooks/serviceManagement";
+import {
+  useServiceManagement,
+  EnhancedService,
+} from "../../hooks/serviceManagement";
 import ServiceCard from "../../components/provider/ServiceCard";
 import BottomNavigation from "../../components/provider/NavigationBar";
 import { Toaster, toast } from "sonner";
@@ -28,12 +31,37 @@ const MyServicesPage: React.FC = () => {
     refreshServices,
     updateServiceStatus,
     deleteService,
+    restoreService,
+    getProviderServices,
   } = useServiceManagement();
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+  const [archivedServices, setArchivedServices] = useState<EnhancedService[]>(
+    [],
+  );
+  const [loadingArchived, setLoadingArchived] = useState(false);
   const { bookings: providerBookings } = useProviderBookingManagement();
+
+  useEffect(() => {
+    if (activeTab === "archived") {
+      const fetchArchived = async () => {
+        setLoadingArchived(true);
+        try {
+          const services = await getProviderServices(undefined, true);
+          setArchivedServices(services);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoadingArchived(false);
+        }
+      };
+      fetchArchived();
+    }
+  }, [activeTab, getProviderServices]);
 
   useEffect(() => {
     document.title = "My Services | SRV Provider";
@@ -120,7 +148,12 @@ const MyServicesPage: React.FC = () => {
         },
         icon: <TrashIcon className="h-6 w-6 text-red-600" />,
       });
-      await refreshServices();
+      if (activeTab === "active") {
+        await refreshServices();
+      } else {
+        const services = await getProviderServices(undefined, true);
+        setArchivedServices(services);
+      }
     } catch (e) {
       toast.error(
         <span className="text-center">
@@ -137,6 +170,25 @@ const MyServicesPage: React.FC = () => {
     }
   };
 
+  const handleRestoreService = async (serviceId: string) => {
+    setRestoringId(serviceId);
+    try {
+      await restoreService(serviceId);
+      toast.success("Service restored!");
+      const services = await getProviderServices(undefined, true);
+      setArchivedServices(services);
+      await refreshServices();
+    } catch (e) {
+      toast.error("Failed to restore service.");
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
+  const displayedServices =
+    activeTab === "active" ? userServices : archivedServices;
+  const isLoadingDisplay = activeTab === "active" ? loading : loadingArchived;
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50 pb-16 md:pb-0">
       <Toaster position="top-center" richColors />
@@ -150,8 +202,8 @@ const MyServicesPage: React.FC = () => {
             <p className="mb-4 text-center text-sm text-gray-700">
               Are you sure you want to delete{" "}
               <b>
-                {userServices.find((s) => s.id === deleteConfirmId)?.title ||
-                  "this service"}
+                {displayedServices.find((s) => s.id === deleteConfirmId)
+                  ?.title || "this service"}
               </b>
               ? This action cannot be undone.
             </p>
@@ -204,8 +256,31 @@ const MyServicesPage: React.FC = () => {
       </header>
 
       <main className="container mx-auto flex-grow p-6 pb-10">
+        <div className="mb-6 flex justify-center space-x-4 border-b pb-4">
+          <button
+            onClick={() => setActiveTab("active")}
+            className={`px-4 py-2 font-semibold ${
+              activeTab === "active"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Active Services
+          </button>
+          <button
+            onClick={() => setActiveTab("archived")}
+            className={`px-4 py-2 font-semibold ${
+              activeTab === "archived"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Archived Services
+          </button>
+        </div>
+
         <div className="mt-4">
-          {loading ? (
+          {isLoadingDisplay ? (
             <ServiceGridSkeleton count={6} />
           ) : error ? (
             <div className="py-12 text-center">
@@ -217,20 +292,23 @@ const MyServicesPage: React.FC = () => {
                 Try Again
               </button>
             </div>
-          ) : userServices.length > 0 ? (
+          ) : displayedServices.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {userServices.map((service, idx) => (
+              {displayedServices.map((service, idx) => (
                 <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
                   <ServiceCard
                     service={service}
                     onToggleActive={handleToggleActive}
                     onDelete={setDeleteConfirmId}
+                    onRestore={handleRestoreService}
                     hasActiveBookings={hasActiveBookings}
                     getServiceActiveBookingsCount={
                       getServiceActiveBookingsCount
                     }
                     updatingId={updatingId}
                     deletingId={deletingId}
+                    restoringId={restoringId}
+                    isArchivedView={activeTab === "archived"}
                   />
                 </Appear>
               ))}
@@ -239,30 +317,36 @@ const MyServicesPage: React.FC = () => {
             <div className="py-12 text-center text-gray-500">
               <WrenchScrewdriverIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
               <p className="mb-2 text-lg">
-                You haven't listed any services yet.
+                {activeTab === "active"
+                  ? "You haven't listed any services yet."
+                  : "You have no archived services."}
               </p>
-              <Tooltip
-                content="You have reached the maximum of 5 services."
-                showWhenDisabled={userServices.length >= 5}
-              >
-                <Link
-                  to="/provider/services/add"
-                  onClick={(e) => {
-                    if (userServices.length >= 5) {
-                      e.preventDefault();
-                      toast.error("You can only have a maximum of 5 services.");
-                    }
-                  }}
-                  className={`mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700 ${
-                    userServices.length >= 5
-                      ? "cursor-not-allowed opacity-50"
-                      : ""
-                  }`}
+              {activeTab === "active" && (
+                <Tooltip
+                  content="You have reached the maximum of 5 services."
+                  showWhenDisabled={userServices.length >= 5}
                 >
-                  <PlusIcon className="mr-2 h-5 w-5" />
-                  Add your first service
-                </Link>
-              </Tooltip>
+                  <Link
+                    to="/provider/services/add"
+                    onClick={(e) => {
+                      if (userServices.length >= 5) {
+                        e.preventDefault();
+                        toast.error(
+                          "You can only have a maximum of 5 services.",
+                        );
+                      }
+                    }}
+                    className={`mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700 ${
+                      userServices.length >= 5
+                        ? "cursor-not-allowed opacity-50"
+                        : ""
+                    }`}
+                  >
+                    <PlusIcon className="mr-2 h-5 w-5" />
+                    Add your first service
+                  </Link>
+                </Tooltip>
+              )}
             </div>
           )}
         </div>

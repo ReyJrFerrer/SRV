@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 
 const db = admin.firestore();
@@ -381,7 +382,7 @@ exports.getService = functions.https.onCall(async (data, _context) => {
  */
 exports.getServicesByProvider = functions.https.onCall(async (data, _context) => {
   const payload = data.data || data;
-  const {providerId} = payload;
+  const {providerId, archivedOnly} = payload;
 
   if (!providerId) {
     throw new functions.https.HttpsError(
@@ -395,10 +396,16 @@ exports.getServicesByProvider = functions.https.onCall(async (data, _context) =>
       .where("providerId", "==", providerId)
       .get();
 
-    const services = [];
+    let services = [];
     servicesSnapshot.forEach((doc) => {
       services.push({id: doc.id, ...doc.data()});
     });
+
+    if (archivedOnly) {
+      services = services.filter((s) => s.isArchived === true);
+    } else {
+      services = services.filter((s) => s.isArchived !== true);
+    }
 
     return {success: true, services};
   } catch (error) {
@@ -434,10 +441,12 @@ exports.getServicesByCategory = functions.https.onCall(async (data, _context) =>
       .where("category.id", "==", categoryId)
       .get();
 
-    const services = [];
+    let services = [];
     servicesSnapshot.forEach((doc) => {
       services.push({id: doc.id, ...doc.data()});
     });
+
+    services = services.filter((s) => s.isArchived !== true);
 
     return {success: true, services};
   } catch (error) {
@@ -530,7 +539,7 @@ exports.searchServicesByLocation = functions.https.onCall(
 
       const servicesSnapshot = await query.get();
 
-      const services = [];
+      let services = [];
       servicesSnapshot.forEach((doc) => {
         const service = {id: doc.id, ...doc.data()};
         const distance = calculateDistance(userLocation, service.location);
@@ -540,6 +549,8 @@ exports.searchServicesByLocation = functions.https.onCall(
           services.push(service);
         }
       });
+
+      services = services.filter((s) => s.isArchived !== true);
 
       // Sort by distance
       services.sort((a, b) => a.distance - b.distance);
@@ -784,88 +795,72 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
       );
     }
 
-    // Delete service images from storage and metadata
-    if (service.imageMedia && service.imageMedia.length > 0) {
-      await deleteImagesFromStorage(service.imageMedia);
-    }
+    // Archive service instead of deleting
+    await serviceRef.update({
+      isArchived: true,
+      archivedAt: new Date().toISOString(),
+    });
 
-    // Delete service certificates from storage and metadata
-    if (service.certificateMedia && service.certificateMedia.length > 0) {
-      await deleteImagesFromStorage(service.certificateMedia);
-    }
-
-    // Delete all associated bookings for this service
-    const bookingsSnapshot = await db.collection("bookings")
-      .where("serviceId", "==", serviceId)
-      .get();
-
-    if (!bookingsSnapshot.empty) {
-      const batchSize = 500; // Firestore batch limit
-      const docs = bookingsSnapshot.docs;
-
-      // Process in batches
-      for (let i = 0; i < docs.length; i += batchSize) {
-        const batch = db.batch();
-        const batchDocs = docs.slice(i, i + batchSize);
-
-        batchDocs.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-      }
-    }
-
-    // Delete all associated reviews for this service (client reviews)
-    const reviewsSnapshot = await db.collection("reviews")
-      .where("serviceId", "==", serviceId)
-      .get();
-
-    if (!reviewsSnapshot.empty) {
-      const batchSize = 500; // Firestore batch limit
-      const docs = reviewsSnapshot.docs;
-
-      // Process in batches
-      for (let i = 0; i < docs.length; i += batchSize) {
-        const batch = db.batch();
-        const batchDocs = docs.slice(i, i + batchSize);
-
-        batchDocs.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-      }
-    }
-
-    // Delete all associated provider reviews for this service
-    const providerReviewsSnapshot = await db.collection("providerReviews")
-      .where("serviceId", "==", serviceId)
-      .get();
-
-    if (!providerReviewsSnapshot.empty) {
-      const batchSize = 500; // Firestore batch limit
-      const docs = providerReviewsSnapshot.docs;
-
-      // Process in batches
-      for (let i = 0; i < docs.length; i += batchSize) {
-        const batch = db.batch();
-        const batchDocs = docs.slice(i, i + batchSize);
-
-        batchDocs.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-
-        await batch.commit();
-      }
-    }
-
-    // Delete the service document
-    await serviceRef.delete();
-
-    return {success: true, message: "Service deleted successfully"};
+    return {success: true, message: "Service archived successfully"};
   } catch (error) {
     console.error("Error deleting service:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Restore an archived service
+ */
+exports.restoreService = functions.https.onCall(async (data, context) => {
+  // Get authentication info
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  const payload = data.data || data;
+  const {serviceId} = payload;
+
+  if (!serviceId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Service ID is required",
+    );
+  }
+
+  try {
+    const serviceRef = db.collection("services").doc(serviceId);
+    const serviceDoc = await serviceRef.get();
+
+    if (!serviceDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "Service not found");
+    }
+
+    const service = serviceDoc.data();
+
+    // Check if user is the provider or admin
+    if (
+      service.providerId !== authInfo.uid &&
+      !authInfo.isAdmin
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Only the service provider or admin can restore this service",
+      );
+    }
+
+    await serviceRef.update({
+      isArchived: false,
+      archivedAt: null,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return {success: true, message: "Service restored successfully"};
+  } catch (error) {
+    console.error("Error restoring service:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
@@ -877,10 +872,12 @@ exports.getAllServices = functions.https.onCall(async (_data, _context) => {
   try {
     const servicesSnapshot = await db.collection("services").get();
 
-    const services = [];
+    let services = [];
     servicesSnapshot.forEach((doc) => {
       services.push({id: doc.id, ...doc.data()});
     });
+
+    services = services.filter((s) => s.isArchived !== true);
 
     return {success: true, services};
   } catch (error) {
@@ -2137,10 +2134,11 @@ exports.getAvailableTimeSlots = functions.https.onCall(
  */
 async function getAllServicesInternal() {
   const servicesSnapshot = await db.collection("services").get();
-  const services = [];
+  let services = [];
   servicesSnapshot.forEach((doc) => {
     services.push({id: doc.id, ...doc.data()});
   });
+  services = services.filter((s) => s.isArchived !== true);
   return services;
 }
 
@@ -2161,3 +2159,108 @@ async function getServiceInternal(serviceId) {
 // Export internal functions for use by other modules
 exports.getAllServicesInternal = getAllServicesInternal;
 exports.getServiceInternal = getServiceInternal;
+
+// Export other functions that might be needed elsewhere
+
+
+/**
+ * Scheduled function to clean up archived services
+ */
+exports.cleanupArchivedServices = onSchedule("every 24 hours", async (_event) => {
+  try {
+    const SETTINGS_KEY = "system_settings";
+    const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    // Default to 30 days if not set
+    const retentionDays = settings.serviceRetentionDays !== undefined ?
+      settings.serviceRetentionDays : 30;
+
+    const retentionDate = new Date();
+    retentionDate.setDate(retentionDate.getDate() - retentionDays);
+    const retentionIso = retentionDate.toISOString();
+
+    const servicesSnapshot = await db.collection("services")
+      .where("isArchived", "==", true)
+      .where("archivedAt", "<=", retentionIso)
+      .get();
+
+    if (servicesSnapshot.empty) {
+      console.log("No archived services to clean up.");
+      return {success: true, count: 0};
+    }
+
+    let deletedCount = 0;
+
+    for (const doc of servicesSnapshot.docs) {
+      const serviceId = doc.id;
+      const service = doc.data();
+
+      // Delete images and certificates
+      if (service.imageMedia && service.imageMedia.length > 0) {
+        await deleteImagesFromStorage(service.imageMedia);
+      }
+      if (service.certificateMedia && service.certificateMedia.length > 0) {
+        await deleteImagesFromStorage(service.certificateMedia);
+      }
+
+      // Delete bookings
+      const bookingsSnapshot = await db.collection("bookings")
+        .where("serviceId", "==", serviceId)
+        .get();
+
+      if (!bookingsSnapshot.empty) {
+        const batchSize = 500;
+        const bDocs = bookingsSnapshot.docs;
+        for (let i = 0; i < bDocs.length; i += batchSize) {
+          const batch = db.batch();
+          const batchDocs = bDocs.slice(i, i + batchSize);
+          batchDocs.forEach((d) => batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+
+      // Delete client reviews
+      const reviewsSnapshot = await db.collection("reviews")
+        .where("serviceId", "==", serviceId)
+        .get();
+
+      if (!reviewsSnapshot.empty) {
+        const batchSize = 500;
+        const rDocs = reviewsSnapshot.docs;
+        for (let i = 0; i < rDocs.length; i += batchSize) {
+          const batch = db.batch();
+          const batchDocs = rDocs.slice(i, i + batchSize);
+          batchDocs.forEach((d) => batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+
+      // Delete provider reviews
+      const providerReviewsSnapshot = await db.collection("providerReviews")
+        .where("serviceId", "==", serviceId)
+        .get();
+
+      if (!providerReviewsSnapshot.empty) {
+        const batchSize = 500;
+        const prDocs = providerReviewsSnapshot.docs;
+        for (let i = 0; i < prDocs.length; i += batchSize) {
+          const batch = db.batch();
+          const batchDocs = prDocs.slice(i, i + batchSize);
+          batchDocs.forEach((d) => batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+
+      // Delete the service document
+      await doc.ref.delete();
+      deletedCount++;
+    }
+
+    console.log(`Successfully cleaned up ${deletedCount} archived services.`);
+    return {success: true, count: deletedCount};
+  } catch (error) {
+    console.error("Error in cleanupArchivedServices:", error);
+    throw error;
+  }
+});

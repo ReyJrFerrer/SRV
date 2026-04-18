@@ -154,6 +154,7 @@ interface ServiceManagementHook {
   ) => Promise<EnhancedService>;
   deleteService: (serviceId: string) => Promise<void>;
   getService: (serviceId: string) => Promise<EnhancedService | null>;
+  restoreService: (serviceId: string) => Promise<void>;
 
   // Service status management
   updateServiceStatus: (
@@ -233,7 +234,10 @@ interface ServiceManagementHook {
   refreshCategories: () => Promise<void>;
 
   // Provider functions
-  getProviderServices: (providerId?: string) => Promise<EnhancedService[]>;
+  getProviderServices: (
+    providerId?: string,
+    archivedOnly?: boolean,
+  ) => Promise<EnhancedService[]>;
   getProviderStats: (providerId?: string) => Promise<{
     totalServices: number;
     activeServices: number;
@@ -660,6 +664,22 @@ export const useServiceManagement = (): ServiceManagementHook => {
       }
     },
     [setOperationLoading, handleError],
+  );
+
+  const restoreService = useCallback(
+    async (serviceId: string): Promise<void> => {
+      try {
+        setOperationLoading("restoreService", true);
+        await serviceCanisterService.restoreService(serviceId);
+        await fetchServices();
+      } catch (error) {
+        handleError(error, "restore service");
+        throw error;
+      } finally {
+        setOperationLoading("restoreService", false);
+      }
+    },
+    [setOperationLoading, handleError, fetchServices],
   );
 
   const getService = useCallback(
@@ -1152,7 +1172,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Provider functions
   const getProviderServices = useCallback(
-    async (providerId?: string): Promise<EnhancedService[]> => {
+    async (
+      providerId?: string,
+      archivedOnly?: boolean,
+    ): Promise<EnhancedService[]> => {
       try {
         const targetProviderId = providerId || getCurrentUserId();
         if (!targetProviderId) return [];
@@ -1161,7 +1184,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
         await new Promise((resolve) => setTimeout(resolve, 100));
 
         const providerServices =
-          await serviceCanisterService.getServicesByProvider(targetProviderId);
+          await serviceCanisterService.getServicesByProvider(
+            targetProviderId,
+            archivedOnly,
+          );
         return await Promise.all(
           providerServices.map((service) =>
             enrichServiceWithProviderData(service),
@@ -1427,6 +1453,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     updateService,
     deleteService,
     getService,
+    restoreService,
 
     // Service status management
     updateServiceStatus,
