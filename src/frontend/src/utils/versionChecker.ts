@@ -134,7 +134,8 @@ function showUpdateNotification(): void {
 
   const desc = document.createElement("p");
   desc.style.cssText = `margin: 0; font-size: 14px; opacity: 0.95; line-height: 1.4;`;
-  desc.textContent = "Please reload to get the latest updates and improvements.";
+  desc.textContent =
+    "Please reload to get the latest updates and improvements.";
   content.appendChild(desc);
 
   container.appendChild(content);
