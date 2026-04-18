@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 const db = admin.firestore();
@@ -176,7 +177,9 @@ async function deleteImagesFromStorage(mediaItems) {
 /**
  * Create a new service listing
  */
-exports.createService = functions.https.onCall(async (data, context) => {
+exports.createService = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("createService called");
   // Extract the actual payload from data.data FIRST
   const payload = data.data || data;
@@ -205,7 +208,7 @@ exports.createService = functions.https.onCall(async (data, context) => {
 
   // Authentication check
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated to create a service",
     );
@@ -231,14 +234,14 @@ exports.createService = functions.https.onCall(async (data, context) => {
 
   const titleValid = validateTitle(title);
   if (!titleValid) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Service title must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters`);
   }
 
   const descValid = validateDescription(description);
   if (!descValid) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Service description must be between 
       ${MIN_DESCRIPTION_LENGTH} and ${MAX_DESCRIPTION_LENGTH} characters`);
@@ -246,14 +249,14 @@ exports.createService = functions.https.onCall(async (data, context) => {
 
   const priceValid = validatePrice(price);
   if (!priceValid) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Service price must be between ₱${MIN_PRICE} and ₱${MAX_PRICE}`);
   }
 
   const locationValid = validateLocation(location);
   if (!locationValid) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid location data");
   }
@@ -261,7 +264,7 @@ exports.createService = functions.https.onCall(async (data, context) => {
   // Validate category exists
   const categoryDoc = await db.collection("categories").doc(categoryId).get();
   if (!categoryDoc.exists) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "not-found",
       "Service category not found");
   }
@@ -272,7 +275,7 @@ exports.createService = functions.https.onCall(async (data, context) => {
     // Fetch provider information to get name
     const providerDoc = await db.collection("users").doc(providerId).get();
     if (!providerDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Provider not found");
     }
@@ -288,7 +291,7 @@ exports.createService = functions.https.onCall(async (data, context) => {
     let imageMedia = [];
     if (serviceImages && serviceImages.length > 0) {
       if (serviceImages.length > MAX_SERVICE_IMAGES) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           `Maximum ${MAX_SERVICE_IMAGES} service images allowed`);
       }
@@ -302,7 +305,7 @@ exports.createService = functions.https.onCall(async (data, context) => {
     let certificateMedia = [];
     if (serviceCertificates && serviceCertificates.length > 0) {
       if (serviceCertificates.length > MAX_SERVICE_CERTIFICATES) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           `Maximum ${MAX_SERVICE_CERTIFICATES} service certificates allowed`);
       }
@@ -345,19 +348,21 @@ exports.createService = functions.https.onCall(async (data, context) => {
     return {success: true, service: {...newService, id: serviceId}};
   } catch (error) {
     console.error("Error creating service:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get service by ID
  */
-exports.getService = functions.https.onCall(async (data, _context) => {
+exports.getService = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId} = payload;
 
   if (!serviceId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID is required");
   }
@@ -366,25 +371,27 @@ exports.getService = functions.https.onCall(async (data, _context) => {
     const serviceDoc = await db.collection("services").doc(serviceId).get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     return {success: true, service: {id: serviceDoc.id, ...serviceDoc.data()}};
   } catch (error) {
     console.error("Error getting service:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get services by provider
  */
-exports.getServicesByProvider = functions.https.onCall(async (data, _context) => {
+exports.getServicesByProvider = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {providerId} = payload;
 
   if (!providerId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Provider ID is required");
   }
@@ -403,19 +410,21 @@ exports.getServicesByProvider = functions.https.onCall(async (data, _context) =>
     return {success: true, services};
   } catch (error) {
     console.error("Error getting services by provider:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get services by category
  */
-exports.getServicesByCategory = functions.https.onCall(async (data, _context) => {
+exports.getServicesByCategory = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {categoryId} = payload;
 
   if (!categoryId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Category ID is required");
   }
@@ -424,7 +433,7 @@ exports.getServicesByCategory = functions.https.onCall(async (data, _context) =>
     // Validate category exists
     const categoryDoc = await db.collection("categories").doc(categoryId).get();
     if (!categoryDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Service category not found");
     }
@@ -442,18 +451,20 @@ exports.getServicesByCategory = functions.https.onCall(async (data, _context) =>
     return {success: true, services};
   } catch (error) {
     console.error("Error getting services by category:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Update service status
  */
-exports.updateServiceStatus = functions.https.onCall(async (data, context) => {
+exports.updateServiceStatus = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated");
   }
@@ -462,13 +473,13 @@ exports.updateServiceStatus = functions.https.onCall(async (data, context) => {
   const {serviceId, status} = payload;
 
   if (!serviceId || !status) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID and status are required");
   }
 
   if (!["Available", "Suspended", "Unavailable"].includes(status)) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid status");
+    throw new HttpsError("invalid-argument", "Invalid status");
   }
 
   try {
@@ -476,7 +487,7 @@ exports.updateServiceStatus = functions.https.onCall(async (data, context) => {
     const serviceDoc = await serviceRef.get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
@@ -486,7 +497,7 @@ exports.updateServiceStatus = functions.https.onCall(async (data, context) => {
       service.providerId !== authInfo.uid &&
       !authInfo.isAdmin
     ) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider or admin can update service status",
       );
@@ -501,65 +512,68 @@ exports.updateServiceStatus = functions.https.onCall(async (data, context) => {
     return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
   } catch (error) {
     console.error("Error updating service status:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Search services by location
  */
-exports.searchServicesByLocation = functions.https.onCall(
-  async (data, _context) => {
-    const payload = data.data || data;
-    const {userLocation, maxDistance, categoryId} = payload;
+exports.searchServicesByLocation = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {userLocation, maxDistance, categoryId} = payload;
 
-    if (!userLocation) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "User location is required",
-      );
+  if (!userLocation) {
+    throw new HttpsError(
+      "invalid-argument",
+      "User location is required",
+    );
+  }
+
+  try {
+    let query = db.collection("services");
+
+    // Filter by category if provided
+    if (categoryId) {
+      query = query.where("category.id", "==", categoryId);
     }
 
-    try {
-      let query = db.collection("services");
+    const servicesSnapshot = await query.get();
 
-      // Filter by category if provided
-      if (categoryId) {
-        query = query.where("category.id", "==", categoryId);
+    const services = [];
+    servicesSnapshot.forEach((doc) => {
+      const service = {id: doc.id, ...doc.data()};
+      const distance = calculateDistance(userLocation, service.location);
+
+      if (!maxDistance || distance <= maxDistance) {
+        service.distance = distance;
+        services.push(service);
       }
+    });
 
-      const servicesSnapshot = await query.get();
+    // Sort by distance
+    services.sort((a, b) => a.distance - b.distance);
 
-      const services = [];
-      servicesSnapshot.forEach((doc) => {
-        const service = {id: doc.id, ...doc.data()};
-        const distance = calculateDistance(userLocation, service.location);
-
-        if (!maxDistance || distance <= maxDistance) {
-          service.distance = distance;
-          services.push(service);
-        }
-      });
-
-      // Sort by distance
-      services.sort((a, b) => a.distance - b.distance);
-
-      return {success: true, services};
-    } catch (error) {
-      console.error("Error searching services by location:", error);
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
+    return {success: true, services};
+  } catch (error) {
+    console.error("Error searching services by location:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Update service
  */
-exports.updateService = functions.https.onCall(async (data, context) => {
+exports.updateService = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -581,7 +595,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
   } = payload;
 
   if (!serviceId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID is required",
     );
@@ -592,7 +606,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
     const serviceDoc = await serviceRef.get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
@@ -602,7 +616,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
       service.providerId !== authInfo.uid &&
       !authInfo.isAdmin
     ) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider or admin can update this service",
       );
@@ -612,7 +626,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
     let updatedTitle;
     if (title !== undefined && title !== null) {
       if (!validateTitle(title)) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           `Service title must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters`,
         );
@@ -626,7 +640,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
     let updatedDescription;
     if (description !== undefined && description !== null) {
       if (!validateDescription(description)) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           `Service description must be between ${MIN_DESCRIPTION_LENGTH} ` +
           `and ${MAX_DESCRIPTION_LENGTH} characters`,
@@ -655,7 +669,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
     let updatedPrice;
     if (price !== undefined && price !== null) {
       if (!validatePrice(price)) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           `Service price must be between ₱${MIN_PRICE} and ₱${MAX_PRICE}`,
         );
@@ -669,7 +683,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
     let updatedLocation;
     if (location !== undefined && location !== null) {
       if (!validateLocation(location)) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           "Invalid location data",
         );
@@ -692,7 +706,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
     let updatedBookingNoticeHours;
     if (bookingNoticeHours !== undefined && bookingNoticeHours !== null) {
       if (bookingNoticeHours > 720) { // Maximum 30 days
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           "Booking notice hours cannot exceed 720 (30 days)",
         );
@@ -705,7 +719,7 @@ exports.updateService = functions.https.onCall(async (data, context) => {
     let updatedMaxBookingsPerDay;
     if (maxBookingsPerDay !== undefined && maxBookingsPerDay !== null) {
       if (maxBookingsPerDay === 0 || maxBookingsPerDay > 50) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           "Max bookings per day must be between 1 and 50",
         );
@@ -736,18 +750,20 @@ exports.updateService = functions.https.onCall(async (data, context) => {
     return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
   } catch (error) {
     console.error("Error updating service:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Delete a service
  */
-exports.deleteService = functions.https.onCall(async (data, context) => {
+exports.deleteService = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -757,7 +773,7 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
   const {serviceId} = payload;
 
   if (!serviceId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID is required",
     );
@@ -768,7 +784,7 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
     const serviceDoc = await serviceRef.get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
@@ -778,7 +794,7 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
       service.providerId !== authInfo.uid &&
       !authInfo.isAdmin
     ) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider or admin can delete this service",
       );
@@ -866,14 +882,16 @@ exports.deleteService = functions.https.onCall(async (data, context) => {
     return {success: true, message: "Service deleted successfully"};
   } catch (error) {
     console.error("Error deleting service:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get all services
  */
-exports.getAllServices = functions.https.onCall(async (_data, _context) => {
+exports.getAllServices = onCall(async (request) => {
+  const _data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   try {
     const servicesSnapshot = await db.collection("services").get();
 
@@ -885,7 +903,7 @@ exports.getAllServices = functions.https.onCall(async (_data, _context) => {
     return {success: true, services};
   } catch (error) {
     console.error("Error getting all services:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -896,11 +914,13 @@ exports.getAllServices = functions.https.onCall(async (_data, _context) => {
 /**
  * Upload additional images to existing service
  */
-exports.uploadServiceImages = functions.https.onCall(async (data, context) => {
+exports.uploadServiceImages = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -910,7 +930,7 @@ exports.uploadServiceImages = functions.https.onCall(async (data, context) => {
   const {serviceId, serviceImages} = payload;
 
   if (!serviceId || !serviceImages || serviceImages.length === 0) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID and images are required",
     );
@@ -921,14 +941,14 @@ exports.uploadServiceImages = functions.https.onCall(async (data, context) => {
     const serviceDoc = await serviceRef.get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
 
     // Check if user is the provider
     if (service.providerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider can upload images",
       );
@@ -936,7 +956,7 @@ exports.uploadServiceImages = functions.https.onCall(async (data, context) => {
 
     const currentImageCount = service.imageUrls ? service.imageUrls.length : 0;
     if (currentImageCount + serviceImages.length > MAX_SERVICE_IMAGES) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "invalid-argument",
         `Maximum ${MAX_SERVICE_IMAGES} service images allowed. 
         Current: ${currentImageCount}, trying to add: ${serviceImages.length}`,
@@ -965,18 +985,20 @@ exports.uploadServiceImages = functions.https.onCall(async (data, context) => {
     return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
   } catch (error) {
     console.error("Error uploading service images:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Remove specific image from service
  */
-exports.removeServiceImage = functions.https.onCall(async (data, context) => {
+exports.removeServiceImage = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -986,7 +1008,7 @@ exports.removeServiceImage = functions.https.onCall(async (data, context) => {
   const {serviceId, imageUrl} = payload;
 
   if (!serviceId || !imageUrl) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID and image URL are required",
     );
@@ -997,21 +1019,21 @@ exports.removeServiceImage = functions.https.onCall(async (data, context) => {
     const serviceDoc = await serviceRef.get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
 
     // Check if user is the provider
     if (service.providerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider can remove images",
       );
     }
 
     if (!service.imageUrls || !service.imageUrls.includes(imageUrl)) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Image not found in service",
       );
@@ -1040,18 +1062,20 @@ exports.removeServiceImage = functions.https.onCall(async (data, context) => {
     return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
   } catch (error) {
     console.error("Error removing service image:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Reorder service images
  */
-exports.reorderServiceImages = functions.https.onCall(async (data, context) => {
+exports.reorderServiceImages = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1061,7 +1085,7 @@ exports.reorderServiceImages = functions.https.onCall(async (data, context) => {
   const {serviceId, orderedImageUrls} = payload;
 
   if (!serviceId || !orderedImageUrls) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID and ordered image URLs are required",
     );
@@ -1072,14 +1096,14 @@ exports.reorderServiceImages = functions.https.onCall(async (data, context) => {
     const serviceDoc = await serviceRef.get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
 
     // Check if user is the provider
     if (service.providerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider can reorder images",
       );
@@ -1092,7 +1116,7 @@ exports.reorderServiceImages = functions.https.onCall(async (data, context) => {
       orderedImageUrls.every((url) => currentUrls.includes(url));
 
     if (!allUrlsMatch) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "invalid-argument",
         "Ordered URLs must match existing service images",
       );
@@ -1107,7 +1131,7 @@ exports.reorderServiceImages = functions.https.onCall(async (data, context) => {
     return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
   } catch (error) {
     console.error("Error reordering service images:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1118,179 +1142,183 @@ exports.reorderServiceImages = functions.https.onCall(async (data, context) => {
 /**
  * Upload additional certificates to existing service
  */
-exports.uploadServiceCertificates = functions.https.onCall(
-  async (data, context) => {
-    // Get authentication info
-    const authInfo = getAuthInfo(context, data);
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
+exports.uploadServiceCertificates = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  // Get authentication info
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  const payload = data.data || data;
+  const {serviceId, serviceCertificates} = payload;
+
+  if (!serviceId || !serviceCertificates || serviceCertificates.length === 0) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Service ID and certificates are required",
+    );
+  }
+
+  try {
+    const serviceRef = db.collection("services").doc(serviceId);
+    const serviceDoc = await serviceRef.get();
+
+    if (!serviceDoc.exists) {
+      throw new HttpsError("not-found", "Service not found");
+    }
+
+    const service = serviceDoc.data();
+
+    // Check if user is the provider
+    if (service.providerId !== authInfo.uid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the service provider can upload certificates",
       );
     }
 
-    const payload = data.data || data;
-    const {serviceId, serviceCertificates} = payload;
-
-    if (!serviceId || !serviceCertificates || serviceCertificates.length === 0) {
-      throw new functions.https.HttpsError(
+    const currentCertCount = service.certificateUrls ?
+      service.certificateUrls.length :
+      0;
+    if (currentCertCount + serviceCertificates.length > MAX_SERVICE_CERTIFICATES) {
+      throw new HttpsError(
         "invalid-argument",
-        "Service ID and certificates are required",
+        `Maximum ${MAX_SERVICE_CERTIFICATES} service certificates allowed`,
       );
     }
 
-    try {
-      const serviceRef = db.collection("services").doc(serviceId);
-      const serviceDoc = await serviceRef.get();
+    // Upload new certificates
+    const newCertMedia = await uploadImagesToStorage(
+      service.providerId,
+      serviceCertificates,
+      "ServiceCertificate",
+    );
 
-      if (!serviceDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Service not found");
-      }
+    // Update service with new certificates
+    const existingCertMedia = service.certificateMedia || [];
+    const updatedCertMedia = [...existingCertMedia, ...newCertMedia];
+    const updatedCertUrls = updatedCertMedia.map((m) => m.url);
 
-      const service = serviceDoc.data();
+    await serviceRef.update({
+      certificateUrls: updatedCertUrls,
+      certificateMedia: updatedCertMedia,
+      isVerifiedService: updatedCertMedia.length > 0,
+      updatedAt: new Date().toISOString(),
+    });
 
-      // Check if user is the provider
-      if (service.providerId !== authInfo.uid) {
-        throw new functions.https.HttpsError(
-          "permission-denied",
-          "Only the service provider can upload certificates",
-        );
-      }
-
-      const currentCertCount = service.certificateUrls ?
-        service.certificateUrls.length :
-        0;
-      if (currentCertCount + serviceCertificates.length > MAX_SERVICE_CERTIFICATES) {
-        throw new functions.https.HttpsError(
-          "invalid-argument",
-          `Maximum ${MAX_SERVICE_CERTIFICATES} service certificates allowed`,
-        );
-      }
-
-      // Upload new certificates
-      const newCertMedia = await uploadImagesToStorage(
-        service.providerId,
-        serviceCertificates,
-        "ServiceCertificate",
-      );
-
-      // Update service with new certificates
-      const existingCertMedia = service.certificateMedia || [];
-      const updatedCertMedia = [...existingCertMedia, ...newCertMedia];
-      const updatedCertUrls = updatedCertMedia.map((m) => m.url);
-
-      await serviceRef.update({
-        certificateUrls: updatedCertUrls,
-        certificateMedia: updatedCertMedia,
-        isVerifiedService: updatedCertMedia.length > 0,
-        updatedAt: new Date().toISOString(),
-      });
-
-      const updatedDoc = await serviceRef.get();
-      return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
-    } catch (error) {
-      console.error("Error uploading service certificates:", error);
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
+    const updatedDoc = await serviceRef.get();
+    return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
+  } catch (error) {
+    console.error("Error uploading service certificates:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Remove specific certificate from service
  */
-exports.removeServiceCertificate = functions.https.onCall(
-  async (data, context) => {
-    // Get authentication info
-    const authInfo = getAuthInfo(context, data);
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
+exports.removeServiceCertificate = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  // Get authentication info
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  const payload = data.data || data;
+  const {serviceId, certificateUrl} = payload;
+
+  if (!serviceId || !certificateUrl) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Service ID and certificate URL are required",
+    );
+  }
+
+  try {
+    const serviceRef = db.collection("services").doc(serviceId);
+    const serviceDoc = await serviceRef.get();
+
+    if (!serviceDoc.exists) {
+      throw new HttpsError("not-found", "Service not found");
+    }
+
+    const service = serviceDoc.data();
+
+    // Check if user is the provider
+    if (service.providerId !== authInfo.uid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the service provider can remove certificates",
       );
     }
 
-    const payload = data.data || data;
-    const {serviceId, certificateUrl} = payload;
-
-    if (!serviceId || !certificateUrl) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Service ID and certificate URL are required",
-      );
-    }
-
-    try {
-      const serviceRef = db.collection("services").doc(serviceId);
-      const serviceDoc = await serviceRef.get();
-
-      if (!serviceDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Service not found");
-      }
-
-      const service = serviceDoc.data();
-
-      // Check if user is the provider
-      if (service.providerId !== authInfo.uid) {
-        throw new functions.https.HttpsError(
-          "permission-denied",
-          "Only the service provider can remove certificates",
-        );
-      }
-
-      if (
-        !service.certificateUrls ||
+    if (
+      !service.certificateUrls ||
         !service.certificateUrls.includes(certificateUrl)
-      ) {
-        throw new functions.https.HttpsError(
-          "not-found",
-          "Certificate not found in service",
-        );
-      }
-
-      // Find the media item to delete
-      const certMedia = service.certificateMedia || [];
-      const mediaToDelete = certMedia.find((m) => m.url === certificateUrl);
-
-      if (mediaToDelete) {
-        // Delete certificate from storage and metadata
-        await deleteImagesFromStorage([mediaToDelete]);
-      }
-
-      // Remove certificate from service
-      const updatedCertMedia = certMedia.filter((m) => m.url !== certificateUrl);
-      const updatedCertUrls = updatedCertMedia.map((m) => m.url);
-
-      await serviceRef.update({
-        certificateUrls: updatedCertUrls,
-        certificateMedia: updatedCertMedia,
-        isVerifiedService: updatedCertMedia.length > 0,
-        updatedAt: new Date().toISOString(),
-      });
-
-      const updatedDoc = await serviceRef.get();
-      return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
-    } catch (error) {
-      console.error("Error removing service certificate:", error);
-      throw new functions.https.HttpsError("internal", error.message);
+    ) {
+      throw new HttpsError(
+        "not-found",
+        "Certificate not found in service",
+      );
     }
-  },
+
+    // Find the media item to delete
+    const certMedia = service.certificateMedia || [];
+    const mediaToDelete = certMedia.find((m) => m.url === certificateUrl);
+
+    if (mediaToDelete) {
+      // Delete certificate from storage and metadata
+      await deleteImagesFromStorage([mediaToDelete]);
+    }
+
+    // Remove certificate from service
+    const updatedCertMedia = certMedia.filter((m) => m.url !== certificateUrl);
+    const updatedCertUrls = updatedCertMedia.map((m) => m.url);
+
+    await serviceRef.update({
+      certificateUrls: updatedCertUrls,
+      certificateMedia: updatedCertMedia,
+      isVerifiedService: updatedCertMedia.length > 0,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const updatedDoc = await serviceRef.get();
+    return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
+  } catch (error) {
+    console.error("Error removing service certificate:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Verify service manually
  */
-exports.verifyService = functions.https.onCall(async (data, context) => {
+exports.verifyService = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only admins can verify services",
     );
@@ -1300,7 +1328,7 @@ exports.verifyService = functions.https.onCall(async (data, context) => {
   const {serviceId, isVerified} = payload;
 
   if (!serviceId || isVerified === undefined) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID and verification status are required",
     );
@@ -1311,7 +1339,7 @@ exports.verifyService = functions.https.onCall(async (data, context) => {
     const serviceDoc = await serviceRef.get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     await serviceRef.update({
@@ -1323,7 +1351,7 @@ exports.verifyService = functions.https.onCall(async (data, context) => {
     return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
   } catch (error) {
     console.error("Error verifying service:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1334,18 +1362,20 @@ exports.verifyService = functions.https.onCall(async (data, context) => {
 /**
  * Add a new category
  */
-exports.addCategory = functions.https.onCall(async (data, context) => {
+exports.addCategory = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only admins can add categories",
     );
@@ -1355,7 +1385,7 @@ exports.addCategory = functions.https.onCall(async (data, context) => {
   const {name, description, parentId, slug, imageUrl} = payload;
 
   if (!name || !slug) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Name and slug are required",
     );
@@ -1366,7 +1396,7 @@ exports.addCategory = functions.https.onCall(async (data, context) => {
     if (parentId) {
       const parentDoc = await db.collection("categories").doc(parentId).get();
       if (!parentDoc.exists) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "not-found",
           "Parent category not found",
         );
@@ -1388,14 +1418,16 @@ exports.addCategory = functions.https.onCall(async (data, context) => {
     return {success: true, category: newCategory};
   } catch (error) {
     console.error("Error adding category:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get all categories
  */
-exports.getAllCategories = functions.https.onCall(async (_data, _context) => {
+exports.getAllCategories = onCall(async (request) => {
+  const _data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   try {
     // Defensively initialize categories if missing
     await initializeCategoriesDirectly();
@@ -1410,7 +1442,7 @@ exports.getAllCategories = functions.https.onCall(async (_data, _context) => {
     return {success: true, categories};
   } catch (error) {
     console.error("Error getting all categories:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 /**
@@ -1546,11 +1578,13 @@ exports.initializeCategoriesDirectly = initializeCategoriesDirectly;
 /**
  * Create a new service package
  */
-exports.createServicePackage = functions.https.onCall(async (data, context) => {
+exports.createServicePackage = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1561,7 +1595,7 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
   const {serviceId, title, description, price} = payload;
 
   if (!serviceId || !title || !description || !price) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID, title, description, and price are required",
     );
@@ -1571,14 +1605,14 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
     // Validate service exists
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
 
     // Check if user is the provider
     if (service.providerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider can create packages",
       );
@@ -1590,7 +1624,7 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
       MAX_PACKAGE_TITLE_LENGTH);
     const titleValid = validatePackageTitle(title);
     if (!titleValid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "invalid-argument",
         `Package title must be between ${MIN_PACKAGE_TITLE_LENGTH} and 
         ${MAX_PACKAGE_TITLE_LENGTH} characters`);
@@ -1598,7 +1632,7 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
 
     const descValid = validateDescription(description);
     if (!descValid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "invalid-argument",
         `Package description must be between 
         ${MIN_DESCRIPTION_LENGTH} and ${MAX_DESCRIPTION_LENGTH} characters`);
@@ -1606,7 +1640,7 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
 
     // Validate price
     if (!validatePrice(price)) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "invalid-argument",
         `Package price must be between ₱${MIN_PRICE} and ₱${MAX_PRICE}`,
       );
@@ -1630,19 +1664,21 @@ exports.createServicePackage = functions.https.onCall(async (data, context) => {
     return {success: true, package: newPackage};
   } catch (error) {
     console.error("Error creating service package:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get all packages for a service
  */
-exports.getServicePackages = functions.https.onCall(async (data, _context) => {
+exports.getServicePackages = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId} = payload;
 
   if (!serviceId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID is required",
     );
@@ -1652,7 +1688,7 @@ exports.getServicePackages = functions.https.onCall(async (data, _context) => {
     // Validate service exists
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const packagesSnapshot = await db
@@ -1668,19 +1704,21 @@ exports.getServicePackages = functions.https.onCall(async (data, _context) => {
     return {success: true, packages};
   } catch (error) {
     console.error("Error getting service packages:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get a specific package by ID
  */
-exports.getPackage = functions.https.onCall(async (data, _context) => {
+exports.getPackage = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {packageId} = payload;
 
   if (!packageId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Package ID is required",
     );
@@ -1690,24 +1728,26 @@ exports.getPackage = functions.https.onCall(async (data, _context) => {
     const packageDoc = await db.collection("service_packages").doc(packageId).get();
 
     if (!packageDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Package not found");
+      throw new HttpsError("not-found", "Package not found");
     }
 
     return {success: true, package: {id: packageDoc.id, ...packageDoc.data()}};
   } catch (error) {
     console.error("Error getting package:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Update a service package
  */
-exports.updateServicePackage = functions.https.onCall(async (data, context) => {
+exports.updateServicePackage = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1718,7 +1758,7 @@ exports.updateServicePackage = functions.https.onCall(async (data, context) => {
   const {packageId, title, description, price} = payload;
 
   if (!packageId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Package ID is required",
     );
@@ -1729,7 +1769,7 @@ exports.updateServicePackage = functions.https.onCall(async (data, context) => {
     const packageDoc = await packageRef.get();
 
     if (!packageDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Package not found");
+      throw new HttpsError("not-found", "Package not found");
     }
 
     const pkg = packageDoc.data();
@@ -1737,12 +1777,12 @@ exports.updateServicePackage = functions.https.onCall(async (data, context) => {
     // Validate service and ownership
     const serviceDoc = await db.collection("services").doc(pkg.serviceId).get();
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
     if (service.providerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider can update packages",
       );
@@ -1760,7 +1800,7 @@ exports.updateServicePackage = functions.https.onCall(async (data, context) => {
     }
     if (price !== undefined) {
       if (!validatePrice(price)) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           `Package price must be between ₱${MIN_PRICE} and ₱${MAX_PRICE}`,
         );
@@ -1774,18 +1814,20 @@ exports.updateServicePackage = functions.https.onCall(async (data, context) => {
     return {success: true, package: {id: updatedDoc.id, ...updatedDoc.data()}};
   } catch (error) {
     console.error("Error updating service package:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Delete a service package
  */
-exports.deleteServicePackage = functions.https.onCall(async (data, context) => {
+exports.deleteServicePackage = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1796,7 +1838,7 @@ exports.deleteServicePackage = functions.https.onCall(async (data, context) => {
   const {packageId} = payload;
 
   if (!packageId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Package ID is required",
     );
@@ -1807,7 +1849,7 @@ exports.deleteServicePackage = functions.https.onCall(async (data, context) => {
     const packageDoc = await packageRef.get();
 
     if (!packageDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Package not found");
+      throw new HttpsError("not-found", "Package not found");
     }
 
     const pkg = packageDoc.data();
@@ -1815,12 +1857,12 @@ exports.deleteServicePackage = functions.https.onCall(async (data, context) => {
     // Validate service and ownership
     const serviceDoc = await db.collection("services").doc(pkg.serviceId).get();
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
     if (service.providerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Only the service provider can delete packages",
       );
@@ -1831,7 +1873,7 @@ exports.deleteServicePackage = functions.https.onCall(async (data, context) => {
     return {success: true, message: "Package deleted successfully"};
   } catch (error) {
     console.error("Error deleting service package:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1846,12 +1888,14 @@ exports.deleteServicePackage = functions.https.onCall(async (data, context) => {
 /**
  * Update service rating (called by Review system)
  */
-exports.updateServiceRating = functions.https.onCall(async (data, _context) => {
+exports.updateServiceRating = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId, newRating, newReviewCount} = payload;
 
   if (!serviceId || newRating === undefined || newReviewCount === undefined) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID, rating, and review count are required",
     );
@@ -1862,7 +1906,7 @@ exports.updateServiceRating = functions.https.onCall(async (data, _context) => {
     const serviceDoc = await serviceRef.get();
 
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     await serviceRef.update({
@@ -1875,7 +1919,7 @@ exports.updateServiceRating = functions.https.onCall(async (data, _context) => {
     return {success: true, service: {id: updatedDoc.id, ...updatedDoc.data()}};
   } catch (error) {
     console.error("Error updating service rating:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1886,156 +1930,158 @@ exports.updateServiceRating = functions.https.onCall(async (data, _context) => {
 /**
  * Set service availability
  */
-exports.setServiceAvailability = functions.https.onCall(
-  async (data, context) => {
-    // Get authentication info
-    const authInfo = getAuthInfo(context, data);
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
-      );
-    }
+exports.setServiceAvailability = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  // Get authentication info
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
 
-    // Extract the actual payload from data.data
-    const payload = data.data || data;
-    const {
-      serviceId,
-      weeklySchedule,
-      instantBookingEnabled,
-      bookingNoticeHours,
-      maxBookingsPerDay,
-    } = payload;
+  // Extract the actual payload from data.data
+  const payload = data.data || data;
+  const {
+    serviceId,
+    weeklySchedule,
+    instantBookingEnabled,
+    bookingNoticeHours,
+    maxBookingsPerDay,
+  } = payload;
 
-    if (
-      !serviceId ||
+  if (
+    !serviceId ||
       !weeklySchedule ||
       instantBookingEnabled === undefined ||
       bookingNoticeHours === undefined ||
       maxBookingsPerDay === undefined
-    ) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "All availability parameters are required",
+  ) {
+    throw new HttpsError(
+      "invalid-argument",
+      "All availability parameters are required",
+    );
+  }
+
+  try {
+    const serviceRef = db.collection("services").doc(serviceId);
+    const serviceDoc = await serviceRef.get();
+
+    if (!serviceDoc.exists) {
+      throw new HttpsError("not-found", "Service not found");
+    }
+
+    const service = serviceDoc.data();
+
+    // Check if user is the provider
+    if (service.providerId !== authInfo.uid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Not authorized to set availability for this service",
       );
     }
 
-    try {
-      const serviceRef = db.collection("services").doc(serviceId);
-      const serviceDoc = await serviceRef.get();
-
-      if (!serviceDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Service not found");
-      }
-
-      const service = serviceDoc.data();
-
-      // Check if user is the provider
-      if (service.providerId !== authInfo.uid) {
-        throw new functions.https.HttpsError(
-          "permission-denied",
-          "Not authorized to set availability for this service",
-        );
-      }
-
-      // Validate booking notice hours
-      if (bookingNoticeHours > 720) {
-        throw new functions.https.HttpsError(
-          "invalid-argument",
-          "Booking notice hours cannot exceed 720 (30 days)",
-        );
-      }
-
-      // Validate max bookings per day
-      if (maxBookingsPerDay === 0 || maxBookingsPerDay > 50) {
-        throw new functions.https.HttpsError(
-          "invalid-argument",
-          "Max bookings per day must be between 1 and 50",
-        );
-      }
-
-      // Update service with availability data
-      await serviceRef.update({
-        weeklySchedule,
-        instantBookingEnabled,
-        bookingNoticeHours,
-        maxBookingsPerDay,
-        updatedAt: new Date().toISOString(),
-      });
-
-      const availability = {
-        providerId: service.providerId,
-        weeklySchedule,
-        instantBookingEnabled,
-        bookingNoticeHours,
-        maxBookingsPerDay,
-        isActive: true,
-        createdAt: service.createdAt,
-        updatedAt: new Date().toISOString(),
-      };
-
-      return {success: true, availability};
-    } catch (error) {
-      console.error("Error setting service availability:", error);
-      throw new functions.https.HttpsError("internal", error.message);
+    // Validate booking notice hours
+    if (bookingNoticeHours > 720) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Booking notice hours cannot exceed 720 (30 days)",
+      );
     }
-  },
+
+    // Validate max bookings per day
+    if (maxBookingsPerDay === 0 || maxBookingsPerDay > 50) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Max bookings per day must be between 1 and 50",
+      );
+    }
+
+    // Update service with availability data
+    await serviceRef.update({
+      weeklySchedule,
+      instantBookingEnabled,
+      bookingNoticeHours,
+      maxBookingsPerDay,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const availability = {
+      providerId: service.providerId,
+      weeklySchedule,
+      instantBookingEnabled,
+      bookingNoticeHours,
+      maxBookingsPerDay,
+      isActive: true,
+      createdAt: service.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+
+    return {success: true, availability};
+  } catch (error) {
+    console.error("Error setting service availability:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Get service availability
  */
-exports.getServiceAvailability = functions.https.onCall(
-  async (data, _context) => {
-    const payload = data.data || data;
-    const {serviceId} = payload;
+exports.getServiceAvailability = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {serviceId} = payload;
 
-    if (!serviceId) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Service ID is required",
-      );
+  if (!serviceId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Service ID is required",
+    );
+  }
+
+  try {
+    const serviceDoc = await db.collection("services").doc(serviceId).get();
+
+    if (!serviceDoc.exists) {
+      throw new HttpsError("not-found", "Service not found");
     }
 
-    try {
-      const serviceDoc = await db.collection("services").doc(serviceId).get();
+    const service = serviceDoc.data();
 
-      if (!serviceDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Service not found");
-      }
-
-      const service = serviceDoc.data();
-
-      // Check if service has availability data
-      if (
-        !service.weeklySchedule ||
+    // Check if service has availability data
+    if (
+      !service.weeklySchedule ||
         service.instantBookingEnabled === undefined ||
         service.bookingNoticeHours === undefined ||
         service.maxBookingsPerDay === undefined
-      ) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "Service availability not properly configured",
-        );
-      }
-
-      const availability = {
-        providerId: service.providerId,
-        isActive: true,
-        instantBookingEnabled: service.instantBookingEnabled,
-        bookingNoticeHours: service.bookingNoticeHours,
-        maxBookingsPerDay: service.maxBookingsPerDay,
-        weeklySchedule: service.weeklySchedule,
-        createdAt: service.createdAt,
-        updatedAt: service.updatedAt,
-      };
-
-      return {success: true, availability};
-    } catch (error) {
-      console.error("Error getting service availability:", error);
-      throw new functions.https.HttpsError("internal", error.message);
+    ) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Service availability not properly configured",
+      );
     }
-  },
+
+    const availability = {
+      providerId: service.providerId,
+      isActive: true,
+      instantBookingEnabled: service.instantBookingEnabled,
+      bookingNoticeHours: service.bookingNoticeHours,
+      maxBookingsPerDay: service.maxBookingsPerDay,
+      weeklySchedule: service.weeklySchedule,
+      createdAt: service.createdAt,
+      updatedAt: service.updatedAt,
+    };
+
+    return {success: true, availability};
+  } catch (error) {
+    console.error("Error getting service availability:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
@@ -2060,73 +2106,74 @@ function getDayOfWeekFromTimestamp(timestamp) {
 /**
  * Get available time slots for a specific date and service
  */
-exports.getAvailableTimeSlots = functions.https.onCall(
-  async (data, _context) => {
-    const payload = data.data || data;
-    const {serviceId, date} = payload;
+exports.getAvailableTimeSlots = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {serviceId, date} = payload;
 
-    if (!serviceId || !date) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Service ID and date are required",
-      );
+  if (!serviceId || !date) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Service ID and date are required",
+    );
+  }
+
+  try {
+    const serviceDoc = await db.collection("services").doc(serviceId).get();
+
+    if (!serviceDoc.exists) {
+      throw new HttpsError("not-found", "Service not found");
     }
 
-    try {
-      const serviceDoc = await db.collection("services").doc(serviceId).get();
+    const service = serviceDoc.data();
 
-      if (!serviceDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Service not found");
-      }
-
-      const service = serviceDoc.data();
-
-      // Check if service has availability data
-      if (
-        !service.weeklySchedule ||
+    // Check if service has availability data
+    if (
+      !service.weeklySchedule ||
         service.instantBookingEnabled === undefined ||
         service.bookingNoticeHours === undefined ||
         service.maxBookingsPerDay === undefined
-      ) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "Service availability not properly configured",
-        );
-      }
-
-      // Get day of week for the requested date
-      const dayOfWeek = getDayOfWeekFromTimestamp(date);
-
-      // Find the day's availability in the weekly schedule
-      const daySchedule = service.weeklySchedule.find(
-        (schedule) => schedule.day === dayOfWeek,
+    ) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Service availability not properly configured",
       );
-
-      if (!daySchedule || !daySchedule.availability) {
-        return {success: true, slots: []};
-      }
-
-      const dayAvailability = daySchedule.availability;
-
-      if (!dayAvailability.isAvailable) {
-        return {success: true, slots: []};
-      }
-
-      // Create available slots
-      // Note: Conflict checking is handled in booking canister/function
-      const availableSlots = dayAvailability.slots.map((slot) => ({
-        date: date,
-        timeSlot: slot,
-        isAvailable: true, // Service only provides schedule availability
-        conflictingBookings: [], // Conflict checking handled in booking system
-      }));
-
-      return {success: true, slots: availableSlots};
-    } catch (error) {
-      console.error("Error getting available time slots:", error);
-      throw new functions.https.HttpsError("internal", error.message);
     }
-  },
+
+    // Get day of week for the requested date
+    const dayOfWeek = getDayOfWeekFromTimestamp(date);
+
+    // Find the day's availability in the weekly schedule
+    const daySchedule = service.weeklySchedule.find(
+      (schedule) => schedule.day === dayOfWeek,
+    );
+
+    if (!daySchedule || !daySchedule.availability) {
+      return {success: true, slots: []};
+    }
+
+    const dayAvailability = daySchedule.availability;
+
+    if (!dayAvailability.isAvailable) {
+      return {success: true, slots: []};
+    }
+
+    // Create available slots
+    // Note: Conflict checking is handled in booking canister/function
+    const availableSlots = dayAvailability.slots.map((slot) => ({
+      date: date,
+      timeSlot: slot,
+      isAvailable: true, // Service only provides schedule availability
+      conflictingBookings: [], // Conflict checking handled in booking system
+    }));
+
+    return {success: true, slots: availableSlots};
+  } catch (error) {
+    console.error("Error getting available time slots:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 // ============================================================================

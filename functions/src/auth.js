@@ -6,6 +6,7 @@
  */
 
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 // Initialize Firebase Admin if not already initialized
@@ -44,12 +45,14 @@ async function getUserProfile(principalText) {
  * Sign in with Internet Identity
  * Callable Cloud Function that serves as the Identity Bridge
  */
-exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
+exports.signInWithInternetIdentity = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   try {
-    const {principal: principalText} = data.data;
+    const {principal: principalText} = data;
 
     if (!principalText) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "invalid-argument",
         "Principal is required",
       );
@@ -81,12 +84,12 @@ exports.signInWithInternetIdentity = functions.https.onCall(async (data) => {
     console.error("Error in signInWithInternetIdentity:", error);
 
     // If it's already an HttpsError, re-throw it
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
 
     // Otherwise, wrap it in an internal error
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "internal",
       error.message || "Server error, please try again at another time ",
     );

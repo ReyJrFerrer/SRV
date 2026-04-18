@@ -6,6 +6,7 @@
  */
 
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 // Import media upload functions for consistent media handling
@@ -100,12 +101,14 @@ exports.isPhoneTaken = isPhoneTaken;
  * Validates phone number if it exists
  * HTTPS onCall Cloud Function
  */
-exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
+exports.validatePhoneNumber = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
   // Check authentication
   if (!auth) {
     console.error("No authentication context found!");
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated to create a profile",
     );
@@ -113,7 +116,7 @@ exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
   const {phone} = data.data || data;
 
   if (!validatePhone(phone)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid phone format",
     );
@@ -121,7 +124,7 @@ exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
 
   // Check if phone is already taken
   if (await isPhoneTaken(phone)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "already-exists",
       "Phone number is already registered",
     );
@@ -135,13 +138,15 @@ exports.validatePhoneNumber = functions.https.onCall(async (data, context) => {
  * Create a new user profile
  * HTTPS onCall Cloud Function
  */
-exports.createProfile = functions.https.onCall(async (data, context) => {
+exports.createProfile = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
 
   // Check authentication
   if (!auth) {
     console.error("No authentication context found!");
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated to create a profile",
     );
@@ -152,14 +157,14 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
 
   // Validate inputs
   if (!validateName(name)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Invalid name length. Must be between ${MIN_NAME_LENGTH} and ${MAX_NAME_LENGTH} characters`,
     );
   }
 
   if (!validatePhone(phone)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid phone format",
     );
@@ -167,7 +172,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
 
   // Check if phone is already taken
   if (await isPhoneTaken(phone)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "already-exists",
       "Phone number is already registered",
     );
@@ -179,7 +184,7 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
   const userDoc = await userRef.get();
 
   if (userDoc.exists) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "already-exists",
       "Profile already exists",
     );
@@ -224,13 +229,15 @@ exports.createProfile = functions.https.onCall(async (data, context) => {
  * Get user profile by ID
  * HTTPS onCall Cloud Function
  */
-exports.getProfile = functions.https.onCall(async (data, context) => {
+exports.getProfile = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
   const actualData = data.data || data;
 
   // Check authentication
   if (!auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -244,7 +251,7 @@ exports.getProfile = functions.https.onCall(async (data, context) => {
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "not-found",
       "Profile not found",
     );
@@ -260,13 +267,15 @@ exports.getProfile = functions.https.onCall(async (data, context) => {
  * Update user profile
  * HTTPS onCall Cloud Function
  */
-exports.updateProfile = functions.https.onCall(async (data, context) => {
+exports.updateProfile = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
   const actualData = data.data || data;
 
   // Check authentication
   if (!auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated to update profile",
     );
@@ -277,7 +286,7 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
 
   // Validate inputs if provided
   if (name !== undefined && !validateName(name)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Invalid name length. Must be between ${MIN_NAME_LENGTH} and ${MAX_NAME_LENGTH} characters`,
     );
@@ -289,7 +298,7 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "not-found",
       "Profile not found",
     );
@@ -319,12 +328,14 @@ exports.updateProfile = functions.https.onCall(async (data, context) => {
  * Switch user active role between Client and ServiceProvider
  * HTTPS onCall Cloud Function
  */
-exports.switchUserRole = functions.https.onCall(async (data, context) => {
+exports.switchUserRole = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
 
   // Check authentication
   if (!auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated to switch role",
     );
@@ -336,7 +347,7 @@ exports.switchUserRole = functions.https.onCall(async (data, context) => {
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "not-found",
       "Profile not found",
     );
@@ -346,7 +357,7 @@ exports.switchUserRole = functions.https.onCall(async (data, context) => {
 
   // Don't allow switching if user is Admin
   if (profile.role === "Admin" || profile.activeRole === "Admin") {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Admin role cannot be switched",
     );
@@ -372,12 +383,14 @@ exports.switchUserRole = functions.https.onCall(async (data, context) => {
  * Get all service providers
  * HTTPS onCall Cloud Function
  */
-exports.getAllServiceProviders = functions.https.onCall(async (data, context) => {
+exports.getAllServiceProviders = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
 
   // Check authentication
   if (!auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -404,12 +417,14 @@ exports.getAllServiceProviders = functions.https.onCall(async (data, context) =>
  * Get all users (admin function)
  * HTTPS onCall Cloud Function
  */
-exports.getAllUsers = functions.https.onCall(async (data, context) => {
+exports.getAllUsers = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
 
   // Check authentication
   if (!auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -438,12 +453,14 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
  * Upload profile picture
  * HTTP onCall Cloud Function
  */
-exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
+exports.uploadProfilePicture = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
 
   // Check authentication
   if (!auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated to upload profile picture",
     );
@@ -455,7 +472,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
 
   // Validate inputs
   if (!fileName || !contentType || !fileData) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "File name, content type, and file data are required",
     );
@@ -467,7 +484,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Profile not found",
       );
@@ -513,7 +530,7 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error uploading profile picture:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -521,12 +538,14 @@ exports.uploadProfilePicture = functions.https.onCall(async (data, context) => {
  * Remove profile picture
  * HTTPS onCall Cloud Function
  */
-exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
+exports.removeProfilePicture = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
 
   // Check authentication
   if (!auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated to remove profile picture",
     );
@@ -540,7 +559,7 @@ exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Profile not found",
       );
@@ -550,7 +569,7 @@ exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
 
     // Check if profile picture exists
     if (!profile.profilePicture || !profile.profilePicture.mediaId) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "No profile picture to remove",
       );
@@ -574,7 +593,7 @@ exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error removing profile picture:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -582,13 +601,15 @@ exports.removeProfilePicture = functions.https.onCall(async (data, context) => {
  * Update user active status and last activity timestamp
  * HTTPS onCall Cloud Function
  */
-exports.updateUserActiveStatus = functions.https.onCall(async (data, context) => {
+exports.updateUserActiveStatus = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth || data.auth;
   const actualData = data.data || data;
 
   // Check authentication
   if (!auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated to update active status",
     );
@@ -599,7 +620,7 @@ exports.updateUserActiveStatus = functions.https.onCall(async (data, context) =>
 
   // Validate input
   if (typeof isActive !== "boolean") {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "isActive must be a boolean value",
     );
@@ -611,7 +632,7 @@ exports.updateUserActiveStatus = functions.https.onCall(async (data, context) =>
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Profile not found",
       );
@@ -632,9 +653,9 @@ exports.updateUserActiveStatus = functions.https.onCall(async (data, context) =>
     };
   } catch (error) {
     console.error("Error updating user active status:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });

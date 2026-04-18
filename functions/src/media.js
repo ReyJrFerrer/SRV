@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 /**
@@ -101,7 +102,9 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
 /**
  * Upload a media file to Cloud Storage and store metadata in Firestore
  */
-exports.uploadMedia = functions.https.onCall(async (data, context) => {
+exports.uploadMedia = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const {fileName, contentType, mediaType, fileData} = data.data;
   // Log incoming data
   console.log("uploadMedia called with:", {
@@ -117,7 +120,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -130,7 +133,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
       fileNameType: typeof fileName,
       fileNameLength: fileName?.length,
     });
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "File name must be between 1 and 255 characters",
     );
@@ -138,7 +141,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
 
   // Validate content type
   if (!validateContentType(contentType)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Unsupported file type. Supported types: ${SUPPORTED_CONTENT_TYPES.join(", ")}`,
     );
@@ -153,7 +156,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
       fileData;
     fileBuffer = Buffer.from(base64Data, "base64");
   } catch (error) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid file data format",
     );
@@ -168,7 +171,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
       mediaType === "ProblemProof" && contentType?.startsWith("video/") ?
         "30MB" :
         "1MB";
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `File size must be between 1 byte and ${maxSizeText} for this media type`,
     );
@@ -243,7 +246,7 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
     return {success: true, data: mediaItem};
   } catch (error) {
     console.error("Error uploading media:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -251,13 +254,15 @@ exports.uploadMedia = functions.https.onCall(async (data, context) => {
  * Get a media item by ID
  * Mirrors getMediaItem function from media.mo canister
  */
-exports.getMediaItem = functions.https.onCall(async (data, _context) => {
+exports.getMediaItem = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   console.log("Media ID", data.data);
   const {mediaId} = data.data || data;
 
   if (!mediaId) {
     console.log("No media ID");
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Media ID is required",
     );
@@ -267,16 +272,16 @@ exports.getMediaItem = functions.https.onCall(async (data, _context) => {
     const mediaDoc = await db.collection("media").doc(mediaId).get();
 
     if (!mediaDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Media item not found");
+      throw new HttpsError("not-found", "Media item not found");
     }
 
     return {success: true, data: mediaDoc.data()};
   } catch (error) {
     console.error("Error getting media item:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -285,11 +290,13 @@ exports.getMediaItem = functions.https.onCall(async (data, _context) => {
  * Note: In Cloud Storage, we return the public URL instead of raw data
  * Mirrors getFileData function from media.mo canister
  */
-exports.getFileData = functions.https.onCall(async (data, _context) => {
+exports.getFileData = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const {mediaId} = data;
 
   if (!mediaId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Media ID is required",
     );
@@ -299,17 +306,17 @@ exports.getFileData = functions.https.onCall(async (data, _context) => {
     const mediaDoc = await db.collection("media").doc(mediaId).get();
 
     if (!mediaDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "File data not found");
+      throw new HttpsError("not-found", "File data not found");
     }
 
     const mediaItem = mediaDoc.data();
     return {success: true, data: mediaItem.url};
   } catch (error) {
     console.error("Error getting file data:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -317,13 +324,15 @@ exports.getFileData = functions.https.onCall(async (data, _context) => {
  * Get media items by owner
  * Mirrors getMediaByOwner function from media.mo canister
  */
-exports.getMediaByOwner = functions.https.onCall(async (data, context) => {
+exports.getMediaByOwner = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const {ownerId} = data;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -331,7 +340,7 @@ exports.getMediaByOwner = functions.https.onCall(async (data, context) => {
 
   // Users can only view their own media unless they're admin
   if (ownerId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "You can only view your own media",
     );
@@ -351,7 +360,7 @@ exports.getMediaByOwner = functions.https.onCall(async (data, context) => {
     return {success: true, data: mediaItems};
   } catch (error) {
     console.error("Error getting media by owner:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -359,65 +368,68 @@ exports.getMediaByOwner = functions.https.onCall(async (data, context) => {
  * Get media items by type and owner
  * Mirrors getMediaByTypeAndOwner function from media.mo canister
  */
-exports.getMediaByTypeAndOwner = functions.https.onCall(
-  async (data, context) => {
-    const {ownerId, mediaType} = data;
+exports.getMediaByTypeAndOwner = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const {ownerId, mediaType} = data;
 
-    // Authentication
-    const authInfo = getAuthInfo(context, data);
-    if (!authInfo.hasAuth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated",
-      );
-    }
+  // Authentication
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
 
-    // Users can only view their own media unless they're admin
-    if (ownerId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new functions.https.HttpsError(
-        "permission-denied",
-        "You can only view your own media",
-      );
-    }
+  // Users can only view their own media unless they're admin
+  if (ownerId !== authInfo.uid && !authInfo.isAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "You can only view your own media",
+    );
+  }
 
-    try {
-      const mediaSnapshot = await db
-        .collection("media")
-        .where("ownerId", "==", ownerId)
-        .where("mediaType", "==", mediaType)
-        .get();
+  try {
+    const mediaSnapshot = await db
+      .collection("media")
+      .where("ownerId", "==", ownerId)
+      .where("mediaType", "==", mediaType)
+      .get();
 
-      const mediaItems = [];
-      mediaSnapshot.forEach((doc) => {
-        mediaItems.push(doc.data());
-      });
+    const mediaItems = [];
+    mediaSnapshot.forEach((doc) => {
+      mediaItems.push(doc.data());
+    });
 
-      return {success: true, data: mediaItems};
-    } catch (error) {
-      console.error("Error getting media by type and owner:", error);
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
+    return {success: true, data: mediaItems};
+  } catch (error) {
+    console.error("Error getting media by type and owner:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Delete a media item
  * Mirrors deleteMedia function from media.mo canister
  */
-exports.deleteMedia = functions.https.onCall(async (data, context) => {
+exports.deleteMedia = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const {mediaId} = data;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!mediaId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Media ID is required",
     );
@@ -427,14 +439,14 @@ exports.deleteMedia = functions.https.onCall(async (data, context) => {
     const mediaDoc = await db.collection("media").doc(mediaId).get();
 
     if (!mediaDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Media item not found");
+      throw new HttpsError("not-found", "Media item not found");
     }
 
     const mediaItem = mediaDoc.data();
 
     // Only owner or admin can delete
     if (mediaItem.ownerId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "You can only delete your own media",
       );
@@ -460,10 +472,10 @@ exports.deleteMedia = functions.https.onCall(async (data, context) => {
     return {success: true, data: "Media item deleted successfully"};
   } catch (error) {
     console.error("Error deleting media:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -471,20 +483,22 @@ exports.deleteMedia = functions.https.onCall(async (data, context) => {
  * Update media metadata
  * Mirrors updateMediaMetadata function from media.mo canister
  */
-exports.updateMediaMetadata = functions.https.onCall(async (data, context) => {
+exports.updateMediaMetadata = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const {mediaId, fileName} = data;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!mediaId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Media ID is required",
     );
@@ -494,14 +508,14 @@ exports.updateMediaMetadata = functions.https.onCall(async (data, context) => {
     const mediaDoc = await db.collection("media").doc(mediaId).get();
 
     if (!mediaDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Media item not found");
+      throw new HttpsError("not-found", "Media item not found");
     }
 
     const mediaItem = mediaDoc.data();
 
     // Only owner can update
     if (mediaItem.ownerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "You can only update your own media",
       );
@@ -514,7 +528,7 @@ exports.updateMediaMetadata = functions.https.onCall(async (data, context) => {
     // Validate and update file name if provided
     if (fileName !== undefined && fileName !== null) {
       if (fileName.length === 0 || fileName.length > 255) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           "File name must be between 1 and 255 characters",
         );
@@ -528,10 +542,10 @@ exports.updateMediaMetadata = functions.https.onCall(async (data, context) => {
     return {success: true, data: updatedDoc.data()};
   } catch (error) {
     console.error("Error updating media metadata:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -539,10 +553,12 @@ exports.updateMediaMetadata = functions.https.onCall(async (data, context) => {
  * Get storage statistics
  * Mirrors getStorageStats function from media.mo canister
  */
-exports.getStorageStats = functions.https.onCall(async (data, context) => {
+exports.getStorageStats = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
@@ -578,7 +594,7 @@ exports.getStorageStats = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error getting storage stats:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -586,20 +602,22 @@ exports.getStorageStats = functions.https.onCall(async (data, context) => {
  * Validate media items (used by remittance canister)
  * Mirrors validateMediaItems function from media.mo canister
  */
-exports.validateMediaItems = functions.https.onCall(async (data, context) => {
+exports.validateMediaItems = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const {mediaIds} = data;
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!mediaIds || !Array.isArray(mediaIds)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Media IDs array is required",
     );
@@ -638,7 +656,7 @@ exports.validateMediaItems = functions.https.onCall(async (data, context) => {
     return {success: true, data: validations};
   } catch (error) {
     console.error("Error validating media items:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -646,105 +664,107 @@ exports.validateMediaItems = functions.https.onCall(async (data, context) => {
  * Update certificate validation status
  * Mirrors updateCertificateValidationStatus function from media.mo canister
  */
-exports.updateCertificateValidationStatus = functions.https.onCall(
-  async (data, context) => {
-    const {mediaId, newStatus} = data;
+exports.updateCertificateValidationStatus = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const {mediaId, newStatus} = data;
 
-    const authInfo = getAuthInfo(context, data);
-    if (!authInfo.hasAuth || !authInfo.isAdmin) {
-      throw new functions.https.HttpsError(
-        "permission-denied",
-        "Admin access required",
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "Admin access required",
+    );
+  }
+
+  if (!mediaId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Media ID is required",
+    );
+  }
+
+  if (!["Pending", "Validated", "Rejected"].includes(newStatus)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Invalid validation status",
+    );
+  }
+
+  try {
+    const mediaDoc = await db.collection("media").doc(mediaId).get();
+
+    if (!mediaDoc.exists) {
+      throw new HttpsError(
+        "not-found",
+        "Media item not found",
       );
     }
 
-    if (!mediaId) {
-      throw new functions.https.HttpsError(
+    const mediaItem = mediaDoc.data();
+
+    if (mediaItem.mediaType !== "ServiceCertificate") {
+      throw new HttpsError(
         "invalid-argument",
-        "Media ID is required",
+        "Only service certificates can have validation status updated",
       );
     }
 
-    if (!["Pending", "Validated", "Rejected"].includes(newStatus)) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Invalid validation status",
-      );
+    await db.collection("media").doc(mediaId).update({
+      validationStatus: newStatus,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const updatedDoc = await db.collection("media").doc(mediaId).get();
+    return {success: true, data: updatedDoc.data()};
+  } catch (error) {
+    console.error("Error updating certificate validation status:", error);
+    if (error instanceof HttpsError) {
+      throw error;
     }
-
-    try {
-      const mediaDoc = await db.collection("media").doc(mediaId).get();
-
-      if (!mediaDoc.exists) {
-        throw new functions.https.HttpsError(
-          "not-found",
-          "Media item not found",
-        );
-      }
-
-      const mediaItem = mediaDoc.data();
-
-      if (mediaItem.mediaType !== "ServiceCertificate") {
-        throw new functions.https.HttpsError(
-          "invalid-argument",
-          "Only service certificates can have validation status updated",
-        );
-      }
-
-      await db.collection("media").doc(mediaId).update({
-        validationStatus: newStatus,
-        updatedAt: new Date().toISOString(),
-      });
-
-      const updatedDoc = await db.collection("media").doc(mediaId).get();
-      return {success: true, data: updatedDoc.data()};
-    } catch (error) {
-      console.error("Error updating certificate validation status:", error);
-      if (error instanceof functions.https.HttpsError) {
-        throw error;
-      }
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 /**
  * Get certificates by validation status
  * Mirrors getCertificatesByValidationStatus function from media.mo canister
  */
-exports.getCertificatesByValidationStatus = functions.https.onCall(
-  async (data, context) => {
-    const {status} = data;
+exports.getCertificatesByValidationStatus = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const {status} = data;
 
-    const authInfo = getAuthInfo(context, data);
-    if (!authInfo.hasAuth || !authInfo.isAdmin) {
-      throw new functions.https.HttpsError(
-        "permission-denied",
-        "Admin access required",
-      );
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "Admin access required",
+    );
+  }
+
+  try {
+    let query = db
+      .collection("media")
+      .where("mediaType", "==", "ServiceCertificate");
+
+    if (status !== undefined && status !== null) {
+      query = query.where("validationStatus", "==", status);
     }
 
-    try {
-      let query = db
-        .collection("media")
-        .where("mediaType", "==", "ServiceCertificate");
+    const snapshot = await query.get();
+    const certificates = [];
+    snapshot.forEach((doc) => {
+      certificates.push(doc.data());
+    });
 
-      if (status !== undefined && status !== null) {
-        query = query.where("validationStatus", "==", status);
-      }
-
-      const snapshot = await query.get();
-      const certificates = [];
-      snapshot.forEach((doc) => {
-        certificates.push(doc.data());
-      });
-
-      return {success: true, data: certificates};
-    } catch (error) {
-      console.error("Error getting certificates by validation status:", error);
-      throw new functions.https.HttpsError("internal", error.message);
-    }
-  },
+    return {success: true, data: certificates};
+  } catch (error) {
+    console.error("Error getting certificates by validation status:", error);
+    throw new HttpsError("internal", error.message);
+  }
+},
 );
 
 // ============================================================================

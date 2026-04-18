@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 const {
@@ -237,7 +238,9 @@ async function checkConsecutiveBadReviews(
 /**
  * Submit a review for a booking
  */
-exports.submitReview = functions.https.onCall(async (data, context) => {
+exports.submitReview = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {bookingId, rating, comment = ""} = payload;
@@ -246,7 +249,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -254,21 +257,21 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
   // Input validation
   if (!bookingId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Booking ID is required",
     );
   }
 
   if (!isValidRating(rating)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Invalid rating. Must be between ${MIN_RATING} and ${MAX_RATING}`,
     );
   }
 
   if (comment.length > MAX_COMMENT_LENGTH) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Comment too long. Maximum ${MAX_COMMENT_LENGTH} characters allowed`,
     );
@@ -283,7 +286,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
       const bookingSnap = await transaction.get(bookingRef);
 
       if (!bookingSnap.exists) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "not-found",
           "Booking not found",
         );
@@ -299,7 +302,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
         .get();
 
       if (!existingReviewsSnap.empty) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "already-exists",
           "Review already exists for this booking",
         );
@@ -313,7 +316,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
       // Verify user is the client of this booking
       if (booking.clientId !== authInfo.uid) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "permission-denied",
           "Not authorized to review this booking",
         );
@@ -321,7 +324,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
       // Check if booking is completed
       if (booking.status !== "Completed" || !booking.completedDate) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "failed-precondition",
           "Booking is not completed yet. Cannot submit review until service is completed.",
         );
@@ -329,7 +332,7 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
 
       // Check if within review window
       if (!isWithinReviewWindow(booking.completedDate)) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "deadline-exceeded",
           `Review window has expired. Reviews must be submitted within 
           ${REVIEW_WINDOW_DAYS} days of service completion`,
@@ -423,24 +426,26 @@ exports.submitReview = functions.https.onCall(async (data, context) => {
     return result;
   } catch (error) {
     console.error("Error in submitReview:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get review by ID
  */
-exports.getReview = functions.https.onCall(async (data, _context) => {
+exports.getReview = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {reviewId} = payload;
   console.log("Get Review Payload", payload);
 
   if (!reviewId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Review ID is required",
     );
@@ -450,7 +455,7 @@ exports.getReview = functions.https.onCall(async (data, _context) => {
     const reviewSnap = await db.collection("reviews").doc(reviewId).get();
 
     if (!reviewSnap.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Review not found",
       );
@@ -459,7 +464,7 @@ exports.getReview = functions.https.onCall(async (data, _context) => {
     const review = reviewSnap.data();
 
     if (review.status === "Hidden") {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Review has been hidden",
       );
@@ -468,24 +473,26 @@ exports.getReview = functions.https.onCall(async (data, _context) => {
     return {success: true, data: review};
   } catch (error) {
     console.error("Error in getReview:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get reviews for a booking
  */
-exports.getBookingReviews = functions.https.onCall(async (data, _context) => {
+exports.getBookingReviews = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {bookingId} = payload;
   console.log("Get booking Review Payload", payload);
 
   if (!bookingId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Booking ID is required",
     );
@@ -506,14 +513,16 @@ exports.getBookingReviews = functions.https.onCall(async (data, _context) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getBookingReviews:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get reviews by a user
  */
-exports.getUserReviews = functions.https.onCall(async (data, context) => {
+exports.getUserReviews = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {userId, includeHidden = false} = payload;
@@ -522,7 +531,7 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -599,17 +608,19 @@ exports.getUserReviews = functions.https.onCall(async (data, context) => {
         return {success: true, data: sorted};
       } catch (fallbackError) {
         console.error("Error in fallback query:", fallbackError);
-        throw new functions.https.HttpsError("internal", fallbackError.message);
+        throw new HttpsError("internal", fallbackError.message);
       }
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Update a review
  */
-exports.updateReview = functions.https.onCall(async (data, context) => {
+exports.updateReview = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {reviewId, rating, comment = ""} = payload;
@@ -618,7 +629,7 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -626,21 +637,21 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
 
   // Input validation
   if (!reviewId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Review ID is required",
     );
   }
 
   if (!isValidRating(rating)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Invalid rating. Must be between ${MIN_RATING} and ${MAX_RATING}`,
     );
   }
 
   if (comment.length > MAX_COMMENT_LENGTH) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Comment too long. Maximum ${MAX_COMMENT_LENGTH} characters allowed`,
     );
@@ -654,7 +665,7 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
       const reviewSnap = await transaction.get(reviewRef);
 
       if (!reviewSnap.exists) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "not-found",
           "Review not found",
         );
@@ -670,14 +681,14 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
 
       // Verify user owns this review
       if (existingReview.clientId !== authInfo.uid) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "permission-denied",
           "Not authorized to update this review",
         );
       }
 
       if (existingReview.status !== "Visible") {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "failed-precondition",
           `Cannot update a ${existingReview.status} review`,
         );
@@ -720,17 +731,19 @@ exports.updateReview = functions.https.onCall(async (data, context) => {
     });
   } catch (error) {
     console.error("Error in updateReview:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Delete (hide) a review
  */
-exports.deleteReview = functions.https.onCall(async (data, context) => {
+exports.deleteReview = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {reviewId} = payload;
@@ -739,14 +752,14 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!reviewId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Review ID is required",
     );
@@ -766,7 +779,7 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
       reviewCollection = "providerReviews";
       existingReview = providerReviewDoc.data();
     } else {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Review not found",
       );
@@ -777,7 +790,7 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
       const reviewSnap = await transaction.get(reviewRef);
 
       if (!reviewSnap.exists) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "not-found",
           "Review not found",
         );
@@ -794,14 +807,14 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
         existingReview.providerId === authInfo.uid;
 
       if (!isOwner && !authInfo.isAdmin) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "permission-denied",
           "Not authorized to delete this review",
         );
       }
 
       if (existingReview.status === "Hidden") {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "already-exists",
           "Review is already hidden",
         );
@@ -840,17 +853,19 @@ exports.deleteReview = functions.https.onCall(async (data, context) => {
     });
   } catch (error) {
     console.error("Error in deleteReview:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Restore (unhide) a review
  */
-exports.restoreReview = functions.https.onCall(async (data, context) => {
+exports.restoreReview = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {reviewId} = payload;
@@ -859,14 +874,14 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
   }
 
   if (!reviewId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Review ID is required",
     );
@@ -886,7 +901,7 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
       reviewCollection = "providerReviews";
       existingReview = providerReviewDoc.data();
     } else {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Review not found",
       );
@@ -904,7 +919,7 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
       }
 
       if (existingReview.status !== "Hidden") {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "failed-precondition",
           "Review is not hidden",
         );
@@ -944,17 +959,19 @@ exports.restoreReview = functions.https.onCall(async (data, context) => {
     });
   } catch (error) {
     console.error("Error in restoreReview:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Bulk update review status
  */
-exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) => {
+exports.bulkUpdateReviewStatus = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {reviewIds, status} = payload;
@@ -963,21 +980,21 @@ exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) =>
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
   }
 
   if (!reviewIds || !Array.isArray(reviewIds) || reviewIds.length === 0) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Review IDs array is required",
     );
   }
 
   if (status !== "Visible" && status !== "Hidden") {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Status must be 'Visible' or 'Hidden'",
     );
@@ -1032,23 +1049,25 @@ exports.bulkUpdateReviewStatus = functions.https.onCall(async (data, context) =>
     };
   } catch (error) {
     console.error("Error in bulkUpdateReviewStatus:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Calculate average rating for a provider
  */
-exports.calculateProviderRating = functions.https.onCall(async (data, _context) => {
+exports.calculateProviderRating = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {providerId} = payload;
 
   if (!providerId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Provider ID is required",
     );
@@ -1062,7 +1081,7 @@ exports.calculateProviderRating = functions.https.onCall(async (data, _context) 
       .get();
 
     if (reviewsSnap.empty) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "No reviews found for this provider",
       );
@@ -1089,23 +1108,25 @@ exports.calculateProviderRating = functions.https.onCall(async (data, _context) 
     };
   } catch (error) {
     console.error("Error in calculateProviderRating:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Calculate average rating for a service
  */
-exports.calculateServiceRating = functions.https.onCall(async (data, _context) => {
+exports.calculateServiceRating = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {serviceId} = payload;
 
   if (!serviceId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID is required",
     );
@@ -1119,7 +1140,7 @@ exports.calculateServiceRating = functions.https.onCall(async (data, _context) =
       .get();
 
     if (reviewsSnap.empty) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "No reviews found for this service",
       );
@@ -1146,17 +1167,19 @@ exports.calculateServiceRating = functions.https.onCall(async (data, _context) =
     };
   } catch (error) {
     console.error("Error in calculateServiceRating:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Calculate user average rating (reviews given by user)
  */
-exports.calculateUserAverageRating = functions.https.onCall(async (data, context) => {
+exports.calculateUserAverageRating = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {userId} = payload;
@@ -1164,7 +1187,7 @@ exports.calculateUserAverageRating = functions.https.onCall(async (data, context
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1173,7 +1196,7 @@ exports.calculateUserAverageRating = functions.https.onCall(async (data, context
   // Use authenticated user's ID if no userId provided, or validate admin access
   const targetUserId = userId || authInfo.uid;
   if (userId && userId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Not authorized to view other user's rating statistics",
     );
@@ -1187,7 +1210,7 @@ exports.calculateUserAverageRating = functions.https.onCall(async (data, context
       .get();
 
     if (reviewsSnap.empty) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "No reviews found for this user",
       );
@@ -1214,20 +1237,22 @@ exports.calculateUserAverageRating = functions.https.onCall(async (data, context
     };
   } catch (error) {
     console.error("Error in calculateUserAverageRating:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get all reviews
  */
-exports.getAllReviews = functions.https.onCall(async (data, context) => {
+exports.getAllReviews = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
@@ -1260,17 +1285,19 @@ exports.getAllReviews = functions.https.onCall(async (data, context) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getAllReviews:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get review statistics
  */
-exports.getReviewStatistics = functions.https.onCall(async (data, context) => {
+exports.getReviewStatistics = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
@@ -1296,27 +1323,29 @@ exports.getReviewStatistics = functions.https.onCall(async (data, context) => {
     return {success: true, data: statistics};
   } catch (error) {
     console.error("Error in getReviewStatistics:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Flag a review for moderation
  */
-exports.flagReview = functions.https.onCall(async (data, context) => {
+exports.flagReview = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data.data || data;
   const {reviewId, reason} = payload;
   const authInfo = getAuthInfo(context, data);
 
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
   }
 
   if (!reviewId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Review ID is required",
     );
@@ -1328,7 +1357,7 @@ exports.flagReview = functions.https.onCall(async (data, context) => {
       const reviewSnap = await transaction.get(reviewRef);
 
       if (!reviewSnap.exists) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "not-found",
           "Review not found",
         );
@@ -1352,17 +1381,19 @@ exports.flagReview = functions.https.onCall(async (data, context) => {
     });
   } catch (error) {
     console.error("Error in flagReview:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get reviews for a specific provider
  */
-exports.getProviderReviews = functions.https.onCall(async (data, _context) => {
+exports.getProviderReviews = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {providerId, limit = 20, offset = 0} = payload;
@@ -1393,21 +1424,23 @@ exports.getProviderReviews = functions.https.onCall(async (data, _context) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getProviderReviews:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get reviews for a service with pagination
  */
-exports.getServiceReviews = functions.https.onCall(async (data, _context) => {
+exports.getServiceReviews = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {serviceId, limit = 20, offset = 0} = payload;
   console.log("Get Service Reviews ", payload);
 
   if (!serviceId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Service ID is required",
     );
@@ -1435,7 +1468,7 @@ exports.getServiceReviews = functions.https.onCall(async (data, _context) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getServiceReviews:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1443,7 +1476,9 @@ exports.getServiceReviews = functions.https.onCall(async (data, _context) => {
  * Submit a provider review for a client
  * This allows providers to rate clients after service completion
  */
-exports.submitProviderReview = functions.https.onCall(async (data, context) => {
+exports.submitProviderReview = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {bookingId, rating, comment = ""} = payload;
@@ -1452,7 +1487,7 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1460,21 +1495,21 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
 
   // Input validation
   if (!bookingId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Booking ID is required",
     );
   }
 
   if (!isValidRating(rating)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Invalid rating. Must be between ${MIN_RATING} and ${MAX_RATING}`,
     );
   }
 
   if (comment.length > MAX_COMMENT_LENGTH) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Comment too long. Maximum ${MAX_COMMENT_LENGTH} characters allowed`,
     );
@@ -1487,7 +1522,7 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
       const bookingSnap = await transaction.get(bookingRef);
 
       if (!bookingSnap.exists) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "not-found",
           "Booking not found",
         );
@@ -1497,7 +1532,7 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
 
       // Verify the authenticated user is the provider
       if (booking.providerId !== authInfo.uid) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "permission-denied",
           "Only the service provider can review the client",
         );
@@ -1505,7 +1540,7 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
 
       // Verify booking is completed
       if (booking.status !== "Completed") {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "failed-precondition",
           "Can only review completed bookings",
         );
@@ -1513,7 +1548,7 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
 
       // Check if within review window
       if (!isWithinReviewWindow(booking.completedDate)) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "deadline-exceeded",
           `Review window has expired. Reviews must be submitted within 
           ${REVIEW_WINDOW_DAYS} days of service completion`,
@@ -1528,7 +1563,7 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
         .get();
 
       if (!existingReviewsSnap.empty) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "already-exists",
           "You have already reviewed this client for this booking",
         );
@@ -1611,10 +1646,10 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
     return result;
   } catch (error) {
     console.error("Error in submitProviderReview:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1622,13 +1657,15 @@ exports.submitProviderReview = functions.https.onCall(async (data, context) => {
  * Get provider reviews for a specific client
  * Shows what providers have said about a client
  */
-exports.getClientProviderReviews = functions.https.onCall(async (data, context) => {
+exports.getClientProviderReviews = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {clientId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!clientId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Client ID is required",
     );
@@ -1693,10 +1730,10 @@ exports.getClientProviderReviews = functions.https.onCall(async (data, context) 
         return {success: true, data: paginated};
       } catch (fallbackError) {
         console.error("Error in fallback query:", fallbackError);
-        throw new functions.https.HttpsError("internal", fallbackError.message);
+        throw new HttpsError("internal", fallbackError.message);
       }
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1704,13 +1741,15 @@ exports.getClientProviderReviews = functions.https.onCall(async (data, context) 
  * Get reviews given by a provider (reviews they wrote about clients)
  * Shows what a provider has said about clients
  */
-exports.getProviderReviewsByProvider = functions.https.onCall(async (data, context) => {
+exports.getProviderReviewsByProvider = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data.data || data;
   const {providerId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!providerId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Provider ID is required",
     );
@@ -1779,9 +1818,9 @@ exports.getProviderReviewsByProvider = functions.https.onCall(async (data, conte
         return {success: true, data: paginated};
       } catch (fallbackError) {
         console.error("Error in fallback query:", fallbackError);
-        throw new functions.https.HttpsError("internal", fallbackError.message);
+        throw new HttpsError("internal", fallbackError.message);
       }
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });

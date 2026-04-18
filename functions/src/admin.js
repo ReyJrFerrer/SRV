@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const {isPhoneTaken} = require("./account");
@@ -26,13 +27,15 @@ const SETTINGS_KEY = "system_settings";
 /**
  * Get user role
  */
-exports.getUserRole = functions.https.onCall(async (data, context) => {
+exports.getUserRole = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get user roles",
     );
@@ -48,17 +51,19 @@ exports.getUserRole = functions.https.onCall(async (data, context) => {
     return {success: true, data: roleDoc.data()};
   } catch (error) {
     console.error("Error in getUserRole:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * List all user roles
  */
-exports.listUserRoles = functions.https.onCall(async (data, context) => {
+exports.listUserRoles = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can list user roles",
     );
@@ -71,14 +76,16 @@ exports.listUserRoles = functions.https.onCall(async (data, context) => {
     return {success: true, data: roles};
   } catch (error) {
     console.error("Error in listUserRoles:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Check if user has specific role
  */
-exports.hasRole = functions.https.onCall(async (data, _context) => {
+exports.hasRole = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId, role} = payload;
 
@@ -93,14 +100,16 @@ exports.hasRole = functions.https.onCall(async (data, _context) => {
     return {success: true, data: userRole.role === role};
   } catch (error) {
     console.error("Error in hasRole:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Update system settings
  */
-exports.setSettings = functions.https.onCall(async (data, context) => {
+exports.setSettings = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {
     restrictNewAdminLogins,
@@ -108,7 +117,7 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can update system settings",
     );
@@ -131,17 +140,19 @@ exports.setSettings = functions.https.onCall(async (data, context) => {
     return {success: true, message: "System settings updated successfully"};
   } catch (error) {
     console.error("Error in setSettings:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get current system settings
  */
-exports.getSettings = functions.https.onCall(async (data, context) => {
+exports.getSettings = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get system settings",
     );
@@ -169,41 +180,43 @@ exports.getSettings = functions.https.onCall(async (data, context) => {
     return {success: true, data: settingsData};
   } catch (error) {
     console.error("Error in getSettings:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Change admin access password
  */
-exports.changeAdminPassword = functions.https.onCall(async (data, context) => {
+exports.changeAdminPassword = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {oldPassword, newPassword, confirmPassword} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can change the admin password",
     );
   }
 
   if (!newPassword || !confirmPassword) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "New password and confirmation are required",
     );
   }
 
   if (newPassword !== confirmPassword) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "New password and confirmation do not match",
     );
   }
 
   if (newPassword.length < 8) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "New password must be at least 8 characters long",
     );
@@ -217,7 +230,7 @@ exports.changeAdminPassword = functions.https.onCall(async (data, context) => {
 
     if (!isInitialPassword) {
       if (!oldPassword) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "invalid-argument",
           "Old password is required when changing an existing password",
         );
@@ -225,7 +238,7 @@ exports.changeAdminPassword = functions.https.onCall(async (data, context) => {
 
       const isOldPasswordValid = await bcrypt.compare(oldPassword, settings.adminPasswordHash);
       if (!isOldPasswordValid) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "permission-denied",
           "Old password is incorrect",
         );
@@ -243,18 +256,20 @@ exports.changeAdminPassword = functions.https.onCall(async (data, context) => {
 
     return {success: true, message: "Password changed successfully"};
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     console.error("Error in changeAdminPassword:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Check if admin password is set
  */
-exports.isAdminPasswordSet = functions.https.onCall(async () => {
+exports.isAdminPasswordSet = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   try {
     const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
     const settings = settingsDoc.exists ? settingsDoc.data() : {};
@@ -265,19 +280,21 @@ exports.isAdminPasswordSet = functions.https.onCall(async () => {
     };
   } catch (error) {
     console.error("Error in isAdminPasswordSet:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Verify admin password
  */
-exports.verifyAdminPassword = functions.https.onCall(async (data) => {
+exports.verifyAdminPassword = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data;
   const {password} = payload;
 
   if (!password) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Password is required",
     );
@@ -300,17 +317,19 @@ exports.verifyAdminPassword = functions.https.onCall(async (data) => {
     };
   } catch (error) {
     console.error("Error in verifyAdminPassword:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get system statistics
  */
-exports.getSystemStats = functions.https.onCall(async (data, context) => {
+exports.getSystemStats = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get system statistics",
     );
@@ -390,17 +409,19 @@ exports.getSystemStats = functions.https.onCall(async (data, context) => {
     return {success: true, data: stats};
   } catch (error) {
     console.error("Error in getSystemStats:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get all users
  */
-exports.getAllUsers = functions.https.onCall(async (data, context) => {
+exports.getAllUsers = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get all users",
     );
@@ -427,17 +448,19 @@ exports.getAllUsers = functions.https.onCall(async (data, context) => {
     return {success: true, users: allUsers};
   } catch (error) {
     console.error("Error in getAllUsers:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get all user lock statuses from users collection
  */
-exports.getAllUserLockStatuses = functions.https.onCall(async (data, context) => {
+exports.getAllUserLockStatuses = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get user lock statuses",
     );
@@ -456,20 +479,22 @@ exports.getAllUserLockStatuses = functions.https.onCall(async (data, context) =>
     return {success: true, lockStatuses: lockStatuses};
   } catch (error) {
     console.error("Error in getAllUserLockStatuses:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get user services and bookings combined
  */
-exports.getUserServicesAndBookings = functions.https.onCall(async (data, context) => {
+exports.getUserServicesAndBookings = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get user services and bookings",
     );
@@ -505,20 +530,22 @@ exports.getUserServicesAndBookings = functions.https.onCall(async (data, context
     };
   } catch (error) {
     console.error("Error in getUserServicesAndBookings:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get user service count
  */
-exports.getUserServiceCount = functions.https.onCall(async (data, context) => {
+exports.getUserServiceCount = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get user service count",
     );
@@ -532,7 +559,7 @@ exports.getUserServiceCount = functions.https.onCall(async (data, context) => {
     return {success: true, data: servicesSnapshot.size};
   } catch (error) {
     console.error("Error in getUserServiceCount:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -544,13 +571,15 @@ exports.getUserServiceCount = functions.https.onCall(async (data, context) => {
  * @param {number|null} data.suspensionDurationDays
  * Duration in days (7, 30, custom number, or null for indefinite)
  */
-exports.lockUserAccount = functions.https.onCall(async (data, context) => {
+exports.lockUserAccount = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId, locked, suspensionDurationDays} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can lock/unlock user accounts",
     );
@@ -596,20 +625,22 @@ exports.lockUserAccount = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error in lockUserAccount:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Update user reputation score
  */
-exports.updateUserReputation = functions.https.onCall(async (data, context) => {
+exports.updateUserReputation = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId, reputationScore} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can update user reputation",
     );
@@ -636,24 +667,26 @@ exports.updateUserReputation = functions.https.onCall(async (data, context) => {
     }
   } catch (error) {
     console.error("Error in updateUserReputation:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
-exports.updateUserPhoneNumber = functions.https.onCall(async (data, context) => {
+exports.updateUserPhoneNumber = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId, phone} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can update phone numbers",
     );
   }
 
   if (!userId || typeof userId !== "string") {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "User ID is required",
     );
@@ -661,14 +694,14 @@ exports.updateUserPhoneNumber = functions.https.onCall(async (data, context) => 
 
   const normalizedPhone = typeof phone === "string" ? phone.replace(/\D/g, "") : "";
   if (!normalizedPhone || !/^(09|9)\d{9}$/.test(normalizedPhone)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid phone number format. Must be 10 or 11 digits starting with 9 or 09",
     );
   }
 
   if (await isPhoneTaken(normalizedPhone, userId)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "already-exists",
       "Phone number is already registered to another user",
     );
@@ -687,34 +720,36 @@ exports.updateUserPhoneNumber = functions.https.onCall(async (data, context) => 
     };
   } catch (error) {
     console.error("Error in updateUserPhoneNumber:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Update certificate validation status
  */
-exports.updateCertificateValidationStatus = functions.https.onCall(async (data, context) => {
+exports.updateCertificateValidationStatus = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {certificateId, status} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can validate certificates",
     );
   }
 
   if (!certificateId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Certificate ID is required",
     );
   }
 
   if (!["Pending", "Validated", "Rejected"].includes(status)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Invalid validation status. Must be Pending, Validated, or Rejected",
     );
@@ -725,7 +760,7 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
     const mediaDoc = await db.collection("media").doc(certificateId).get();
 
     if (!mediaDoc.exists) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "not-found",
         "Certificate not found",
       );
@@ -735,7 +770,7 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
 
     // Verify it's a certificate
     if (mediaData.mediaType !== "ServiceCertificate") {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "invalid-argument",
         "This media item is not a service certificate",
       );
@@ -753,10 +788,10 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
     };
   } catch (error) {
     console.error("Error in updateCertificateValidationStatus:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -764,10 +799,12 @@ exports.updateCertificateValidationStatus = functions.https.onCall(async (data, 
  * Get validated certificates
  * Returns certificates with their service information
  */
-exports.getValidatedCertificates = functions.https.onCall(async (data, context) => {
+exports.getValidatedCertificates = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get validated certificates",
     );
@@ -817,7 +854,7 @@ exports.getValidatedCertificates = functions.https.onCall(async (data, context) 
     return {success: true, data: certificates};
   } catch (error) {
     console.error("Error in getValidatedCertificates:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -825,10 +862,12 @@ exports.getValidatedCertificates = functions.https.onCall(async (data, context) 
  * Get rejected certificates
  * Returns certificates with their service information
  */
-exports.getRejectedCertificates = functions.https.onCall(async (data, context) => {
+exports.getRejectedCertificates = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get rejected certificates",
     );
@@ -878,17 +917,19 @@ exports.getRejectedCertificates = functions.https.onCall(async (data, context) =
     return {success: true, data: certificates};
   } catch (error) {
     console.error("Error in getRejectedCertificates:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get all services with certificates for validation
  */
-exports.getServicesWithCertificates = functions.https.onCall(async (data, context) => {
+exports.getServicesWithCertificates = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can view services with certificates",
     );
@@ -946,17 +987,19 @@ exports.getServicesWithCertificates = functions.https.onCall(async (data, contex
     return {success: true, data: servicesWithCerts};
   } catch (error) {
     console.error("Error in getServicesWithCertificates:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get pending certificate validations
  */
-exports.getPendingCertificateValidations = functions.https.onCall(async (data, context) => {
+exports.getPendingCertificateValidations = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can view certificate validations",
     );
@@ -975,7 +1018,7 @@ exports.getPendingCertificateValidations = functions.https.onCall(async (data, c
     return {success: true, data: pendingValidations};
   } catch (error) {
     console.error("Error in getPendingCertificateValidations:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 

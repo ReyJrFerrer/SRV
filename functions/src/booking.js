@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
@@ -362,7 +363,9 @@ async function cancelConflictingBookings(
 /**
  * Create a new booking request
  */
-exports.createBooking = functions.https.onCall(async (data, context) => {
+exports.createBooking = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload from data.data
   const payload = data.data || data;
   const {
@@ -384,7 +387,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
   // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -393,7 +396,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
   // Validation (mirror Motoko validation logic)
   if (!serviceId || !providerId || !price || !location || !requestedDate ||
     !paymentMethod || !scheduledDate) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Required parameters missing: serviceId,
       providerId, price, location, requestedDate, paymentMethod`,
@@ -406,7 +409,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     console.log("[createBooking] Reputation check result:", clientReputation);
     if (!clientReputation.success || !clientReputation.data) {
       console.error("[createBooking] Failed to check client reputation:", clientReputation);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "Unable to verify client reputation. Please try again later.",
       );
@@ -414,7 +417,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
 
     if (clientReputation.data.trustScore <= 5) {
       console.error("[createBooking] Client reputation too low:", clientReputation.data.trustScore);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         `Your reputation score (${clientReputation.data.trustScore}) is too ` +
         "low to create a booking. Please contact support if you believe " +
@@ -428,7 +431,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     console.log("[createBooking] Reputation check result:", providerReputation);
     if (!providerReputation.success || !providerReputation.data) {
       console.error("[createBooking] Failed to check provider reputation:", providerReputation);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "Unable to verify provider reputation. Please try again later.",
       );
@@ -437,7 +440,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     if (providerReputation.data.trustScore <= 5) {
       console.error("[createBooking] Provider reputation too low:",
         providerReputation.data.trustScore);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "This provider is currently not accepting new bookings due to " +
         "reputation issues. Please try another provider.",
@@ -447,7 +450,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     // Validate service exists and belongs to provider
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
@@ -455,7 +458,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     if (service.providerId !== providerId) {
       console.error("[createBooking] Service does not belong to the specified provider:",
         service.providerId, providerId);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Service does not belong to the specified provider",
       );
@@ -464,7 +467,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     // Check if service is active
     if (!isServiceActive(service)) {
       console.error("[createBooking] Service is not active:", service.id);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "Service is not available for booking",
       );
@@ -481,7 +484,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
           console.error("[createBooking] Package not found:", packageId);
           const errorMsg =
             `Package with ID ${packageId} not found in 'service_packages' collection.`;
-          throw new functions.https.HttpsError("not-found", errorMsg);
+          throw new HttpsError("not-found", errorMsg);
         }
 
         const packageData = packageDoc.data();
@@ -491,7 +494,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
           const errorMsg =
             `Package ${packageId} belongs to service ${packageData.serviceId}, 
            but booking is for service ${serviceId}.`;
-          throw new functions.https.HttpsError(
+          throw new HttpsError(
             "permission-denied",
             errorMsg,
           );
@@ -515,7 +518,7 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     if (hasConflict) {
       console.error("[createBooking] Booking conflict detected:", hasConflict);
       const errorMsg = "The requested time conflicts with an existing booking.";
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         errorMsg,
       );
@@ -598,23 +601,25 @@ exports.createBooking = functions.https.onCall(async (data, context) => {
     return {success: true, data: newBooking};
   } catch (error) {
     console.error("Error in createBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Accept a booking request (provider only)
  */
-exports.acceptBooking = functions.https.onCall(async (data, context) => {
+exports.acceptBooking = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {bookingId, scheduledDate} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -622,7 +627,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
 
   if (!bookingId || !scheduledDate) {
     console.error("[acceptBooking] Required parameters missing:", bookingId, scheduledDate);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId and scheduledDate are required",
     );
@@ -632,7 +637,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
       console.error("[acceptBooking] Booking not found:", bookingId);
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
@@ -641,7 +646,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     if (booking.providerId !== authInfo.uid) {
       console.error("[acceptBooking] Not authorized to update this booking:",
         booking.providerId, authInfo.uid);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
       );
@@ -650,7 +655,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     // Validate status transition
     if (!isValidStatusTransition(booking.status, "Accepted")) {
       console.error("[acceptBooking] Invalid status transition:", booking.status, "to Accepted");
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to Accepted`,
       );
@@ -667,7 +672,7 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     );
     if (hasConflict) {
       console.warn("[acceptBooking] Scheduling conflict detected:", hasConflict);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "The scheduled time conflicts with an existing booking",
       );
@@ -724,17 +729,19 @@ exports.acceptBooking = functions.https.onCall(async (data, context) => {
     return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in acceptBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Decline a booking request (provider only)
  */
-exports.declineBooking = functions.https.onCall(async (data, context) => {
+exports.declineBooking = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("[declineBooking] called");
   const payload = data.data || data;
   const {bookingId} = payload;
@@ -742,7 +749,7 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
     console.error("[declineBooking] User not authenticated");
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -750,7 +757,7 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
 
   if (!bookingId) {
     console.error("[declineBooking] Required parameters missing:", bookingId);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId is required",
     );
@@ -760,7 +767,7 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
       console.error("[declineBooking] Booking not found:", bookingId);
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
@@ -769,7 +776,7 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
     if (booking.providerId !== authInfo.uid) {
       console.error("[declineBooking] Not authorized to update this booking:",
         booking.providerId, authInfo.uid);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
       );
@@ -777,7 +784,7 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
 
     // Validate status transition
     if (!isValidStatusTransition(booking.status, "Declined")) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to Declined`,
       );
@@ -823,15 +830,17 @@ exports.declineBooking = functions.https.onCall(async (data, context) => {
     return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in declineBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 
-exports.startNavigation = functions.https.onCall(async (data, context) => {
+exports.startNavigation = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("[startNavigation] called");
   const payload = data.data || data;
   const {bookingId} = payload;
@@ -839,7 +848,7 @@ exports.startNavigation = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
     console.error("[startNavigation] User not authenticated");
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -847,7 +856,7 @@ exports.startNavigation = functions.https.onCall(async (data, context) => {
 
   if (!bookingId) {
     console.error("[startNavigation] Required parameters missing:", bookingId);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId is required",
     );
@@ -856,7 +865,7 @@ exports.startNavigation = functions.https.onCall(async (data, context) => {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
       console.error("[startNavigation] Booking not found:", bookingId);
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
@@ -865,7 +874,7 @@ exports.startNavigation = functions.https.onCall(async (data, context) => {
     if (booking.providerId !== authInfo.uid) {
       console.error("[startNavigation] Not authorized to update this booking:",
         booking.providerId, authInfo.uid);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
       );
@@ -938,17 +947,19 @@ exports.startNavigation = functions.https.onCall(async (data, context) => {
     return {success: true};
   } catch (error) {
     console.error("Error in startBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Start a booking (mark as in progress) - provider only
  */
-exports.startBooking = functions.https.onCall(async (data, context) => {
+exports.startBooking = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("[startBooking] called");
   const payload = data.data || data;
   const {bookingId} = payload;
@@ -956,7 +967,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
     console.error("[startBooking] User not authenticated");
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -964,7 +975,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
 
   if (!bookingId) {
     console.error("[startBooking] Required parameters missing:", bookingId);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId is required",
     );
@@ -974,7 +985,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
       console.error("[startBooking] Booking not found:", bookingId);
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
@@ -983,7 +994,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     if (booking.providerId !== authInfo.uid) {
       console.error("[startBooking] Not authorized to update this booking:",
         booking.providerId, authInfo.uid);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
       );
@@ -992,7 +1003,7 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     // Validate status transition
     if (!isValidStatusTransition(booking.status, "InProgress")) {
       console.error("[startBooking] Invalid status transition:", booking.status, "to InProgress");
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to InProgress`,
       );
@@ -1068,17 +1079,19 @@ exports.startBooking = functions.https.onCall(async (data, context) => {
     return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in startBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Complete a booking - provider only
  */
-exports.completeBooking = functions.https.onCall(async (data, context) => {
+exports.completeBooking = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   console.log("[completeBooking] called");
   const payload = data.data || data;
   const {bookingId, amountPaid} = payload;
@@ -1086,7 +1099,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
     console.error("[completeBooking] User not authenticated");
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1094,7 +1107,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
 
   if (!bookingId) {
     console.error("[completeBooking] Required parameters missing:", bookingId);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId is required",
     );
@@ -1104,7 +1117,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
       console.error("[completeBooking] Booking not found:", bookingId);
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
@@ -1113,7 +1126,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     if (booking.providerId !== authInfo.uid) {
       console.error("[completeBooking] Not authorized to update this booking:",
         booking.providerId, authInfo.uid);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
       );
@@ -1122,7 +1135,7 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     // Validate status transition
     if (!isValidStatusTransition(booking.status, "Completed")) {
       console.error("[completeBooking] Invalid status transition:", booking.status, "to Completed");
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to Completed`,
       );
@@ -1218,22 +1231,24 @@ exports.completeBooking = functions.https.onCall(async (data, context) => {
     return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in completeBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Cancel a booking - client or provider
  */
-exports.cancelBooking = functions.https.onCall(async (data, context) => {
+exports.cancelBooking = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {bookingId, cancelReason} = payload;
 
   if (!cancelReason || typeof cancelReason !== "string" || cancelReason.trim() === "") {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "A reason for cancellation is required",
     );
@@ -1241,14 +1256,14 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!bookingId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId is required",
     );
@@ -1257,14 +1272,14 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
 
     // Validate user authorization (client or provider can cancel)
     if (booking.clientId !== authInfo.uid && booking.providerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to update this booking",
       );
@@ -1272,7 +1287,7 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
 
     // Validate status transition
     if (!isValidStatusTransition(booking.status, "Cancelled")) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to Cancelled`,
       );
@@ -1387,30 +1402,32 @@ exports.cancelBooking = functions.https.onCall(async (data, context) => {
     return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in cancelBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get booking by ID
  */
-exports.getBooking = functions.https.onCall(async (data, context) => {
+exports.getBooking = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {bookingId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!bookingId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId is required",
     );
@@ -1419,7 +1436,7 @@ exports.getBooking = functions.https.onCall(async (data, context) => {
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
@@ -1428,7 +1445,7 @@ exports.getBooking = functions.https.onCall(async (data, context) => {
     if (booking.clientId !== authInfo.uid &&
       booking.providerId !== authInfo.uid &&
       !authInfo.isAdmin) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to view this booking",
       );
@@ -1436,23 +1453,25 @@ exports.getBooking = functions.https.onCall(async (data, context) => {
     return {success: true, data: booking};
   } catch (error) {
     console.error("Error in getBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get bookings for a client
  */
-exports.getClientBookings = functions.https.onCall(async (data, context) => {
+exports.getClientBookings = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {clientId, limit = 50} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1461,7 +1480,7 @@ exports.getClientBookings = functions.https.onCall(async (data, context) => {
   // User can only get their own bookings unless they're admin
   const targetClientId = clientId || authInfo.uid;
   if (targetClientId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Not authorized to view these bookings",
     );
@@ -1478,20 +1497,22 @@ exports.getClientBookings = functions.https.onCall(async (data, context) => {
     return {success: true, data: bookings};
   } catch (error) {
     console.error("Error in getClientBookings:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get bookings for a provider
  */
-exports.getProviderBookings = functions.https.onCall(async (data, context) => {
+exports.getProviderBookings = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {providerId, limit = 50} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1500,7 +1521,7 @@ exports.getProviderBookings = functions.https.onCall(async (data, context) => {
   // User can only get their own bookings unless they're admin
   const targetProviderId = providerId || authInfo.uid;
   if (targetProviderId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Not authorized to view these bookings",
     );
@@ -1517,27 +1538,29 @@ exports.getProviderBookings = functions.https.onCall(async (data, context) => {
     return {success: true, data: bookings};
   } catch (error) {
     console.error("Error in getProviderBookings:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get bookings by status
  */
-exports.getBookingsByStatus = functions.https.onCall(async (data, context) => {
+exports.getBookingsByStatus = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {status, limit = 50} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Admin access required",
     );
   }
 
   if (!status) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "status is required",
     );
@@ -1554,7 +1577,7 @@ exports.getBookingsByStatus = functions.https.onCall(async (data, context) => {
     return {success: true, data: bookings};
   } catch (error) {
     console.error("Error in getBookingsByStatus:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1562,20 +1585,22 @@ exports.getBookingsByStatus = functions.https.onCall(async (data, context) => {
 /**
  * Dispute a booking - client or provider
  */
-exports.disputeBooking = functions.https.onCall(async (data, context) => {
+exports.disputeBooking = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {bookingId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!bookingId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId is required",
     );
@@ -1584,14 +1609,14 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
 
     // Validate user authorization (client or provider can dispute)
     if (booking.clientId !== authInfo.uid && booking.providerId !== authInfo.uid) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "permission-denied",
         "Not authorized to dispute this booking",
       );
@@ -1599,7 +1624,7 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
 
     // Validate status transition - can only dispute completed bookings or in-progress bookings
     if (!isValidStatusTransition(booking.status, "Disputed")) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to Disputed`,
       );
@@ -1643,30 +1668,32 @@ exports.disputeBooking = functions.https.onCall(async (data, context) => {
     return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in disputeBooking:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Check if service is available for booking at specific date/time
  */
-exports.checkServiceAvailability = functions.https.onCall(async (data, context) => {
+exports.checkServiceAvailability = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId, requestedDateTime} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!serviceId || !requestedDateTime) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "serviceId and requestedDateTime are required",
     );
@@ -1676,7 +1703,7 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
     // Get service to check if it exists and is active
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
@@ -1753,30 +1780,32 @@ exports.checkServiceAvailability = functions.https.onCall(async (data, context) 
     return {success: true, data: {available: true, reason: "Service is available"}};
   } catch (error) {
     console.error("Error in checkServiceAvailability:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get service's available time slots for a specific date
  */
-exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) => {
+exports.getServiceAvailableSlots = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId, date} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
   }
 
   if (!serviceId || !date) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "serviceId and date are required",
     );
@@ -1786,7 +1815,7 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
     // Get service to check if it exists
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Service not found");
+      throw new HttpsError("not-found", "Service not found");
     }
 
     const service = serviceDoc.data();
@@ -1880,23 +1909,25 @@ exports.getServiceAvailableSlots = functions.https.onCall(async (data, context) 
     return {success: true, data: availableSlots};
   } catch (error) {
     console.error("Error in getServiceAvailableSlots:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
 /**
  * Get client analytics (spending, booking patterns)
  */
-exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
+exports.getClientAnalytics = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {clientId, startDate, endDate} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -1905,7 +1936,7 @@ exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
   // Security check: only allow clients to view their own analytics or admin
   const targetClientId = clientId || authInfo.uid;
   if (targetClientId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Not authorized to view these analytics",
     );
@@ -1978,10 +2009,10 @@ exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error in getClientAnalytics:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -1990,21 +2021,23 @@ exports.getClientAnalytics = functions.https.onCall(async (data, context) => {
  * Returns comprehensive analytics for a provider including earnings, jobs, completion rate
  * Matches the logic from booking.mo getProviderAnalytics
  */
-exports.getProviderAnalytics = functions.https.onCall(async (data, context) => {
+exports.getProviderAnalytics = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {providerId, startDate, endDate} = payload;
 
   // Authentication - Admin only
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "permission-denied",
       "Only ADMIN users can get provider analytics",
     );
   }
 
   if (!providerId) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Provider ID is required",
     );
@@ -2111,7 +2144,7 @@ exports.getProviderAnalytics = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error in getProviderAnalytics:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -2119,13 +2152,15 @@ exports.getProviderAnalytics = functions.https.onCall(async (data, context) => {
  * Release held payment when booking is completed
  * This function is called by authorized backend services to release payments
  */
-exports.releasePayment = functions.https.onCall(async (data, context) => {
+exports.releasePayment = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {bookingId, paymentId, releasedAmount, commissionRetained, payoutId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "unauthenticated",
       "User must be authenticated",
     );
@@ -2139,7 +2174,7 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
   }
 
   if (!bookingId || releasedAmount === undefined || commissionRetained === undefined) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "bookingId, releasedAmount, and commissionRetained are required",
     );
@@ -2148,14 +2183,14 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "Booking not found");
+      throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
 
     // Validate booking status - can only release payment for Completed bookings
     if (booking.status !== "Completed") {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "Payment can only be released for completed bookings",
       );
@@ -2163,7 +2198,7 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
 
     // Check if payment is already released
     if (booking.paymentReleased) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "Payment has already been released for this booking",
       );
@@ -2171,7 +2206,7 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
 
     // Validate payment method - should only release digital payments
     if (booking.paymentMethod === "CashOnHand") {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "Cash payments do not require release",
       );
@@ -2228,10 +2263,10 @@ exports.releasePayment = functions.https.onCall(async (data, context) => {
     return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in releasePayment:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 

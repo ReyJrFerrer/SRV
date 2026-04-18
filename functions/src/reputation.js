@@ -6,6 +6,7 @@
  */
 
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 const {
@@ -177,15 +178,17 @@ async function initializeReputationInternal(userId) {
   }
 }
 
-exports.initializeReputation = functions.https.onCall(async (data, _context) => {
+exports.initializeReputation = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId} = payload;
-  if (!userId) throw new functions.https.HttpsError("invalid-argument", "User ID is required");
+  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
 
   try {
     return await initializeReputationInternal(userId);
   } catch (error) {
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 exports.initializeReputationInternal = initializeReputationInternal;
@@ -232,14 +235,16 @@ async function updateUserReputationInternal(userId) {
   }
 }
 
-exports.updateUserReputation = functions.https.onCall(async (data, _context) => {
+exports.updateUserReputation = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId} = payload;
-  if (!userId) throw new functions.https.HttpsError("invalid-argument", "User ID is required");
+  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
   try {
     return await updateUserReputationInternal(userId);
   } catch (error) {
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 exports.updateUserReputationInternal = updateUserReputationInternal;
@@ -286,16 +291,18 @@ async function updateProviderReputationInternal(providerId) {
   }
 }
 
-exports.updateProviderReputation = functions.https.onCall(async (data, _context) => {
+exports.updateProviderReputation = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {providerId} = payload;
   if (!providerId) {
-    throw new functions.https.HttpsError("invalid-argument", "Provider ID is required");
+    throw new HttpsError("invalid-argument", "Provider ID is required");
   }
   try {
     return await updateProviderReputationInternal(providerId);
   } catch (error) {
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 exports.updateProviderReputationInternal = updateProviderReputationInternal;
@@ -319,16 +326,18 @@ async function processReviewForReputationInternal(review) {
   }
 }
 
-exports.processReviewForReputation = functions.https.onCall(async (data, _context) => {
+exports.processReviewForReputation = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {review} = payload;
   if (!review || !review.id) {
-    throw new functions.https.HttpsError("invalid-argument", "Review object is required");
+    throw new HttpsError("invalid-argument", "Review object is required");
   }
   try {
     return await processReviewForReputationInternal(review);
   } catch (error) {
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 exports.processReviewForReputationInternal = processReviewForReputationInternal;
@@ -377,15 +386,17 @@ async function deductReputationForCancellationInternal(userId) {
   }
 }
 
-exports.deductReputationForCancellation = functions.https.onCall(async (data, _context) => {
+exports.deductReputationForCancellation = onCall(async (request) => {
+  const data = request.data;
+  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId} = payload;
-  if (!userId) throw new functions.https.HttpsError("invalid-argument", "User ID is required");
+  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
   try {
     const result = await deductReputationForCancellationInternal(userId);
     return {success: true, data: result};
   } catch (error) {
-    throw new functions.https.HttpsError("internal", "Failed to deduct reputation points", error);
+    throw new HttpsError("internal", "Failed to deduct reputation points", error);
   }
 });
 exports.deductReputationForCancellationInternal = deductReputationForCancellationInternal;

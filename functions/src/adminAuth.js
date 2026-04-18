@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
 
@@ -7,7 +8,9 @@ const db = admin.firestore();
 /**
  * Auto-create admin profile and assign role for development
  */
-exports.createAdminProfile = functions.https.onCall(async (data, context) => {
+exports.createAdminProfile = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
 
   const {principal, phone, uid: providedUid} = payload;
@@ -20,7 +23,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
   } else if (providedUid) {
     uid = providedUid;
   } else {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       "Either authenticate or provide UID",
     );
@@ -38,7 +41,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       const hasAdminRole = userRoleDoc.exists && userRoleDoc.data()?.role === "ADMIN";
 
       if (!userExists || !hasAdminRole) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "permission-denied",
           `New accounts are not allowed to access the admin panel. 
             Please contact an administrator.`,
@@ -46,7 +49,7 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
       }
     }
   } catch (error) {
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
   }
@@ -137,6 +140,6 @@ exports.createAdminProfile = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     console.error("Error in createAdminProfile:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
