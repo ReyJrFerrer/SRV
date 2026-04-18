@@ -443,7 +443,7 @@ export default function CreateProfilePage() {
                         <button
                           type="button"
                           onClick={() => setSelectedRole("Client")}
-                          className={`flex cursor-pointer flex-col items-center rounded-2xl border-2 bg-white/80 p-6 shadow-sm transition-all duration-200 hover:bg-blue-50/80 ${selectedRole === "Client" ? "scale-105 border-blue-600 bg-blue-50/90 shadow-lg" : "border-gray-200 hover:border-blue-400"}`}
+                          className={`flex cursor-pointer flex-col items-center rounded-2xl border-2 bg-white p-6 shadow-sm transition-all duration-200 hover:border-blue-400 ${selectedRole === "Client" ? "scale-105 border-blue-600 shadow-lg" : "border-gray-200"}`}
                         >
                           <UserIcon
                             className={`mb-2 h-10 w-10 ${selectedRole === "Client" ? "text-blue-600" : "text-gray-400"}`}
@@ -460,7 +460,7 @@ export default function CreateProfilePage() {
                         <button
                           type="button"
                           onClick={() => setSelectedRole("ServiceProvider")}
-                          className={`flex cursor-pointer flex-col items-center rounded-2xl border-2 bg-white/80 p-6 shadow-sm transition-all duration-200 hover:bg-yellow-50/80 ${selectedRole === "ServiceProvider" ? "scale-105 border-yellow-400 bg-yellow-50/90 shadow-lg" : "border-gray-200 hover:border-yellow-300"}`}
+                          className={`flex cursor-pointer flex-col items-center rounded-2xl border-2 bg-white p-6 shadow-sm transition-all duration-200 hover:border-yellow-300 ${selectedRole === "ServiceProvider" ? "scale-105 border-yellow-400 shadow-lg" : "border-gray-200"}`}
                         >
                           <WrenchScrewdriverIcon
                             className={`mb-2 h-10 w-10 ${selectedRole === "ServiceProvider" ? "text-yellow-600" : "text-gray-400"}`}
