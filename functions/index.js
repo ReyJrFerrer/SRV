@@ -130,6 +130,8 @@ const {
   setServiceAvailability,
   getServiceAvailability,
   getAvailableTimeSlots,
+  restoreService,
+  cleanupArchivedServices,
 } = require("./src/service");
 
 const {
@@ -308,6 +310,8 @@ exports.updateServiceRating = updateServiceRating;
 exports.setServiceAvailability = setServiceAvailability;
 exports.getServiceAvailability = getServiceAvailability;
 exports.getAvailableTimeSlots = getAvailableTimeSlots;
+exports.restoreService = restoreService;
+exports.cleanupArchivedServices = cleanupArchivedServices;
 
 // Export Booking Management Functions
 exports.createBooking = createBooking;
