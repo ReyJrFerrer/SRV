@@ -6,12 +6,7 @@
  */
 
 const {setGlobalOptions} = require("firebase-functions");
-const admin = require("firebase-admin");
-
-// Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+const {admin} = require("./firebase-admin");
 
 // Set global options for all functions
 setGlobalOptions({maxInstances: 10});
@@ -35,17 +30,6 @@ async function initializeOnStartup() {
 
 // Run initialization
 initializeOnStartup();
-
-// Import and export all payment-related functions
-const {onboardProvider} = require("./onboardProvider");
-const {createDirectPayment} = require("./createDirectPayment");
-const {createTopupInvoice} = require("./createTopupInvoice");
-const {xenditWebhook} = require("./xenditWebhook");
-const {checkProviderOnboarding} = require("./checkProviderOnboarding");
-const {getPaymentData} = require("./getPaymentData");
-const {checkInvoiceStatus} = require("./checkInvoiceStatus");
-const {releaseHeldPayment} = require("./releaseHeldPayment");
-
 // Import Identity Bridge function
 const {signInWithInternetIdentity} = require("./src/auth");
 
@@ -243,7 +227,6 @@ const {
   validateMediaItems,
   getCertificatesByValidationStatus,
 } = require("./src/media");
-
 
 
 // Export Identity Bridge function

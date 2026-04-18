@@ -22,6 +22,8 @@ function initializeFirebaseAdmin() {
     // Initialize with emulator settings
     admin.initializeApp({
       projectId: "srve-7133d",
+      storageBucket: "srve-7133d.appspot.com",
+      databaseURL: "http://localhost:8080?ns=srve-7133d",
     });
 
     // Connect to Firestore emulator
