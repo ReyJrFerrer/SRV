@@ -380,7 +380,16 @@ exports.getService = functions.https.onCall(async (data, _context) => {
 /**
  * Get services by provider
  */
-exports.getServicesByProvider = functions.https.onCall(async (data, _context) => {
+exports.getServicesByProvider = functions.https.onCall(async (data, context) => {
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
   const payload = data.data || data;
   const {providerId, archivedOnly} = payload;
 
@@ -388,6 +397,13 @@ exports.getServicesByProvider = functions.https.onCall(async (data, _context) =>
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Provider ID is required");
+  }
+
+  if (providerId !== authInfo.uid && !authInfo.isAdmin) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "You can only access your own services",
+    );
   }
 
   try {
