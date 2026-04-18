@@ -245,7 +245,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={`transition-colors duration-300 ${
                             active
                               ? "h-5 w-5 text-yellow-400"
-                              : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                              : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
                           }`}
                         />
                       </div>
@@ -253,7 +253,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         className={`mt-1 text-[10px] tracking-wide transition-all duration-300 ease-out ${
                           active
                             ? "block font-black text-blue-700 opacity-100"
-                            : "hidden font-bold text-gray-500 opacity-80 group-hover:text-blue-600 sm:block"
+                            : "hidden font-bold text-gray-600 opacity-80 group-hover:text-blue-600 sm:block"
                         }`}
                       >
                         {label}
@@ -359,7 +359,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                           className={`transition-colors duration-300 ${
                             isActive
                               ? "h-6 w-6 text-yellow-400"
-                              : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                              : "h-6 w-6 text-blue-600 group-hover:text-yellow-600"
                           }`}
                         />
                       </div>
@@ -370,7 +370,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
                     isActive
                       ? "font-black text-blue-700 opacity-100"
-                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
+                      : "font-bold text-gray-600 opacity-80 group-hover:text-blue-600"
                   }`}
                 >
                   {item.label}
@@ -433,7 +433,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     className={`transition-colors duration-300 ${
                       isActive
                         ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                        : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
                     }`}
                   />
                 </div>
@@ -441,7 +441,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
                     isActive
                       ? "font-black text-blue-700 opacity-100"
-                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
+                      : "font-bold text-gray-600 opacity-80 group-hover:text-blue-600"
                   }`}
                 >
                   Notifications
@@ -507,7 +507,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     className={`transition-colors duration-300 ${
                       isActive
                         ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-gray-400 group-hover:text-blue-600"
+                        : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
                     }`}
                   />
                 </div>
@@ -515,7 +515,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
                     isActive
                       ? "font-black text-blue-700 opacity-100"
-                      : "font-bold text-gray-500 opacity-80 group-hover:text-blue-600"
+                      : "font-bold text-gray-600 opacity-80 group-hover:text-blue-600"
                   }`}
                 >
                   {item.label}
