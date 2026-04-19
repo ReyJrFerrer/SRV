@@ -446,3 +446,77 @@ async function checkUserReputationInternal(userId) {
   }
 }
 exports.checkUserReputationInternal = checkUserReputationInternal;
+
+/**
+ * Internal function to set a specific reputation score (admin override)
+ * @param {string} userId - The user ID
+ * @param {number} reputationScore - The reputation score to set
+ */
+async function updateReputationInternal(userId, reputationScore) {
+  if (!userId) throw new Error("User ID is required");
+  if (reputationScore === undefined || reputationScore === null) {
+    throw new Error("Reputation score is required");
+  }
+
+  try {
+    const repRef = db.collection("reputations").doc(userId);
+    const doc = await repRef.get();
+
+    let detectionFlags = [];
+    let completedBookings = 0;
+    let averageRating = null;
+
+    if (doc.exists) {
+      const data = doc.data();
+      detectionFlags = data.detectionFlags || [];
+      completedBookings = data.completedBookings || 0;
+      averageRating = data.averageRating || null;
+    }
+
+    const updatedScore = {
+      userId,
+      trustScore: Number(reputationScore),
+      trustLevel: determineTrustLevel(Number(reputationScore)),
+      completedBookings,
+      averageRating,
+      detectionFlags,
+    };
+
+    await writeReputationAndHistory(userId, updatedScore);
+
+    return {success: true, data: updatedScore, message: "Reputation updated successfully"};
+  } catch (error) {
+    console.error("Error updating reputation:", error);
+    throw error;
+  }
+}
+
+exports.updateReputation = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {userId, reputationScore} = payload;
+
+  const authInfo = (context.auth && context.auth.token) ?
+    {uid: context.auth.uid, isAdmin: context.auth.token.isAdmin || false, hasAuth: true} :
+    {uid: null, isAdmin: false, hasAuth: !!context.auth};
+
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only ADMIN users can update reputation",
+    );
+  }
+
+  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
+  if (reputationScore === undefined || reputationScore === null) {
+    throw new HttpsError("invalid-argument", "Reputation score is required");
+  }
+
+  try {
+    return await updateReputationInternal(userId, reputationScore);
+  } catch (error) {
+    throw new HttpsError("internal", error.message);
+  }
+});
+exports.updateReputationInternal = updateReputationInternal;
