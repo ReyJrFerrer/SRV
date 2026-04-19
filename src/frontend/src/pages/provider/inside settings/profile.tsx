@@ -5,8 +5,6 @@ import {
   ArrowLeftIcon,
   PencilIcon,
   CameraIcon,
-  ArrowPathRoundedSquareIcon,
-  ChevronRightIcon,
   InformationCircleIcon,
   ExclamationTriangleIcon,
   SparklesIcon,
@@ -15,10 +13,11 @@ import {
   ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../../components/provider/NavigationBar"; // Changed to provider bottom nav
+import BottomNavigation from "../../../components/provider/NavigationBar";
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";
+import RoleSwitchButton from "../../../components/common/RoleSwitchButton";
 import {
   ProfileSkeleton,
   ReputationScoreSkeleton,
@@ -378,7 +377,6 @@ const ProviderProfilePage: React.FC = () => {
     loading,
     error,
     updateProfile,
-    switchRole,
     profileImageUrl,
     isImageLoading,
     refetchImage,
@@ -398,7 +396,6 @@ const ProviderProfilePage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [nameError, setNameError] = useState("");
   const [editError, setEditError] = useState("");
-  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -474,16 +471,6 @@ const ProviderProfilePage: React.FC = () => {
     setEditError("");
     setImageFile(null);
     setPreviewImage(null);
-  };
-
-  const handleSwitchToClient = async () => {
-    setIsSwitchingRole(true);
-    try {
-      await switchRole();
-      navigate("/client/profile");
-    } finally {
-      setIsSwitchingRole(false);
-    }
   };
 
   return (
@@ -629,33 +616,7 @@ const ProviderProfilePage: React.FC = () => {
               </div>
               {/* Switch to Client Button (below profile info) */}
               <div className="rounded-lg bg-blue-600 shadow-sm">
-                <button
-                  onClick={handleSwitchToClient}
-                  disabled={isSwitchingRole}
-                  className={`group flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors ${
-                    isSwitchingRole
-                      ? "cursor-not-allowed opacity-50"
-                      : "hover:bg-yellow-400"
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <ArrowPathRoundedSquareIcon
-                      className={`mr-4 h-6 w-6 ${
-                        isSwitchingRole
-                          ? "animate-spin text-yellow-400"
-                          : "text-white group-hover:text-black"
-                      }`}
-                    />
-                    <span className="text-md font-medium text-white group-hover:text-gray-800">
-                      {isSwitchingRole
-                        ? "Switching Role..."
-                        : "Switch into Client"}
-                    </span>
-                  </div>
-                  {!isSwitchingRole && (
-                    <ChevronRightIcon className="h-5 w-5 text-white group-hover:text-black" />
-                  )}
-                </button>
+                <RoleSwitchButton currentRole="provider" />
               </div>
 
               <div className="hidden lg:block">
