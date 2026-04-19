@@ -478,7 +478,11 @@ export const reviewCanisterService = {
         "submitProviderReview",
       );
 
-      const result = await submitProviderReviewFn({ bookingId, rating, comment });
+      const result = await submitProviderReviewFn({
+        bookingId,
+        rating,
+        comment,
+      });
 
       const responseData = result.data as { success: boolean; data: Review };
       return responseData.data;
@@ -502,7 +506,11 @@ export const reviewCanisterService = {
         "getClientProviderReviews",
       );
 
-      const result = await getClientProviderReviewsFn({ clientId, limit, offset });
+      const result = await getClientProviderReviewsFn({
+        clientId,
+        limit,
+        offset,
+      });
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
     } catch (error) {
