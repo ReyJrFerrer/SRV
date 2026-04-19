@@ -560,7 +560,7 @@ const ProviderBookingsPage: React.FC = () => {
                           }}
                           className={`${
                             statusFilter === filter
-                              ? "bg-blue-50 font-bold text-blue-700"
+                              ? "border border-yellow-200 bg-white font-bold text-yellow-700"
                               : "font-medium text-gray-700 hover:bg-gray-50"
                           } block w-full rounded-xl px-4 py-2.5 text-left text-sm transition-colors`}
                           role="menuitem"
@@ -579,7 +579,7 @@ const ProviderBookingsPage: React.FC = () => {
                           }}
                           className={`${
                             selectedCategoryId === null
-                              ? "bg-blue-50 font-bold text-blue-700"
+                              ? "border border-yellow-200 bg-white font-bold text-yellow-700"
                               : "font-medium text-gray-700 hover:bg-gray-50"
                           } block w-full rounded-xl px-4 py-2.5 text-left text-sm transition-colors`}
                         >
@@ -665,7 +665,7 @@ const ProviderBookingsPage: React.FC = () => {
                       Same Day Bookings
                     </h2>
                   </div>
-                  <div className="space-y-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm md:space-y-6">
+                  <div className="space-y-4 rounded-2xl border border-yellow-200 bg-white p-4 shadow-sm md:space-y-6">
                     {sameDayBookings.map((booking, idx) => {
                       const clientId =
                         booking.clientProfile?.id?.toString() ||
@@ -778,7 +778,7 @@ const ProviderBookingsPage: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <div className="space-y-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm md:space-y-6">
+                    <div className="space-y-4 rounded-2xl border border-blue-200 bg-white p-4 shadow-sm md:space-y-6">
                       {scheduledBookings.map((booking, idx) => {
                         const clientId =
                           booking.clientProfile?.id?.toString() ||

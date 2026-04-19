@@ -375,7 +375,7 @@ const WalletPage: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={loading}
-              className="absolute right-4 rounded-lg bg-blue-50 p-2 text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+              className="absolute right-4 rounded-lg border border-yellow-200 bg-white p-2 text-yellow-600 hover:bg-yellow-50 disabled:opacity-50"
             >
               <ArrowPathIcon className="h-5 w-5" />
             </button>
@@ -397,7 +397,7 @@ const WalletPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            <div className="rounded-2xl bg-yellow-100 p-4">
+            <div className="rounded-2xl border border-yellow-200 bg-white p-4">
               <BanknotesIcon className="h-8 w-8 text-yellow-600" />
             </div>
           </div>
@@ -424,7 +424,7 @@ const WalletPage: React.FC = () => {
           <div className="mt-4 flex justify-center">
             <button
               onClick={() => setShowCommissionModal(true)}
-              className="flex items-center gap-2 rounded-xl border border-yellow-100 bg-yellow-50 px-4 py-2 text-xs font-bold text-yellow-800 transition hover:bg-yellow-100"
+              className="flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-50"
             >
               <ExclamationTriangleIcon className="h-4 w-4" />
               Commission Info
@@ -434,7 +434,7 @@ const WalletPage: React.FC = () => {
 
         {/* Active Payments Monitoring */}
         {activeInvoices.size > 0 && (
-          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="mb-6 rounded-lg border border-blue-200 bg-white p-4">
             <div className="flex items-start gap-3">
               <ClockIcon className="mt-0.5 h-5 w-5 text-blue-600" />
               <div className="text-sm">
@@ -646,7 +646,7 @@ const WalletPage: React.FC = () => {
                       onClick={() => handlePredefinedAmount(amount)}
                       className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                         topUpAmount === amount.toString()
-                          ? "border-blue-500 bg-blue-50/80 text-blue-600"
+                          ? "border-yellow-500 bg-yellow-50/80 text-yellow-600"
                           : "border-gray-200 bg-white/80 text-gray-700 hover:bg-gray-50/80"
                       }`}
                     >
@@ -731,14 +731,14 @@ const WalletPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="rounded-lg border border-blue-200/80 bg-blue-50/80 p-4">
+              <div className="rounded-lg border border-yellow-200/80 bg-white p-4">
                 <div className="flex items-start gap-3">
-                  <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 text-blue-600" />
+                  <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 text-yellow-600" />
                   <div className="text-sm">
-                    <p className="font-medium text-blue-800">
+                    <p className="font-medium text-yellow-800">
                       What you'll set up:
                     </p>
-                    <ul className="mt-2 space-y-1 text-blue-700">
+                    <ul className="mt-2 space-y-1 text-yellow-700">
                       <li>• GCash account for receiving payments</li>
                       <li>• Business information</li>
                       <li>• Contact details</li>
@@ -783,7 +783,7 @@ const WalletPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="rounded-lg border border-yellow-200/80 bg-yellow-50/80 p-4">
+              <div className="rounded-lg border border-blue-200/80 bg-white p-4">
                 <div className="flex items-start gap-3">
                   <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 text-yellow-600" />
                   <div className="text-sm">

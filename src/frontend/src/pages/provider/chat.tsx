@@ -420,7 +420,7 @@ const ClientChatPage: React.FC = () => {
                             otherUserImageUrl,
                           )
                         }
-                        className={`group mx-2 flex cursor-pointer items-center space-x-4 rounded-xl p-3 transition-all ${selectedConversationId === conversation.id ? "border border-blue-100 bg-blue-50 text-blue-900" : "hover:bg-gray-50"}`}
+                        className={`group mx-2 flex cursor-pointer items-center space-x-4 rounded-xl p-3 transition-all ${selectedConversationId === conversation.id ? "border border-yellow-100 bg-white text-yellow-900" : "hover:bg-gray-50"}`}
                       >
                         <div className="relative h-14 w-14 flex-shrink-0">
                           <ProfileImage

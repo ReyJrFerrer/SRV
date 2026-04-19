@@ -22,6 +22,8 @@ const RoleSwitchButton: React.FC<RoleSwitchButtonProps> = ({
   const [switching, setSwitching] = useState(false);
 
   const isClient = currentRole === "client";
+  const isProvider = currentRole === "provider";
+
   const newRole = isClient ? "provider" : "client";
   const buttonText = isClient
     ? "Switch to SRVice Provider"
@@ -43,9 +45,18 @@ const RoleSwitchButton: React.FC<RoleSwitchButtonProps> = ({
     }
   };
 
+  const borderColor = isProvider ? "border-yellow-200" : "border-blue-200";
+  const bgColor = isProvider ? "bg-white" : "bg-white";
+  const iconBg = isProvider
+    ? "border-yellow-200 bg-white"
+    : "border-blue-200 bg-white";
+  const textColor = isProvider ? "text-yellow-700" : "text-blue-700";
+  const iconColor = isProvider ? "text-yellow-600" : "text-blue-600";
+  const arrowColor = isProvider ? "text-yellow-400" : "text-blue-400";
+
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-sm ${className}`}
+      className={`overflow-hidden rounded-2xl border ${borderColor} ${bgColor} shadow-sm ${className}`}
     >
       <button
         onClick={handleSwitch}
@@ -53,7 +64,7 @@ const RoleSwitchButton: React.FC<RoleSwitchButtonProps> = ({
         className="group flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50 disabled:opacity-70"
       >
         <div className="flex items-center">
-          <div className="mr-4 rounded-lg border border-blue-200 bg-white p-2 text-blue-600">
+          <div className={`mr-4 rounded-lg border ${iconBg} p-2 ${iconColor}`}>
             <ArrowPathRoundedSquareIcon
               className={`h-6 w-6 transition-transform duration-300 ${
                 switching ? "animate-spin" : ""
@@ -61,13 +72,13 @@ const RoleSwitchButton: React.FC<RoleSwitchButtonProps> = ({
             />
           </div>
           <span
-            className={`text-base font-bold text-blue-700 ${switching ? "opacity-70" : ""}`}
+            className={`text-base font-bold ${textColor} ${switching ? "opacity-70" : ""}`}
           >
             {switching ? "Switching..." : buttonText}
           </span>
         </div>
         <ChevronRightIcon
-          className={`h-5 w-5 text-blue-400 ${switching ? "opacity-70" : ""}`}
+          className={`h-5 w-5 ${arrowColor} ${switching ? "opacity-70" : ""}`}
         />
       </button>
     </div>

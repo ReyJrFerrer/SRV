@@ -105,7 +105,7 @@ const SettingsPage: React.FC = () => {
                     className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                   >
                     <div className="flex items-center">
-                      <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                      <div className="mr-4 rounded-lg border border-yellow-200 bg-white p-2 text-yellow-600">
                         <DevicePhoneMobileIcon className="h-6 w-6" />
                       </div>
                       <span className="text-base font-bold text-gray-900">
@@ -131,7 +131,7 @@ const SettingsPage: React.FC = () => {
                     className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                   >
                     <div className="flex items-center">
-                      <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                      <div className="mr-4 rounded-lg border border-yellow-200 bg-white p-2 text-yellow-600">
                         <BellIcon className="h-6 w-6" />
                       </div>
                       <span className="text-base font-bold text-gray-900">
@@ -157,7 +157,7 @@ const SettingsPage: React.FC = () => {
                       className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                     >
                       <div className="flex items-center">
-                        <div className="mr-4 rounded-lg bg-gray-50 p-2 text-blue-600">
+                        <div className="mr-4 rounded-lg border border-yellow-200 bg-white p-2 text-yellow-600">
                           <item.icon className="h-6 w-6" />
                         </div>
                         <span className="text-base font-bold text-gray-900">
@@ -176,7 +176,7 @@ const SettingsPage: React.FC = () => {
                 onClick={logout}
                 className="flex w-full items-center p-4 text-left transition-all hover:bg-red-50"
               >
-                <div className="mr-4 rounded-lg bg-red-50 p-2 text-red-600">
+                <div className="mr-4 rounded-lg border border-red-200 bg-white p-2 text-red-600">
                   <ArrowRightOnRectangleIcon className="h-6 w-6" />
                 </div>
                 <span className="text-base font-bold text-red-600">
