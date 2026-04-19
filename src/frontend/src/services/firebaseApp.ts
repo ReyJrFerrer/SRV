@@ -63,8 +63,8 @@ export function initializeFirebase(): {
       firebaseApp = getApps()[0];
       firebaseAuth = getAuth(firebaseApp);
       firebaseFunctions = getFunctions(firebaseApp, "asia-southeast1");
-      firebaseStorage = getStorage(firebaseApp);
-      firebaseFirestore = getFirestore(firebaseApp);
+      firebaseStorage = getStorage(firebaseApp, "srve-7133d");
+      firebaseFirestore = getFirestore(firebaseApp, "srvefirestore");
       firebaseDatabase = getDatabase(
         firebaseApp,
         import.meta.env.VITE_FIREBASE_DATABASE_URL,
@@ -115,8 +115,8 @@ export function initializeFirebase(): {
     firebaseApp = initializeApp(firebaseConfig);
     firebaseAuth = getAuth(firebaseApp);
     firebaseFunctions = getFunctions(firebaseApp, "asia-southeast1");
-    firebaseStorage = getStorage(firebaseApp);
-    firebaseFirestore = getFirestore(firebaseApp);
+    firebaseStorage = getStorage(firebaseApp, "srve-7133d");
+    firebaseFirestore = getFirestore(firebaseApp, "srvefirestore");
     firebaseDatabase = getDatabase(
       firebaseApp,
       import.meta.env.VITE_FIREBASE_DATABASE_URL,

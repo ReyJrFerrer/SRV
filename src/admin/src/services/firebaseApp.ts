@@ -56,8 +56,8 @@ export function initializeFirebase(): {
       firebaseApp = getApps()[0];
       firebaseAuth = getAuth(firebaseApp);
       firebaseFunctions = getFunctions(firebaseApp, "asia-southeast1");
-      firebaseStorage = getStorage(firebaseApp);
-      firebaseFirestore = getFirestore(firebaseApp);
+      firebaseStorage = getStorage(firebaseApp, "srve-7133d");
+      firebaseFirestore = getFirestore(firebaseApp, "srvefirestore");
 
       // Connect to emulators if in development and not already connected
       if (
@@ -106,8 +106,8 @@ export function initializeFirebase(): {
     firebaseApp = initializeApp(firebaseConfig);
     firebaseAuth = getAuth(firebaseApp);
     firebaseFunctions = getFunctions(firebaseApp, "asia-southeast1");
-    firebaseStorage = getStorage(firebaseApp);
-    firebaseFirestore = getFirestore(firebaseApp);
+    firebaseStorage = getStorage(firebaseApp, "srve-7133d");
+    firebaseFirestore = getFirestore(firebaseApp, "srvefirestore");
 
     // Connect to emulators in development
     if (import.meta.env.DEV || window.location.hostname === "localhost") {
