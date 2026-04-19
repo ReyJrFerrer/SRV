@@ -5,14 +5,14 @@ import {
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
-  ArrowPathRoundedSquareIcon, // Icon for the new switch button
   ExclamationCircleIcon,
   BellIcon,
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/provider/NavigationBar"; // Adjust path as needed
-import { useLogout } from "../../hooks/logout"; // Adjust path as needed
-import { useUserProfile } from "../../hooks/useUserProfile"; // Hook to get profile data
+import BottomNavigation from "../../components/provider/NavigationBar";
+import { useLogout } from "../../hooks/logout";
+import { useUserProfile } from "../../hooks/useUserProfile";
+import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
 
@@ -23,47 +23,33 @@ const SettingsPage: React.FC = () => {
   const {
     profile,
     loading: profileLoading,
-    switchRole,
     profileImageUrl,
   } = useUserProfile();
 
-  // Set the document title when the component mounts
   useEffect(() => {
     document.title = "Settings | SRV";
   }, []);
 
-  // Update menu items to point to correct routes
   const menuItems = [
     {
       name: "Terms & Conditions",
       icon: ArrowRightOnRectangleIcon,
-      href: "/provider/terms", // updated route
+      href: "/provider/terms",
     },
     {
       name: "Report",
       icon: ExclamationCircleIcon,
-      href: "/provider/report", // updated route
+      href: "/provider/report",
     },
     {
       name: "Help & Support",
       icon: QuestionMarkCircleIcon,
-      href: "/provider/help", // updated route
+      href: "/provider/help",
     },
   ];
 
-  const [switching, setSwitching] = React.useState(false);
   const [pwaOpen, setPwaOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
-  const handleSwitchToClient = async () => {
-    setSwitching(true);
-    try {
-      await switchRole();
-      navigate("/client/settings");
-    } catch (error) {
-    } finally {
-      setSwitching(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -106,29 +92,7 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {/* --- Switch to Service Provider Button --- */}
-            <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-              <button
-                onClick={handleSwitchToClient}
-                className="group flex w-full items-center justify-between p-4 text-left transition-all hover:bg-blue-50"
-                disabled={switching}
-              >
-                <div className="flex items-center">
-                  <div className="mr-4 rounded-lg bg-blue-50 p-2 text-blue-600">
-                    <ArrowPathRoundedSquareIcon
-                      className={`h-6 w-6 transition-transform duration-300 ${switching ? "animate-spin" : ""}`}
-                    />
-                  </div>
-                  <span
-                    className={`text-base font-bold text-blue-700 ${switching ? "opacity-70" : ""}`}
-                  >
-                    {switching ? "Switching..." : "Switch to Client"}
-                  </span>
-                </div>
-                <ChevronRightIcon
-                  className={`h-5 w-5 text-blue-400 ${switching ? "opacity-70" : ""}`}
-                />
-              </button>
-            </div>
+            <RoleSwitchButton currentRole="provider" />
 
             {/* --- Menu Items Including App Settings --- */}
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">

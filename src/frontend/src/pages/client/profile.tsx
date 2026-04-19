@@ -10,8 +10,6 @@ import {
   CheckBadgeIcon,
   CurrencyEuroIcon,
   CalendarIcon,
-  ArrowPathRoundedSquareIcon,
-  ChevronRightIcon,
   InformationCircleIcon,
   StarIcon,
   SparklesIcon,
@@ -27,6 +25,7 @@ import { useReputation } from "../../hooks/useReputation";
 import { useClientAnalytics } from "../../hooks/useClientAnalytics";
 import useClientRating from "../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
+import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import {
   ProfileSkeleton,
   ReputationScoreSkeleton,
@@ -488,7 +487,6 @@ const ClientProfilePage: React.FC = () => {
     loading,
     error,
     updateProfile,
-    switchRole,
     profileImageUrl,
     isImageLoading,
     refetchImage,
@@ -511,7 +509,6 @@ const ClientProfilePage: React.FC = () => {
   const [nameError, setNameError] = useState("");
   const [, setPhoneError] = useState("");
   const [editError, setEditError] = useState("");
-  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
   // Toast notification state
   const [toast, setToast] = useState<{
@@ -629,16 +626,6 @@ const ClientProfilePage: React.FC = () => {
     setPhone(profile?.phone || "");
     setImageFile(null);
     setPreviewImage(null);
-  };
-
-  const handleSwitchToProvider = async () => {
-    setIsSwitchingRole(true);
-    try {
-      await switchRole();
-      navigate("/provider/profile");
-    } finally {
-      setIsSwitchingRole(false);
-    }
   };
 
   return (
@@ -772,33 +759,7 @@ const ClientProfilePage: React.FC = () => {
                 )}
               </div>
               <div className="rounded-2xl bg-yellow-400 p-1 shadow-sm transition-transform hover:-translate-y-1">
-                <button
-                  onClick={handleSwitchToProvider}
-                  disabled={isSwitchingRole}
-                  className={`group flex w-full items-center justify-between rounded-xl bg-yellow-400 p-4 text-left transition-colors ${
-                    isSwitchingRole
-                      ? "cursor-not-allowed opacity-50"
-                      : "hover:bg-yellow-500"
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <ArrowPathRoundedSquareIcon
-                      className={`mr-3 h-5 w-5 ${
-                        isSwitchingRole
-                          ? "animate-spin text-gray-800"
-                          : "text-gray-900 group-hover:text-black"
-                      }`}
-                    />
-                    <span className="text-sm font-bold text-gray-900 group-hover:text-black">
-                      {isSwitchingRole
-                        ? "Switching Role..."
-                        : "Switch to SRVice Provider"}
-                    </span>
-                  </div>
-                  {!isSwitchingRole && (
-                    <ChevronRightIcon className="h-5 w-5 text-gray-900 group-hover:text-black" />
-                  )}
-                </button>
+                <RoleSwitchButton currentRole="client" />
               </div>
               <div className="hidden lg:block">
                 <button

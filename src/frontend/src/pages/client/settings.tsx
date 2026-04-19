@@ -6,7 +6,6 @@ import {
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   ChevronRightIcon,
-  ArrowPathRoundedSquareIcon,
   ExclamationCircleIcon,
   BellIcon,
   DevicePhoneMobileIcon,
@@ -14,6 +13,7 @@ import {
 import BottomNavigation from "../../components/client/NavigationBar";
 import { useLogout } from "../../hooks/logout";
 import { useUserProfile } from "../../hooks/useUserProfile";
+import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
 
@@ -24,7 +24,6 @@ const SettingsPage: React.FC = () => {
   const {
     profile,
     loading: profileLoading,
-    switchRole,
     profileImageUrl,
   } = useUserProfile();
 
@@ -50,19 +49,8 @@ const SettingsPage: React.FC = () => {
     },
   ];
 
-  const [switching, setSwitching] = React.useState(false);
   const [pwaOpen, setPwaOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
-  const handleSwitchToProvider = async () => {
-    setSwitching(true);
-    try {
-      await switchRole();
-      navigate("/provider/settings");
-    } catch (error) {
-    } finally {
-      setSwitching(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -105,29 +93,7 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {/* SECTION: Switch to service provider */}
-            <div className="overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-sm">
-              <button
-                onClick={handleSwitchToProvider}
-                className="group flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
-                disabled={switching}
-              >
-                <div className="flex items-center">
-                  <div className="mr-4 rounded-lg border border-blue-200 bg-white p-2 text-blue-600">
-                    <ArrowPathRoundedSquareIcon
-                      className={`h-6 w-6 transition-transform duration-300 ${switching ? "animate-spin" : ""}`}
-                    />
-                  </div>
-                  <span
-                    className={`text-base font-bold text-blue-700 ${switching ? "opacity-70" : ""}`}
-                  >
-                    {switching ? "Switching..." : "Switch to SRVice Provider"}
-                  </span>
-                </div>
-                <ChevronRightIcon
-                  className={`h-5 w-5 text-blue-400 ${switching ? "opacity-70" : ""}`}
-                />
-              </button>
-            </div>
+            <RoleSwitchButton currentRole="client" />
 
             {/* SECTION: Menu items including app settings */}
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
