@@ -758,13 +758,11 @@ const ClientProfilePage: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div className="rounded-2xl bg-yellow-400 p-1 shadow-sm transition-transform hover:-translate-y-1">
-                <RoleSwitchButton currentRole="client" />
-              </div>
+              <RoleSwitchButton currentRole="client" />
               <div className="hidden lg:block">
                 <button
                   onClick={logout}
-                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-red-100  px-6 py-3 text-sm font-bold text-red-600 shadow-sm transition-colors hover:bg-red-100"
+                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-red-200 bg-white px-6 py-3 text-sm font-bold text-red-600 shadow-sm transition-colors hover:bg-red-50"
                 >
                   Log Out
                 </button>

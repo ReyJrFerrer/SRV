@@ -15,13 +15,13 @@ const HelpSupportPage: React.FC = () => {
   const goToReportPage = () => navigate("/client/report");
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 pb-24 md:pb-6">
+    <div className="flex min-h-screen flex-col bg-white pb-24 md:pb-6">
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-200 bg-white text-blue-600 transition-colors hover:bg-blue-50 active:scale-95"
           >
             <ArrowLeftIcon className="h-6 w-6" />
           </button>

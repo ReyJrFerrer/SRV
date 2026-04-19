@@ -45,43 +45,29 @@ const RoleSwitchButton: React.FC<RoleSwitchButtonProps> = ({
     }
   };
 
-  const borderColor = isProvider ? "border-yellow-200" : "border-blue-200";
-  const bgColor = isProvider ? "bg-white" : "bg-white";
-  const iconBg = isProvider
-    ? "border-yellow-200 bg-white"
-    : "border-blue-200 bg-white";
-  const textColor = isProvider ? "text-yellow-700" : "text-blue-700";
-  const iconColor = isProvider ? "text-yellow-600" : "text-blue-600";
-  const arrowColor = isProvider ? "text-yellow-400" : "text-blue-400";
+  // Client = blue solid, Provider = yellow solid
+  const solidBg = isProvider ? "bg-yellow-500" : "bg-blue-600";
+  const solidHover = isProvider ? "hover:bg-yellow-600" : "hover:bg-blue-700";
+  const iconColor = isProvider ? "text-yellow-900" : "text-white";
 
   return (
-    <div
-      className={`overflow-hidden rounded-2xl border ${borderColor} ${bgColor} shadow-sm ${className}`}
+    <button
+      onClick={handleSwitch}
+      disabled={switching}
+      className={`flex w-full items-center justify-between rounded-2xl ${solidBg} ${solidHover} px-5 py-3.5 font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50 ${className}`}
     >
-      <button
-        onClick={handleSwitch}
-        disabled={switching}
-        className="group flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50 disabled:opacity-70"
-      >
-        <div className="flex items-center">
-          <div className={`mr-4 rounded-lg border ${iconBg} p-2 ${iconColor}`}>
-            <ArrowPathRoundedSquareIcon
-              className={`h-6 w-6 transition-transform duration-300 ${
-                switching ? "animate-spin" : ""
-              }`}
-            />
-          </div>
-          <span
-            className={`text-base font-bold ${textColor} ${switching ? "opacity-70" : ""}`}
-          >
-            {switching ? "Switching..." : buttonText}
-          </span>
-        </div>
-        <ChevronRightIcon
-          className={`h-5 w-5 ${arrowColor} ${switching ? "opacity-70" : ""}`}
+      <div className="flex items-center">
+        <ArrowPathRoundedSquareIcon
+          className={`mr-3 h-6 w-6 ${iconColor} ${switching ? "animate-spin" : ""}`}
         />
-      </button>
-    </div>
+        <span className={switching ? "opacity-70" : ""}>
+          {switching ? "Switching..." : buttonText}
+        </span>
+      </div>
+      <ChevronRightIcon
+        className={`h-5 w-5 ${iconColor} ${switching ? "opacity-70" : ""}`}
+      />
+    </button>
   );
 };
 

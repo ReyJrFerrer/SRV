@@ -8,11 +8,11 @@ const HelpSupportPage: React.FC = () => {
 
   const goToReportPage = () => navigate("/provider/report");
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 pb-20">
+    <div className="flex min-h-screen flex-col bg-white pb-20">
       <div className="mx-auto w-full max-w-xl rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-yellow-700 hover:text-yellow-900 focus:outline-none"
+          className="mb-6 flex items-center gap-2 rounded-lg border border-yellow-200 bg-white px-3 py-2 text-yellow-700 hover:bg-yellow-50 focus:outline-none"
         >
           <ArrowLeftIcon className="h-5 w-5" />
           <span className="font-medium">Back</span>

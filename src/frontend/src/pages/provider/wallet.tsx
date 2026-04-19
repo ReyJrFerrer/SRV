@@ -593,7 +593,7 @@ const WalletPage: React.FC = () => {
             <button
               onClick={loadMoreTransactions}
               disabled={loadMoreLoading}
-              className="rounded-lg bg-white px-6 py-3 text-sm font-medium text-blue-600 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+              className="rounded-lg bg-yellow-500 px-6 py-3 text-sm font-semibold text-white hover:bg-yellow-600 disabled:opacity-50"
             >
               {loadMoreLoading ? "Loading..." : "Load More Transactions"}
             </button>

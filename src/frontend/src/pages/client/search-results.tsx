@@ -180,12 +180,12 @@ const SearchResultsPage: React.FC = () => {
   }, [sortedAndFilteredResults, fetchUserReputation, serviceDataMap]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-white">
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white px-4 py-4 shadow-sm">
         <div className="mb-4 flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-2xl bg-gray-50 px-5 py-3.5 font-bold text-gray-700 transition-all hover:bg-gray-100 hover:text-blue-600 active:scale-95"
+            className="rounded-2xl border border-blue-200 bg-white px-5 py-3.5 font-bold text-blue-600 transition-all hover:bg-blue-50 active:scale-95"
             aria-label="Go back"
           >
             <ArrowLeftIcon className="h-5 w-5" />

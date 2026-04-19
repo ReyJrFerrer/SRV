@@ -52,7 +52,7 @@ const SettingsPage: React.FC = () => {
   const [notifOpen, setNotifOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-white pb-20">
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white py-3 shadow-sm">
         <div className="flex w-full items-center justify-center px-4">
           <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
