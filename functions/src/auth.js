@@ -7,7 +7,7 @@
 
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const {admin, getFirestore} = require("../firebase-admin");
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
@@ -30,7 +30,7 @@ if (!admin.apps.length) {
  * @return {Promise<Object|null>} User profile data or null if not found
  */
 async function getUserProfile(principalText) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const userRef = db.collection("users").doc(principalText);
   const userDoc = await userRef.get();
 

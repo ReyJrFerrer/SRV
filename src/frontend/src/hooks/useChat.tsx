@@ -39,6 +39,19 @@ export interface EnhancedConversationSummary
   otherUserImageUrl?: string; // Raw profile picture URL from backend
 }
 
+// Optimistic message status
+export type OptimisticMessageStatus = "sending" | "sent" | "failed";
+
+// Optimistic message interface
+export interface OptimisticMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  createdAt: Date;
+  status: OptimisticMessageStatus;
+}
+
 /**
  * Custom hook to manage chat functionality including conversations and messaging
  */
@@ -53,9 +66,14 @@ export const useChat = () => {
   const [currentConversation, setCurrentConversation] =
     useState<FrontendConversation | null>(null);
   const [messages, setMessages] = useState<FrontendMessage[]>([]);
+  const [optimisticMessages, setOptimisticMessages] = useState<
+    OptimisticMessage[]
+  >([]);
   const [loading, setLoading] = useState(false); // For initial loads only
+
+  // Computed sending status from optimistic messages (for backward compatibility)
+  const sendingMessage = optimisticMessages.some((m) => m.status === "sending");
   const [error, setError] = useState<string | null>(null);
-  const [sendingMessage, setSendingMessage] = useState(false);
 
   // Cache for user names to avoid repeated API calls without callback churn
   const userNameCacheRef = useRef<Map<string, string>>(new Map());
@@ -395,7 +413,7 @@ export const useChat = () => {
    * Send a message in the current conversation
    */
   const sendMessage = useCallback(
-    async (content: string, receiverId: string) => {
+    async (content: string, receiverId: string, retryMessageId?: string) => {
       if (!isAuthenticated || !identity || !currentConversation) {
         throw new Error("Authentication and active conversation required");
       }
@@ -408,28 +426,87 @@ export const useChat = () => {
         throw new Error("Message cannot exceed 500 characters");
       }
 
-      setSendingMessage(true);
+      const currentUserId = identity.getPrincipal().toString();
+
+      // If retrying a failed message, remove the old optimistic message first
+      if (retryMessageId) {
+        setOptimisticMessages((prev) =>
+          prev.filter((m) => m.id !== retryMessageId),
+        );
+      }
+
+      // Create optimistic message
+      const optimisticMsg: OptimisticMessage = {
+        id:
+          retryMessageId ||
+          `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        conversationId: currentConversation.id,
+        senderId: currentUserId,
+        content: content.trim(),
+        createdAt: new Date(),
+        status: "sending",
+      };
+
+      // Add optimistic message immediately
+      setOptimisticMessages((prev) => [...prev, optimisticMsg]);
+
       setError(null);
 
       try {
-        const newMessage = await chatCanisterService.sendMessage(
+        await chatCanisterService.sendMessage(
           currentConversation.id,
           receiverId,
           content.trim(),
-          identity.getPrincipal().toString(),
+          currentUserId,
         );
 
-        return newMessage;
+        // Remove optimistic message immediately on success since the real message
+        // will arrive via the subscription, showing the date.
+        setOptimisticMessages((prev) =>
+          prev.filter((m) => m.id !== optimisticMsg.id),
+        );
+
+        return optimisticMsg;
       } catch (err) {
+        // Update optimistic message status to failed
+        setOptimisticMessages((prev) =>
+          prev.map((m) =>
+            m.id === optimisticMsg.id
+              ? { ...m, status: "failed" as OptimisticMessageStatus }
+              : m,
+          ),
+        );
+
         setError(
           err instanceof Error ? err.message : "Could not send message.",
         );
         throw err;
-      } finally {
-        setSendingMessage(false);
       }
     },
     [isAuthenticated, identity, currentConversation],
+  );
+
+  /**
+   * Retry a failed message
+   */
+  const retryMessage = useCallback(
+    async (messageId: string) => {
+      const optimisticMsg = optimisticMessages.find((m) => m.id === messageId);
+      if (!optimisticMsg || !currentConversation) {
+        return;
+      }
+
+      const currentUserId = identity?.getPrincipal().toString();
+      if (!currentUserId) return;
+
+      const receiverId =
+        currentConversation.clientId === currentUserId
+          ? currentConversation.providerId
+          : currentConversation.clientId;
+
+      await sendMessage(optimisticMsg.content, receiverId, messageId);
+    },
+    [optimisticMessages, currentConversation, identity, sendMessage],
   );
 
   /**
@@ -561,15 +638,35 @@ export const useChat = () => {
     isMountedRef,
   ]);
 
+  // Filter out optimistic messages that have already arrived via the real-time subscription
+  const visibleOptimisticMessages = optimisticMessages.filter((optMsg) => {
+    if (optMsg.status === "failed") return true;
+
+    const hasMatchingRealMessage = messages.some((m) => {
+      const realContent =
+        typeof m.content === "string" ? m.content : m.content?.encryptedText;
+      return (
+        m.senderId === optMsg.senderId &&
+        realContent === optMsg.content &&
+        new Date(m.createdAt).getTime() >
+          new Date(optMsg.createdAt).getTime() - 5000
+      );
+    });
+
+    return !hasMatchingRealMessage;
+  });
+
   return {
     conversations,
     currentConversation,
     messages,
+    optimisticMessages: visibleOptimisticMessages,
     loading,
     error,
     sendingMessage,
     loadConversation,
     sendMessage,
+    retryMessage,
     createConversation,
     markAsRead,
     clearCurrentConversation,

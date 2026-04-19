@@ -1,11 +1,11 @@
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
-const admin = require("firebase-admin");
+const {admin, getFirestore} = require("../firebase-admin");
 const {isPhoneTaken} = require("./account");
 const bcrypt = require("bcryptjs");
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Helper function to safely get user authentication info
@@ -647,24 +647,10 @@ exports.updateUserReputation = onCall(async (request) => {
   }
 
   try {
-    const {createReputationActor} = require("./reputation");
-    const {Principal} = require("@dfinity/principal");
+    const {updateReputationInternal} = require("./reputation");
 
-    // Create reputation actor
-    const reputationActor = await createReputationActor();
-
-    // Call IC canister to update reputation
-    const principal = Principal.fromText(userId);
-    const result = await reputationActor.setUserReputation(
-      principal,
-      BigInt(reputationScore),
-    );
-
-    if ("ok" in result) {
-      return {success: true, message: result.ok};
-    } else {
-      throw new Error(result.err || "Failed to update reputation in canister");
-    }
+    const result = await updateReputationInternal(userId, reputationScore);
+    return {success: true, message: result.message};
   } catch (error) {
     console.error("Error in updateUserReputation:", error);
     throw new HttpsError("internal", error.message);

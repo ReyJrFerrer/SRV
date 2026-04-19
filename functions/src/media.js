@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const {admin, getFirestore} = require("../firebase-admin");
 
 /**
  * Generate a v4 UUID using dynamic import to support ESM-only `uuid`.
@@ -11,8 +11,8 @@ async function generateUuid() {
   return uuidv4();
 }
 
-const db = admin.firestore();
-const bucket = admin.storage().bucket();
+const db = getFirestore();
+const bucket = admin.storage().bucket("srve-7133d");
 
 /**
  * Helper function to safely get user authentication info
@@ -105,7 +105,7 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
 exports.uploadMedia = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  const {fileName, contentType, mediaType, fileData} = data.data;
+  const {fileName, contentType, mediaType, fileData} = data;
   // Log incoming data
   console.log("uploadMedia called with:", {
     fileName: fileName,

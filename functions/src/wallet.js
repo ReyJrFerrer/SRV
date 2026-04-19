@@ -1,8 +1,8 @@
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const {getFirestore} = require("../firebase-admin");
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Helper function to safely get user authentication info
@@ -524,7 +524,7 @@ async function creditWalletInternal(userId, amount, paymentChannel, description 
     throw new Error("Payment channel is required");
   }
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const walletRef = db.collection("wallets").doc(userId);
 
   try {

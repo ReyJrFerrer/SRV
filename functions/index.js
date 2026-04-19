@@ -9,7 +9,7 @@ const {setGlobalOptions} = require("firebase-functions/v2");
 const {admin} = require("./firebase-admin");
 
 // Set global options for all functions
-setGlobalOptions({maxInstances: 50, concurrency: 80, region: "us-central1"});
+setGlobalOptions({maxInstances: 50, concurrency: 80, region: "asia-southeast1"});
 // Import Identity Bridge function
 const {signInWithInternetIdentity} = require("./src/auth");
 

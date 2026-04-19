@@ -148,14 +148,28 @@ const ClientTrackingPage: React.FC = () => {
       );
 
       if (existingConversation) {
-        navigate(`/client/chat/${existingConversation.conversation.id}`);
+        navigate(`/client/chat`, {
+          state: {
+            conversationId: existingConversation.conversation.id,
+            otherUserName: existingConversation.otherUserName,
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
+          },
+        });
         return;
       }
 
       // Create new conversation
       const newConv = await createConversation(currentUserId, providerIdString);
       if (newConv?.id) {
-        navigate(`/client/chat/${newConv.id}`);
+        navigate(`/client/chat`, {
+          state: {
+            conversationId: newConv.id,
+            otherUserName: booking.providerProfile?.name || "Provider",
+            otherUserImage:
+              booking.providerProfile?.profilePicture?.imageUrl || undefined,
+          },
+        });
       }
     } catch (error) {
       console.error("Failed to start chat:", error);

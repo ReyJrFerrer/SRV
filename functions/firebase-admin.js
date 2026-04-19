@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const {getFirestore: getFirestoreFromAdmin} = require("firebase-admin/firestore");
 
 let isInitialized = false;
 
@@ -9,12 +10,6 @@ function initializeFirebaseAdmin() {
   if (isInitialized || admin.apps.length > 0) {
     return;
   }
-
-  console.log("Initializing Firebase Admin...");
-  console.log("FUNCTIONS_EMULATOR:", process.env.FUNCTIONS_EMULATOR);
-  console.log("GCLOUD_PROJECT:", process.env.GCLOUD_PROJECT);
-  console.log("FIREBASE_CONFIG:", process.env.FIREBASE_CONFIG);
-
   // Check if running in emulator environment
   if (process.env.FUNCTIONS_EMULATOR === "true") {
     console.log("Initializing for emulator environment");
@@ -23,7 +18,7 @@ function initializeFirebaseAdmin() {
     admin.initializeApp();
 
     // Connect to Firestore emulator
-    const db = admin.firestore();
+    const db = getFirestoreFromAdmin(admin.app(), "srvefirestore");
     db.settings({
       host: "localhost:8080",
       ssl: false,
@@ -33,7 +28,11 @@ function initializeFirebaseAdmin() {
   } else {
     console.log("Initializing for production environment");
 
-    admin.initializeApp();
+    admin.initializeApp({
+      "projectId": "srve-7133d",
+      "databaseURL": "https://srve-7133d.asia-southeast1.firebasedatabase.app",
+      "storageBucket": "srve-7133d",
+    });
   }
 
   isInitialized = true;
@@ -47,7 +46,7 @@ function getFirestore() {
   if (!isInitialized) {
     initializeFirebaseAdmin();
   }
-  return admin.firestore();
+  return getFirestoreFromAdmin(admin.app(), "srvefirestore");
 }
 
 /**

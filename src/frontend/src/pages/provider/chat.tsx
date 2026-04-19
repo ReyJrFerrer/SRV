@@ -1,15 +1,21 @@
 // SECTION: Imports — dependencies for this page
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
 import BottomNavigation from "../../components/provider/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
-import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
+import {
+  PaperAirplaneIcon,
+  ChatBubbleLeftRightIcon,
+  ArrowLeftIcon,
+} from "@heroicons/react/24/solid";
+import EmptyState from "../../components/common/EmptyState";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     conversations,
     loading,
@@ -18,7 +24,9 @@ const ClientChatPage: React.FC = () => {
     loadConversation,
     currentConversation,
     messages,
+    optimisticMessages,
     sendMessage,
+    retryMessage,
     sendingMessage,
   } = useChat();
   const [, setTick] = React.useState(0);
@@ -27,11 +35,13 @@ const ClientChatPage: React.FC = () => {
   );
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >(null);
-  const [selectedOtherUserName, setSelectedOtherUserName] =
-    useState<string>("");
+  >(location.state?.conversationId || null);
+  const [selectedOtherUserName, setSelectedOtherUserName] = useState<string>(
+    location.state?.otherUserName || "",
+  );
   const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
-    useState<string>("");
+    useState<string>(location.state?.otherUserImage || "");
+
   const [messageText, setMessageText] = useState<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -146,12 +156,27 @@ const ClientChatPage: React.FC = () => {
 
   // Scroll to bottom on message updates (robust: after layout and assets)
   useEffect(() => {
-    const el = messagesContainerRef.current;
-    if (!el) return;
     const scrollBottom = () => {
       try {
-        el.scrollTop = el.scrollHeight;
-      } catch {}
+        const el = messagesContainerRef.current;
+        if (el && el.scrollHeight > el.clientHeight) {
+          const isFar = el.scrollHeight - el.scrollTop - el.clientHeight > 500;
+          if (isFar) {
+            el.scrollTop = el.scrollHeight;
+          } else {
+            el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+          }
+        } else {
+          // For mobile where the window itself is the scrollable container
+          window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: "smooth",
+          });
+        }
+      } catch {
+        // Fallback
+        window.scrollTo(0, document.documentElement.scrollHeight);
+      }
     };
     // Immediate
     scrollBottom();
@@ -165,7 +190,7 @@ const ClientChatPage: React.FC = () => {
       cancelAnimationFrame(raf2);
       clearTimeout(timeout);
     };
-  }, [messages, selectedConversationId]);
+  }, [messages, optimisticMessages, selectedConversationId]);
 
   const handleConversationClick = async (
     conversationId: string,
@@ -176,22 +201,12 @@ const ClientChatPage: React.FC = () => {
       await markAsRead(conversationId);
       const imageToUse =
         otherUserImageUrl && otherUserImageUrl !== "" ? otherUserImageUrl : "";
-      if (isDesktop) {
-        if (selectedConversationId === conversationId) {
-          loadConversation(conversationId);
-        }
-        setSelectedConversationId(conversationId);
-        setSelectedOtherUserName(otherUserName);
-        setSelectedOtherUserImageUrl(imageToUse);
-      } else {
-        navigate(`/provider/chat/${conversationId}`, {
-          state: {
-            conversationId,
-            otherUserName,
-            otherUserImage: imageToUse,
-          },
-        });
+      if (selectedConversationId === conversationId) {
+        loadConversation(conversationId);
       }
+      setSelectedConversationId(conversationId);
+      setSelectedOtherUserName(otherUserName);
+      setSelectedOtherUserImageUrl(imageToUse);
     } catch {}
   };
 
@@ -369,106 +384,117 @@ const ClientChatPage: React.FC = () => {
               <p className="mb-4 text-lg text-red-600">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+                className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
               >
                 Retry
               </button>
             </div>
           ) : conversations.length > 0 ? (
             <div
-              className={`w-full ${isDesktop ? "mx-auto my-4 flex h-[calc(100vh-80px)] max-w-6xl overflow-hidden border border-gray-100 bg-white shadow-sm md:rounded-2xl" : ""}`}
+              className={`w-full ${isDesktop ? "mx-auto my-4 flex h-[calc(100vh-80px)] max-w-6xl overflow-hidden border border-gray-100 bg-white shadow-sm md:rounded-2xl" : "pb-[70px]"}`}
             >
-              <ul
-                className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} space-y-1 py-2`}
-              >
-                {conversations
-                  .slice()
-                  .sort((a, b) => {
-                    const aTime = a.lastMessage?.[0]?.createdAt
-                      ? new Date(a.lastMessage[0].createdAt).getTime()
-                      : 0;
-                    const bTime = b.lastMessage?.[0]?.createdAt
-                      ? new Date(b.lastMessage[0].createdAt).getTime()
-                      : 0;
-                    return bTime - aTime;
-                  })
-                  .map((conversationSummary) => {
-                    const conversation = conversationSummary.conversation;
-                    const lastMessage =
-                      conversationSummary.lastMessage?.[0] || undefined;
-                    const currentUserId =
-                      identity?.getPrincipal().toString() || "";
-                    const otherUserId = conversationSummary.otherUserId;
-                    const otherUserName =
-                      conversationSummary.otherUserName ||
-                      `User ${otherUserId.slice(0, 8)}...`;
-                    const otherUserImageUrl =
-                      conversationSummary.otherUserImageUrl &&
-                      conversationSummary.otherUserImageUrl !== ""
-                        ? conversationSummary.otherUserImageUrl
-                        : "";
-                    const unreadCount =
-                      conversation.unreadCount[currentUserId] || 0;
-
-                    return (
-                      <li
-                        key={conversation.id}
-                        onClick={() =>
-                          handleConversationClick(
-                            conversation.id,
-                            otherUserName,
-                            otherUserImageUrl,
-                          )
-                        }
-                        className={`group mx-2 flex cursor-pointer items-center space-x-4 rounded-xl p-3 transition-all ${selectedConversationId === conversation.id ? "border border-yellow-100 bg-white text-yellow-900" : "hover:bg-gray-50"}`}
-                      >
-                        <div className="relative h-14 w-14 flex-shrink-0">
-                          <ProfileImage
-                            profilePictureUrl={otherUserImageUrl}
-                            userName={otherUserName}
-                            size="h-14 w-14"
-                            className=""
-                          />
-                          {unreadCount > 0 && (
-                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
-                              {unreadCount}
-                            </span>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <p className="truncate text-base font-semibold text-blue-900 group-hover:text-yellow-600">
-                              {otherUserName}
-                            </p>
-                            <p
-                              className={`ml-2 whitespace-nowrap text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
-                            >
-                              {formatTimestamp(lastMessage?.createdAt)}
-                            </p>
+              {(!selectedConversationId || isDesktop) && (
+                <ul
+                  className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} space-y-1 py-2`}
+                >
+                  {conversations
+                    .slice()
+                    .sort((a, b) => {
+                      const aTime = a.lastMessage?.[0]?.createdAt
+                        ? new Date(a.lastMessage[0].createdAt).getTime()
+                        : 0;
+                      const bTime = b.lastMessage?.[0]?.createdAt
+                        ? new Date(b.lastMessage[0].createdAt).getTime()
+                        : 0;
+                      return bTime - aTime;
+                    })
+                    .map((conversationSummary) => {
+                      const conversation = conversationSummary.conversation;
+                      const lastMessage =
+                        conversationSummary.lastMessage?.[0] || undefined;
+                      const currentUserId =
+                        identity?.getPrincipal().toString() || "";
+                      const otherUserId = conversationSummary.otherUserId;
+                      const otherUserName =
+                        conversationSummary.otherUserName ||
+                        `User ${otherUserId.slice(0, 8)}...`;
+                      const otherUserImageUrl =
+                        conversationSummary.otherUserImageUrl &&
+                        conversationSummary.otherUserImageUrl !== ""
+                          ? conversationSummary.otherUserImageUrl
+                          : "";
+                      const unreadCount =
+                        conversation.unreadCount[currentUserId] || 0;
+                      return (
+                        <li
+                          key={conversation.id}
+                          onClick={() =>
+                            handleConversationClick(
+                              conversation.id,
+                              otherUserName,
+                              otherUserImageUrl,
+                            )
+                          }
+                          className={`group mx-2 flex cursor-pointer items-center space-x-4 rounded-xl p-3 transition-all ${selectedConversationId === conversation.id ? "border border-blue-100 bg-blue-50 text-blue-900" : "hover:bg-gray-50"}`}
+                        >
+                          <div className="relative h-14 w-14 flex-shrink-0">
+                            <ProfileImage
+                              profilePictureUrl={otherUserImageUrl}
+                              userName={otherUserName}
+                              size="h-14 w-14"
+                              className=""
+                            />
+                            {unreadCount > 0 && (
+                              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-xs font-bold text-white shadow-md">
+                                {unreadCount}
+                              </span>
+                            )}
                           </div>
-                          <div className="mt-1 flex items-start justify-between">
-                            <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
-                              {lastMessage?.content?.encryptedText ? (
-                                lastMessage.content.encryptedText
-                              ) : (
-                                <span className="italic text-gray-400">
-                                  No messages yet
-                                </span>
-                              )}
-                            </p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between">
+                              <p className="truncate text-base font-semibold text-blue-900 group-hover:text-yellow-600">
+                                {otherUserName}
+                              </p>
+                              <p
+                                className={`ml-2 whitespace-nowrap text-xs ${unreadCount > 0 ? "font-bold text-blue-600" : "text-gray-400"}`}
+                              >
+                                {formatTimestamp(lastMessage?.createdAt)}
+                              </p>
+                            </div>
+                            <div className="mt-1 flex items-start justify-between">
+                              <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
+                                {lastMessage?.content?.encryptedText ? (
+                                  lastMessage.content.encryptedText
+                                ) : (
+                                  <span className="italic text-gray-400">
+                                    No messages yet
+                                  </span>
+                                )}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-              </ul>
-              {isDesktop && (
-                <div className="md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100">
+                        </li>
+                      );
+                    })}
+                </ul>
+              )}
+              {(selectedConversationId || isDesktop) && (
+                <div
+                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "flex h-full flex-1 flex-col overflow-hidden"}`}
+                >
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
                       {/* Header */}
                       <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3 shadow-sm">
                         <div className="flex items-center gap-3">
+                          {!isDesktop && (
+                            <button
+                              onClick={() => setSelectedConversationId(null)}
+                              className="mr-1 rounded-full p-2 hover:bg-gray-100"
+                            >
+                              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+                            </button>
+                          )}
                           <div className="relative h-10 w-10">
                             <ProfileImage
                               profilePictureUrl={selectedOtherUserImageUrl}
@@ -490,54 +516,84 @@ const ClientChatPage: React.FC = () => {
                         onMouseDown={handlePageInteract}
                         onTouchStart={handlePageInteract}
                       >
-                        {messages.length === 0 ? (
+                        {messages.length === 0 &&
+                        optimisticMessages.length === 0 ? (
                           <div className="flex h-full items-center justify-center">
                             <p className="text-gray-500">
                               No messages yet. Start the conversation!
                             </p>
                           </div>
                         ) : (
-                          messages.map((message) => {
-                            const isMine =
-                              identity?.getPrincipal().toString() ===
-                              message.senderId;
-                            return (
-                              <div
-                                key={message.id}
-                                className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}
-                              >
-                                {!isMine && (
-                                  <div className="relative h-8 w-8 flex-shrink-0">
-                                    <ProfileImage
-                                      profilePictureUrl={
-                                        selectedOtherUserImageUrl
-                                      }
-                                      userName={selectedOtherUserName}
-                                      size="h-8 w-8"
-                                    />
-                                  </div>
-                                )}
+                          <>
+                            {messages.map((message) => {
+                              const isMine =
+                                identity?.getPrincipal().toString() ===
+                                message.senderId;
+                              return (
                                 <div
-                                  className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-sm bg-blue-600 text-white shadow-sm" : "rounded-bl-sm border border-gray-100 bg-white text-gray-800 shadow-sm"}`}
+                                  key={message.id}
+                                  className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}
                                 >
-                                  <p className="text-sm">
-                                    {typeof message.content === "string"
-                                      ? message.content
-                                      : message.content?.encryptedText}
-                                  </p>
-                                  <p
-                                    className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
+                                  {!isMine && (
+                                    <div className="relative h-8 w-8 flex-shrink-0">
+                                      <ProfileImage
+                                        profilePictureUrl={
+                                          selectedOtherUserImageUrl
+                                        }
+                                        userName={selectedOtherUserName}
+                                        size="h-8 w-8"
+                                      />
+                                    </div>
+                                  )}
+                                  <div
+                                    className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
                                   >
-                                    {formatDateTime(message.createdAt)}
-                                  </p>
+                                    <p className="text-sm">
+                                      {typeof message.content === "string"
+                                        ? message.content
+                                        : message.content?.encryptedText}
+                                    </p>
+                                    <p
+                                      className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
+                                    >
+                                      {formatDateTime(message.createdAt)}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })
+                              );
+                            })}
+                            {optimisticMessages.map((message) => {
+                              return (
+                                <div
+                                  key={message.id}
+                                  onClick={() =>
+                                    message.status === "failed" &&
+                                    retryMessage(message.id)
+                                  }
+                                  className={`flex items-end justify-end gap-2 ${message.status === "failed" ? "cursor-pointer" : ""}`}
+                                >
+                                  <div
+                                    className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white"}`}
+                                  >
+                                    <p className="text-sm">{message.content}</p>
+                                    <p
+                                      className={`mt-1 text-right text-xs ${message.status === "sending" ? "text-blue-200" : message.status === "failed" ? "text-red-200" : "text-blue-100"}`}
+                                    >
+                                      {message.status === "sending"
+                                        ? "Sending..."
+                                        : message.status === "failed"
+                                          ? "Failed - Tap to retry"
+                                          : "Sent"}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </>
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="border-t border-gray-100 bg-white p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:sticky md:bottom-0">
+                      <div className="border-t border-gray-200 bg-white p-3 pb-1 md:sticky md:bottom-0 md:bg-white md:pb-3">
                         <form
                           onSubmit={handleSendMessage}
                           className="flex items-center gap-3"
@@ -566,21 +622,24 @@ const ClientChatPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex h-full items-center justify-center p-8 text-gray-500">
-                      Select a conversation to view messages
+                    <div className="flex h-full items-center justify-center py-12">
+                      <EmptyState
+                        icon={<ChatBubbleLeftRightIcon className="h-12 w-12" />}
+                        title="Select a conversation"
+                        message="Choose a conversation from the list to view messages"
+                      />
                     </div>
                   )}
                 </div>
               )}
             </div>
           ) : (
-            <div className="m-4 rounded-xl bg-white p-6 text-center shadow-md">
-              <div className="mb-3 text-4xl">💬</div>
-              <p className="mb-4 text-lg text-gray-600">No conversations yet</p>
-              <p className="text-sm text-gray-500">
-                Your conversations with service providers will appear here after
-                booking a service.
-              </p>
+            <div className="py-12">
+              <EmptyState
+                icon={<ChatBubbleLeftRightIcon className="h-12 w-12" />}
+                title="No conversations yet"
+                message="Your conversations with service providers will appear here after booking a service."
+              />
             </div>
           )
         ) : (
@@ -590,7 +649,7 @@ const ClientChatPage: React.FC = () => {
             </p>
             <button
               onClick={() => navigate("/login")}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
             >
               Log In
             </button>

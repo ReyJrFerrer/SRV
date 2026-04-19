@@ -7,7 +7,7 @@
 
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const {admin, getFirestore} = require("../firebase-admin");
 
 // Import media upload functions for consistent media handling
 const {
@@ -78,7 +78,7 @@ function validateName(name) {
  * @return {Promise<boolean>} Whether the phone is taken
  */
 async function isPhoneTaken(phone, excludePrincipal = null) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const usersSnapshot = await db.collection("users")
     .where("phone", "==", phone)
     .limit(1)
@@ -179,7 +179,7 @@ exports.createProfile = onCall(async (request) => {
   }
 
   // Check if profile already exists
-  const db = admin.firestore();
+  const db = getFirestore();
   const userRef = db.collection("users").doc(principalId);
   const userDoc = await userRef.get();
 
@@ -246,7 +246,7 @@ exports.getProfile = onCall(async (request) => {
   const {userId} = actualData;
   const targetUserId = userId || auth.uid;
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const userRef = db.collection("users").doc(targetUserId);
   const userDoc = await userRef.get();
 
@@ -293,7 +293,7 @@ exports.updateProfile = onCall(async (request) => {
   }
 
   // Get existing profile
-  const db = admin.firestore();
+  const db = getFirestore();
   const userRef = db.collection("users").doc(principalId);
   const userDoc = await userRef.get();
 
@@ -342,7 +342,7 @@ exports.switchUserRole = onCall(async (request) => {
   }
 
   const principalId = auth.uid;
-  const db = admin.firestore();
+  const db = getFirestore();
   const userRef = db.collection("users").doc(principalId);
   const userDoc = await userRef.get();
 
@@ -396,7 +396,7 @@ exports.getAllServiceProviders = onCall(async (request) => {
     );
   }
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const usersSnapshot = await db.collection("users")
     .where("role", "==", "ServiceProvider")
     .where("isActive", "==", true)
@@ -431,7 +431,7 @@ exports.getAllUsers = onCall(async (request) => {
   }
 
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const usersSnapshot = await db.collection("users").get();
 
   const users = [];
@@ -479,7 +479,7 @@ exports.uploadProfilePicture = onCall(async (request) => {
   }
 
   try {
-    const db = admin.firestore();
+    const db = getFirestore();
     const userRef = db.collection("users").doc(principalId);
     const userDoc = await userRef.get();
 
@@ -554,7 +554,7 @@ exports.removeProfilePicture = onCall(async (request) => {
   const principalId = auth.uid;
 
   try {
-    const db = admin.firestore();
+    const db = getFirestore();
     const userRef = db.collection("users").doc(principalId);
     const userDoc = await userRef.get();
 
@@ -627,7 +627,7 @@ exports.updateUserActiveStatus = onCall(async (request) => {
   }
 
   try {
-    const db = admin.firestore();
+    const db = getFirestore();
     const userRef = db.collection("users").doc(principalId);
     const userDoc = await userRef.get();
 

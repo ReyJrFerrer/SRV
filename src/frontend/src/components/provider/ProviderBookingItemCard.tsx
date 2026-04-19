@@ -233,7 +233,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
       if (existingConversation) {
         // Navigate to existing conversation, use clientId as route param
-        navigate(`/provider/chat/${booking.clientId}`, {
+        navigate(`/provider/chat`, {
           state: {
             conversationId: existingConversation.conversation.id,
             otherUserName: booking.clientName || "Client",
@@ -247,7 +247,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           booking.clientId.toString(),
         );
         if (newConversation) {
-          navigate(`/provider/chat/${booking.clientId}`, {
+          navigate(`/provider/chat`, {
             state: {
               conversationId: newConversation.id,
               otherUserName: booking.clientName || "Client",
