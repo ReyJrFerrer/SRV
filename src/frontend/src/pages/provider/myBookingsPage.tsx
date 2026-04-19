@@ -594,7 +594,7 @@ const ProviderBookingsPage: React.FC = () => {
                             }}
                             className={`${
                               selectedCategoryId === cat.id
-                                ? "bg-blue-50 font-bold text-blue-700"
+                                ? "border border-yellow-200 bg-white font-bold text-yellow-700"
                                 : "font-medium text-gray-700 hover:bg-gray-50"
                             } block w-full rounded-xl px-4 py-2.5 text-left text-sm transition-colors`}
                           >

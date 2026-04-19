@@ -312,14 +312,14 @@ const ActiveServicePage: React.FC = () => {
                   )}
                   <button
                     onClick={handleContactClient}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-yellow-200 bg-white px-4 py-3 text-base font-semibold text-yellow-700 transition-colors hover:bg-yellow-50"
                   >
                     <PaperAirplaneIcon className="h-5 w-5" /> Contact{" "}
                     {booking.clientName?.split(" ")[0] || "Client"}
                   </button>
                   <button
                     onClick={handleChatClient}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-yellow-200 bg-white px-4 py-3 text-base font-semibold text-yellow-700 transition-colors hover:bg-yellow-50"
                   >
                     <ChatBubbleLeftRightIcon className="h-5 w-5" /> Chat{" "}
                     {booking.clientName?.split(" ")[0] || "Client"}

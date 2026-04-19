@@ -574,9 +574,9 @@ const ProviderProfilePage: React.FC = () => {
                         <p className="mt-1 text-gray-800">
                           {profile?.phone || "No phone number"}
                         </p>
-                        <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
-                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
-                          <p className="text-xs text-blue-800">
+                        <div className="mt-2 flex items-start gap-2 rounded-md border border-yellow-200 bg-white p-3">
+                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" />
+                          <p className="text-xs text-yellow-800">
                             Your phone number is linked to your account for
                             security and cannot be changed here. Please contact
                             support for assistance if you need to update it.
@@ -589,7 +589,7 @@ const ProviderProfilePage: React.FC = () => {
                     {!isEditing ? (
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                        className="flex items-center rounded-lg border border-yellow-200 bg-white px-6 py-2 font-semibold text-yellow-700 transition-colors hover:bg-yellow-50"
                       >
                         <PencilIcon className="mr-2 h-4 w-4" />
                         Edit Profile

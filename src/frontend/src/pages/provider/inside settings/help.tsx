@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, LifebuoyIcon } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../../components/provider/NavigationBar";
 
 const HelpSupportPage: React.FC = () => {
@@ -8,18 +8,20 @@ const HelpSupportPage: React.FC = () => {
 
   const goToReportPage = () => navigate("/provider/report");
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="w-full max-w-xl rounded-3xl border border-blue-100 bg-white p-6 shadow-2xl">
+    <div className="flex min-h-screen flex-col bg-gray-50 pb-20">
+      <div className="mx-auto w-full max-w-xl rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
+          className="mb-6 flex items-center gap-2 text-yellow-700 hover:text-yellow-900 focus:outline-none"
         >
           <ArrowLeftIcon className="h-5 w-5" />
-          <span className="font-medium"></span>
+          <span className="font-medium">Back</span>
         </button>
         <div className="mb-8 flex flex-col items-center">
-          <img src="/logo.svg" alt="SRV Logo" className="mb-2 h-16 w-16" />
-          <h1 className="text-center text-2xl font-extrabold tracking-tight text-blue-900">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-200 bg-white">
+            <LifebuoyIcon className="h-8 w-8 text-blue-600" />
+          </div>
+          <h1 className="text-center text-2xl font-black tracking-tight text-yellow-900">
             Help & Support
           </h1>
         </div>
@@ -55,11 +57,10 @@ const HelpSupportPage: React.FC = () => {
               community for tips and peer support (coming soon).
             </li>
           </ul>
-          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <h2 className="mb-2 text-lg font-bold text-yellow-700">
+          <div className="mt-6 rounded-lg border border-blue-200 bg-white p-4">
+            <h2 className="mb-2 text-lg font-bold text-blue-700">
               Follow us on Social Media
             </h2>
-            {/* 👇 KEY CHANGE HERE: flex-col for mobile, gap-4 for vertical spacing, md:flex-row to go back to horizontal on desktop */}
             <div className="flex flex-col items-start gap-4 md:flex-row md:justify-center md:gap-6">
               <a
                 href="https://facebook.com/srvpinoy"

@@ -273,11 +273,11 @@ const CompleteServicePage: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <span className="text-sm font-medium text-blue-700">
+            <div className="flex items-center justify-between rounded-lg border border-yellow-200 bg-white p-4">
+              <span className="text-sm font-medium text-yellow-700">
                 Service Total:
               </span>
-              <span className="text-xl font-bold text-blue-700">
+              <span className="text-xl font-bold text-yellow-700">
                 ₱
                 {(
                   servicePrice + commissionValidation.estimatedCommission
