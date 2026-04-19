@@ -1,7 +1,7 @@
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
-const admin = require("firebase-admin");
+const {admin, getFirestore} = require("../firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
 const {deductReputationForCancellationInternal} = require("./reputation");
 const {
@@ -16,7 +16,7 @@ const {
 const {
   checkUserReputationInternal,
 } = require("./reputation");
-const db = admin.firestore();
+const db = getFirestore();
 const rtdb = admin.database();
 
 // Constants for notification system

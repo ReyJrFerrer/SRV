@@ -62,7 +62,7 @@ export function initializeFirebase(): {
     if (getApps().length > 0) {
       firebaseApp = getApps()[0];
       firebaseAuth = getAuth(firebaseApp);
-      firebaseFunctions = getFunctions(firebaseApp);
+      firebaseFunctions = getFunctions(firebaseApp, "asia-southeast1");
       firebaseStorage = getStorage(firebaseApp);
       firebaseFirestore = getFirestore(firebaseApp);
       firebaseDatabase = getDatabase(
@@ -114,7 +114,7 @@ export function initializeFirebase(): {
     // Initialize Firebase
     firebaseApp = initializeApp(firebaseConfig);
     firebaseAuth = getAuth(firebaseApp);
-    firebaseFunctions = getFunctions(firebaseApp);
+    firebaseFunctions = getFunctions(firebaseApp, "asia-southeast1");
     firebaseStorage = getStorage(firebaseApp);
     firebaseFirestore = getFirestore(firebaseApp);
     firebaseDatabase = getDatabase(

@@ -1,10 +1,10 @@
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
-const admin = require("firebase-admin");
+const {getFirestore} = require("../firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // OneSignal Configuration
 const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "7bd5300e-16ce-4334-8462-93e1a1458579";

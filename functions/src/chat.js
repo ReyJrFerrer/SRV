@@ -1,5 +1,5 @@
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
-const admin = require("firebase-admin");
+const {getFirestore} = require("../firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
 const {
   NOTIFICATION_TYPES,
@@ -8,7 +8,7 @@ const {
   sendOneSignalNotification,
 } = require("./notification");
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Generates a unique ID based on timestamp and random string.

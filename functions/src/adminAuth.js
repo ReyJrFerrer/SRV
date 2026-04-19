@@ -1,9 +1,9 @@
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const {admin, getFirestore} = require("../firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Auto-create admin profile and assign role for development

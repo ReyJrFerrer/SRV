@@ -1,11 +1,11 @@
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
-const admin = require("firebase-admin");
+const {admin, getFirestore} = require("../firebase-admin");
 const {isPhoneTaken} = require("./account");
 const bcrypt = require("bcryptjs");
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Helper function to safely get user authentication info

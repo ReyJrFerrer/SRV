@@ -7,7 +7,7 @@
 
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const {admin, getFirestore} = require("../firebase-admin");
 
 const {
   BASE_SCORE,
@@ -29,7 +29,7 @@ if (!admin.apps.length) {
   }
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Fetch user data from Firestore
