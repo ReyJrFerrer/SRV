@@ -105,7 +105,7 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
 exports.uploadMedia = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  const {fileName, contentType, mediaType, fileData} = data.data;
+  const {fileName, contentType, mediaType, fileData} = data;
   // Log incoming data
   console.log("uploadMedia called with:", {
     fileName: fileName,
