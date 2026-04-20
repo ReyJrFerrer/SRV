@@ -98,7 +98,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   const packageTitle = booking.packageName || "No Package Name";
   let serviceTitle =
     booking.serviceDetails?.description || booking.packageName || "Service";
-    
+
   if (booking.serviceDetails?.status === "Archived") {
     serviceTitle += " (Archived)";
   }

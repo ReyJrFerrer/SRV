@@ -673,7 +673,9 @@ export const useServiceManagement = (): ServiceManagementHook => {
         // Note: we can either fetch services again or update locally
         setServices((prev) =>
           prev.map((service) =>
-            service.id === serviceId ? { ...service, status: "Archived" as ServiceStatus } : service,
+            service.id === serviceId
+              ? { ...service, status: "Archived" as ServiceStatus }
+              : service,
           ),
         );
       } catch (error) {

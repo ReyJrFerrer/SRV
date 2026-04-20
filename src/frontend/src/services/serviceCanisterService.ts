@@ -21,7 +21,11 @@ const getFunctions = () => getFirebaseFunctions();
 const getDb = () => getFirebaseFirestore();
 
 // Type definitions matching the backend
-export type ServiceStatus = "Available" | "Suspended" | "Unavailable" | "Archived";
+export type ServiceStatus =
+  | "Available"
+  | "Suspended"
+  | "Unavailable"
+  | "Archived";
 
 export type DayOfWeek =
   | "Monday"
@@ -434,7 +438,10 @@ export const serviceCanisterService = {
    */
   async permanentDeleteService(serviceId: string): Promise<string | null> {
     try {
-      const permanentDeleteServiceFn = httpsCallable(getFunctions(), "permanentDeleteService");
+      const permanentDeleteServiceFn = httpsCallable(
+        getFunctions(),
+        "permanentDeleteService",
+      );
       const result = await permanentDeleteServiceFn({ serviceId });
 
       const data = result.data as { success: boolean; message: string };
