@@ -89,7 +89,9 @@ export function stopVersionChecker(): void {
  * Show update notification to user
  */
 function showUpdateNotification(): void {
-  const existingNotification = document.getElementById("app-update-notification");
+  const existingNotification = document.getElementById(
+    "app-update-notification",
+  );
   if (existingNotification) {
     existingNotification.remove();
   }
