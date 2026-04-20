@@ -389,7 +389,7 @@ const MyBookingsPage: React.FC = () => {
                   onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
                 >
                   <FunnelIcon className="mr-1.5 h-4 w-4 text-gray-500" />
-                  <span className="hidden md:inline">Filters</span>
+                  <span className="hidden md:inline">{statusFilter !== "ALL" ? statusFilter.replace("_", " ") : "Filters"}</span>
                   <span className="ml-1 text-xs text-gray-400">
                     {selectedCategory ? `| ${selectedCategory}` : ""}
                   </span>
