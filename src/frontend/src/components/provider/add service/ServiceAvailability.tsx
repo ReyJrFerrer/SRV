@@ -449,7 +449,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
               </p>
             </div>
             {/* Shortcuts */}
-            <div className="hidden space-x-3 text-sm sm:block">
+            <div className="block space-x-3 text-sm">
               <button
                 type="button"
                 onClick={() => togglePreset(weekdays)}
