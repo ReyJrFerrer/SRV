@@ -523,7 +523,9 @@ const ProviderBookingsPage: React.FC = () => {
                   onClick={() => setIsTimingDropdownOpen(!isTimingDropdownOpen)}
                 >
                   <FunnelIcon className="mr-1 h-5 w-5" />
-                  <span className="hidden md:inline">{statusFilter !== "ALL" ? statusFilter : "Filters"}</span>
+                  <span className="hidden md:inline">
+                    {statusFilter !== "ALL" ? statusFilter : "Filters"}
+                  </span>
                   <ChevronDownIcon
                     className={`-mr-0.5 ml-1 h-4 w-4 transform transition-transform ${
                       isTimingDropdownOpen ? "rotate-180" : "rotate-0"
