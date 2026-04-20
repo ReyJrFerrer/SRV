@@ -21,7 +21,7 @@ const getFunctions = () => getFirebaseFunctions();
 const getDb = () => getFirebaseFirestore();
 
 // Type definitions matching the backend
-export type ServiceStatus = "Available" | "Suspended" | "Unavailable";
+export type ServiceStatus = "Available" | "Suspended" | "Unavailable" | "Archived";
 
 export type DayOfWeek =
   | "Monday"
@@ -385,12 +385,57 @@ export const serviceCanisterService = {
   },
 
   /**
-   * Delete a service
+   * Delete a service (alias for archiveService in backend)
    */
   async deleteService(serviceId: string): Promise<string | null> {
     try {
       const deleteServiceFn = httpsCallable(getFunctions(), "deleteService");
       const result = await deleteServiceFn({ serviceId });
+
+      const data = result.data as { success: boolean; message: string };
+      return data.success ? data.message : null;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Archive a service (soft delete)
+   */
+  async archiveService(serviceId: string): Promise<string | null> {
+    try {
+      const archiveServiceFn = httpsCallable(getFunctions(), "archiveService");
+      const result = await archiveServiceFn({ serviceId });
+
+      const data = result.data as { success: boolean; message: string };
+      return data.success ? data.message : null;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Restore an archived service
+   */
+  async restoreService(serviceId: string): Promise<string | null> {
+    try {
+      const restoreServiceFn = httpsCallable(getFunctions(), "restoreService");
+      const result = await restoreServiceFn({ serviceId });
+
+      const data = result.data as { success: boolean; message: string };
+      return data.success ? data.message : null;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Permanently delete an archived service
+   */
+  async permanentDeleteService(serviceId: string): Promise<string | null> {
+    try {
+      const permanentDeleteServiceFn = httpsCallable(getFunctions(), "permanentDeleteService");
+      const result = await permanentDeleteServiceFn({ serviceId });
 
       const data = result.data as { success: boolean; message: string };
       return data.success ? data.message : null;

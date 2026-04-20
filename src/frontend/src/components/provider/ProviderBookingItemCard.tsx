@@ -96,8 +96,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   const clientName = booking.clientName || "Unknown Client";
   const packageTitle = booking.packageName || "No Package Name";
-  const serviceTitle =
+  let serviceTitle =
     booking.serviceDetails?.description || booking.packageName || "Service";
+    
+  if (booking.serviceDetails?.status === "Archived") {
+    serviceTitle += " (Archived)";
+  }
+
   const serviceImage = userImageUrl;
 
   // If profilePicture is an object, use its imageUrl property
