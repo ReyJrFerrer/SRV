@@ -237,13 +237,16 @@ const BookingDetailsPage: React.FC = () => {
 
   const getStatusPillStyle = (status: string) => {
     const styles: { [key: string]: string } = {
-      REQUESTED: "bg-yellow-50 text-yellow-700",
-      ACCEPTED: "bg-green-50 text-green-700",
-      INPROGRESS: "bg-blue-50 text-blue-700",
-      COMPLETED: "bg-indigo-50 text-indigo-700",
-      CANCELLED: "bg-red-50 text-red-700",
+      REQUESTED: "text-yellow-700 border border-yellow-200 bg-yellow-50",
+      ACCEPTED: "text-emerald-700 border border-emerald-200 bg-emerald-50",
+      INPROGRESS: "text-blue-700 border border-blue-200 bg-blue-50",
+      COMPLETED: "text-indigo-700 border border-indigo-200 bg-indigo-50",
+      CANCELLED: "text-red-700 border border-red-200 bg-red-50",
     };
-    return styles[status?.toUpperCase()] || "bg-gray-50 text-gray-700";
+    return (
+      styles[status?.toUpperCase()] ||
+      "text-slate-700 border border-slate-200 bg-slate-50"
+    );
   };
 
   const getReviewButtonContent = () => {

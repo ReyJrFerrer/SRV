@@ -157,23 +157,23 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     switch (status.toUpperCase()) {
       case "REQUESTED":
       case "PENDING":
-        return "text-yellow-600 bg-yellow-100";
+        return "text-yellow-700 border border-yellow-200 bg-yellow-50";
       case "ACCEPTED":
       case "CONFIRMED":
-        return "text-green-600 bg-green-100";
+        return "text-emerald-700 border border-emerald-200 bg-emerald-50";
       case "INPROGRESS":
       case "IN_PROGRESS":
-        return "text-blue-600 bg-blue-100";
+        return "text-blue-700 border border-blue-200 bg-blue-50";
       case "COMPLETED":
-        return "text-indigo-600 bg-indigo-100";
+        return "text-indigo-700 border border-indigo-200 bg-indigo-50";
       case "CANCELLED":
-        return "text-red-600 bg-red-100";
+        return "text-red-700 border border-red-200 bg-red-50";
       case "DECLINED":
-        return "text-gray-600 bg-gray-100";
+        return "text-slate-700 border border-slate-200 bg-slate-50";
       case "DISPUTED":
-        return "text-orange-600 bg-orange-100";
+        return "text-orange-700 border border-orange-200 bg-orange-50";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "text-slate-700 border border-slate-200 bg-slate-50";
     }
   };
 
