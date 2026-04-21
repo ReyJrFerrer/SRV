@@ -512,11 +512,11 @@ const NotificationsPageSP = () => {
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (
                 <section>
-                  <h2 className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3 text-sm font-bold tracking-wide text-gray-900 shadow-sm">
+                  <h2 className="flex items-center justify-between border-b border-gray-100 bg-white px-5 py-3 text-sm font-bold tracking-wide text-gray-900 shadow-sm">
                     <span>New</span>
                     <span
                       aria-label={`${unread.length} new notifications`}
-                      className="ml-2 inline-flex min-w-[20px] items-center justify-center rounded-full bg-yellow-500 px-2 py-0.5 text-[11px] font-bold text-white"
+                      className="ml-2 inline-flex min-w-[20px] items-center justify-center rounded-full bg-blue-500 px-2 py-0.5 text-[11px] font-bold text-white"
                     >
                       {unread.length > 99 ? "99+" : unread.length}
                     </span>

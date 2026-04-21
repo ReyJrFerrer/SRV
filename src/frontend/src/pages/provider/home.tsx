@@ -190,7 +190,7 @@ const ProviderHomePage: React.FC = () => {
           )}
           <button
             onClick={() => window.location.reload()}
-            className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
+            className="rounded-lg bg-yellow-500 px-6 py-2 text-white transition-colors hover:bg-yellow-600"
           >
             Retry
           </button>

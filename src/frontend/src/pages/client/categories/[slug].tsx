@@ -221,7 +221,7 @@ const CategoryPage: React.FC = () => {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="relative rounded-2xl bg-gray-100 px-5 py-3.5 font-bold text-gray-600 transition-all duration-300 hover:bg-gray-200 active:scale-95"
+            className="relative rounded-2xl border border-blue-200 bg-white px-5 py-3.5 font-bold text-blue-600 transition-all duration-300 hover:bg-blue-50 active:scale-95"
           >
             <AdjustmentsHorizontalIcon className="h-6 w-6" />
           </button>
