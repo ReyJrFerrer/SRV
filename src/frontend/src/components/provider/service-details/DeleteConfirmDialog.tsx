@@ -28,13 +28,14 @@ const DeleteConfirmDialog: React.FC<Props> = ({
           {isAlreadyArchived ? (
             <>
               Are you sure you want to <b>permanently delete</b>{" "}
-              <b>{serviceTitle || "this service"}</b>? This action cannot be undone.
+              <b>{serviceTitle || "this service"}</b>? This action cannot be
+              undone.
             </>
           ) : (
             <>
               Are you sure you want to archive{" "}
-              <b>{serviceTitle || "this service"}</b>? This service will be hidden
-              from clients.
+              <b>{serviceTitle || "this service"}</b>? This service will be
+              hidden from clients.
             </>
           )}
         </p>

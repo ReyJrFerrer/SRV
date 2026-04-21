@@ -324,7 +324,9 @@ const ProviderServiceDetailPage: React.FC = () => {
       setIsDeleting(true);
       if (service.status === "Archived") {
         await permanentDeleteService(service.id);
-        toast.success("Service deleted permanently!", { position: "top-center" });
+        toast.success("Service deleted permanently!", {
+          position: "top-center",
+        });
       } else {
         await archiveService(service.id);
         toast.success("Service archived!", { position: "top-center" });
