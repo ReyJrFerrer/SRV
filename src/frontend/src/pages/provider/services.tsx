@@ -27,12 +27,15 @@ const MyServicesPage: React.FC = () => {
     error,
     refreshServices,
     updateServiceStatus,
-    deleteService,
+    archiveService,
+    restoreService,
+    permanentDeleteService,
   } = useServiceManagement();
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState<boolean>(false);
   const { bookings: providerBookings } = useProviderBookingManagement();
 
   useEffect(() => {
@@ -109,8 +112,8 @@ const MyServicesPage: React.FC = () => {
   const handleDeleteService = async (serviceId: string) => {
     setDeletingId(serviceId);
     try {
-      await deleteService(serviceId);
-      toast.error(<span className="text-center">Service deleted!</span>, {
+      await archiveService(serviceId);
+      toast.error(<span className="text-center">Service archived!</span>, {
         position: "top-center",
         style: {
           background: "#fee2e2",
@@ -124,7 +127,7 @@ const MyServicesPage: React.FC = () => {
     } catch (e) {
       toast.error(
         <span className="text-center">
-          Failed to delete service. Please try again.
+          Failed to archive service. Please try again.
         </span>,
         {
           position: "top-center",
@@ -136,6 +139,47 @@ const MyServicesPage: React.FC = () => {
       setDeleteConfirmId(null);
     }
   };
+
+  const handleRestoreService = async (serviceId: string) => {
+    setUpdatingId(serviceId);
+    try {
+      await restoreService(serviceId);
+      toast.success("Service restored!");
+      await refreshServices();
+    } catch (e) {
+      toast.error("Failed to restore service.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handlePermanentDelete = async (serviceId: string) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to permanently delete this service? This cannot be undone.",
+      )
+    )
+      return;
+    setDeletingId(serviceId);
+    try {
+      await permanentDeleteService(serviceId);
+      toast.success("Service permanently deleted.");
+      await refreshServices();
+    } catch (e) {
+      toast.error("Failed to permanently delete service.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const activeServicesList = useMemo(
+    () => userServices.filter((s) => s.status !== "Archived"),
+    [userServices],
+  );
+  const archivedServicesList = useMemo(
+    () => userServices.filter((s) => s.status === "Archived"),
+    [userServices],
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50 pb-16 md:pb-0">
@@ -153,7 +197,8 @@ const MyServicesPage: React.FC = () => {
                 {userServices.find((s) => s.id === deleteConfirmId)?.title ||
                   "this service"}
               </b>
-              ? This action cannot be undone.
+              ? This service will be archived for 30 days. You can restore it
+              during this time.
             </p>
             <div className="flex gap-2">
               <button
@@ -182,17 +227,27 @@ const MyServicesPage: React.FC = () => {
           <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             My Services
           </h1>
-          <div className="flex flex-1 justify-end">
+          <div className="flex flex-1 items-center justify-end gap-4">
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              {showArchived
+                ? "View Active"
+                : `View Archived (${archivedServicesList.length})`}
+            </button>
             <Link
               to="/provider/services/add"
               onClick={(e) => {
-                if (userServices.length >= 5) {
+                if (activeServicesList.length >= 5) {
                   e.preventDefault();
                   toast.error("You can only have a maximum of 5 services.");
                 }
               }}
               className={`flex items-center rounded-lg bg-blue-600 px-2 py-1 text-sm font-medium text-white transition-colors hover:bg-blue-700 lg:px-3 lg:py-2 ${
-                userServices.length >= 5 ? "cursor-not-allowed opacity-50" : ""
+                activeServicesList.length >= 5
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
               }`}
               aria-label="Add new service"
             >
@@ -217,9 +272,53 @@ const MyServicesPage: React.FC = () => {
                 Try Again
               </button>
             </div>
-          ) : userServices.length > 0 ? (
+          ) : showArchived ? (
+            archivedServicesList.length > 0 ? (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {archivedServicesList.map((service, idx) => (
+                  <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                    <div className="relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                      <div className="p-4">
+                        <h3 className="mb-1 text-lg font-bold text-gray-800">
+                          {service.title}
+                        </h3>
+                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                          Archived
+                        </span>
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={() => handleRestoreService(service.id)}
+                            disabled={updatingId === service.id}
+                            className="flex-1 rounded-lg border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50"
+                          >
+                            {updatingId === service.id
+                              ? "Restoring..."
+                              : "Restore"}
+                          </button>
+                          <button
+                            onClick={() => handlePermanentDelete(service.id)}
+                            disabled={deletingId === service.id}
+                            className="flex-1 rounded-lg border border-red-600 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                          >
+                            {deletingId === service.id
+                              ? "Deleting..."
+                              : "Permanently Delete"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </Appear>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 text-center text-gray-500">
+                <TrashIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
+                <p className="text-lg">No archived services found.</p>
+              </div>
+            )
+          ) : activeServicesList.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {userServices.map((service, idx) => (
+              {activeServicesList.map((service, idx) => (
                 <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
                   <ServiceCard
                     service={service}
@@ -239,22 +338,22 @@ const MyServicesPage: React.FC = () => {
             <div className="py-12 text-center text-gray-500">
               <WrenchScrewdriverIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
               <p className="mb-2 text-lg">
-                You haven't listed any services yet.
+                You haven't listed any active services yet.
               </p>
               <Tooltip
                 content="You have reached the maximum of 5 services."
-                showWhenDisabled={userServices.length >= 5}
+                showWhenDisabled={activeServicesList.length >= 5}
               >
                 <Link
                   to="/provider/services/add"
                   onClick={(e) => {
-                    if (userServices.length >= 5) {
+                    if (activeServicesList.length >= 5) {
                       e.preventDefault();
                       toast.error("You can only have a maximum of 5 services.");
                     }
                   }}
                   className={`mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700 ${
-                    userServices.length >= 5
+                    activeServicesList.length >= 5
                       ? "cursor-not-allowed opacity-50"
                       : ""
                   }`}

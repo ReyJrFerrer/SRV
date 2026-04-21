@@ -115,7 +115,10 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   }, [booking.id, booking.status]);
 
   // Section: Data extraction
-  const serviceTitle = booking.serviceName;
+  let serviceTitle = booking.serviceName;
+  if (booking.serviceDetails?.status === "Archived") {
+    serviceTitle = `${serviceTitle} (Archived)`;
+  }
 
   // Use provider profile image directly, do not use useMediaLoader for booking image
   let fallbackImage = userImageUrl;

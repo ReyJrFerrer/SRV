@@ -66,7 +66,7 @@ const ProviderServiceDetailPage: React.FC = () => {
 
   const {
     getService,
-    deleteService,
+    archiveService,
     updateServiceStatus,
     updateService,
     getServicePackages,
@@ -321,11 +321,11 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (!service) return;
     try {
       setIsDeleting(true);
-      await deleteService(service.id);
-      toast.success("Service deleted!", { position: "top-center" });
+      await archiveService(service.id);
+      toast.success("Service archived!", { position: "top-center" });
       navigate("/provider/services");
     } catch (error) {
-      toast.error("Failed to delete service. Please try again.", {
+      toast.error("Failed to archive service. Please try again.", {
         position: "top-center",
       });
     } finally {
