@@ -67,9 +67,7 @@ export const reviewCanisterService = {
     try {
       const submitReviewFn = httpsCallable(getFunctions(), "submitReview");
 
-      const result = await submitReviewFn({
-        data: { bookingId, rating, comment },
-      });
+      const result = await submitReviewFn({ bookingId, rating, comment });
 
       const responseData = result.data as { success: boolean; data: Review };
       return responseData.data;
@@ -85,9 +83,7 @@ export const reviewCanisterService = {
     try {
       const getReviewFn = httpsCallable(getFunctions(), "getReview");
 
-      const result = await getReviewFn({
-        data: { reviewId },
-      });
+      const result = await getReviewFn({ reviewId });
 
       const responseData = result.data as { success: boolean; data: Review };
 
@@ -107,9 +103,7 @@ export const reviewCanisterService = {
         "getBookingReviews",
       );
 
-      const result = await getBookingReviewsFn({
-        data: { bookingId },
-      });
+      const result = await getBookingReviewsFn({ bookingId });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
@@ -125,9 +119,7 @@ export const reviewCanisterService = {
     try {
       const getUserReviewsFn = httpsCallable(getFunctions(), "getUserReviews");
 
-      const result = await getUserReviewsFn({
-        data: { userId },
-      });
+      const result = await getUserReviewsFn({ userId });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
@@ -147,9 +139,7 @@ export const reviewCanisterService = {
     try {
       const updateReviewFn = httpsCallable(getFunctions(), "updateReview");
 
-      const result = await updateReviewFn({
-        data: { reviewId, rating, comment },
-      });
+      const result = await updateReviewFn({ reviewId, rating, comment });
       const responseData = result.data as { success: boolean; data: Review };
       return responseData.data;
     } catch (error) {
@@ -164,9 +154,7 @@ export const reviewCanisterService = {
     try {
       const deleteReviewFn = httpsCallable(getFunctions(), "deleteReview");
 
-      const result = await deleteReviewFn({
-        data: { reviewId },
-      });
+      const result = await deleteReviewFn({ reviewId });
       result.data as { success: boolean; message: string };
     } catch (error) {
       throw new Error(`Failed to delete review: ${error}`);
@@ -185,9 +173,7 @@ export const reviewCanisterService = {
         "calculateProviderRating",
       );
 
-      const result = await calculateProviderRatingFn({
-        data: { providerId },
-      });
+      const result = await calculateProviderRatingFn({ providerId });
 
       const responseData = result.data as {
         success: boolean;
@@ -226,9 +212,7 @@ export const reviewCanisterService = {
         "calculateServiceRating",
       );
 
-      const result = await calculateServiceRatingFn({
-        data: { serviceId },
-      });
+      const result = await calculateServiceRatingFn({ serviceId });
 
       const responseData = result.data as {
         success: boolean;
@@ -267,9 +251,7 @@ export const reviewCanisterService = {
         "calculateUserAverageRating",
       );
 
-      const result = await calculateUserAverageRatingFn({
-        data: { userId },
-      });
+      const result = await calculateUserAverageRatingFn({ userId });
 
       const responseData = result.data as {
         success: boolean;
@@ -307,9 +289,7 @@ export const reviewCanisterService = {
     try {
       const getAllReviewsFn = httpsCallable(getFunctions(), "getAllReviews");
 
-      const result = await getAllReviewsFn({
-        data: { limit, offset, status },
-      });
+      const result = await getAllReviewsFn({ limit, offset, status });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
@@ -346,9 +326,7 @@ export const reviewCanisterService = {
     try {
       const flagReviewFn = httpsCallable(getFunctions(), "flagReview");
 
-      const result = await flagReviewFn({
-        data: { reviewId, reason },
-      });
+      const result = await flagReviewFn({ reviewId, reason });
 
       result.data as { success: boolean; message: string };
     } catch (error) {
@@ -370,9 +348,7 @@ export const reviewCanisterService = {
         "getProviderReviews",
       );
 
-      const result = await getProviderReviewsFn({
-        data: { providerId, limit, offset },
-      });
+      const result = await getProviderReviewsFn({ providerId, limit, offset });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
@@ -395,9 +371,7 @@ export const reviewCanisterService = {
         "getServiceReviews",
       );
 
-      const result = await getServiceReviewsFn({
-        data: { serviceId, limit, offset },
-      });
+      const result = await getServiceReviewsFn({ serviceId, limit, offset });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
@@ -505,7 +479,9 @@ export const reviewCanisterService = {
       );
 
       const result = await submitProviderReviewFn({
-        data: { bookingId, rating, comment },
+        bookingId,
+        rating,
+        comment,
       });
 
       const responseData = result.data as { success: boolean; data: Review };
@@ -531,7 +507,9 @@ export const reviewCanisterService = {
       );
 
       const result = await getClientProviderReviewsFn({
-        data: { clientId, limit, offset },
+        clientId,
+        limit,
+        offset,
       });
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];

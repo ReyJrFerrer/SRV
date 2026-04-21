@@ -242,7 +242,7 @@ exports.submitReview = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {bookingId, rating, comment = ""} = payload;
   console.log("Submit Review Payload", payload);
 
@@ -440,7 +440,7 @@ exports.getReview = onCall(async (request) => {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {reviewId} = payload;
   console.log("Get Review Payload", payload);
 
@@ -487,7 +487,7 @@ exports.getBookingReviews = onCall(async (request) => {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {bookingId} = payload;
   console.log("Get booking Review Payload", payload);
 
@@ -524,7 +524,7 @@ exports.getUserReviews = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {userId, includeHidden = false} = payload;
   console.log("Get User Review Payload", payload);
 
@@ -622,7 +622,7 @@ exports.updateReview = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {reviewId, rating, comment = ""} = payload;
   console.log("Update Review Payload", payload);
 
@@ -745,7 +745,7 @@ exports.deleteReview = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {reviewId} = payload;
   console.log("Delete Review Payload", payload);
 
@@ -867,7 +867,7 @@ exports.restoreReview = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {reviewId} = payload;
   console.log("Restore Review Payload", payload);
 
@@ -973,7 +973,7 @@ exports.bulkUpdateReviewStatus = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {reviewIds, status} = payload;
   console.log("Bulk Update Review Status Payload", payload);
 
@@ -1063,7 +1063,7 @@ exports.calculateProviderRating = onCall(async (request) => {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {providerId} = payload;
 
   if (!providerId) {
@@ -1122,7 +1122,7 @@ exports.calculateServiceRating = onCall(async (request) => {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {serviceId} = payload;
 
   if (!serviceId) {
@@ -1181,7 +1181,7 @@ exports.calculateUserAverageRating = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {userId} = payload;
 
   // Authentication
@@ -1259,7 +1259,7 @@ exports.getAllReviews = onCall(async (request) => {
   }
 
   // Extract payload for pagination
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {limit = 50, offset = 0, status = null} = payload;
 
   // Convert limit and offset to integers
@@ -1333,7 +1333,7 @@ exports.getReviewStatistics = onCall(async (request) => {
 exports.flagReview = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {reviewId, reason} = payload;
   const authInfo = getAuthInfo(context, data);
 
@@ -1395,7 +1395,7 @@ exports.getProviderReviews = onCall(async (request) => {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {providerId, limit = 20, offset = 0} = payload;
 
   if (!providerId) {
@@ -1435,7 +1435,7 @@ exports.getServiceReviews = onCall(async (request) => {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {serviceId, limit = 20, offset = 0} = payload;
   console.log("Get Service Reviews ", payload);
 
@@ -1480,7 +1480,7 @@ exports.submitProviderReview = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {bookingId, rating, comment = ""} = payload;
   console.log("Submit Provider Review Payload", payload);
 
@@ -1661,7 +1661,7 @@ exports.getClientProviderReviews = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {clientId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!clientId) {
@@ -1745,7 +1745,7 @@ exports.getProviderReviewsByProvider = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {providerId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!providerId) {
