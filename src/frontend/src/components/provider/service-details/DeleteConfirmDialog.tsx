@@ -4,6 +4,7 @@ interface Props {
   open: boolean;
   serviceTitle?: string;
   isDeleting: boolean;
+  isAlreadyArchived?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -12,6 +13,7 @@ const DeleteConfirmDialog: React.FC<Props> = ({
   open,
   serviceTitle,
   isDeleting,
+  isAlreadyArchived,
   onCancel,
   onConfirm,
 }) => {
@@ -20,12 +22,21 @@ const DeleteConfirmDialog: React.FC<Props> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
         <h3 className="mb-2 text-lg font-bold text-red-700">
-          Archive Service?
+          {isAlreadyArchived ? "Delete Service?" : "Archive Service?"}
         </h3>
         <p className="mb-4 text-sm text-gray-700">
-          Are you sure you want to archive{" "}
-          <b>{serviceTitle || "this service"}</b>? This service will be hidden
-          from clients.
+          {isAlreadyArchived ? (
+            <>
+              Are you sure you want to <b>permanently delete</b>{" "}
+              <b>{serviceTitle || "this service"}</b>? This action cannot be undone.
+            </>
+          ) : (
+            <>
+              Are you sure you want to archive{" "}
+              <b>{serviceTitle || "this service"}</b>? This service will be hidden
+              from clients.
+            </>
+          )}
         </p>
         <div className="flex gap-2">
           <button
@@ -40,7 +51,13 @@ const DeleteConfirmDialog: React.FC<Props> = ({
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? "Archiving..." : "Archive"}
+            {isDeleting
+              ? isAlreadyArchived
+                ? "Deleting..."
+                : "Archiving..."
+              : isAlreadyArchived
+                ? "Delete"
+                : "Archive"}
           </button>
         </div>
       </div>

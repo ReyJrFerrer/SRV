@@ -8,6 +8,7 @@ import {
   LockClosedIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceManagement } from "../../hooks/serviceManagement";
+import CompactServiceCard from "../../components/provider/CompactServiceCard";
 import ServiceCard from "../../components/provider/ServiceCard";
 import BottomNavigation from "../../components/provider/NavigationBar";
 import { Toaster, toast } from "sonner";
@@ -179,42 +180,52 @@ const MyServicesPage: React.FC = () => {
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50 pb-16 md:pb-0">
       <Toaster position="top-center" richColors />
       {/* Delete Confirmation Dialog */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-center text-lg font-bold text-red-700">
-              Delete Service?
-            </h3>
-            <p className="mb-4 text-center text-sm text-gray-700">
-              Are you sure you want to delete{" "}
-              <b>
-                {userServices.find((s) => s.id === deleteConfirmId)?.title ||
-                  "this service"}
-              </b>
-              ? This service will be archived for 30 days. You can restore it
-              during this time.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setDeleteConfirmId(null)}
-                disabled={deletingId === deleteConfirmId}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={async () => {
-                  await handleDeleteService(deleteConfirmId);
-                }}
-                disabled={deletingId === deleteConfirmId}
-              >
-                {deletingId === deleteConfirmId ? "Deleting..." : "Delete"}
-              </button>
+      {deleteConfirmId && (() => {
+        const serviceToDelete = userServices.find((s) => s.id === deleteConfirmId);
+        const isArchivedDelete = serviceToDelete?.status === "Archived";
+        
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
+              <h3 className="mb-2 text-center text-lg font-bold text-red-700">
+                {isArchivedDelete ? "Permanently Delete ?" : "Delete Service?"}
+              </h3>
+              <p className="mb-4 text-center text-sm text-gray-700">
+                {isArchivedDelete 
+                  ? <>Are you sure you want to permanently delete <b>{serviceToDelete?.title || "this service"}</b>? This cannot be undone.</>
+                  : <>Are you sure you want to delete <b>{serviceToDelete?.title || "this service"}</b>? This service will be archived for 30 days. You can restore it during this time.</>
+                }
+              </p>
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  onClick={() => setDeleteConfirmId(null)}
+                  disabled={deletingId === deleteConfirmId}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                  onClick={async () => {
+                    if (isArchivedDelete) {
+                      await handlePermanentDelete(deleteConfirmId);
+                    } else {
+                      await handleDeleteService(deleteConfirmId);
+                    }
+                    setDeleteConfirmId(null);
+                  }}
+                  disabled={deletingId === deleteConfirmId}
+                >
+                  {deletingId === deleteConfirmId 
+                    ? "Deleting..." 
+                    : isArchivedDelete ? "Permanently Delete" : "Delete"
+                  }
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-3.5 py-2.5">
@@ -269,40 +280,26 @@ const MyServicesPage: React.FC = () => {
           ) : showArchived ? (
             archivedServicesList.length > 0 ? (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {archivedServicesList.map((service, idx) => (
-                  <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                    <div className="relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                      <div className="p-4">
-                        <h3 className="mb-1 text-lg font-bold text-gray-800">
-                          {service.title}
-                        </h3>
-                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                          Archived
-                        </span>
-                        <div className="mt-4 flex gap-2">
-                          <button
-                            onClick={() => handleRestoreService(service.id)}
-                            disabled={updatingId === service.id}
-                            className="flex-1 rounded-lg border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50"
-                          >
-                            {updatingId === service.id
-                              ? "Restoring..."
-                              : "Restore"}
-                          </button>
-                          <button
-                            onClick={() => handlePermanentDelete(service.id)}
-                            disabled={deletingId === service.id}
-                            className="flex-1 rounded-lg border border-red-600 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                          >
-                            {deletingId === service.id
-                              ? "Deleting..."
-                              : "Permanently Delete"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </Appear>
-                ))}
+                {archivedServicesList.map((service, idx) => {
+                  const activeCount = getServiceActiveBookingsCount(service.id);
+                  const plural = activeCount !== 1 ? "s" : "";
+                  
+                  return (
+                    <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                      <CompactServiceCard
+                        service={service}
+                        isActive={false}
+                        isArchived={true}
+                        activeCount={activeCount}
+                        plural={plural}
+                        hasActiveBookings={hasActiveBookings}
+                        handleRestoreService={handleRestoreService}
+                        setDeleteConfirmId={setDeleteConfirmId}
+                        deletingId={deletingId}
+                      />
+                    </Appear>
+                  );
+                })}
               </div>
             ) : (
               <div className="py-12 text-center text-gray-500">
