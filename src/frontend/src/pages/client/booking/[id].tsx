@@ -7,7 +7,6 @@ import {
   StarIcon,
   CheckCircleIcon,
   CalendarDaysIcon,
-  TruckIcon,
 } from "@heroicons/react/24/solid";
 import {
   EnhancedBooking,
@@ -317,37 +316,6 @@ const BookingDetailsPage: React.FC = () => {
                 />
               </div>
             )}
-
-            {/* Track Provider Banner - shows when provider has started navigation */}
-            {status === "Accepted" &&
-              (specificBooking as any)?.navigationStartedNotified && (
-                <div
-                  onClick={() =>
-                    navigate(`/client/tracking/${specificBooking?.id}`)
-                  }
-                  className="group cursor-pointer overflow-hidden rounded-2xl bg-blue-600 px-5 py-3.5 font-black shadow-sm transition-all hover:bg-blue-700 active:scale-95"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 animate-ping rounded-full bg-white opacity-25" />
-                      <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                        <TruckIcon className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-white">
-                        Provider is on the way!
-                      </h3>
-                      <p className="text-sm text-blue-100">
-                        Tap to track real-time location
-                      </p>
-                    </div>
-                    <div className="rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-colors group-hover:bg-white/30">
-                      Track Now
-                    </div>
-                  </div>
-                </div>
-              )}
 
             <div>
               <div className="relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">

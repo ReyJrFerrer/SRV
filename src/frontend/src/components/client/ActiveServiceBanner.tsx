@@ -1,20 +1,25 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useBookingManagement } from "../../hooks/bookingManagement";
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
+import { WrenchIcon } from "@heroicons/react/24/outline";
 
 const ClientActiveServiceBanner: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { bookingsByStatus, getServiceDisplayName, getPackageDisplayName } =
-    useBookingManagement();
+  const { bookingsByStatus, getServiceDisplayName } = useBookingManagement();
 
-  // Hide on client booking details page itself
   if (
-    location.pathname.startsWith("/client/booking/") ||
-    location.pathname.startsWith("/client/chat/")
+    location.pathname.startsWith("/client/chat/") ||
+    location.pathname.startsWith("/client/book/")
   )
     return null;
+
+  const accepted = bookingsByStatus("Accepted");
+  const onRouteBooking = accepted?.find(
+    (booking) => (booking as any)?.navigationStartedNotified === true,
+  );
+
+  if (onRouteBooking) return null;
 
   const active = bookingsByStatus("InProgress");
   if (!active || active.length === 0) return null;
@@ -22,58 +27,32 @@ const ClientActiveServiceBanner: React.FC = () => {
   const booking = active[0];
   const serviceName =
     getServiceDisplayName(booking) || booking.serviceName || "Service";
-  const packageName =
-    getPackageDisplayName(booking) || booking.packageName || "Package";
   const providerName =
     booking.providerName || booking.providerProfile?.name || "Provider";
 
-  const categoryName =
-    booking.serviceDetails?.category?.name ||
-    booking.serviceDetails?.category?.slug ||
-    "Category";
-
-  const isFullPage =
-    location.pathname.startsWith("/client/book/") ||
-    location.pathname.startsWith("/client/report/");
-
   return (
-    <>
-      <div
-        className={
-          `relative top-0 z-50 flex w-full flex-1 justify-center bg-gradient-to-r from-yellow-400 to-yellow-500 text-black shadow ` +
-          (isFullPage ? "" : "")
-        }
-      >
-        <div className="flex max-w-7xl flex-1 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => navigate(`/client/booking/${booking.id}`)}
-            className="flex w-full max-w-7xl items-center justify-between px-4 py-2 sm:px-6"
-            aria-label="Go to active booking"
-          >
-            <span className="h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/30 text-xs font-bold uppercase tracking-wide">
-              LIVE
-            </span>
-            <div className="min-w-0 flex-1 text-center">
-              <p className="flex w-full flex-col items-center justify-center text-xs font-semibold md:flex-row lg:text-sm">
-                <span className="w-full truncate md:w-auto md:overflow-visible">
-                  {serviceName}
-                </span>
-                <span className="mx-2 hidden opacity-70 md:inline">•</span>
-                <span className="w-full truncate opacity-90 md:w-auto md:overflow-visible">
-                  {packageName}
-                </span>
-              </p>
-              <p className="truncate text-[11px] opacity-90">
-                {categoryName} <span className="mx-2">•</span>
-                {providerName}
-              </p>
-            </div>
-            <ChevronRightIcon className="h-5 w-5 flex-shrink-0 opacity-90" />
-          </button>
+    <div
+      onClick={() => navigate(`/client/booking/${booking.id}`)}
+      className="group cursor-pointer overflow-hidden rounded-2xl bg-yellow-500 px-5 py-3.5 font-black shadow-sm transition-all hover:bg-yellow-600 active:scale-95"
+    >
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <div className="absolute inset-0 animate-ping rounded-full bg-white opacity-25" />
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
+            <WrenchIcon className="h-6 w-6 text-white" />
+          </div>
+        </div>
+        <div className="flex-1">
+          <h3 className="font-bold text-white">Service in progress</h3>
+          <p className="text-sm text-yellow-100">
+            {serviceName} • {providerName}
+          </p>
+        </div>
+        <div className="rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-colors group-hover:bg-white/30">
+          View
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
