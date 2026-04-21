@@ -154,12 +154,6 @@ const MyServicesPage: React.FC = () => {
   };
 
   const handlePermanentDelete = async (serviceId: string) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to permanently delete this service? This cannot be undone.",
-      )
-    )
-      return;
     setDeletingId(serviceId);
     try {
       await permanentDeleteService(serviceId);

@@ -35,10 +35,12 @@ const getCategoryImage = (slugOrName?: string) => {
 interface ServiceCardProps {
   service: EnhancedService;
   isActive: boolean;
+  isArchived: boolean;
   activeCount: number;
   plural: string;
   hasActiveBookings: (id: string) => boolean;
   handleToggleActive: (serviceId: string, isActive: boolean) => Promise<void>;
+  handleRestoreService?: (serviceId: string) => Promise<void>;
   setDeleteConfirmId: (id: string | null) => void;
   deletingId: string | null;
 }
@@ -46,10 +48,12 @@ interface ServiceCardProps {
 const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
   isActive,
+  isArchived,
   activeCount,
   plural,
   hasActiveBookings,
   handleToggleActive,
+  handleRestoreService,
   setDeleteConfirmId,
   deletingId,
 }) => {
@@ -119,56 +123,95 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       </div>
 
       <div className="relative z-10 mt-5 grid w-full grid-cols-2 gap-2">
-        <Tooltip
-          content={`Cannot ${isActive ? "deactivate" : "activate"} service with ${activeCount} active booking${plural}`}
-          showWhenDisabled={hasActiveBookings(service.id)}
-        >
-          <button
-            type="button"
-            className={`w-full rounded-xl px-2 py-2.5 text-xs font-bold transition-colors ${
-              hasActiveBookings(service.id)
-                ? "cursor-not-allowed opacity-50"
-                : ""
-            } ${
-              isActive
-                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                : "bg-blue-100 text-blue-800 hover:bg-blue-200"
-            }`}
-            onClick={async (e) => {
-              e.stopPropagation();
-              if (!hasActiveBookings(service.id)) {
-                await handleToggleActive(service.id, isActive);
-              }
-            }}
-            disabled={hasActiveBookings(service.id)}
+        {isArchived ? (
+          <Tooltip
+            content={`Cannot reactivate service with ${activeCount} active booking${plural}`}
+            showWhenDisabled={hasActiveBookings(service.id)}
           >
-            {isActive ? "Deactivate" : "Activate"}
-          </button>
-        </Tooltip>
-        <Tooltip
-          content={`Cannot archive service with ${activeCount} active booking${plural}`}
-          showWhenDisabled={hasActiveBookings(service.id)}
-        >
+            <button
+              type="button"
+              className={`w-full rounded-xl px-2 py-2.5 text-xs font-bold transition-colors ${
+                hasActiveBookings(service.id)
+                  ? "cursor-not-allowed opacity-50"
+                  : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+              }`}
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (!hasActiveBookings(service.id) && handleRestoreService) {
+                  await handleRestoreService(service.id);
+                }
+              }}
+              disabled={hasActiveBookings(service.id)}
+            >
+              Reactivate
+            </button>
+          </Tooltip>
+        ) : (
+          <Tooltip
+            content={`Cannot ${isActive ? "deactivate" : "activate"} service with ${activeCount} active booking${plural}`}
+            showWhenDisabled={hasActiveBookings(service.id)}
+          >
+            <button
+              type="button"
+              className={`w-full rounded-xl px-2 py-2.5 text-xs font-bold transition-colors ${
+                hasActiveBookings(service.id)
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
+              } ${
+                isActive
+                  ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                  : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+              }`}
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (!hasActiveBookings(service.id)) {
+                  await handleToggleActive(service.id, isActive);
+                }
+              }}
+              disabled={hasActiveBookings(service.id)}
+            >
+              {isActive ? "Deactivate" : "Activate"}
+            </button>
+          </Tooltip>
+        )}
+        {isArchived ? (
           <button
             type="button"
-            className={`w-full rounded-xl bg-red-50 px-2 py-2.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 ${
-              hasActiveBookings(service.id)
-                ? "cursor-not-allowed opacity-50"
-                : ""
-            }`}
+            className="w-full rounded-xl bg-red-600 px-2 py-2.5 text-xs font-bold text-white transition-colors hover:bg-red-700"
             onClick={(e) => {
               e.stopPropagation();
-              if (!hasActiveBookings(service.id)) {
-                setDeleteConfirmId(service.id);
-              }
+              setDeleteConfirmId(service.id);
             }}
-            disabled={
-              deletingId === service.id || hasActiveBookings(service.id)
-            }
+            disabled={deletingId === service.id}
           >
-            Archive
+            Delete
           </button>
-        </Tooltip>
+        ) : (
+          <Tooltip
+            content={`Cannot archive service with ${activeCount} active booking${plural}`}
+            showWhenDisabled={hasActiveBookings(service.id)}
+          >
+            <button
+              type="button"
+              className={`w-full rounded-xl bg-red-50 px-2 py-2.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 ${
+                hasActiveBookings(service.id)
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!hasActiveBookings(service.id)) {
+                  setDeleteConfirmId(service.id);
+                }
+              }}
+              disabled={
+                deletingId === service.id || hasActiveBookings(service.id)
+              }
+            >
+              Archive
+            </button>
+          </Tooltip>
+        )}
       </div>
     </div>
   );
@@ -192,7 +235,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 }) => {
   // Limit displayed services to 4
   const displayedServices = services.slice(0, 4);
-  const { updateServiceStatus, archiveService } = useServiceManagement();
+  const { updateServiceStatus, archiveService, restoreService, permanentDeleteService } = useServiceManagement();
   const { bookings: providerBookings } = useProviderBookingManagement();
 
   // Helper function to check if a service has active bookings
@@ -258,44 +301,88 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
     }
   };
 
+  // Handler for restore (reactivate archived service)
+  const handleRestoreService = async (serviceId: string) => {
+    setDeletingId(serviceId);
+    try {
+      await restoreService(serviceId);
+      toast.success("Service restored!", { position: "top-center" });
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      toast.error("Failed to restore service. Please try again.", {
+        position: "top-center",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Handler for permanent delete
+  const handlePermanentDelete = async (serviceId: string) => {
+    setDeletingId(serviceId);
+    try {
+      await permanentDeleteService(serviceId);
+      toast.success("Service permanently deleted.", { position: "top-center" });
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      toast.error("Failed to delete service. Please try again.", {
+        position: "top-center",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <>
       {/* Centered Delete Confirmation Dialog */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Archive Service?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to archive{" "}
-              <b>
-                {services.find((s) => s.id === deleteConfirmId)?.title ||
-                  "this service"}
-              </b>
-              ? This service will be hidden from clients.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setDeleteConfirmId(null)}
-                disabled={deletingId === deleteConfirmId}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={async () => {
-                  await handleDeleteService(deleteConfirmId);
-                }}
-                disabled={deletingId === deleteConfirmId}
-              >
-                {deletingId === deleteConfirmId ? "Archiving..." : "Archive"}
-              </button>
+      {deleteConfirmId && (() => {
+        const serviceToDelete = services.find((s) => s.id === deleteConfirmId);
+        const isArchivedDelete = serviceToDelete?.status === "Archived";
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
+              <h3 className="mb-2 text-lg font-bold text-red-700">
+                {isArchivedDelete ? "Delete Service?" : "Archive Service?"}
+              </h3>
+              <p className="mb-4 text-sm text-gray-700">
+                {isArchivedDelete
+                  ? `Are you sure you want to permanently delete "${serviceToDelete?.title || "this service"}"? This cannot be undone.`
+                  : `Are you sure you want to archive "${serviceToDelete?.title || "this service"}"? This service will be hidden from clients.`}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  onClick={() => setDeleteConfirmId(null)}
+                  disabled={deletingId === deleteConfirmId}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                  onClick={async () => {
+                    if (isArchivedDelete) {
+                      await handlePermanentDelete(deleteConfirmId);
+                    } else {
+                      await handleDeleteService(deleteConfirmId);
+                    }
+                    setDeleteConfirmId(null);
+                  }}
+                  disabled={deletingId === deleteConfirmId}
+                >
+                  {deletingId === deleteConfirmId
+                    ? isArchivedDelete
+                      ? "Deleting..."
+                      : "Archiving..."
+                    : isArchivedDelete
+                      ? "Delete"
+                      : "Archive"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="flex items-center justify-between py-4 md:py-5 lg:py-8">
         <h2 className="text-xl font-bold tracking-tight text-gray-900">
@@ -350,6 +437,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
               const isActive = service.status === "Available";
+              const isArchived = service.status === "Archived";
               const activeCount = getServiceActiveBookingsCount(service.id);
               const plural = activeCount !== 1 ? "s" : "";
 
@@ -358,10 +446,12 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                   key={service.id}
                   service={service}
                   isActive={isActive}
+                  isArchived={isArchived}
                   activeCount={activeCount}
                   plural={plural}
                   hasActiveBookings={hasActiveBookings}
                   handleToggleActive={handleToggleActive}
+                  handleRestoreService={handleRestoreService}
                   setDeleteConfirmId={setDeleteConfirmId}
                   deletingId={deletingId}
                 />
