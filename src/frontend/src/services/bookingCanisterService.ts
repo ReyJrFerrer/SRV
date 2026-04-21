@@ -631,6 +631,9 @@ export const bookingCanisterService = {
 
   // ==================== REALTIME SUBSCRIPTION FUNCTIONS ====================
 
+  // Shared listeners cache to prevent Firebase Web SDK 'Unexpected state' crashes
+  // caused by rapid/overlapping exact same queries being initiated.
+
   /**
    * Subscribe to all bookings for a client with realtime updates
    */
@@ -638,23 +641,12 @@ export const bookingCanisterService = {
     clientId: Principal,
     callback: (bookings: Booking[]) => void,
   ): Unsubscribe {
-    const bookingsRef = collection(getDb(), "bookings");
-    const q = query(bookingsRef, where("clientId", "==", clientId.toString()));
-
-    return onSnapshot(
-      q,
-      (snapshot) => {
-        const bookings: Booking[] = [];
-        snapshot.forEach((doc) => {
-          const data = { id: doc.id, ...doc.data() } as Booking;
-          bookings.push(mapBookingFields(data));
-        });
-        callback(bookings);
-      },
-      () => {
-        callback([]);
-      },
+    const listenerId = `client-${clientId.toString()}`;
+    const q = query(
+      collection(getDb(), "bookings"),
+      where("clientId", "==", clientId.toString()),
     );
+    return createSharedBookingListener(listenerId, q, callback);
   },
 
   /**
@@ -664,26 +656,12 @@ export const bookingCanisterService = {
     providerId: Principal,
     callback: (bookings: Booking[]) => void,
   ): Unsubscribe {
-    const bookingsRef = collection(getDb(), "bookings");
+    const listenerId = `provider-${providerId.toString()}`;
     const q = query(
-      bookingsRef,
+      collection(getDb(), "bookings"),
       where("providerId", "==", providerId.toString()),
     );
-
-    return onSnapshot(
-      q,
-      (snapshot) => {
-        const bookings: Booking[] = [];
-        snapshot.forEach((doc) => {
-          const data = { id: doc.id, ...doc.data() } as Booking;
-          bookings.push(mapBookingFields(data));
-        });
-        callback(bookings);
-      },
-      () => {
-        callback([]);
-      },
-    );
+    return createSharedBookingListener(listenerId, q, callback);
   },
 
   /**
@@ -693,22 +671,78 @@ export const bookingCanisterService = {
     bookingId: string,
     callback: (booking: Booking | null) => void,
   ): Unsubscribe {
+    const listenerId = `booking-${bookingId}`;
     const bookingRef = doc(getDb(), "bookings", bookingId);
 
-    return onSnapshot(
+    let listener = sharedBookingListeners.get(listenerId);
+
+    if (listener) {
+      listener.callbacks.add(callback);
+      if (listener.lastData !== undefined) {
+        callback(listener.lastData);
+      }
+      return () => {
+        const l = sharedBookingListeners.get(listenerId);
+        if (l) {
+          l.callbacks.delete(callback);
+          if (l.callbacks.size === 0) {
+            setTimeout(() => {
+              const currentL = sharedBookingListeners.get(listenerId);
+              if (currentL && currentL.callbacks.size === 0) {
+                currentL.unsubscribe();
+                sharedBookingListeners.delete(listenerId);
+              }
+            }, 1000);
+          }
+        }
+      };
+    }
+
+    const notifyAll = (booking: Booking | null) => {
+      const currentListener = sharedBookingListeners.get(listenerId);
+      if (currentListener) {
+        currentListener.lastData = booking;
+        currentListener.callbacks.forEach((cb) => cb(booking));
+      }
+    };
+
+    const unsubscribe = onSnapshot(
       bookingRef,
       (snapshot) => {
         if (snapshot.exists()) {
           const data = { id: snapshot.id, ...snapshot.data() } as Booking;
-          callback(mapBookingFields(data));
+          notifyAll(mapBookingFields(data));
         } else {
-          callback(null);
+          notifyAll(null);
         }
       },
       () => {
-        callback(null);
+        notifyAll(null);
       },
     );
+
+    sharedBookingListeners.set(listenerId, {
+      unsubscribe,
+      callbacks: new Set([callback]),
+      lastData: undefined,
+    });
+
+    return () => {
+      const l = sharedBookingListeners.get(listenerId);
+      if (l) {
+        l.callbacks.delete(callback);
+        if (l.callbacks.size === 0) {
+          // Delay actual unsubscription to prevent rapid mount/unmount issues in Firestore
+          setTimeout(() => {
+            const currentL = sharedBookingListeners.get(listenerId);
+            if (currentL && currentL.callbacks.size === 0) {
+              currentL.unsubscribe();
+              sharedBookingListeners.delete(listenerId);
+            }
+          }, 1000);
+        }
+      }
+    };
   },
 
   /**
@@ -718,25 +752,101 @@ export const bookingCanisterService = {
     status: BookingStatus,
     callback: (bookings: Booking[]) => void,
   ): Unsubscribe {
-    const bookingsRef = collection(getDb(), "bookings");
-    const q = query(bookingsRef, where("status", "==", status));
-
-    return onSnapshot(
-      q,
-      (snapshot) => {
-        const bookings: Booking[] = [];
-        snapshot.forEach((doc) => {
-          const data = { id: doc.id, ...doc.data() } as Booking;
-          bookings.push(mapBookingFields(data));
-        });
-        callback(bookings);
-      },
-      () => {
-        callback([]);
-      },
+    const listenerId = `status-${status}`;
+    const q = query(
+      collection(getDb(), "bookings"),
+      where("status", "==", status),
     );
+    return createSharedBookingListener(listenerId, q, callback);
   },
 };
+
+// Global cache for shared listeners
+const sharedBookingListeners = new Map<
+  string,
+  {
+    unsubscribe: Unsubscribe;
+    callbacks: Set<Function>;
+    lastData: any;
+  }
+>();
+
+// Helper to create or reuse a listener that expects an array of Bookings
+function createSharedBookingListener(
+  listenerId: string,
+  q: any,
+  callback: (bookings: Booking[]) => void,
+): Unsubscribe {
+  let listener = sharedBookingListeners.get(listenerId);
+
+  if (listener) {
+    listener.callbacks.add(callback);
+    if (listener.lastData !== undefined) {
+      callback(listener.lastData);
+    }
+    return () => {
+      const l = sharedBookingListeners.get(listenerId);
+      if (l) {
+        l.callbacks.delete(callback);
+        if (l.callbacks.size === 0) {
+          // Delay actual unsubscription to prevent rapid mount/unmount issues in Firestore
+          setTimeout(() => {
+            const currentL = sharedBookingListeners.get(listenerId);
+            if (currentL && currentL.callbacks.size === 0) {
+              currentL.unsubscribe();
+              sharedBookingListeners.delete(listenerId);
+            }
+          }, 1000);
+        }
+      }
+    };
+  }
+
+  const notifyAll = (bookings: Booking[]) => {
+    const currentListener = sharedBookingListeners.get(listenerId);
+    if (currentListener) {
+      currentListener.lastData = bookings;
+      currentListener.callbacks.forEach((cb) => cb(bookings));
+    }
+  };
+
+  const unsubscribe = onSnapshot(
+    q,
+    (snapshot: any) => {
+      const bookings: Booking[] = [];
+      snapshot.forEach((doc: any) => {
+        const data = { id: doc.id, ...doc.data() } as Booking;
+        bookings.push(mapBookingFields(data));
+      });
+      notifyAll(bookings);
+    },
+    () => {
+      notifyAll([]);
+    },
+  );
+
+  sharedBookingListeners.set(listenerId, {
+    unsubscribe,
+    callbacks: new Set([callback]),
+    lastData: undefined,
+  });
+
+  return () => {
+    const l = sharedBookingListeners.get(listenerId);
+    if (l) {
+      l.callbacks.delete(callback);
+      if (l.callbacks.size === 0) {
+        setTimeout(() => {
+          const currentL = sharedBookingListeners.get(listenerId);
+          if (currentL && currentL.callbacks.size === 0) {
+            currentL.unsubscribe();
+            sharedBookingListeners.delete(listenerId);
+          }
+        }, 1000);
+      }
+    }
+  };
+}
 
 // Firebase functions don't require actor management or reset functionality
 

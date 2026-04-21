@@ -71,7 +71,7 @@ const NotificationsPageSP = () => {
       }
     }
 
-    if (changed || notifications.length === 0) {
+    if (changed) {
       previousNotificationsRef.current = nextMap;
       setStableNotifications(notifications);
     }
