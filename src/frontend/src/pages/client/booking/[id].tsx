@@ -7,7 +7,6 @@ import {
   StarIcon,
   CheckCircleIcon,
   CalendarDaysIcon,
-  TruckIcon,
 } from "@heroicons/react/24/solid";
 import {
   EnhancedBooking,
@@ -238,13 +237,16 @@ const BookingDetailsPage: React.FC = () => {
 
   const getStatusPillStyle = (status: string) => {
     const styles: { [key: string]: string } = {
-      REQUESTED: "bg-yellow-50 text-yellow-700",
-      ACCEPTED: "bg-green-50 text-green-700",
-      INPROGRESS: "bg-blue-50 text-blue-700",
-      COMPLETED: "bg-indigo-50 text-indigo-700",
-      CANCELLED: "bg-red-50 text-red-700",
+      REQUESTED: "text-yellow-700 border border-yellow-200 bg-yellow-50",
+      ACCEPTED: "text-emerald-700 border border-emerald-200 bg-emerald-50",
+      INPROGRESS: "text-blue-700 border border-blue-200 bg-blue-50",
+      COMPLETED: "text-indigo-700 border border-indigo-200 bg-indigo-50",
+      CANCELLED: "text-red-700 border border-red-200 bg-red-50",
     };
-    return styles[status?.toUpperCase()] || "bg-gray-50 text-gray-700";
+    return (
+      styles[status?.toUpperCase()] ||
+      "text-slate-700 border border-slate-200 bg-slate-50"
+    );
   };
 
   const getReviewButtonContent = () => {
@@ -317,37 +319,6 @@ const BookingDetailsPage: React.FC = () => {
                 />
               </div>
             )}
-
-            {/* Track Provider Banner - shows when provider has started navigation */}
-            {status === "Accepted" &&
-              (specificBooking as any)?.navigationStartedNotified && (
-                <div
-                  onClick={() =>
-                    navigate(`/client/tracking/${specificBooking?.id}`)
-                  }
-                  className="group cursor-pointer overflow-hidden rounded-2xl bg-blue-600 px-5 py-3.5 font-black shadow-sm transition-all hover:bg-blue-700 active:scale-95"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 animate-ping rounded-full bg-white opacity-25" />
-                      <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                        <TruckIcon className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-white">
-                        Provider is on the way!
-                      </h3>
-                      <p className="text-sm text-blue-100">
-                        Tap to track real-time location
-                      </p>
-                    </div>
-                    <div className="rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-colors group-hover:bg-white/30">
-                      Track Now
-                    </div>
-                  </div>
-                </div>
-              )}
 
             <div>
               <div className="relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">

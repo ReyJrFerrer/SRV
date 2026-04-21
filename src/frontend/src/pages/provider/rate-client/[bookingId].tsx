@@ -195,7 +195,7 @@ const ProviderRateClientPage: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 pb-24">
+    <div className="flex min-h-screen flex-col bg-white pb-24">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="relative flex w-full items-center px-4 py-3">
           <button
@@ -313,18 +313,18 @@ const ProviderRateClientPage: React.FC = () => {
             </div>
           )}
 
-          <div className="mt-6 flex justify-center space-x-3">
+          <div className="mt-6 flex justify-center gap-3">
             <button
               onClick={() => navigate("/")}
               disabled={submitting}
-              className="w-full rounded-lg bg-gray-100 px-4 py-2 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+              className="w-full rounded-lg border border-yellow-500 bg-white px-4 py-2 font-semibold text-yellow-600 hover:bg-yellow-50 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={!isFormValid || submitting}
-              className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="flex w-full items-center justify-center rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               {submitting && (
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />

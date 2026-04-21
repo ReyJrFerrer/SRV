@@ -270,7 +270,7 @@ export const BookingReviewPage: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 pb-24">
+    <div className="flex min-h-screen flex-col bg-white pb-24">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="relative flex w-full items-center px-4 py-3">
           <button
@@ -399,18 +399,18 @@ export const BookingReviewPage: React.FC = () => {
             </div>
           )}
 
-          <div className="mt-6 flex justify-end space-x-3">
+          <div className="mt-6 flex justify-end gap-3">
             <button
               onClick={() => navigate(-1)}
               disabled={isSubmitting}
-              className="rounded-2xl bg-gray-100 px-5 py-3.5 font-bold text-gray-600 transition-all duration-300 hover:bg-gray-200 active:scale-95 disabled:opacity-50"
+              className="rounded-lg border border-blue-500 bg-white px-5 py-3 font-semibold text-blue-600 transition-all duration-300 hover:bg-blue-50 active:scale-95 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={!isFormValid || isSubmitting}
-              className="flex items-center rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="flex items-center rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               {isSubmitting && (
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>

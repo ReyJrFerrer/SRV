@@ -204,7 +204,7 @@ const ReportIssuePage: React.FC = () => {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-gray-800 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+              className="w-full rounded-lg border border-blue-200 bg-white p-3 text-gray-800 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
               placeholder="Brief summary of your issue..."
               required
               disabled={submitting}
@@ -222,9 +222,9 @@ const ReportIssuePage: React.FC = () => {
                 return (
                   <label
                     key={cat.id}
-                    className={`relative flex cursor-pointer rounded-lg border p-4 transition-all hover:bg-yellow-50 ${
+                    className={`relative flex cursor-pointer rounded-lg border p-4 transition-all hover:bg-blue-50 ${
                       category === cat.id
-                        ? "border-yellow-400 bg-yellow-50 ring-2 ring-yellow-200"
+                        ? "border-blue-400 bg-white ring-2 ring-blue-200"
                         : "border-gray-200 bg-white"
                     }`}
                   >
@@ -269,7 +269,7 @@ const ReportIssuePage: React.FC = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={6}
-              className="w-full rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-gray-800 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+              className="w-full rounded-lg border border-blue-200 bg-white p-3 text-gray-800 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
               placeholder="Please provide detailed information about your issue, including steps to reproduce if applicable..."
               required
               disabled={submitting}
@@ -281,9 +281,9 @@ const ReportIssuePage: React.FC = () => {
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Screenshots (optional)
             </label>
-            <div className="rounded-lg border border-dashed border-yellow-300 bg-yellow-50 p-4">
+            <div className="rounded-lg border border-dashed border-blue-300 bg-white p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-yellow-700">
+                <div className="flex items-center gap-2 text-blue-700">
                   <PhotoIcon className="h-5 w-5" />
                   <span className="text-sm">Upload up to 5 images</span>
                 </div>

@@ -397,8 +397,8 @@ const PayoutSettingsPage: React.FC = () => {
               </button>
             </form>
 
-            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-              <p className="text-xs text-blue-700">
+            <div className="mt-4 rounded-lg border border-yellow-200 bg-white p-3">
+              <p className="text-xs text-yellow-700">
                 <strong>Secure & Private:</strong> Your information is encrypted
                 and stored securely. We use Xendit's secure payment platform to
                 process transactions. This is a one-time setup to activate your

@@ -90,6 +90,16 @@ function debounce<T extends (...args: any[]) => void>(
   };
 }
 
+// Shared listeners to prevent Firebase Web SDK 'Unexpected state' crashes
+const sharedNotificationListeners = new Map<
+  string,
+  {
+    unsubscribe: Unsubscribe;
+    callbacks: Set<(notifications: FrontendNotification[]) => void>;
+    lastData: FrontendNotification[] | null;
+  }
+>();
+
 // Notification Service Functions using Firebase
 export const notificationCanisterService = {
   /**
@@ -101,6 +111,42 @@ export const notificationCanisterService = {
     filter?: NotificationFilter,
   ): Unsubscribe {
     try {
+      const filterKey = filter ? JSON.stringify(filter) : "";
+      const listenerId = `user-notifs-${userId}-${filterKey}`;
+
+      let listener = sharedNotificationListeners.get(listenerId);
+
+      if (listener) {
+        listener.callbacks.add(callback);
+        if (listener.lastData) {
+          callback(listener.lastData);
+        }
+        return () => {
+          const l = sharedNotificationListeners.get(listenerId);
+          if (l) {
+            l.callbacks.delete(callback);
+            if (l.callbacks.size === 0) {
+              setTimeout(() => {
+                const currentL = sharedNotificationListeners.get(listenerId);
+                if (currentL && currentL.callbacks.size === 0) {
+                  currentL.unsubscribe();
+                  sharedNotificationListeners.delete(listenerId);
+                }
+              }, 1000);
+            }
+          }
+        };
+      }
+
+      // Debounce the notification to all callbacks to prevent rapid re-renders
+      const notifyAll = debounce((notifications: FrontendNotification[]) => {
+        const currentListener = sharedNotificationListeners.get(listenerId);
+        if (currentListener) {
+          currentListener.lastData = notifications;
+          currentListener.callbacks.forEach((cb) => cb(notifications));
+        }
+      }, 250);
+
       let q = query(
         collection(db, "notifications"),
         where("userId", "==", userId),
@@ -126,16 +172,8 @@ export const notificationCanisterService = {
         }
       }
 
-      // Debounce the callback to prevent rapid re-renders
-      const debouncedCallback = debounce(
-        (notifications: FrontendNotification[]) => {
-          callback(notifications);
-        },
-        250,
-      ); // 250ms debounce for notifications
-
       // Set up real-time listener
-      return onSnapshot(
+      const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
           const notifications = snapshot.docs.map((doc) => {
@@ -149,12 +187,37 @@ export const notificationCanisterService = {
                   : new Date().toISOString(),
             });
           });
-          debouncedCallback(notifications);
+          notifyAll(notifications);
         },
         () => {
-          callback([]);
+          notifyAll([]);
         },
       );
+
+      listener = {
+        unsubscribe,
+        callbacks: new Set([callback]),
+        lastData: null,
+      };
+
+      sharedNotificationListeners.set(listenerId, listener);
+
+      return () => {
+        const l = sharedNotificationListeners.get(listenerId);
+        if (l) {
+          l.callbacks.delete(callback);
+          if (l.callbacks.size === 0) {
+            // Delay unsubscription to prevent Firestore 'Unexpected state' on rapid mount/unmount
+            setTimeout(() => {
+              const currentL = sharedNotificationListeners.get(listenerId);
+              if (currentL && currentL.callbacks.size === 0) {
+                currentL.unsubscribe();
+                sharedNotificationListeners.delete(listenerId);
+              }
+            }, 1000);
+          }
+        }
+      };
     } catch (error) {
       return () => {};
     }

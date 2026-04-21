@@ -1239,18 +1239,18 @@ const ProviderServiceDetailPage: React.FC = () => {
             {error || hookError || "The service could not be loaded."}
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
-            <button
-              onClick={handleRetry}
-              className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-            >
-              Try Again
-            </button>
             <Link
               to="/provider/services"
-              className="rounded-lg bg-gray-600 px-6 py-2 text-white transition-colors hover:bg-gray-700"
+              className="rounded-lg border border-yellow-500 bg-white px-6 py-2 font-semibold text-yellow-600 transition-colors hover:bg-yellow-50"
             >
               Back to Services
             </Link>
+            <button
+              onClick={handleRetry}
+              className="rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-white transition-colors hover:bg-yellow-600"
+            >
+              Try Again
+            </button>
           </div>
           {retryCount > 0 && (
             <p className="mt-4 text-xs text-gray-500">

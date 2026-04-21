@@ -152,7 +152,7 @@ const ReceiptPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="mb-8 space-y-3 rounded-xl border border-blue-100 bg-blue-50/60 p-5 text-base shadow-inner">
+        <div className="mb-8 space-y-3 rounded-xl border border-blue-200 bg-white p-5 text-base shadow-sm">
           <div className="flex justify-between">
             <span className="text-gray-600">Booking ID:</span>
             <span className="font-semibold tracking-widest text-blue-900">
@@ -192,8 +192,8 @@ const ReceiptPage: React.FC = () => {
         </div>
 
         {/* Payment Summary Section */}
-        <div className="mb-8 space-y-3 rounded-xl border border-yellow-200 bg-yellow-50/70 p-5 text-base shadow-inner">
-          <h2 className="mb-2 text-lg font-bold text-yellow-700">
+        <div className="mb-8 space-y-3 rounded-xl border border-blue-200 bg-white p-5 text-base shadow-sm">
+          <h2 className="mb-2 text-lg font-bold text-blue-700">
             Payment Summary
           </h2>
           <div className="flex justify-between">
