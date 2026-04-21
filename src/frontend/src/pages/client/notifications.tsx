@@ -18,7 +18,7 @@ import NotificationItem from "../../components/client/NotificationItemClient";
 // NotificationItem and NotificationMenu moved to components/notifications
 
 const NotificationsPage = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const {
     notifications,
     loading,
@@ -27,7 +27,6 @@ const NotificationsPage = () => {
     markAllAsRead,
     deleteNotification,
   } = useNotifications();
-
 
   // Track processed notification IDs to prevent flickering from re-renders
   const processedNotificationsRef = React.useRef<Set<string>>(new Set());
