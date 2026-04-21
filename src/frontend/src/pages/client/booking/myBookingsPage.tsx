@@ -228,9 +228,9 @@ const MyBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
 
-  // View toggle for Scheduled section (default to calendar)
+  // View toggle for Scheduled section (default to list)
   const [scheduledView, setScheduledView] = useState<"calendar" | "list">(
-    "calendar",
+    "list",
   );
 
   const toCalendarItems = React.useCallback(
@@ -479,7 +479,7 @@ const MyBookingsPage: React.FC = () => {
             <div className="flex items-center justify-center px-4 pb-4">
               <div className="relative flex w-full max-w-sm rounded-2xl bg-gray-100 p-1.5">
                 <div
-                  className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
+                  className={`absolute bottom-1.5 left-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
                     timingFilter === "Scheduled"
                       ? "translate-x-full bg-blue-600"
                       : "translate-x-0 bg-yellow-400"
@@ -597,29 +597,38 @@ const MyBookingsPage: React.FC = () => {
                     <h2 className="text-base font-bold tracking-wide text-gray-900">
                       Scheduled
                     </h2>
-                    <div className="ml-auto flex items-center gap-2">
-                      <button
-                        type="button"
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          scheduledView === "calendar"
-                            ? "bg-blue-600 text-white"
-                            : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                        }`}
-                        onClick={() => setScheduledView("calendar")}
-                      >
-                        Calendar
-                      </button>
-                      <button
-                        type="button"
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          scheduledView === "list"
-                            ? "bg-blue-600 text-white"
-                            : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                        }`}
-                        onClick={() => setScheduledView("list")}
-                      >
-                        List
-                      </button>
+                    <div className="ml-auto">
+                      <div className="relative flex w-48 rounded-xl bg-gray-100 p-1">
+                        <div
+                          className={`absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-lg shadow-sm transition-all duration-300 ease-out ${
+                            scheduledView === "list"
+                              ? "translate-x-full bg-blue-600"
+                              : "translate-x-0 bg-yellow-500"
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          className={`relative z-10 w-1/2 rounded-lg py-2 text-center text-sm font-bold transition-colors duration-300 ${
+                            scheduledView === "calendar"
+                              ? "text-gray-900"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                          onClick={() => setScheduledView("calendar")}
+                        >
+                          Calendar
+                        </button>
+                        <button
+                          type="button"
+                          className={`relative z-10 w-1/2 rounded-lg py-2 text-center text-sm font-bold transition-colors duration-300 ${
+                            scheduledView === "list"
+                              ? "text-white"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                          onClick={() => setScheduledView("list")}
+                        >
+                          List
+                        </button>
+                      </div>
                     </div>
                   </div>
                   {scheduledView === "calendar" ? (

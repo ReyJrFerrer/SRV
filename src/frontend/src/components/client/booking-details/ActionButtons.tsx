@@ -152,9 +152,10 @@ const ActionButtons: React.FC<{
       <button
         key="bookAgain"
         onClick={stopAndRun(onBookAgain)}
-        className={`${baseButtonClass} w-full bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-900`}
+        className={`${baseButtonClass} w-full whitespace-nowrap bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-600`}
       >
-        <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+        <ArrowPathIcon className="mr-2 h-5 w-5 flex-shrink-0" />{" "}
+        {bookAgainLabel}
       </button>,
     );
   }

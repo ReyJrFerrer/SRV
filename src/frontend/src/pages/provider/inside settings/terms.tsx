@@ -1,27 +1,29 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../../components/provider/NavigationBar";
 
 const TermsAndConditionsPage: React.FC = () => {
   const navigate = useNavigate();
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="mx-auto w-full max-w-2xl flex-1 rounded-3xl border border-blue-100 bg-white p-10 shadow-2xl">
+    <div className="flex min-h-screen flex-col bg-gray-50 pb-20">
+      <div className="mx-auto w-full max-w-2xl flex-1 rounded-3xl border border-gray-100 bg-white p-10 shadow-sm">
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-blue-700 hover:text-blue-900 focus:outline-none"
+          className="mb-6 flex items-center gap-2 text-yellow-700 hover:text-yellow-900 focus:outline-none"
         >
           <ArrowLeftIcon className="h-5 w-5" />
         </button>
         <div className="mb-8 flex flex-col items-center">
-          <img src="/logo.svg" alt="SRV Logo" className="mb-2 h-16 w-16" />
-          <h1 className="text-center text-3xl font-extrabold tracking-tight text-blue-900">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-200 bg-white">
+            <ShieldCheckIcon className="h-8 w-8 text-blue-600" />
+          </div>
+          <h1 className="text-center text-3xl font-black tracking-tight text-yellow-900">
             Terms and Conditions for SRV
           </h1>
         </div>
         <div className="space-y-6 text-lg text-gray-700">
-          <div className="rounded-lg border border-blue-100 bg-blue-50 p-6">
+          <div className="rounded-lg border border-yellow-200 bg-white p-6">
             <div className="mb-4">
               <p>
                 <strong>Effective Date: August 6, 2025</strong>

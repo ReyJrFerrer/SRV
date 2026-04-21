@@ -101,12 +101,12 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
     switch (level) {
       case "New":
         return {
-          color: "bg-blue-50 text-blue-900 border-blue-200",
+          color: "bg-white text-yellow-900 border-yellow-200",
           icon: SparklesIcon,
           description: (
             <>
-              <span className="mb-1 flex items-center justify-center gap-2 text-lg font-bold text-blue-700">
-                <SparklesIcon className="h-6 w-6 text-blue-500" /> Welcome to
+              <span className="mb-1 flex items-center justify-center gap-2 text-lg font-bold text-yellow-700">
+                <SparklesIcon className="h-6 w-6 text-yellow-500" /> Welcome to
                 SRV!
               </span>
               <span className="block text-gray-700">
@@ -118,35 +118,35 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         };
       case "Low":
         return {
-          color: "bg-red-100 text-red-800 border-red-300",
+          color: "bg-white text-red-800 border-red-200",
           icon: ExclamationTriangleIcon,
           description:
             "Building trust - Focus on completing bookings and maintaining good conduct to improve your provider rating.",
         };
       case "Medium":
         return {
-          color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+          color: "bg-white text-blue-800 border-blue-200",
           icon: StarIcon,
           description:
             "Reliable provider - You're building a good reputation! Keep up the excellent conduct.",
         };
       case "High":
         return {
-          color: "bg-blue-100 text-blue-800 border-blue-300",
+          color: "bg-white text-yellow-800 border-yellow-200",
           icon: TrophyIcon,
           description:
             "Trusted provider - Excellent reputation! Clients trust you as a reliable provider.",
         };
       case "VeryHigh":
         return {
-          color: "bg-green-100 text-green-800 border-green-300",
+          color: "bg-white text-green-700 border-green-200",
           icon: ShieldCheckIcon,
           description:
             "Premium provider - Outstanding reputation! You're among the top-rated providers on our platform.",
         };
       default:
         return {
-          color: "bg-gray-100 text-gray-800 border-gray-300",
+          color: "bg-white text-gray-700 border-gray-200",
           icon: InformationCircleIcon,
           description: "Trust level not available.",
         };
@@ -183,7 +183,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
       </div>
       <div className="mt-3 flex w-full max-w-md flex-col items-center">
         {trustLevel === "New" ? (
-          <div className="w-full rounded-lg border border-blue-100 bg-blue-50 p-4 text-center shadow-sm">
+          <div className="w-full rounded-lg border border-yellow-100 bg-white p-4 text-center shadow-sm">
             {config.description}
           </div>
         ) : (
@@ -211,14 +211,14 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
         className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
+        <h2 className="mb-4 text-center text-xl font-bold text-yellow-700">
           Provider Badge Levels
         </h2>
         <ul className="space-y-4">
-          <li className="flex flex-col gap-1 rounded-lg border border-blue-100 bg-blue-50 p-3">
+          <li className="flex flex-col gap-1 rounded-lg border border-yellow-200 bg-white p-3">
             <div className="flex items-center gap-3">
-              <SparklesIcon className="h-6 w-6 text-blue-500" />
-              <span className="font-semibold text-blue-700">New User</span>
+              <SparklesIcon className="h-6 w-6 text-yellow-500" />
+              <span className="font-semibold text-yellow-700">New User</span>
               <span className="text-xs text-gray-500">Score: 50</span>
             </div>
             <span className="text-xs text-gray-700">
@@ -226,7 +226,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
               start building your reputation and unlock higher trust levels.
             </span>
           </li>
-          <li className="flex flex-col gap-1 rounded-lg border border-red-100 bg-red-50 p-3">
+          <li className="flex flex-col gap-1 rounded-lg border border-red-200 bg-white p-3">
             <div className="flex items-center gap-3">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
               <span className="font-semibold text-red-700">Building Trust</span>
@@ -237,10 +237,10 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
               maintaining good conduct to improve your provider rating.
             </span>
           </li>
-          <li className="flex flex-col gap-1 rounded-lg border border-yellow-100 bg-yellow-50 p-3">
+          <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-white p-3">
             <div className="flex items-center gap-3">
-              <StarIcon className="h-6 w-6 text-yellow-500" />
-              <span className="font-semibold text-yellow-700">Reliable</span>
+              <StarIcon className="h-6 w-6 text-blue-500" />
+              <span className="font-semibold text-blue-700">Reliable</span>
               <span className="text-xs text-gray-500">Score: 20.01 - 50.0</span>
             </div>
             <span className="text-xs text-gray-700">
@@ -248,10 +248,10 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
               Keep up the excellent conduct.
             </span>
           </li>
-          <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-100 p-3">
+          <li className="flex flex-col gap-1 rounded-lg border border-yellow-200 bg-white p-3">
             <div className="flex items-center gap-3">
-              <TrophyIcon className="h-6 w-6 text-blue-600" />
-              <span className="font-semibold text-blue-700">Trusted</span>
+              <TrophyIcon className="h-6 w-6 text-yellow-600" />
+              <span className="font-semibold text-yellow-700">Trusted</span>
               <span className="text-xs text-gray-500">Score: 50.01 - 80.0</span>
             </div>
             <span className="text-xs text-gray-700">
@@ -574,9 +574,9 @@ const ProviderProfilePage: React.FC = () => {
                         <p className="mt-1 text-gray-800">
                           {profile?.phone || "No phone number"}
                         </p>
-                        <div className="mt-2 flex items-start gap-2 rounded-md border border-blue-100 bg-blue-50 p-3">
-                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-500" />
-                          <p className="text-xs text-blue-800">
+                        <div className="mt-2 flex items-start gap-2 rounded-md border border-yellow-200 bg-white p-3">
+                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" />
+                          <p className="text-xs text-yellow-800">
                             Your phone number is linked to your account for
                             security and cannot be changed here. Please contact
                             support for assistance if you need to update it.
@@ -589,7 +589,7 @@ const ProviderProfilePage: React.FC = () => {
                     {!isEditing ? (
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="flex items-center rounded-lg bg-blue-50 px-6 py-2 font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                        className="flex items-center rounded-lg border border-yellow-200 bg-white px-6 py-2 font-semibold text-yellow-700 transition-colors hover:bg-yellow-50"
                       >
                         <PencilIcon className="mr-2 h-4 w-4" />
                         Edit Profile

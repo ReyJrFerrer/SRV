@@ -50,7 +50,7 @@ const ReviewItem: React.FC<{
       }`}
     >
       <div className="mb-3 flex items-start">
-        <div className="relative mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-blue-100 bg-blue-50">
+        <div className="relative mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-100 bg-white">
           <img
             src={clientImageUrl || "/default-client.svg"}
             alt={review.clientName || "Client"}
