@@ -10,7 +10,9 @@ const ClientOnRouteBanner: React.FC = () => {
 
   if (
     location.pathname.startsWith("/client/chat/") ||
-    location.pathname.startsWith("/client/tracking/")
+    location.pathname.startsWith("/client/tracking/") ||
+    location.pathname.startsWith("/client/booking/") ||
+    location.pathname.startsWith("/client/bookings")
   )
     return null;
 
@@ -24,7 +26,7 @@ const ClientOnRouteBanner: React.FC = () => {
   return (
     <div
       onClick={() => navigate(`/client/tracking/${onRouteBooking.id}`)}
-      className="group cursor-pointer overflow-hidden rounded-2xl bg-blue-600 px-5 py-3.5 font-black shadow-sm transition-all hover:bg-blue-700 active:scale-95"
+      className="fixed left-4 right-4 top-2 z-[60] mx-auto max-w-md cursor-pointer overflow-hidden rounded-2xl bg-blue-600 px-5 py-3.5 font-black shadow-sm transition-all hover:bg-blue-700 md:left-1/2 md:top-4 md:max-w-xl md:-translate-x-1/2"
     >
       <div className="flex items-center gap-4">
         <div className="relative">

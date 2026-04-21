@@ -11,7 +11,10 @@ const ActiveServiceBanner: React.FC = () => {
 
   if (
     location.pathname.startsWith("/provider/chat/") ||
-    location.pathname.startsWith("/provider/directions/")
+    location.pathname.startsWith("/provider/directions/") ||
+    location.pathname.startsWith("/provider/booking/") ||
+    location.pathname.startsWith("/provider/bookings") ||
+    location.pathname.startsWith("/provider/service-details/")
   ) {
     return null;
   }
@@ -39,7 +42,7 @@ const ActiveServiceBanner: React.FC = () => {
   return (
     <div
       onClick={() => navigate(`/provider/active-service/${booking.id}`)}
-      className="group cursor-pointer overflow-hidden rounded-2xl bg-yellow-500 px-5 py-3.5 font-black shadow-sm transition-all hover:bg-yellow-600 active:scale-95"
+      className="fixed left-4 right-4 top-2 z-[60] mx-auto max-w-md cursor-pointer overflow-hidden rounded-2xl bg-yellow-500 px-5 py-3.5 font-black shadow-sm transition-all hover:bg-yellow-600 md:left-1/2 md:top-4 md:max-w-xl md:-translate-x-1/2"
     >
       <div className="flex items-center gap-4">
         <div className="relative">
