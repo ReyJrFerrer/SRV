@@ -146,7 +146,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           </button>
         </Tooltip>
         <Tooltip
-          content={`Cannot delete service with ${activeCount} active booking${plural}`}
+          content={`Cannot archive service with ${activeCount} active booking${plural}`}
           showWhenDisabled={hasActiveBookings(service.id)}
         >
           <button
@@ -166,7 +166,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               deletingId === service.id || hasActiveBookings(service.id)
             }
           >
-            Delete
+            Archive
           </button>
         </Tooltip>
       </div>
@@ -192,7 +192,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 }) => {
   // Limit displayed services to 4
   const displayedServices = services.slice(0, 4);
-  const { updateServiceStatus, deleteService } = useServiceManagement();
+  const { updateServiceStatus, archiveService } = useServiceManagement();
   const { bookings: providerBookings } = useProviderBookingManagement();
 
   // Helper function to check if a service has active bookings
@@ -245,11 +245,11 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   const handleDeleteService = async (serviceId: string) => {
     setDeletingId(serviceId);
     try {
-      await deleteService(serviceId);
-      toast.success("Service deleted!", { position: "top-center" });
+      await archiveService(serviceId);
+      toast.success("Service archived!", { position: "top-center" });
       if (onRefresh) await onRefresh();
     } catch (error) {
-      toast.error("Failed to delete service. Please try again.", {
+      toast.error("Failed to archive service. Please try again.", {
         position: "top-center",
       });
     } finally {
@@ -265,15 +265,15 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
             <h3 className="mb-2 text-lg font-bold text-red-700">
-              Delete Service?
+              Archive Service?
             </h3>
             <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to delete{" "}
+              Are you sure you want to archive{" "}
               <b>
                 {services.find((s) => s.id === deleteConfirmId)?.title ||
                   "this service"}
               </b>
-              ? This action cannot be undone.
+              ? This service will be hidden from clients.
             </p>
             <div className="flex gap-2">
               <button
@@ -290,7 +290,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                 }}
                 disabled={deletingId === deleteConfirmId}
               >
-                {deletingId === deleteConfirmId ? "Deleting..." : "Delete"}
+                {deletingId === deleteConfirmId ? "Archiving..." : "Archive"}
               </button>
             </div>
           </div>

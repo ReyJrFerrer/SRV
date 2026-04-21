@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {getFirestore} = require("../firebase-admin");
 
 const db = getFirestore();
@@ -755,9 +756,146 @@ exports.updateService = onCall(async (request) => {
 });
 
 /**
- * Delete a service
+ * Archive a service (soft delete)
  */
-exports.deleteService = onCall(async (request) => {
+const archiveService = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  // Get authentication info
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  const payload = data.data || data;
+  const {serviceId} = payload;
+
+  if (!serviceId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Service ID is required",
+    );
+  }
+
+  try {
+    const serviceRef = db.collection("services").doc(serviceId);
+    const serviceDoc = await serviceRef.get();
+
+    if (!serviceDoc.exists) {
+      throw new HttpsError("not-found", "Service not found");
+    }
+
+    const service = serviceDoc.data();
+
+    // Check if user is the provider or admin
+    if (
+      service.providerId !== authInfo.uid &&
+      !authInfo.isAdmin
+    ) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the service provider or admin can archive this service",
+      );
+    }
+
+    const now = new Date();
+    const deletionDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // + 30 days
+
+    await serviceRef.update({
+      status: "Archived",
+      previousStatus: service.status || "Available",
+      archivedAt: now.toISOString(),
+      deletionScheduledAt: deletionDate.toISOString(),
+      updatedAt: now.toISOString(),
+    });
+
+    return {success: true, message: "Service archived successfully"};
+  } catch (error) {
+    console.error("Error archiving service:", error);
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+exports.archiveService = archiveService;
+exports.deleteService = archiveService; // Backwards compatibility alias
+
+/**
+ * Restore an archived service
+ */
+exports.restoreService = onCall(async (request) => {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  // Get authentication info
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated",
+    );
+  }
+
+  const payload = data.data || data;
+  const {serviceId} = payload;
+
+  if (!serviceId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Service ID is required",
+    );
+  }
+
+  try {
+    const serviceRef = db.collection("services").doc(serviceId);
+    const serviceDoc = await serviceRef.get();
+
+    if (!serviceDoc.exists) {
+      throw new HttpsError("not-found", "Service not found");
+    }
+
+    const service = serviceDoc.data();
+
+    // Check if user is the provider or admin
+    if (
+      service.providerId !== authInfo.uid &&
+      !authInfo.isAdmin
+    ) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the service provider or admin can restore this service",
+      );
+    }
+
+    if (service.status !== "Archived") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Service is not archived",
+      );
+    }
+
+    const {FieldValue} = require("firebase-admin/firestore");
+
+    await serviceRef.update({
+      status: service.previousStatus || "Available",
+      archivedAt: FieldValue.delete(),
+      deletionScheduledAt: FieldValue.delete(),
+      previousStatus: FieldValue.delete(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    return {success: true, message: "Service restored successfully"};
+  } catch (error) {
+    console.error("Error restoring service:", error);
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Permanently delete a service
+ */
+exports.permanentDeleteService = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -2211,3 +2349,99 @@ async function getServiceInternal(serviceId) {
 // Export internal functions for use by other modules
 exports.getAllServicesInternal = getAllServicesInternal;
 exports.getServiceInternal = getServiceInternal;
+
+/**
+ * Scheduled job to permanently delete archived services past their deletion date
+ */
+exports.processScheduledDeletions = onSchedule("every day 00:00", async (event) => {
+  const now = new Date().toISOString();
+  
+  try {
+    // Find all archived services where deletionScheduledAt <= now
+    const snapshot = await db.collection("services")
+      .where("status", "==", "Archived")
+      .where("deletionScheduledAt", "<=", now)
+      .get();
+
+    if (snapshot.empty) {
+      console.log("No scheduled deletions found.");
+      return;
+    }
+
+    console.log(`Found ${snapshot.docs.length} services scheduled for deletion.`);
+
+    for (const doc of snapshot.docs) {
+      try {
+        const service = doc.data();
+        const serviceId = doc.id;
+
+        // Delete service images from storage and metadata
+        if (service.imageMedia && service.imageMedia.length > 0) {
+          await deleteImagesFromStorage(service.imageMedia);
+        }
+
+        // Delete service certificates from storage and metadata
+        if (service.certificateMedia && service.certificateMedia.length > 0) {
+          await deleteImagesFromStorage(service.certificateMedia);
+        }
+
+        // Delete all associated bookings for this service
+        const bookingsSnapshot = await db.collection("bookings")
+          .where("serviceId", "==", serviceId)
+          .get();
+
+        if (!bookingsSnapshot.empty) {
+          const batchSize = 500;
+          const docs = bookingsSnapshot.docs;
+          for (let i = 0; i < docs.length; i += batchSize) {
+            const batch = db.batch();
+            const batchDocs = docs.slice(i, i + batchSize);
+            batchDocs.forEach((d) => batch.delete(d.ref));
+            await batch.commit();
+          }
+        }
+
+        // Delete all associated reviews for this service
+        const reviewsSnapshot = await db.collection("reviews")
+          .where("serviceId", "==", serviceId)
+          .get();
+
+        if (!reviewsSnapshot.empty) {
+          const batchSize = 500;
+          const docs = reviewsSnapshot.docs;
+          for (let i = 0; i < docs.length; i += batchSize) {
+            const batch = db.batch();
+            const batchDocs = docs.slice(i, i + batchSize);
+            batchDocs.forEach((d) => batch.delete(d.ref));
+            await batch.commit();
+          }
+        }
+
+        // Delete all associated provider reviews
+        const providerReviewsSnapshot = await db.collection("providerReviews")
+          .where("serviceId", "==", serviceId)
+          .get();
+
+        if (!providerReviewsSnapshot.empty) {
+          const batchSize = 500;
+          const docs = providerReviewsSnapshot.docs;
+          for (let i = 0; i < docs.length; i += batchSize) {
+            const batch = db.batch();
+            const batchDocs = docs.slice(i, i + batchSize);
+            batchDocs.forEach((d) => batch.delete(d.ref));
+            await batch.commit();
+          }
+        }
+
+        // Delete the service document itself
+        await doc.ref.delete();
+        console.log(`Successfully permanently deleted service: ${serviceId}`);
+      } catch (err) {
+        console.error(`Failed to delete service ${doc.id}:`, err);
+      }
+    }
+  } catch (error) {
+    console.error("Error in processScheduledDeletions:", error);
+  }
+});
+

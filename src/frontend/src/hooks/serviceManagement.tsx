@@ -153,6 +153,9 @@ interface ServiceManagementHook {
     maxBookingsPerDay?: number,
   ) => Promise<EnhancedService>;
   deleteService: (serviceId: string) => Promise<void>;
+  archiveService: (serviceId: string) => Promise<void>;
+  restoreService: (serviceId: string) => Promise<void>;
+  permanentDeleteService: (serviceId: string) => Promise<void>;
   getService: (serviceId: string) => Promise<EnhancedService | null>;
 
   // Service status management
@@ -657,6 +660,63 @@ export const useServiceManagement = (): ServiceManagementHook => {
         throw error;
       } finally {
         setOperationLoading("deleteService", false);
+      }
+    },
+    [setOperationLoading, handleError],
+  );
+
+  const archiveService = useCallback(
+    async (serviceId: string): Promise<void> => {
+      try {
+        setOperationLoading("archiveService", true);
+        await serviceCanisterService.archiveService(serviceId);
+        // Note: we can either fetch services again or update locally
+        setServices((prev) =>
+          prev.map((service) =>
+            service.id === serviceId
+              ? { ...service, status: "Archived" as ServiceStatus }
+              : service,
+          ),
+        );
+      } catch (error) {
+        handleError(error, "archive service");
+        throw error;
+      } finally {
+        setOperationLoading("archiveService", false);
+      }
+    },
+    [setOperationLoading, handleError],
+  );
+
+  const restoreService = useCallback(
+    async (serviceId: string): Promise<void> => {
+      try {
+        setOperationLoading("restoreService", true);
+        await serviceCanisterService.restoreService(serviceId);
+        await fetchServices(); // Re-fetch to get correct restored status
+      } catch (error) {
+        handleError(error, "restore service");
+        throw error;
+      } finally {
+        setOperationLoading("restoreService", false);
+      }
+    },
+    [setOperationLoading, handleError, fetchServices],
+  );
+
+  const permanentDeleteService = useCallback(
+    async (serviceId: string): Promise<void> => {
+      try {
+        setOperationLoading("permanentDeleteService", true);
+        await serviceCanisterService.permanentDeleteService(serviceId);
+        setServices((prev) =>
+          prev.filter((service) => service.id !== serviceId),
+        );
+      } catch (error) {
+        handleError(error, "permanent delete service");
+        throw error;
+      } finally {
+        setOperationLoading("permanentDeleteService", false);
       }
     },
     [setOperationLoading, handleError],
@@ -1426,6 +1486,9 @@ export const useServiceManagement = (): ServiceManagementHook => {
     createService,
     updateService,
     deleteService,
+    archiveService,
+    restoreService,
+    permanentDeleteService,
     getService,
 
     // Service status management

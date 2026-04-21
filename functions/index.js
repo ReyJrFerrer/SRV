@@ -69,6 +69,10 @@ const {
 const {
   createService,
   getService,
+  archiveService,
+  restoreService,
+  permanentDeleteService,
+  processScheduledDeletions,
   getServicesByProvider,
   getServicesByCategory,
   updateServiceStatus,
@@ -237,6 +241,10 @@ exports.validatePhoneNumber = validatePhoneNumber;
 // Export Service Management functions
 exports.createService = createService;
 exports.getService = getService;
+exports.archiveService = archiveService;
+exports.restoreService = restoreService;
+exports.permanentDeleteService = permanentDeleteService;
+exports.processScheduledDeletions = processScheduledDeletions;
 exports.getServicesByProvider = getServicesByProvider;
 exports.getServicesByCategory = getServicesByCategory;
 exports.updateServiceStatus = updateServiceStatus;
