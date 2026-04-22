@@ -180,7 +180,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
         <button
           type="button"
           aria-label="Show badge info"
-          className="ml-2 rounded-full p-1 transition-colors hover:bg-black/5 focus:outline-none"
+          className="ml-2 rounded-full border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-blue-600"
           onClick={onInfoClick}
         >
           <InformationCircleIcon
@@ -777,7 +777,7 @@ const ClientProfilePage: React.FC = () => {
                   <button
                     type="button"
                     aria-label="What is reputation score?"
-                    className="rounded-full border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="rounded-full border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-blue-600 focus:outline-none"
                     onClick={() => setShowAboutInfo(true)}
                   >
                     <InformationCircleIcon className="h-5 w-5" />

@@ -1732,9 +1732,9 @@ const BookingPage: React.FC = () => {
             <div className="relative flex w-full items-center px-5 py-4">
               <button
                 onClick={() => navigate(-1)}
-                className="mr-4 flex-shrink-0 text-gray-600 hover:text-gray-800"
+                className="flex-shrink-0 rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
               >
-                <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+                <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
               </button>
               <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
                 Book Service

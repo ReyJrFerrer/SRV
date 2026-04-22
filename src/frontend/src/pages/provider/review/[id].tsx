@@ -289,9 +289,9 @@ export default function ProviderReviewView() {
         <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 transition-colors hover:bg-gray-100"
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
             Client Review

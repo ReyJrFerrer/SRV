@@ -242,7 +242,7 @@ const ClientTrackingPage: React.FC = () => {
       <div className="absolute left-4 top-4 z-20">
         <button
           onClick={handleBack}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur hover:bg-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm hover:bg-gray-50"
         >
           <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
         </button>

@@ -218,11 +218,10 @@ const PaymentPendingPage: React.FC = () => {
       <header className="sticky top-0 z-20 bg-white py-4 shadow-sm">
         <div className="flex items-center justify-between px-4">
           <button
-            onClick={() => navigate("/client")}
-            className="flex items-center text-blue-600 hover:text-blue-700"
+            onClick={() => navigate(-1)}
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
           >
-            <ArrowLeftIcon className="mr-2 h-5 w-5" />
-            Home
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <h1 className="text-xl font-extrabold text-black">Payment Status</h1>
           <div className="w-16" />

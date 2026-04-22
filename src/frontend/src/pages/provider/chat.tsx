@@ -490,7 +490,7 @@ const ClientChatPage: React.FC = () => {
                           {!isDesktop && (
                             <button
                               onClick={() => setSelectedConversationId(null)}
-                              className="mr-1 rounded-full p-2 hover:bg-gray-100"
+                              className="mr-1 rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
                             >
                               <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
                             </button>

@@ -265,10 +265,10 @@ const ServiceReviewsPage: React.FC = () => {
           <div className="flex items-center">
             <button
               onClick={() => navigate(-1)}
-              className="mr-3 rounded-full p-2 transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="mr-3 rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
               aria-label="Go back"
             >
-              <ArrowLeftIcon className="h-6 w-6 text-blue-700" />
+              <ArrowLeftIcon className="h-5 w-5" />
             </button>
             <h1 className="truncate text-lg font-bold text-blue-900">
               Reviews Page

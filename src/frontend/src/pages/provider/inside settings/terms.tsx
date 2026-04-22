@@ -10,7 +10,7 @@ const TermsAndConditionsPage: React.FC = () => {
       <div className="mx-auto w-full max-w-2xl flex-1 rounded-3xl border border-gray-100 bg-white p-10 shadow-sm">
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-yellow-700 hover:text-yellow-900 focus:outline-none"
+          className="mb-6 rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
         >
           <ArrowLeftIcon className="h-5 w-5" />
         </button>

@@ -138,19 +138,19 @@ const ReviewsPage: React.FC = () => {
         <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-200 bg-white text-blue-600 transition-colors hover:bg-blue-50 active:scale-95"
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
           >
-            <ChevronLeftIcon className="h-6 w-6" />
+            <ChevronLeftIcon className="h-5 w-5" />
           </button>
           <h1 className="text-xl font-black tracking-tight text-blue-950">
             My Reviews
           </h1>
           <button
             onClick={() => setShowRatingInfo(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100 active:scale-95"
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-blue-600"
             aria-label="About ratings"
           >
-            <InformationCircleIcon className="h-6 w-6" />
+            <InformationCircleIcon className="h-5 w-5" />
           </button>
         </div>
       </header>

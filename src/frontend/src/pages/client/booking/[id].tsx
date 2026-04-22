@@ -294,9 +294,9 @@ const BookingDetailsPage: React.FC = () => {
         <div className="flex max-w-4xl items-center px-4 py-3.5 sm:px-6 md:pl-24 lg:pl-24">
           <button
             onClick={() => navigate(-1)}
-            className="flex-shrink-0 rounded-full p-1 transition-colors hover:bg-gray-50 lg:mr-4"
+            className="flex-shrink-0 rounded-full border border-gray-200 bg-white p-2 text-gray-700 transition-colors hover:bg-gray-50 lg:mr-4"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
             Booking Details

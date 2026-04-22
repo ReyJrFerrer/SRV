@@ -61,10 +61,10 @@ const ClientInfoCard: React.FC<Props> = ({
               <button
                 type="button"
                 aria-label="About ratings"
-                className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="rounded-full border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-blue-600"
                 onClick={() => setShowRatingInfo(true)}
               >
-                <InformationCircleIcon className="h-5 w-5 text-blue-500" />
+                <InformationCircleIcon className="h-5 w-5" />
               </button>
             </div>
           </div>

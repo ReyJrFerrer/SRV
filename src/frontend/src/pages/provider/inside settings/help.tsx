@@ -12,10 +12,9 @@ const HelpSupportPage: React.FC = () => {
       <div className="mx-auto w-full max-w-xl rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 rounded-lg border border-yellow-200 bg-white px-3 py-2 text-yellow-700 hover:bg-yellow-50 focus:outline-none"
+          className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
         >
           <ArrowLeftIcon className="h-5 w-5" />
-          <span className="font-medium">Back</span>
         </button>
         <div className="mb-8 flex flex-col items-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-200 bg-white">

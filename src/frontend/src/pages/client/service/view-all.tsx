@@ -42,10 +42,10 @@ const ViewAllServicesPage: React.FC = () => {
         <div className="mb-4 flex items-center gap-3">
           <button
             onClick={handleBackClick}
-            className="rounded-full p-2 transition-colors hover:bg-gray-100"
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
             aria-label="Go back"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <h1 className="text-xl font-bold text-gray-800">All Services</h1>
         </div>

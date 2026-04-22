@@ -275,9 +275,9 @@ export const BookingReviewPage: React.FC = () => {
         <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate("/client/home")}
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
             Rate Provider

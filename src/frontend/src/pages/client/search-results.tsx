@@ -185,7 +185,7 @@ const SearchResultsPage: React.FC = () => {
         <div className="mb-4 flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-2xl border border-blue-200 bg-white px-5 py-3.5 font-bold text-blue-600 transition-all hover:bg-blue-50 active:scale-95"
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
             aria-label="Go back"
           >
             <ArrowLeftIcon className="h-5 w-5" />
