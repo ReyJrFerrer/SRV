@@ -222,35 +222,40 @@ const ProviderHomePage: React.FC = () => {
             scrollTargetRef={scrollRef as React.RefObject<HTMLElement>}
           />
           <div className="mx-auto max-w-7xl">
-            {/* Use legacyProvider for components that still need the old interface */}
-            {provider && (
-              <ProviderStatsNextjs
-                loading={isDataLoading}
-                analytics={analytics}
-                bookingsLoading={bookingsLoading}
-                bookingsError={bookingsError}
-                getMonthlyRevenue={getMonthlyRevenue}
-                getBookingCountByDay={getBookingCountByDay}
-                getRevenueByPeriod={getRevenueByPeriod}
-                reviewAnalytics={reviewAnalytics}
-                reviewsLoading={reviewsLoading}
-                reviewsError={reviewsError}
-                getStatusCountsByPeriod={getStatusCountsByPeriod}
-                providerReviews={reviews}
+            <div className="tour-provider-stats">
+              {provider && (
+                <ProviderStatsNextjs
+                  loading={isDataLoading}
+                  analytics={analytics}
+                  bookingsLoading={bookingsLoading}
+                  bookingsError={bookingsError}
+                  getMonthlyRevenue={getMonthlyRevenue}
+                  getBookingCountByDay={getBookingCountByDay}
+                  getRevenueByPeriod={getRevenueByPeriod}
+                  reviewAnalytics={reviewAnalytics}
+                  reviewsLoading={reviewsLoading}
+                  reviewsError={reviewsError}
+                  getStatusCountsByPeriod={getStatusCountsByPeriod}
+                  providerReviews={reviews}
+                />
+              )}
+            </div>
+
+            <div className="tour-provider-requests">
+              <BookingRequestsNextjs
+                pendingRequests={bookingCounts.pendingCount}
+                upcomingJobs={bookingCounts.upcomingCount}
               />
-            )}
+            </div>
 
-            <BookingRequestsNextjs
-              pendingRequests={bookingCounts.pendingCount}
-              upcomingJobs={bookingCounts.upcomingCount}
-            />
-
-            <ServiceManagementNextjs
-              services={userServices}
-              loading={servicesLoading}
-              error={servicesError}
-              onRefresh={refreshServices}
-            />
+            <div className="tour-provider-services">
+              <ServiceManagementNextjs
+                services={userServices}
+                loading={servicesLoading}
+                error={servicesError}
+                onRefresh={refreshServices}
+              />
+            </div>
           </div>
         </main>
 

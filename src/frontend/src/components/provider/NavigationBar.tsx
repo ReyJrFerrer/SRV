@@ -168,7 +168,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     <>
       {!location.pathname.startsWith("/provider/chat/") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-100 bg-white/90 pb-2 pt-2 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] backdrop-blur-xl md:hidden">
-          <nav className="mx-auto flex w-full max-w-full items-center justify-center">
+          <nav className="tour-provider-nav mx-auto flex w-full max-w-full items-center justify-center">
             <div className="grid w-full grid-cols-6 font-medium">
               {mobileOrder.map((label) => {
                 let to = "";
@@ -283,7 +283,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       )}
 
       {/* Desktop left sidebar */}
-      <aside className="safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-100 bg-white pt-4 shadow-[10px_0_30px_-15px_rgba(0,0,0,0.05)] md:flex md:flex-col">
+      <aside className="tour-provider-nav safe-area-inset-left fixed left-0 top-0 z-40 hidden h-screen w-20 border-r border-gray-100 bg-white pt-4 shadow-[10px_0_30px_-15px_rgba(0,0,0,0.05)] md:flex md:flex-col">
         {/* Top section: main nav items */}
         <div className="flex w-full flex-1 flex-col items-center gap-3">
           {navItems.map((item) => {
