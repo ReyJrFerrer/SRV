@@ -31,6 +31,7 @@ import AvailabilitySection, {
   Availability,
 } from "../../../components/client/service-detail/AvailabilitySection";
 import EmptyState from "../../../components/common/EmptyState";
+import SpotlightTour from "../../../components/common/SpotlightTour";
 
 function formatTime12Hour(time: string): string {
   if (!time) return "";
@@ -171,8 +172,8 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const isOwnService = Boolean(
     identity &&
-      service &&
-      identity.getPrincipal().toString() === service.providerId,
+    service &&
+    identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -291,7 +292,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         <div className="relative h-60 w-full animate-pulse bg-gray-300"></div>
 
         <main className="relative z-10 -mt-24 p-4">
-          <div className="mx-auto mt-6 w-full max-w-5xl">
+          <div className="tour-client-service-hero mx-auto mt-6 w-full max-w-5xl">
             {/* Main Card Skeleton */}
             <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
@@ -593,6 +594,7 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28 md:pb-20">
+      <SpotlightTour flowType="client-service" />
       <div className="relative h-64 w-full md:h-80">
         {/* Accept any valid URL (data:, http(s), or local path) for hero images */}
         <img
@@ -728,7 +730,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         </div>
 
         <div className="mx-auto w-full max-w-5xl">
-          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+          <div className="tour-client-service-packages mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
             <h3 className="mb-6 flex items-center gap-2 text-xl font-bold text-gray-900">
               <Squares2X2Icon className="h-6 w-6 text-yellow-500" />
               Packages Offered
@@ -775,27 +777,35 @@ const ClientServiceDetailsPage: React.FC = () => {
             )}
           </div>
 
-          <AvailabilitySection
-            availability={mappedAvailability}
-            isActive={service?.isActive}
-          />
-          <ServiceGallerySection
-            serviceId={service.id}
-            imageUrls={service.media || []}
-          />
-          <CredentialsSection
-            isVerified={isVerified}
-            hasCertificates={hasCertificates}
-            hasPendingCertificates={hasPendingCertificates}
-          />
-          <ReviewsSection
-            serviceId={service.id}
-            reviews={reviews}
-            loading={reviewsLoading}
-            error={reviewsError}
-            averageRating={getAverageRating(reviews)}
-            ratingDistribution={getRatingDistribution(reviews)}
-          />
+          <div className="tour-client-service-availability">
+            <AvailabilitySection
+              availability={mappedAvailability}
+              isActive={service?.isActive}
+            />
+          </div>
+          <div className="tour-client-service-gallery">
+            <ServiceGallerySection
+              serviceId={service.id}
+              imageUrls={service.media || []}
+            />
+          </div>
+          <div className="tour-client-service-credentials">
+            <CredentialsSection
+              isVerified={isVerified}
+              hasCertificates={hasCertificates}
+              hasPendingCertificates={hasPendingCertificates}
+            />
+          </div>
+          <div className="tour-client-service-reviews">
+            <ReviewsSection
+              serviceId={service.id}
+              reviews={reviews}
+              loading={reviewsLoading}
+              error={reviewsError}
+              averageRating={getAverageRating(reviews)}
+              ratingDistribution={getRatingDistribution(reviews)}
+            />
+          </div>
         </div>
       </main>
 
@@ -835,7 +845,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               !hasSufficientReputation ||
               isCheckingReputation
             }
-            className="group relative flex w-2/3 items-center justify-center rounded-xl bg-yellow-400 px-4 py-3.5 font-bold text-gray-900 shadow-sm transition-all duration-200 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+            className="tour-client-service-book group relative flex w-2/3 items-center justify-center rounded-xl bg-yellow-400 px-4 py-3.5 font-bold text-gray-900 shadow-sm transition-all duration-200 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
           >
             {isCheckingReputation
               ? "Checking..."

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { PlusIcon, StarIcon } from "@heroicons/react/24/solid";
-import { Link, useNavigate } from "react-router-dom";
+import { PlusIcon } from "@heroicons/react/24/solid";
+import { Link } from "react-router-dom";
 import {
   EnhancedService,
   useServiceManagement,

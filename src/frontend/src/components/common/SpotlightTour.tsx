@@ -12,7 +12,12 @@ import {
   ChevronLeftIcon,
 } from "@heroicons/react/24/outline";
 
-export type FlowType = "client" | "provider";
+export type FlowType =
+  | "client"
+  | "provider"
+  | "client-service"
+  | "client-bookings"
+  | "client-booking-details";
 
 interface SpotlightTourProps {
   flowType: FlowType;
@@ -85,6 +90,15 @@ const PROVIDER_STEPS: CustomStep[] = [
     placement: "bottom",
   } as CustomStep,
   {
+    target: ".tour-provider-requests",
+    headline: "Manage Bookings",
+    content:
+      "Easily track upcoming and pending bookings all in one place. Accept or decline requests with a single click.",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    color: "bg-pink-50",
+    placement: "top",
+  } as CustomStep,
+  {
     target: ".tour-provider-services",
     headline: "Manage Services",
     content:
@@ -93,13 +107,199 @@ const PROVIDER_STEPS: CustomStep[] = [
     color: "bg-purple-50",
     placement: "top",
   } as CustomStep,
+];
+
+const CLIENT_SERVICE_STEPS: CustomStep[] = [
   {
-    target: ".tour-provider-requests",
-    headline: "Manage Bookings",
+    target: ".tour-client-service-hero",
+    before: () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const el = document.querySelector(".tour-client-service-hero");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.scrollBy(0, -120);
+          }
+          resolve();
+        }, 150);
+      });
+    },
+    headline: "Service Details",
     content:
-      "Easily track upcoming and pending bookings all in one place. Accept or decline requests with a single click.",
+      "Here you can view all the details about this service, including the provider's info, price, and availability.",
+    image: "/images/srv characters (SVG)/plumber.svg",
+    color: "bg-indigo-50",
+    placement: "bottom",
+    disableBeacon: true,
+  } as CustomStep,
+  {
+    target: ".tour-client-service-packages",
+    before: () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const el = document.querySelector(".tour-client-service-packages");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.scrollBy(0, -120);
+          }
+          resolve();
+        }, 150);
+      });
+    },
+    headline: "Choose Your Package",
+    content:
+      "Browse through the service packages offered by this provider. Each package includes a detailed description and pricing.",
+    image: "/images/srv characters (SVG)/tech guy.svg",
+    color: "bg-purple-50",
+    placement: "top",
+  } as CustomStep,
+  {
+    target: ".tour-client-service-availability",
+    before: () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const el = document.querySelector(
+            ".tour-client-service-availability",
+          );
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.scrollBy(0, -120);
+          }
+          resolve();
+        }, 150);
+      });
+    },
+    headline: "Check Availability",
+    content:
+      "See the provider's available time slots and schedule your booking at a time that works for you.",
     image: "/images/srv characters (SVG)/tutor.svg",
     color: "bg-pink-50",
+    placement: "top",
+  } as CustomStep,
+  {
+    target: ".tour-client-service-gallery",
+    before: () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const el = document.querySelector(".tour-client-service-gallery");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.scrollBy(0, -120);
+          }
+          resolve();
+        }, 150);
+      });
+    },
+    headline: "See Their Work",
+    content:
+      "Browse through photos and gallery images to get a feel for the quality of work this provider delivers.",
+    image: "/images/srv characters (SVG)/girl.svg",
+    color: "bg-teal-50",
+    placement: "top",
+  } as CustomStep,
+  {
+    target: ".tour-client-service-credentials",
+    before: () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const el = document.querySelector(".tour-client-service-credentials");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.scrollBy(0, -120);
+          }
+          resolve();
+        }, 150);
+      });
+    },
+    headline: "Verified Credentials",
+    content:
+      "This section shows any certifications, licenses, or qualifications the provider has earned.",
+    image: "/images/srv characters (SVG)/plumber.svg",
+    color: "bg-indigo-50",
+    placement: "top",
+  } as CustomStep,
+  {
+    target: ".tour-client-service-reviews",
+    before: () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const el = document.querySelector(".tour-client-service-reviews");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.scrollBy(0, -120);
+          }
+          resolve();
+        }, 150);
+      });
+    },
+    headline: "Real Reviews",
+    content:
+      "Read genuine feedback from past clients to help you decide if this is the right provider for you.",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    color: "bg-pink-50",
+    placement: "top",
+  } as CustomStep,
+  {
+    target: ".tour-client-service-book",
+    before: () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const el = document.querySelector(".tour-client-service-book");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "end" });
+          }
+          resolve();
+        }, 150);
+      });
+    },
+    headline: "Ready to Book?",
+    content: "When you're ready, tap here to book this service!",
+    image: "/images/srv characters (SVG)/girl.svg",
+    color: "bg-teal-50",
+    placement: "top",
+  } as CustomStep,
+];
+
+const CLIENT_BOOKINGS_STEPS: CustomStep[] = [
+  {
+    target: ".tour-bookings-tabs",
+    headline: "Your Bookings Hub",
+    content:
+      "Switch between calendar and list views to manage your appointments in the way that suits you best.",
+    image: "/images/srv characters (SVG)/tech guy.svg",
+    color: "bg-blue-50",
+    placement: "bottom",
+    disableBeacon: true,
+  } as CustomStep,
+  {
+    target: ".tour-bookings-filter",
+    headline: "Find Appointments Fast",
+    content:
+      "Use the search bar and filters to quickly find specific bookings by status or service category.",
+    image: "/images/srv characters (SVG)/plumber.svg",
+    color: "bg-indigo-50",
+    placement: "bottom",
+  } as CustomStep,
+];
+
+const CLIENT_BOOKING_DETAILS_STEPS: CustomStep[] = [
+  {
+    target: ".tour-booking-status",
+    headline: "Track Your Request",
+    content:
+      "This badge shows the current status of your booking—whether it's pending, accepted, or completed.",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    color: "bg-pink-50",
+    placement: "bottom",
+    disableBeacon: true,
+  } as CustomStep,
+  {
+    target: ".tour-booking-actions",
+    headline: "Manage This Job",
+    content:
+      "Here you can message the provider directly, cancel if needed, or leave a review once the job is done.",
+    image: "/images/srv characters (SVG)/girl.svg",
+    color: "bg-blue-50",
     placement: "top",
   } as CustomStep,
 ];
@@ -189,7 +389,16 @@ function Tooltip({
 export default function SpotlightTour({ flowType }: SpotlightTourProps) {
   const [run, setRun] = useState(false);
   const STORAGE_KEY = `srv_spotlight_tour_${flowType}`;
-  const steps = flowType === "client" ? CLIENT_STEPS : PROVIDER_STEPS;
+  const steps =
+    flowType === "client"
+      ? CLIENT_STEPS
+      : flowType === "client-service"
+        ? CLIENT_SERVICE_STEPS
+        : flowType === "client-bookings"
+          ? CLIENT_BOOKINGS_STEPS
+          : flowType === "client-booking-details"
+            ? CLIENT_BOOKING_DETAILS_STEPS
+            : PROVIDER_STEPS;
 
   useEffect(() => {
     // Delay slightly to let the UI mount fully
@@ -224,6 +433,14 @@ export default function SpotlightTour({ flowType }: SpotlightTourProps) {
       options={{
         overlayColor: "rgba(15, 23, 42, 0.6)",
         zIndex: 10000,
+        scrollDuration: 800,
+        scrollOffset: 80,
+      }}
+      styles={{
+        beacon: {
+          backgroundColor: "#facc15",
+          color: "#facc15",
+        },
       }}
     />
   );
