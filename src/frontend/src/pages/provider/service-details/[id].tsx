@@ -67,6 +67,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   const {
     getService,
     archiveService,
+    permanentDeleteService,
     updateServiceStatus,
     updateService,
     getServicePackages,
@@ -321,13 +322,25 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (!service) return;
     try {
       setIsDeleting(true);
-      await archiveService(service.id);
-      toast.success("Service archived!", { position: "top-center" });
+      if (service.status === "Archived") {
+        await permanentDeleteService(service.id);
+        toast.success("Service deleted permanently!", {
+          position: "top-center",
+        });
+      } else {
+        await archiveService(service.id);
+        toast.success("Service archived!", { position: "top-center" });
+      }
       navigate("/provider/services");
     } catch (error) {
-      toast.error("Failed to archive service. Please try again.", {
-        position: "top-center",
-      });
+      toast.error(
+        service.status === "Archived"
+          ? "Failed to delete service. Please try again."
+          : "Failed to archive service. Please try again.",
+        {
+          position: "top-center",
+        },
+      );
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -1292,6 +1305,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         open={showDeleteConfirm}
         serviceTitle={service?.title}
         isDeleting={isDeleting}
+        isAlreadyArchived={service?.status === "Archived"}
         onCancel={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteService}
       />

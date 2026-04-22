@@ -6,173 +6,9 @@ import {
   useServiceManagement,
 } from "../../hooks/serviceManagement";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
-import { useServiceReviews } from "../../hooks/reviewManagement";
 import { toast } from "sonner";
 import Tooltip from "../common/Tooltip";
-
-// Helper to map status to display text and className
-const getStatusDisplay = (status: string) => {
-  switch (status) {
-    case "Unavailable":
-      return { text: "Inactive", className: "bg-gray-100 text-gray-600" };
-    case "Pending":
-      return { text: "Pending", className: "bg-yellow-100 text-yellow-700" };
-    case "Rejected":
-      return { text: "Rejected", className: "bg-red-100 text-red-700" };
-    default:
-      return { text: status, className: "bg-gray-100 text-gray-600" };
-  }
-};
-
-// Helper to get category image path
-const getCategoryImage = (slugOrName?: string) => {
-  if (!slugOrName) return "/images/categories/others.svg";
-  // Normalize slug: lowercase, replace spaces with hyphens
-  const slug = slugOrName.toLowerCase().replace(/\s+/g, "-");
-  return `/images/categories/${slug}.svg`;
-};
-
-interface ServiceCardProps {
-  service: EnhancedService;
-  isActive: boolean;
-  activeCount: number;
-  plural: string;
-  hasActiveBookings: (id: string) => boolean;
-  handleToggleActive: (serviceId: string, isActive: boolean) => Promise<void>;
-  setDeleteConfirmId: (id: string | null) => void;
-  deletingId: string | null;
-}
-
-const ServiceCard: React.FC<ServiceCardProps> = ({
-  service,
-  isActive,
-  activeCount,
-  plural,
-  hasActiveBookings,
-  handleToggleActive,
-  setDeleteConfirmId,
-  deletingId,
-}) => {
-  const navigate = useNavigate();
-  const { reviews, getAverageRating } = useServiceReviews(service.id as string);
-  const visibleReviews = reviews.filter((r) => r.status === "Visible");
-  const averageRating = getAverageRating(visibleReviews);
-  const reviewCount = visibleReviews.length;
-  const categoryImage = getCategoryImage(
-    service.category?.slug || service.category?.name,
-  );
-
-  return (
-    <div className="group relative mt-8 flex flex-col items-center rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
-      <button
-        type="button"
-        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus:outline-none"
-        style={{ background: "transparent", border: "none", padding: 0 }}
-        onClick={() => navigate(`/provider/service-details/${service.id}`)}
-        aria-label={`View details for ${service.title}`}
-        tabIndex={0}
-      />
-
-      <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
-        <img
-          src={categoryImage}
-          alt={service.category?.name || "Category"}
-          className="h-16 w-16 rounded-2xl border-4 border-white bg-yellow-50 object-cover shadow-sm"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = "/images/categories/others.svg";
-          }}
-        />
-      </div>
-
-      {isActive ? (
-        <span
-          className="pointer-events-none absolute right-3 top-3 rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700"
-          title="Active"
-        >
-          Active
-        </span>
-      ) : (
-        <span
-          className={`pointer-events-none absolute right-3 top-3 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${
-            getStatusDisplay(service.status).className
-          }`}
-        >
-          {getStatusDisplay(service.status).text}
-        </span>
-      )}
-
-      <div className="pointer-events-none mt-10 flex flex-grow flex-col items-center">
-        <h4
-          className="mb-1 line-clamp-2 w-full break-words text-center text-sm font-bold text-gray-900"
-          style={{ wordBreak: "break-word" }}
-        >
-          {service.title}
-        </h4>
-        <div className="flex items-center justify-center gap-1.5">
-          <StarIcon className="h-4 w-4 text-yellow-500" />
-          <span className="text-xs font-bold text-gray-800">
-            {averageRating || "0"}{" "}
-            <span className="font-medium text-gray-500">({reviewCount})</span>
-          </span>
-        </div>
-      </div>
-
-      <div className="relative z-10 mt-5 grid w-full grid-cols-2 gap-2">
-        <Tooltip
-          content={`Cannot ${isActive ? "deactivate" : "activate"} service with ${activeCount} active booking${plural}`}
-          showWhenDisabled={hasActiveBookings(service.id)}
-        >
-          <button
-            type="button"
-            className={`w-full rounded-xl px-2 py-2.5 text-xs font-bold transition-colors ${
-              hasActiveBookings(service.id)
-                ? "cursor-not-allowed opacity-50"
-                : ""
-            } ${
-              isActive
-                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                : "bg-blue-100 text-blue-800 hover:bg-blue-200"
-            }`}
-            onClick={async (e) => {
-              e.stopPropagation();
-              if (!hasActiveBookings(service.id)) {
-                await handleToggleActive(service.id, isActive);
-              }
-            }}
-            disabled={hasActiveBookings(service.id)}
-          >
-            {isActive ? "Deactivate" : "Activate"}
-          </button>
-        </Tooltip>
-        <Tooltip
-          content={`Cannot archive service with ${activeCount} active booking${plural}`}
-          showWhenDisabled={hasActiveBookings(service.id)}
-        >
-          <button
-            type="button"
-            className={`w-full rounded-xl bg-red-50 px-2 py-2.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 ${
-              hasActiveBookings(service.id)
-                ? "cursor-not-allowed opacity-50"
-                : ""
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!hasActiveBookings(service.id)) {
-                setDeleteConfirmId(service.id);
-              }
-            }}
-            disabled={
-              deletingId === service.id || hasActiveBookings(service.id)
-            }
-          >
-            Archive
-          </button>
-        </Tooltip>
-      </div>
-    </div>
-  );
-};
+import CompactServiceCard from "./CompactServiceCard";
 
 interface ServiceManagementProps {
   services?: EnhancedService[];
@@ -192,7 +28,12 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 }) => {
   // Limit displayed services to 4
   const displayedServices = services.slice(0, 4);
-  const { updateServiceStatus, archiveService } = useServiceManagement();
+  const {
+    updateServiceStatus,
+    archiveService,
+    restoreService,
+    permanentDeleteService,
+  } = useServiceManagement();
   const { bookings: providerBookings } = useProviderBookingManagement();
 
   // Helper function to check if a service has active bookings
@@ -258,44 +99,91 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
     }
   };
 
+  // Handler for restore (reactivate archived service)
+  const handleRestoreService = async (serviceId: string) => {
+    setDeletingId(serviceId);
+    try {
+      await restoreService(serviceId);
+      toast.success("Service restored!", { position: "top-center" });
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      toast.error("Failed to restore service. Please try again.", {
+        position: "top-center",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Handler for permanent delete
+  const handlePermanentDelete = async (serviceId: string) => {
+    setDeletingId(serviceId);
+    try {
+      await permanentDeleteService(serviceId);
+      toast.success("Service permanently deleted.", { position: "top-center" });
+      if (onRefresh) await onRefresh();
+    } catch (error) {
+      toast.error("Failed to delete service. Please try again.", {
+        position: "top-center",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <>
       {/* Centered Delete Confirmation Dialog */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
-            <h3 className="mb-2 text-lg font-bold text-red-700">
-              Archive Service?
-            </h3>
-            <p className="mb-4 text-sm text-gray-700">
-              Are you sure you want to archive{" "}
-              <b>
-                {services.find((s) => s.id === deleteConfirmId)?.title ||
-                  "this service"}
-              </b>
-              ? This service will be hidden from clients.
-            </p>
-            <div className="flex gap-2">
-              <button
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                onClick={() => setDeleteConfirmId(null)}
-                disabled={deletingId === deleteConfirmId}
-              >
-                Cancel
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={async () => {
-                  await handleDeleteService(deleteConfirmId);
-                }}
-                disabled={deletingId === deleteConfirmId}
-              >
-                {deletingId === deleteConfirmId ? "Archiving..." : "Archive"}
-              </button>
+      {deleteConfirmId &&
+        (() => {
+          const serviceToDelete = services.find(
+            (s) => s.id === deleteConfirmId,
+          );
+          const isArchivedDelete = serviceToDelete?.status === "Archived";
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
+                <h3 className="mb-2 text-lg font-bold text-red-700">
+                  {isArchivedDelete ? "Delete Service?" : "Archive Service?"}
+                </h3>
+                <p className="mb-4 text-sm text-gray-700">
+                  {isArchivedDelete
+                    ? `Are you sure you want to permanently delete "${serviceToDelete?.title || "this service"}"? This cannot be undone.`
+                    : `Are you sure you want to archive "${serviceToDelete?.title || "this service"}"? This service will be hidden from clients.`}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                    onClick={() => setDeleteConfirmId(null)}
+                    disabled={deletingId === deleteConfirmId}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                    onClick={async () => {
+                      if (isArchivedDelete) {
+                        await handlePermanentDelete(deleteConfirmId);
+                      } else {
+                        await handleDeleteService(deleteConfirmId);
+                      }
+                      setDeleteConfirmId(null);
+                    }}
+                    disabled={deletingId === deleteConfirmId}
+                  >
+                    {deletingId === deleteConfirmId
+                      ? isArchivedDelete
+                        ? "Deleting..."
+                        : "Archiving..."
+                      : isArchivedDelete
+                        ? "Delete"
+                        : "Archive"}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
 
       <div className="flex items-center justify-between py-4 md:py-5 lg:py-8">
         <h2 className="text-xl font-bold tracking-tight text-gray-900">
@@ -350,18 +238,21 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
               const isActive = service.status === "Available";
+              const isArchived = service.status === "Archived";
               const activeCount = getServiceActiveBookingsCount(service.id);
               const plural = activeCount !== 1 ? "s" : "";
 
               return (
-                <ServiceCard
+                <CompactServiceCard
                   key={service.id}
                   service={service}
                   isActive={isActive}
+                  isArchived={isArchived}
                   activeCount={activeCount}
                   plural={plural}
                   hasActiveBookings={hasActiveBookings}
                   handleToggleActive={handleToggleActive}
+                  handleRestoreService={handleRestoreService}
                   setDeleteConfirmId={setDeleteConfirmId}
                   deletingId={deletingId}
                 />

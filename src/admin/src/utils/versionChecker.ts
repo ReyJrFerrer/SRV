@@ -89,7 +89,13 @@ export function stopVersionChecker(): void {
  * Show update notification to user
  */
 function showUpdateNotification(): void {
-  // Create a custom notification
+  const existingNotification = document.getElementById(
+    "app-update-notification",
+  );
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
   const notification = document.createElement("div");
   notification.id = "app-update-notification";
   notification.innerHTML = `
