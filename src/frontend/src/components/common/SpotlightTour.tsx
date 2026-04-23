@@ -117,8 +117,14 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
         setTimeout(() => {
           const el = document.querySelector(".tour-client-service-hero");
           if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-            window.scrollBy(0, -120);
+            const rect = el.getBoundingClientRect();
+            const isMobile = window.innerWidth < 768;
+            const centerOffset = isMobile ? 200 : 120;
+            const scrollTarget = window.scrollY + rect.top - centerOffset;
+            window.scrollTo({
+              top: Math.max(0, scrollTarget),
+              behavior: "smooth",
+            });
           }
           resolve();
         }, 150);
@@ -139,8 +145,14 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
         setTimeout(() => {
           const el = document.querySelector(".tour-client-service-packages");
           if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-            window.scrollBy(0, -120);
+            const rect = el.getBoundingClientRect();
+            const isMobile = window.innerWidth < 768;
+            const centerOffset = isMobile ? 200 : 120;
+            const scrollTarget = window.scrollY + rect.top - centerOffset;
+            window.scrollTo({
+              top: Math.max(0, scrollTarget),
+              behavior: "smooth",
+            });
           }
           resolve();
         }, 150);
@@ -162,8 +174,14 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
             ".tour-client-service-availability",
           );
           if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-            window.scrollBy(0, -120);
+            const rect = el.getBoundingClientRect();
+            const isMobile = window.innerWidth < 768;
+            const centerOffset = isMobile ? 200 : 120;
+            const scrollTarget = window.scrollY + rect.top - centerOffset;
+            window.scrollTo({
+              top: Math.max(0, scrollTarget),
+              behavior: "smooth",
+            });
           }
           resolve();
         }, 150);
@@ -183,8 +201,14 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
         setTimeout(() => {
           const el = document.querySelector(".tour-client-service-gallery");
           if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-            window.scrollBy(0, -120);
+            const rect = el.getBoundingClientRect();
+            const isMobile = window.innerWidth < 768;
+            const centerOffset = isMobile ? 200 : 120;
+            const scrollTarget = window.scrollY + rect.top - centerOffset;
+            window.scrollTo({
+              top: Math.max(0, scrollTarget),
+              behavior: "smooth",
+            });
           }
           resolve();
         }, 150);
@@ -204,8 +228,14 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
         setTimeout(() => {
           const el = document.querySelector(".tour-client-service-credentials");
           if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-            window.scrollBy(0, -120);
+            const rect = el.getBoundingClientRect();
+            const isMobile = window.innerWidth < 768;
+            const centerOffset = isMobile ? 200 : 120;
+            const scrollTarget = window.scrollY + rect.top - centerOffset;
+            window.scrollTo({
+              top: Math.max(0, scrollTarget),
+              behavior: "smooth",
+            });
           }
           resolve();
         }, 150);
@@ -225,8 +255,14 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
         setTimeout(() => {
           const el = document.querySelector(".tour-client-service-reviews");
           if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-            window.scrollBy(0, -120);
+            const rect = el.getBoundingClientRect();
+            const isMobile = window.innerWidth < 768;
+            const centerOffset = isMobile ? 200 : 120;
+            const scrollTarget = window.scrollY + rect.top - centerOffset;
+            window.scrollTo({
+              top: Math.max(0, scrollTarget),
+              behavior: "smooth",
+            });
           }
           resolve();
         }, 150);
