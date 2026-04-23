@@ -164,7 +164,7 @@ const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
                 color: "#1e293b",
                 fontSize: "0.95rem",
               }}
-              formatter={(value: number, name: string) => [value, name]}
+              formatter={(value, name) => [value, String(name)]}
             />
             <Legend
               verticalAlign="bottom"

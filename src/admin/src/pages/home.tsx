@@ -621,7 +621,10 @@ export const AdminHomePage: React.FC = () => {
                       <YAxis allowDecimals={false} />
                       <Tooltip
                         labelFormatter={(dateStr) => `Bookings on ${dateStr}`}
-                        formatter={(value: number) => [`${value}`, "Bookings"]}
+                        formatter={(value) => [
+                          typeof value === "number" ? `${value}` : "0",
+                          "Bookings",
+                        ]}
                       />
                       <Legend />
                       <Line
@@ -687,14 +690,11 @@ export const AdminHomePage: React.FC = () => {
                             year: "numeric",
                           });
                         }}
-                        formatter={(value: number, name: string) => [
-                          `₱${value.toFixed(2)}`,
-                          name === "revenue"
-                            ? "Revenue"
-                            : name === "commission"
-                              ? "Commission"
-                              : name,
-                        ]}
+                        formatter={(value, name) => {
+                          const numValue = typeof value === "number" ? value : 0;
+                          const label = typeof name === "string" ? name : "Value";
+                          return [`₱${numValue.toFixed(2)}`, label === "revenue" ? "Revenue" : label === "commission" ? "Commission" : label];
+                        }}
                       />
                       <Legend />
                       <Line

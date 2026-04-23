@@ -1,4 +1,4 @@
-import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
+import type { Profile } from "../../declarations/auth/auth.did.d.ts";
 import type { ServiceData } from "../components";
 
 const PRICE_DIVISOR = 100;
@@ -16,9 +16,9 @@ export const convertProfileToSimpleUserData = (
   profile: Profile,
 ): SimpleUserData => {
   return {
-    id: profile.id.toString(),
-    name: profile.name,
-    phone: profile.phone,
+    id: String(profile.id),
+    name: String(profile.name ?? ""),
+    phone: String(profile.phone ?? ""),
   };
 };
 

@@ -284,7 +284,7 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
                 color: "#1e293b",
                 fontSize: "0.95rem",
               }}
-              formatter={(value: number) => [value, "Bookings"]}
+              formatter={(value) => [value, "Bookings"]}
             />
             <Legend
               verticalAlign="top"

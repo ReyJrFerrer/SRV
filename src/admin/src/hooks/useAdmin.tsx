@@ -4,7 +4,7 @@ import {
   adminServiceCanister,
   FrontendSystemStats,
 } from "../services/adminServiceCanister";
-import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
+import type { Profile } from "../../declarations/auth/auth.did.d.ts";
 import { handleError, isNetworkError } from "../utils/errorUtils";
 import {
   serviceCanister,
