@@ -44,8 +44,12 @@ const extractUserData = (
   walletBalanceData: number,
   servicesDataResult: any,
 ): UserData => {
-  const createdAt = validateDate(convertToDate(Number(profile.createdAt) as bigint | number | undefined));
-  const updatedAt = validateDate(convertToDate(Number(profile.updatedAt) as bigint | number | undefined));
+  const createdAt = validateDate(
+    convertToDate(Number(profile.createdAt) as bigint | number | undefined),
+  );
+  const updatedAt = validateDate(
+    convertToDate(Number(profile.updatedAt) as bigint | number | undefined),
+  );
 
   return {
     id: String(profile.id),
@@ -54,9 +58,7 @@ const extractUserData = (
     createdAt,
     updatedAt,
     profilePicture: extractProfilePicture(String(profile.profilePicture ?? "")),
-    biography: extractBiography(
-      String(profile.biography ?? ""),
-    ),
+    biography: extractBiography(String(profile.biography ?? "")),
     totalEarnings: analyticsData.totalEarnings,
     pendingCommission: 0,
     settledCommission: 0,
@@ -81,17 +83,19 @@ const getDefaultUserData = (
   profile: Profile,
   lockStatus: boolean,
 ): UserData => {
-  const updatedAt = validateDate(convertToDate(Number(profile.updatedAt) as bigint | number | undefined));
+  const updatedAt = validateDate(
+    convertToDate(Number(profile.updatedAt) as bigint | number | undefined),
+  );
   return {
     id: String(profile.id),
     name: String(profile.name ?? ""),
     phone: String(profile.phone ?? ""),
-    createdAt: validateDate(convertToDate(Number(profile.createdAt) as bigint | number | undefined)),
+    createdAt: validateDate(
+      convertToDate(Number(profile.createdAt) as bigint | number | undefined),
+    ),
     updatedAt,
     profilePicture: extractProfilePicture(String(profile.profilePicture ?? "")),
-    biography: extractBiography(
-      String(profile.biography ?? ""),
-    ),
+    biography: extractBiography(String(profile.biography ?? "")),
     totalEarnings: 0,
     pendingCommission: 0,
     settledCommission: 0,

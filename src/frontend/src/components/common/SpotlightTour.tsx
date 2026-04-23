@@ -152,29 +152,29 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
     placement: "top",
   } as CustomStep,
   {
-target: ".tour-client-service-availability",
-            before: () => {
-              return new Promise((resolve) => {
-                setTimeout(() => {
-                  const el = document.querySelector(
-                    ".tour-client-service-availability",
-                  );
-                  if (el) {
-                    el.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }
-                  resolve();
-                }, 150);
-              });
-            },
-            headline: "Check Availability",
-            content:
-              "See the provider's available time slots and schedule your booking at a time that works for you.",
-            image: "/images/srv characters (SVG)/tutor.svg",
-            color: "bg-pink-50",
-            placement: "top",
-          } as CustomStep,
-          {
-target: ".tour-client-service-gallery",
+    target: ".tour-client-service-availability",
+    before: () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const el = document.querySelector(
+            ".tour-client-service-availability",
+          );
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+          resolve();
+        }, 150);
+      });
+    },
+    headline: "Check Availability",
+    content:
+      "See the provider's available time slots and schedule your booking at a time that works for you.",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    color: "bg-pink-50",
+    placement: "top",
+  } as CustomStep,
+  {
+    target: ".tour-client-service-gallery",
     before: () => {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -186,15 +186,15 @@ target: ".tour-client-service-gallery",
         }, 150);
       });
     },
-            headline: "See Their Work",
-            content:
-              "Browse through photos and gallery images to get a feel for the quality of work this provider delivers.",
-            image: "/images/srv characters (SVG)/girl.svg",
-            color: "bg-teal-50",
-            placement: "top",
-          } as CustomStep,
-          {
-target: ".tour-client-service-credentials",
+    headline: "See Their Work",
+    content:
+      "Browse through photos and gallery images to get a feel for the quality of work this provider delivers.",
+    image: "/images/srv characters (SVG)/girl.svg",
+    color: "bg-teal-50",
+    placement: "top",
+  } as CustomStep,
+  {
+    target: ".tour-client-service-credentials",
     before: () => {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -206,13 +206,13 @@ target: ".tour-client-service-credentials",
         }, 150);
       });
     },
-            headline: "Verified Credentials",
-            content:
-              "This section shows any certifications, licenses, or qualifications the provider has earned.",
-            image: "/images/srv characters (SVG)/plumber.svg",
-            color: "bg-indigo-50",
-            placement: "top",
-          } as CustomStep,
+    headline: "Verified Credentials",
+    content:
+      "This section shows any certifications, licenses, or qualifications the provider has earned.",
+    image: "/images/srv characters (SVG)/plumber.svg",
+    color: "bg-indigo-50",
+    placement: "top",
+  } as CustomStep,
   {
     target: ".tour-client-service-reviews",
     before: () => {
@@ -227,7 +227,8 @@ target: ".tour-client-service-credentials",
             // 120px on desktop
             const scrollOffset = isMobile ? viewportHeight * 0.35 : 120;
             window.scrollTo({
-              top: window.scrollY + el.getBoundingClientRect().top - scrollOffset,
+              top:
+                window.scrollY + el.getBoundingClientRect().top - scrollOffset,
               behavior: "smooth",
             });
           }

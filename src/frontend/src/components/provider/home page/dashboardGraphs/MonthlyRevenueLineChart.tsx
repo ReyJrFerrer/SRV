@@ -277,13 +277,13 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
                 color: "#1e293b",
                 fontSize: "0.95rem",
               }}
-formatter={(value) => [
-                  `₱${Number(value ?? 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}`,
-                  "Revenue",
-                ]}
+              formatter={(value) => [
+                `₱${Number(value ?? 0).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`,
+                "Revenue",
+              ]}
             />
             <Legend
               verticalAlign="top"

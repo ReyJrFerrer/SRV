@@ -691,9 +691,18 @@ export const AdminHomePage: React.FC = () => {
                           });
                         }}
                         formatter={(value, name) => {
-                          const numValue = typeof value === "number" ? value : 0;
-                          const label = typeof name === "string" ? name : "Value";
-                          return [`₱${numValue.toFixed(2)}`, label === "revenue" ? "Revenue" : label === "commission" ? "Commission" : label];
+                          const numValue =
+                            typeof value === "number" ? value : 0;
+                          const label =
+                            typeof name === "string" ? name : "Value";
+                          return [
+                            `₱${numValue.toFixed(2)}`,
+                            label === "revenue"
+                              ? "Revenue"
+                              : label === "commission"
+                                ? "Commission"
+                                : label,
+                          ];
                         }}
                       />
                       <Legend />
