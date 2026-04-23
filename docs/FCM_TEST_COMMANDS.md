@@ -49,10 +49,12 @@ async function testRawFCM() {
     }
 
     // 3. Import Firebase
-    const { initializeApp } =
-      await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
-    const { getMessaging, getToken } =
-      await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js");
+    const { initializeApp } = await import(
+      "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"
+    );
+    const { getMessaging, getToken } = await import(
+      "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js"
+    );
 
     // 4. Initialize Firebase
     const app = initializeApp({

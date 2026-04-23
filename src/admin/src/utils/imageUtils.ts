@@ -19,8 +19,9 @@ export const findMediaIdFromUrl = async (
   }
 
   try {
-    const { collection, query, where, getDocs } =
-      await import("firebase/firestore");
+    const { collection, query, where, getDocs } = await import(
+      "firebase/firestore"
+    );
     const mediaCollection = collection(firestore, "media");
     const q = query(mediaCollection, where("url", "==", url));
     const querySnapshot = await getDocs(q);
