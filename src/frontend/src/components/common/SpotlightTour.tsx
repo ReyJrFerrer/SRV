@@ -19,10 +19,12 @@ export type FlowType =
   | "client-bookings"
   | "client-booking-details"
   | "client-ratings"
-  | "client-profile";
+  | "client-profile"
+  | "client-receipt";
 
 interface SpotlightTourProps {
   flowType: FlowType;
+  onTourComplete?: () => void;
 }
 
 interface CustomStep extends Step {
@@ -335,21 +337,12 @@ const CLIENT_RATINGS_STEPS: CustomStep[] = [
 
 const CLIENT_PROFILE_STEPS: CustomStep[] = [
   {
-    target: ".tour-client-profile-header",
-    headline: "Your Profile",
+    target: ".tour-client-reputation-score",
+    headline: "Your Reputation Score",
     content:
-      "Manage your personal information, profile picture, and contact details here.",
+      "This score (0-100) reflects your reliability as a client. It's based on your booking history, reviews from providers, and how often you keep appointments. Tap 'View All Reviews' to see your detailed provider reviews.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "center",
-    disableBeacon: true,
-  } as CustomStep,
-  {
-    target: ".tour-client-profile-settings",
-    headline: "Settings",
-    content:
-      "Configure your notifications, privacy preferences, and communication settings.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "top",
     disableBeacon: true,
   } as CustomStep,
 ];
@@ -444,13 +437,16 @@ function Tooltip({
   );
 }
 
-export default function SpotlightTour({ flowType }: SpotlightTourProps) {
+export default function SpotlightTour({
+  flowType,
+  onTourComplete,
+}: SpotlightTourProps) {
   const [run, setRun] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const STORAGE_KEY = `srv_spotlight_tour_${flowType}`;
   const [steps, setSteps] = useState<CustomStep[]>([]);
   const [isDesktop, setIsDesktop] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= 768 : false
+    typeof window !== "undefined" ? window.innerWidth >= 768 : false,
   );
 
   useEffect(() => {
@@ -459,13 +455,15 @@ export default function SpotlightTour({ flowType }: SpotlightTourProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-useEffect(() => {
+  useEffect(() => {
     const isDesktopLayout =
       typeof window !== "undefined" ? window.innerWidth >= 768 : false;
 
     const CLIENT_STEPS: CustomStep[] = [
       {
-        target: isDesktopLayout ? '.tour-client-nav-desktop' : '.tour-client-nav-mobile',
+        target: isDesktopLayout
+          ? ".tour-client-nav-desktop"
+          : ".tour-client-nav-mobile",
         headline: "Welcome to SRV!",
         content:
           "Use this menu to navigate between your home, bookings, messages, and profile.",
@@ -506,6 +504,45 @@ useEffect(() => {
         headline: "Top Local Professionals",
         content:
           "Here you'll find the best service providers in your area, ready to help. Check their reputation scores and book instantly!",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "top",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: ".tour-client-reputation",
+        headline: "Provider Reputation Score",
+        content:
+          "This score (0-100) shows how reliable a provider is. 81-100 = Premium (excellent), 51-80 = Trusted (great), 21-50 = Building (good), 0-20 = New. Higher scores mean more reliable providers!",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "top",
+        disableBeacon: true,
+      } as CustomStep,
+    ];
+
+    const CLIENT_RECEIPT_STEPS: CustomStep[] = [
+      {
+        target: ".tour-receipt-details",
+        headline: "Your Receipt",
+        content:
+          "Your booking is complete! This receipt serves as your proof of transaction. Keep it for your records.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: ".tour-receipt-payment",
+        headline: "Payment Summary",
+        content:
+          "Review the final amount paid and the payment method used for this service.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "top",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: ".tour-receipt-actions",
+        headline: "Next Steps",
+        content:
+          "Share your receipt with others or leave a review for the provider to help other clients!",
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "top",
         disableBeacon: true,
@@ -564,27 +601,45 @@ useEffect(() => {
                 ? CLIENT_RATINGS_STEPS
                 : flowType === "client-profile"
                   ? CLIENT_PROFILE_STEPS
-                  : PROVIDER_STEPS;
+                  : flowType === "client-receipt"
+                    ? CLIENT_RECEIPT_STEPS
+                    : PROVIDER_STEPS;
 
     setSteps(currentSteps);
   }, [flowType, isDesktop]);
 
-  useEffect(() => {
-    // Check and show welcome screen on first load
+useEffect(() => {
+    // Check and show welcome screen ONLY on first visit to home page
     const timer = setTimeout(() => {
-      const hasSeen = localStorage.getItem(STORAGE_KEY);
+      // Only show welcome on home page for first visit
+      if (flowType !== "client") {
+        // For non-home pages, auto-start the tour immediately
+        // Check if this page's tour has been seen before
+        const hasSeenPage = localStorage.getItem(STORAGE_KEY);
+        if (!hasSeenPage) {
+          setRun(true);
+        }
+        return;
+      }
       
-      // Delay to ensure the DOM is painted and targets are available before deciding to show welcome.
-      // Joyride will instantly abort if targets aren't there.
-      if (!hasSeen) {
+      const hasSeenHomeWelcome = localStorage.getItem(
+        "srv_spotlight_seen_home_welcome",
+      );
+
+      // Show welcome only if never seen before
+      if (!hasSeenHomeWelcome) {
         setShowWelcome(true);
       }
-    }, 1000); // Increased check delay to wait for elements to render
+    }, 1000);
     return () => clearTimeout(timer);
-  }, [STORAGE_KEY]);
+  }, [flowType]);
 
   const handleStartTour = () => {
     setShowWelcome(false);
+    // Mark home welcome as seen when user starts the tour
+    if (flowType === "client") {
+      localStorage.setItem("srv_spotlight_seen_home_welcome", "true");
+    }
     setTimeout(() => {
       setRun(true);
     }, 500);
@@ -592,22 +647,42 @@ useEffect(() => {
 
   const handleSkip = () => {
     setShowWelcome(false);
+    // Mark home welcome as seen when user skips
+    if (flowType === "client") {
+      localStorage.setItem("srv_spotlight_seen_home_welcome", "true");
+    }
     localStorage.setItem(STORAGE_KEY, "true");
   };
 
   const handleJoyrideCallback = (data: EventData) => {
     const { status, action, type } = data;
-    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED, "skip"];
+    const finishedStatuses: string[] = [
+      STATUS.FINISHED,
+      STATUS.SKIPPED,
+      "skip",
+    ];
 
     if ((status as any) === "error" || type === "error") {
       setRun(false);
+      // Mark as seen on error too
+      if (flowType === "client") {
+        localStorage.setItem("srv_spotlight_seen_home_welcome", "true");
+      }
       localStorage.setItem(STORAGE_KEY, "true");
       return;
     }
 
     if (finishedStatuses.includes(status) || action === "close") {
       setRun(false);
+      // Mark as seen when tour completes
+      if (flowType === "client") {
+        localStorage.setItem("srv_spotlight_seen_home_welcome", "true");
+      }
       localStorage.setItem(STORAGE_KEY, "true");
+      // Call onTourComplete callback if provided
+      if (onTourComplete) {
+        onTourComplete();
+      }
     }
   };
 
@@ -628,12 +703,14 @@ useEffect(() => {
         return "Your Ratings Tour";
       case "client-profile":
         return "Profile Tour";
+      case "client-receipt":
+        return "Receipt Tour";
       default:
         return "SRV Tour";
     }
   };
 
-if (showWelcome) {
+  if (showWelcome) {
     return (
       <WelcomeModal
         onStart={handleStartTour}

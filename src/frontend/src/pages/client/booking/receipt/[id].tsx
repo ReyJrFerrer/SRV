@@ -11,6 +11,7 @@ import {
 } from "../../../../hooks/bookingManagement"; // Adjust path as needed
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import useNoBackNavigation from "../../../../hooks/useNoBackNavigation";
+import SpotlightTour from "../../../../components/common/SpotlightTour";
 
 const ReceiptPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL
@@ -156,6 +157,7 @@ const ReceiptPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 sm:p-6">
+      <SpotlightTour flowType="client-receipt" />
       <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         {/* Receipt Header */}
         <div className="mb-6 text-center">
@@ -173,7 +175,7 @@ const ReceiptPage: React.FC = () => {
         </div>
 
         {/* Booking Details */}
-        <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm">
+        <div className="tour-receipt-details mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm">
           <div className="mb-2 flex items-center justify-between">
             <span className="font-medium text-gray-500">Booking ID</span>
             <span className="font-mono font-medium text-gray-900">
@@ -226,7 +228,7 @@ const ReceiptPage: React.FC = () => {
         </div>
 
         {/* Payment Summary */}
-        <div className="text-sm">
+        <div className="tour-receipt-payment text-sm">
           <h2 className="mb-3 text-base font-bold text-gray-900">
             Payment Summary
           </h2>
@@ -262,7 +264,7 @@ const ReceiptPage: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-6 flex w-full max-w-md gap-3">
+      <div className="tour-receipt-actions mt-6 flex w-full max-w-md gap-3">
         <button
           onClick={handleShare}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
