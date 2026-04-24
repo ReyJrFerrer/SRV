@@ -17,6 +17,7 @@
     "@react-google-maps/api": "^2.20.3",
     "@vis.gl/react-google-maps": "^1.5.5",
     "bad-words": "^4.0.0",
+    "canvas-confetti": "^1.9.4",
     "firebase": "^12.3.0",
     "leaflet": "^1.9.4",
     "react": "^19.1.0",

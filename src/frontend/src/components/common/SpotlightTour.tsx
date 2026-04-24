@@ -265,21 +265,12 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
 
 const CLIENT_BOOKINGS_STEPS: CustomStep[] = [
   {
-    target: ".tour-bookings-tabs",
+    target: "body",
     headline: "Your Bookings Hub",
     content:
-      "Switch between calendar and list views to manage your appointments in the way that suits you best.",
+      "View and manage all your bookings here. Use the calendar toggle to switch between Same Day and Scheduled bookings. Use the search bar to find specific appointments by service or provider name.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "center",
-    disableBeacon: true,
-  } as CustomStep,
-  {
-    target: ".tour-bookings-filter",
-    headline: "Find Appointments Fast",
-    content:
-      "Use the search bar and filters to quickly find specific bookings by status or service category.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
     disableBeacon: true,
   } as CustomStep,
 ];
@@ -307,30 +298,12 @@ const CLIENT_BOOKING_DETAILS_STEPS: CustomStep[] = [
 
 const CLIENT_RATINGS_STEPS: CustomStep[] = [
   {
-    target: ".tour-client-reputation-score",
-    headline: "Your Reputation Score",
+    target: "body",
+    headline: "Your Ratings",
     content:
-      "This score reflects your reliability as a client. It's based on your booking history, reviews from providers, and how often you keep your appointments.",
+      "This page shows your ratings from service providers. Your ratings reflects reliability based on completed bookings. Higher scores mean more providers trust you!",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "center",
-    disableBeacon: true,
-  } as CustomStep,
-  {
-    target: ".tour-client-rating-reviews",
-    headline: "Provider Reviews",
-    content:
-      "See feedback from service providers you've worked with. These reviews help build trust in the community.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
-    disableBeacon: true,
-  } as CustomStep,
-  {
-    target: ".tour-client-rating-stats",
-    headline: "Your Stats",
-    content:
-      "Track your booking history, completion rate, and more. A good record means better service providers!",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "top",
     disableBeacon: true,
   } as CustomStep,
 ];
@@ -613,22 +586,22 @@ useEffect(() => {
     const timer = setTimeout(() => {
       // Only show welcome on home page for first visit
       if (flowType !== "client") {
-        // For non-home pages, auto-start the tour immediately
-        // Check if this page's tour has been seen before
-        const hasSeenPage = localStorage.getItem(STORAGE_KEY);
-        if (!hasSeenPage) {
-          setRun(true);
-        }
-        return;
-      }
-      
-      const hasSeenHomeWelcome = localStorage.getItem(
-        "srv_spotlight_seen_home_welcome",
-      );
+        // Add delay to ensure DOM and steps are rendered
+        setTimeout(() => {
+          const hasSeenPage = localStorage.getItem(STORAGE_KEY);
+          if (!hasSeenPage) {
+            setRun(true);
+          }
+        }, 300);
+      } else {
+        const hasSeenHomeWelcome = localStorage.getItem(
+          "srv_spotlight_seen_home_welcome",
+        );
 
-      // Show welcome only if never seen before
-      if (!hasSeenHomeWelcome) {
-        setShowWelcome(true);
+        // Show welcome only if never seen before
+        if (!hasSeenHomeWelcome) {
+          setShowWelcome(true);
+        }
       }
     }, 1000);
     return () => clearTimeout(timer);

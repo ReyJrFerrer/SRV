@@ -12,6 +12,7 @@ import {
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import useNoBackNavigation from "../../../../hooks/useNoBackNavigation";
 import SpotlightTour from "../../../../components/common/SpotlightTour";
+import ConfettiCelebration from "../../../../components/common/ConfettiCelebration";
 
 const ReceiptPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get booking ID from URL
@@ -157,6 +158,7 @@ const ReceiptPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 sm:p-6">
+      <ConfettiCelebration trigger={true} />
       <SpotlightTour flowType="client-receipt" />
       <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         {/* Receipt Header */}
