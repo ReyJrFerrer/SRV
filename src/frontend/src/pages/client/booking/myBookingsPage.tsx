@@ -360,11 +360,13 @@ const MyBookingsPage: React.FC = () => {
     <>
       <div className="flex min-h-screen flex-col bg-gray-50">
         <SpotlightTour flowType="client-bookings" />
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-          <div className="flex w-full items-center justify-center px-4 py-3">
-            <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
+          <div className="flex h-16 w-full items-center justify-between px-4">
+            <div className="flex h-10 w-10" />
+            <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
               My Bookings
             </h1>
+            <div className="flex h-10 w-10" />
           </div>
         </header>
 

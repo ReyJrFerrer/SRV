@@ -79,10 +79,12 @@ const SettingsPage: React.FC = () => {
         />
       )}
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
+        <div className="flex h-16 w-full items-center justify-between px-4">
+          <div className="flex h-10 w-10" />
+          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             Settings
           </h1>
+          <div className="flex h-10 w-10" />
         </div>
       </header>
 

@@ -6,11 +6,15 @@ interface ConfettiCelebrationProps {
   trigger: boolean;
 }
 
-export default function ConfettiCelebration({ trigger }: ConfettiCelebrationProps) {
+export default function ConfettiCelebration({
+  trigger,
+}: ConfettiCelebrationProps) {
   useEffect(() => {
     if (!trigger) return;
 
-    const hasSeenConfetti = localStorage.getItem("srv_first_booking_confetti_shown");
+    const hasSeenConfetti = localStorage.getItem(
+      "srv_first_booking_confetti_shown",
+    );
     if (hasSeenConfetti) return;
 
     // Mark as shown
@@ -19,7 +23,8 @@ export default function ConfettiCelebration({ trigger }: ConfettiCelebrationProp
     // Fire confetti
     const duration = 3 * 1000;
 
-    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+    const randomInRange = (min: number, max: number) =>
+      Math.random() * (max - min) + min;
 
     const fireConfetti = () => {
       confetti({

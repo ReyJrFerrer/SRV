@@ -3,16 +3,11 @@ import BottomNavigation from "../../../components/client/NavigationBar";
 import useClientRating, {
   type ClientReview,
 } from "../../../hooks/useClientRating";
-import {
-  StarIcon,
-  InformationCircleIcon,
-  ChevronLeftIcon,
-} from "@heroicons/react/24/solid";
+import { InformationCircleIcon, StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
 import { useAuth } from "../../../context/AuthContext";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
 import authCanisterService from "../../../services/authCanisterService";
-import { useNavigate } from "react-router-dom";
 import SpotlightTour from "../../../components/common/SpotlightTour";
 
 const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
@@ -53,7 +48,6 @@ const ReviewsPage: React.FC = () => {
   const [reviews, setReviews] = useState<ClientReview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showRatingInfo, setShowRatingInfo] = useState(false);
-  const navigate = useNavigate();
   // Cache reviewer names by user id to avoid repeated profile calls
   const reviewerNameCache = useRef<Map<string, string>>(new Map());
 
@@ -137,22 +131,17 @@ const ReviewsPage: React.FC = () => {
       <SpotlightTour flowType="client-ratings" />
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-200 bg-white text-blue-600 transition-colors hover:bg-blue-50 active:scale-95"
-          >
-            <ChevronLeftIcon className="h-6 w-6" />
-          </button>
-          <h1 className="text-xl font-black tracking-tight text-blue-950">
+        <div className="flex h-16 w-full items-center justify-between px-4">
+          <div className="flex h-10 w-10" />
+          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             My Reviews
           </h1>
           <button
             onClick={() => setShowRatingInfo(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100 active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 active:scale-95"
             aria-label="About ratings"
           >
-            <InformationCircleIcon className="h-6 w-6" />
+            <InformationCircleIcon className="h-5 w-5" />
           </button>
         </div>
       </header>

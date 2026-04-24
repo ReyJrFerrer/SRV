@@ -581,7 +581,7 @@ export default function SpotlightTour({
     setSteps(currentSteps);
   }, [flowType, isDesktop]);
 
-useEffect(() => {
+  useEffect(() => {
     // Check and show welcome screen ONLY on first visit to home page
     const timer = setTimeout(() => {
       // Only show welcome on home page for first visit

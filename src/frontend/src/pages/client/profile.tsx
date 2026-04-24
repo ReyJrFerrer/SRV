@@ -647,7 +647,7 @@ const ClientProfilePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-5 w-5" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-black tracking-tight text-gray-900">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             My Profile
           </h1>
         </div>
