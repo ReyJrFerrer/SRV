@@ -105,7 +105,7 @@ const ActionButtons: React.FC<Props> = ({
       </button>
 
       <Tooltip
-        content={`Cannot archive service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+        content={`Cannot delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
         showWhenDisabled={hasActiveBookings}
         className="w-full sm:flex-1"
       >

@@ -151,7 +151,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                 <p className="mb-4 text-sm text-gray-700">
                   {isArchivedDelete
                     ? `Are you sure you want to permanently delete "${serviceToDelete?.title || "this service"}"? This cannot be undone.`
-                    : `Are you sure you want to archive "${serviceToDelete?.title || "this service"}"? This service will be hidden from clients.`}
+                    : `Are you sure you want to delete "${serviceToDelete?.title || "this service"}"?  archived for 30 days. You can restore it during this time.`}
                 </p>
                 <div className="flex gap-2">
                   <button

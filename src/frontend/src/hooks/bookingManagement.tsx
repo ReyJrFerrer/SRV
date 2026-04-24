@@ -68,6 +68,7 @@ export interface EnhancedBooking extends Booking {
   isProviderDataLoaded?: boolean;
   isServiceDataLoaded?: boolean;
   isPackageDataLoaded?: boolean;
+  serviceDeleted?: boolean;
 }
 
 // Types for hook state management
@@ -446,6 +447,7 @@ export const useBookingManagement = (): BookingManagementHook => {
           isServiceDataLoaded: !!serviceDetails,
           isPackageDataLoaded:
             !!packageDetails || booking.servicePackageId.length === 0, // Consider loaded if no packages
+          serviceDeleted: !serviceDetails,
         };
 
         return enhancedBooking;
@@ -464,6 +466,7 @@ export const useBookingManagement = (): BookingManagementHook => {
           isProviderDataLoaded: false,
           isServiceDataLoaded: false,
           isPackageDataLoaded: false,
+          serviceDeleted: true,
         };
       }
     },

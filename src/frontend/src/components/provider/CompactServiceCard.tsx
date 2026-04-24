@@ -183,7 +183,7 @@ const CompactServiceCard: React.FC<CompactServiceCardProps> = ({
           </button>
         ) : (
           <Tooltip
-            content={`Cannot archive service with ${activeCount} active booking${plural}`}
+            content={`Cannot delete service with ${activeCount} active booking${plural}`}
             showWhenDisabled={hasActiveBookings(service.id)}
           >
             <button
@@ -203,7 +203,7 @@ const CompactServiceCard: React.FC<CompactServiceCardProps> = ({
                 deletingId === service.id || hasActiveBookings(service.id)
               }
             >
-              Archive
+              Delete
             </button>
           </Tooltip>
         )}
