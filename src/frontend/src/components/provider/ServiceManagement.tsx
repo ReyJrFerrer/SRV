@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   EnhancedService,
   useServiceManagement,
@@ -144,7 +144,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
               <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
                 <h3 className="mb-2 text-lg font-bold text-red-700">
-                  {isArchivedDelete ? "Permanently Delete Service?" : "Delete Service?"}
+                  {isArchivedDelete
+                    ? "Permanently Delete Service?"
+                    : "Delete Service?"}
                 </h3>
                 <p className="mb-4 text-sm text-gray-700">
                   {isArchivedDelete

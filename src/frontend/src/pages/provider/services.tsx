@@ -182,12 +182,11 @@ const MyServicesPage: React.FC = () => {
       <Toaster position="top-center" richColors />
       <DeleteConfirmDialog
         open={!!deleteConfirmId}
-        serviceTitle={
-          userServices.find((s) => s.id === deleteConfirmId)?.title
-        }
+        serviceTitle={userServices.find((s) => s.id === deleteConfirmId)?.title}
         isDeleting={!!deletingId}
         isAlreadyArchived={
-          userServices.find((s) => s.id === deleteConfirmId)?.status === "Archived"
+          userServices.find((s) => s.id === deleteConfirmId)?.status ===
+          "Archived"
         }
         onCancel={() => setDeleteConfirmId(null)}
         onConfirm={async () => {
