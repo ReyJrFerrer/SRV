@@ -490,9 +490,7 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
       const allServices = await serviceCanisterService.getAllServices();
 
       // Filter out archived services for client view
-      const activeServices = allServices.filter(
-        (s) => s.status !== "Archived",
-      );
+      const activeServices = allServices.filter((s) => s.status !== "Archived");
 
       // Sort by rating and filter only available services with ratings
       const topServices = activeServices
