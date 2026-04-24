@@ -10,7 +10,6 @@ import {
   XMarkIcon,
   ChevronRightIcon,
   ChevronLeftIcon,
-  SparklesIcon,
 } from "@heroicons/react/24/outline";
 
 export type FlowType =
@@ -18,7 +17,9 @@ export type FlowType =
   | "provider"
   | "client-service"
   | "client-bookings"
-  | "client-booking-details";
+  | "client-booking-details"
+  | "client-ratings"
+  | "client-profile";
 
 interface SpotlightTourProps {
   flowType: FlowType;
@@ -41,39 +42,55 @@ function WelcomeModal({
   return (
     <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity duration-300"
         onClick={onSkip}
       />
-      <div className="animate-in fade-in zoom-in relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl duration-300">
-        <div className="relative bg-blue-600 p-8 text-center">
+      <div className="animate-in fade-in zoom-in-95 relative w-full max-w-md overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] duration-300">
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-700 p-8 text-center">
+          {/* Decorative background shapes */}
+          <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
+          <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+
           <button
             onClick={onSkip}
-            className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white/80 transition-colors hover:bg-white/30 hover:text-white"
+            className="absolute right-4 top-4 rounded-full bg-black/10 p-2 text-white/90 transition-all hover:bg-black/20 hover:text-white"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/20">
-            <SparklesIcon className="h-10 w-10 text-white" />
+          <div className="relative mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-full bg-white/10 shadow-inner backdrop-blur-sm">
+            <img
+              src="/images/srv characters (SVG)/tutor.svg"
+              alt="Sir V"
+              className="h-24 w-24 animate-bounce object-contain drop-shadow-md"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white">{flowTitle}</h1>
-          <p className="mt-2 text-sm text-white/90">
-            Take a quick tour to discover how to use SRV!
+          <div className="mb-3 inline-block rounded-full border border-white/20 bg-white/20 px-4 py-1.5 shadow-sm backdrop-blur-md">
+            <p className="text-sm font-bold tracking-wide text-white">
+              Hi, I'm Sir V!
+            </p>
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm">
+            {flowTitle}
+          </h1>
+          <p className="mt-2 text-sm font-medium text-blue-100">
+            I'll be your tour guide through SRV!
           </p>
         </div>
-        <div className="p-6 text-center">
-          <p className="mb-6 text-gray-600">
+        <div className="px-8 py-7 text-center">
+          <p className="mb-7 text-sm leading-relaxed text-gray-500">
             We'll walk you through the key features in just a few simple steps.
+            Ready to explore?
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <button
               onClick={onSkip}
-              className="flex-1 rounded-xl border-2 border-gray-200 py-3 font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50"
+              className="flex-1 rounded-2xl border-2 border-gray-100 bg-white py-3.5 text-sm font-bold text-gray-500 transition-all hover:border-gray-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98]"
             >
-              Skip
+              Maybe Later
             </button>
             <button
               onClick={onStart}
-              className="flex-1 rounded-xl bg-blue-600 py-3 font-semibold text-white shadow-lg shadow-blue-600/30 transition-all hover:bg-blue-700 hover:shadow-xl"
+              className="flex-1 rounded-2xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)] transition-all hover:bg-blue-700 hover:shadow-[0_12px_20px_-6px_rgba(37,99,235,0.5)] active:scale-[0.98]"
             >
               Start Tour
             </button>
@@ -92,78 +109,6 @@ interface CustomStep extends Step {
   image?: string;
   headline?: string;
 }
-
-const CLIENT_STEPS: CustomStep[] = [
-  {
-    target: ".tour-client-nav",
-    headline: "Welcome to SRV!",
-    content:
-      "Use this menu to navigate between your home, bookings, messages, and profile.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "center",
-    disableBeacon: true,
-  } as CustomStep,
-  {
-    target: ".tour-client-search",
-    headline: "Find Exactly What You Need",
-    content:
-      "Looking for something specific? Type it here to instantly find top-rated professionals near you.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
-  } as CustomStep,
-  {
-    target: ".tour-client-service-card",
-    headline: "Top Local Professionals",
-    content:
-      "These cards show you the best providers available. You can see their category, price, and basic info at a glance.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
-  } as CustomStep,
-  {
-    target: ".tour-client-reputation",
-    headline: "Trust Built on Real Feedback",
-    content:
-      "This is the Reputation Score! It's a true reflection of a provider's quality, calculated from real client reviews and reliability.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "top",
-  } as CustomStep,
-];
-
-const PROVIDER_STEPS: CustomStep[] = [
-  {
-    target: ".tour-provider-nav",
-    headline: "Welcome to SRV Provider!",
-    content:
-      "Your central hub to grow your business, manage your services, and connect with new clients.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "center",
-    disableBeacon: true,
-  } as CustomStep,
-  {
-    target: ".tour-provider-stats",
-    headline: "Track Your Success",
-    content:
-      "Here is a quick snapshot of your earnings, completed jobs, and upcoming bookings.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
-  } as CustomStep,
-  {
-    target: ".tour-provider-requests",
-    headline: "Manage Bookings",
-    content:
-      "Easily track upcoming and pending bookings all in one place. Accept or decline requests with a single click.",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
-  } as CustomStep,
-  {
-    target: ".tour-provider-services",
-    headline: "Manage Services",
-    content:
-      "This is where you can create, edit, and manage the services you offer to clients. Make sure your listings stand out!",
-    image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "top",
-  } as CustomStep,
-];
 
 const CLIENT_SERVICE_STEPS: CustomStep[] = [
   {
@@ -204,6 +149,7 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
       "Browse through the service packages offered by this provider. Each package includes a detailed description and pricing.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "bottom",
+    disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-availability",
@@ -225,6 +171,7 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
       "See the provider's available time slots and schedule your booking at a time that works for you.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "bottom",
+    disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-gallery",
@@ -244,6 +191,7 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
       "Browse through photos and gallery images to get a feel for the quality of work this provider delivers.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "bottom",
+    disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-credentials",
@@ -263,6 +211,7 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
       "This section shows any certifications, licenses, or qualifications the provider has earned.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "bottom",
+    disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-reviews",
@@ -289,6 +238,7 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
       "Read genuine feedback from past clients to help you decide if this is the right provider for you.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "bottom",
+    disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-book",
@@ -307,6 +257,7 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
     content: "When you're ready, tap here to book this service!",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "top",
+    disableBeacon: true,
   } as CustomStep,
 ];
 
@@ -327,6 +278,7 @@ const CLIENT_BOOKINGS_STEPS: CustomStep[] = [
       "Use the search bar and filters to quickly find specific bookings by status or service category.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "bottom",
+    disableBeacon: true,
   } as CustomStep,
 ];
 
@@ -347,6 +299,58 @@ const CLIENT_BOOKING_DETAILS_STEPS: CustomStep[] = [
       "Here you can message the provider directly, cancel if needed, or leave a review once the job is done.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "top",
+    disableBeacon: true,
+  } as CustomStep,
+];
+
+const CLIENT_RATINGS_STEPS: CustomStep[] = [
+  {
+    target: ".tour-client-reputation-score",
+    headline: "Your Reputation Score",
+    content:
+      "This score reflects your reliability as a client. It's based on your booking history, reviews from providers, and how often you keep your appointments.",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    placement: "center",
+    disableBeacon: true,
+  } as CustomStep,
+  {
+    target: ".tour-client-rating-reviews",
+    headline: "Provider Reviews",
+    content:
+      "See feedback from service providers you've worked with. These reviews help build trust in the community.",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    placement: "bottom",
+    disableBeacon: true,
+  } as CustomStep,
+  {
+    target: ".tour-client-rating-stats",
+    headline: "Your Stats",
+    content:
+      "Track your booking history, completion rate, and more. A good record means better service providers!",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    placement: "top",
+    disableBeacon: true,
+  } as CustomStep,
+];
+
+const CLIENT_PROFILE_STEPS: CustomStep[] = [
+  {
+    target: ".tour-client-profile-header",
+    headline: "Your Profile",
+    content:
+      "Manage your personal information, profile picture, and contact details here.",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    placement: "center",
+    disableBeacon: true,
+  } as CustomStep,
+  {
+    target: ".tour-client-profile-settings",
+    headline: "Settings",
+    content:
+      "Configure your notifications, privacy preferences, and communication settings.",
+    image: "/images/srv characters (SVG)/tutor.svg",
+    placement: "top",
+    disableBeacon: true,
   } as CustomStep,
 ];
 
@@ -358,29 +362,32 @@ function Tooltip({
   primaryProps,
   tooltipProps,
   isLastStep,
-}: TooltipRenderProps) {
+  size,
+}: TooltipRenderProps & { size?: number }) {
   const customStep = step as CustomStep;
 
   return (
     <div
       {...tooltipProps}
-      className="relative flex w-80 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl md:w-[28rem] md:flex-row"
+      className="animate-in slide-in-from-bottom-4 fade-in relative flex w-[21rem] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300 md:w-[32rem] md:flex-row"
     >
       <button
         {...closeProps}
-        className="absolute right-2 top-2 z-10 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+        className="absolute right-3 top-3 z-10 rounded-full bg-gray-50/80 p-1.5 text-gray-400/80 backdrop-blur-sm transition-all hover:bg-gray-100 hover:text-gray-700 active:scale-95"
         aria-label="Skip walkthrough"
       >
-        <XMarkIcon className="h-5 w-5" />
+        <XMarkIcon className="h-4 w-4" />
       </button>
 
-      {/* Left/Top Side: Visuals */}
-      <div className="flex w-full items-center justify-center bg-gray-50 p-4 md:w-2/5">
+      {/* Left/Top Side: Visuals - Soft gradient background */}
+      <div className="relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 md:w-2/5">
+        {/* Decorative circle */}
+        <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200/40 blur-xl"></div>
         {customStep.image && (
           <img
             src={customStep.image}
             alt="SRV Character"
-            className="h-auto w-24 animate-[wiggle_1s_ease-in-out] object-contain drop-shadow-lg md:w-32"
+            className="relative z-10 h-auto w-24 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] md:w-32"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = target.src.replace(/ /g, "%20");
@@ -390,27 +397,34 @@ function Tooltip({
       </div>
 
       {/* Right/Bottom Side: Content */}
-      <div className="flex w-full flex-col justify-between p-4 md:w-3/5">
-        <div>
+      <div className="flex w-full flex-col justify-between p-6 md:w-3/5">
+        <div className="animate-in slide-in-from-right-2 fade-in duration-300">
+          <div className="mb-2 flex items-center justify-between pr-8">
+            {size && (
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                Step {index + 1} of {size}
+              </span>
+            )}
+          </div>
           {customStep.headline && (
-            <h2 className="mb-2 mt-4 pr-6 text-lg font-bold text-gray-900 md:mt-0">
+            <h2 className="mb-2 text-xl font-extrabold tracking-tight text-slate-900 md:mt-0">
               {customStep.headline}
             </h2>
           )}
-          <p className="mb-4 text-sm leading-relaxed text-gray-600">
+          <p className="mb-6 text-sm leading-relaxed text-slate-600">
             {step.content as React.ReactNode}
           </p>
         </div>
 
         {/* Navigation Controls */}
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex w-full justify-between space-x-2">
+        <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+          <div className="flex w-full justify-between space-x-3">
             {index > 0 ? (
               <button
                 {...backProps}
-                className="flex items-center rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                className="flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
               >
-                <ChevronLeftIcon className="mr-1 h-4 w-4" /> Back
+                <ChevronLeftIcon className="mr-1 h-3.5 w-3.5" /> Back
               </button>
             ) : (
               <div />
@@ -418,9 +432,9 @@ function Tooltip({
 
             <button
               {...primaryProps}
-              className="flex items-center rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-700"
+              className="flex flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_10px_-2px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-700 hover:shadow-[0_8px_16px_-4px_rgba(37,99,235,0.4)] active:scale-[0.98]"
             >
-              {isLastStep ? "Finish" : "Next"}
+              {isLastStep ? "Finish Tour" : "Next"}
               {!isLastStep && <ChevronRightIcon className="ml-1 h-4 w-4" />}
             </button>
           </div>
@@ -434,31 +448,146 @@ export default function SpotlightTour({ flowType }: SpotlightTourProps) {
   const [run, setRun] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const STORAGE_KEY = `srv_spotlight_tour_${flowType}`;
-  const steps =
-    flowType === "client"
-      ? CLIENT_STEPS
-      : flowType === "client-service"
-        ? CLIENT_SERVICE_STEPS
-        : flowType === "client-bookings"
-          ? CLIENT_BOOKINGS_STEPS
-          : flowType === "client-booking-details"
-            ? CLIENT_BOOKING_DETAILS_STEPS
-            : PROVIDER_STEPS;
+  const [steps, setSteps] = useState<CustomStep[]>([]);
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+useEffect(() => {
+    const isDesktopLayout =
+      typeof window !== "undefined" ? window.innerWidth >= 768 : false;
+
+    const CLIENT_STEPS: CustomStep[] = [
+      {
+        target: isDesktopLayout ? '.tour-client-nav-desktop' : '.tour-client-nav-mobile',
+        headline: "Welcome to SRV!",
+        content:
+          "Use this menu to navigate between your home, bookings, messages, and profile.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: isDesktopLayout ? "right-start" : "top",
+        disableBeacon: true,
+        disableScroll: true,
+      } as CustomStep,
+      {
+        target: '[data-tour="client-header"]',
+        headline: "Your Profile & Location",
+        content:
+          "Welcome to SRV! This is your dashboard. You can quickly access your profile settings here and see your current location.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: '[data-tour="client-search"]',
+        headline: "Find Exactly What You Need",
+        content:
+          "Looking for something specific? Type it here to instantly find top-rated professionals near you.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: '[data-tour="client-categories"]',
+        headline: "Browse by Category",
+        content:
+          "Not sure what you need? Browse our wide range of service categories to find the perfect professional for your job.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: '[data-tour="client-book-now"]',
+        headline: "Top Local Professionals",
+        content:
+          "Here you'll find the best service providers in your area, ready to help. Check their reputation scores and book instantly!",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "top",
+        disableBeacon: true,
+      } as CustomStep,
+    ];
+
+    const PROVIDER_STEPS: CustomStep[] = [
+      {
+        target: '[data-tour="provider-nav"]',
+        headline: "Welcome to SRV Provider!",
+        content:
+          "Your central hub to grow your business, manage your services, and connect with new clients.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "center",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: '[data-tour="provider-stats"]',
+        headline: "Track Your Success",
+        content:
+          "Here is a quick snapshot of your earnings, completed jobs, and upcoming bookings.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: '[data-tour="provider-requests"]',
+        headline: "Manage Bookings",
+        content:
+          "Easily track upcoming and pending bookings all in one place. Accept or decline requests with a single click.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: '[data-tour="provider-services"]',
+        headline: "Manage Services",
+        content:
+          "This is where you can create, edit, and manage the services you offer to clients. Make sure your listings stand out!",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "top",
+        disableBeacon: true,
+      } as CustomStep,
+    ];
+
+    const currentSteps =
+      flowType === "client"
+        ? CLIENT_STEPS
+        : flowType === "client-service"
+          ? CLIENT_SERVICE_STEPS
+          : flowType === "client-bookings"
+            ? CLIENT_BOOKINGS_STEPS
+            : flowType === "client-booking-details"
+              ? CLIENT_BOOKING_DETAILS_STEPS
+              : flowType === "client-ratings"
+                ? CLIENT_RATINGS_STEPS
+                : flowType === "client-profile"
+                  ? CLIENT_PROFILE_STEPS
+                  : PROVIDER_STEPS;
+
+    setSteps(currentSteps);
+  }, [flowType, isDesktop]);
 
   useEffect(() => {
     // Check and show welcome screen on first load
     const timer = setTimeout(() => {
       const hasSeen = localStorage.getItem(STORAGE_KEY);
+      
+      // Delay to ensure the DOM is painted and targets are available before deciding to show welcome.
+      // Joyride will instantly abort if targets aren't there.
       if (!hasSeen) {
         setShowWelcome(true);
       }
-    }, 500); // Quick check
+    }, 1000); // Increased check delay to wait for elements to render
     return () => clearTimeout(timer);
   }, [STORAGE_KEY]);
 
   const handleStartTour = () => {
     setShowWelcome(false);
-    setRun(true);
+    setTimeout(() => {
+      setRun(true);
+    }, 500);
   };
 
   const handleSkip = () => {
@@ -467,8 +596,14 @@ export default function SpotlightTour({ flowType }: SpotlightTourProps) {
   };
 
   const handleJoyrideCallback = (data: EventData) => {
-    const { status, action } = data;
-    const finishedStatuses: string[] = [STATUS.FINISHED, "skip"];
+    const { status, action, type } = data;
+    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED, "skip"];
+
+    if ((status as any) === "error" || type === "error") {
+      setRun(false);
+      localStorage.setItem(STORAGE_KEY, "true");
+      return;
+    }
 
     if (finishedStatuses.includes(status) || action === "close") {
       setRun(false);
@@ -489,12 +624,16 @@ export default function SpotlightTour({ flowType }: SpotlightTourProps) {
         return "Your Bookings Tour";
       case "client-booking-details":
         return "Booking Details Tour";
+      case "client-ratings":
+        return "Your Ratings Tour";
+      case "client-profile":
+        return "Profile Tour";
       default:
         return "SRV Tour";
     }
   };
 
-  if (showWelcome) {
+if (showWelcome) {
     return (
       <WelcomeModal
         onStart={handleStartTour}
@@ -506,6 +645,7 @@ export default function SpotlightTour({ flowType }: SpotlightTourProps) {
 
   return (
     <Joyride
+      key={run ? "joyride-running" : "joyride-idle"}
       onEvent={handleJoyrideCallback}
       continuous
       run={run}
@@ -519,12 +659,6 @@ export default function SpotlightTour({ flowType }: SpotlightTourProps) {
         scrollOffset: -40,
       }}
       styles={{
-        beacon: {
-          backgroundColor: "#facc15",
-          color: "#facc15",
-          borderRadius: "50%",
-          boxShadow: "0 0 0 4px rgba(250, 204, 21, 0.3)",
-        },
         tooltip: {
           borderRadius: "16px",
           boxShadow: "0 20px 40px rgba(0,0,0,0.2)",

@@ -3,7 +3,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import ProviderOnRouteBanner from "../provider/OnRouteBanner";
 import ActiveServiceBanner from "../provider/ActiveServiceBanner";
 import RouteTransition from "../common/pageFlowImprovements/RouteTransition";
-import SpotlightTour from "../common/SpotlightTour";
 
 export default function ProviderLayout() {
   return (
@@ -11,7 +10,6 @@ export default function ProviderLayout() {
       <div className="min-h-screen bg-gray-50">
         <ProviderOnRouteBanner />
         <ActiveServiceBanner />
-        <SpotlightTour flowType="provider" />
         {/* Provider-specific header/navigation can go here */}
         <main>
           <RouteTransition>

@@ -249,6 +249,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     <>
       <header
         ref={headerRef}
+        data-tour="client-header"
         // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
         className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-yellow-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-sm ${className}`}
       >
@@ -317,7 +318,10 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </div>
 
           {/* --- Location & Search Section --- */}
-          <div className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out">
+          <div
+            data-tour="client-search"
+            className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out"
+          >
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <button
                 type="button"

@@ -12,6 +12,7 @@ import {
   OneSignalBlockedModal,
   isOneSignalBlockedModalDismissed,
 } from "../../components/OneSignalBlockedModal";
+import SpotlightTour from "../../components/common/SpotlightTour";
 
 const ProviderHomePage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
@@ -201,6 +202,7 @@ const ProviderHomePage: React.FC = () => {
 
   return (
     <>
+      <SpotlightTour flowType="provider" />
       {/* OneSignal Blocked Modal */}
       {showOneSignalBlockedModal && (
         <OneSignalBlockedModal
@@ -222,7 +224,7 @@ const ProviderHomePage: React.FC = () => {
             scrollTargetRef={scrollRef as React.RefObject<HTMLElement>}
           />
           <div className="mx-auto max-w-7xl">
-            <div className="tour-provider-stats">
+            <div data-tour="provider-stats">
               {provider && (
                 <ProviderStatsNextjs
                   loading={isDataLoading}
@@ -241,14 +243,14 @@ const ProviderHomePage: React.FC = () => {
               )}
             </div>
 
-            <div className="tour-provider-requests">
+            <div data-tour="provider-requests">
               <BookingRequestsNextjs
                 pendingRequests={bookingCounts.pendingCount}
                 upcomingJobs={bookingCounts.upcomingCount}
               />
             </div>
 
-            <div className="tour-provider-services">
+            <div data-tour="provider-services">
               <ServiceManagementNextjs
                 services={userServices}
                 loading={servicesLoading}
