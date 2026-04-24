@@ -16,6 +16,7 @@ import useProviderBookingManagement from "../../hooks/useProviderBookingManageme
 import Tooltip from "../../components/common/Tooltip";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
+import DeleteConfirmDialog from "../../components/provider/service-details/DeleteConfirmDialog";
 
 // ServiceCard has been extracted to a separate component under components/provider
 
@@ -179,69 +180,26 @@ const MyServicesPage: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50 pb-16 md:pb-0">
       <Toaster position="top-center" richColors />
-      {/* Delete Confirmation Dialog */}
-      {deleteConfirmId &&
-        (() => {
-          const serviceToDelete = userServices.find(
-            (s) => s.id === deleteConfirmId,
-          );
-          const isArchivedDelete = serviceToDelete?.status === "Archived";
-
-          return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
-                <h3 className="mb-2 text-center text-lg font-bold text-red-700">
-                  {isArchivedDelete
-                    ? "Permanently Delete ?"
-                    : "Delete Service?"}
-                </h3>
-                <p className="mb-4 text-center text-sm text-gray-700">
-                  {isArchivedDelete ? (
-                    <>
-                      Are you sure you want to permanently delete{" "}
-                      <b>{serviceToDelete?.title || "this service"}</b>? This
-                      cannot be undone.
-                    </>
-                  ) : (
-                    <>
-                      Are you sure you want to delete{" "}
-                      <b>{serviceToDelete?.title || "this service"}</b>? This
-                      service will be archived for 30 days. You can restore it
-                      during this time.
-                    </>
-                  )}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                    onClick={() => setDeleteConfirmId(null)}
-                    disabled={deletingId === deleteConfirmId}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                    onClick={async () => {
-                      if (isArchivedDelete) {
-                        await handlePermanentDelete(deleteConfirmId);
-                      } else {
-                        await handleDeleteService(deleteConfirmId);
-                      }
-                      setDeleteConfirmId(null);
-                    }}
-                    disabled={deletingId === deleteConfirmId}
-                  >
-                    {deletingId === deleteConfirmId
-                      ? "Deleting..."
-                      : isArchivedDelete
-                        ? "Permanently Delete"
-                        : "Delete"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+      <DeleteConfirmDialog
+        open={!!deleteConfirmId}
+        serviceTitle={userServices.find((s) => s.id === deleteConfirmId)?.title}
+        isDeleting={!!deletingId}
+        isAlreadyArchived={
+          userServices.find((s) => s.id === deleteConfirmId)?.status ===
+          "Archived"
+        }
+        onCancel={() => setDeleteConfirmId(null)}
+        onConfirm={async () => {
+          if (!deleteConfirmId) return;
+          const service = userServices.find((s) => s.id === deleteConfirmId);
+          if (service?.status === "Archived") {
+            await handlePermanentDelete(deleteConfirmId);
+          } else {
+            await handleDeleteService(deleteConfirmId);
+          }
+          setDeleteConfirmId(null);
+        }}
+      />
 
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex w-full items-center justify-center px-3.5 py-2.5">

@@ -119,6 +119,9 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   if (booking.serviceDetails?.status === "Archived") {
     serviceTitle = `${serviceTitle} (Archived)`;
   }
+  if (booking.serviceDeleted) {
+    serviceTitle = `${serviceTitle} (Deleted)`;
+  }
 
   // Use provider profile image directly, do not use useMediaLoader for booking image
   let fallbackImage = userImageUrl;

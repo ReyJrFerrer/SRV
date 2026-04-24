@@ -7,7 +7,7 @@ import {
   ChartBarIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../../hooks/reviewManagement";
-import { useServiceById } from "../../../../hooks/serviceInformation";
+import { useServiceManagement } from "../../../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { useUserImage } from "../../../../hooks/useMediaLoader";
 import BottomNavigation from "../../../../components/provider/NavigationBar";
@@ -129,11 +129,22 @@ const ServiceReviewsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
 
-  const {
-    service,
-    loading: serviceLoading,
-    error: serviceError,
-  } = useServiceById(serviceId as string);
+  const { getService } = useServiceManagement();
+  const [service, setService] = useState<any>(null);
+  const [serviceLoading, setServiceLoading] = useState(true);
+  const [serviceError, setServiceError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!serviceId) return;
+    setServiceLoading(true);
+    getService(serviceId)
+      .then((s) => {
+        setService(s);
+        setServiceError(null);
+      })
+      .catch((err) => setServiceError(err))
+      .finally(() => setServiceLoading(false));
+  }, [serviceId, getService]);
 
   const { providerProfile } = useProviderBookingManagement();
   const { userImageUrl } = useUserImage(service?.providerAvatar);

@@ -250,14 +250,17 @@ const ProviderHomePage: React.FC = () => {
               />
             </div>
 
-            <div data-tour="provider-services">
-              <ServiceManagementNextjs
-                services={userServices}
-                loading={servicesLoading}
-                error={servicesError}
-                onRefresh={refreshServices}
-              />
-            </div>
+            <BookingRequestsNextjs
+              pendingRequests={bookingCounts.pendingCount}
+              upcomingJobs={bookingCounts.upcomingCount}
+            />
+
+            <ServiceManagementNextjs
+              services={userServices?.filter((s) => s.status !== "Archived")}
+              loading={servicesLoading}
+              error={servicesError}
+              onRefresh={refreshServices}
+            />
           </div>
         </main>
 

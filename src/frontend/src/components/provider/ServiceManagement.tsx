@@ -144,12 +144,14 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
               <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
                 <h3 className="mb-2 text-lg font-bold text-red-700">
-                  {isArchivedDelete ? "Delete Service?" : "Archive Service?"}
+                  {isArchivedDelete
+                    ? "Permanently Delete Service?"
+                    : "Delete Service?"}
                 </h3>
                 <p className="mb-4 text-sm text-gray-700">
                   {isArchivedDelete
                     ? `Are you sure you want to permanently delete "${serviceToDelete?.title || "this service"}"? This cannot be undone.`
-                    : `Are you sure you want to archive "${serviceToDelete?.title || "this service"}"? This service will be hidden from clients.`}
+                    : `Are you sure you want to delete "${serviceToDelete?.title || "this service"}"?  archived for 30 days. You can restore it during this time.`}
                 </p>
                 <div className="flex gap-2">
                   <button

@@ -32,7 +32,7 @@ export const ServiceDetailsModals: React.FC<ServiceDetailsModalsProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
             <h3 className="mb-2 text-lg font-bold text-red-700">
-              Delete Service?
+              Permanently Delete Service?
             </h3>
             <p className="mb-4 text-sm text-gray-700">
               Are you sure you want to delete{" "}

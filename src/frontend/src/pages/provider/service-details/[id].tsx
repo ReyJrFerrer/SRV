@@ -68,6 +68,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     getService,
     archiveService,
     permanentDeleteService,
+    restoreService,
     updateServiceStatus,
     updateService,
     getServicePackages,
@@ -106,6 +107,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [packagesLoading, setPackagesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -329,7 +331,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         });
       } else {
         await archiveService(service.id);
-        toast.success("Service archived!", { position: "top-center" });
+        toast.success("Service deleted!", { position: "top-center" });
       }
       navigate("/provider/services");
     } catch (error) {
@@ -344,6 +346,22 @@ const ProviderServiceDetailPage: React.FC = () => {
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleRestoreService = async () => {
+    if (!service) return;
+    setIsRestoring(true);
+    try {
+      await restoreService(service.id);
+      setService((prev) => (prev ? { ...prev, status: "Available" } : prev));
+      toast.success("Service restored!", { position: "top-center" });
+    } catch (error) {
+      toast.error("Failed to restore service. Please try again.", {
+        position: "top-center",
+      });
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -1509,12 +1527,15 @@ const ProviderServiceDetailPage: React.FC = () => {
         >
           <ActionButtons
             status={service.status}
+            isArchived={service.status === "Archived"}
             isUpdatingStatus={isUpdatingStatus}
             isDeleting={isDeleting}
+            isRestoring={isRestoring}
             hasActiveBookings={hasActiveBookings}
             activeBookingsCount={activeBookingsCount}
             onToggleStatus={handleStatusToggle}
             onDeleteClick={() => setShowDeleteConfirm(true)}
+            onRestore={handleRestoreService}
           />
         </LockableSection>
       </main>

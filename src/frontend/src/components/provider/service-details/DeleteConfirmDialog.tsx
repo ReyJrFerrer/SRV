@@ -21,8 +21,10 @@ const DeleteConfirmDialog: React.FC<Props> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
-        <h3 className="mb-2 text-lg font-bold text-red-700">
-          {isAlreadyArchived ? "Delete Service?" : "Archive Service?"}
+        <h3 className="mb-2 text-center text-lg font-bold text-red-700">
+          {isAlreadyArchived
+            ? "Permanently Delete Service?"
+            : "Delete Service?"}
         </h3>
         <p className="mb-4 text-sm text-gray-700">
           {isAlreadyArchived ? (
@@ -33,9 +35,9 @@ const DeleteConfirmDialog: React.FC<Props> = ({
             </>
           ) : (
             <>
-              Are you sure you want to archive{" "}
+              Are you sure you want to delete{" "}
               <b>{serviceTitle || "this service"}</b>? This service will be
-              hidden from clients.
+              archived for 30 days. You can restore it during this time.
             </>
           )}
         </p>

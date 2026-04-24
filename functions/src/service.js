@@ -963,7 +963,10 @@ exports.permanentDeleteService = onCall(async (request) => {
         const batchDocs = docs.slice(i, i + batchSize);
 
         batchDocs.forEach((doc) => {
-          batch.delete(doc.ref);
+          batch.update(doc.ref, {
+            serviceDeleted: true,
+            updatedAt: new Date().toISOString()
+          });
         });
 
         await batch.commit();
@@ -985,7 +988,10 @@ exports.permanentDeleteService = onCall(async (request) => {
         const batchDocs = docs.slice(i, i + batchSize);
 
         batchDocs.forEach((doc) => {
-          batch.delete(doc.ref);
+          batch.update(doc.ref, {
+            serviceDeleted: true,
+            updatedAt: new Date().toISOString()
+          });
         });
 
         await batch.commit();
@@ -1007,7 +1013,10 @@ exports.permanentDeleteService = onCall(async (request) => {
         const batchDocs = docs.slice(i, i + batchSize);
 
         batchDocs.forEach((doc) => {
-          batch.delete(doc.ref);
+          batch.update(doc.ref, {
+            serviceDeleted: true,
+            updatedAt: new Date().toISOString()
+          });
         });
 
         await batch.commit();
@@ -1035,7 +1044,10 @@ exports.getAllServices = onCall(async (request) => {
 
     const services = [];
     servicesSnapshot.forEach((doc) => {
-      services.push({id: doc.id, ...doc.data()});
+      const data = doc.data();
+      if (data.serviceDeleted !== true) {
+        services.push({id: doc.id, ...data});
+      }
     });
 
     return {success: true, services};
@@ -2396,42 +2408,51 @@ exports.processScheduledDeletions = onSchedule("every day 00:00", async (event) 
           for (let i = 0; i < docs.length; i += batchSize) {
             const batch = db.batch();
             const batchDocs = docs.slice(i, i + batchSize);
-            batchDocs.forEach((d) => batch.delete(d.ref));
-            await batch.commit();
-          }
-        }
+        batchDocs.forEach((d) => batch.update(d.ref, {
+          serviceDeleted: true,
+          updatedAt: new Date().toISOString()
+        }));
+        await batch.commit();
+      }
+    }
 
-        // Delete all associated reviews for this service
-        const reviewsSnapshot = await db.collection("reviews")
-          .where("serviceId", "==", serviceId)
-          .get();
+    // Delete all associated reviews for this service
+    const reviewsSnapshot = await db.collection("reviews")
+      .where("serviceId", "==", serviceId)
+      .get();
 
-        if (!reviewsSnapshot.empty) {
-          const batchSize = 500;
-          const docs = reviewsSnapshot.docs;
-          for (let i = 0; i < docs.length; i += batchSize) {
-            const batch = db.batch();
-            const batchDocs = docs.slice(i, i + batchSize);
-            batchDocs.forEach((d) => batch.delete(d.ref));
-            await batch.commit();
-          }
-        }
+    if (!reviewsSnapshot.empty) {
+      const batchSize = 500;
+      const docs = reviewsSnapshot.docs;
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + batchSize);
+        batchDocs.forEach((d) => batch.update(d.ref, {
+          serviceDeleted: true,
+          updatedAt: new Date().toISOString()
+        }));
+        await batch.commit();
+      }
+    }
 
-        // Delete all associated provider reviews
-        const providerReviewsSnapshot = await db.collection("providerReviews")
-          .where("serviceId", "==", serviceId)
-          .get();
+    // Delete all associated provider reviews
+    const providerReviewsSnapshot = await db.collection("providerReviews")
+      .where("serviceId", "==", serviceId)
+      .get();
 
-        if (!providerReviewsSnapshot.empty) {
-          const batchSize = 500;
-          const docs = providerReviewsSnapshot.docs;
-          for (let i = 0; i < docs.length; i += batchSize) {
-            const batch = db.batch();
-            const batchDocs = docs.slice(i, i + batchSize);
-            batchDocs.forEach((d) => batch.delete(d.ref));
-            await batch.commit();
-          }
-        }
+    if (!providerReviewsSnapshot.empty) {
+      const batchSize = 500;
+      const docs = providerReviewsSnapshot.docs;
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + batchSize);
+        batchDocs.forEach((d) => batch.update(d.ref, {
+          serviceDeleted: true,
+          updatedAt: new Date().toISOString()
+        }));
+        await batch.commit();
+      }
+    }
 
         // Delete the service document itself
         await doc.ref.delete();

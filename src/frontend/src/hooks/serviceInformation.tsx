@@ -276,15 +276,20 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
         }
 
         try {
+          // Filter out archived services for client view
+          const activeServices = allServices.filter(
+            (s) => s.status !== "Archived",
+          );
+
           // Fetch provider profiles and service packages in parallel
           const [providerMap, servicePackagesMap] = await Promise.all([
-            fetchProviderProfiles(allServices),
-            fetchServicePackages(allServices),
+            fetchProviderProfiles(activeServices),
+            fetchServicePackages(activeServices),
           ]);
 
           // Transform services with provider data and packages
           const enrichedServices = transformServicesWithData(
-            allServices,
+            activeServices,
             providerMap,
             servicePackagesMap,
           );
@@ -387,15 +392,20 @@ export const useServicesByCategory = (
       const categoryServices =
         await serviceCanisterService.getServicesByCategory(categoryId);
 
+      // Filter out archived services for client view
+      const activeServices = categoryServices.filter(
+        (s) => s.status !== "Archived",
+      );
+
       // Fetch provider profiles and service packages in parallel
       const [providerMap, servicePackagesMap] = await Promise.all([
-        fetchProviderProfiles(categoryServices),
-        fetchServicePackages(categoryServices),
+        fetchProviderProfiles(activeServices),
+        fetchServicePackages(activeServices),
       ]);
 
       // Transform services with provider data and packages
       const enrichedServices = transformServicesWithData(
-        categoryServices,
+        activeServices,
         providerMap,
         servicePackagesMap,
       );
@@ -479,8 +489,11 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
       // Fetch all services
       const allServices = await serviceCanisterService.getAllServices();
 
+      // Filter out archived services for client view
+      const activeServices = allServices.filter((s) => s.status !== "Archived");
+
       // Sort by rating and filter only available services with ratings
-      const topServices = allServices
+      const topServices = activeServices
         .filter(
           (service) =>
             service.status === "Available" &&
@@ -596,7 +609,7 @@ export const useServiceById = (
     const unsubscribe = serviceCanisterService.subscribeToService(
       serviceId,
       async (serviceData) => {
-        if (!serviceData) {
+        if (!serviceData || serviceData.status === "Archived") {
           setService(null);
           setError(new Error("Service not found"));
           setLoading(false);

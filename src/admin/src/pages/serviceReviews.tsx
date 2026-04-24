@@ -6,7 +6,7 @@ import {
   ChartBarIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../frontend/src/hooks/reviewManagement";
-import { useServiceById } from "../../../frontend/src/hooks/serviceInformation";
+import { useServiceManagement } from "../../../frontend/src/hooks/serviceManagement";
 import { useUserImage } from "../../../frontend/src/hooks/useMediaLoader";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
@@ -24,11 +24,22 @@ const ServiceReviewsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
 
-  const {
-    service,
-    loading: serviceLoading,
-    error: serviceError,
-  } = useServiceById(serviceId as string);
+  const { getService } = useServiceManagement();
+  const [service, setService] = useState<any>(null);
+  const [serviceLoading, setServiceLoading] = useState(true);
+  const [serviceError, setServiceError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!serviceId) return;
+    setServiceLoading(true);
+    getService(serviceId)
+      .then((s) => {
+        setService(s);
+        setServiceError(null);
+      })
+      .catch((err) => setServiceError(err))
+      .finally(() => setServiceLoading(false));
+  }, [serviceId, getService]);
 
   const { userImageUrl } = useUserImage(service?.providerAvatar);
 
