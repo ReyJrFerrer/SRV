@@ -246,7 +246,7 @@ const ProviderHomePage: React.FC = () => {
             />
 
             <ServiceManagementNextjs
-              services={userServices}
+              services={userServices?.filter((s) => s.status !== "Archived")}
               loading={servicesLoading}
               error={servicesError}
               onRefresh={refreshServices}

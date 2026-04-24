@@ -3,28 +3,78 @@ import {
   LockClosedIcon,
   LockOpenIcon,
   TrashIcon,
+  ArrowUturnLeftIcon,
 } from "@heroicons/react/24/solid";
 import Tooltip from "../../common/Tooltip";
 
 interface Props {
   status: "Available" | "Unavailable" | string;
+  isArchived?: boolean;
   isUpdatingStatus: boolean;
   isDeleting: boolean;
+  isRestoring: boolean;
   hasActiveBookings: boolean;
   activeBookingsCount: number;
   onToggleStatus: () => void;
   onDeleteClick: () => void;
+  onRestore?: () => void;
 }
 
 const ActionButtons: React.FC<Props> = ({
   status,
+  isArchived = false,
   isUpdatingStatus,
   isDeleting,
+  isRestoring,
   hasActiveBookings,
   activeBookingsCount,
   onToggleStatus,
   onDeleteClick,
+  onRestore,
 }) => {
+  if (isArchived) {
+    return (
+      <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row sm:justify-start">
+        <Tooltip
+          content="Restore this service to make it available again"
+          className="w-full sm:flex-1"
+        >
+          <button
+            onClick={onRestore}
+            disabled={!onRestore || isRestoring}
+            className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all ${
+              !onRestore || isRestoring
+                ? "cursor-not-allowed bg-blue-600 text-white opacity-60"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+          >
+            <ArrowUturnLeftIcon className="h-5 w-5" />
+            {isRestoring ? "Restoring..." : "Restore Service"}
+          </button>
+        </Tooltip>
+
+        <Tooltip
+          content={`Cannot permanently delete service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+          showWhenDisabled={hasActiveBookings}
+          className="w-full sm:flex-1"
+        >
+          <button
+            onClick={onDeleteClick}
+            disabled={isDeleting || hasActiveBookings}
+            className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all ${
+              isDeleting || hasActiveBookings
+                ? "cursor-not-allowed bg-red-600 text-white opacity-60"
+                : "bg-red-700 text-white hover:bg-red-800"
+            }`}
+          >
+            <TrashIcon className="h-5 w-5" />
+            {isDeleting ? "Deleting..." : "Permanently Delete Service"}
+          </button>
+        </Tooltip>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row sm:justify-start">
       <button
@@ -55,7 +105,7 @@ const ActionButtons: React.FC<Props> = ({
       </button>
 
       <Tooltip
-        content={`Cannot ${status === "Archived" ? "delete" : "archive"} service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
+        content={`Cannot archive service with ${activeBookingsCount} active booking${activeBookingsCount !== 1 ? "s" : ""}`}
         showWhenDisabled={hasActiveBookings}
         className="w-full sm:flex-1"
       >
@@ -69,13 +119,7 @@ const ActionButtons: React.FC<Props> = ({
           }`}
         >
           <TrashIcon className="h-5 w-5" />
-          {isDeleting
-            ? status === "Archived"
-              ? "Deleting..."
-              : "Archiving..."
-            : status === "Archived"
-              ? "Delete Service"
-              : "Archive Service"}
+          {isDeleting ? "Archiving..." : "Delete Service"}
         </button>
       </Tooltip>
     </div>
