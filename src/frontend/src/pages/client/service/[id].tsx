@@ -292,7 +292,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         <div className="relative h-60 w-full animate-pulse bg-gray-300"></div>
 
         <main className="relative z-10 -mt-24 p-4">
-          <div className="tour-client-service-hero mx-auto mt-6 w-full max-w-5xl">
+          <div className="mx-auto mt-6 w-full max-w-5xl">
             {/* Main Card Skeleton */}
             <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
@@ -638,7 +638,7 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
         )}
         <div className="mx-auto mt-2 w-full max-w-5xl">
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+          <div className="tour-client-service-hero rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
             <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between md:gap-8">
               {/* Left: Service Details */}
               <div className="flex-1">

@@ -123,14 +123,14 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
             el.scrollIntoView({ behavior: "smooth", block: "start" });
           }
           resolve();
-        }, 150);
+        }, 200);
       });
     },
     headline: "Service Details",
     content:
       "Here you can view all the details about this service, including the provider's info, price, and availability.",
     image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "center",
+    placement: "bottom",
     disableBeacon: true,
   } as CustomStep,
   {
