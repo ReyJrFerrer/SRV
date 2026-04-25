@@ -8,11 +8,7 @@ import {
 import BottomNavigation from "../../components/client/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import EmptyState from "../../components/common/EmptyState";
-import {
-  InboxIcon,
-  CheckIcon,
-  PencilIcon,
-} from "@heroicons/react/24/solid";
+import { InboxIcon, CheckIcon, PencilIcon } from "@heroicons/react/24/solid";
 import NotificationItem from "../../components/client/NotificationItemClient";
 
 // NotificationItem and NotificationMenu moved to components/notifications
@@ -288,7 +284,7 @@ const NotificationsPage = () => {
     );
   }, [stableNotifications, deletedIds, activeTab]);
 
-return (
+  return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
         <div className="flex h-16 w-full items-center justify-between px-4">
