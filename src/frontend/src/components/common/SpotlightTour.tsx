@@ -115,37 +115,15 @@ interface CustomStep extends Step {
 const CLIENT_SERVICE_STEPS: CustomStep[] = [
   {
     target: ".tour-client-service-hero",
-    before: () => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const el = document.querySelector(".tour-client-service-hero");
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-          resolve();
-        }, 200);
-      });
-    },
     headline: "Service Details",
     content:
-      "Here you can view all the details about this service, including the provider's info, price, and availability.",
+      "Here you can view all the details about this service, including the provider's info, price, and location.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "bottom",
     disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-packages",
-    before: () => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const el = document.querySelector(".tour-client-service-packages");
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-          resolve();
-        }, 150);
-      });
-    },
     headline: "Choose Your Package",
     content:
       "Browse through the service packages offered by this provider. Each package includes a detailed description and pricing.",
@@ -155,108 +133,45 @@ const CLIENT_SERVICE_STEPS: CustomStep[] = [
   } as CustomStep,
   {
     target: ".tour-client-service-availability",
-    before: () => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const el = document.querySelector(
-            ".tour-client-service-availability",
-          );
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-          resolve();
-        }, 150);
-      });
-    },
     headline: "Check Availability",
     content:
-      "See the provider's available time slots and schedule your booking at a time that works for you.",
+      "Check the provider's schedule to see when they are available to perform this service.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "bottom",
     disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-gallery",
-    before: () => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const el = document.querySelector(".tour-client-service-gallery");
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-          resolve();
-        }, 150);
-      });
-    },
-    headline: "See Their Work",
+    headline: "Service Gallery",
     content:
-      "Browse through photos and gallery images to get a feel for the quality of work this provider delivers.",
+      "View photos and media showcasing the provider's past work and service quality.",
     image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
+    placement: "top",
     disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-credentials",
-    before: () => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const el = document.querySelector(".tour-client-service-credentials");
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-          resolve();
-        }, 150);
-      });
-    },
-    headline: "Verified Credentials",
+    headline: "Provider Credentials",
     content:
-      "This section shows any certifications, licenses, or qualifications the provider has earned.",
+      "Verify the provider's qualifications, identity status, and professional certificates.",
     image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
+    placement: "top",
     disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-reviews",
-    before: () => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const el = document.querySelector(".tour-client-service-reviews");
-          if (el) {
-            const isMobile = window.innerWidth < 768;
-            const viewportHeight = window.innerHeight;
-            const scrollOffset = isMobile ? viewportHeight * 0.35 : 120;
-            window.scrollTo({
-              top:
-                window.scrollY + el.getBoundingClientRect().top - scrollOffset,
-              behavior: "smooth",
-            });
-          }
-          resolve();
-        }, 150);
-      });
-    },
-    headline: "Real Reviews",
+    headline: "Client Reviews",
     content:
-      "Read genuine feedback from past clients to help you decide if this is the right provider for you.",
+      "Read ratings and feedback from past clients to help you make an informed decision.",
     image: "/images/srv characters (SVG)/tutor.svg",
-    placement: "bottom",
+    placement: "top",
     disableBeacon: true,
   } as CustomStep,
   {
     target: ".tour-client-service-book",
-    before: () => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const el = document.querySelector(".tour-client-service-book");
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "end" });
-          }
-          resolve();
-        }, 150);
-      });
-    },
     headline: "Ready to Book?",
-    content: "When you're ready, tap here to book this service!",
+    content:
+      "Once you've found the perfect service and package, click here to proceed with your booking.",
     image: "/images/srv characters (SVG)/tutor.svg",
     placement: "top",
     disableBeacon: true,
@@ -706,7 +621,7 @@ export default function SpotlightTour({
         overlayColor: "rgba(15, 23, 42, 0.6)",
         zIndex: 10001,
         scrollDuration: 600,
-        scrollOffset: -40,
+        scrollOffset: 80,
       }}
       styles={{
         tooltip: {
