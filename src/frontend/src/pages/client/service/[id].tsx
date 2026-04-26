@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   StarIcon,
   MapPinIcon,
-  CheckBadgeIcon,
+ShieldCheckIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/solid";
 import useServiceById from "../../../hooks/serviceDetail";
@@ -639,10 +639,10 @@ const ClientServiceDetailsPage: React.FC = () => {
         )}
         <div className="mx-auto mt-2 w-full max-w-5xl">
           <div className="tour-client-service-hero rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between md:gap-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               {/* Left: Service Details */}
-              <div className="flex-1">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="flex-1 space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
                     {category?.slug ? (
                       <img
@@ -658,72 +658,71 @@ const ClientServiceDetailsPage: React.FC = () => {
                     {category?.name ?? "General"}
                   </span>
                   <div className="flex items-center text-sm font-medium text-gray-500">
-                    <MapPinIcon className="mr-1 h-4 w-4 text-gray-400" />
+                    <MapPinIcon className="mr-1.5 h-4 w-4 text-gray-400" />
                     <span>{location?.address || "Baguio City"}</span>
                   </div>
                 </div>
 
-                <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl lg:text-4xl">
                   {name}
                 </h1>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1">
-                    <StarIcon className="h-6 w-6 text-yellow-400" />
-                    <span className="text-xl font-bold text-gray-900">
-                      {averageRating.toFixed(1)}
-                    </span>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <div className="flex items-center gap-1 text-yellow-400">
+                    <StarIcon className="h-5 w-5" />
                   </div>
+                  <span className="text-lg font-bold text-gray-900">
+                    {averageRating.toFixed(1)}
+                  </span>
                   <span className="text-sm font-medium text-gray-500">
                     ({reviewCount} review{reviewCount !== 1 ? "s" : ""})
                   </span>
                 </div>
               </div>
 
-              {/* Right: Provider Details */}
-              <div className="flex min-w-[280px] flex-col rounded-xl border border-gray-100 bg-gray-50 p-5 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm">
-                    <img
-                      src={(() => {
-                        const isValidUrl = (
-                          url?: string | null,
-                        ): url is string =>
-                          !!url &&
-                          (url.startsWith("data:") ||
-                            url.startsWith("http") ||
-                            url.startsWith("/")) &&
-                          url.length > 20;
+              {/* Mobile Divider */}
+              <div className="my-2 h-px w-full bg-gray-100 md:hidden"></div>
 
-                        if (isValidUrl(userImageUrl)) {
-                          return userImageUrl;
-                        }
-                        return "/default-provider.svg";
-                      })()}
-                      alt={providerName}
-                      className="h-full w-full rounded-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/default-provider.svg";
-                      }}
-                    />
-                    {service.isActive && (
-                      <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow-sm"></span>
-                    )}
-                  </div>
-                  <div className="flex flex-col">
-                    <h2 className="text-lg font-bold text-gray-900">
-                      {providerName}
-                    </h2>
-                    <ReputationScore reputation={providerRep} />
-                  </div>
+              {/* Right: Provider Details */}
+              <div className="flex shrink-0 items-center gap-4 md:border-l md:border-gray-100 md:pl-8">
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-full border-2 border-gray-100 bg-white shadow-sm md:h-16 md:w-16">
+                  <img
+                    src={(() => {
+                      const isValidUrl = (url?: string | null): url is string =>
+                        !!url &&
+                        (url.startsWith("data:") ||
+                          url.startsWith("http") ||
+                          url.startsWith("/")) &&
+                        url.length > 20;
+
+                      if (isValidUrl(userImageUrl)) {
+                        return userImageUrl;
+                      }
+                      return "/default-provider.svg";
+                    })()}
+                    alt={providerName}
+                    className="h-full w-full rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/default-provider.svg";
+                    }}
+                  />
+                  {service.isActive && (
+                    <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500 shadow-sm md:h-4 md:w-4"></span>
+                  )}
                 </div>
-                {isVerified === true && (
-                  <div className="mt-4 flex items-center justify-center rounded-lg bg-blue-50/50 py-2 text-xs font-semibold text-blue-600">
-                    <CheckBadgeIcon className="mr-1.5 h-4 w-4" />
-                    Verified Provider
-                  </div>
-                )}
+                <div className="flex flex-col">
+                  <h2 className="text-base font-bold text-gray-900 md:text-lg">
+                    {providerName}
+                  </h2>
+                  <ReputationScore reputation={providerRep} />
+                  {isVerified === true && (
+                    <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-green-600">
+                      <ShieldCheckIcon className="h-4 w-4" />
+                      <span>Verified</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
