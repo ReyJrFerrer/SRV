@@ -9,6 +9,7 @@ import {
   ExclamationCircleIcon,
   BellIcon,
   DevicePhoneMobileIcon,
+  PlayIcon,
 } from "@heroicons/react/24/outline";
 import BottomNavigation from "../../components/client/NavigationBar";
 import { useLogout } from "../../hooks/logout";
@@ -16,6 +17,7 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
+import SpotlightTour from "../../components/common/SpotlightTour";
 
 const SettingsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -32,6 +34,11 @@ const SettingsPage: React.FC = () => {
   }, []);
 
   const menuItems = [
+    {
+      name: "Start Tour",
+      icon: PlayIcon,
+      action: "startTour",
+    },
     {
       name: "Terms & Conditions",
       icon: ArrowRightOnRectangleIcon,
@@ -51,14 +58,33 @@ const SettingsPage: React.FC = () => {
 
   const [pwaOpen, setPwaOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
+  const [startTourOpen, setStartTourOpen] = React.useState(false);
+
+  const handleMenuClick = (item: {
+    name?: string;
+    action?: string;
+    href?: string;
+  }) => {
+    if (item.action === "startTour") {
+      setStartTourOpen(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
+      {startTourOpen && (
+        <SpotlightTour
+          flowType="client"
+          onTourComplete={() => setStartTourOpen(false)}
+        />
+      )}
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
+        <div className="flex h-16 w-full items-center justify-between px-4">
+          <div className="flex h-10 w-10" />
+          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             Settings
           </h1>
+          <div className="flex h-10 w-10" />
         </div>
       </header>
 
@@ -154,7 +180,13 @@ const SettingsPage: React.FC = () => {
                 {menuItems.map((item) => (
                   <li key={item.name}>
                     <button
-                      onClick={() => navigate(item.href)}
+                      onClick={() => {
+                        if (item.action === "startTour") {
+                          handleMenuClick(item);
+                        } else if (item.href) {
+                          navigate(item.href);
+                        }
+                      }}
                       className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                     >
                       <div className="flex items-center">

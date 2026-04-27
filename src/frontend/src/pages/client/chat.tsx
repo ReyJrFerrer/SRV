@@ -415,10 +415,12 @@ const ClientChatPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b border-gray-100 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+        <div className="flex h-16 w-full items-center justify-between px-4">
+          <div className="flex h-10 w-10" />
+          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             Messages
           </h1>
+          <div className="flex h-10 w-10" />
         </div>
       </header>
 

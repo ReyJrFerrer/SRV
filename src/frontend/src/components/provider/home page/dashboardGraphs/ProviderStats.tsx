@@ -371,7 +371,7 @@ const ProviderStats: React.FC<ProviderStatsProps> = ({
 
   // // --- Improved Outstanding Commission Card ---
   // const WalletCard = () => (
-  //   <div className="relative flex flex-col items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-6 shadow-lg md:flex-row">
+  //   <div className="relative flex flex-col items-center justify-between gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm md:flex-row">
   //     <div className="flex items-center gap-4">
   //       <BanknotesIcon className="h-10 w-10 text-blue-500 drop-shadow" />
   //       <div>

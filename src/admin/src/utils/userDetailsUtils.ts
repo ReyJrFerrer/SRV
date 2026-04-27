@@ -44,21 +44,21 @@ const extractUserData = (
   walletBalanceData: number,
   servicesDataResult: any,
 ): UserData => {
-  const createdAt = validateDate(convertToDate(profile.createdAt));
-  const updatedAt = validateDate(convertToDate(profile.updatedAt));
+  const createdAt = validateDate(
+    convertToDate(Number(profile.createdAt) as bigint | number | undefined),
+  );
+  const updatedAt = validateDate(
+    convertToDate(Number(profile.updatedAt) as bigint | number | undefined),
+  );
 
   return {
-    id: profile.id.toString(),
-    name: profile.name,
-    phone: profile.phone,
+    id: String(profile.id),
+    name: String(profile.name ?? ""),
+    phone: String(profile.phone ?? ""),
     createdAt,
     updatedAt,
-    profilePicture: extractProfilePicture(profile.profilePicture),
-    biography: extractBiography(
-      Array.isArray(profile.biography)
-        ? profile.biography[0]
-        : profile.biography,
-    ),
+    profilePicture: extractProfilePicture(String(profile.profilePicture ?? "")),
+    biography: extractBiography(String(profile.biography ?? "")),
     totalEarnings: analyticsData.totalEarnings,
     pendingCommission: 0,
     settledCommission: 0,
@@ -83,19 +83,19 @@ const getDefaultUserData = (
   profile: Profile,
   lockStatus: boolean,
 ): UserData => {
-  const updatedAt = validateDate(convertToDate(profile.updatedAt));
+  const updatedAt = validateDate(
+    convertToDate(Number(profile.updatedAt) as bigint | number | undefined),
+  );
   return {
-    id: profile.id.toString(),
-    name: profile.name,
-    phone: profile.phone,
-    createdAt: validateDate(convertToDate(profile.createdAt)),
-    updatedAt,
-    profilePicture: extractProfilePicture(profile.profilePicture),
-    biography: extractBiography(
-      Array.isArray(profile.biography)
-        ? profile.biography[0]
-        : profile.biography,
+    id: String(profile.id),
+    name: String(profile.name ?? ""),
+    phone: String(profile.phone ?? ""),
+    createdAt: validateDate(
+      convertToDate(Number(profile.createdAt) as bigint | number | undefined),
     ),
+    updatedAt,
+    profilePicture: extractProfilePicture(String(profile.profilePicture ?? "")),
+    biography: extractBiography(String(profile.biography ?? "")),
     totalEarnings: 0,
     pendingCommission: 0,
     settledCommission: 0,
@@ -117,16 +117,16 @@ export const convertProfileToUserData = async (
   profile: Profile,
   getUserLockStatus: (userId: string) => boolean,
 ): Promise<UserData> => {
-  const lockStatus = getUserLockStatus(profile.id.toString());
+  const lockStatus = getUserLockStatus(String(profile.id));
 
   try {
     const [analytics, reviews, reputation, walletBalance, servicesData] =
       await Promise.allSettled([
-        adminServiceCanister.getUserAnalytics(profile.id.toString()),
-        adminServiceCanister.getUserReviews(profile.id.toString()),
-        adminServiceCanister.getUserReputation(profile.id.toString()),
-        walletCanisterService.getBalanceOf(profile.id.toString()),
-        adminServiceCanister.getUserServicesAndBookings(profile.id.toString()),
+        adminServiceCanister.getUserAnalytics(String(profile.id)),
+        adminServiceCanister.getUserReviews(String(profile.id)),
+        adminServiceCanister.getUserReputation(String(profile.id)),
+        walletCanisterService.getBalanceOf(String(profile.id)),
+        adminServiceCanister.getUserServicesAndBookings(String(profile.id)),
       ]);
 
     const analyticsData =

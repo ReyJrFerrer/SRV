@@ -25,6 +25,7 @@ import { useReputation } from "../../hooks/useReputation";
 import { useClientAnalytics } from "../../hooks/useClientAnalytics";
 import useClientRating from "../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
+import SpotlightTour from "../../components/common/SpotlightTour";
 import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import {
   ProfileSkeleton,
@@ -630,6 +631,7 @@ const ClientProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      <SpotlightTour flowType="client-profile" />
       {toast && (
         <Toast
           message={toast.message}
@@ -637,7 +639,7 @@ const ClientProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-md">
+      <header className="tour-client-profile-header sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-md">
         <div className="relative flex w-full items-center px-4 py-4">
           <button
             onClick={() => navigate(-1)}
@@ -645,7 +647,7 @@ const ClientProfilePage: React.FC = () => {
           >
             <ArrowLeftIcon className="h-5 w-5" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-black tracking-tight text-gray-900">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             My Profile
           </h1>
         </div>
@@ -769,7 +771,7 @@ const ClientProfilePage: React.FC = () => {
               </div>
             </div>
             <div className="mt-2 lg:col-span-2 lg:mt-0">
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+              <div className="tour-client-reputation-score tour-client-profile-reputation rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
                 <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
                   <h3 className="text-xl font-bold tracking-tight text-gray-900">
                     Your Reputation

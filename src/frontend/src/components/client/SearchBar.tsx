@@ -146,7 +146,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   // --- Render: SearchBar Layout ---
   return (
-    <div ref={searchBarRef} className="relative">
+    <div ref={searchBarRef} className="tour-client-search relative">
       {/* Search input and button */}
       <form
         onSubmit={handleSubmit}

@@ -189,7 +189,10 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
   }
 
   return (
-    <div className={`w-full max-w-full ${className}`}>
+    <div
+      data-tour="client-book-now"
+      className={`w-full max-w-full ${className}`}
+    >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold sm:text-xl">Book Now!</h2>
       </div>

@@ -7,6 +7,7 @@ import ServiceList from "../../components/client/home page/ServiceListRow";
 import BottomNavigation from "../../components/client/NavigationBar";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import ClientHeader from "../../components/client/home page/Header";
+import SpotlightTour from "../../components/common/SpotlightTour";
 import {
   OneSignalBlockedModal,
   isOneSignalBlockedModalDismissed,
@@ -57,6 +58,7 @@ const ClientHomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 pb-32">
+      <SpotlightTour flowType="client" />
       {/* SECTION: Feedback popup */}
       <FeedbackPopup />
 

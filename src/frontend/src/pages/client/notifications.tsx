@@ -8,25 +8,15 @@ import {
 import BottomNavigation from "../../components/client/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import EmptyState from "../../components/common/EmptyState";
-import {
-  EnvelopeOpenIcon,
-  InboxIcon,
-  EllipsisVerticalIcon,
-} from "@heroicons/react/24/solid";
+import { InboxIcon, CheckIcon, PencilIcon } from "@heroicons/react/24/solid";
 import NotificationItem from "../../components/client/NotificationItemClient";
 
 // NotificationItem and NotificationMenu moved to components/notifications
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const {
-    notifications,
-    loading,
-    error,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-  } = useNotifications();
+  const { notifications, loading, error, markAsRead, deleteNotification } =
+    useNotifications();
 
   // Track processed notification IDs to prevent flickering from re-renders
   const processedNotificationsRef = React.useRef<Set<string>>(new Set());
@@ -173,22 +163,6 @@ const NotificationsPage = () => {
     return !hiddenTypes.has(n.type);
   };
 
-  const handleSelectAll = () => {
-    const visibleIds = stableNotifications
-      .filter((n) => !deletedIds.includes(n.id))
-      .map((n) => n.id);
-    if (!editMode) {
-      setSelectedIds(visibleIds);
-      setEditMode(true);
-      return;
-    }
-    if (selectedIds.length === visibleIds.length && visibleIds.length > 0) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(visibleIds);
-    }
-  };
-
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -290,130 +264,33 @@ const NotificationsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="sticky top-0 z-20 bg-white">
-        <div className="relative flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
+        <div className="flex h-16 w-full items-center justify-between px-4">
+          <div className="flex h-10 w-10" />
+          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             Notifications
           </h1>
-          {stableNotifications.length > 0 && (
-            <>
-              <div className="hidden sm:block" aria-hidden="true" />
-
-              <div
-                className={`absolute inset-y-0 right-4 hidden items-center gap-2 transition-opacity duration-200 lg:flex ${
-                  loading ? "pointer-events-none opacity-0" : "opacity-100"
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    if (!editMode) {
-                      setEditMode(true);
-                      clearSelection();
-                    } else {
-                      setEditMode(false);
-                      clearSelection();
-                    }
-                  }}
-                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-                >
-                  {editMode ? "Done" : "Edit"}
-                </button>
-                <button
-                  onClick={handleSelectAll}
-                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-                >
-                  {selectedIds.length > 0 &&
-                  selectedIds.length ===
-                    stableNotifications.filter(
-                      (n) => !deletedIds.includes(n.id),
-                    ).length
-                    ? "Clear"
-                    : "Select all"}
-                </button>
-                {unread.length > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-                  >
-                    <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-                    Mark all as read
-                  </button>
-                )}
-              </div>
-
-              <div
-                className={`absolute inset-y-0 right-4 flex items-center transition-opacity duration-200 lg:hidden ${
-                  loading ? "pointer-events-none opacity-0" : "opacity-100"
-                }`}
-              >
-                <button
-                  ref={mobileMenuButtonRef}
-                  onClick={() => setMobileMenuOpen((s) => !s)}
-                  className="text-black-600 rounded-full p-2 hover:bg-gray-100"
-                  aria-haspopup="true"
-                  aria-expanded={mobileMenuOpen}
-                >
-                  <EllipsisVerticalIcon className="h-6 w-6" />
-                </button>
-
-                {mobileMenuOpen && (
-                  <div
-                    ref={mobileMenuRef}
-                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
-                  >
-                    <div className="py-1" role="menu">
-                      <button
-                        onClick={() => {
-                          if (!editMode) {
-                            setEditMode(true);
-                            clearSelection();
-                          } else {
-                            setEditMode(false);
-                            clearSelection();
-                          }
-                          setMobileMenuOpen(false);
-                        }}
-                        className="block w-full rounded-2xl px-5 py-3.5 text-left text-sm font-black text-gray-700 transition-all duration-300 hover:bg-gray-100 active:scale-95"
-                        role="menuitem"
-                      >
-                        {editMode ? "Done" : "Edit"}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleSelectAll();
-                          setMobileMenuOpen(false);
-                        }}
-                        className="block w-full rounded-2xl px-5 py-3.5 text-left text-sm font-black text-gray-700 transition-all duration-300 hover:bg-gray-100 active:scale-95"
-                        role="menuitem"
-                      >
-                        {selectedIds.length > 0 &&
-                        selectedIds.length ===
-                          stableNotifications.filter(
-                            (n) => !deletedIds.includes(n.id),
-                          ).length
-                          ? "Clear selection"
-                          : "Select all"}
-                      </button>
-
-                      {unread.length > 0 && (
-                        <button
-                          onClick={() => {
-                            markAllAsRead();
-                            setMobileMenuOpen(false);
-                          }}
-                          className="flex w-full items-center rounded-2xl px-5 py-3.5 text-left text-sm font-black text-blue-700 transition-all duration-300 hover:bg-gray-100 active:scale-95"
-                          role="menuitem"
-                        >
-                          <EnvelopeOpenIcon className="mr-2 h-4 w-4" />
-                          Mark all as read
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
+          {stableNotifications.length > 0 ? (
+            <button
+              onClick={() => {
+                if (!editMode) {
+                  setEditMode(true);
+                  clearSelection();
+                } else {
+                  setEditMode(false);
+                  clearSelection();
+                }
+              }}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 active:scale-95"
+            >
+              {editMode ? (
+                <CheckIcon className="h-5 w-5" />
+              ) : (
+                <PencilIcon className="h-5 w-5" />
+              )}
+            </button>
+          ) : (
+            <div className="flex h-10 w-10" />
           )}
         </div>
       </header>

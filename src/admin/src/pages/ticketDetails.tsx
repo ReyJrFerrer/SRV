@@ -55,9 +55,8 @@ export const TicketDetailsPage: React.FC = () => {
   // Load reports from firestore
   const loadReportsAsTickets = async (): Promise<Ticket[]> => {
     try {
-      const { getReportsFromFeedbackCanister } = await import(
-        "../services/adminServiceCanister"
-      );
+      const { getReportsFromFeedbackCanister } =
+        await import("../services/adminServiceCanister");
       const reports = await getReportsFromFeedbackCanister();
       const reportTickets = convertReportsToTickets(reports, backendUsers);
       return reportTickets;
@@ -95,15 +94,12 @@ export const TicketDetailsPage: React.FC = () => {
     const loadImages = async () => {
       setLoadingImages(true);
       try {
-        const { getFirebaseFirestore } = await import(
-          "../services/firebaseApp"
-        );
-        const { getMediaItem } = await import(
-          "../services/mediaServiceCanister"
-        );
-        const { loadTicketAttachmentImages } = await import(
-          "../utils/imageUtils"
-        );
+        const { getFirebaseFirestore } =
+          await import("../services/firebaseApp");
+        const { getMediaItem } =
+          await import("../services/mediaServiceCanister");
+        const { loadTicketAttachmentImages } =
+          await import("../utils/imageUtils");
 
         const firestore = getFirebaseFirestore();
         const urls = await loadTicketAttachmentImages(
@@ -130,9 +126,8 @@ export const TicketDetailsPage: React.FC = () => {
       const reportId = ticket.id.replace(REPORT_PREFIX, "");
       const oldStatus = ticket.status;
 
-      const { updateReportStatus } = await import(
-        "../services/adminServiceCanister"
-      );
+      const { updateReportStatus } =
+        await import("../services/adminServiceCanister");
       const success = await updateReportStatus(
         reportId,
         newStatus,
@@ -190,9 +185,8 @@ export const TicketDetailsPage: React.FC = () => {
 
     // Send notification to user about the new comment
     try {
-      const { sendTicketCommentNotificationToUser } = await import(
-        "../services/adminServiceCanister"
-      );
+      const { sendTicketCommentNotificationToUser } =
+        await import("../services/adminServiceCanister");
       const reportId = ticket.id.replace(REPORT_PREFIX, "");
 
       await sendTicketCommentNotificationToUser(

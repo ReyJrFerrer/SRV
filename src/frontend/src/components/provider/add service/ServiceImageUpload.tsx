@@ -17,68 +17,107 @@ interface ServiceImageUploadProps {
 
 const MAX_PDF_SIZE = 450 * 1024; // 450 KB
 
-const FileInput: React.FC<{
+const UploadZone: React.FC<{
   id: string;
   accept: string;
   multiple: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   files: File[];
   previews: string[];
-  buttonText: string;
-  buttonClass: string;
-  label: string;
-  description: string;
-}> = ({
-  id,
-  accept,
-  multiple,
-  onChange,
-  files,
-  previews,
-  buttonText,
-  buttonClass,
-}) => {
+}> = ({ id, accept, multiple, onChange, files, previews }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFiles(Array.from(e.target.files));
-    } else {
-      setSelectedFiles([]);
-    }
-    onChange(e);
+  const hasFiles = files.length > 0 || previews.length > 0;
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
   };
 
-  const hasFiles =
-    files.length > 0 || previews.length > 0 || selectedFiles.length > 0;
-  const displayFiles = files.length > 0 ? files : selectedFiles;
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const dataTransfer = new DataTransfer();
+      Array.from(e.dataTransfer.files).forEach((file) => {
+        if (id.includes("service")) {
+          if (file.type.startsWith("image/")) {
+            dataTransfer.items.add(file);
+          }
+        } else {
+          dataTransfer.items.add(file);
+        }
+      });
+      const nativeInput = fileInputRef.current;
+      if (nativeInput) {
+        nativeInput.files = dataTransfer.files;
+        nativeInput.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
+  };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className={`inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium ${buttonClass}`}
+    <div
+      className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-all ${
+        isDragging
+          ? "border-yellow-400 bg-yellow-50"
+          : hasFiles
+            ? "border-gray-200 bg-gray-50"
+            : "border-gray-200 bg-white hover:border-yellow-300 hover:bg-yellow-50"
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <input
+        type="file"
+        ref={fileInputRef}
+        id={id}
+        accept={accept}
+        multiple={multiple}
+        onChange={onChange}
+        className="hidden"
+      />
+      <div className="flex flex-col items-center text-center">
+        <div
+          className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
+            hasFiles ? "bg-gray-100" : "bg-yellow-100"
+          }`}
         >
-          {buttonText}
-        </button>
-        {hasFiles && (
-          <span className="text-sm text-gray-600">
-            {displayFiles.length} file{displayFiles.length !== 1 ? "s" : ""}{" "}
-            selected
-          </span>
-        )}
-        <input
-          type="file"
-          ref={fileInputRef}
-          id={id}
-          accept={accept}
-          multiple={multiple}
-          onChange={handleFileChange}
-          className="hidden"
-        />
+          <svg
+            className={`h-6 w-6 ${hasFiles ? "text-gray-400" : "text-yellow-600"}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+        <p className="mb-1 text-sm font-medium text-gray-700">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-yellow-600 hover:underline"
+          >
+            Click to browse
+          </button>{" "}
+          or drag and drop
+        </p>
+        <p className="text-xs text-gray-400">
+          {id.includes("service")
+            ? "PNG, JPG, GIF up to 10MB"
+            : "PNG, JPG, PDF up to 450KB"}
+        </p>
       </div>
     </div>
   );
@@ -136,28 +175,24 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
   return (
     <div className="grid gap-10 md:grid-cols-2 md:gap-8">
       {/* Service Images Section */}
-      <div className="flex flex-col rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-xl font-bold text-blue-700">
+      <div className="flex flex-col rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-lg font-bold text-gray-900">
             Service Images
           </span>
-          <span className="text-xs font-normal text-gray-600">(Optional)</span>
+          <span className="text-xs font-normal text-gray-500">(Optional)</span>
         </div>
         <p className="mb-4 text-sm text-gray-600">
           Upload images of your past work. High-quality images help attract more
           clients.
         </p>
-        <FileInput
+        <UploadZone
           id="serviceImages"
           accept="image/png, image/jpeg, image/gif"
           multiple={true}
           onChange={onImageFilesChange}
           files={serviceImageFiles}
           previews={imagePreviews}
-          buttonText="Choose Service Images"
-          buttonClass="bg-blue-100 text-blue-700 hover:bg-blue-200"
-          label="Service Images"
-          description="Upload images of your past work. High-quality images help attract more clients."
         />
         {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3">
@@ -176,20 +211,21 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
                       ? fileOrUrl
                       : (fileOrUrl as File).name + index
                   }
-                  className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-blue-200 bg-white shadow-md transition hover:shadow-lg"
+                  className="group relative aspect-square overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200"
                 >
                   <img
                     src={src}
                     alt={`Service Image ${index + 1}`}
                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
+                  <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(index)}
-                    className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white opacity-90 shadow-md transition hover:bg-red-700 hover:opacity-100"
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-sm backdrop-blur-sm transition hover:bg-red-500 hover:text-white"
                     aria-label={`Remove service image ${index + 1}`}
                   >
-                    <TrashIcon className="h-5 w-5" />
+                    <TrashIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
               );
@@ -199,28 +235,24 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
       </div>
 
       {/* Certifications Section */}
-      <div className="flex flex-col rounded-2xl border border-yellow-200 bg-gradient-to-br from-yellow-50 via-white to-yellow-100 p-8 shadow-lg">
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-xl font-bold text-yellow-700">
+      <div className="flex flex-col rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-lg font-bold text-gray-900">
             Certifications
           </span>
-          <span className="text-xs font-normal text-gray-600">(Optional)</span>
+          <span className="text-xs font-normal text-gray-500">(Optional)</span>
         </div>
         <p className="mb-4 text-sm text-gray-600">
           Upload images of your certifications or credentials. This helps build
           trust with clients.
         </p>
-        <FileInput
+        <UploadZone
           id="certificationImages"
-          accept="image/png, image/jpeg"
+          accept="image/png, image/jpeg,application/pdf"
           multiple={true}
           onChange={onCertificationFilesChange}
           files={certificationFiles}
           previews={certificationPreviews}
-          buttonText="Choose Certification Files"
-          buttonClass="bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-          label="Certifications"
-          description="Upload images of your certifications or credentials. This helps build trust with clients."
         />
         {(certificationFiles.length > 0 ||
           certificationPreviews.length > 0) && (
@@ -245,15 +277,24 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
                       ? fileOrUrl
                       : (fileOrUrl as File).name + index
                   }
-                  className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-yellow-200 bg-white shadow-md transition hover:shadow-lg"
+                  className="group relative aspect-square overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-200"
                 >
                   {isPdf ? (
-                    <iframe
-                      src={src}
-                      title={`Certification PDF ${index + 1}`}
-                      className="h-full w-full rounded bg-gray-100"
-                      style={{ minHeight: 0, minWidth: 0, border: "none" }}
-                    />
+                    <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                      <svg
+                        className="h-8 w-8 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
                   ) : (
                     <img
                       src={src}
@@ -261,16 +302,17 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
                       className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                     />
                   )}
+                  <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
                   <button
                     type="button"
                     onClick={() =>
                       handleRemoveCertification &&
                       handleRemoveCertification(index)
                     }
-                    className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white opacity-90 shadow-md transition hover:bg-red-700 hover:opacity-100"
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-sm backdrop-blur-sm transition hover:bg-red-500 hover:text-white"
                     aria-label={`Remove certification ${index + 1}`}
                   >
-                    <TrashIcon className="h-5 w-5" />
+                    <TrashIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
               );
