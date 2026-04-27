@@ -15,13 +15,8 @@ import NotificationItem from "../../components/client/NotificationItemClient";
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const {
-    notifications,
-    loading,
-    error,
-    markAsRead,
-    deleteNotification,
-  } = useNotifications();
+  const { notifications, loading, error, markAsRead, deleteNotification } =
+    useNotifications();
 
   // Track processed notification IDs to prevent flickering from re-renders
   const processedNotificationsRef = React.useRef<Set<string>>(new Set());
@@ -167,8 +162,6 @@ const NotificationsPage = () => {
     ]);
     return !hiddenTypes.has(n.type);
   };
-
-
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
