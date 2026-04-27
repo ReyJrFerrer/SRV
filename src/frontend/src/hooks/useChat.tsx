@@ -460,10 +460,16 @@ export const useChat = () => {
           currentUserId,
         );
 
-        // Remove optimistic message immediately on success since the real message
-        // will arrive via the subscription, showing the date.
+        // Update optimistic message status to "sent" instead of removing it.
+        // It stays visible with "Sent" text until the real message arrives
+        // via subscription, at which point the visibleOptimisticMessages filter
+        // will remove it (since it matches the real message by content/time).
         setOptimisticMessages((prev) =>
-          prev.filter((m) => m.id !== optimisticMsg.id),
+          prev.map((m) =>
+            m.id === optimisticMsg.id
+              ? { ...m, status: "sent" as OptimisticMessageStatus }
+              : m,
+          ),
         );
 
         return optimisticMsg;
