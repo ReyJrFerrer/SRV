@@ -441,7 +441,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
       <div className="shadow-xly rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-100 via-white to-blue-100 p-6">
         {/* --- Header & Days --- */}
         <section className="mb-8">
-          <div className="mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-800">Availability</h2>
               <p className="text-sm text-gray-500">
@@ -501,7 +501,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-4 md:grid-cols-7 gap-2 w-full">
+          <div className="grid w-full grid-cols-4 gap-2 md:grid-cols-7">
             {allDays.map((day) => {
               const isSelected = formData.availabilitySchedule.includes(day);
               return (
