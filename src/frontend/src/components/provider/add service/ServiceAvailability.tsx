@@ -449,7 +449,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
           </div>
 
           {/* Shortcuts - above days on mobile, inline on desktop */}
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-sm sm:justify-end sm:gap-0">
+          <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm sm:justify-end sm:gap-2">
             <button
               type="button"
               onClick={() => togglePreset(weekdays)}
@@ -461,7 +461,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             >
               Weekdays
             </button>
-            <span className="hidden text-gray-300 sm:inline">|</span>
+            <span className="text-gray-300">|</span>
             <button
               type="button"
               onClick={() => togglePreset(weekends)}
@@ -473,7 +473,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             >
               Weekends
             </button>
-            <span className="hidden text-gray-300 sm:inline">|</span>
+            <span className="text-gray-300">|</span>
             <button
               type="button"
               onClick={() => togglePreset(allDays)}
