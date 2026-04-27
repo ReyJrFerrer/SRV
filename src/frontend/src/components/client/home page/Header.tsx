@@ -251,7 +251,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         ref={headerRef}
         data-tour="client-header"
         // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
-        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-gray-100 bg-white p-4 shadow-sm ${className}`}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
         <div
@@ -267,9 +267,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
                 />
               </Link>
-              <div className="h-10 border-l-2 border-gray-200"></div>
+              <div className="h-10 border-l-2 border-blue-100"></div>
               <div className="flex flex-col">
-                <span className="text-2xl font-semibold tracking-wide text-gray-600">
+                <span className="text-2xl font-semibold tracking-wide text-blue-700">
                   Welcome,{" "}
                   <span className="text-2xl font-bold text-gray-900">
                     {displayName}
@@ -280,7 +280,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             {isAuthenticated && (
               <button
                 onClick={handleProfileClick}
-                className="group relative rounded-full border border-gray-200 bg-gray-50 p-2 shadow-sm transition-all hover:scale-105 hover:border-yellow-300 hover:bg-yellow-50"
+                className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
               >
                 <UserCircleIcon className="h-10 w-10 text-yellow-500 transition-colors group-hover:text-yellow-600" />
               </button>
@@ -300,15 +300,15 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               {isAuthenticated && (
                 <button
                   onClick={handleProfileClick}
-                  className="group relative rounded-full border border-gray-200 bg-gray-50 p-2 shadow-sm transition-all hover:scale-105 hover:border-yellow-300 hover:bg-yellow-50"
+                  className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
                 >
                   <UserCircleIcon className="h-8 w-8 text-yellow-500 transition-colors group-hover:text-yellow-600" />
                 </button>
               )}
             </div>
-            <hr className="my-4 border-gray-200" />
+            <hr className="my-4 border-yellow-200" />
             <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-              <span className="text-xl font-semibold tracking-wide text-gray-600">
+              <span className="text-xl font-semibold tracking-wide text-blue-700">
                 Welcome,
               </span>
               <span className="text-xl font-bold text-gray-900">
@@ -320,7 +320,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           {/* --- Location & Search Section --- */}
           <div
             data-tour="client-search"
-            className="rounded-xl border border-gray-200 bg-gray-50 p-5 shadow-sm transition-all duration-300 ease-in-out"
+            className="rounded-xl border border-yellow-300 bg-yellow-100 p-5 shadow-sm transition-all duration-300 ease-in-out"
           >
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <button
@@ -388,7 +388,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
         <div className="mini-header fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)]">
-          <div className="w-full rounded-b-xl border-b border-gray-200 bg-white p-3 shadow-sm">
+          <div className="w-full rounded-b-xl border-b border-yellow-300 bg-yellow-100 p-3 shadow-sm">
             {/* Location row (reveals on slight scroll-up) */}
             <div
               className={`overflow-hidden transition-all duration-300 ${
