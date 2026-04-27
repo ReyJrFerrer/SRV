@@ -120,9 +120,8 @@ export const TicketInboxPage: React.FC = () => {
   const loadReportsAsTickets = async () => {
     setLoadingReports(true);
     try {
-      const { getReportsFromFeedbackCanister } = await import(
-        "../services/adminServiceCanister"
-      );
+      const { getReportsFromFeedbackCanister } =
+        await import("../services/adminServiceCanister");
       const reports = await getReportsFromFeedbackCanister();
       const reportTickets = convertReportsToTickets(reports, backendUsers);
       return reportTickets;

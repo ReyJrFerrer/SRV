@@ -320,9 +320,8 @@ export const useAdmin = (): UseAdminReturn => {
 
   const getReportsFromFeedbackCanister = useCallback(async () => {
     try {
-      const { getReportsFromFeedbackCanister } = await import(
-        "../services/adminServiceCanister"
-      );
+      const { getReportsFromFeedbackCanister } =
+        await import("../services/adminServiceCanister");
       const reports = await getReportsFromFeedbackCanister();
       return reports;
     } catch (error) {

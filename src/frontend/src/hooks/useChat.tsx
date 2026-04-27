@@ -32,8 +32,7 @@ const useIsMounted = () => {
 };
 
 // Enhanced conversation summary with user name and profile image URL
-export interface EnhancedConversationSummary
-  extends FrontendConversationSummary {
+export interface EnhancedConversationSummary extends FrontendConversationSummary {
   otherUserName?: string;
   otherUserId: string;
   otherUserImageUrl?: string; // Raw profile picture URL from backend
