@@ -1,4 +1,4 @@
-import type { Profile } from "../../declarations/auth/auth.did.d.ts";
+import type { Profile } from "../types/profile";
 import type { ServiceData } from "../components";
 
 const PRICE_DIVISOR = 100;
