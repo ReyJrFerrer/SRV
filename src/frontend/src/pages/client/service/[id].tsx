@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   StarIcon,
   MapPinIcon,
-ShieldCheckIcon,
+  ShieldCheckIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/solid";
 import useServiceById from "../../../hooks/serviceDetail";

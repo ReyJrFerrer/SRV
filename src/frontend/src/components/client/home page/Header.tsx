@@ -251,7 +251,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         ref={headerRef}
         data-tour="client-header"
         // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
-        className={`sticky top-0 z-40 w-full max-w-full rounded-2xl border border-yellow-100 bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-4 shadow-sm ${className}`}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-gray-100 bg-white p-4 shadow-sm ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
         <div
@@ -267,11 +267,11 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   className="h-20 w-auto drop-shadow-md transition-transform duration-300 hover:scale-110"
                 />
               </Link>
-              <div className="h-10 border-l-2 border-blue-100"></div>
+              <div className="h-10 border-l-2 border-gray-200"></div>
               <div className="flex flex-col">
-                <span className="text-2xl font-semibold tracking-wide text-blue-700">
+                <span className="text-2xl font-semibold tracking-wide text-gray-600">
                   Welcome,{" "}
-                  <span className="text-2xl font-bold text-gray-800">
+                  <span className="text-2xl font-bold text-gray-900">
                     {displayName}
                   </span>
                 </span>
@@ -280,9 +280,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             {isAuthenticated && (
               <button
                 onClick={handleProfileClick}
-                className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-2 shadow-sm transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                className="group relative rounded-full border border-gray-200 bg-gray-50 p-2 shadow-sm transition-all hover:scale-105 hover:border-yellow-300 hover:bg-yellow-50"
               >
-                <UserCircleIcon className="h-10 w-10 text-yellow-500 transition-colors group-hover:text-blue-700" />
+                <UserCircleIcon className="h-10 w-10 text-yellow-500 transition-colors group-hover:text-yellow-600" />
               </button>
             )}
           </div>
@@ -300,18 +300,18 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               {isAuthenticated && (
                 <button
                   onClick={handleProfileClick}
-                  className="group relative rounded-full bg-gradient-to-br from-blue-100 to-yellow-100 p-2 shadow-sm transition-all hover:scale-105 hover:from-yellow-200 hover:to-blue-200"
+                  className="group relative rounded-full border border-gray-200 bg-gray-50 p-2 shadow-sm transition-all hover:scale-105 hover:border-yellow-300 hover:bg-yellow-50"
                 >
-                  <UserCircleIcon className="h-8 w-8 text-yellow-500 transition-colors group-hover:text-blue-700" />
+                  <UserCircleIcon className="h-8 w-8 text-yellow-500 transition-colors group-hover:text-yellow-600" />
                 </button>
               )}
             </div>
-            <hr className="my-4 border-blue-100" />
+            <hr className="my-4 border-gray-200" />
             <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-0">
-              <span className="text-xl font-semibold tracking-wide text-blue-700">
+              <span className="text-xl font-semibold tracking-wide text-gray-600">
                 Welcome,
               </span>
-              <span className="text-xl font-bold text-gray-800">
+              <span className="text-xl font-bold text-gray-900">
                 {displayName}
               </span>
             </div>
@@ -320,7 +320,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           {/* --- Location & Search Section --- */}
           <div
             data-tour="client-search"
-            className="rounded-2xl border border-blue-100 bg-yellow-200 p-6 shadow transition-all duration-300 ease-in-out"
+            className="rounded-xl border border-gray-200 bg-gray-50 p-5 shadow-sm transition-all duration-300 ease-in-out"
           >
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <button
@@ -332,7 +332,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 className="flex items-center gap-2 rounded-xl border border-transparent bg-white/0 text-left transition hover:border-blue-200 focus:border-blue-300 focus:outline-none disabled:cursor-not-allowed"
                 aria-label="Open my location details"
               >
-                <MapPinIcon className="h-6 w-6 text-blue-600" />
+                <MapPinIcon className="h-6 w-6 text-yellow-500" />
                 <span className="text-base font-bold text-gray-800">
                   My Location
                 </span>
@@ -388,7 +388,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
       {isMini && (
         <div className="mini-header fixed inset-x-0 top-0 z-50 pt-[env(safe-area-inset-top)]">
-          <div className="w-full rounded-b-xl border-b border-yellow-200 bg-yellow-50 p-3 shadow-sm">
+          <div className="w-full rounded-b-xl border-b border-gray-200 bg-white p-3 shadow-sm">
             {/* Location row (reveals on slight scroll-up) */}
             <div
               className={`overflow-hidden transition-all duration-300 ${
