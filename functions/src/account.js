@@ -213,7 +213,6 @@ exports.createProfile = onCall(async (request) => {
     biography: null,
     isActive: true,
     totalEarnings: 0,
-    isOnboarded: false, // Provider onboarding status for payment functionality
   };
 
   await userRef.set(newProfile);

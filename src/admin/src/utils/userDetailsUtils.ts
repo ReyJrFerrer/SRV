@@ -1,4 +1,4 @@
-import type { Profile } from "../../../declarations/auth/auth.did.d.ts";
+import type { Profile } from "../types/profile";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { walletCanisterService } from "../../../frontend/src/services/walletCanisterService";
 import {
