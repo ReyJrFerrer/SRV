@@ -573,7 +573,7 @@ const ClientChatPage: React.FC = () => {
                                   className={`flex items-end justify-end gap-2 ${message.status === "failed" ? "cursor-pointer" : ""}`}
                                 >
                                   <div
-                                      className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl transition-all duration-300 ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white opacity-100"}`}
+                                    className={`max-w-xs rounded-2xl px-4 py-2 transition-all duration-300 md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white opacity-100"}`}
                                   >
                                     <p className="text-sm">{message.content}</p>
                                     <p
