@@ -46,7 +46,7 @@ const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
 
   if (!hasAnalyticsData) {
     return (
-      <div className="relative flex h-[275px] w-full flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 shadow-inner">
+      <div className="relative flex h-[275px] w-full flex-col items-center justify-center rounded-xl border border-gray-100 bg-white shadow-sm">
         <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-900">
           <InformationCircleIcon className="h-6 w-6 text-blue-400" />
           Booking Status
@@ -102,7 +102,7 @@ const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
 
   return (
     <div
-      className="relative flex h-full max-h-[400px] min-h-[200px] w-full flex-col rounded-2xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-4 shadow-inner"
+      className="relative flex h-full max-h-[400px] min-h-[200px] w-full flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
       style={{
         aspectRatio: "1.5 / 1",
       }}

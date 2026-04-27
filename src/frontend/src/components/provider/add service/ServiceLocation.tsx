@@ -333,23 +333,23 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
 
   return (
     <div className="mx-auto max-w-xl space-y-8 p-4">
-      <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-lg">
-        <div className="mb-6 flex items-center gap-2">
-          <MapPinIcon className="h-5 w-5 text-blue-600 md:h-8 md:w-8" />
-          <h3 className="text-md font-bold text-blue-800 md:text-2xl">
-            Service Location
-            <span className="ml-1 text-base text-red-500">*</span>
+      <section className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
+        <div className="mb-6 flex items-center gap-3">
+          <MapPinIcon className="h-6 w-6 text-yellow-500 md:h-8 md:w-8" />
+          <h3 className="text-lg font-bold text-gray-900 md:text-xl">
+            Service Location{" "}
+            <span className="font-normal text-gray-500">(Required)</span>
           </h3>
         </div>
 
         {/* Location mode toggle */}
-        <div className="mb-6 flex gap-4">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            className={`rounded-lg border px-4 py-2 font-semibold ${
+            className={`flex-1 rounded-xl border px-4 py-3 font-medium transition-all ${
               locationInputMode === "detected"
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-blue-300 bg-white text-blue-700"
+                ? "border-yellow-400 bg-yellow-400 text-gray-900 shadow-sm"
+                : "border-gray-200 bg-white text-gray-700 hover:border-yellow-300 hover:bg-yellow-50"
             }`}
             onClick={() => setLocationInputMode("detected")}
           >
@@ -357,10 +357,10 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
           </button>
           <button
             type="button"
-            className={`rounded-lg border px-4 py-2 font-semibold ${
+            className={`flex-1 rounded-xl border px-4 py-3 font-medium transition-all ${
               locationInputMode === "manual"
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-blue-300 bg-white text-blue-700"
+                ? "border-yellow-400 bg-yellow-400 text-gray-900 shadow-sm"
+                : "border-gray-200 bg-white text-gray-700 hover:border-yellow-300 hover:bg-yellow-50"
             }`}
             onClick={() => setLocationInputMode("manual")}
           >
@@ -371,12 +371,12 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
         {/* Detected location */}
         {locationInputMode === "detected" && (
           <div className="mb-6 flex flex-col items-center justify-center">
-            <div className="flex w-full items-center gap-4 rounded-xl border border-blue-100 bg-white px-5 py-4 shadow-sm">
+            <div className="flex w-full items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 shadow-sm">
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="mb-1 text-xs font-medium text-blue-500">
+                <span className="mb-1 text-xs font-medium text-gray-500">
                   Using Your Current Location
                 </span>
-                <span className="break-words text-lg font-semibold text-blue-900">
+                <span className="break-words text-base font-semibold text-gray-900">
                   {getDisplayAddress()}
                 </span>
               </div>

@@ -29,15 +29,15 @@ const ReviewSubmit: React.FC<Props> = ({
 }) => {
   return (
     <div className="flex flex-col items-center space-y-8">
-      <div className="w-full max-w-3xl rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-10 shadow-2xl">
+      <div className="w-full max-w-3xl rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 shadow">
-            <ClockIcon className="h-8 w-8 text-blue-500" />
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-yellow-50 shadow-sm">
+            <ClockIcon className="h-7 w-7 text-yellow-500" />
           </div>
-          <h2 className="mb-2 text-3xl font-extrabold text-blue-900">
+          <h2 className="mb-2 text-2xl font-bold text-gray-900">
             Review &amp; Submit
           </h2>
-          <p className="text-lg text-gray-600">
+          <p className="text-base text-gray-500">
             Please review your service details before submitting.
           </p>
         </div>
@@ -47,21 +47,23 @@ const ReviewSubmit: React.FC<Props> = ({
           {/* --- Top Row: Stacks vertically on mobile, horizontally on desktop --- */}
           <div className="flex flex-col gap-8 md:flex-row">
             {/* Service Name + Category Card */}
-            <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-2 flex items-start gap-2">
-                <DocumentCheckIcon className="h-5 w-5 shrink-0 text-blue-400" />
-                <h3 className="font-semibold text-gray-800">
-                  Service Name & Category
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-5 md:flex-1">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100">
+                  <DocumentCheckIcon className="h-4 w-4 shrink-0 text-yellow-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Service Details
                 </h3>
               </div>
               <div className="space-y-1">
-                <p className="break-words text-xl font-bold text-blue-900">
+                <p className="break-words text-lg font-bold text-gray-900">
                   {formData.serviceOfferingTitle?.trim() ||
                     "(No title provided)"}
                 </p>
-                <p className="break-words text-sm text-gray-700">
+                <p className="break-words text-sm text-gray-600">
                   Category:{" "}
-                  <span className="font-semibold text-blue-800">
+                  <span className="font-medium text-gray-800">
                     {categories.find((cat) => cat.id === formData.categoryId)
                       ?.name || "Unknown"}
                   </span>
@@ -70,12 +72,16 @@ const ReviewSubmit: React.FC<Props> = ({
             </div>
 
             {/* Location Card: Takes 1/3 of the width on desktop */}
-            <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-4 flex items-start gap-2">
-                <MapPinIcon className="h-5 w-5 shrink-0 text-blue-400" />
-                <h3 className="font-semibold text-gray-800">Location</h3>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-5 md:flex-1">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100">
+                  <MapPinIcon className="h-4 w-4 shrink-0 text-yellow-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Location
+                </h3>
               </div>
-              <div className="break-words font-medium text-blue-900">
+              <div className="break-words font-medium text-gray-900">
                 {[formData.locationMunicipalityCity, formData.locationProvince]
                   .filter(Boolean)
                   .join(", ")}
@@ -83,16 +89,20 @@ const ReviewSubmit: React.FC<Props> = ({
             </div>
 
             {/* Availability Card: Takes 1/3 of the width on desktop */}
-            <div className="rounded-lg bg-white p-5 shadow-sm md:flex-1">
-              <div className="mb-4 flex items-start gap-2">
-                <CalendarDaysIcon className="h-5 w-5 shrink-0 text-blue-400" />
-                <h3 className="font-semibold text-gray-800">Availability</h3>
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-5 md:flex-1">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100">
+                  <CalendarDaysIcon className="h-4 w-4 shrink-0 text-yellow-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Availability
+                </h3>
               </div>
-              <div className="font-medium text-blue-900">
+              <div className="font-medium text-gray-900">
                 {formData.availabilitySchedule.join(", ")}
               </div>
               {formData.availabilitySchedule.length > 0 && (
-                <span className="mt-1 block text-sm text-gray-500">
+                <span className="mt-1 block text-xs text-gray-500">
                   {formData.useSameTimeForAllDays
                     ? `Same hours for all days (${formData.commonTimeSlots.length} time slot${formData.commonTimeSlots.length > 1 ? "s" : ""})`
                     : "Custom hours per day"}
@@ -101,12 +111,14 @@ const ReviewSubmit: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="rounded-lg bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-start gap-2">
-              <CalendarDaysIcon className="h-5 w-5 shrink-0 text-blue-400" />
-              <h3 className="font-semibold text-gray-800">Packages</h3>
+          <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100">
+                <AdjustmentsVerticalIcon className="h-4 w-4 shrink-0 text-yellow-600" />
+              </div>
+              <h3 className="font-semibold text-gray-700">Packages</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {formData.servicePackages
                 .filter(
                   (pkg: any) =>
@@ -116,17 +128,17 @@ const ReviewSubmit: React.FC<Props> = ({
                   return (
                     <div
                       key={pkg.id}
-                      className="flex flex-col items-start justify-between gap-2 rounded border border-blue-400 bg-blue-50 p-3 md:flex-row md:items-start md:gap-4"
+                      className="flex flex-col items-start justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 md:flex-row md:items-start"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-blue-900">{pkg.name}</p>
-                        <p className="break-words text-sm text-gray-600">
+                        <p className="font-medium text-gray-900">{pkg.name}</p>
+                        <p className="mt-1 break-words text-sm text-gray-600">
                           {pkg.description}
                         </p>
                       </div>
 
                       <div className="flex-shrink-0 text-left md:text-right">
-                        <p className="text-lg font-semibold text-green-600">
+                        <p className="text-lg font-bold text-yellow-600">
                           ₱{Number(pkg.price).toLocaleString()}
                         </p>
                       </div>
@@ -138,17 +150,19 @@ const ReviewSubmit: React.FC<Props> = ({
         </div>
 
         {(serviceImageFiles.length > 0 || imagePreviews.length > 0) && (
-          <div className="mt-10">
-            <div className="mb-2 flex items-center gap-2">
-              <PhotoIcon className="h-5 w-5 text-blue-400" />
-              <h3 className="font-semibold text-gray-800">Service Images</h3>
+          <div className="mt-8">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100">
+                <PhotoIcon className="h-4 w-4 text-yellow-600" />
+              </div>
+              <h3 className="font-semibold text-gray-700">Service Images</h3>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
               {serviceImageFiles.length > 0
                 ? serviceImageFiles.map((file, idx) => (
                     <div
                       key={file.name + idx}
-                      className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                      className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
                     >
                       <img
                         src={URL.createObjectURL(file)}
@@ -160,7 +174,7 @@ const ReviewSubmit: React.FC<Props> = ({
                 : imagePreviews.map((previewUrl, idx) => (
                     <div
                       key={previewUrl}
-                      className="flex aspect-square items-center justify-center overflow-hidden rounded border border-gray-200 bg-white"
+                      className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
                     >
                       <img
                         src={previewUrl}
@@ -175,12 +189,14 @@ const ReviewSubmit: React.FC<Props> = ({
 
         {(certificationFiles?.length > 0 ||
           certificationPreviews?.length > 0) && (
-          <div className="mt-10">
-            <div className="mb-2 flex items-center gap-2">
-              <AdjustmentsVerticalIcon className="h-5 w-5 text-yellow-500" />
-              <h3 className="font-semibold text-yellow-700">Certifications</h3>
+          <div className="mt-8">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100">
+                <DocumentCheckIcon className="h-4 w-4 text-yellow-600" />
+              </div>
+              <h3 className="font-semibold text-gray-700">Certifications</h3>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
               {certificationFiles && certificationFiles.length > 0
                 ? certificationFiles.map((file, idx) => {
                     const isPdf =
@@ -190,7 +206,7 @@ const ReviewSubmit: React.FC<Props> = ({
                     return (
                       <div
                         key={file.name + idx}
-                        className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
+                        className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
                       >
                         {isPdf ? (
                           <iframe
@@ -216,7 +232,7 @@ const ReviewSubmit: React.FC<Props> = ({
                 : certificationPreviews?.map((previewUrl, idx) => (
                     <div
                       key={previewUrl}
-                      className="flex aspect-square items-center justify-center overflow-hidden rounded border border-yellow-200 bg-white"
+                      className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
                     >
                       {previewUrl.endsWith(".pdf") ? (
                         <iframe

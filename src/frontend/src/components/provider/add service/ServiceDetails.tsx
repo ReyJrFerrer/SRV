@@ -191,17 +191,18 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Left: Service Details & Category */}
-        <section className="flex flex-col justify-between rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-lg">
+        <section className="flex flex-col justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
           <div className="space-y-8">
             {/* Service Title */}
             <section>
-              <h2 className="mb-2 text-xl font-bold text-blue-700">
-                Service Title <span className="text-red-500">*</span>
+              <h2 className="mb-3 text-lg font-bold text-gray-900">
+                Service Title{" "}
+                <span className="font-normal text-gray-500">(Required)</span>
               </h2>
               <div className="space-y-2">
                 <label
                   htmlFor="serviceOfferingTitle"
-                  className="block text-sm font-medium text-blue-900"
+                  className="block text-sm font-medium text-gray-600"
                 >
                   Place a title for your service
                 </label>
@@ -213,10 +214,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   onChange={handleTitleChange}
                   required
                   ref={titleRef}
-                  className={`lg:text-md mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-400 ${
+                  className={`lg:text-md mt-1 block w-full rounded-xl border px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 ${
                     validationErrors.serviceOfferingTitle && !hideTitleError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
-                      : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                      : "border-gray-200 bg-gray-50 focus:border-yellow-400"
                   }`}
                   placeholder="e.g., Professional Hair Styling"
                   maxLength={40}
@@ -231,13 +232,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
 
             {/* Category */}
             <section>
-              <h2 className="mb-2 text-xl font-bold text-blue-700">
-                Category <span className="text-red-500">*</span>
+              <h2 className="mb-3 text-lg font-bold text-gray-900">
+                Category{" "}
+                <span className="font-normal text-gray-500">(Required)</span>
               </h2>
               <div className="space-y-2">
                 <label
                   htmlFor="categoryId"
-                  className="block text-sm font-medium text-blue-900"
+                  className="block text-sm font-medium text-gray-600"
                 >
                   Select Category
                 </label>
@@ -248,10 +250,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   onChange={handleCategoryChange}
                   required
                   ref={categoryRef}
-                  className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                  className={`block w-full rounded-xl border px-4 py-3 shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 sm:text-sm ${
                     validationErrors.categoryId && !hideCategoryError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
-                      : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                      : "border-gray-200 bg-gray-50 focus:border-yellow-400"
                   }`}
                 >
                   <option value="" disabled>
@@ -277,7 +279,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                     href="https://forms.gle/o3KjDDCkcr5KGE2R8"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex px-3 py-2 text-sm font-medium text-blue-700 underline hover:bg-blue-100 md:w-auto"
+                    className="inline-flex px-3 py-2 text-sm font-medium text-gray-500 underline hover:text-yellow-600"
                     aria-label="Request Service Category"
                   >
                     Request Service Category
@@ -295,17 +297,32 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
 
         {/* Right: Service Packages */}
         <div>
-          <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-lg">
-            <h2 className="mb-4 text-xl font-bold text-blue-700">
-              Service Packages <span className="text-red-500">*</span>
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-bold text-gray-900">
+              Service Packages{" "}
+              <span className="font-normal text-gray-500">(Required)</span>
             </h2>
-            <div className="mb-4 rounded-lg  bg-yellow-50 p-3">
-              <p className="text-sm text-yellow-800">
-                <span className="font-semibold">Note:</span> At least one
-                package is required to create your service. If your service
-                doesn't have different tiers or packages, simply create one
-                package that describes your complete offering.
-              </p>
+            <div className="mb-4 rounded-xl bg-blue-50 p-4">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="mt-0.5 h-5 w-5 text-blue-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p className="text-sm text-blue-800">
+                  At least one package is required to create your service. If
+                  your service doesn't have different tiers, simply create one
+                  package that describes your complete offering.
+                </p>
+              </div>
             </div>
             <fieldset>
               <div className="space-y-6">
@@ -319,19 +336,19 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                       ref={(el) => {
                         packageRefs.current[pkg.id] = el;
                       }}
-                      className={`relative rounded-xl border bg-white p-4 shadow-md transition-shadow hover:shadow-lg ${
-                        pkgError ? "border-red-400" : "border-gray-200"
+                      className={`relative rounded-xl border bg-gray-50 p-5 shadow-sm transition-all hover:shadow-md ${
+                        pkgError ? "border-red-300" : "border-gray-200"
                       }`}
                     >
-                      <div className="mb-2 flex items-center justify-between">
-                        <h4 className="text-lg font-bold text-blue-800">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h4 className="text-base font-bold text-gray-900">
                           Package {index + 1}
                         </h4>
                         {formData.servicePackages.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removePackage(pkg.id)}
-                            className="rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700"
+                            className="rounded-full bg-white p-2 text-gray-400 shadow-sm transition-all hover:bg-red-50 hover:text-red-500"
                             title="Remove package"
                           >
                             <TrashIcon className="h-5 w-5" />
@@ -358,12 +375,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                               )
                             }
                             required
-                            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-400 ${
+                            className={`mt-1 block w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 ${
                               pkgError &&
                               pkgError.name &&
                               !hidePackageFieldError[pkg.id]?.name
-                                ? "border-red-400 bg-red-50 focus:border-red-500"
-                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                                ? "border-red-300 bg-white focus:border-red-500"
+                                : "border-gray-200 bg-white focus:border-yellow-400"
                             }`}
                             maxLength={40}
                           />
@@ -391,12 +408,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             }
                             required
                             min="0"
-                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                            className={`mt-1 block w-full rounded-lg border px-3 py-2.5 shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 sm:text-sm ${
                               pkgError &&
                               pkgError.price &&
                               !hidePackageFieldError[pkg.id]?.price
-                                ? "border-red-400 bg-red-50 focus:border-red-500"
-                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                                ? "border-red-300 bg-white focus:border-red-500"
+                                : "border-gray-200 bg-white focus:border-yellow-400"
                             }`}
                           />
                           {pkgError &&
@@ -427,12 +444,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             }
                             rows={3}
                             required
-                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                            className={`mt-1 block w-full rounded-lg border px-3 py-2.5 shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 sm:text-sm ${
                               pkgError &&
                               pkgError.description &&
                               !hidePackageFieldError[pkg.id]?.description
-                                ? "border-red-400 bg-red-50 focus:border-red-500"
-                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                                ? "border-red-300 bg-white focus:border-red-500"
+                                : "border-gray-200 bg-white focus:border-yellow-400"
                             }`}
                             placeholder="Describe what's included in this package. 150 words maximum"
                             maxLength={150}
@@ -459,10 +476,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   formData.servicePackages.length < 5 ? addPackage : undefined
                 }
                 disabled={formData.servicePackages.length >= 5}
-                className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-3 text-base font-semibold transition-colors ${
+                className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-3 text-sm font-semibold transition-all ${
                   formData.servicePackages.length >= 5
-                    ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
-                    : "border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400"
+                    : "border-gray-300 bg-white text-gray-700 hover:border-yellow-400 hover:bg-yellow-50 hover:text-yellow-700"
                 }`}
               >
                 <PlusCircleIcon className="h-5 w-5" />
