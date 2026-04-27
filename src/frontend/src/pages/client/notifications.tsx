@@ -20,7 +20,6 @@ const NotificationsPage = () => {
     loading,
     error,
     markAsRead,
-    markAllAsRead,
     deleteNotification,
   } = useNotifications();
 
@@ -169,21 +168,7 @@ const NotificationsPage = () => {
     return !hiddenTypes.has(n.type);
   };
 
-  const handleSelectAll = () => {
-    const visibleIds = stableNotifications
-      .filter((n) => !deletedIds.includes(n.id))
-      .map((n) => n.id);
-    if (!editMode) {
-      setSelectedIds(visibleIds);
-      setEditMode(true);
-      return;
-    }
-    if (selectedIds.length === visibleIds.length && visibleIds.length > 0) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(visibleIds);
-    }
-  };
+
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
