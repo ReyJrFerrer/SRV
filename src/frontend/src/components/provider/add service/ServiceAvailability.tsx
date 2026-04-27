@@ -441,15 +441,14 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
       <div className="shadow-xly rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-100 via-white to-blue-100 p-6">
         {/* --- Header & Days --- */}
         <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-800">Availability</h2>
               <p className="text-sm text-gray-500">
                 Select days to set your schedule.
               </p>
             </div>
-            {/* Shortcuts */}
-            <div className="block space-x-3 text-sm">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
               <button
                 type="button"
                 onClick={() => togglePreset(weekdays)}
@@ -502,7 +501,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full grid-cols-4 gap-2 md:grid-cols-7">
             {allDays.map((day) => {
               const isSelected = formData.availabilitySchedule.includes(day);
               return (
@@ -510,7 +509,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   key={day}
                   type="button"
                   onClick={() => handleDayToggle(day)}
-                  className={`flex h-10 min-w-[3rem] flex-1 items-center justify-center rounded-full border px-4 text-sm font-medium transition-all ${
+                  className={`flex h-10 w-full items-center justify-center rounded-full border text-sm font-medium transition-all ${
                     isSelected
                       ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200"
                       : "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50"
