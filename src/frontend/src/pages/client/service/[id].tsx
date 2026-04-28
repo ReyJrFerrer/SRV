@@ -31,6 +31,7 @@ import AvailabilitySection, {
   Availability,
 } from "../../../components/client/service-detail/AvailabilitySection";
 import EmptyState from "../../../components/common/EmptyState";
+import SpotlightTour from "../../../components/common/SpotlightTour";
 
 function formatTime12Hour(time: string): string {
   if (!time) return "";
@@ -171,8 +172,8 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   const isOwnService = Boolean(
     identity &&
-      service &&
-      identity.getPrincipal().toString() === service.providerId,
+    service &&
+    identity.getPrincipal().toString() === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -593,6 +594,7 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28 md:pb-20">
+      <SpotlightTour flowType="client-service" />
       <div className="relative h-64 w-full md:h-80">
         {/* Accept any valid URL (data:, http(s), or local path) for hero images */}
         <img
@@ -636,29 +638,30 @@ const ClientServiceDetailsPage: React.FC = () => {
           </div>
         )}
         <div className="mx-auto mt-2 w-full max-w-5xl">
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+          <div className="tour-client-service-hero rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
             <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between md:gap-8">
               {/* Left: Service Details */}
               <div className="flex-1">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
-                    {category?.slug ? (
-                      <img
-                        src={`/images/categories/${category.slug}.svg`}
-                        alt={category.name || "Category"}
-                        className="h-4 w-4 object-contain"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            "/images/categories/others.svg";
-                        }}
-                      />
-                    ) : null}
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                  {category?.slug ? (
+                    <img
+                      src={`/images/categories/${category.slug}.svg`}
+                      alt={category.name || "Category"}
+                      className="inline h-4 w-4 object-contain"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          "/images/categories/others.svg";
+                      }}
+                    />
+                  ) : null}
+                  <span className="font-medium text-gray-700">
                     {category?.name ?? "General"}
                   </span>
-                  <div className="flex items-center text-sm font-medium text-gray-500">
+                  <span className="text-gray-300">•</span>
+                  <span className="flex items-center">
                     <MapPinIcon className="mr-1 h-4 w-4 text-gray-400" />
-                    <span>{location?.address || "Baguio City"}</span>
-                  </div>
+                    {location?.address || "Baguio City"}
+                  </span>
                 </div>
 
                 <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
@@ -679,9 +682,9 @@ const ClientServiceDetailsPage: React.FC = () => {
               </div>
 
               {/* Right: Provider Details */}
-              <div className="flex min-w-[280px] flex-col rounded-xl border border-gray-100 bg-gray-50 p-5 shadow-sm">
+              <div className="flex min-w-[280px] flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
                 <div className="flex items-center gap-4">
-                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm">
+                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100">
                     <img
                       src={(() => {
                         const isValidUrl = (
@@ -706,7 +709,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                       }}
                     />
                     {service.isActive && (
-                      <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow-sm"></span>
+                      <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white bg-green-500"></span>
                     )}
                   </div>
                   <div className="flex flex-col">
@@ -717,7 +720,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                   </div>
                 </div>
                 {isVerified === true && (
-                  <div className="mt-4 flex items-center justify-center rounded-lg bg-blue-50/50 py-2 text-xs font-semibold text-blue-600">
+                  <div className="mt-4 flex items-center justify-center rounded-lg bg-yellow-50 py-2 text-xs font-semibold text-yellow-700">
                     <CheckBadgeIcon className="mr-1.5 h-4 w-4" />
                     Verified Provider
                   </div>
@@ -728,7 +731,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         </div>
 
         <div className="mx-auto w-full max-w-5xl">
-          <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+          <div className="tour-client-service-packages mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
             <h3 className="mb-6 flex items-center gap-2 text-xl font-bold text-gray-900">
               <Squares2X2Icon className="h-6 w-6 text-yellow-500" />
               Packages Offered
@@ -742,7 +745,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                 {packages.map((pkg) => (
                   <div
                     key={pkg.id}
-                    className="flex flex-col justify-between rounded-xl border border-gray-100 bg-gray-50 p-5 transition-colors hover:border-blue-200 hover:bg-white"
+                    className="flex flex-col justify-between rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200 transition-all hover:shadow-md hover:ring-yellow-400"
                   >
                     <div>
                       <h4 className="text-lg font-bold text-gray-900">
@@ -753,7 +756,7 @@ const ClientServiceDetailsPage: React.FC = () => {
                       </p>
                     </div>
                     <div className="mt-4 flex items-center justify-between">
-                      <span className="text-2xl font-extrabold text-blue-600">
+                      <span className="text-2xl font-bold text-yellow-600">
                         ₱
                         {Number(pkg.price).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -775,27 +778,35 @@ const ClientServiceDetailsPage: React.FC = () => {
             )}
           </div>
 
-          <AvailabilitySection
-            availability={mappedAvailability}
-            isActive={service?.isActive}
-          />
-          <ServiceGallerySection
-            serviceId={service.id}
-            imageUrls={service.media || []}
-          />
-          <CredentialsSection
-            isVerified={isVerified}
-            hasCertificates={hasCertificates}
-            hasPendingCertificates={hasPendingCertificates}
-          />
-          <ReviewsSection
-            serviceId={service.id}
-            reviews={reviews}
-            loading={reviewsLoading}
-            error={reviewsError}
-            averageRating={getAverageRating(reviews)}
-            ratingDistribution={getRatingDistribution(reviews)}
-          />
+          <div className="tour-client-service-availability">
+            <AvailabilitySection
+              availability={mappedAvailability}
+              isActive={service?.isActive}
+            />
+          </div>
+          <div className="tour-client-service-gallery">
+            <ServiceGallerySection
+              serviceId={service.id}
+              imageUrls={service.media || []}
+            />
+          </div>
+          <div className="tour-client-service-credentials">
+            <CredentialsSection
+              isVerified={isVerified}
+              hasCertificates={hasCertificates}
+              hasPendingCertificates={hasPendingCertificates}
+            />
+          </div>
+          <div className="tour-client-service-reviews">
+            <ReviewsSection
+              serviceId={service.id}
+              reviews={reviews}
+              loading={reviewsLoading}
+              error={reviewsError}
+              averageRating={getAverageRating(reviews)}
+              ratingDistribution={getRatingDistribution(reviews)}
+            />
+          </div>
         </div>
       </main>
 
@@ -835,7 +846,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               !hasSufficientReputation ||
               isCheckingReputation
             }
-            className="group relative flex w-2/3 items-center justify-center rounded-xl bg-yellow-400 px-4 py-3.5 font-bold text-gray-900 shadow-sm transition-all duration-200 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+            className="tour-client-service-book group relative flex w-2/3 items-center justify-center rounded-xl bg-yellow-400 px-4 py-3.5 font-bold text-gray-900 shadow-sm transition-all duration-200 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
           >
             {isCheckingReputation
               ? "Checking..."

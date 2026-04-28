@@ -37,7 +37,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
         </div>
         <div className="mb-6 h-2 w-full rounded-full bg-gray-100">
           <div
-            className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all"
+            className="h-2 rounded-full bg-blue-600 transition-all"
             style={{ width: `${percent}%` }}
           />
         </div>

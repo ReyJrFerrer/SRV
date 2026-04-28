@@ -261,10 +261,6 @@ export const AnalyticsPage: React.FC = () => {
             emptyMessage="No service data"
             emptySubMessage="No service category data available."
             innerRadius={0}
-            tooltipFormatter={(value: number, name: string) => [
-              `${value} services`,
-              name,
-            ]}
             summaryStats={
               serviceCategoryData && serviceCategoryData.length > 0 ? (
                 <>

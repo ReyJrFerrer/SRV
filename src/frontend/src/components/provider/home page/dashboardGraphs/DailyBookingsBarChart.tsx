@@ -168,7 +168,7 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
   };
 
   return (
-    <div className="relative flex h-[275px] w-full flex-col rounded-2xl bg-gradient-to-br from-blue-50 via-white to-yellow-50 p-4 shadow-inner">
+    <div className="relative flex h-[275px] w-full flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-lg font-bold text-blue-900">
           <CalendarDaysIcon className="h-6 w-6 text-blue-400" />
@@ -284,7 +284,7 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
                 color: "#1e293b",
                 fontSize: "0.95rem",
               }}
-              formatter={(value: number) => [value, "Bookings"]}
+              formatter={(value) => [value, "Bookings"]}
             />
             <Legend
               verticalAlign="top"

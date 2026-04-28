@@ -12,6 +12,7 @@ import {
   OneSignalBlockedModal,
   isOneSignalBlockedModalDismissed,
 } from "../../components/OneSignalBlockedModal";
+import SpotlightTour from "../../components/common/SpotlightTour";
 
 const ProviderHomePage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
@@ -201,6 +202,7 @@ const ProviderHomePage: React.FC = () => {
 
   return (
     <>
+      <SpotlightTour flowType="provider" />
       {/* OneSignal Blocked Modal */}
       {showOneSignalBlockedModal && (
         <OneSignalBlockedModal
@@ -222,23 +224,31 @@ const ProviderHomePage: React.FC = () => {
             scrollTargetRef={scrollRef as React.RefObject<HTMLElement>}
           />
           <div className="mx-auto max-w-7xl">
-            {/* Use legacyProvider for components that still need the old interface */}
-            {provider && (
-              <ProviderStatsNextjs
-                loading={isDataLoading}
-                analytics={analytics}
-                bookingsLoading={bookingsLoading}
-                bookingsError={bookingsError}
-                getMonthlyRevenue={getMonthlyRevenue}
-                getBookingCountByDay={getBookingCountByDay}
-                getRevenueByPeriod={getRevenueByPeriod}
-                reviewAnalytics={reviewAnalytics}
-                reviewsLoading={reviewsLoading}
-                reviewsError={reviewsError}
-                getStatusCountsByPeriod={getStatusCountsByPeriod}
-                providerReviews={reviews}
+            <div data-tour="provider-stats">
+              {provider && (
+                <ProviderStatsNextjs
+                  loading={isDataLoading}
+                  analytics={analytics}
+                  bookingsLoading={bookingsLoading}
+                  bookingsError={bookingsError}
+                  getMonthlyRevenue={getMonthlyRevenue}
+                  getBookingCountByDay={getBookingCountByDay}
+                  getRevenueByPeriod={getRevenueByPeriod}
+                  reviewAnalytics={reviewAnalytics}
+                  reviewsLoading={reviewsLoading}
+                  reviewsError={reviewsError}
+                  getStatusCountsByPeriod={getStatusCountsByPeriod}
+                  providerReviews={reviews}
+                />
+              )}
+            </div>
+
+            <div data-tour="provider-requests">
+              <BookingRequestsNextjs
+                pendingRequests={bookingCounts.pendingCount}
+                upcomingJobs={bookingCounts.upcomingCount}
               />
-            )}
+            </div>
 
             <BookingRequestsNextjs
               pendingRequests={bookingCounts.pendingCount}

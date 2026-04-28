@@ -438,67 +438,61 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
 
   return (
     <div className="mx-auto max-w-2xl p-4">
-      <div className="shadow-xly rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-100 via-white to-blue-100 p-6">
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         {/* --- Header & Days --- */}
         <section className="mb-8">
-          <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">Availability</h2>
-              <p className="text-sm text-gray-500">
-                Select days to set your schedule.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <button
-                type="button"
-                onClick={() => togglePreset(weekdays)}
-                className={`font-medium hover:underline ${
-                  weekdays.every((d) =>
-                    formData.availabilitySchedule.includes(d),
-                  )
-                    ? "font-bold text-blue-800"
-                    : "text-blue-600"
-                }`}
-              >
-                Weekdays
-              </button>
-              <span className="text-gray-300">|</span>
-              <button
-                type="button"
-                onClick={() => togglePreset(weekends)}
-                className={`font-medium hover:underline ${
-                  weekends.every((d) =>
-                    formData.availabilitySchedule.includes(d),
-                  )
-                    ? "font-bold text-blue-800"
-                    : "text-blue-600"
-                }`}
-              >
-                Weekends
-              </button>
-              <span className="text-gray-300">|</span>
-              <button
-                type="button"
-                onClick={() => togglePreset(allDays)}
-                className={`font-medium hover:underline ${
-                  allDays.every((d) =>
-                    formData.availabilitySchedule.includes(d),
-                  )
-                    ? "font-bold text-blue-800"
-                    : "text-blue-600"
-                }`}
-              >
-                Everyday
-              </button>
-              <span className="text-gray-300">|</span>
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="font-medium text-red-500 hover:text-red-600 hover:underline"
-              >
-                Clear
-              </button>
-            </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-gray-900">Availability</h2>
+            <p className="text-sm text-gray-500">
+              Select days to set your schedule.
+            </p>
+          </div>
+
+          {/* Shortcuts - above days on mobile, inline on desktop */}
+          <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm sm:justify-end sm:gap-2">
+            <button
+              type="button"
+              onClick={() => togglePreset(weekdays)}
+              className={`font-medium transition-colors hover:underline ${
+                weekdays.every((d) => formData.availabilitySchedule.includes(d))
+                  ? "font-bold text-yellow-600"
+                  : "text-gray-500 hover:text-yellow-600"
+              }`}
+            >
+              Weekdays
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              type="button"
+              onClick={() => togglePreset(weekends)}
+              className={`font-medium transition-colors hover:underline ${
+                weekends.every((d) => formData.availabilitySchedule.includes(d))
+                  ? "font-bold text-yellow-600"
+                  : "text-gray-500 hover:text-yellow-600"
+              }`}
+            >
+              Weekends
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              type="button"
+              onClick={() => togglePreset(allDays)}
+              className={`font-medium transition-colors hover:underline ${
+                allDays.every((d) => formData.availabilitySchedule.includes(d))
+                  ? "font-bold text-yellow-600"
+                  : "text-gray-500 hover:text-yellow-600"
+              }`}
+            >
+              Everyday
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              type="button"
+              onClick={handleClearAll}
+              className="font-medium text-red-500 hover:text-red-600 hover:underline"
+            >
+              Clear
+            </button>
           </div>
 
           <div className="grid w-full grid-cols-4 gap-2 md:grid-cols-7">
@@ -511,8 +505,8 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   onClick={() => handleDayToggle(day)}
                   className={`flex h-10 w-full items-center justify-center rounded-full border text-sm font-medium transition-all ${
                     isSelected
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50"
+                      ? "border-yellow-400 bg-yellow-400 text-gray-900 shadow-sm"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-yellow-300 hover:bg-yellow-50"
                   }`}
                 >
                   <span className="sm:hidden">{day.slice(0, 3)}</span>
@@ -533,7 +527,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
         {/* --- Hours Section --- */}
         <section>
           <div className="mb-4 flex flex-1 flex-col items-start justify-self-start">
-            <h2 className="text-xl font-bold text-gray-800">Working Hours</h2>
+            <h2 className="text-lg font-bold text-gray-900">Working Hours</h2>
             <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
               <input
                 type="checkbox"
@@ -544,7 +538,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                     useSameTimeForAllDays: e.target.checked,
                   }))
                 }
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-400"
               />
               Same hours daily
             </label>
@@ -552,7 +546,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
 
           <div className="space-y-4">
             {formData.useSameTimeForAllDays ? (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
                 {formData.commonTimeSlots.map((slot) => (
                   <div key={slot.id} className="mb-3 last:mb-0">
                     <TimeSlotInput
@@ -564,7 +558,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                 ))}
                 <button
                   onClick={() => handleAddSlot("common")}
-                  className="mt-2 flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                  className="mt-3 flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-yellow-600"
                 >
                   <PlusCircleIcon className="h-5 w-5" /> Add Split Shift
                 </button>
@@ -606,7 +600,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                       </div>
                     </div>
                     {index < activeDays.length - 1 && (
-                      <hr className="my-6 border-blue-200" />
+                      <hr className="my-6 border-gray-200" />
                     )}
                   </React.Fragment>
                 ))}

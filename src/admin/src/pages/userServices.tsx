@@ -53,7 +53,7 @@ const UserServicesPage: React.FC = () => {
       );
 
       const foundProfile = validUsers.find(
-        (profile) => profile.id.toString() === id,
+        (profile) => String(profile.id) === id,
       );
       if (foundProfile) {
         const userData = convertProfileToSimpleUserData(foundProfile);

@@ -255,7 +255,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     }
 
     return (
-      <div className="group relative flex flex-col items-center">
+      <div className="tour-client-service-card group relative flex flex-col items-center">
         <Link
           to={`/client/service/${service.id}`}
           className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-xl border border-gray-200 bg-white pb-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group-hover:pb-2`}
@@ -312,7 +312,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                   return (
                     <div
                       title={`Reputation: ${score}`}
-                      className={`z-10 flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${strongBg}`}
+                      className={`tour-client-reputation z-10 flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${strongBg}`}
                     >
                       {`Reputation: ${score}`}
                     </div>

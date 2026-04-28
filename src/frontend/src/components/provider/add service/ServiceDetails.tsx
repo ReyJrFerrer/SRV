@@ -150,6 +150,26 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     handleChange(e);
   };
 
+  // Check if selected category requires client proof images
+  const requiresProofKeywords = [
+    "repair",
+    "technician",
+    "gadget",
+    "appliance",
+    "automobile",
+    "mechanic",
+    "car",
+    "motor",
+  ];
+  const selectedCategory = categories.find(
+    (cat) => cat.id === formData.categoryId,
+  );
+  const categoryRequiresProof = selectedCategory
+    ? requiresProofKeywords.some((keyword) =>
+        selectedCategory.name.toLowerCase().includes(keyword),
+      )
+    : false;
+
   // (Custom/"Other" categories have been removed.)
 
   // Modify the handlePackageInputChange function
@@ -191,53 +211,59 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Left: Service Details & Category */}
-        <section className="flex flex-col justify-between rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-lg">
-          <div className="space-y-8">
-            {/* Service Title */}
-            <section>
-              <h2 className="mb-2 text-xl font-bold text-blue-700">
-                Service Title <span className="text-red-500">*</span>
-              </h2>
-              <div className="space-y-2">
-                <label
-                  htmlFor="serviceOfferingTitle"
-                  className="block text-sm font-medium text-blue-900"
-                >
-                  Place a title for your service
-                </label>
-                <input
-                  type="text"
-                  name="serviceOfferingTitle"
-                  id="serviceOfferingTitle"
-                  value={formData.serviceOfferingTitle}
-                  onChange={handleTitleChange}
-                  required
-                  ref={titleRef}
-                  className={`lg:text-md mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-400 ${
-                    validationErrors.serviceOfferingTitle && !hideTitleError
-                      ? "border-red-300 bg-red-50 focus:border-red-500"
-                      : "border-gray-300 bg-gray-50 focus:border-blue-500"
-                  }`}
-                  placeholder="e.g., Professional Hair Styling"
-                  maxLength={40}
-                />
-                {validationErrors.serviceOfferingTitle && !hideTitleError && (
-                  <p className="text-sm text-red-600">
-                    {validationErrors.serviceOfferingTitle}
-                  </p>
-                )}
-              </div>
-            </section>
+        <section className="flex flex-col justify-between rounded-xl border border-gray-100 bg-white shadow-sm">
+          {/* Service Title */}
+          <div className="bg-yellow-50 px-6 py-4">
+            <h2 className="text-lg font-bold text-gray-900">
+              Service Title{" "}
+              <span className="font-normal text-gray-500">(Required)</span>
+            </h2>
+          </div>
+          <div className="p-6">
+            <div className="space-y-2">
+              <label
+                htmlFor="serviceOfferingTitle"
+                className="block text-sm font-medium text-gray-600"
+              >
+                Place a title for your service
+              </label>
+              <input
+                type="text"
+                name="serviceOfferingTitle"
+                id="serviceOfferingTitle"
+                value={formData.serviceOfferingTitle}
+                onChange={handleTitleChange}
+                required
+                ref={titleRef}
+                className={`lg:text-md mt-1 block w-full rounded-xl border px-4 py-3 text-sm shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 ${
+                  validationErrors.serviceOfferingTitle && !hideTitleError
+                    ? "border-red-300 bg-red-50 focus:border-red-500"
+                    : "border-gray-200 bg-gray-50 focus:border-yellow-400"
+                }`}
+                placeholder="e.g., Professional Hair Styling"
+                maxLength={40}
+              />
+              {validationErrors.serviceOfferingTitle && !hideTitleError && (
+                <p className="text-sm text-red-600">
+                  {validationErrors.serviceOfferingTitle}
+                </p>
+              )}
+            </div>
+          </div>
 
-            {/* Category */}
-            <section>
-              <h2 className="mb-2 text-xl font-bold text-blue-700">
-                Category <span className="text-red-500">*</span>
+          {/* Category */}
+          <div className="border-t border-gray-100">
+            <div className="bg-yellow-50 px-6 py-4">
+              <h2 className="text-lg font-bold text-gray-900">
+                Category{" "}
+                <span className="font-normal text-gray-500">(Required)</span>
               </h2>
+            </div>
+            <div className="p-6 pt-4">
               <div className="space-y-2">
                 <label
                   htmlFor="categoryId"
-                  className="block text-sm font-medium text-blue-900"
+                  className="block text-sm font-medium text-gray-600"
                 >
                   Select Category
                 </label>
@@ -248,10 +274,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   onChange={handleCategoryChange}
                   required
                   ref={categoryRef}
-                  className={`block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                  className={`block w-full rounded-xl border px-4 py-3 shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 sm:text-sm ${
                     validationErrors.categoryId && !hideCategoryError
                       ? "border-red-300 bg-red-50 focus:border-red-500"
-                      : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                      : "border-gray-200 bg-gray-50 focus:border-yellow-400"
                   }`}
                 >
                   <option value="" disabled>
@@ -270,6 +296,25 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   )}
                   {/* 'Other' custom category removed */}
                 </select>
+                {categoryRequiresProof && (
+                  <div className="mt-2 flex items-start gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
+                    <svg
+                      className="mt-0.5 h-4 w-4 shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <p>
+                      Clients booking this service will be required to upload
+                      photos or a short video of the problem when they book.
+                    </p>
+                  </div>
+                )}
                 {/* Removed optional custom category input */}
                 {/* Request Service Category button - opens Google Form in new tab */}
                 <div className="mt-3 flex items-center justify-center">
@@ -277,7 +322,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                     href="https://forms.gle/o3KjDDCkcr5KGE2R8"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex px-3 py-2 text-sm font-medium text-blue-700 underline hover:bg-blue-100 md:w-auto"
+                    className="inline-flex px-3 py-2 text-sm font-medium text-gray-500 underline hover:text-yellow-600"
                     aria-label="Request Service Category"
                   >
                     Request Service Category
@@ -289,26 +334,43 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   </p>
                 )}
               </div>
-            </section>
+            </div>
           </div>
         </section>
 
         {/* Right: Service Packages */}
         <div>
-          <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6 shadow-lg">
-            <h2 className="mb-4 text-xl font-bold text-blue-700">
-              Service Packages <span className="text-red-500">*</span>
-            </h2>
-            <div className="mb-4 rounded-lg  bg-yellow-50 p-3">
-              <p className="text-sm text-yellow-800">
-                <span className="font-semibold">Note:</span> At least one
-                package is required to create your service. If your service
-                doesn't have different tiers or packages, simply create one
-                package that describes your complete offering.
-              </p>
+          <section className="rounded-xl border border-gray-100 bg-white shadow-sm">
+            <div className="bg-yellow-50 px-6 py-4">
+              <h2 className="text-lg font-bold text-gray-900">
+                Service Packages{" "}
+                <span className="font-normal text-gray-500">(Required)</span>
+              </h2>
             </div>
-            <fieldset>
-              <div className="space-y-6">
+            <div className="p-6">
+              <div className="mb-4 rounded-xl bg-blue-50 p-4">
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="mt-0.5 h-5 w-5 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-sm text-blue-800">
+                    At least one package is required to create your service. If
+                    your service doesn't have different tiers, simply create one
+                    package that describes your complete offering.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-4">
                 {formData.servicePackages.map((pkg, index) => {
                   const pkgError =
                     validationErrors.packageFields &&
@@ -319,22 +381,24 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                       ref={(el) => {
                         packageRefs.current[pkg.id] = el;
                       }}
-                      className={`relative rounded-xl border bg-white p-4 shadow-md transition-shadow hover:shadow-lg ${
-                        pkgError ? "border-red-400" : "border-gray-200"
+                      className={`relative overflow-hidden rounded-xl border-2 bg-white p-5 shadow-sm transition-all hover:shadow-md ${
+                        pkgError
+                          ? "border-red-200"
+                          : "border-gray-100 hover:border-gray-200"
                       }`}
                     >
-                      <div className="mb-2 flex items-center justify-between">
-                        <h4 className="text-lg font-bold text-blue-800">
+                      <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+                        <span className="text-base font-bold text-gray-800">
                           Package {index + 1}
-                        </h4>
+                        </span>
                         {formData.servicePackages.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removePackage(pkg.id)}
-                            className="rounded-full bg-red-50 p-2 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700"
+                            className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-red-50 hover:text-red-500"
                             title="Remove package"
                           >
-                            <TrashIcon className="h-5 w-5" />
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         )}
                       </div>
@@ -358,12 +422,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                               )
                             }
                             required
-                            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-400 ${
+                            className={`mt-1 block w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 ${
                               pkgError &&
                               pkgError.name &&
                               !hidePackageFieldError[pkg.id]?.name
-                                ? "border-red-400 bg-red-50 focus:border-red-500"
-                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                                ? "border-red-300 bg-white focus:border-red-500"
+                                : "border-gray-200 bg-white focus:border-yellow-400"
                             }`}
                             maxLength={40}
                           />
@@ -391,12 +455,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             }
                             required
                             min="0"
-                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                            className={`mt-1 block w-full rounded-lg border px-3 py-2.5 shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 sm:text-sm ${
                               pkgError &&
                               pkgError.price &&
                               !hidePackageFieldError[pkg.id]?.price
-                                ? "border-red-400 bg-red-50 focus:border-red-500"
-                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                                ? "border-red-300 bg-white focus:border-red-500"
+                                : "border-gray-200 bg-white focus:border-yellow-400"
                             }`}
                           />
                           {pkgError &&
@@ -427,12 +491,12 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                             }
                             rows={3}
                             required
-                            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 sm:text-sm ${
+                            className={`mt-1 block w-full rounded-lg border px-3 py-2.5 shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 sm:text-sm ${
                               pkgError &&
                               pkgError.description &&
                               !hidePackageFieldError[pkg.id]?.description
-                                ? "border-red-400 bg-red-50 focus:border-red-500"
-                                : "border-gray-300 bg-gray-50 focus:border-blue-500"
+                                ? "border-red-300 bg-white focus:border-red-500"
+                                : "border-gray-200 bg-white focus:border-yellow-400"
                             }`}
                             placeholder="Describe what's included in this package. 150 words maximum"
                             maxLength={150}
@@ -459,10 +523,10 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   formData.servicePackages.length < 5 ? addPackage : undefined
                 }
                 disabled={formData.servicePackages.length >= 5}
-                className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-3 text-base font-semibold transition-colors ${
+                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-3 text-sm font-semibold transition-all ${
                   formData.servicePackages.length >= 5
-                    ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500"
-                    : "border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-yellow-400 hover:bg-yellow-50 hover:text-yellow-700"
                 }`}
               >
                 <PlusCircleIcon className="h-5 w-5" />
@@ -475,7 +539,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                   {validationErrors.servicePackages}
                 </p>
               )}
-            </fieldset>
+            </div>
           </section>
         </div>
       </div>

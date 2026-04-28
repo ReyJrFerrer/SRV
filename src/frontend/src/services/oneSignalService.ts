@@ -406,9 +406,8 @@ class OneSignalService {
 
     try {
       // Import Firebase functions
-      const { getFunctions, httpsCallable } = await import(
-        "firebase/functions"
-      );
+      const { getFunctions, httpsCallable } =
+        await import("firebase/functions");
       const functions = getFunctions();
       const storePlayerId = httpsCallable(functions, "storeOneSignalPlayerId");
       const result = await storePlayerId({ playerId });
@@ -431,9 +430,8 @@ class OneSignalService {
       }
 
       // Import Firebase functions
-      const { getFunctions, httpsCallable } = await import(
-        "firebase/functions"
-      );
+      const { getFunctions, httpsCallable } =
+        await import("firebase/functions");
       const functions = getFunctions();
       const removePlayerId = httpsCallable(
         functions,

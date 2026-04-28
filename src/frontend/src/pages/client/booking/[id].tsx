@@ -27,6 +27,7 @@ import ActionButtons from "../../../components/client/booking-details/ActionButt
 import BookingDetailsSkeleton from "../../../components/client/booking-details/BookingDetailsSkeleton";
 import { dispatchBookingInteracted } from "../../../utils/interactionEvents";
 import ClientAttachments from "../../../components/common/MediaAttachments";
+import SpotlightTour from "../../../components/common/SpotlightTour";
 
 type BookingStatus =
   | "Requested"
@@ -290,6 +291,7 @@ const BookingDetailsPage: React.FC = () => {
   const isLoading = hookLoading || isInitialLoad || loadingStats;
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+      <SpotlightTour flowType="client-booking-details" />
       <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-100 bg-white shadow-sm">
         <div className="flex max-w-4xl items-center px-4 py-3.5 sm:px-6 md:pl-24 lg:pl-24">
           <button
@@ -323,7 +325,7 @@ const BookingDetailsPage: React.FC = () => {
             <div>
               <div className="relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
                 <span
-                  className={`absolute right-5 top-5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusPillStyle(status || "")}`}
+                  className={`tour-booking-status absolute right-5 top-5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusPillStyle(status || "")}`}
                   aria-label="Booking status"
                 >
                   {status?.replace("_", " ")}
@@ -388,15 +390,17 @@ const BookingDetailsPage: React.FC = () => {
               </div>
             )}
 
-            <ActionButtons
-              onChat={handleChatWithProvider}
-              chatLoading={chatLoading}
-              onRequestCancel={() => setIsCancelModalOpen(true)}
-              canCancel={canCancel}
-              reviewButtonContent={reviewButtonContent}
-              status={status}
-              onReport={handleReportClick}
-            />
+            <div className="tour-booking-actions">
+              <ActionButtons
+                onChat={handleChatWithProvider}
+                chatLoading={chatLoading}
+                onRequestCancel={() => setIsCancelModalOpen(true)}
+                canCancel={canCancel}
+                reviewButtonContent={reviewButtonContent}
+                status={status}
+                onReport={handleReportClick}
+              />
+            </div>
           </>
         )}
       </main>

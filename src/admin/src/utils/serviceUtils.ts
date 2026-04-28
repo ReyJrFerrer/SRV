@@ -16,9 +16,9 @@ export const convertProfileToSimpleUserData = (
   profile: Profile,
 ): SimpleUserData => {
   return {
-    id: profile.id.toString(),
-    name: profile.name,
-    phone: profile.phone,
+    id: String(profile.id),
+    name: String(profile.name ?? ""),
+    phone: String(profile.phone ?? ""),
   };
 };
 
