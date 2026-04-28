@@ -96,10 +96,10 @@ const LocationAvailabilitySection: React.FC<Props> = ({
   };
 
   return (
-    <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
+    <section className="flex flex-col gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between border-b pb-3">
-        <h3 className="text-md flex items-center gap-2 font-bold text-blue-800 lg:text-xl">
-          <MapPinIcon className="h-6 w-6 text-blue-400" />
+        <h3 className="text-md flex items-center gap-2 font-bold text-gray-900 lg:text-xl">
+          <MapPinIcon className="h-6 w-6 text-yellow-600" />
           Location & Availability
         </h3>
         <Tooltip
@@ -108,11 +108,11 @@ const LocationAvailabilitySection: React.FC<Props> = ({
         >
           <button
             onClick={hasActiveBookings ? undefined : onEdit}
-            className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
+            className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
             aria-label="Edit location and availability"
             disabled={hasActiveBookings}
           >
-            <PencilIcon className="h-5 w-5 text-blue-500" />
+            <PencilIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
           </button>
         </Tooltip>
       </div>
@@ -120,22 +120,24 @@ const LocationAvailabilitySection: React.FC<Props> = ({
       {savingLocationAvailability ? (
         // Skeleton UI when saving
         <div className="animate-pulse space-y-4">
-          <div className="h-10 w-full rounded-lg bg-blue-200/50"></div>
-          <div className="h-10 w-full rounded-lg bg-blue-200/50"></div>
-          <div className="h-32 w-full rounded-lg bg-blue-200/50"></div>
+          <div className="h-10 w-full rounded-lg bg-gray-200"></div>
+          <div className="h-10 w-full rounded-lg bg-gray-200"></div>
+          <div className="h-32 w-full rounded-lg bg-gray-200"></div>
         </div>
       ) : editLocationAvailability ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-blue-700">
+              <label className="mb-1 block text-xs font-semibold text-gray-700">
                 Province
-                <span className="ml-1 text-red-500">*</span>
+                <span className="ml-1 text-[10px] font-normal text-gray-500">
+                  (Required)
+                </span>
               </label>
               <select
                 value={editedState}
                 onChange={handleProvinceChange}
-                className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-yellow-500 focus:ring-yellow-500"
               >
                 <option value="">Select Province</option>
                 {phLocations.provinces.map((prov: any) => (
@@ -146,15 +148,17 @@ const LocationAvailabilitySection: React.FC<Props> = ({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold text-blue-700">
+              <label className="mb-1 block text-xs font-semibold text-gray-700">
                 City/Municipality
-                <span className="ml-1 text-red-500">*</span>
+                <span className="ml-1 text-[10px] font-normal text-gray-500">
+                  (Required)
+                </span>
               </label>
               <select
                 value={editedCity}
                 onChange={handleCityChange}
                 disabled={!editedState}
-                className="w-full rounded-md border border-blue-200 bg-white/80 px-3 py-2 text-sm text-blue-900 focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-yellow-500 focus:ring-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select City / Municipality</option>
                 {cityOptions.map((city) => (
@@ -166,8 +170,8 @@ const LocationAvailabilitySection: React.FC<Props> = ({
             </div>
           </div>
           <div>
-            <label className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-700">
-              <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+            <label className="mb-1 flex items-center gap-2 text-xs font-semibold text-gray-700">
+              <CalendarDaysIcon className="h-4 w-4 text-yellow-600" />
               Availability
             </label>
             <AvailabilityEditor
@@ -178,14 +182,14 @@ const LocationAvailabilitySection: React.FC<Props> = ({
           <div className="flex justify-end gap-2">
             <button
               onClick={onCancel}
-              className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={savingLocationAvailability}
             >
               Cancel
             </button>
             <button
               onClick={onSave}
-              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={savingLocationAvailability}
             >
               {savingLocationAvailability && (
@@ -198,21 +202,21 @@ const LocationAvailabilitySection: React.FC<Props> = ({
       ) : (
         <div className="space-y-3">
           <div>
-            <label className="text-l mb-1 flex items-center gap-2 font-semibold text-blue-700">
-              <HomeIcon className="h-4 w-4 text-blue-400" />
+            <label className="text-l mb-1 flex items-center gap-2 font-semibold text-gray-700">
+              <HomeIcon className="h-4 w-4 text-yellow-600" />
               Address
             </label>
-            <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-900">
               {service.location.city}
               {service.location.state && `, ${service.location.state}`}
             </div>
           </div>
           <div>
-            <label className="text-l mb-1 flex items-center gap-2 font-semibold text-blue-700">
-              <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+            <label className="text-l mb-1 flex items-center gap-2 font-semibold text-gray-700">
+              <CalendarDaysIcon className="h-4 w-4 text-yellow-600" />
               Availability
             </label>
-            <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-4 text-sm font-medium text-blue-900">
+            <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-4 text-sm font-medium text-gray-900">
               {service.weeklySchedule?.filter(
                 (entry: any) =>
                   entry.availability.isAvailable &&
@@ -230,10 +234,10 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                   .map((entry: any) => (
                     <div
                       key={entry.day}
-                      className="flex w-full flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow sm:w-auto sm:min-w-[140px]"
+                      className="flex w-full flex-col items-start rounded-xl border border-gray-200 bg-white p-3 shadow sm:w-auto sm:min-w-[140px]"
                     >
-                      <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
-                        <CalendarDaysIcon className="h-4 w-4 text-blue-400" />
+                      <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-gray-900 shadow-sm">
+                        <CalendarDaysIcon className="h-4 w-4 text-yellow-600" />
                         {entry.day}
                       </span>
                       <ul className="ml-1 space-y-1">
@@ -241,9 +245,9 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                           (slot: any, idx: number) => (
                             <li
                               key={idx}
-                              className="flex items-center gap-2 text-xs text-blue-900"
+                              className="flex items-center gap-2 text-xs text-gray-900"
                             >
-                              <span className="inline-block rounded bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
+                              <span className="inline-block rounded bg-gray-100 px-2 py-0.5 font-semibold text-gray-700">
                                 {formatTime(slot.startTime)} -{" "}
                                 {formatTime(slot.endTime)}
                               </span>
@@ -254,7 +258,7 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                     </div>
                   ))
               ) : (
-                <span className="text-blue-400">Not specified</span>
+                <span className="text-yellow-600">Not specified</span>
               )}
             </div>
           </div>

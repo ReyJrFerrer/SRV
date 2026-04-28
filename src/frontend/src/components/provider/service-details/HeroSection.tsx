@@ -116,10 +116,10 @@ const HeroSection: React.FC<Props> = ({
 
   return (
     <>
-      <section className="relative mt-5 overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-gray-50 shadow-xl sm:mt-8">
-        <div className="relative flex h-56 w-full items-center justify-center bg-gradient-to-r from-blue-200 via-blue-100 to-white">
+      <section className="relative mt-5 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm sm:mt-8">
+        <div className="relative flex h-56 w-full items-center justify-center bg-yellow-50">
           {(isLoadingServiceImages || !currentImageSrc || !imageLoaded) && (
-            <div className="absolute inset-0 h-full w-full animate-pulse bg-gradient-to-r from-blue-200 via-blue-100 to-blue-50"></div>
+            <div className="absolute inset-0 h-full w-full animate-pulse bg-gray-200"></div>
           )}
 
           {/* Show image once we have a source and it's loaded */}
@@ -142,14 +142,14 @@ const HeroSection: React.FC<Props> = ({
             />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-transparent"></div>
         </div>
         <div className="relative z-10 flex flex-col gap-6 px-8 py-8 md:flex-row md:items-center md:gap-10 md:py-10">
           {savingTitleCategory ? (
             // Skeleton UI when saving
             <div className="min-w-0 flex-1 animate-pulse">
-              <div className="mb-4 h-8 w-3/4 rounded-lg bg-blue-200/50"></div>
-              <div className="h-6 w-1/2 rounded-lg bg-blue-200/50"></div>
+              <div className="mb-4 h-8 w-3/4 rounded-lg bg-gray-200"></div>
+              <div className="h-6 w-1/2 rounded-lg bg-gray-200"></div>
             </div>
           ) : (
             <div className="min-w-0 flex-1">
@@ -157,7 +157,7 @@ const HeroSection: React.FC<Props> = ({
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex w-full flex-wrap items-center gap-2">
                     <h2
-                      className="flex-1 break-words text-xl font-bold text-blue-900 drop-shadow-sm"
+                      className="flex-1 break-words text-xl font-bold text-gray-900 drop-shadow-sm"
                       title={service.title}
                       style={{ wordBreak: "break-word" }}
                     >
@@ -175,11 +175,11 @@ const HeroSection: React.FC<Props> = ({
                     >
                       <button
                         onClick={hasActiveBookings ? undefined : onEdit}
-                        className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
+                        className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
                         aria-label="Edit title and category"
                         disabled={hasActiveBookings}
                       >
-                        <PencilIcon className="h-5 w-5 text-blue-500" />
+                        <PencilIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                       </button>
                     </Tooltip>
                   </div>
@@ -187,7 +187,7 @@ const HeroSection: React.FC<Props> = ({
               </div>
               <div className="mb-2 hidden items-center gap-2 md:flex">
                 <h2
-                  className="truncate text-3xl font-extrabold text-blue-900 drop-shadow-sm"
+                  className="truncate text-3xl font-extrabold text-gray-900 drop-shadow-sm"
                   title={service.title}
                 >
                   {service.title}
@@ -208,16 +208,16 @@ const HeroSection: React.FC<Props> = ({
                 >
                   <button
                     onClick={hasActiveBookings ? undefined : onEdit}
-                    className={`rounded-full p-2 transition-colors hover:bg-blue-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
+                    className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
                     aria-label="Edit title and category"
                     disabled={hasActiveBookings}
                   >
-                    <PencilIcon className="h-5 w-5 text-blue-500" />
+                    <PencilIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                   </button>
                 </Tooltip>
               </div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-medium text-blue-700">
-                <TagIcon className="h-5 w-5 text-blue-400" />
+              <div className="mt-2 flex items-center gap-2 text-lg font-medium text-gray-700">
+                <TagIcon className="h-5 w-5 text-yellow-600" />
                 {service.category.name}
               </div>
               {editTitleCategory && (
@@ -226,14 +226,14 @@ const HeroSection: React.FC<Props> = ({
                     type="text"
                     value={editedTitle}
                     onChange={(e) => setEditedTitle(e.target.value)}
-                    className="w-full rounded-lg border border-blue-200 bg-white/80 px-4 py-2 text-2xl font-bold text-blue-900 focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-2xl font-bold text-gray-900 focus:border-yellow-500 focus:ring-yellow-500"
                     placeholder="Service Title"
                     maxLength={40}
                   />
                   <select
                     value={editedCategory}
                     onChange={(e) => setEditedCategory(e.target.value)}
-                    className="w-full rounded-lg border border-blue-200 bg-white/80 px-4 py-2 text-base text-blue-700 focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-base text-gray-700 focus:border-yellow-500 focus:ring-yellow-500"
                     disabled={categoriesLoading}
                   >
                     <option value="">
@@ -250,7 +250,7 @@ const HeroSection: React.FC<Props> = ({
                   <div className="mt-2 flex gap-2">
                     <button
                       onClick={onSave}
-                      className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-full bg-yellow-500 p-2 text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label="Save title and category"
                       disabled={savingTitleCategory}
                     >

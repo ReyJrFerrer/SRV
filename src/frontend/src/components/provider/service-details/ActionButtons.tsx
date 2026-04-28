@@ -44,8 +44,8 @@ const ActionButtons: React.FC<Props> = ({
             disabled={!onRestore || isRestoring}
             className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all ${
               !onRestore || isRestoring
-                ? "cursor-not-allowed bg-blue-600 text-white opacity-60"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+                ? "cursor-not-allowed bg-yellow-500 text-white opacity-60"
+                : "bg-yellow-500 text-white hover:bg-yellow-600"
             }`}
           >
             <ArrowUturnLeftIcon className="h-5 w-5" />
@@ -82,14 +82,14 @@ const ActionButtons: React.FC<Props> = ({
           isUpdatingStatus || hasActiveBookings ? undefined : onToggleStatus
         }
         disabled={isUpdatingStatus || hasActiveBookings}
-        className={`flex w-full items-center justify-center gap-2 rounded-xl border border-yellow-600 bg-yellow-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 sm:flex-1 ${
+        className={`flex w-full items-center justify-center gap-2 rounded-xl border border-yellow-600 bg-yellow-600 px-6 py-3 text-lg font-semibold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 sm:flex-1 ${
           status === "Available"
-            ? `border-blue-600 bg-white text-blue-600 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-yellow-500 hover:text-white"}`
-            : `border-transparent bg-blue-600 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-blue-700"}`
+            ? `border-gray-300 bg-white text-gray-700 ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-yellow-500 hover:text-white"}`
+            : `border-transparent bg-yellow-500 text-white ${hasActiveBookings ? "cursor-not-allowed opacity-60" : "hover:bg-yellow-600"}`
         }`}
       >
         {isUpdatingStatus ? (
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent text-blue-100" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent text-gray-200" />
         ) : status === "Available" ? (
           <LockClosedIcon className="h-6 w-6" />
         ) : (
