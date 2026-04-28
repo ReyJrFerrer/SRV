@@ -123,7 +123,7 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
     try {
       localStorage.removeItem(ADD_SERVICE_DRAFT_KEY);
       await deleteDraftFromIDB(ADD_SERVICE_DRAFT_KEY);
-    } catch (e) { }
+    } catch (e) {}
     setLoadedDraft(null);
     setDraftAvailable(false);
     setShowRestorePrompt(false);
@@ -282,39 +282,40 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
       />
 
       {/* Exit (Save Draft) Modal */}
-      {showExitPrompt && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="mb-2 text-lg font-bold">Save draft?</h2>
-            <p className="mb-4 text-sm text-gray-600">
-              You haven't finished creating this service. Would you like to save
-              your current progress as a draft?
-            </p>
-            <div className="flex justify-center gap-2">
-              <button
-                onClick={() => setShowExitPrompt(false)}
-                className="w-full rounded-md border px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 lg:px-4 lg:py-2 lg:text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDontSaveAndExit}
-                className="w-full rounded-md border px-2 py-2 text-xs text-red-600 hover:bg-red-50 lg:px-4 lg:py-2 lg:text-sm"
-              >
-                Don't Save
-              </button>
-              <button
-                onClick={handleSaveDraftAndExit}
-                disabled={isSavingDraft}
-                className="w-full rounded-md bg-blue-600 px-2 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 lg:px-4 lg:py-2 lg:text-sm"
-              >
-                {isSavingDraft ? "Saving..." : "Save Draft"}
-              </button>
+      {showExitPrompt &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
+              <h2 className="mb-2 text-lg font-bold">Save draft?</h2>
+              <p className="mb-4 text-sm text-gray-600">
+                You haven't finished creating this service. Would you like to
+                save your current progress as a draft?
+              </p>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => setShowExitPrompt(false)}
+                  className="w-full rounded-md border px-2 py-2 text-xs text-gray-700 hover:bg-gray-50 lg:px-4 lg:py-2 lg:text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDontSaveAndExit}
+                  className="w-full rounded-md border px-2 py-2 text-xs text-red-600 hover:bg-red-50 lg:px-4 lg:py-2 lg:text-sm"
+                >
+                  Don't Save
+                </button>
+                <button
+                  onClick={handleSaveDraftAndExit}
+                  disabled={isSavingDraft}
+                  className="w-full rounded-md bg-blue-600 px-2 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 lg:px-4 lg:py-2 lg:text-sm"
+                >
+                  {isSavingDraft ? "Saving..." : "Save Draft"}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body,
+        )}
 
       {/* Draft available banner (uses draftAvailable state) */}
       {draftAvailable && !showRestorePrompt && (
