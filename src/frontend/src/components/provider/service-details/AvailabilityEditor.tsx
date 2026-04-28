@@ -139,25 +139,25 @@ const AvailabilityEditor: React.FC<AvailabilityEditorProps> = ({
         <div className="flex flex-wrap items-center justify-start gap-2">
           <button
             onClick={() => setScheduleToDays(allDays)}
-            className="rounded-full bg-yellow-100 px-4 py-1.5 text-xs font-semibold text-yellow-800 transition-colors hover:bg-yellow-200"
+            className="rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100"
           >
             Apply to All
           </button>
           <button
             onClick={() => setScheduleToDays(weekdays)}
-            className="rounded-full bg-yellow-100 px-4 py-1.5 text-xs font-semibold text-yellow-800 transition-colors hover:bg-yellow-200"
+            className="rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100"
           >
             Apply to Weekdays
           </button>
           <button
             onClick={() => setScheduleToDays(weekends)}
-            className="rounded-full bg-yellow-100 px-4 py-1.5 text-xs font-semibold text-yellow-800 transition-colors hover:bg-yellow-200"
+            className="rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100"
           >
             Apply to Weekends
           </button>
           <button
             onClick={deselectAllDays}
-            className="rounded-full bg-gray-200 px-4 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-300"
+            className="rounded-lg border border-gray-200 bg-gray-100 px-3.5 py-2 text-[13px] font-semibold text-gray-600 transition-all hover:bg-gray-200"
           >
             Deselect All
           </button>

@@ -234,7 +234,7 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                   .map((entry: any) => (
                     <div
                       key={entry.day}
-                      className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition-shadow hover:shadow-md sm:w-auto"
+                      className="flex w-full flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4"
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-50">
@@ -244,12 +244,12 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                           {entry.day}
                         </span>
                       </div>
-                      <div className="flex flex-col items-end gap-1.5">
+                      <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:gap-1.5">
                         {entry.availability.slots.map(
                           (slot: any, idx: number) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-[13px] font-semibold text-gray-700"
+                              className="inline-flex items-center whitespace-nowrap rounded-lg bg-gray-100 px-3 py-1.5 text-[13px] font-semibold text-gray-700"
                             >
                               {formatTime(slot.startTime)} -{" "}
                               {formatTime(slot.endTime)}
