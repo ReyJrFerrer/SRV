@@ -91,7 +91,7 @@ const CustomerRatingStars: React.FC<CustomerRatingStarsProps> = ({
   };
 
   return (
-    <div className="relative flex h-[275px] w-full flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-50 via-white to-blue-50 p-6 shadow-inner">
+    <div className="relative flex h-[275px] w-full flex-col items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
       <h3 className="mb-2 text-lg font-bold tracking-tight text-blue-900">
         Customer Rating
       </h3>

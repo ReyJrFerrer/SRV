@@ -52,7 +52,7 @@ export const UserBookingsPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const validUsers = backendUsers.filter((u) => u && u.id);
-      const foundUser = validUsers.find((u) => u.id.toString() === userId);
+      const foundUser = validUsers.find((u) => String(u.id) === userId);
       if (foundUser) {
         setUser(foundUser);
       }

@@ -23,6 +23,7 @@ import {
 import MonthlyBookingsCalendar, {
   CalendarItem,
 } from "../../../components/common/calendar/MonthlyBookingsCalendar";
+import SpotlightTour from "../../../components/common/SpotlightTour";
 
 type BookingStatusTab =
   | "ALL"
@@ -358,16 +359,19 @@ const MyBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-50">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-          <div className="flex w-full items-center justify-center px-4 py-3">
-            <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+        <SpotlightTour flowType="client-bookings" />
+        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
+          <div className="flex h-16 w-full items-center justify-between px-4">
+            <div className="flex h-10 w-10" />
+            <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
               My Bookings
             </h1>
+            <div className="flex h-10 w-10" />
           </div>
         </header>
 
         <div className="sticky z-10 bg-white px-4 pt-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="tour-bookings-filter mb-4 flex items-center justify-between">
             <div className="relative mr-2 flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
@@ -480,7 +484,7 @@ const MyBookingsPage: React.FC = () => {
           </div>
           {/* Top toggle: Same Day / Scheduled */}
           <div className="w-full">
-            <div className="flex items-center justify-center px-4 pb-4">
+            <div className="tour-bookings-tabs flex items-center justify-center px-4 pb-4">
               <div className="relative flex w-full max-w-sm rounded-2xl bg-gray-100 p-1.5">
                 <div
                   className={`absolute bottom-1.5 left-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${

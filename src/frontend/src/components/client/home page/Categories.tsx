@@ -176,6 +176,7 @@ const Categories: React.FC<CategoriesProps> = React.memo(
 
     return (
       <div
+        data-tour="client-categories"
         className={`${className} mx-auto flex w-full max-w-screen-lg flex-col items-center`}
       >
         <div className="mb-4 w-full">

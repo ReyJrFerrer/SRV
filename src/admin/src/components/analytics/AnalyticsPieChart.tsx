@@ -26,7 +26,6 @@ interface AnalyticsPieChartProps {
   filterValue?: "all" | "online" | "dormant";
   onFilterChange?: (filter: "all" | "online" | "dormant") => void;
   summaryStats?: React.ReactNode;
-  tooltipFormatter?: (value: number, name: string) => [string, string];
 }
 
 export const AnalyticsPieChart: React.FC<AnalyticsPieChartProps> = ({
@@ -40,7 +39,6 @@ export const AnalyticsPieChart: React.FC<AnalyticsPieChartProps> = ({
   filterValue,
   onFilterChange,
   summaryStats,
-  tooltipFormatter,
 }) => {
   return (
     <div className="rounded-lg border border-blue-100 bg-white shadow-sm">
@@ -122,9 +120,6 @@ export const AnalyticsPieChart: React.FC<AnalyticsPieChartProps> = ({
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={
-                      tooltipFormatter || ((v: number) => v.toLocaleString())
-                    }
                     contentStyle={{
                       backgroundColor: "#fff",
                       border: "1px solid #e5e7eb",
