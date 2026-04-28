@@ -315,6 +315,9 @@ async function processReviewForReputationInternal(review) {
   if (!review || !review.id) throw new Error("Review object with ID is required");
 
   try {
+    // Check if AI analysis indicates review bombing
+    await applyAIAnalysisFlags(review);
+
     // Update both reputations whenever a review is processed
     await updateUserReputationInternal(review.clientId);
     await updateProviderReputationInternal(review.providerId);
@@ -324,6 +327,65 @@ async function processReviewForReputationInternal(review) {
     console.error("Error in processReviewForReputationInternal:", error);
     throw error;
   }
+}
+
+/**
+ * Apply detection flags based on AI analysis results
+ * @param {Object} review - The review object with AI analysis
+ */
+async function applyAIAnalysisFlags(review) {
+  if (!review.aiAnalysis?.analyzed) {
+    return;
+  }
+
+  const aiAnalysis = review.aiAnalysis;
+
+  // Check if AI analysis indicates review bombing patterns
+  if (!aiAnalysis.isSuspicious || aiAnalysis.confidence < 0.7) {
+    return;
+  }
+
+  const patterns = aiAnalysis.patterns || [];
+  const threatLevel = aiAnalysis.threatLevel;
+
+  // Determine if this warrants a ReviewBomb flag
+  const reviewBombPatterns = [
+    "template_language",
+    "coordinated_pattern",
+    "repeated_structure",
+    "suspicious_timing",
+  ];
+
+  const hasReviewBombIndicators = patterns.some((p) => reviewBombPatterns.includes(p));
+
+  if (!hasReviewBombIndicators && threatLevel !== "high") {
+    return;
+  }
+
+  // Check if user already has ReviewBomb flag
+  const repRef = db.collection("reputations").doc(review.clientId);
+  const doc = await repRef.get();
+
+  let existingFlags = [];
+  if (doc.exists && doc.data().detectionFlags) {
+    existingFlags = doc.data().detectionFlags;
+  }
+
+  // Don't add duplicate flags
+  if (existingFlags.includes("ReviewBomb")) {
+    return;
+  }
+
+  // Add ReviewBomb flag
+  const updatedFlags = [...existingFlags, "ReviewBomb"];
+
+  await repRef.update({
+    detectionFlags: updatedFlags,
+    lastUpdated: Date.now(),
+  });
+
+  const msg = `[applyAIAnalysisFlags] Added ReviewBomb flag to user ${review.clientId}`;
+  console.log(`${msg} based on AI analysis`);
 }
 
 exports.processReviewForReputation = onCall(async (request) => {

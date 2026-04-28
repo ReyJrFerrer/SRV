@@ -6,6 +6,11 @@ const {
   processReviewForReputationInternal,
 } = require("./reputation");
 
+const {
+  analyzeReviewBatch,
+  shouldTriggerReport,
+} = require("./utils/reviewAnalyzer");
+
 const db = getFirestore();
 
 /**
@@ -188,13 +193,32 @@ async function checkConsecutiveBadReviews(
           }
         }
 
+        // Check AI analysis results for all reviews
+        const aiAnalysisResults = [];
+        const suspiciousAIReviews = [];
+
+        for (const review of reviews) {
+          if (review.aiAnalysis?.analyzed) {
+            aiAnalysisResults.push(review.aiAnalysis);
+            if (review.aiAnalysis.isSuspicious && review.aiAnalysis.confidence >= 0.7) {
+              suspiciousAIReviews.push(review.id);
+            }
+          }
+        }
+
+        // Determine if AI analysis confirms suspicious behavior
+        const aiConfirmedSuspicious = suspiciousAIReviews.length > 0;
+
         // Create ticket description with structured data
         const title = `${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} Consecutive Bad Reviews - ` +
           `${displayName} (${action} by ${userType})`;
+        const aiNote = aiConfirmedSuspicious ?
+          "\n\nAI Analysis: Suspicious patterns detected in review content." :
+          "";
         const description = `${userName} ${displayName} has ${action}
         ${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} ` +
           `consecutive bad reviews (rating <= ${BAD_REVIEW_RATING_THRESHOLD}).\n\n` +
-          `This is an automatically generated report.`;
+          `This is an automatically generated report.${aiNote}`;
 
         const ticketDescription = JSON.stringify({
           title: title,
@@ -211,6 +235,15 @@ async function checkConsecutiveBadReviews(
           reviewIds: reviews.map((r) => r.id),
           ratings: reviews.map((r) => r.rating),
           collection: collectionName,
+          aiAnalysis: aiAnalysisResults.length > 0 ? {
+            totalAnalyzed: aiAnalysisResults.length,
+            suspiciousCount: suspiciousAIReviews.length,
+            suspiciousReviewIds: suspiciousAIReviews,
+            patterns: aiAnalysisResults.reduce((acc, a) => {
+              if (a.patterns) acc.push(...a.patterns);
+              return acc;
+            }, []),
+          } : null,
         });
 
         const newReport = {
@@ -221,6 +254,7 @@ async function checkConsecutiveBadReviews(
           description: ticketDescription,
           status: "open",
           createdAt: new Date().toISOString(),
+          aiAnalysisTriggered: aiConfirmedSuspicious,
         };
 
         // Save report to Firestore
@@ -385,11 +419,12 @@ exports.submitReview = onCall(async (request) => {
       return {success: true, data: newReview};
     });
 
-    // Process review for reputation with AI sentiment analysis
+    // Process review for reputation (AI content analysis is handled by Firestore trigger)
     // This is done outside the transaction to avoid long-running operations
     await processReviewForReputationInternal(result.data, true);
 
     // Check for consecutive bad reviews and auto-create report if needed
+    // Also considers AI analysis results from Firestore trigger for enhanced detection
     // This is done outside the transaction to avoid long-running operations
     // Check both scenarios:
     // 1. Provider receives 5 consecutive bad reviews (from clients)
