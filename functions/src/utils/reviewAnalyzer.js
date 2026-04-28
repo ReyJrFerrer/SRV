@@ -1,4 +1,4 @@
-const {getFirestore} = require("../firebase-admin");
+const {getFirestore} = require("../../firebase-admin");
 const {generateContentWithJSON, isCacheValid, getGeminiConfig} = require("./geminiClient");
 
 const db = getFirestore();

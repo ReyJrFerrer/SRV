@@ -167,8 +167,10 @@ async function generateContentWithJSON(prompt, options = {}) {
 function isCacheValid(cachedAt, ttlHours) {
   if (!cachedAt) return false;
   const config = getGeminiConfig();
-  const ttlMs = (ttlHours || config.cacheTtlHours) * 60 * 60 * 1000;
-  return Date.now() - new Date(cachedAt).getTime() < ttlMs;
+  const ttlMs = (ttlHours ?? config.cacheTtlHours) * 60 * 60 * 1000;
+  if (ttlMs <= 0) return false;
+  const elapsed = Date.now() - new Date(cachedAt).getTime();
+  return elapsed > 0 && elapsed < ttlMs;
 }
 
 module.exports = {
