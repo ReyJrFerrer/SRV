@@ -97,9 +97,9 @@ const LocationAvailabilitySection: React.FC<Props> = ({
 
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between border-b pb-3">
-        <h3 className="text-md flex items-center gap-2 font-bold text-gray-900 lg:text-xl">
-          <MapPinIcon className="h-6 w-6 text-yellow-600" />
+      <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 lg:text-xl">
+          <MapPinIcon className="h-6 w-6 text-yellow-500" />
           Location & Availability
         </h3>
         <Tooltip
@@ -108,11 +108,11 @@ const LocationAvailabilitySection: React.FC<Props> = ({
         >
           <button
             onClick={hasActiveBookings ? undefined : onEdit}
-            className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
+            className={`rounded-full bg-gray-50 p-2.5 transition-colors hover:bg-yellow-50 hover:text-yellow-600 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
             aria-label="Edit location and availability"
             disabled={hasActiveBookings}
           >
-            <PencilIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+            <PencilIcon className="h-5 w-5 text-gray-500" />
           </button>
         </Tooltip>
       </div>
@@ -125,19 +125,19 @@ const LocationAvailabilitySection: React.FC<Props> = ({
           <div className="h-32 w-full rounded-lg bg-gray-200"></div>
         </div>
       ) : editLocationAvailability ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-700">
+        <div className="space-y-6 pt-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">
                 Province
-                <span className="ml-1 text-[10px] font-normal text-gray-500">
+                <span className="ml-1 text-[11px] font-normal text-gray-500">
                   (Required)
                 </span>
               </label>
               <select
                 value={editedState}
                 onChange={handleProvinceChange}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-yellow-500 focus:ring-yellow-500"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-yellow-500 focus:ring-yellow-500"
               >
                 <option value="">Select Province</option>
                 {phLocations.provinces.map((prov: any) => (
@@ -147,10 +147,10 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                 ))}
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-700">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">
                 City/Municipality
-                <span className="ml-1 text-[10px] font-normal text-gray-500">
+                <span className="ml-1 text-[11px] font-normal text-gray-500">
                   (Required)
                 </span>
               </label>
@@ -158,7 +158,7 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                 value={editedCity}
                 onChange={handleCityChange}
                 disabled={!editedState}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-yellow-500 focus:ring-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-yellow-500 focus:ring-yellow-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-50"
               >
                 <option value="">Select City / Municipality</option>
                 {cityOptions.map((city) => (
@@ -169,9 +169,9 @@ const LocationAvailabilitySection: React.FC<Props> = ({
               </select>
             </div>
           </div>
-          <div>
-            <label className="mb-1 flex items-center gap-2 text-xs font-semibold text-gray-700">
-              <CalendarDaysIcon className="h-4 w-4 text-yellow-600" />
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <CalendarDaysIcon className="h-5 w-5 text-yellow-500" />
               Availability
             </label>
             <AvailabilityEditor
@@ -179,44 +179,44 @@ const LocationAvailabilitySection: React.FC<Props> = ({
               setWeeklySchedule={setEditedWeeklySchedule as any}
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               onClick={onCancel}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl px-6 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={savingLocationAvailability}
             >
               Cancel
             </button>
             <button
               onClick={onSave}
-              className="inline-flex items-center gap-2 rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={savingLocationAvailability}
             >
               {savingLocationAvailability && (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
               )}
-              {savingLocationAvailability ? "Saving..." : "Save"}
+              {savingLocationAvailability ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div>
-            <label className="text-l mb-1 flex items-center gap-2 font-semibold text-gray-700">
-              <HomeIcon className="h-4 w-4 text-yellow-600" />
+        <div className="space-y-6 pt-2">
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <HomeIcon className="h-5 w-5 text-yellow-500" />
               Address
             </label>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-900">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900">
               {service.location.city}
               {service.location.state && `, ${service.location.state}`}
             </div>
           </div>
-          <div>
-            <label className="text-l mb-1 flex items-center gap-2 font-semibold text-gray-700">
-              <CalendarDaysIcon className="h-4 w-4 text-yellow-600" />
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <CalendarDaysIcon className="h-5 w-5 text-yellow-500" />
               Availability
             </label>
-            <div className="flex flex-wrap justify-center gap-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-4 text-sm font-medium text-gray-900">
+            <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
               {service.weeklySchedule?.filter(
                 (entry: any) =>
                   entry.availability.isAvailable &&
@@ -234,31 +234,35 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                   .map((entry: any) => (
                     <div
                       key={entry.day}
-                      className="flex w-full flex-col items-start rounded-xl border border-gray-200 bg-white p-3 shadow sm:w-auto sm:min-w-[140px]"
+                      className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition-shadow hover:shadow-md sm:w-auto"
                     >
-                      <span className="mb-2 flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-gray-900 shadow-sm">
-                        <CalendarDaysIcon className="h-4 w-4 text-yellow-600" />
-                        {entry.day}
-                      </span>
-                      <ul className="ml-1 space-y-1">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-50">
+                          <CalendarDaysIcon className="h-4 w-4 text-yellow-600" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-900">
+                          {entry.day}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5">
                         {entry.availability.slots.map(
                           (slot: any, idx: number) => (
-                            <li
+                            <span
                               key={idx}
-                              className="flex items-center gap-2 text-xs text-gray-900"
+                              className="inline-flex items-center rounded-lg bg-gray-100 px-3 py-1.5 text-[13px] font-semibold text-gray-700"
                             >
-                              <span className="inline-block rounded bg-gray-100 px-2 py-0.5 font-semibold text-gray-700">
-                                {formatTime(slot.startTime)} -{" "}
-                                {formatTime(slot.endTime)}
-                              </span>
-                            </li>
+                              {formatTime(slot.startTime)} -{" "}
+                              {formatTime(slot.endTime)}
+                            </span>
                           ),
                         )}
-                      </ul>
+                      </div>
                     </div>
                   ))
               ) : (
-                <span className="text-yellow-600">Not specified</span>
+                <span className="py-2 text-center text-sm font-medium text-gray-500">
+                  Not specified
+                </span>
               )}
             </div>
           </div>
