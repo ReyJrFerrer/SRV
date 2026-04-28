@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import BookingDrafts from "../../client/BookingDrafts";
 import {
@@ -122,7 +123,7 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
     try {
       localStorage.removeItem(ADD_SERVICE_DRAFT_KEY);
       await deleteDraftFromIDB(ADD_SERVICE_DRAFT_KEY);
-    } catch (e) {}
+    } catch (e) { }
     setLoadedDraft(null);
     setDraftAvailable(false);
     setShowRestorePrompt(false);
@@ -281,7 +282,7 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
       />
 
       {/* Exit (Save Draft) Modal */}
-      {showExitPrompt && (
+      {showExitPrompt && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
             <h2 className="mb-2 text-lg font-bold">Save draft?</h2>
@@ -311,7 +312,8 @@ const ServiceDrafts = forwardRef((props: Props, ref) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Draft available banner (uses draftAvailable state) */}
