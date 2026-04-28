@@ -75,8 +75,9 @@ export const ValidationInboxPage: React.FC = () => {
   const loadServicesWithCertificates = async () => {
     setLoading((prev) => ({ ...prev, certificates: true }));
     try {
-      const { adminServiceCanister } =
-        await import("../services/adminServiceCanister");
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
       const services = await adminServiceCanister.getServicesWithCertificates();
       setServicesWithCertificates(services);
     } catch (error) {
@@ -89,8 +90,9 @@ export const ValidationInboxPage: React.FC = () => {
   // Load validated certificates from backend
   const loadValidatedCertificates = async () => {
     try {
-      const { adminServiceCanister } =
-        await import("../services/adminServiceCanister");
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
       const validatedCerts =
         await adminServiceCanister.getValidatedCertificates();
       setApprovedCertificates(validatedCerts);
@@ -102,8 +104,9 @@ export const ValidationInboxPage: React.FC = () => {
   // Load rejected certificates from backend
   const loadRejectedCertificates = async () => {
     try {
-      const { adminServiceCanister } =
-        await import("../services/adminServiceCanister");
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
       const rejectedCerts =
         await adminServiceCanister.getRejectedCertificates();
       setRejectedCertificates(rejectedCerts);
@@ -141,8 +144,9 @@ export const ValidationInboxPage: React.FC = () => {
         throw new Error("Media ID is required but was empty or invalid");
       }
 
-      const { adminServiceCanister } =
-        await import("../services/adminServiceCanister");
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
       await adminServiceCanister.updateCertificateValidationStatus(
         mediaId,
         "Validated",
@@ -174,8 +178,9 @@ export const ValidationInboxPage: React.FC = () => {
         throw new Error("Media ID is required but was empty or invalid");
       }
 
-      const { adminServiceCanister } =
-        await import("../services/adminServiceCanister");
+      const { adminServiceCanister } = await import(
+        "../services/adminServiceCanister"
+      );
       await adminServiceCanister.updateCertificateValidationStatus(
         mediaId,
         "Rejected",
@@ -198,8 +203,9 @@ export const ValidationInboxPage: React.FC = () => {
 
       if (mediaId) {
         // Reset validation status to Pending in media canister
-        const { adminServiceCanister } =
-          await import("../services/adminServiceCanister");
+        const { adminServiceCanister } = await import(
+          "../services/adminServiceCanister"
+        );
         await adminServiceCanister.updateCertificateValidationStatus(
           mediaId,
           "Pending",
