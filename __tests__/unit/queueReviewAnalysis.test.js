@@ -62,7 +62,9 @@ describe("queueReviewAnalysis integration", () => {
         isSuspicious: false,
         confidence: 0.9,
       };
-      expect(shouldTriggerReport(aiLowLowConfidence, ratingNotSuspicious)).toBe(false);
+      expect(shouldTriggerReport(aiLowLowConfidence, ratingNotSuspicious)).toBe(
+        false,
+      );
     });
   });
 });

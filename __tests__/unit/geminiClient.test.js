@@ -90,7 +90,9 @@ describe("geminiClient", () => {
 
     test("returns true for cache within TTL", () => {
       const now = new Date();
-      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
+      const fiveMinutesAgo = new Date(
+        now.getTime() - 5 * 60 * 1000,
+      ).toISOString();
 
       expect(isCacheValid(fiveMinutesAgo, 24)).toBe(true);
     });
@@ -98,14 +100,18 @@ describe("geminiClient", () => {
     test("returns true for cache at exactly TTL boundary", () => {
       const now = new Date();
       const ttlHours = 24;
-      const exactlyAtBoundary = new Date(now.getTime() - (ttlHours * 60 * 60 * 1000 - 1)).toISOString();
+      const exactlyAtBoundary = new Date(
+        now.getTime() - (ttlHours * 60 * 60 * 1000 - 1),
+      ).toISOString();
 
       expect(isCacheValid(exactlyAtBoundary, ttlHours)).toBe(true);
     });
 
     test("returns false for expired cache", () => {
       const now = new Date();
-      const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000).toISOString();
+      const twentyFiveHoursAgo = new Date(
+        now.getTime() - 25 * 60 * 60 * 1000,
+      ).toISOString();
 
       expect(isCacheValid(twentyFiveHoursAgo, 24)).toBe(false);
     });
@@ -119,7 +125,9 @@ describe("geminiClient", () => {
     test("uses config default TTL when ttlHours not provided", () => {
       process.env.GEMINI_CACHE_TTL_HOURS = "1";
       const now = new Date();
-      const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
+      const thirtyMinutesAgo = new Date(
+        now.getTime() - 30 * 60 * 1000,
+      ).toISOString();
 
       const config = getGeminiConfig();
       expect(isCacheValid(thirtyMinutesAgo)).toBe(true);
@@ -127,7 +135,9 @@ describe("geminiClient", () => {
 
     test("handles different TTL values correctly", () => {
       const now = new Date();
-      const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
+      const twoHoursAgo = new Date(
+        now.getTime() - 2 * 60 * 60 * 1000,
+      ).toISOString();
 
       expect(isCacheValid(twoHoursAgo, 24)).toBe(true);
       expect(isCacheValid(twoHoursAgo, 1)).toBe(false);

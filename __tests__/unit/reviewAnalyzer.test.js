@@ -173,7 +173,10 @@ describe("reviewAnalyzer", () => {
       const original = process.env.GEMINI_ANALYSIS_ENABLED;
       process.env.GEMINI_ANALYSIS_ENABLED = "false";
 
-      const result = await analyzeReviewContent({ id: "review-123", comment: "test" });
+      const result = await analyzeReviewContent({
+        id: "review-123",
+        comment: "test",
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("AI analysis is disabled");
