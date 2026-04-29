@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Toast from "../../../components/ToastNotifications";
-import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeftIcon,
   PencilIcon,
   CameraIcon,
   InformationCircleIcon,
@@ -17,6 +15,7 @@ import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";
 import RoleSwitchButton from "../../../components/common/RoleSwitchButton";
+import SmartHeader from "../../../components/common/SmartHeader";
 import {
   ProfileSkeleton,
   ReputationScoreSkeleton,
@@ -370,7 +369,6 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
 
 // ProviderProfilePage: Main profile view for providers
 const ProviderProfilePage: React.FC = () => {
-  const navigate = useNavigate();
   const {
     profile,
     loading,
@@ -481,19 +479,7 @@ const ProviderProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-full hover:bg-gray-100"
-          >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
-          </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
-            My Profile
-          </h1>
-        </div>
-      </header>
+      <SmartHeader title="Profile" showBackButton={false} userRole="provider" />
 
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
         {loading || !profile ? (

@@ -1,10 +1,11 @@
 // --- Imports ---
 import React, { useState, useEffect, useRef } from "react";
-import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { MapPinIcon, UserCircleIcon, Bars3Icon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useLocationStore } from "../../../store/locationStore";
+import { useLogout } from "../../../hooks/logout";
 import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
@@ -21,6 +22,7 @@ export interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { logout } = useLogout();
 
   // --- Use Zustand location store ---
   const { locationStatus, addressMode } = useLocationStore();
@@ -32,6 +34,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
   const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
   const miniMapRef = useRef<MapFunctionsHandle | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Effect: fetch user profile when auth loads (location handled by post-login modal)
   useEffect(() => {
@@ -116,6 +120,40 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
     if (miniMapRef.current?.openChangeLocation) {
       miniMapRef.current.openChangeLocation();
     }
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMenu]);
+
+  // --- Menu items ---
+  const menuItems = [
+    { label: "Profile", to: "/provider/profile" },
+    { label: "My Services", to: "/provider/services" },
+    { label: "Wallet", to: "/provider/wallet" },
+    { label: "Settings", to: "/provider/settings" },
+    { label: "Terms & Conditions", to: "/provider/terms" },
+    { label: "Report", to: "/provider/report" },
+    { label: "Help & Support", to: "/provider/help" },
+  ];
+
+  const handleMenuClick = (to: string) => {
+    setShowMenu(false);
+    navigate(to);
+  };
+
+  const handleLogout = () => {
+    setShowMenu(false);
+    logout();
   };
 
   // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
@@ -246,13 +284,38 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 Hi, {displayName}
               </span>
               {isAuthenticated && (
-                <button
-                  onClick={handleProfileClick}
-                  className="group relative rounded-full bg-gray-50 p-1.5 transition-all hover:bg-gray-100"
-                  aria-label="Profile"
-                >
-                  <UserCircleIcon className="h-7 w-7 text-gray-700 group-hover:text-blue-600" />
-                </button>
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="group relative rounded-full bg-gray-50 p-1.5 transition-all hover:bg-gray-100"
+                    aria-label="Menu"
+                  >
+                    <Bars3Icon className="h-7 w-7 text-gray-700 group-hover:text-blue-600" />
+                  </button>
+
+                  {showMenu && (
+                    <div className="absolute right-0 top-12 w-56 rounded-xl border border-gray-100 bg-white shadow-lg z-50 animate-slide-in">
+                      <div className="py-2">
+                        {menuItems.map((item, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleMenuClick(item.to!)}
+                            className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                        <div className="border-t border-gray-100 my-2" />
+                        <button
+                          onClick={handleLogout}
+                          className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-gray-50"
+                        >
+                          Log Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

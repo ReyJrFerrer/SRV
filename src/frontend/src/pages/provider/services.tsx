@@ -16,6 +16,7 @@ import Tooltip from "../../components/common/Tooltip";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import DeleteConfirmDialog from "../../components/provider/service-details/DeleteConfirmDialog";
+import SmartHeader from "../../components/common/SmartHeader";
 
 // ServiceCard has been extracted to a separate component under components/provider
 
@@ -176,7 +177,7 @@ const MyServicesPage: React.FC = () => {
     [userServices],
   );
 
-  return (
+return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50 pb-16 md:pb-0">
       <Toaster position="top-center" richColors />
       <DeleteConfirmDialog
@@ -199,12 +200,10 @@ const MyServicesPage: React.FC = () => {
           setDeleteConfirmId(null);
         }}
       />
-
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex w-full items-center justify-center px-3.5 py-2.5">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
-            My Services
-          </h1>
+      <SmartHeader 
+        title="My Services" 
+        userRole="provider"
+        rightAction={
           <div className="flex flex-1 items-center justify-end gap-4">
             <button
               onClick={() => setShowArchived(!showArchived)}
@@ -233,8 +232,8 @@ const MyServicesPage: React.FC = () => {
               <span className="ml-1 hidden sm:inline">Add new service</span>
             </Link>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="container mx-auto flex-grow p-6 pb-10">
         <div className="mt-4">

@@ -155,7 +155,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     };
   }, []);
 
-  const mobileOrder = ["Home", "Booking", "Chat", "Services", "Notifications", "Settings"];
+  const mobileOrder = ["Home", "Booking", "Chat", "Services", "Notifications"];
 
   return (
     <>
@@ -359,15 +359,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         ? HomeIcon
                         : item.label === "Booking"
                           ? CalendarDaysIcon
-                        : item.label === "Chat"
-                          ? ChatBubbleOvalLeftEllipsisIcon
-                        : item.label === "Services"
-                          ? WrenchScrewdriverIcon
-                          : item.label === "Settings"
-                            ? Cog6ToothIcon
-                            : item.label === "Notifications"
-                              ? BellIcon
-                              : HomeIcon;
+                          : item.label === "Chat"
+                            ? ChatBubbleOvalLeftEllipsisIcon
+                            : item.label === "Services"
+                              ? WrenchScrewdriverIcon
+                              : item.label === "Settings"
+                                ? Cog6ToothIcon
+                                : item.label === "Notifications"
+                                  ? BellIcon
+                                  : HomeIcon;
                     return (
                       <div
                         className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${

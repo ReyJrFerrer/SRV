@@ -6,7 +6,7 @@ const TermsAndConditionsPage: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 pb-24 md:pb-6">
       {/* Header */}
-      <SmartHeader title="Terms" />
+      <SmartHeader title="Terms" userRole="client" />
 
       <main className="mx-auto w-full max-w-2xl px-4 py-6">
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">

@@ -9,6 +9,7 @@ import Appear from "../../components/common/pageFlowImprovements/Appear";
 import EmptyState from "../../components/common/EmptyState";
 import { InboxIcon, CheckIcon, PencilIcon } from "@heroicons/react/24/solid";
 import NotificationItem from "../../components/client/NotificationItemClient";
+import SmartHeader from "../../components/common/SmartHeader";
 
 // NotificationItem and NotificationMenu moved to components/notifications
 
@@ -263,13 +264,11 @@ const NotificationsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex h-16 w-full items-center justify-between px-4">
-          <div className="flex h-10 w-10" />
-          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
-            Notifications
-          </h1>
-          {stableNotifications.length > 0 ? (
+      <SmartHeader 
+        title="Notifications" 
+        userRole="client"
+        rightAction={
+          stableNotifications.length > 0 ? (
             <button
               onClick={() => {
                 if (!editMode) {
@@ -288,11 +287,9 @@ const NotificationsPage = () => {
                 <PencilIcon className="h-5 w-5" />
               )}
             </button>
-          ) : (
-            <div className="flex h-10 w-10" />
-          )}
-        </div>
-      </header>
+          ) : null
+        }
+      />
 
       {/* Tabs navigation for notification categories */}
       <div className="mx-auto mb-6 mt-4 max-w-2xl px-4">

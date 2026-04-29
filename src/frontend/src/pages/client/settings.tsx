@@ -78,7 +78,7 @@ const SettingsPage: React.FC = () => {
           onTourComplete={() => setStartTourOpen(false)}
         />
       )}
-      <SmartHeader title="Settings" showBackButton={false} />
+      <SmartHeader title="Settings" showBackButton={false} userRole="client" />
 
       <main className="mx-auto max-w-2xl p-4">
         {isAuthenticated ? (

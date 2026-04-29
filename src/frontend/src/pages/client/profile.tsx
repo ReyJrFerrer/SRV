@@ -1,9 +1,7 @@
 // SECTION: Imports — dependencies for this page
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Toast from "../../components/ToastNotifications";
-import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeftIcon,
   PencilIcon,
   CameraIcon,
   BriefcaseIcon,
@@ -30,6 +28,7 @@ import useClientRating, {
 } from "../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 import SpotlightTour from "../../components/common/SpotlightTour";
+import SmartHeader from "../../components/common/SmartHeader";
 import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import {
   ProfileSkeleton,
@@ -520,7 +519,6 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
 
 // SECTION: ClientProfilePage — main profile view and interactions
 const ClientProfilePage: React.FC = () => {
-  const navigate = useNavigate();
   const { firebaseUser } = useAuth();
   const {
     profile,
@@ -727,19 +725,7 @@ const ClientProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="tour-client-profile-header sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-md">
-        <div className="relative flex w-full items-center px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
-          >
-            <ArrowLeftIcon className="h-5 w-5" />
-          </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
-            My Profile
-          </h1>
-        </div>
-      </header>
+      <SmartHeader title="Profile" showBackButton={false} userRole="client" />
 
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
         {loading || !profile ? (

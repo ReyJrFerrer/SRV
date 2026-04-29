@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { MapPinIcon, UserCircleIcon, Bars3Icon } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useServiceManagement } from "../../../hooks/serviceManagement";
@@ -8,6 +8,7 @@ import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
 import { useLocationStore } from "../../../store/locationStore";
+import { useLogout } from "../../../hooks/logout";
 
 // --- Props ---
 export interface HeaderProps {
@@ -20,6 +21,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const { services } = useServiceManagement();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { logout } = useLogout();
 
   // --- Use Zustand location store ---
   const { locationLoading, locationStatus, addressMode } = useLocationStore();
@@ -32,6 +34,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- State: Search bar ---
   const [searchQuery, setSearchQuery] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   // Static search bar placeholders
   const searchPlaceholders = [
     "Looking for a plumber?",
@@ -95,6 +99,38 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     else document.body.classList.remove("has-mini-header");
     return () => document.body.classList.remove("has-mini-header");
   }, [isMini]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMenu]);
+
+  // --- Menu items ---
+  const menuItems = [
+    { label: "Profile", to: "/client/profile" },
+    { label: "Settings", to: "/client/settings" },
+    { label: "Terms & Conditions", to: "/client/terms" },
+    { label: "Report", to: "/client/report" },
+    { label: "Help & Support", to: "/client/help" },
+  ];
+
+  const handleMenuClick = (to: string) => {
+    setShowMenu(false);
+    navigate(to);
+  };
+
+  const handleLogout = () => {
+    setShowMenu(false);
+    logout();
+  };
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -298,12 +334,37 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 />
               </Link>
               {isAuthenticated && (
-                <button
-                  onClick={handleProfileClick}
-                  className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
-                >
-                  <UserCircleIcon className="h-8 w-8 text-yellow-500 transition-colors group-hover:text-yellow-600" />
-                </button>
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
+                  >
+                    <Bars3Icon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-blue-700" />
+                  </button>
+
+                  {showMenu && (
+                    <div className="absolute right-0 top-12 w-56 rounded-xl border border-gray-100 bg-white shadow-lg z-50 animate-slide-in">
+                      <div className="py-2">
+                        {menuItems.map((item, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleMenuClick(item.to!)}
+                            className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                        <div className="border-t border-gray-100 my-2" />
+                        <button
+                          onClick={handleLogout}
+                          className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-gray-50"
+                        >
+                          Log Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             <hr className="my-4 border-yellow-200" />
