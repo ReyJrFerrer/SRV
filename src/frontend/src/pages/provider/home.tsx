@@ -249,11 +249,6 @@ const ProviderHomePage: React.FC = () => {
               />
             </div>
 
-            <BookingRequestsNextjs
-              pendingRequests={bookingCounts.pendingCount}
-              upcomingJobs={bookingCounts.upcomingCount}
-            />
-
             <ServiceManagementNextjs
               services={userServices?.filter((s) => s.status !== "Archived")}
               loading={servicesLoading}

@@ -495,7 +495,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full grid-cols-4 gap-2 md:grid-cols-7">
             {allDays.map((day) => {
               const isSelected = formData.availabilitySchedule.includes(day);
               return (
@@ -503,7 +503,7 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
                   key={day}
                   type="button"
                   onClick={() => handleDayToggle(day)}
-                  className={`flex h-10 min-w-[3rem] flex-1 items-center justify-center rounded-full border px-4 text-sm font-medium transition-all ${
+                  className={`flex h-10 w-full items-center justify-center rounded-full border text-sm font-medium transition-all ${
                     isSelected
                       ? "border-yellow-400 bg-yellow-400 text-gray-900 shadow-sm"
                       : "border-gray-200 bg-white text-gray-600 hover:border-yellow-300 hover:bg-yellow-50"

@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 interface Props {
@@ -45,7 +46,7 @@ const BookingDrafts: React.FC<Props> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="mx-4 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
         <h2 className="mb-2 text-lg font-bold">{title}</h2>
@@ -71,7 +72,8 @@ const BookingDrafts: React.FC<Props> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
