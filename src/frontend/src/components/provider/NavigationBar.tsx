@@ -165,7 +165,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             data-tour="provider-nav"
             className="tour-provider-nav-mobile mx-auto flex w-full max-w-full items-center justify-center"
           >
-            <div className="grid w-full grid-cols-6 font-medium">
+            <div className="grid w-full grid-cols-5 font-medium">
               {mobileOrder.map((label) => {
                 let to = "";
                 let count = 0;

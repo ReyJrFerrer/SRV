@@ -87,6 +87,61 @@
   animation: menu-slide-in 200ms ease-out both;
 }
 
+/* Drawer slide-in from right */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-from-right {
+  animation: slide-in-from-right 250ms ease-out both;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 200ms ease-out both;
+}
+
+/* Hide element but keep in DOM */
+.hidden-menu {
+  display: none;
+}
+
+/* Show element */
+.visible-menu {
+  display: block;
+}
+
+/* Slide out classes */
+.translate-x-full {
+  transform: translateX(100%);
+}
+
+.translate-x-0 {
+  transform: translateX(0);
+}
+
+.transition-transform {
+  transition-property: transform;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
 /* Smooth fade-in animation for dynamically loaded content */
 @keyframes fadeIn {
   from {

@@ -3,6 +3,7 @@ import {
   MapPinIcon,
   UserCircleIcon,
   Bars3Icon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -339,37 +340,12 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 />
               </Link>
               {isAuthenticated && (
-                <div className="relative" ref={menuRef}>
-                  <button
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
-                  >
-                    <Bars3Icon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-blue-700" />
-                  </button>
-
-                  {showMenu && (
-                    <div className="animate-slide-in absolute right-0 top-12 z-50 w-56 rounded-xl border border-gray-100 bg-white shadow-lg">
-                      <div className="py-2">
-                        {menuItems.map((item, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleMenuClick(item.to!)}
-                            className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                        <div className="my-2 border-t border-gray-100" />
-                        <button
-                          onClick={handleLogout}
-                          className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-gray-50"
-                        >
-                          Log Out
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
+                >
+                  <Bars3Icon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-blue-700" />
+                </button>
               )}
             </div>
             <hr className="my-4 border-yellow-200" />
@@ -504,6 +480,35 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Slide-out Menu */}
+      {showMenu && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/50 animate-fade-in" onClick={() => setShowMenu(false)} />
+          <div className="fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] animate-slide-in-from-right bg-white shadow-2xl">
+            <div className="flex h-full flex-col">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
+                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+                <button onClick={() => setShowMenu(false)} className="flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100">
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto py-2">
+                {menuItems.map((item, index) => (
+                  <button key={index} onClick={() => handleMenuClick(item.to!)} className="w-full px-4 py-4 text-left text-base font-medium text-gray-700 hover:bg-gray-50">
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <div className="border-t border-gray-100 py-4">
+                <button onClick={handleLogout} className="w-full px-4 py-4 text-left text-base font-medium text-red-600 hover:bg-gray-50">
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </>
   );
