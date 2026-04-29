@@ -113,10 +113,12 @@ const BottomNavigation: React.FC = () => {
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
 
-const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
+  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
 
   const mobileItems = mobileOrder
-    .map((label: string) => navItems.find((i: any) => i.label === label) || null)
+    .map(
+      (label: string) => navItems.find((i: any) => i.label === label) || null,
+    )
     .filter((i: any): i is any => !!i);
 
   return (
@@ -169,7 +171,7 @@ const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
                             );
                           }
 
-const Icon =
+                          const Icon =
                             displayItem.label === "Home"
                               ? HomeIcon
                               : displayItem.label === "Booking"
@@ -245,41 +247,41 @@ const Icon =
                     }, 120);
                   }
                 }}
->
-                  {item.label === "Profile" ? (
-                    <img
-                      src={stableProfileSrc}
-                      alt="Profile"
-                      className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
-                        isActive
-                          ? "h-9 w-9 border-2 border-yellow-400"
-                          : "h-8 w-8 md:group-hover:scale-105"
-                      }`}
-                      draggable={false}
-                    />
-                  ) : (
-                    (() => {
-                      const ItemIcon =
-                        item.label === "Home"
-                          ? HomeIcon
-                          : item.label === "Booking"
-                            ? CalendarDaysIcon
-                            : item.label === "Chat"
-                              ? ChatBubbleOvalLeftEllipsisIcon
-                              : item.label === "Notifications"
-                                ? BellIcon
-                                : HomeIcon;
-                      return (
-                        <ItemIcon
-                          className={`transition-colors duration-300 ${
-                            isActive
-                              ? "h-6 w-6 text-yellow-400"
-                              : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
-                          }`}
-                        />
-                      );
-                    })()
-                  )}
+              >
+                {item.label === "Profile" ? (
+                  <img
+                    src={stableProfileSrc}
+                    alt="Profile"
+                    className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
+                      isActive
+                        ? "h-9 w-9 border-2 border-yellow-400"
+                        : "h-8 w-8 md:group-hover:scale-105"
+                    }`}
+                    draggable={false}
+                  />
+                ) : (
+                  (() => {
+                    const ItemIcon =
+                      item.label === "Home"
+                        ? HomeIcon
+                        : item.label === "Booking"
+                          ? CalendarDaysIcon
+                          : item.label === "Chat"
+                            ? ChatBubbleOvalLeftEllipsisIcon
+                            : item.label === "Notifications"
+                              ? BellIcon
+                              : HomeIcon;
+                    return (
+                      <ItemIcon
+                        className={`transition-colors duration-300 ${
+                          isActive
+                            ? "h-6 w-6 text-yellow-400"
+                            : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
+                        }`}
+                      />
+                    );
+                  })()
+                )}
                 <span
                   className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
                     isActive

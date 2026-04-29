@@ -54,7 +54,8 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
     };
     if (showMenu) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showMenu]);
 
@@ -75,7 +76,11 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
     { label: "Help & Support", to: "/provider/help" },
   ];
 
-  const items = menuItems || (userRole === "provider" ? defaultProviderMenuItems : defaultClientMenuItems);
+  const items =
+    menuItems ||
+    (userRole === "provider"
+      ? defaultProviderMenuItems
+      : defaultClientMenuItems);
 
   const handleMenuClick = (item: MenuItem) => {
     setShowMenu(false);
@@ -124,7 +129,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
               </button>
 
               {showMenu && (
-                <div className="absolute right-0 top-12 w-56 rounded-xl border border-gray-100 bg-white shadow-lg z-50 animate-slide-in">
+                <div className="animate-slide-in absolute right-0 top-12 z-50 w-56 rounded-xl border border-gray-100 bg-white shadow-lg">
                   <div className="py-2">
                     {items.map((item, index) => (
                       <button
@@ -137,7 +142,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
                         {item.label}
                       </button>
                     ))}
-                    <div className="border-t border-gray-100 my-2" />
+                    <div className="my-2 border-t border-gray-100" />
                     <button
                       onClick={() => {
                         setShowMenu(false);

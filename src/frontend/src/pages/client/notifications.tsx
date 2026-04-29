@@ -264,8 +264,8 @@ const NotificationsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <SmartHeader 
-        title="Notifications" 
+      <SmartHeader
+        title="Notifications"
         userRole="client"
         rightAction={
           stableNotifications.length > 0 ? (

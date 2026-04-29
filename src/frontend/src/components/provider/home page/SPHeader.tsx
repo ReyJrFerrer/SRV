@@ -1,6 +1,10 @@
 // --- Imports ---
 import React, { useState, useEffect, useRef } from "react";
-import { MapPinIcon, UserCircleIcon, Bars3Icon } from "@heroicons/react/24/solid";
+import {
+  MapPinIcon,
+  UserCircleIcon,
+  Bars3Icon,
+} from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
@@ -131,7 +135,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
     };
     if (showMenu) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showMenu]);
 
@@ -294,7 +299,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                   </button>
 
                   {showMenu && (
-                    <div className="absolute right-0 top-12 w-56 rounded-xl border border-gray-100 bg-white shadow-lg z-50 animate-slide-in">
+                    <div className="animate-slide-in absolute right-0 top-12 z-50 w-56 rounded-xl border border-gray-100 bg-white shadow-lg">
                       <div className="py-2">
                         {menuItems.map((item, index) => (
                           <button
@@ -305,7 +310,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                             {item.label}
                           </button>
                         ))}
-                        <div className="border-t border-gray-100 my-2" />
+                        <div className="my-2 border-t border-gray-100" />
                         <button
                           onClick={handleLogout}
                           className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-gray-50"

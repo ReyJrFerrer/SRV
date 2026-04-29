@@ -177,7 +177,7 @@ const MyServicesPage: React.FC = () => {
     [userServices],
   );
 
-return (
+  return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50 pb-16 md:pb-0">
       <Toaster position="top-center" richColors />
       <DeleteConfirmDialog
@@ -200,8 +200,8 @@ return (
           setDeleteConfirmId(null);
         }}
       />
-      <SmartHeader 
-        title="My Services" 
+      <SmartHeader
+        title="My Services"
         userRole="provider"
         rightAction={
           <div className="flex flex-1 items-center justify-end gap-4">

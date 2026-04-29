@@ -53,7 +53,11 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <SmartHeader title="Settings" showBackButton={false} userRole="provider" />
+      <SmartHeader
+        title="Settings"
+        showBackButton={false}
+        userRole="provider"
+      />
 
       <main className="mx-auto max-w-2xl p-4">
         {isAuthenticated ? (
