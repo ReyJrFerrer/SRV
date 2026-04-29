@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 import {
   PaperAirplaneIcon,
@@ -657,7 +656,6 @@ const ClientChatPage: React.FC = () => {
         )}
       </div>
 
-      <BottomNavigation />
     </div>
   );
 };

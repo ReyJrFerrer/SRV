@@ -16,7 +16,6 @@ import {
   useServiceCertificates,
 } from "../../../hooks/useMediaLoader";
 import { useReputation } from "../../../hooks/useReputation";
-import BottomNavigation from "../../../components/client/NavigationBar";
 import {
   ServicePackage,
   serviceCanisterService,
@@ -446,7 +445,6 @@ const ClientServiceDetailsPage: React.FC = () => {
             ></div>
           </div>
         </div>
-        <BottomNavigation />
       </div>
     );
   }
@@ -868,7 +866,6 @@ const ClientServiceDetailsPage: React.FC = () => {
           </button>
         </div>
       </div>
-      <BottomNavigation />
     </div>
   );
 };

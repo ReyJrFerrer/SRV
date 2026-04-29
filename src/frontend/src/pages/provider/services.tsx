@@ -10,7 +10,6 @@ import {
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import CompactServiceCard from "../../components/provider/CompactServiceCard";
 import ServiceCard from "../../components/provider/ServiceCard";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import { Toaster, toast } from "sonner";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
 import Tooltip from "../../components/common/Tooltip";
@@ -335,7 +334,6 @@ const MyServicesPage: React.FC = () => {
           )}
         </div>
       </main>
-      <BottomNavigation />
     </div>
   );
 };

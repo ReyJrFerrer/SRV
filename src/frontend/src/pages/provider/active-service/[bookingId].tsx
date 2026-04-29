@@ -16,7 +16,6 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";
@@ -355,7 +354,6 @@ const ActiveServicePage: React.FC = () => {
         cancelText="Back"
         isSubmitting={isCancelling}
       />
-      <BottomNavigation />
     </div>
   );
 };

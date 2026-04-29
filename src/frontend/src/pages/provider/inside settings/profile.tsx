@@ -13,7 +13,6 @@ import {
   ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";
@@ -709,7 +708,6 @@ const ProviderProfilePage: React.FC = () => {
           Log Out
         </button>
       </div>
-      <BottomNavigation />
     </div>
   );
 };

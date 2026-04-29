@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
-import BottomNavigation from "../../../components/client/NavigationBar";
 import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard";
 import {
   useBookingManagement,
@@ -721,7 +720,6 @@ const MyBookingsPage: React.FC = () => {
         </main>
 
         <div>
-          <BottomNavigation />
         </div>
       </div>
 

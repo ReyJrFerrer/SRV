@@ -10,7 +10,6 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import { releaseHeldPayment } from "../../../services/firebase";
 import bookingCanisterService from "../../../services/bookingCanisterService";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 
 const MAX_CASH_RECEIVED = 1000000; // Set a reasonable upper limit for cash received
 
@@ -391,7 +390,6 @@ const CompleteServicePage: React.FC = () => {
           </div>
         </div>
       </main>
-      <BottomNavigation />
     </div>
   );
 };

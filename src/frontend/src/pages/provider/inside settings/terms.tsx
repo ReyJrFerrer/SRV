@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 
 const TermsAndConditionsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -711,7 +710,6 @@ const TermsAndConditionsPage: React.FC = () => {
           </div>
         </div>
       </div>
-      <BottomNavigation />
     </div>
   );
 };

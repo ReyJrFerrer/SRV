@@ -5,7 +5,6 @@ import {
   useNotifications,
   Notification,
 } from "../../hooks/useNotificationsWithPush";
-import BottomNavigation from "../../components/client/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import EmptyState from "../../components/common/EmptyState";
 import { InboxIcon, CheckIcon, PencilIcon } from "@heroicons/react/24/solid";
@@ -443,7 +442,6 @@ const NotificationsPage = () => {
       </main>
 
       <div className="fixed bottom-0 left-0 z-30 w-full">
-        <BottomNavigation />
       </div>
     </div>
   );

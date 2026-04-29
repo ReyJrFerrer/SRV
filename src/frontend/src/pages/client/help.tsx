@@ -7,7 +7,6 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/client/NavigationBar";
 
 const HelpSupportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -152,7 +151,6 @@ const HelpSupportPage: React.FC = () => {
         </div>
       </main>
 
-      <BottomNavigation />
     </div>
   );
 };

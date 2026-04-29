@@ -16,7 +16,6 @@ import {
 import MapSection from "../../../components/provider/booking-details/MapSection";
 import ClientAttachments from "../../../components/common/MediaAttachments";
 import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { useReviewManagement } from "../../../hooks/reviewManagement";
@@ -771,7 +770,6 @@ const ProviderBookingDetailsPage: React.FC = () => {
           </>
         )}
       </main>
-      <BottomNavigation />
       {/* Cancel Booking Dialog */}
       <CancelWithReasonButton
         show={!!cancellingBooking}

@@ -6,7 +6,6 @@ import React, {
   useCallback,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
 import {
   useProviderBookingManagement,
@@ -862,7 +861,6 @@ const ProviderBookingsPage: React.FC = () => {
             </div>
           )}
         </main>
-        <BottomNavigation />
       </div>
 
       {/* Decline Confirmation Dialog */}

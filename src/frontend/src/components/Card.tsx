@@ -12,9 +12,9 @@ interface CardProps {
 export function Card({ title, children, className = "" }: CardProps) {
   return (
     <div
-      className={`my-4 rounded-lg border border-gray-300 p-8 transition-opacity duration-200 ease-out ${className}`}
+      className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md ${className}`}
     >
-      <h3>{title}</h3>
+      {title && <h3 className="mb-4 text-lg font-bold text-gray-900">{title}</h3>}
       {children}
     </div>
   );

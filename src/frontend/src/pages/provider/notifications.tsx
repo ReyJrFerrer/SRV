@@ -4,7 +4,6 @@ import {
   useProviderNotifications,
   ProviderNotification,
 } from "../../hooks/useProviderNotificationsWithPush";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import {
   EnvelopeOpenIcon,
@@ -599,7 +598,6 @@ const NotificationsPageSP = () => {
       </main>
 
       <div className="fixed bottom-0 left-0 z-30 w-full">
-        <BottomNavigation />
       </div>
     </div>
   );

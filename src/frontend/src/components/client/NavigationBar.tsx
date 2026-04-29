@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import {
   HomeIcon,
   CalendarDaysIcon,
-  StarIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   BellIcon,
   Cog6ToothIcon,
@@ -103,7 +102,6 @@ const BottomNavigation: React.FC = () => {
       icon: null,
       count: bookingAcceptedCount,
     },
-    { to: "/client/profile/reviews", label: "Ratings", icon: null, count: 0 },
     { to: "/client/chat", label: "Chat", icon: null, count: unreadChatCount },
     {
       to: "/client/notifications",
@@ -111,6 +109,7 @@ const BottomNavigation: React.FC = () => {
       icon: null,
       count: filteredNotificationUnreadCount,
     },
+    { to: "/client/settings", label: "Settings", icon: null, count: 0 },
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
 
@@ -141,24 +140,22 @@ const BottomNavigation: React.FC = () => {
     "Home",
     "Booking",
     "Chat",
-    "Ratings",
     "Notifications",
-    "Settings",
+    "Settings"
   ];
 
   const mobileItems = mobileOrder
     .map((label) => {
-      if (label === "Settings") return settingsItem;
       return navItems.find((i) => i.label === label) || null;
     })
-    .filter((i): i is (typeof navItems)[number] | typeof settingsItem => !!i);
+    .filter((i): i is (typeof navItems)[number] => !!i);
 
   return (
     <>
       {!location.pathname.startsWith("/client/chat/") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-100 bg-white/90 pb-2 pt-2 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] backdrop-blur-xl md:hidden">
           <nav className="tour-client-nav-mobile mx-auto flex w-full max-w-full items-center justify-center">
-            <div className="grid w-full grid-cols-6 font-medium">
+            <div className="grid w-full grid-cols-5 font-medium">
               {mobileItems.map((item) => {
                 const displayItem = item;
                 const isActive = isRouteActive(
@@ -188,20 +185,31 @@ const BottomNavigation: React.FC = () => {
                         }`}
                       >
                         {(() => {
+                          if (displayItem.label === "Profile") {
+                            return (
+                              <img
+                                src={stableProfileSrc}
+                                alt="Profile"
+                                className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
+                                  isActive
+                                    ? "h-6 w-6 border-2 border-yellow-400"
+                                    : "h-6 w-6"
+                                }`}
+                                draggable={false}
+                              />
+                            );
+                          }
+
                           const Icon =
                             displayItem.label === "Home"
                               ? HomeIcon
                               : displayItem.label === "Booking"
                                 ? CalendarDaysIcon
-                                : displayItem.label === "Ratings"
-                                  ? StarIcon
-                                  : displayItem.label === "Notifications"
-                                    ? BellIcon
-                                    : displayItem.label === "Chat"
-                                      ? ChatBubbleOvalLeftEllipsisIcon
-                                      : displayItem.label === "Settings"
-                                        ? Cog6ToothIcon
-                                        : HomeIcon;
+                                : displayItem.label === "Notifications"
+                                  ? BellIcon
+                                  : displayItem.label === "Chat"
+                                    ? ChatBubbleOvalLeftEllipsisIcon
+                                    : HomeIcon;
                           return (
                             <Icon
                               className={`transition-colors duration-300 ${
@@ -290,20 +298,18 @@ const BottomNavigation: React.FC = () => {
                   </>
                 ) : (
                   (() => {
-                    const Icon =
+                    const ItemIcon =
                       item.label === "Home"
                         ? HomeIcon
                         : item.label === "Booking"
                           ? CalendarDaysIcon
-                          : item.label === "Ratings"
-                            ? StarIcon
-                            : item.label === "Notifications"
-                              ? BellIcon
-                              : item.label === "Chat"
-                                ? ChatBubbleOvalLeftEllipsisIcon
-                                : item.label === "Settings"
-                                  ? Cog6ToothIcon
-                                  : HomeIcon;
+                          : item.label === "Settings"
+                            ? Cog6ToothIcon
+                            : item.label === "Chat"
+                              ? ChatBubbleOvalLeftEllipsisIcon
+                              : item.label === "Notifications"
+                                ? BellIcon
+                                : HomeIcon;
                     return (
                       <div
                         className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
@@ -312,7 +318,7 @@ const BottomNavigation: React.FC = () => {
                             : "rounded-2xl bg-transparent hover:bg-gray-50"
                         }`}
                       >
-                        <Icon
+                        <ItemIcon
                           className={`transition-colors duration-300 ${
                             isActive
                               ? "h-6 w-6 text-yellow-400"

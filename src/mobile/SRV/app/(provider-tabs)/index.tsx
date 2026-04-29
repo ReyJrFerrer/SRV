@@ -197,101 +197,73 @@ export default function ProviderHomeScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.servicesScroll}
+            contentContainerStyle={styles.servicesScrollContent}
           >
-            {mockServices.slice(0, 5).map((service) => (
-              <TouchableOpacity
-                key={service.id}
-                style={styles.serviceCard}
-                onPress={() => handleServicePress(service.id)}
-              >
-                <Image
-                  source={{
-                    uri:
-                      service.imageUrl ||
-                      "https://images.unsplash.com/photo-1581578731548-c64695b69535?w=200",
-                  }}
-                  style={styles.serviceImage}
-                />
-                <View style={styles.serviceContent}>
-                  <Text style={styles.serviceTitle} numberOfLines={2}>
-                    {service.title}
-                  </Text>
-                  <View style={styles.serviceRating}>
-                    <Ionicons
-                      name="star"
-                      size={12}
-                      color={Colors.light.yellow}
+            {mockServices.slice(0, 5).map((service) => {
+              const isAvailable = service.status === "Available";
+              return (
+                <TouchableOpacity
+                  key={service.id}
+                  style={styles.serviceCard}
+                  onPress={() => handleServicePress(service.id)}
+                >
+                  <View style={styles.serviceImageWrapper}>
+                    <Image
+                      source={{
+                        uri:
+                          service.imageUrl ||
+                          "https://images.unsplash.com/photo-1581578731548-c64695b69535?w=200",
+                      }}
+                      style={styles.serviceImage}
                     />
-                    <Text style={styles.serviceRatingText}>
-                      {service.rating} ({service.reviewCount})
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.serviceStatusBadge,
-                      {
-                        backgroundColor:
-                          service.status === "Available"
-                            ? Colors.light.green100
-                            : Colors.light.gray100,
-                      },
-                    ]}
-                  >
-                    <Text
+                    <View
                       style={[
-                        styles.serviceStatusText,
+                        styles.serviceStatusBadge,
                         {
-                          color:
-                            service.status === "Available"
-                              ? Colors.light.green
-                              : Colors.light.gray600,
+                          backgroundColor: isAvailable
+                            ? Colors.light.green
+                            : Colors.light.gray400,
                         },
                       ]}
                     >
-                      {service.status === "Available" ? "ACTIVE" : "INACTIVE"}
-                    </Text>
+                      <Text style={styles.serviceStatusText}>
+                        {isAvailable ? "Active" : "Inactive"}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))}
+                  <View style={styles.serviceContent}>
+                    <Text style={styles.serviceTitle} numberOfLines={2}>
+                      {service.title}
+                    </Text>
+                    <View style={styles.serviceMeta}>
+                      <View style={styles.serviceRating}>
+                        <Ionicons
+                          name="star"
+                          size={11}
+                          color={Colors.light.yellow}
+                        />
+                        <Text style={styles.serviceRatingText}>
+                          {service.rating}
+                        </Text>
+                        <Text style={styles.serviceReviewText}>
+                          ({service.reviewCount})
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.servicePriceRow}>
+                      <Text style={styles.servicePriceLabel}>From</Text>
+                      <Text style={styles.servicePriceValue}>
+                        ₱
+                        {Math.min(
+                          ...service.packages.map((p) => p.price),
+                        ).toLocaleString()}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
-        </View>
-
-        {/* Analytics Preview */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Analytics</Text>
-          </View>
-          <View style={styles.analyticsCard}>
-            <View style={styles.analyticsRow}>
-              <View style={styles.analyticsItem}>
-                <Text style={styles.analyticsLabel}>Total Earnings</Text>
-                <Text style={styles.analyticsValue}>
-                  {formatCurrency(mockStats.totalEarnings)}
-                </Text>
-              </View>
-              <View style={styles.analyticsItem}>
-                <Text style={styles.analyticsLabel}>Active Services</Text>
-                <Text style={styles.analyticsValue}>
-                  {activeServices.length}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.analyticsRow}>
-              <View style={styles.analyticsItem}>
-                <Text style={styles.analyticsLabel}>Total Reviews</Text>
-                <Text style={styles.analyticsValue}>
-                  {mockStats.totalReviews}
-                </Text>
-              </View>
-              <View style={styles.analyticsItem}>
-                <Text style={styles.analyticsLabel}>Completed Jobs</Text>
-                <Text style={styles.analyticsValue}>
-                  {mockStats.completedJobs}
-                </Text>
-              </View>
-            </View>
-          </View>
         </View>
 
         <View style={styles.bottomPadding} />
@@ -562,52 +534,89 @@ const styles = StyleSheet.create({
     marginHorizontal: -16,
     paddingHorizontal: 16,
   },
+  servicesScrollContent: {
+    paddingRight: 16,
+  },
   serviceCard: {
-    width: 160,
+    width: 170,
     backgroundColor: Colors.light.white,
-    borderRadius: 12,
+    borderRadius: 14,
     marginRight: 12,
     overflow: "hidden",
     shadowColor: Colors.light.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
     elevation: 2,
+  },
+  serviceImageWrapper: {
+    position: "relative",
+    height: 100,
   },
   serviceImage: {
     width: "100%",
-    height: 90,
+    height: "100%",
     backgroundColor: Colors.light.gray100,
   },
-  serviceContent: {
-    padding: 10,
-  },
-  serviceTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Colors.light.blue900,
-    height: 36,
-  },
-  serviceRating: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 6,
-  },
-  serviceRatingText: {
-    fontSize: 11,
-    color: Colors.light.gray500,
-  },
   serviceStatusBadge: {
-    marginTop: 8,
+    position: "absolute",
+    bottom: 8,
+    right: 8,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 6,
-    alignSelf: "flex-start",
   },
   serviceStatusText: {
     fontSize: 9,
     fontWeight: "700",
+    color: Colors.light.white,
+  },
+  serviceContent: {
+    padding: 12,
+  },
+  serviceTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: Colors.light.blue900,
+    height: 34,
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  serviceMeta: {
+    marginBottom: 8,
+  },
+  serviceRating: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  serviceRatingText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.light.blue900,
+  },
+  serviceReviewText: {
+    fontSize: 11,
+    color: Colors.light.gray500,
+    fontWeight: "500",
+  },
+  servicePriceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 3,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.gray100,
+  },
+  servicePriceLabel: {
+    fontSize: 10,
+    color: Colors.light.gray500,
+    fontWeight: "500",
+  },
+  servicePriceValue: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: Colors.light.green,
   },
   analyticsCard: {
     backgroundColor: Colors.light.white,

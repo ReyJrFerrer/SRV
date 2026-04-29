@@ -13,7 +13,6 @@ import {
   useBookingManagement,
 } from "../../../hooks/bookingManagement";
 import { useReviewManagement } from "../../../hooks/reviewManagement";
-import BottomNavigation from "../../../components/client/NavigationBar";
 import { useChat } from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
@@ -406,7 +405,6 @@ const BookingDetailsPage: React.FC = () => {
       </main>
 
       <div>
-        <BottomNavigation />
       </div>
 
       <CancelWithReasonButton

@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import ProviderStatsNextjs from "../../components/provider/home page/dashboardGraphs/ProviderStats";
 import BookingRequestsNextjs from "../../components/provider/BookingRequests";
 import ServiceManagementNextjs from "../../components/provider/ServiceManagement";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 import { useProviderReviews } from "../../hooks/reviewManagement";
@@ -264,7 +263,6 @@ const ProviderHomePage: React.FC = () => {
           </div>
         </main>
 
-        <BottomNavigation />
       </div>
     </>
   );

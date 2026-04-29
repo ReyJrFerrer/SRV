@@ -31,7 +31,6 @@ import ImagesSection from "../../../components/provider/service-details/ImagesSe
 import HeroSection from "../../../components/provider/service-details/HeroSection";
 import LocationAvailabilitySection from "../../../components/provider/service-details/LocationAvailabilitySection";
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
@@ -1238,7 +1237,6 @@ const ProviderServiceDetailPage: React.FC = () => {
             <div className="h-12 w-full animate-pulse rounded-lg bg-gray-200"></div>
           </div>
         </main>
-        <BottomNavigation />
       </div>
     );
   }
@@ -1535,7 +1533,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           />
         </LockableSection>
       </main>
-      <BottomNavigation />
     </div>
   );
 };

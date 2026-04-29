@@ -9,7 +9,6 @@ import {
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { useFeedback } from "../../../hooks/useFeedback";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import { initializeFirebase } from "../../../services/firebaseApp";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
@@ -342,7 +341,6 @@ const ReportIssuePage: React.FC = () => {
           </button>
         </form>
       </div>
-      <BottomNavigation />
     </div>
   );
 };
