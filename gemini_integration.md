@@ -54,18 +54,18 @@ This integration uses Firebase Secret Manager for secure API key storage. Secret
 
 ```bash
 # Using Firebase CLI to set secrets
-firebase functions:secrets:set GEMINI_API_KEY 
+firebase functions:secrets:set GEMINI_API_KEY
 ```
 
 ### Environment Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `GEMINI_API_KEY` | string | - | **Required.** Gemini API key (from Secret Manager) |
-| `GEMINI_MODEL` | string | `gemini-2.0-flash` | Model identifier |
-| `GEMINI_ANALYSIS_ENABLED` | boolean | `true` | Enable/disable AI analysis |
-| `GEMINI_CONFIDENCE_THRESHOLD` | number | `0.7` | Min confidence to trigger flag |
-| `GEMINI_CACHE_TTL_HOURS` | number | `24` | Cache TTL for AI analysis results |
+| Variable                      | Type    | Default            | Description                                        |
+| ----------------------------- | ------- | ------------------ | -------------------------------------------------- |
+| `GEMINI_API_KEY`              | string  | -                  | **Required.** Gemini API key (from Secret Manager) |
+| `GEMINI_MODEL`                | string  | `gemini-2.0-flash` | Model identifier                                   |
+| `GEMINI_ANALYSIS_ENABLED`     | boolean | `true`             | Enable/disable AI analysis                         |
+| `GEMINI_CONFIDENCE_THRESHOLD` | number  | `0.7`              | Min confidence to trigger flag                     |
+| `GEMINI_CACHE_TTL_HOURS`      | number  | `24`               | Cache TTL for AI analysis results                  |
 
 ### Local Development
 
@@ -86,6 +86,7 @@ GEMINI_CACHE_TTL_HOURS=24
 ### 1. `functions/src/utils/geminiClient.js`
 
 Gemini API wrapper with:
+
 - API key management via environment variables (Secret Manager)
 - Request/response handling
 - Error handling and retries
@@ -94,6 +95,7 @@ Gemini API wrapper with:
 ### 2. `functions/src/utils/reviewAnalyzer.js`
 
 Core AI analysis logic:
+
 - `analyzeReviewContent(review)` - Analyze single review
 - `analyzeReviewBatch(reviews)` - Batch analysis for patterns
 - `detectReviewBombingPattern(reviews)` - Coordinated attack detection
@@ -102,6 +104,7 @@ Core AI analysis logic:
 ### 3. `functions/src/queueReviewAnalysis.js`
 
 Background function triggered on review creation:
+
 - Cloud Tasks queue for async processing
 - Rate limiting to prevent API throttling
 - Graceful degradation on AI failure
@@ -111,17 +114,20 @@ Background function triggered on review creation:
 ### 1. `functions/src/review.js`
 
 **Changes:**
+
 - `submitReview()` - Queue AI analysis instead of inline call
 - `checkConsecutiveBadReviews()` - Enhanced to consider AI threat level
 
 ### 2. `functions/src/reputation.js`
 
 **Changes:**
+
 - `processReviewForReputationInternal()` - Apply `ReviewBomb` flag based on AI analysis
 
 ### 3. `functions/package.json`
 
 **Changes:**
+
 - Add `@google/generative-ai` dependency
 
 ## Firestore Schema Changes
@@ -168,6 +174,7 @@ Background function triggered on review creation:
 **Function**: `analyzeReviewContentBackground`
 
 **Flow**:
+
 1. Receive review document snapshot
 2. Check if already analyzed (cache lookup)
 3. Call Gemini API for content analysis
@@ -244,6 +251,7 @@ Return a JSON object:
 **TTL**: Configurable via `gemini.cache_ttl_hours` (default: 24 hours)
 
 **Invalidation**:
+
 - Manual: Admin can force re-analysis
 - Automatic: TTL expiration
 - On update: If review content changes
@@ -261,16 +269,17 @@ Return a JSON object:
 
 ### Gemini API Failures
 
-| Scenario | Handling |
-|----------|----------|
-| API timeout | Retry 3x with exponential backoff, then fail gracefully |
-| Rate limit | Queue for later processing, log warning |
+| Scenario         | Handling                                                  |
+| ---------------- | --------------------------------------------------------- |
+| API timeout      | Retry 3x with exponential backoff, then fail gracefully   |
+| Rate limit       | Queue for later processing, log warning                   |
 | Invalid response | Log error, mark as `analyzed: false`, continue without AI |
-| Quota exceeded | Disable AI analysis temporarily, fallback to rating-only |
+| Quota exceeded   | Disable AI analysis temporarily, fallback to rating-only  |
 
 ### Graceful Degradation
 
 If AI analysis is unavailable:
+
 1. Continue with review submission (don't block user)
 2. Log warning for monitoring
 3. Fall back to rating-based `checkConsecutiveBadReviews` only
@@ -280,13 +289,13 @@ If AI analysis is unavailable:
 
 ### Log Events
 
-| Event | Severity | Details |
-|-------|----------|---------|
-| `ai_analysis_started` | INFO | Review ID, reviewer ID |
-| `ai_analysis_completed` | INFO | Review ID, threat level, confidence |
-| `ai_analysis_failed` | WARNING | Review ID, error message |
-| `ai_analysis_cached` | DEBUG | Review ID, cache hit |
-| `review_bomb_detected` | ERROR | Report ID, patterns, threat level |
+| Event                   | Severity | Details                             |
+| ----------------------- | -------- | ----------------------------------- |
+| `ai_analysis_started`   | INFO     | Review ID, reviewer ID              |
+| `ai_analysis_completed` | INFO     | Review ID, threat level, confidence |
+| `ai_analysis_failed`    | WARNING  | Review ID, error message            |
+| `ai_analysis_cached`    | DEBUG    | Review ID, cache hit                |
+| `review_bomb_detected`  | ERROR    | Report ID, patterns, threat level   |
 
 ### Metrics to Track
 
@@ -300,31 +309,33 @@ If AI analysis is unavailable:
 
 ### Unit Tests
 
-| Test | Description |
-|------|-------------|
+| Test                                          | Description                      |
+| --------------------------------------------- | -------------------------------- |
 | `analyzeReviewContent` with suspicious review | Verify correct pattern detection |
-| `analyzeReviewContent` with legitimate review | Verify no false positives |
-| `analyzeReviewBatch` with coordinated reviews | Verify pattern detection |
-| Cache TTL expiration | Verify cache invalidation |
-| API error handling | Verify graceful degradation |
+| `analyzeReviewContent` with legitimate review | Verify no false positives        |
+| `analyzeReviewBatch` with coordinated reviews | Verify pattern detection         |
+| Cache TTL expiration                          | Verify cache invalidation        |
+| API error handling                            | Verify graceful degradation      |
 
 ### Integration Tests
 
-| Test | Description |
-|------|-------------|
-| Full flow: submitReview → AI analysis → Report | E2E test |
-| Concurrent review submissions | Verify queue processing |
-| Gemini API mock tests | Avoid external API dependency |
+| Test                                           | Description                   |
+| ---------------------------------------------- | ----------------------------- |
+| Full flow: submitReview → AI analysis → Report | E2E test                      |
+| Concurrent review submissions                  | Verify queue processing       |
+| Gemini API mock tests                          | Avoid external API dependency |
 
 ## Implementation Phases
 
 ### Phase 1: Foundation (Core Infrastructure)
+
 - [ ] Install `@google/generative-ai` dependency
 - [ ] Create `geminiClient.js` with basic API wrapper
 - [ ] Set up Firebase config for API key
 - [ ] Create error handling and retry logic
 
 ### Phase 2: Core Analysis (Review Analysis Logic)
+
 - [ ] Create `reviewAnalyzer.js`
 - [ ] Implement single review analysis
 - [ ] Implement batch review analysis
@@ -332,18 +343,21 @@ If AI analysis is unavailable:
 - [ ] Unit tests
 
 ### Phase 3: Background Processing (Async Queue)
+
 - [ ] Create `queueReviewAnalysis.js`
 - [ ] Set up Cloud Tasks queue
 - [ ] Implement background function trigger
 - [ ] Add rate limiting
 
 ### Phase 4: Integration (Existing Code Updates)
+
 - [ ] Update `submitReview()` to queue analysis
 - [ ] Update `checkConsecutiveBadReviews()` with AI data
 - [ ] Update `processReviewForReputationInternal()` for AI flags
 - [ ] Update report generation with AI data
 
 ### Phase 5: Polish (Enhancements)
+
 - [ ] Add comprehensive logging
 - [ ] Create monitoring dashboard
 - [ ] Backfill existing reviews with AI analysis
@@ -353,17 +367,17 @@ If AI analysis is unavailable:
 
 ### Gemini 2.0 Flash Pricing (Approximate)
 
-| Operation | Cost |
-|-----------|------|
-| Input (per 1K chars) | $0.075 |
-| Output (per 1K chars) | $0.30 |
+| Operation             | Cost   |
+| --------------------- | ------ |
+| Input (per 1K chars)  | $0.075 |
+| Output (per 1K chars) | $0.30  |
 
 ### Estimated Usage
 
-| Scenario | Input | Output | Cost per Review |
-|----------|-------|--------|-----------------|
-| Single review | ~500 chars | ~200 chars | ~$0.000165 |
-| Batch (5 reviews) | ~2500 chars | ~400 chars | ~$0.000315 |
+| Scenario          | Input       | Output     | Cost per Review |
+| ----------------- | ----------- | ---------- | --------------- |
+| Single review     | ~500 chars  | ~200 chars | ~$0.000165      |
+| Batch (5 reviews) | ~2500 chars | ~400 chars | ~$0.000315      |
 
 ### Monthly Estimate
 

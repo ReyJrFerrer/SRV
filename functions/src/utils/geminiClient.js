@@ -13,7 +13,7 @@ function getGeminiConfig() {
   return {
     apiKey: process.env.GEMINI_API_KEY || "",
     model: process.env.GEMINI_MODEL || DEFAULT_MODEL,
-    analysisEnabled: process.env.GEMINI_ANALYSIS_ENABLED !== "false",
+    analysisEnabled: true,
     confidenceThreshold: parseFloat(process.env.GEMINI_CONFIDENCE_THRESHOLD) ||
       DEFAULT_CONFIDENCE_THRESHOLD,
     cacheTtlHours: parseInt(process.env.GEMINI_CACHE_TTL_HOURS) ||

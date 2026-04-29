@@ -8,45 +8,45 @@ The reputation system manages trust scores for users and providers using Firesto
 
 ## Core Constants
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `BASE_SCORE` | 50.0 | Starting score for all new users/providers |
-| `MAX_BOOKING_POINTS` | 20.0 | Maximum points from booking activity |
-| `MAX_AGE_POINTS` | 10.0 | Maximum points from account age |
-| `MIN_TRUST_SCORE` | 0.0 | Minimum possible score |
-| `MAX_TRUST_SCORE` | 100.0 | Maximum possible score |
-| `CANCELLATION_PENALTY` | 5.0 | Points deducted for booking cancellation |
+| Constant               | Value | Description                                |
+| ---------------------- | ----- | ------------------------------------------ |
+| `BASE_SCORE`           | 50.0  | Starting score for all new users/providers |
+| `MAX_BOOKING_POINTS`   | 20.0  | Maximum points from booking activity       |
+| `MAX_AGE_POINTS`       | 10.0  | Maximum points from account age            |
+| `MIN_TRUST_SCORE`      | 0.0   | Minimum possible score                     |
+| `MAX_TRUST_SCORE`      | 100.0 | Maximum possible score                     |
+| `CANCELLATION_PENALTY` | 5.0   | Points deducted for booking cancellation   |
 
 ### Trust Level Thresholds
 
-| Level | Score Range |
-|-------|-------------|
-| New | No score yet |
-| Low | 0 - 20 |
-| Medium | 21 - 50 |
-| High | 51 - 80 |
-| VeryHigh | 81 - 100 |
+| Level    | Score Range  |
+| -------- | ------------ |
+| New      | No score yet |
+| Low      | 0 - 20       |
+| Medium   | 21 - 50      |
+| High     | 51 - 80      |
+| VeryHigh | 81 - 100     |
 
 ### Weights and Bonuses
 
-| Constant | Value |
-|----------|-------|
-| `RECENCY_WEIGHT` | 0.3 |
-| `CONSISTENCY_BONUS` | 5.0 |
-| `ACTIVITY_FREQUENCY_WEIGHT` | 0.1 |
-| `BAYESIAN_CONFIDENCE_THRESHOLD` | 2.0 |
-| `BAYESIAN_PRIOR_MEAN` | 3.0 |
+| Constant                        | Value |
+| ------------------------------- | ----- |
+| `RECENCY_WEIGHT`                | 0.3   |
+| `CONSISTENCY_BONUS`             | 5.0   |
+| `ACTIVITY_FREQUENCY_WEIGHT`     | 0.1   |
+| `BAYESIAN_CONFIDENCE_THRESHOLD` | 2.0   |
+| `BAYESIAN_PRIOR_MEAN`           | 3.0   |
 
 ### Detection Flags (Penalty Types)
 
-| Flag | Base Penalty | With Multiple Flags |
-|------|-------------|---------------------|
-| `ReviewBomb` | 15.0 | 20.0 |
-| `CompetitiveManipulation` | 15.0 | 20.0 |
-| `FakeEvidence` | 10.0 | 13.0 |
-| `IdentityFraud` | 15.0 | 25.0 |
-| `AbusiveContent` | 20.0 | 30.0 |
-| `Other` | 5.0 | 5.0 |
+| Flag                      | Base Penalty | With Multiple Flags |
+| ------------------------- | ------------ | ------------------- |
+| `ReviewBomb`              | 15.0         | 20.0                |
+| `CompetitiveManipulation` | 15.0         | 20.0                |
+| `FakeEvidence`            | 10.0         | 13.0                |
+| `IdentityFraud`           | 15.0         | 25.0                |
+| `AbusiveContent`          | 20.0         | 30.0                |
+| `Other`                   | 5.0          | 5.0                 |
 
 ---
 
@@ -194,14 +194,14 @@ bayesianAvg = (currentAverage * count + BAYESIAN_PRIOR_MEAN * BAYESIAN_CONFIDENC
 
 ### Constants
 
-| Constant | Value |
-|----------|-------|
-| `REVIEW_WINDOW_DAYS` | 30 |
-| `MAX_COMMENT_LENGTH` | 500 |
-| `MIN_RATING` | 1 |
-| `MAX_RATING` | 5 |
-| `CONSECUTIVE_BAD_REVIEWS_THRESHOLD` | 5 |
-| `BAD_REVIEW_RATING_THRESHOLD` | 2 |
+| Constant                            | Value |
+| ----------------------------------- | ----- |
+| `REVIEW_WINDOW_DAYS`                | 30    |
+| `MAX_COMMENT_LENGTH`                | 500   |
+| `MIN_RATING`                        | 1     |
+| `MAX_RATING`                        | 5     |
+| `CONSECUTIVE_BAD_REVIEWS_THRESHOLD` | 5     |
+| `BAD_REVIEW_RATING_THRESHOLD`       | 2     |
 
 ### Review Quality Score
 
@@ -243,6 +243,7 @@ newAverageRating = ((currentAverage * currentCount) + newRating) / newCount
 ```
 
 On review deletion:
+
 ```
 newAverageRating = ((currentAverage * currentCount) - deletedRating) / (newCount - 1)
 ```
@@ -253,22 +254,22 @@ newAverageRating = ((currentAverage * currentCount) - deletedRating) / (newCount
 
 ### `reputations/{userId}`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `userId` | string | User or provider ID |
-| `trustScore` | number | Calculated trust score |
-| `trustLevel` | string | Trust level (New, Low, Medium, High, VeryHigh) |
-| `completedBookings` | number | Total completed bookings |
-| `averageRating` | number | Average rating received |
-| `detectionFlags` | array | List of active flags |
-| `lastUpdated` | number | Timestamp of last update |
+| Field               | Type   | Description                                    |
+| ------------------- | ------ | ---------------------------------------------- |
+| `userId`            | string | User or provider ID                            |
+| `trustScore`        | number | Calculated trust score                         |
+| `trustLevel`        | string | Trust level (New, Low, Medium, High, VeryHigh) |
+| `completedBookings` | number | Total completed bookings                       |
+| `averageRating`     | number | Average rating received                        |
+| `detectionFlags`    | array  | List of active flags                           |
+| `lastUpdated`       | number | Timestamp of last update                       |
 
 ### `reputations/{userId}/history/{timestamp}`
 
-| Field | Type | Description |
-|-------|------|-------------|
+| Field        | Type   | Description                 |
+| ------------ | ------ | --------------------------- |
 | `trustScore` | number | Score at this point in time |
-| `timestamp` | number | Timestamp of this record |
+| `timestamp`  | number | Timestamp of this record    |
 
 ### `reviews/{reviewId}`
 
@@ -284,42 +285,42 @@ Provider-to-client reviews.
 
 ### User Functions
 
-| Function | Description |
-|----------|-------------|
-| `initializeReputation` | Initialize reputation for new user (BASE_SCORE = 50) |
-| `updateUserReputation` | Recalculate user trust score |
-| `checkUserReputation` | Get current reputation (or defaults if not exists) |
-| `deductReputationForCancellation` | Subtract CANCELLATION_PENALTY from score |
+| Function                          | Description                                          |
+| --------------------------------- | ---------------------------------------------------- |
+| `initializeReputation`            | Initialize reputation for new user (BASE_SCORE = 50) |
+| `updateUserReputation`            | Recalculate user trust score                         |
+| `checkUserReputation`             | Get current reputation (or defaults if not exists)   |
+| `deductReputationForCancellation` | Subtract CANCELLATION_PENALTY from score             |
 
 ### Provider Functions
 
-| Function | Description |
-|----------|-------------|
+| Function                   | Description                      |
+| -------------------------- | -------------------------------- |
 | `updateProviderReputation` | Recalculate provider trust score |
 
 ### Review Functions
 
-| Function | Description |
-|----------|-------------|
-| `submitReview` | Submit client review for a booking |
-| `submitProviderReview` | Submit provider review for a client |
-| `updateReview` | Update an existing review |
-| `deleteReview` | Hide a review (soft delete) |
-| `restoreReview` | Restore a hidden review (admin) |
-| `getReview` | Get single review by ID |
-| `getBookingReviews` | Get reviews for a booking |
-| `getUserReviews` | Get reviews by a user |
-| `getProviderReviews` | Get reviews for a provider |
-| `getServiceReviews` | Get reviews for a service |
-| `getClientProviderReviews` | Get provider reviews about a client |
-| `getProviderReviewsByProvider` | Get reviews written by a provider |
-| `bulkUpdateReviewStatus` | Bulk update review status (admin) |
-| `calculateProviderRating` | Calculate average rating for provider |
-| `calculateServiceRating` | Calculate average rating for service |
-| `calculateUserAverageRating` | Calculate user's average rating |
-| `getAllReviews` | Get all reviews with pagination (admin) |
-| `getReviewStatistics` | Get review counts by status (admin) |
-| `flagReview` | Flag review for moderation (admin) |
+| Function                       | Description                             |
+| ------------------------------ | --------------------------------------- |
+| `submitReview`                 | Submit client review for a booking      |
+| `submitProviderReview`         | Submit provider review for a client     |
+| `updateReview`                 | Update an existing review               |
+| `deleteReview`                 | Hide a review (soft delete)             |
+| `restoreReview`                | Restore a hidden review (admin)         |
+| `getReview`                    | Get single review by ID                 |
+| `getBookingReviews`            | Get reviews for a booking               |
+| `getUserReviews`               | Get reviews by a user                   |
+| `getProviderReviews`           | Get reviews for a provider              |
+| `getServiceReviews`            | Get reviews for a service               |
+| `getClientProviderReviews`     | Get provider reviews about a client     |
+| `getProviderReviewsByProvider` | Get reviews written by a provider       |
+| `bulkUpdateReviewStatus`       | Bulk update review status (admin)       |
+| `calculateProviderRating`      | Calculate average rating for provider   |
+| `calculateServiceRating`       | Calculate average rating for service    |
+| `calculateUserAverageRating`   | Calculate user's average rating         |
+| `getAllReviews`                | Get all reviews with pagination (admin) |
+| `getReviewStatistics`          | Get review counts by status (admin)     |
+| `flagReview`                   | Flag review for moderation (admin)      |
 
 ---
 

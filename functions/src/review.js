@@ -8,6 +8,7 @@ const {
 
 const {
   analyzeReviewBatch,
+  analyzeReviewContent,
   shouldTriggerReport,
 } = require("./utils/reviewAnalyzer");
 
@@ -33,7 +34,8 @@ const REVIEW_WINDOW_DAYS = 30;
 const MAX_COMMENT_LENGTH = 500;
 const MIN_RATING = 1;
 const MAX_RATING = 5;
-const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 5;
+// to change back to 5 after testing
+const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 1;
 // Number of consecutive bad reviews to trigger auto-report
 const BAD_REVIEW_RATING_THRESHOLD = 2; // Rating <= this value is considered "bad"
 
@@ -173,10 +175,75 @@ async function checkConsecutiveBadReviews(
       });
 
       if (allBad) {
+        // Run AI analysis - use batch for multiple reviews, single for threshold=1
+        let batchAnalysisResult = null;
+        let singleReviewAnalysis = null;
+
+        try {
+          if (reviews.length >= 2) {
+            batchAnalysisResult = await analyzeReviewBatch(reviews);
+            if (batchAnalysisResult.success) {
+              console.log(`[checkConsecutiveBadReviews] Batch AI analysis completed:`, {
+                isCoordinated: batchAnalysisResult.data.isCoordinated,
+                threatLevel: batchAnalysisResult.data.threatLevel,
+                confidence: batchAnalysisResult.data.confidence,
+              });
+            }
+          } else {
+            // Single review: analyze individually using Gemini
+            singleReviewAnalysis = await analyzeReviewContent(reviews[0]);
+            if (singleReviewAnalysis.success) {
+              console.log(`[checkConsecutiveBadReviews] Single review AI analysis completed:`, {
+                isSuspicious: singleReviewAnalysis.data.isSuspicious,
+                threatLevel: singleReviewAnalysis.data.threatLevel,
+                confidence: singleReviewAnalysis.data.confidence,
+              });
+            }
+          }
+        } catch (aiError) {
+          console.error("[checkConsecutiveBadReviews] AI analysis failed:", aiError);
+        }
+
+        // Check individual review AI analysis results (from prior runs or cache)
+        const aiAnalysisResults = [];
+        const suspiciousAIReviews = [];
+
+        for (const review of reviews) {
+          if (review.aiAnalysis?.analyzed) {
+            aiAnalysisResults.push(review.aiAnalysis);
+            if (review.aiAnalysis.isSuspicious && review.aiAnalysis.confidence >= 0.7) {
+              suspiciousAIReviews.push(review.id);
+            }
+          }
+        }
+
+        // Also factor in the single review analysis we just ran
+        const aiConfirmedSuspicious = suspiciousAIReviews.length > 0 ||
+          (singleReviewAnalysis?.success && singleReviewAnalysis.data.isSuspicious &&
+           singleReviewAnalysis.data.confidence >= 0.7);
+
+        const batchDetectedCoordinated = batchAnalysisResult?.success &&
+          batchAnalysisResult.data.isCoordinated;
+
+        // Use shouldTriggerReport to determine if AI analysis warrants a report
+        const aiThreatAnalysis = batchAnalysisResult?.success ? {
+          analyzed: true,
+          threatLevel: batchAnalysisResult.data.threatLevel,
+          confidence: batchAnalysisResult.data.confidence,
+          isSuspicious: batchDetectedCoordinated,
+        } : singleReviewAnalysis?.success ? {
+          analyzed: true,
+          threatLevel: singleReviewAnalysis.data.threatLevel,
+          confidence: singleReviewAnalysis.data.confidence,
+          isSuspicious: singleReviewAnalysis.data.isSuspicious,
+        } : null;
+
+        const aiTriggeredReport = shouldTriggerReport(aiThreatAnalysis);
+
+        // Create report if all bad reviews OR AI detects coordinated patterns
         const reportId = generateReportId();
         const userName = userType === "provider" ? "Provider" : "Client";
         const action = scenarioType === "received" ? "received" : "given";
-
 
         // Get user profile for report details
         const userDoc = await db.collection("users").doc(userId).get();
@@ -193,27 +260,33 @@ async function checkConsecutiveBadReviews(
           }
         }
 
-        // Check AI analysis results for all reviews
-        const aiAnalysisResults = [];
-        const suspiciousAIReviews = [];
-
-        for (const review of reviews) {
-          if (review.aiAnalysis?.analyzed) {
-            aiAnalysisResults.push(review.aiAnalysis);
-            if (review.aiAnalysis.isSuspicious && review.aiAnalysis.confidence >= 0.7) {
-              suspiciousAIReviews.push(review.id);
-            }
-          }
+        // Build AI analysis summary for report
+        const aiSummary = [];
+        if (aiConfirmedSuspicious) {
+          aiSummary.push("Individual review analysis detected suspicious patterns.");
         }
-
-        // Determine if AI analysis confirms suspicious behavior
-        const aiConfirmedSuspicious = suspiciousAIReviews.length > 0;
+        if (batchDetectedCoordinated) {
+          const threatLvl = batchAnalysisResult.data.threatLevel;
+          aiSummary.push(
+            `Batch analysis detected coordinated attack (${threatLvl} threat).`,
+          );
+        }
+        if (singleReviewAnalysis?.success) {
+          aiSummary.push(
+            `Single review analysis: ${singleReviewAnalysis.data.threatLevel} threat ` +
+            `(confidence: ${(singleReviewAnalysis.data.confidence * 100).toFixed(0)}%). ` +
+            `${singleReviewAnalysis.data.summary}`,
+          );
+        }
+        if (batchAnalysisResult?.success) {
+          aiSummary.push(batchAnalysisResult.data.summary);
+        }
 
         // Create ticket description with structured data
         const title = `${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} Consecutive Bad Reviews - ` +
           `${displayName} (${action} by ${userType})`;
-        const aiNote = aiConfirmedSuspicious ?
-          "\n\nAI Analysis: Suspicious patterns detected in review content." :
+        const aiNote = aiSummary.length > 0 ?
+          `\n\nAI Analysis:\n${aiSummary.join("\n")}` :
           "";
         const description = `${userName} ${displayName} has ${action}
         ${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} ` +
@@ -235,26 +308,45 @@ async function checkConsecutiveBadReviews(
           reviewIds: reviews.map((r) => r.id),
           ratings: reviews.map((r) => r.rating),
           collection: collectionName,
-          aiAnalysis: aiAnalysisResults.length > 0 ? {
-            totalAnalyzed: aiAnalysisResults.length,
-            suspiciousCount: suspiciousAIReviews.length,
-            suspiciousReviewIds: suspiciousAIReviews,
-            patterns: aiAnalysisResults.reduce((acc, a) => {
-              if (a.patterns) acc.push(...a.patterns);
-              return acc;
-            }, []),
-          } : null,
+          aiAnalysis: {
+            batchAnalysis: batchAnalysisResult?.success ? {
+              isCoordinated: batchAnalysisResult.data.isCoordinated,
+              confidence: batchAnalysisResult.data.confidence,
+              threatLevel: batchAnalysisResult.data.threatLevel,
+              patterns: batchAnalysisResult.data.patterns,
+              summary: batchAnalysisResult.data.summary,
+              affectedReviewIds: batchAnalysisResult.data.affectedReviewIds,
+            } : null,
+            singleReviewAnalysis: singleReviewAnalysis?.success ? {
+              isSuspicious: singleReviewAnalysis.data.isSuspicious,
+              confidence: singleReviewAnalysis.data.confidence,
+              threatLevel: singleReviewAnalysis.data.threatLevel,
+              patterns: singleReviewAnalysis.data.patterns,
+              summary: singleReviewAnalysis.data.summary,
+            } : null,
+            individualAnalysis: aiAnalysisResults.length > 0 ? {
+              totalAnalyzed: aiAnalysisResults.length,
+              suspiciousCount: suspiciousAIReviews.length,
+              suspiciousReviewIds: suspiciousAIReviews,
+              patterns: aiAnalysisResults.reduce((acc, a) => {
+                if (a.patterns) acc.push(...a.patterns);
+                return acc;
+              }, []),
+            } : null,
+            aiTriggeredReport: aiTriggeredReport,
+          },
         });
 
         const newReport = {
           id: reportId,
-          userId: userId, // Report submitted by the user involved
+          userId: userId,
           userName: displayName,
           userPhone: userPhone,
           description: ticketDescription,
           status: "open",
           createdAt: new Date().toISOString(),
-          aiAnalysisTriggered: aiConfirmedSuspicious,
+          aiAnalysisTriggered: aiConfirmedSuspicious || batchDetectedCoordinated ||
+            (singleReviewAnalysis?.success && singleReviewAnalysis.data.isSuspicious),
         };
 
         // Save report to Firestore
