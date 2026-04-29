@@ -24,7 +24,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
 }) => {
   const total = steps.length;
   const safeStep = Math.min(Math.max(currentStep, 1), total);
-  const percent = Math.round(((safeStep - 1) / total) * 100);
+  // const percent = Math.round(((safeStep - 1) / total) * 100);
 
   return (
     <div className="mb-6">
@@ -35,12 +35,12 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
             Step {safeStep}/{total}
           </div>
         </div>
-        <div className="mb-6 h-2 w-full rounded-full bg-gray-100">
+        {/* <div className="mb-6 h-2 w-full rounded-full bg-gray-100">
           <div
             className="h-2 rounded-full bg-blue-600 transition-all"
             style={{ width: `${percent}%` }}
           />
-        </div>
+        </div> */}
 
         <div className="hidden md:block">
           <ul className="flex items-center justify-between">
