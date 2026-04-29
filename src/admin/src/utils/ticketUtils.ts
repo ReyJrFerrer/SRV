@@ -105,20 +105,22 @@ export const convertReportsToTickets = (
         tags: tags,
         comments: [],
         attachments: report.attachments || [],
-        aiAnalysis: parsedData.aiAnalysis ? {
-          threatLevel: parsedData.aiAnalysis.threatLevel,
-          confidence: parsedData.aiAnalysis.confidence,
-          patterns: parsedData.aiAnalysis.patterns,
-          summary: parsedData.aiAnalysis.summary,
-          recommendation: parsedData.aiAnalysis.recommendation,
-          clientId: parsedData.clientId,
-          clientName: parsedData.clientName,
-          providerId: parsedData.providerId,
-          providerName: parsedData.providerName,
-          reviewId: parsedData.reviewId,
-          rating: parsedData.rating,
-          comment: parsedData.comment,
-        } : undefined,
+        aiAnalysis: parsedData.aiAnalysis
+          ? {
+              threatLevel: parsedData.aiAnalysis.threatLevel,
+              confidence: parsedData.aiAnalysis.confidence,
+              patterns: parsedData.aiAnalysis.patterns,
+              summary: parsedData.aiAnalysis.summary,
+              recommendation: parsedData.aiAnalysis.recommendation,
+              clientId: parsedData.clientId,
+              clientName: parsedData.clientName,
+              providerId: parsedData.providerId,
+              providerName: parsedData.providerName,
+              reviewId: parsedData.reviewId,
+              rating: parsedData.rating,
+              comment: parsedData.comment,
+            }
+          : undefined,
       };
     } else {
       ticket = {
