@@ -1,145 +1,208 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
-import chatCanisterService from "../services/chatCanisterService";
+import chatCanisterService, {
+  FrontendConversationSummary,
+  AsyncUnsubscribe,
+} from "../services/chatCanisterService";
 
-// A key to store the read status in the browser's local storage (fallback)
-const HAS_UNREAD_CHATS_KEY = "hasUnreadChats";
-// A custom event name to communicate across components when chats are read.
 const CHATS_READ_EVENT = "chats-read";
 
+// Module-level AudioContext so it survives NavigationBar unmount/remount cycles
+let sharedAudioCtx: AudioContext | null = null;
+let audioPrimerInstalled = false;
+
+function getAudioContext(): AudioContext | null {
+  try {
+    if (!sharedAudioCtx) {
+      sharedAudioCtx = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
+    }
+    return sharedAudioCtx;
+  } catch {
+    return null;
+  }
+}
+
+function installAudioPrimer() {
+  if (audioPrimerInstalled) return;
+  audioPrimerInstalled = true;
+
+  const resume = () => {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume();
+    }
+  };
+
+  document.addEventListener("pointerdown", resume, { once: true });
+  document.addEventListener("keydown", resume, { once: true });
+  document.addEventListener("touchstart", resume, { once: true });
+}
+
 /**
- * A custom hook to manage the state of chat notifications.
- * Integrates with real chat data from useChat hook with localStorage fallback.
+ * Custom hook to manage chat notification state.
+ * Subscribes to real-time conversation updates and tracks unread conversation count.
+ * Plays a notification sound when new unread conversations arrive.
  */
 export const useChatNotifications = () => {
   const { isAuthenticated, identity } = useAuth();
   const [unreadChatCount, setUnreadChatCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  /**
-   * Fetches real unread count from chat canister
-   */
-  const fetchRealUnreadCount = useCallback(async (): Promise<number> => {
-    if (!isAuthenticated || !identity) {
-      return 0;
-    }
+  const conversationsRef = useRef<FrontendConversationSummary[]>([]);
+  const unsubscribeRef = useRef<AsyncUnsubscribe | null>(null);
+  const prevUnreadMessagesRef = useRef<number>(-1);
 
+  const playNotificationSound = useCallback(() => {
     try {
-      const currentUserId = identity.getPrincipal().toString();
-      const conversations =
-        await chatCanisterService.getMyConversations(currentUserId);
-
-      return conversations.reduce((total, convoSummary) => {
-        // unreadCount is now an object: { [userId: string]: number }
-        const count = convoSummary.conversation.unreadCount[currentUserId] || 0;
-        return total + count;
-      }, 0);
-    } catch (error) {
-      return 0;
-    }
-  }, [isAuthenticated, identity]);
-
-  /**
-   * Checks localStorage for fallback unread status (for compatibility)
-   */
-  const checkFallbackUnreadStatus = useCallback((): number => {
-    const hasUnread = localStorage.getItem(HAS_UNREAD_CHATS_KEY);
-    if (hasUnread !== "false") {
-      // Simulate having 2 unread messages for demonstration (fallback)
-      return 2;
-    }
-    return 0;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      ctx.resume?.();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } catch {}
   }, []);
 
-  /**
-   * Updates unread count from real data or fallback
-   */
-  const updateUnreadCount = useCallback(async () => {
-    if (!isAuthenticated) {
+  // Install global audio primer on first mount
+  useEffect(() => {
+    installAudioPrimer();
+  }, []);
+
+  // Real-time subscription to conversations
+  useEffect(() => {
+    if (!isAuthenticated || !identity) {
       setUnreadChatCount(0);
+      conversationsRef.current = [];
+      prevUnreadMessagesRef.current = -1;
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
+    let cancelled = false;
+    const userId = identity.getPrincipal().toString();
 
-    try {
-      // Try to get real unread count first
-      const realCount = await fetchRealUnreadCount();
-      setUnreadChatCount(realCount);
-    } catch (error) {
-      const fallbackCount = checkFallbackUnreadStatus();
-      setUnreadChatCount(fallbackCount);
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, fetchRealUnreadCount, checkFallbackUnreadStatus]);
+    const setup = async () => {
+      try {
+        const unsubscribe = await chatCanisterService.subscribeToConversationSummaries(
+          userId,
+          (summaries) => {
+            if (cancelled) return;
 
-  // Initialize and update unread count when authentication changes
-  useEffect(() => {
-    updateUnreadCount();
-  }, [updateUnreadCount]);
+            conversationsRef.current = summaries;
 
-  // Listen for chat read events and refresh count
+            const unreadConversations = summaries.reduce((count, s) => {
+              const unread = s.conversation.unreadCount?.[userId] || 0;
+              return count + (unread > 0 ? 1 : 0);
+            }, 0);
+
+            const totalUnreadMessages = summaries.reduce((count, s) => {
+              const unread = s.conversation.unreadCount?.[userId] || 0;
+              return count + unread;
+            }, 0);
+
+            setUnreadChatCount(unreadConversations);
+            setLoading(false);
+
+            // Play sound when total unread messages increase (skip initial load)
+            if (prevUnreadMessagesRef.current !== -1 && totalUnreadMessages > prevUnreadMessagesRef.current) {
+              playNotificationSound();
+            }
+            prevUnreadMessagesRef.current = totalUnreadMessages;
+          },
+          () => {
+            if (!cancelled) {
+              setLoading(false);
+            }
+          },
+        );
+
+        if (cancelled) {
+          await unsubscribe();
+        } else {
+          unsubscribeRef.current = unsubscribe;
+        }
+      } catch {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    setup();
+
+    return () => {
+      cancelled = true;
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
+  }, [isAuthenticated, identity, playNotificationSound]);
+
+  // Sync with chat page mark-as-read events
   useEffect(() => {
     const handleChatsRead = () => {
-      updateUnreadCount();
+      // Re-check conversations from the stored ref
+      if (!identity) return;
+      const userId = identity.getPrincipal().toString();
+      const unreadConversations = conversationsRef.current.reduce((count, s) => {
+        const unread = s.conversation.unreadCount?.[userId] || 0;
+        return count + (unread > 0 ? 1 : 0);
+      }, 0);
+      const totalUnreadMessages = conversationsRef.current.reduce((count, s) => {
+        const unread = s.conversation.unreadCount?.[userId] || 0;
+        return count + unread;
+      }, 0);
+      prevUnreadMessagesRef.current = totalUnreadMessages;
+      setUnreadChatCount(unreadConversations);
     };
 
-    // Listen for the custom event to update the state
     window.addEventListener(CHATS_READ_EVENT, handleChatsRead);
-
-    // Cleanup function: remove the event listener when the component unmounts
-    return () => {
-      window.removeEventListener(CHATS_READ_EVENT, handleChatsRead);
-    };
-  }, [updateUnreadCount]);
+    return () => window.removeEventListener(CHATS_READ_EVENT, handleChatsRead);
+  }, [identity]);
 
   /**
-   * Marks all chats as read using real chat service or fallback
+   * Mark all conversations as read
    */
   const markChatsAsRead = useCallback(async () => {
-    if (!isAuthenticated || !identity) {
-      // Update localStorage fallback even when not authenticated
-      localStorage.setItem(HAS_UNREAD_CHATS_KEY, "false");
-      window.dispatchEvent(new CustomEvent(CHATS_READ_EVENT));
-      return;
-    }
+    if (!isAuthenticated || !identity) return;
 
     try {
-      // Get all conversations and mark them as read
       const currentUserId = identity.getPrincipal().toString();
-      const conversations =
-        await chatCanisterService.getMyConversations(currentUserId);
+      const conversations = conversationsRef.current;
 
-      // Mark each conversation as read (in parallel for better performance)
       await Promise.all(
-        conversations.map((conversationSummary) =>
+        conversations.map((s) =>
           chatCanisterService.markMessagesAsRead(
-            conversationSummary.conversation.id,
+            s.conversation.id,
             currentUserId,
           ),
         ),
       );
 
-      // Update local state immediately
       setUnreadChatCount(0);
-
-      // Also update localStorage fallback for compatibility
-      localStorage.setItem(HAS_UNREAD_CHATS_KEY, "false");
+      prevUnreadMessagesRef.current = 0;
       window.dispatchEvent(new CustomEvent(CHATS_READ_EVENT));
-    } catch (error) {
-      // Fallback to localStorage method
-      localStorage.setItem(HAS_UNREAD_CHATS_KEY, "false");
-      window.dispatchEvent(new CustomEvent(CHATS_READ_EVENT));
-    }
+    } catch {}
   }, [isAuthenticated, identity]);
 
   /**
-   * Refresh unread count manually (useful for polling or manual updates)
+   * Re-fetch conversations manually (forces subscription callback)
    */
   const refreshUnreadCount = useCallback(() => {
-    updateUnreadCount();
-  }, [updateUnreadCount]);
+    // The real-time subscription handles updates automatically.
+    // This is kept for API compatibility.
+  }, []);
 
   return {
     unreadChatCount,
@@ -148,3 +211,5 @@ export const useChatNotifications = () => {
     loading,
   };
 };
+
+export default useChatNotifications;

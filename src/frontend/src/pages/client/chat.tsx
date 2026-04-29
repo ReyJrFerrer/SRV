@@ -56,46 +56,7 @@ const ClientChatPage: React.FC = () => {
     useState<boolean>(!!servicePreview);
   const [messageText, setMessageText] = useState<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const ensureAudioReady = React.useCallback(() => {
-    try {
-      let ctx = audioCtxRef.current;
-      if (!ctx) {
-        ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        audioCtxRef.current = ctx as AudioContext;
-      }
-      ctx.resume?.();
-    } catch {}
-  }, []);
-  const [soundEnabled] = useState<boolean>(() => {
-    try {
-      const v = localStorage.getItem("chatSoundEnabled");
-      return v !== "false";
-    } catch {
-      return true;
-    }
-  });
-  const playMessageSound = React.useCallback(() => {
-    if (!soundEnabled) return;
-    try {
-      ensureAudioReady();
-      const ctx = audioCtxRef.current!;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      const now = ctx.currentTime;
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-      osc.start(now);
-      osc.stop(now + 0.24);
-    } catch {}
-  }, [soundEnabled, ensureAudioReady]);
   const lastMarkedRef = useRef<{ id: string; t: number } | null>(null);
-  const prevUnreadRef = useRef<number>(0);
   const prevUnreadMapRef = useRef<Map<string, number>>(new Map());
   const defaultTitleRef = useRef<string>("Messages | SRV");
 
@@ -275,16 +236,6 @@ const ClientChatPage: React.FC = () => {
     }
   }, [conversations, identity]);
 
-  // Play sound on new unread
-  useEffect(() => {
-    if (!isAuthenticated || !isDesktop) return;
-    const unread = unreadTotal;
-    if (unread > prevUnreadRef.current) {
-      playMessageSound();
-    }
-    prevUnreadRef.current = unread;
-  }, [unreadTotal, isAuthenticated, isDesktop, playMessageSound]);
-
   // Update tab title with sender name
   useEffect(() => {
     if (!isAuthenticated || !isDesktop) return;
@@ -311,11 +262,6 @@ const ClientChatPage: React.FC = () => {
     }
   }, [conversations, identity, isAuthenticated, isDesktop, unreadTotal]);
 
-  // Prime unread ref
-  useEffect(() => {
-    prevUnreadRef.current = unreadTotal;
-  }, [unreadTotal]);
-
   // Restore title on unmount
   useEffect(() => {
     return () => {
@@ -327,10 +273,6 @@ const ClientChatPage: React.FC = () => {
 
   // Mark current conversation read on interaction
   const handlePageInteract = React.useCallback(() => {
-    // Resume audio context via user gesture so sounds can play
-    try {
-      ensureAudioReady();
-    } catch {}
     if (!selectedConversationId) return;
     const now = Date.now();
     const last = lastMarkedRef.current;
@@ -340,14 +282,13 @@ const ClientChatPage: React.FC = () => {
       } catch {}
       lastMarkedRef.current = { id: selectedConversationId, t: now };
     }
-  }, [selectedConversationId, markAsRead, ensureAudioReady]);
+  }, [selectedConversationId, markAsRead]);
 
   // Sync trackers on global chats-read events
   useEffect(() => {
     const onChatsRead = () => {
       try {
         prevUnreadMapRef.current = new Map();
-        prevUnreadRef.current = unreadTotal;
         if (unreadTotal === 0) {
           document.title = defaultTitleRef.current;
         }
