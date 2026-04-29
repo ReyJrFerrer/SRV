@@ -116,7 +116,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     },
     {
       to: "/provider/settings",
-      label: "Profile",
+      label: "Settings",
       icon: null,
       count: 0,
     },
@@ -155,7 +155,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     };
   }, []);
 
-  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
+  const mobileOrder = ["Home", "Booking", "Chat", "Services", "Notifications", "Settings"];
 
   return (
     <>
@@ -165,7 +165,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             data-tour="provider-nav"
             className="tour-provider-nav-mobile mx-auto flex w-full max-w-full items-center justify-center"
           >
-            <div className="grid w-full grid-cols-5 font-medium">
+            <div className="grid w-full grid-cols-6 font-medium">
               {mobileOrder.map((label) => {
                 let to = "";
                 let count = 0;
@@ -175,7 +175,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   to = "/provider/notifications";
                   count = filteredNotificationUnreadCount;
                   active = isActivePath(to);
-                } else if (label === "Profile") {
+                } else if (label === "Settings") {
                   const item = navItems.find((it) => it.label === label);
                   if (item) {
                     to = item.to;
@@ -247,9 +247,13 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                                   ? CalendarDaysIcon
                                   : label === "Chat"
                                     ? ChatBubbleOvalLeftEllipsisIcon
-                                    : label === "Notifications"
-                                      ? BellIcon
-                                      : HomeIcon;
+                                    : label === "Services"
+                                      ? WrenchScrewdriverIcon
+                                      : label === "Settings"
+                                        ? Cog6ToothIcon
+                                        : label === "Notifications"
+                                          ? BellIcon
+                                          : HomeIcon;
                             return (
                               <Icon
                                 className={`transition-colors duration-300 ${
@@ -355,10 +359,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         ? HomeIcon
                         : item.label === "Booking"
                           ? CalendarDaysIcon
-                          : item.label === "Services"
-                            ? WrenchScrewdriverIcon
-                            : item.label === "Chat"
-                              ? ChatBubbleOvalLeftEllipsisIcon
+                        : item.label === "Chat"
+                          ? ChatBubbleOvalLeftEllipsisIcon
+                        : item.label === "Services"
+                          ? WrenchScrewdriverIcon
+                          : item.label === "Settings"
+                            ? Cog6ToothIcon
+                            : item.label === "Notifications"
+                              ? BellIcon
                               : HomeIcon;
                     return (
                       <div

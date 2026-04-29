@@ -199,11 +199,13 @@ const BottomNavigation: React.FC = () => {
                               ? HomeIcon
                               : displayItem.label === "Booking"
                                 ? CalendarDaysIcon
-                                : displayItem.label === "Notifications"
-                                  ? BellIcon
-                                  : displayItem.label === "Chat"
-                                    ? ChatBubbleOvalLeftEllipsisIcon
-                                    : HomeIcon;
+                                : displayItem.label === "Settings"
+                                  ? Cog6ToothIcon
+                                  : displayItem.label === "Notifications"
+                                    ? BellIcon
+                                    : displayItem.label === "Chat"
+                                      ? ChatBubbleOvalLeftEllipsisIcon
+                                      : HomeIcon;
                           return (
                             <Icon
                               className={`transition-colors duration-300 ${
