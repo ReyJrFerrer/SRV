@@ -4,6 +4,7 @@ import {
   MapPinIcon,
   UserCircleIcon,
   Bars3Icon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -349,7 +350,37 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           </div>
         </div>
       </header>
-      {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
+
+      {/* Slide-out Menu */}
+      {showMenu && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/50 animate-fade-in" onClick={() => setShowMenu(false)} />
+          <div className="fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] animate-slide-in-from-right bg-white shadow-2xl">
+            <div className="flex h-full flex-col">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
+                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+                <button onClick={() => setShowMenu(false)} className="flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100">
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto py-2">
+                {menuItems.map((item, index) => (
+                  <button key={index} onClick={() => handleMenuClick(item.to!)} className="w-full px-4 py-4 text-left text-base font-medium text-gray-700 hover:bg-gray-50">
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <div className="border-t border-gray-100 py-4">
+                <button onClick={handleLogout} className="w-full px-4 py-4 text-left text-base font-medium text-red-600 hover:bg-gray-50">
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Mini sticky header as a fixed overlay */}
       {isMini && (
         <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)]">
           <div className="w-full border-b border-gray-100 bg-white/95 p-3 shadow-sm backdrop-blur-md">

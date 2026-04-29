@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeftIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronLeftIcon,
+  Bars3Icon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { useLogout } from "../../hooks/logout";
 
 interface MenuItem {
@@ -130,7 +134,9 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
           </div>
 
           <div className="flex flex-1 justify-center px-4">
-            <h1 className="truncate text-xl font-bold text-gray-900">{title}</h1>
+            <h1 className="truncate text-xl font-bold text-gray-900">
+              {title}
+            </h1>
           </div>
 
           <div className="flex w-12 items-center justify-end gap-2">
@@ -154,14 +160,14 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-50 bg-black/50 animate-fade-in"
+            className="animate-fade-in fixed inset-0 z-50 bg-black/50"
             onClick={handleCloseMenu}
           />
 
           {/* Drawer Panel - slides in from right */}
           <div
             ref={menuRef}
-            className="fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] animate-slide-in-from-right bg-white shadow-2xl"
+            className="animate-slide-in-from-right fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] bg-white shadow-2xl"
           >
             <div className="flex h-full flex-col">
               {/* Drawer Header */}
