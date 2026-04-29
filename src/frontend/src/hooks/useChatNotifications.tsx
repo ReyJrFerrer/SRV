@@ -14,8 +14,9 @@ let audioPrimerInstalled = false;
 function getAudioContext(): AudioContext | null {
   try {
     if (!sharedAudioCtx) {
-      sharedAudioCtx = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+      sharedAudioCtx = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
     }
     return sharedAudioCtx;
   } catch {
@@ -93,38 +94,42 @@ export const useChatNotifications = () => {
 
     const setup = async () => {
       try {
-        const unsubscribe = await chatCanisterService.subscribeToConversationSummaries(
-          userId,
-          (summaries) => {
-            if (cancelled) return;
+        const unsubscribe =
+          await chatCanisterService.subscribeToConversationSummaries(
+            userId,
+            (summaries) => {
+              if (cancelled) return;
 
-            conversationsRef.current = summaries;
+              conversationsRef.current = summaries;
 
-            const unreadConversations = summaries.reduce((count, s) => {
-              const unread = s.conversation.unreadCount?.[userId] || 0;
-              return count + (unread > 0 ? 1 : 0);
-            }, 0);
+              const unreadConversations = summaries.reduce((count, s) => {
+                const unread = s.conversation.unreadCount?.[userId] || 0;
+                return count + (unread > 0 ? 1 : 0);
+              }, 0);
 
-            const totalUnreadMessages = summaries.reduce((count, s) => {
-              const unread = s.conversation.unreadCount?.[userId] || 0;
-              return count + unread;
-            }, 0);
+              const totalUnreadMessages = summaries.reduce((count, s) => {
+                const unread = s.conversation.unreadCount?.[userId] || 0;
+                return count + unread;
+              }, 0);
 
-            setUnreadChatCount(unreadConversations);
-            setLoading(false);
-
-            // Play sound when total unread messages increase (skip initial load)
-            if (prevUnreadMessagesRef.current !== -1 && totalUnreadMessages > prevUnreadMessagesRef.current) {
-              playNotificationSound();
-            }
-            prevUnreadMessagesRef.current = totalUnreadMessages;
-          },
-          () => {
-            if (!cancelled) {
+              setUnreadChatCount(unreadConversations);
               setLoading(false);
-            }
-          },
-        );
+
+              // Play sound when total unread messages increase (skip initial load)
+              if (
+                prevUnreadMessagesRef.current !== -1 &&
+                totalUnreadMessages > prevUnreadMessagesRef.current
+              ) {
+                playNotificationSound();
+              }
+              prevUnreadMessagesRef.current = totalUnreadMessages;
+            },
+            () => {
+              if (!cancelled) {
+                setLoading(false);
+              }
+            },
+          );
 
         if (cancelled) {
           await unsubscribe();
@@ -155,14 +160,20 @@ export const useChatNotifications = () => {
       // Re-check conversations from the stored ref
       if (!identity) return;
       const userId = identity.getPrincipal().toString();
-      const unreadConversations = conversationsRef.current.reduce((count, s) => {
-        const unread = s.conversation.unreadCount?.[userId] || 0;
-        return count + (unread > 0 ? 1 : 0);
-      }, 0);
-      const totalUnreadMessages = conversationsRef.current.reduce((count, s) => {
-        const unread = s.conversation.unreadCount?.[userId] || 0;
-        return count + unread;
-      }, 0);
+      const unreadConversations = conversationsRef.current.reduce(
+        (count, s) => {
+          const unread = s.conversation.unreadCount?.[userId] || 0;
+          return count + (unread > 0 ? 1 : 0);
+        },
+        0,
+      );
+      const totalUnreadMessages = conversationsRef.current.reduce(
+        (count, s) => {
+          const unread = s.conversation.unreadCount?.[userId] || 0;
+          return count + unread;
+        },
+        0,
+      );
       prevUnreadMessagesRef.current = totalUnreadMessages;
       setUnreadChatCount(unreadConversations);
     };
