@@ -441,8 +441,7 @@ const NotificationsPage = () => {
         )}
       </main>
 
-      <div className="fixed bottom-0 left-0 z-30 w-full">
-      </div>
+      <div className="fixed bottom-0 left-0 z-30 w-full"></div>
     </div>
   );
 };

@@ -655,7 +655,6 @@ const ClientChatPage: React.FC = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };

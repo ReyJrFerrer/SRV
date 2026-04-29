@@ -719,8 +719,7 @@ const MyBookingsPage: React.FC = () => {
           )}
         </main>
 
-        <div>
-        </div>
+        <div></div>
       </div>
 
       <CancelWithReasonButton

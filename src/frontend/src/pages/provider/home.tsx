@@ -262,7 +262,6 @@ const ProviderHomePage: React.FC = () => {
             />
           </div>
         </main>
-
       </div>
     </>
   );

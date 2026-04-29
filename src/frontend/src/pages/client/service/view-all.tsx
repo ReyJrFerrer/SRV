@@ -87,7 +87,6 @@ const ViewAllServicesPage: React.FC = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };

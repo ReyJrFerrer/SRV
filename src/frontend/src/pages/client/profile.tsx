@@ -17,12 +17,17 @@ import {
   TrophyIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
-import { XMarkIcon, StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
+import {
+  XMarkIcon,
+  StarIcon as StarIconOutline,
+} from "@heroicons/react/24/outline";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { useLogout } from "../../hooks/logout";
 import { useReputation } from "../../hooks/useReputation";
 import { useClientAnalytics } from "../../hooks/useClientAnalytics";
-import useClientRating, { type ClientReview } from "../../hooks/useClientRating";
+import useClientRating, {
+  type ClientReview,
+} from "../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 import SpotlightTour from "../../components/common/SpotlightTour";
 import RoleSwitchButton from "../../components/common/RoleSwitchButton";
@@ -571,7 +576,7 @@ const ClientProfilePage: React.FC = () => {
       try {
         setRatingsError(null);
         setRatingsLoading(true);
-        
+
         if (!firebaseUser?.uid) {
           setRatingsError("Please sign in to view your reviews.");
           setRatingsLoading(false);
@@ -579,7 +584,7 @@ const ClientProfilePage: React.FC = () => {
         }
 
         const data = await getClientReviewsByUser(firebaseUser.uid);
-        
+
         const providerIds = Array.from(
           new Set(data.map((r: any) => r.providerId).filter(Boolean)),
         );
@@ -623,7 +628,7 @@ const ClientProfilePage: React.FC = () => {
         setRatingsLoading(false);
       }
     };
-    
+
     if (firebaseUser) {
       loadReviews();
     }
@@ -961,7 +966,8 @@ const ClientProfilePage: React.FC = () => {
                               ))}
                             </div>
                             <span className="mt-2 text-sm font-bold text-gray-500">
-                              {reviewsStats.total} Review{reviewsStats.total === 1 ? "" : "s"}
+                              {reviewsStats.total} Review
+                              {reviewsStats.total === 1 ? "" : "s"}
                             </span>
                           </div>
 
@@ -986,15 +992,22 @@ const ClientProfilePage: React.FC = () => {
                           {reviews.length === 0 ? (
                             <div className="flex flex-col items-center justify-center rounded-2xl bg-gray-50 py-8 text-center">
                               <StarIconOutline className="mb-2 h-8 w-8 text-gray-400" />
-                              <p className="text-sm font-medium text-gray-500">No reviews yet</p>
+                              <p className="text-sm font-medium text-gray-500">
+                                No reviews yet
+                              </p>
                             </div>
                           ) : (
                             <div className="space-y-4">
                               {reviews.map((rev) => (
-                                <div key={rev.id} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                                <div
+                                  key={rev.id}
+                                  className="rounded-2xl border border-gray-100 bg-gray-50 p-4"
+                                >
                                   <div className="mb-2 flex items-start justify-between">
                                     <div>
-                                      <h6 className="font-bold text-gray-900">{getReviewerName(rev)}</h6>
+                                      <h6 className="font-bold text-gray-900">
+                                        {getReviewerName(rev)}
+                                      </h6>
                                       <div className="mt-0.5 flex gap-0.5">
                                         {[1, 2, 3, 4, 5].map((s) => (
                                           <React.Fragment key={s}>
@@ -1008,7 +1021,9 @@ const ClientProfilePage: React.FC = () => {
                                       </div>
                                     </div>
                                     <span className="text-xs font-bold text-gray-400">
-                                      {new Date(rev.createdAt).toLocaleDateString(undefined, {
+                                      {new Date(
+                                        rev.createdAt,
+                                      ).toLocaleDateString(undefined, {
                                         month: "short",
                                         day: "numeric",
                                         year: "numeric",

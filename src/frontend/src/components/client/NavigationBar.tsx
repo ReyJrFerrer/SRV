@@ -136,13 +136,7 @@ const BottomNavigation: React.FC = () => {
     };
   }, []);
 
-  const mobileOrder = [
-    "Home",
-    "Booking",
-    "Chat",
-    "Notifications",
-    "Settings"
-  ];
+  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Settings"];
 
   const mobileItems = mobileOrder
     .map((label) => {

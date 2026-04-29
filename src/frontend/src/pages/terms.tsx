@@ -337,7 +337,6 @@ const TermsAndConditionsPage: React.FC = () => {
           </div>
         </div>
       </main>
-
     </div>
   );
 };

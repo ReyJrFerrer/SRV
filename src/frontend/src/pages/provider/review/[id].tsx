@@ -462,7 +462,6 @@ export default function ProviderReviewView() {
             </button>
           </div> */}
       </main>
-
     </div>
   );
 }

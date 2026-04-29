@@ -48,9 +48,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
           <h1 className="truncate text-xl font-bold text-gray-900">{title}</h1>
         </div>
 
-        <div className="flex w-12 items-center justify-end">
-          {rightAction}
-        </div>
+        <div className="flex w-12 items-center justify-end">{rightAction}</div>
       </div>
     </header>
   );

@@ -404,8 +404,7 @@ const BookingDetailsPage: React.FC = () => {
         )}
       </main>
 
-      <div>
-      </div>
+      <div></div>
 
       <CancelWithReasonButton
         show={isCancelModalOpen}

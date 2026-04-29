@@ -311,7 +311,6 @@ const CategoryPage: React.FC = () => {
           ))}
         </div>
       </div>
-
     </div>
   );
 };

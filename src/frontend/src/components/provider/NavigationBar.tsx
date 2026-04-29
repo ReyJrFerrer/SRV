@@ -155,13 +155,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     };
   }, []);
 
-  const mobileOrder = [
-    "Home",
-    "Booking",
-    "Chat",
-    "Notifications",
-    "Profile",
-  ];
+  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
 
   return (
     <>
