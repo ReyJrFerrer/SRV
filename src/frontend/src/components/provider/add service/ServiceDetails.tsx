@@ -211,7 +211,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     <div className="mx-auto max-w-5xl p-4">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Left: Service Details & Category */}
-        <section className="flex flex-col rounded-xl border border-gray-100 bg-white shadow-sm">
+        <section className="flex flex-col rounded-xl border border-gray-100 bg-white shadow-sm md:sticky md:top-24 md:h-fit md:self-start">
           {/* Service Title */}
           <div className="bg-yellow-50 px-6 py-4">
             <h2 className="text-lg font-bold text-gray-900">
