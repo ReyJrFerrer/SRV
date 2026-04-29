@@ -464,6 +464,62 @@ exports.deductReputationForCancellation = onCall(async (request) => {
 exports.deductReputationForCancellationInternal = deductReputationForCancellationInternal;
 
 /**
+ * Deduct reputation for a user who submitted a suspicious review (AI-flagged)
+ * Adds a ReviewBomb detection flag and recalculates trust score
+ * @param {string} userId - The reviewer's user ID
+ */
+async function deductReputationForSuspiciousReviewInternal(userId) {
+  try {
+    const repRef = db.collection("reputations").doc(userId);
+    const doc = await repRef.get();
+
+    if (!doc.exists) {
+      console.log(`[deductReputationForSuspiciousReview] No reputation found for ${userId}`);
+      return {success: false, error: "No reputation found"};
+    }
+
+    const data = doc.data();
+    const existingFlags = data.detectionFlags || [];
+
+    if (existingFlags.includes("ReviewBomb")) {
+      console.log(`[deductReputationForSuspiciousReview] User ${userId} already has ReviewBomb flag`);
+      return {success: true, data, message: "Already flagged"};
+    }
+
+    const updatedFlags = [...existingFlags, "ReviewBomb"];
+    const accountAgeMs = data.accountAgeMs || Date.now();
+
+    const newTrustScore = calculateTrustScore(
+      data.completedBookings || 0,
+      data.averageRating,
+      accountAgeMs,
+      updatedFlags,
+    );
+
+    const updatedScore = {
+      ...data,
+      userId,
+      detectionFlags: updatedFlags,
+      trustScore: newTrustScore,
+      trustLevel: determineTrustLevel(newTrustScore),
+    };
+
+    await writeReputationAndHistory(userId, updatedScore);
+
+    console.log(
+      `[deductReputationForSuspiciousReview] Added ReviewBomb flag to ${userId}. ` +
+      `Trust score: ${data.trustScore} -> ${newTrustScore}`,
+    );
+
+    return {success: true, data: updatedScore};
+  } catch (error) {
+    console.error("[deductReputationForSuspiciousReview] Error:", error);
+    throw error;
+  }
+}
+exports.deductReputationForSuspiciousReviewInternal = deductReputationForSuspiciousReviewInternal;
+
+/**
  * Internal function to check the user reputation
  * @param {string} userId - The user ID
  */

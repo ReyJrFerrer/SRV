@@ -1,7 +1,13 @@
 const {getFirestore} = require("../../firebase-admin");
 const {generateContentWithJSON, isCacheValid, getGeminiConfig} = require("./geminiClient");
+const {
+  deductReputationForSuspiciousReviewInternal,
+} = require("../reputation");
 
 const db = getFirestore();
+
+const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 1;
+const BAD_REVIEW_RATING_THRESHOLD = 2;
 
 const SUSPICIOUS_PATTERNS = [
   "template_language",
@@ -336,6 +342,277 @@ function shouldTriggerReport(aiAnalysis, ratingAnalysis = null) {
   return false;
 }
 
+/**
+ * Generate a unique report ID
+ * @return {string} Unique report ID
+ */
+function generateReportId() {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `report_${timestamp}_${random}`;
+}
+
+/**
+ * Check for consecutive bad reviews and auto-create report
+ * Runs AI analysis when bad reviews are detected
+ * @param {string} collectionName - Firestore collection to check
+ * @param {string} filterField - Field to filter by (providerId or clientId)
+ * @param {string} userId - User ID to check reviews for
+ * @param {object} newReview - The newly submitted review
+ * @param {string} scenarioType - Type of scenario: "received" or "given"
+ * @param {string} userType - Type of user: "provider" or "client"
+ * @return {Promise<boolean>} True if a report was created, false otherwise
+ */
+async function checkConsecutiveBadReviews(
+  collectionName,
+  filterField,
+  userId,
+  newReview,
+  scenarioType,
+  userType,
+) {
+  try {
+    if (newReview.rating > BAD_REVIEW_RATING_THRESHOLD) {
+      return false;
+    }
+
+    let recentReviewsSnap;
+    try {
+      recentReviewsSnap = await db
+        .collection(collectionName)
+        .where(filterField, "==", userId)
+        .orderBy("createdAt", "desc")
+        .limit(CONSECUTIVE_BAD_REVIEWS_THRESHOLD)
+        .get();
+    } catch (queryError) {
+      if (queryError.code === 8 || queryError.message?.includes("index")) {
+        const allReviewsSnap = await db
+          .collection(collectionName)
+          .where(filterField, "==", userId)
+          .get();
+
+        const allReviews = [];
+        allReviewsSnap.forEach((doc) => {
+          allReviews.push(doc.data());
+        });
+
+        const sortedReviews = allReviews.sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        recentReviewsSnap = {
+          size: Math.min(CONSECUTIVE_BAD_REVIEWS_THRESHOLD, sortedReviews.length),
+          forEach: (callback) => {
+            sortedReviews.slice(0, CONSECUTIVE_BAD_REVIEWS_THRESHOLD).forEach((review) => {
+              callback({data: () => review});
+            });
+          },
+        };
+      } else {
+        throw queryError;
+      }
+    }
+
+    if (recentReviewsSnap.size === CONSECUTIVE_BAD_REVIEWS_THRESHOLD) {
+      let allBad = true;
+      const reviews = [];
+      recentReviewsSnap.forEach((doc) => {
+        const review = doc.data();
+        reviews.push(review);
+        if (review.rating > BAD_REVIEW_RATING_THRESHOLD) {
+          allBad = false;
+        }
+      });
+
+      if (allBad) {
+        let batchAnalysisResult = null;
+        let singleReviewAnalysis = null;
+
+        try {
+          if (reviews.length >= 2) {
+            batchAnalysisResult = await analyzeReviewBatch(reviews);
+            if (batchAnalysisResult.success) {
+              console.log(`[checkConsecutiveBadReviews] Batch AI analysis completed:`, {
+                isCoordinated: batchAnalysisResult.data.isCoordinated,
+                threatLevel: batchAnalysisResult.data.threatLevel,
+                confidence: batchAnalysisResult.data.confidence,
+              });
+            }
+          } else {
+            singleReviewAnalysis = await analyzeReviewContent(reviews[0]);
+            if (singleReviewAnalysis.success) {
+              console.log(`[checkConsecutiveBadReviews] Single review AI analysis completed:`, {
+                isSuspicious: singleReviewAnalysis.data.isSuspicious,
+                threatLevel: singleReviewAnalysis.data.threatLevel,
+                confidence: singleReviewAnalysis.data.confidence,
+              });
+            }
+          }
+        } catch (aiError) {
+          console.error("[checkConsecutiveBadReviews] AI analysis failed:", aiError);
+        }
+
+        const aiAnalysisResults = [];
+        const suspiciousAIReviews = [];
+
+        for (const review of reviews) {
+          if (review.aiAnalysis?.analyzed) {
+            aiAnalysisResults.push(review.aiAnalysis);
+            if (review.aiAnalysis.isSuspicious && review.aiAnalysis.confidence >= 0.7) {
+              suspiciousAIReviews.push(review.id);
+            }
+          }
+        }
+
+        const aiConfirmedSuspicious = suspiciousAIReviews.length > 0 ||
+          (singleReviewAnalysis?.success && singleReviewAnalysis.data.isSuspicious &&
+           singleReviewAnalysis.data.confidence >= 0.7);
+
+        const batchDetectedCoordinated = batchAnalysisResult?.success &&
+          batchAnalysisResult.data.isCoordinated;
+
+        const aiThreatAnalysis = batchAnalysisResult?.success ? {
+          analyzed: true,
+          threatLevel: batchAnalysisResult.data.threatLevel,
+          confidence: batchAnalysisResult.data.confidence,
+          isSuspicious: batchDetectedCoordinated,
+        } : singleReviewAnalysis?.success ? {
+          analyzed: true,
+          threatLevel: singleReviewAnalysis.data.threatLevel,
+          confidence: singleReviewAnalysis.data.confidence,
+          isSuspicious: singleReviewAnalysis.data.isSuspicious,
+        } : null;
+
+        const aiTriggeredReport = shouldTriggerReport(aiThreatAnalysis);
+
+        const reportId = generateReportId();
+        const userName = userType === "provider" ? "Provider" : "Client";
+        const action = scenarioType === "received" ? "received" : "given";
+
+        const userDoc = await db.collection("users").doc(userId).get();
+        const userProfile = userDoc.exists ? userDoc.data() : null;
+        const displayName = userProfile?.name || `Unknown ${userName}`;
+        const userPhone = userProfile?.phone || userProfile?.phoneNumber || "N/A";
+
+        let serviceName = "Unknown Service";
+        if (newReview.serviceId) {
+          const serviceDoc = await db.collection("services").doc(newReview.serviceId).get();
+          if (serviceDoc.exists) {
+            serviceName = serviceDoc.data()?.name || "Unknown Service";
+          }
+        }
+
+        const aiSummary = [];
+        if (aiConfirmedSuspicious) {
+          aiSummary.push("Individual review analysis detected suspicious patterns.");
+        }
+        if (batchDetectedCoordinated) {
+          const threatLvl = batchAnalysisResult.data.threatLevel;
+          aiSummary.push(
+            `Batch analysis detected coordinated attack (${threatLvl} threat).`,
+          );
+        }
+        if (singleReviewAnalysis?.success) {
+          aiSummary.push(
+            `Single review analysis: ${singleReviewAnalysis.data.threatLevel} threat ` +
+            `(confidence: ${(singleReviewAnalysis.data.confidence * 100).toFixed(0)}%). ` +
+            `${singleReviewAnalysis.data.summary}`,
+          );
+        }
+        if (batchAnalysisResult?.success) {
+          aiSummary.push(batchAnalysisResult.data.summary);
+        }
+
+        const title = `${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} Consecutive Bad Reviews - ` +
+          `${displayName} (${action} by ${userType})`;
+        const aiNote = aiSummary.length > 0 ?
+          `\n\nAI Analysis:\n${aiSummary.join("\n")}` :
+          "";
+        const description = `${userName} ${displayName} has ${action}
+        ${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} ` +
+          `consecutive bad reviews (rating <= ${BAD_REVIEW_RATING_THRESHOLD}).\n\n` +
+          `This is an automatically generated report.${aiNote}`;
+
+        const ticketDescription = JSON.stringify({
+          title: title,
+          description: description,
+          category: "bad_reviews",
+          timestamp: new Date().toISOString(),
+          source: `system_auto_report_consecutive_bad_reviews_${scenarioType}_${userType}`,
+          userId: userId,
+          userName: displayName,
+          userType: userType,
+          scenarioType: scenarioType,
+          serviceId: newReview.serviceId,
+          serviceName: serviceName,
+          reviewIds: reviews.map((r) => r.id),
+          ratings: reviews.map((r) => r.rating),
+          collection: collectionName,
+          aiAnalysis: {
+            batchAnalysis: batchAnalysisResult?.success ? {
+              isCoordinated: batchAnalysisResult.data.isCoordinated,
+              confidence: batchAnalysisResult.data.confidence,
+              threatLevel: batchAnalysisResult.data.threatLevel,
+              patterns: batchAnalysisResult.data.patterns,
+              summary: batchAnalysisResult.data.summary,
+              affectedReviewIds: batchAnalysisResult.data.affectedReviewIds,
+            } : null,
+            singleReviewAnalysis: singleReviewAnalysis?.success ? {
+              isSuspicious: singleReviewAnalysis.data.isSuspicious,
+              confidence: singleReviewAnalysis.data.confidence,
+              threatLevel: singleReviewAnalysis.data.threatLevel,
+              patterns: singleReviewAnalysis.data.patterns,
+              summary: singleReviewAnalysis.data.summary,
+            } : null,
+            individualAnalysis: aiAnalysisResults.length > 0 ? {
+              totalAnalyzed: aiAnalysisResults.length,
+              suspiciousCount: suspiciousAIReviews.length,
+              suspiciousReviewIds: suspiciousAIReviews,
+              patterns: aiAnalysisResults.reduce((acc, a) => {
+                if (a.patterns) acc.push(...a.patterns);
+                return acc;
+              }, []),
+            } : null,
+            aiTriggeredReport: aiTriggeredReport,
+          },
+        });
+
+        const isAISuspicious = aiConfirmedSuspicious || batchDetectedCoordinated ||
+          (singleReviewAnalysis?.success && singleReviewAnalysis.data.isSuspicious);
+
+        const newReport = {
+          id: reportId,
+          userId: userId,
+          userName: displayName,
+          userPhone: userPhone,
+          description: ticketDescription,
+          status: "open",
+          createdAt: new Date().toISOString(),
+          aiAnalysisTriggered: isAISuspicious,
+        };
+
+        await db.collection("reports").doc(reportId).set(newReport);
+
+        if (isAISuspicious) {
+          try {
+            await deductReputationForSuspiciousReviewInternal(newReview.clientId);
+          } catch (repError) {
+            console.error("[checkConsecutiveBadReviews] Failed to deduct reputation:", repError);
+          }
+        }
+
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error("[checkConsecutiveBadReviews] Error:", error);
+    return false;
+  }
+}
+
 module.exports = {
   analyzeReviewContent,
   analyzeReviewBatch,
@@ -343,5 +620,9 @@ module.exports = {
   fetchReviewerStats,
   fetchServiceAndProvider,
   shouldTriggerReport,
+  checkConsecutiveBadReviews,
+  generateReportId,
+  CONSECUTIVE_BAD_REVIEWS_THRESHOLD,
+  BAD_REVIEW_RATING_THRESHOLD,
   SUSPICIOUS_PATTERNS,
 };

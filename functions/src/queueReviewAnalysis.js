@@ -5,6 +5,7 @@ const {
   analyzeReviewContent,
   updateReviewWithAnalysis,
   shouldTriggerReport,
+  checkConsecutiveBadReviews,
 } = require("./utils/reviewAnalyzer");
 const {getGeminiConfig} = require("./utils/geminiClient");
 
@@ -158,7 +159,7 @@ function getAIRecommendation(aiAnalysis) {
  * Analyzes review content using Gemini AI
  */
 exports.analyzeNewReview = onDocumentCreated(
-  "reviews/{reviewId}",
+  {document: "reviews/{reviewId}", database: "srvefirestore"},
   async (event) => {
     const reviewId = event.params.reviewId;
     const config = getGeminiConfig();
@@ -184,6 +185,22 @@ exports.analyzeNewReview = onDocumentCreated(
         cached: result.cached,
         error: result.error,
       });
+
+      if (result.success) {
+        const reviewSnap = await db.collection("reviews").doc(reviewId).get();
+        if (reviewSnap.exists) {
+          const review = {id: reviewSnap.id, ...reviewSnap.data()};
+
+          await checkConsecutiveBadReviews(
+            "reviews", "providerId", review.providerId,
+            review, "received", "provider",
+          );
+          await checkConsecutiveBadReviews(
+            "reviews", "clientId", review.clientId,
+            review, "given", "client",
+          );
+        }
+      }
 
       return result;
     } finally {
