@@ -6,7 +6,7 @@ const {
 
 const db = getFirestore();
 
-const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 1;
+const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 5;
 const BAD_REVIEW_RATING_THRESHOLD = 2;
 
 const SUSPICIOUS_PATTERNS = [
@@ -538,19 +538,42 @@ async function checkConsecutiveBadReviews(
         const ticketDescription = JSON.stringify({
           title: title,
           description: description,
-          category: "bad_reviews",
+          category: "service",
           timestamp: new Date().toISOString(),
           source: `system_auto_report_consecutive_bad_reviews_${scenarioType}_${userType}`,
           userId: userId,
           userName: displayName,
           userType: userType,
           scenarioType: scenarioType,
+          clientId: newReview.clientId,
+          clientName: userType === "client" ? displayName : undefined,
+          providerId: newReview.providerId,
+          providerName: userType === "provider" ? displayName : undefined,
           serviceId: newReview.serviceId,
           serviceName: serviceName,
+          reviewId: newReview.id,
+          rating: newReview.rating,
+          comment: newReview.comment || "",
           reviewIds: reviews.map((r) => r.id),
           ratings: reviews.map((r) => r.rating),
           collection: collectionName,
           aiAnalysis: {
+            threatLevel: batchAnalysisResult?.success ?
+              batchAnalysisResult.data.threatLevel :
+              singleReviewAnalysis?.success ?
+                singleReviewAnalysis.data.threatLevel : "low",
+            confidence: batchAnalysisResult?.success ?
+              batchAnalysisResult.data.confidence :
+              singleReviewAnalysis?.success ?
+                singleReviewAnalysis.data.confidence : 0,
+            patterns: batchAnalysisResult?.success ?
+              batchAnalysisResult.data.patterns :
+              singleReviewAnalysis?.success ?
+                singleReviewAnalysis.data.patterns : [],
+            summary: batchAnalysisResult?.success ?
+              batchAnalysisResult.data.summary :
+              singleReviewAnalysis?.success ?
+                singleReviewAnalysis.data.summary : "",
             batchAnalysis: batchAnalysisResult?.success ? {
               isCoordinated: batchAnalysisResult.data.isCoordinated,
               confidence: batchAnalysisResult.data.confidence,

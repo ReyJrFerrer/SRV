@@ -6,6 +6,7 @@ const {
   updateReviewWithAnalysis,
   shouldTriggerReport,
   checkConsecutiveBadReviews,
+  generateReportId,
 } = require("./utils/reviewAnalyzer");
 const {getGeminiConfig} = require("./utils/geminiClient");
 
@@ -73,11 +74,6 @@ async function processReviewAnalysisWithRetry(reviewId, maxRetries = 2) {
         confidence: result.data.confidence,
       });
 
-      if (shouldTriggerReport(result.data)) {
-        console.log(`[QueueReviewAnalysis] High threat for ${reviewId}, triggering report`);
-        await triggerAIRelatedReport(review, result.data);
-      }
-
       return result;
     } catch (error) {
       lastError = error;
@@ -90,50 +86,6 @@ async function processReviewAnalysisWithRetry(reviewId, maxRetries = 2) {
   }
 
   return {success: false, error: lastError?.message || "All retries failed"};
-}
-
-/**
- * Trigger an AI-related report for suspicious review content
- * @param {Object} review - The review object
- * @param {Object} aiAnalysis - AI analysis results
- * @return {Promise<Object>} Report creation result
- */
-async function triggerAIRelatedReport(review, aiAnalysis) {
-  try {
-    const reportId = `ai_report_${review.id}_${Date.now()}`;
-    const timestamp = new Date().toISOString();
-
-    const reportData = {
-      id: reportId,
-      reviewId: review.id,
-      bookingId: review.bookingId,
-      clientId: review.clientId,
-      providerId: review.providerId,
-      serviceId: review.serviceId,
-      rating: review.rating,
-      comment: review.comment,
-      status: "open",
-      createdAt: timestamp,
-      source: "ai_analysis",
-      aiAnalysis: {
-        reviewContentAnalyzed: true,
-        patternsDetected: aiAnalysis.patterns || [],
-        threatLevel: aiAnalysis.threatLevel,
-        confidence: aiAnalysis.confidence,
-        summary: aiAnalysis.summary,
-        recommendation: getAIRecommendation(aiAnalysis),
-      },
-    };
-
-    await db.collection("reports").doc(reportId).set(reportData);
-
-    console.log(`[QueueReviewAnalysis] Created AI report ${reportId} for review ${review.id}`);
-
-    return {success: true, reportId};
-  } catch (error) {
-    console.error(`[QueueReviewAnalysis] Failed to create AI report:`, error);
-    return {success: false, error: error.message};
-  }
 }
 
 /**
@@ -152,6 +104,95 @@ function getAIRecommendation(aiAnalysis) {
   };
 
   return recommendations[aiAnalysis.threatLevel] || recommendations.low;
+}
+
+/**
+ * Create a single consolidated AI report for a suspicious review
+ * @param {Object} review - The review object
+ * @param {Object} aiAnalysis - AI analysis results
+ * @return {Promise<Object>} Report creation result
+ */
+async function createConsolidatedAIReport(review, aiAnalysis) {
+  try {
+    const reportId = generateReportId();
+    const timestamp = new Date().toISOString();
+
+    const [clientDoc, providerDoc, serviceDoc] = await Promise.all([
+      db.collection("users").doc(review.clientId).get(),
+      db.collection("users").doc(review.providerId).get(),
+      review.serviceId ? db.collection("services").doc(review.serviceId).get() :
+        Promise.resolve({exists: false, data: () => ({})}),
+    ]);
+
+    const clientName = clientDoc.exists ?
+      clientDoc.data()?.name || "Unknown Client" : "Unknown Client";
+    const providerName = providerDoc.exists ?
+      providerDoc.data()?.name || "Unknown Provider" : "Unknown Provider";
+    const serviceName = serviceDoc.exists ?
+      serviceDoc.data()?.name || "Unknown Service" : "Unknown Service";
+
+    const recommendation = getAIRecommendation(aiAnalysis);
+
+    const ticketDescription = JSON.stringify({
+      title: `Suspicious Review Detected - ${clientName} (given by client)`,
+      description:
+        `AI analysis flagged a review submitted by client ${clientName} ` +
+        `(${review.clientId}) against provider ${providerName} ` +
+        `(${review.providerId}) for service "${serviceName}" as suspicious.\n\n` +
+        `Review Details:\n` +
+        `- Rating: ${review.rating}/5\n` +
+        `- Comment: "${review.comment || "No comment"}"\n\n` +
+        `AI Analysis:\n` +
+        `- Threat Level: ${aiAnalysis.threatLevel}\n` +
+        `- Confidence: ${(aiAnalysis.confidence * 100).toFixed(0)}%\n` +
+        `- Patterns: ${(aiAnalysis.patterns || []).join(", ") || "None"}\n` +
+        `- Summary: ${aiAnalysis.summary}\n\n` +
+        `Recommendation: ${recommendation}`,
+      category: "service",
+      timestamp: timestamp,
+      source: "ai_analysis",
+      clientId: review.clientId,
+      clientName: clientName,
+      providerId: review.providerId,
+      providerName: providerName,
+      serviceId: review.serviceId,
+      serviceName: serviceName,
+      reviewId: review.id,
+      rating: review.rating,
+      comment: review.comment || "",
+      aiAnalysis: {
+        threatLevel: aiAnalysis.threatLevel,
+        confidence: aiAnalysis.confidence,
+        patterns: aiAnalysis.patterns || [],
+        summary: aiAnalysis.summary,
+        recommendation: recommendation,
+      },
+    });
+
+    const reportData = {
+      id: reportId,
+      userId: review.clientId,
+      userName: clientName,
+      userPhone: clientDoc.exists ?
+        clientDoc.data()?.phone || clientDoc.data()?.phoneNumber || "" : "",
+      description: ticketDescription,
+      status: "open",
+      createdAt: timestamp,
+      source: "ai_analysis",
+      aiAnalysisTriggered: true,
+    };
+
+    await db.collection("reports").doc(reportId).set(reportData);
+
+    console.log(
+      `[createConsolidatedAIReport] Created report ${reportId} for review ${review.id}`,
+    );
+
+    return {success: true, reportId};
+  } catch (error) {
+    console.error(`[createConsolidatedAIReport] Failed:`, error);
+    return {success: false, error: error.message};
+  }
 }
 
 /**
@@ -190,15 +231,20 @@ exports.analyzeNewReview = onDocumentCreated(
         const reviewSnap = await db.collection("reviews").doc(reviewId).get();
         if (reviewSnap.exists) {
           const review = {id: reviewSnap.id, ...reviewSnap.data()};
+          const aiAnalysis = result.data;
 
-          await checkConsecutiveBadReviews(
+          const providerReport = await checkConsecutiveBadReviews(
             "reviews", "providerId", review.providerId,
             review, "received", "provider",
           );
-          await checkConsecutiveBadReviews(
+          const clientReport = await checkConsecutiveBadReviews(
             "reviews", "clientId", review.clientId,
             review, "given", "client",
           );
+
+          if (!providerReport && !clientReport && shouldTriggerReport(aiAnalysis)) {
+            await createConsolidatedAIReport(review, aiAnalysis);
+          }
         }
       }
 
