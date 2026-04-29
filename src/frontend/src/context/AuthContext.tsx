@@ -170,13 +170,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await signInWithInternetIdentity(principal, sessionDuration);
         await sessionManager.updateLastRefresh();
       } catch (error) {
-        // If refresh fails, only logout if IC delegation expired
-        try {
-          const isAuth = await authClient?.isAuthenticated();
-          if (!isAuth) {
-            await logout();
-          }
-        } catch {}
+        // Retry in 60 seconds — Cloud Function doesn't verify IC delegation,
+        // so this is likely a transient network error, not an auth failure
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("session-refresh-needed"));
+        }, 60000);
       } finally {
         setIsRefreshingSession(false);
       }
@@ -245,8 +243,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const result = await signInWithInternetIdentity(principal);
           setFirebaseUser(result.user);
         } catch (error) {
-          // Only logout if we truly can't refresh (IC delegation expired)
-          await logout();
+          // Silent fail — Cloud Function doesn't verify IC delegation,
+          // so refresh will succeed on next retry or visibility change
         }
       }
     });

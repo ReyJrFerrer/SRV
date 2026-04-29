@@ -128,14 +128,11 @@ export class SessionManager {
       } catch (error) {}
     }
 
-    // Validate session hasn't expired
-    if (sessionData && Date.now() < sessionData.expiresAt) {
-      return sessionData;
-    }
-
-    // Clear expired session
+    // Return session even if expired — the refresh system needs the data
+    // to re-mint Firebase tokens via the Cloud Function (which doesn't
+    // verify IC delegation). The session will be extended on next refresh.
     if (sessionData) {
-      await this.clearSession();
+      return sessionData;
     }
 
     return null;
@@ -214,7 +211,6 @@ export class SessionManager {
     if (!session) return false;
 
     const now = Date.now();
-    const timeUntilExpiry = session.expiresAt - now;
     const timeSinceFirebaseRefresh =
       now - (session.lastFirebaseRefresh || session.lastRefresh);
 
@@ -225,9 +221,7 @@ export class SessionManager {
       now - session.lastRefresh >
       session.sessionDuration * SessionManager.REFRESH_THRESHOLD;
 
-    return (
-      (firebaseTokenNeedsRefresh || pastICThreshold) && timeUntilExpiry > 60000
-    ); // At least 1 min remaining
+    return firebaseTokenNeedsRefresh || pastICThreshold;
   }
 
   /**
