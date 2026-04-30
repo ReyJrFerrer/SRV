@@ -50,11 +50,15 @@ const HeroSection: React.FC<Props> = ({
 
   // Get the first image - prefer dataUrl (loaded), fall back to url (raw)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const firstImage: any = serviceImages && serviceImages.length > 0 ? serviceImages[0] : null;
+  const firstImage: any =
+    serviceImages && serviceImages.length > 0 ? serviceImages[0] : null;
   const imageSrc = firstImage?.dataUrl || firstImage?.url || null;
 
   // Check if we have a valid image (dataUrl or url)
-  const hasValidImage = !!(firstImage && (firstImage.dataUrl || firstImage.url));
+  const hasValidImage = !!(
+    firstImage &&
+    (firstImage.dataUrl || firstImage.url)
+  );
 
   // Determine the fallback image source
   const getFallbackImageSrc = () => {
@@ -78,7 +82,11 @@ const HeroSection: React.FC<Props> = ({
         setCurrentImageSrc(imageSrc);
 
         // For SVG, data URLs, or remote URLs, handle appropriately
-        if (imageSrc.endsWith(".svg") || imageSrc.startsWith("data:") || imageSrc.startsWith("http")) {
+        if (
+          imageSrc.endsWith(".svg") ||
+          imageSrc.startsWith("data:") ||
+          imageSrc.startsWith("http")
+        ) {
           // For remote URLs and SVGs, we need to check if they load
           if (imageSrc.startsWith("http")) {
             const img = new Image();

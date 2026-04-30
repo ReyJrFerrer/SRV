@@ -12,7 +12,7 @@ import { ProviderEnhancedBooking } from "../../../hooks/useProviderBookingManage
 import {
   containerDefault,
   baseButtonDefault,
-  color,
+  outlineColor,
 } from "../../shared/buttonStyles";
 
 interface Props {
@@ -103,10 +103,10 @@ const ActionButtons: React.FC<Props> = ({
       <button
         key="chat"
         onClick={stopAndRun(onChat)}
-        className={`${baseButtonClass} w-full ${color.chat}`}
+        className={`${baseButtonClass} w-full bg-white ${outlineColor.chat}`}
       >
-        <ChatBubbleLeftRightIcon className="mr-2 h-5 w-5" />
-        Chat {booking?.clientName?.split(" ")[0] || "Client"}
+        <ChatBubbleLeftRightIcon className="mr-2 h-4 w-4" />
+        <span>Chat</span>
       </button>,
     );
   }
@@ -116,9 +116,9 @@ const ActionButtons: React.FC<Props> = ({
       <button
         key="bookAgain"
         onClick={stopAndRun(onBookAgain)}
-        className={`${baseButtonClass} w-full ${color.bookAgain}`}
+        className={`${baseButtonClass} w-full bg-white ${outlineColor.bookAgain}`}
       >
-        <ArrowPathIcon className="mr-2 h-5 w-5" /> {bookAgainLabel}
+        <ArrowPathIcon className="mr-2 h-4 w-4" /> {bookAgainLabel}
       </button>,
     );
   }
@@ -128,11 +128,11 @@ const ActionButtons: React.FC<Props> = ({
       <button
         key="report"
         onClick={stopAndRun(onReport)}
-        className={`${baseButtonClass} w-full ${color.report}`}
+        className={`${baseButtonClass} w-full bg-white ${outlineColor.report}`}
         title="Report this booking"
       >
-        <ExclamationTriangleIcon className="mr-2 h-5 w-5" />
-        Report
+        <ExclamationTriangleIcon className="mr-2 h-4 w-4" />
+        <span>Report</span>
       </button>,
     );
   }
@@ -142,9 +142,9 @@ const ActionButtons: React.FC<Props> = ({
       <button
         key="decline"
         onClick={stopAndRun(onDecline)}
-        className={`${baseButtonClass} w-full ${color.decline}`}
+        className={`${baseButtonClass} w-full bg-white ${outlineColor.decline}`}
       >
-        <XCircleIcon className="mr-2 h-5 w-5" /> Decline
+        <XCircleIcon className="mr-2 h-4 w-4" /> Decline
       </button>,
     );
   }
@@ -162,14 +162,14 @@ const ActionButtons: React.FC<Props> = ({
         }}
         disabled={cancelInProgress}
         aria-disabled={cancelInProgress}
-        className={`${baseButtonClass} w-full ${color.decline} ${
+        className={`${baseButtonClass} w-full bg-white ${outlineColor.cancel} ${
           cancelInProgress ? "cursor-not-allowed opacity-60" : ""
         }`}
       >
         {cancelInProgress ? (
-          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+          <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <XCircleIcon className="mr-2 h-5 w-5" />
+          <XCircleIcon className="mr-2 h-4 w-4" />
         )}
         Cancel
       </button>,
@@ -187,14 +187,14 @@ const ActionButtons: React.FC<Props> = ({
         onClick={stopAndRun(onAccept)}
         disabled={acceptInProgress}
         aria-disabled={acceptInProgress}
-        className={`${baseButtonClass} w-full ${color.accept} ${
+        className={`${baseButtonClass} w-full bg-blue-600 text-white hover:bg-blue-700 ${
           acceptInProgress ? "cursor-not-allowed opacity-50" : ""
         }`}
       >
         {acceptInProgress ? (
-          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+          <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <CheckCircleIcon className="mr-2 h-5 w-5" />
+          <CheckCircleIcon className="mr-2 h-4 w-4" />
         )}
         Accept
       </button>,
@@ -209,8 +209,8 @@ const ActionButtons: React.FC<Props> = ({
       (booking as any)?.navigationStartedNotified,
     );
     const startLabel = alreadyNotified
-      ? "Continue Navigation"
-      : "Start Navigating";
+      ? "Continue"
+      : "Start";
 
     buttons.push(
       <button
@@ -218,12 +218,12 @@ const ActionButtons: React.FC<Props> = ({
         onClick={stopAndRun(onStart)}
         disabled={startInProgress}
         aria-disabled={startInProgress}
-        className={`${baseButtonClass} w-full ${color.start} ${startInProgress ? "cursor-not-allowed opacity-60" : ""}`}
+        className={`${baseButtonClass} w-full bg-blue-600 text-white hover:bg-blue-700 ${startInProgress ? "cursor-not-allowed opacity-60" : ""}`}
       >
         {startInProgress ? (
-          <ArrowPathIcon className="mr-2 h-5 w-5 animate-spin" />
+          <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <ArrowPathIcon className="mr-2 h-5 w-5" />
+          <ArrowPathIcon className="mr-2 h-4 w-4" />
         )}
         {startLabel}
       </button>,
@@ -235,9 +235,9 @@ const ActionButtons: React.FC<Props> = ({
       <button
         key="complete"
         onClick={stopAndRun(onComplete)}
-        className={`${baseButtonClass} w-full ${color.complete}`}
+        className={`${baseButtonClass} w-full bg-blue-600 text-white hover:bg-blue-700`}
       >
-        <CheckCircleIcon className="mr-2 h-5 w-5" /> Mark Completed
+        <CheckCircleIcon className="mr-2 h-4 w-4" /> Complete
       </button>,
     );
   }
@@ -248,9 +248,9 @@ const ActionButtons: React.FC<Props> = ({
         key="viewReview"
         to={`/provider/review/${booking?.id}`}
         onClick={(e) => e.stopPropagation()}
-        className={`${baseButtonClass} w-full ${color.review}`}
+        className={`${baseButtonClass} w-full bg-white ${outlineColor.review}`}
       >
-        <StarIcon className="mr-2 h-5 w-5" /> View Review
+        <StarIcon className="mr-2 h-4 w-4" /> View
       </Link>,
     );
   }
