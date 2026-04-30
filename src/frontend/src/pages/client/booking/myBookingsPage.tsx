@@ -75,7 +75,6 @@ const MyBookingsPage: React.FC = () => {
     },
   ];
 
-
   // Status filter (now inside dropdown)
   const [statusFilter, setStatusFilter] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");

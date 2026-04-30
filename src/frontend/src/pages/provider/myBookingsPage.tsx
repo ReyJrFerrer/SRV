@@ -95,7 +95,7 @@ const ProviderBookingsPage: React.FC = () => {
 
   const displayName = profile?.name ? profile.name.split(" ")[0] : "User";
 
-const menuItemsData = [
+  const menuItemsData = [
     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
     { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
     {

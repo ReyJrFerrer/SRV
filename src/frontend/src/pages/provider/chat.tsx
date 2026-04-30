@@ -368,13 +368,13 @@ const ClientChatPage: React.FC = () => {
         </div>
       </header>
 
-{/* Side Menu */}
-        <SideMenuDrawer
-          isOpen={showMenu}
-          onClose={() => setShowMenu(false)}
-          items={menuItemsData}
-          userInfo={{ name: displayName, to: "/provider/profile" }}
-        />
+      {/* Side Menu */}
+      <SideMenuDrawer
+        isOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        items={menuItemsData}
+        userInfo={{ name: displayName, to: "/provider/profile" }}
+      />
 
       <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (

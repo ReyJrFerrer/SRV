@@ -299,7 +299,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         ref={headerRef}
         data-tour="client-header"
         // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
-        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm ${className}`}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-yellow-200  p-4 shadow-sm ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
         <div

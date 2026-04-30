@@ -45,16 +45,13 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-50 bg-black/50"
-        onClick={onClose}
-      />
-      <div className="fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] bg-white shadow-2xl overflow-y-auto">
+      <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose} />
+      <div className="fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] overflow-y-auto bg-white shadow-2xl">
         {/* Profile Section */}
         {userInfo && (
           <div
             onClick={() => navigateTo(userInfo.to)}
-            className="flex items-center gap-3 bg-blue-600 p-5 cursor-pointer"
+            className="flex cursor-pointer items-center gap-3 bg-blue-600 p-5"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
               <UserCircleIcon className="h-8 w-8" />
@@ -76,7 +73,7 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
                 e.preventDefault();
                 navigateTo(item.to || "");
               }}
-              className="flex items-center gap-4 px-5 py-4 cursor-pointer text-gray-700 hover:bg-blue-100"
+              className="flex cursor-pointer items-center gap-4 px-5 py-4 text-gray-700 hover:bg-blue-100"
             >
               {item.icon && <item.icon className="h-5 w-5" />}
               {item.label}
@@ -91,7 +88,7 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               onClose();
               logout();
             }}
-            className="flex items-center gap-4 px-5 py-4 cursor-pointer text-red-600 hover:bg-red-50 w-full text-left"
+            className="flex w-full cursor-pointer items-center gap-4 px-5 py-4 text-left text-red-600 hover:bg-red-50"
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5" />
             Log Out

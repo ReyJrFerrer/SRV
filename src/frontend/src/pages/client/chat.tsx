@@ -74,7 +74,6 @@ const ClientChatPage: React.FC = () => {
     },
   ];
 
-
   const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
     useState<string>(location.state?.otherUserImage || "");
 
@@ -418,13 +417,13 @@ const ClientChatPage: React.FC = () => {
         </div>
       </header>
 
-{/* Side Menu */}
-        <SideMenuDrawer
-          isOpen={showMenu}
-          onClose={() => setShowMenu(false)}
-          items={menuItemsData}
-          userInfo={{ name: displayName, to: "/client/profile" }}
-        />
+      {/* Side Menu */}
+      <SideMenuDrawer
+        isOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        items={menuItemsData}
+        userInfo={{ name: displayName, to: "/client/profile" }}
+      />
 
       <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (
