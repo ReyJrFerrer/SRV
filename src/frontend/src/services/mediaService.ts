@@ -1130,11 +1130,23 @@ export const uploadProblemProofMedia = async (
   const MAX_VIDEO_MB = 25; // guard for very large clips
   const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 
+  // Allowed types for proof media - images only, NO PDFs
+  const PROOF_MEDIA_ALLOWED_TYPES = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+    "image/svg+xml",
+  ];
+
   if (files.length > MAX_FILES) {
     throw new Error(`Maximum ${MAX_FILES} attachments allowed`);
   }
 
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  const allowedTypes = options.allowedTypes || PROOF_MEDIA_ALLOWED_TYPES;
   const uploadMediaFn = httpsCallable<
     {
       fileName: string;
@@ -1152,7 +1164,14 @@ export const uploadProblemProofMedia = async (
     const isVideo = ACCEPTED_VIDEO_TYPES.includes(file.type);
     if (!isImage && !isVideo) {
       throw new Error(
-        `Unsupported file type ${file.type}. Allowed images and videos (MP4/WEBM/MOV).`,
+        `Unsupported file type ${file.type}. Allowed images only.`,
+      );
+    }
+
+    // Additional validation using allowed types
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(
+        `File type ${file.type} is not supported. Allowed types: ${allowedTypes.join(", ")}`,
       );
     }
 
