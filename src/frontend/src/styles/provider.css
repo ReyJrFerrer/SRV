@@ -113,4 +113,120 @@
   .nav-item.active {
     @apply text-teal-400;
   }
+
+  /* Service Card Design System - Clean & Professional */
+  .service-card-clean {
+    @apply relative flex flex-col rounded-2xl bg-white shadow-sm transition-all duration-200;
+  }
+
+  .service-card-clean:hover {
+    @apply shadow-md;
+  }
+
+  .service-card-image {
+    @apply h-40 w-full rounded-t-2xl object-cover;
+  }
+
+  .service-card-content {
+    @apply flex flex-1 flex-col p-4;
+  }
+
+  .service-card-title {
+    @apply line-clamp-2 text-lg font-bold text-gray-900;
+  }
+
+  .service-card-rating {
+    @apply mt-1 flex items-center gap-1 text-sm;
+  }
+
+  .service-card-rating-value {
+    @apply font-semibold text-gray-900;
+  }
+
+  .service-card-rating-count {
+    @apply text-gray-500;
+  }
+
+  /* Status Text - No badges, just colored text */
+  .service-status-text {
+    @apply text-sm font-medium;
+  }
+
+  .service-status-active {
+    @apply text-green-600;
+  }
+
+  .service-status-inactive {
+    @apply text-gray-500;
+  }
+
+  .service-status-suspended {
+    @apply text-yellow-600;
+  }
+
+  /* Action Buttons - Clean, consistent styling */
+  .service-action-btn {
+    @apply flex flex-1 items-center justify-center rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors;
+  }
+
+  .service-action-btn-outline {
+    @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50;
+  }
+
+  .service-action-btn-outline-blue {
+    @apply border border-blue-600 bg-white text-blue-600 hover:bg-blue-50;
+  }
+
+  .service-action-btn-outline-red {
+    @apply border border-red-500 bg-white text-red-600 hover:bg-red-50;
+  }
+
+  .service-action-btn-outline-gray {
+    @apply border border-gray-400 bg-white text-gray-700 hover:bg-gray-100;
+  }
+
+  .service-action-btn-outline-gray-filled {
+    @apply flex-1 rounded-xl border border-gray-300 bg-gray-100 px-3 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200;
+  }
+
+  .service-action-btn-solid-blue {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+
+  .service-action-btn-solid-red {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+
+  /* Service Card Actions Row */
+  .service-card-actions {
+    @apply mt-4 grid grid-cols-2 gap-3;
+  }
+
+  /* Category Icon - Clean rounded square */
+  .service-category-icon {
+    @apply absolute left-3 top-3 h-10 w-10 rounded-xl border-2 border-white/80 object-cover shadow-sm;
+  }
+
+  /* Status Badge - Minimal pill style (only when needed) */
+  .service-status-pill {
+    @apply absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+
+  /* Empty State */
+  .service-empty-state {
+    @apply flex flex-col items-center justify-center py-12 text-center;
+  }
+
+  .service-empty-state-icon {
+    @apply mb-4 h-14 w-14 text-gray-300;
+  }
+
+  .service-empty-state-text {
+    @apply text-lg text-gray-600;
+  }
+
+  /* View All Button */
+  .service-view-all-btn {
+    @apply mt-6 flex items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50;
+  }
 }

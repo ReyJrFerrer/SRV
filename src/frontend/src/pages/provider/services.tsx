@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   PlusIcon,
-  WrenchScrewdriverIcon,
   TrashIcon,
   LockOpenIcon,
   LockClosedIcon,
@@ -174,7 +173,7 @@ const MyServicesPage: React.FC = () => {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-white to-yellow-50 pb-16 md:pb-0">
+    <div className="flex min-h-screen flex-col bg-gray-50 pb-16 md:pb-0">
       <Toaster position="top-center" richColors />
       <DeleteConfirmDialog
         open={!!deleteConfirmId}
@@ -222,15 +221,19 @@ const MyServicesPage: React.FC = () => {
         }
       />
 
-      <main className="container mx-auto flex-grow p-6 pb-10">
-        <div className="mt-4 flex items-center justify-end gap-4 md:hidden">
+      <main className="container mx-auto flex-grow px-4 py-6 pb-10 md:px-6">
+        <div className="mb-4 flex items-center justify-end md:hidden">
           <button
             onClick={() => setShowArchived(!showArchived)}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            className={`text-sm font-medium transition-colors ${
+              showArchived ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+            }`}
           >
             {showArchived
               ? "View Active"
-              : `View Archived (${archivedServicesList.length})`}
+              : archivedServicesList.length > 0
+              ? `Archived (${archivedServicesList.length})`
+              : "Archived"}
           </button>
         </div>
         {loading ? (
@@ -247,7 +250,7 @@ const MyServicesPage: React.FC = () => {
           </div>
         ) : showArchived ? (
           archivedServicesList.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {archivedServicesList.map((service, idx) => {
                 const activeCount = getServiceActiveBookingsCount(service.id);
                 const plural = activeCount !== 1 ? "s" : "";
@@ -270,13 +273,12 @@ const MyServicesPage: React.FC = () => {
               })}
             </div>
           ) : (
-            <div className="py-12 text-center text-gray-500">
-              <TrashIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
-              <p className="text-lg">No archived services found.</p>
+            <div className="service-empty-state">
+              <p className="service-empty-state-text">No archived services found.</p>
             </div>
           )
         ) : activeServicesList.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {activeServicesList.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
                 <ServiceCard
@@ -292,9 +294,8 @@ const MyServicesPage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="py-12 text-center text-gray-500">
-            <WrenchScrewdriverIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
-            <p className="mb-2 text-lg">
+          <div className="service-empty-state">
+            <p className="mb-2 service-empty-state-text">
               You haven't listed any active services yet.
             </p>
             <Tooltip
