@@ -28,9 +28,6 @@ const REVIEW_WINDOW_DAYS = 30;
 const MAX_COMMENT_LENGTH = 500;
 const MIN_RATING = 1;
 const MAX_RATING = 5;
-const CONSECUTIVE_BAD_REVIEWS_THRESHOLD = 5;
-// Number of consecutive bad reviews to trigger auto-report
-const BAD_REVIEW_RATING_THRESHOLD = 2; // Rating <= this value is considered "bad"
 
 /**
  * Generate a unique review ID
@@ -40,16 +37,6 @@ function generateId() {
   const now = Date.now();
   const random = Math.floor(Math.random() * 10000);
   return `${now}-${random}`;
-}
-
-/**
- * Generate a unique report ID
- * @return {string} Unique report ID
- */
-function generateReportId() {
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 10000);
-  return `report_${timestamp}_${random}`;
 }
 
 /**
@@ -84,155 +71,6 @@ function calculateQualityScore(review) {
   const lengthScore = commentLength / maxLength;
   const ratingScore = review.rating / MAX_RATING;
   return (lengthScore + ratingScore) / 2.0;
-}
-
-/**
- * Check for consecutive bad reviews and create auto-report if threshold is met
- * @param {string} collectionName - Collection to query ("reviews" or "providerReviews")
- * @param {string} filterField - Field to filter by ("providerId" or "clientId")
- * @param {string} userId - User ID to check reviews for
- * @param {object} newReview - The newly submitted review
- * @param {string} scenarioType - Type of scenario: "received" or "given"
- * @param {string} userType - Type of user: "provider" or "client"
- * @return {Promise<boolean>} True if a report was created, false otherwise
- */
-async function checkConsecutiveBadReviews(
-  collectionName,
-  filterField,
-  userId,
-  newReview,
-  scenarioType,
-  userType,
-) {
-  try {
-    // Only check if this review is bad (rating <= threshold)
-    if (newReview.rating > BAD_REVIEW_RATING_THRESHOLD) {
-      return false;
-    }
-
-
-    let recentReviewsSnap;
-    try {
-      // Get the last N reviews, ordered by createdAt desc
-      recentReviewsSnap = await db
-        .collection(collectionName)
-        .where(filterField, "==", userId)
-        .orderBy("createdAt", "desc")
-        .limit(CONSECUTIVE_BAD_REVIEWS_THRESHOLD)
-        .get();
-    } catch (queryError) {
-      // If query fails due to missing index, try fallback approach
-      if (queryError.code === 8 || queryError.message?.includes("index")) {
-        // Fallback: get all reviews and filter/sort client-side
-        const allReviewsSnap = await db
-          .collection(collectionName)
-          .where(filterField, "==", userId)
-          .get();
-
-        const allReviews = [];
-        allReviewsSnap.forEach((doc) => {
-          allReviews.push(doc.data());
-        });
-
-        // Sort by createdAt desc and take first N
-        const sortedReviews = allReviews.sort((a, b) => {
-          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return bTime - aTime;
-        });
-
-        // Create a mock snapshot-like structure
-        recentReviewsSnap = {
-          size: Math.min(CONSECUTIVE_BAD_REVIEWS_THRESHOLD, sortedReviews.length),
-          forEach: (callback) => {
-            sortedReviews.slice(0, CONSECUTIVE_BAD_REVIEWS_THRESHOLD).forEach((review) => {
-              callback({data: () => review});
-            });
-          },
-        };
-      } else {
-        throw queryError;
-      }
-    }
-
-    if (recentReviewsSnap.size === CONSECUTIVE_BAD_REVIEWS_THRESHOLD) {
-      // Check if all N reviews are bad (rating <= threshold)
-      let allBad = true;
-      const reviews = [];
-      recentReviewsSnap.forEach((doc) => {
-        const review = doc.data();
-        reviews.push(review);
-        if (review.rating > BAD_REVIEW_RATING_THRESHOLD) {
-          allBad = false;
-        }
-      });
-
-      if (allBad) {
-        const reportId = generateReportId();
-        const userName = userType === "provider" ? "Provider" : "Client";
-        const action = scenarioType === "received" ? "received" : "given";
-
-
-        // Get user profile for report details
-        const userDoc = await db.collection("users").doc(userId).get();
-        const userProfile = userDoc.exists ? userDoc.data() : null;
-        const displayName = userProfile?.name || `Unknown ${userName}`;
-        const userPhone = userProfile?.phone || userProfile?.phoneNumber || "N/A";
-
-        // Get service name for context
-        let serviceName = "Unknown Service";
-        if (newReview.serviceId) {
-          const serviceDoc = await db.collection("services").doc(newReview.serviceId).get();
-          if (serviceDoc.exists) {
-            serviceName = serviceDoc.data()?.name || "Unknown Service";
-          }
-        }
-
-        // Create ticket description with structured data
-        const title = `${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} Consecutive Bad Reviews - ` +
-          `${displayName} (${action} by ${userType})`;
-        const description = `${userName} ${displayName} has ${action}
-        ${CONSECUTIVE_BAD_REVIEWS_THRESHOLD} ` +
-          `consecutive bad reviews (rating <= ${BAD_REVIEW_RATING_THRESHOLD}).\n\n` +
-          `This is an automatically generated report.`;
-
-        const ticketDescription = JSON.stringify({
-          title: title,
-          description: description,
-          category: "bad_reviews",
-          timestamp: new Date().toISOString(),
-          source: `system_auto_report_consecutive_bad_reviews_${scenarioType}_${userType}`,
-          userId: userId,
-          userName: displayName,
-          userType: userType,
-          scenarioType: scenarioType,
-          serviceId: newReview.serviceId,
-          serviceName: serviceName,
-          reviewIds: reviews.map((r) => r.id),
-          ratings: reviews.map((r) => r.rating),
-          collection: collectionName,
-        });
-
-        const newReport = {
-          id: reportId,
-          userId: userId, // Report submitted by the user involved
-          userName: displayName,
-          userPhone: userPhone,
-          description: ticketDescription,
-          status: "open",
-          createdAt: new Date().toISOString(),
-        };
-
-        // Save report to Firestore
-        await db.collection("reports").doc(reportId).set(newReport);
-        return true;
-      }
-    }
-    return false;
-  } catch (error) {
-    // Don't fail the review submission if report creation fails - just log it
-    return false;
-  }
 }
 
 /**
@@ -385,43 +223,9 @@ exports.submitReview = onCall(async (request) => {
       return {success: true, data: newReview};
     });
 
-    // Process review for reputation with AI sentiment analysis
+    // Process review for reputation (AI content analysis is handled by Firestore trigger)
     // This is done outside the transaction to avoid long-running operations
     await processReviewForReputationInternal(result.data, true);
-
-    // Check for consecutive bad reviews and auto-create report if needed
-    // This is done outside the transaction to avoid long-running operations
-    // Check both scenarios:
-    // 1. Provider receives 5 consecutive bad reviews (from clients)
-    // 2. Client gives 5 consecutive bad reviews (to providers)
-    try {
-      const newReview = result.data;
-      const providerId = newReview.providerId;
-      const clientId = newReview.clientId;
-
-
-      // Scenario 1: Provider receives consecutive bad reviews
-      await checkConsecutiveBadReviews(
-        "reviews",
-        "providerId",
-        providerId,
-        newReview,
-        "received",
-        "provider",
-      );
-
-      // Scenario 2: Client gives consecutive bad reviews
-      await checkConsecutiveBadReviews(
-        "reviews",
-        "clientId",
-        clientId,
-        newReview,
-        "given",
-        "client",
-      );
-    } catch (reportError) {
-      // Don't fail the review submission if report creation fails - just log it
-    }
 
     return result;
   } catch (error) {
@@ -1608,40 +1412,6 @@ exports.submitProviderReview = onCall(async (request) => {
 
     // Process review for client reputation with AI sentiment analysis
     await processReviewForReputationInternal(result.data, true);
-
-    // Check for consecutive bad reviews and auto-create report if needed
-    // This is done outside the transaction to avoid long-running operations
-    // Check both scenarios:
-    // 1. Provider gives 5 consecutive bad reviews (to clients)
-    // 2. Client receives 5 consecutive bad reviews (from providers)
-    try {
-      const newReview = result.data;
-      const providerId = newReview.providerId;
-      const clientId = newReview.clientId;
-
-
-      // Scenario 1: Provider gives consecutive bad reviews
-      await checkConsecutiveBadReviews(
-        "providerReviews",
-        "providerId",
-        providerId,
-        newReview,
-        "given",
-        "provider",
-      );
-
-      // Scenario 2: Client receives consecutive bad reviews
-      await checkConsecutiveBadReviews(
-        "providerReviews",
-        "clientId",
-        clientId,
-        newReview,
-        "received",
-        "client",
-      );
-    } catch (reportError) {
-      // Don't fail the review submission if report creation fails - just log it
-    }
 
     return result;
   } catch (error) {

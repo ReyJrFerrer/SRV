@@ -23,7 +23,7 @@ function generateId() {
  * Creates an in-app notification and sends a push notification.
  */
 exports.onMessageCreated = onDocumentCreated(
-  "messages/{messageId}",
+  {document: "messages/{messageId}", database: "srvefirestore"},
   async (event) => {
     const snap = event.data;
     if (!snap) return;

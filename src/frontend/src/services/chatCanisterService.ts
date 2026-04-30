@@ -31,6 +31,17 @@ const activeListeners = new Map<
   }
 >();
 
+// Shared listeners for conversation summaries (multi-subscriber pattern)
+// Mirrors the sharedNotificationListeners pattern in notificationCanisterService
+const sharedConversationSummariesListeners = new Map<
+  string,
+  {
+    unsubscribe: AsyncUnsubscribe;
+    callbacks: Set<(summaries: FrontendConversationSummary[]) => void>;
+    lastData: FrontendConversationSummary[] | null;
+  }
+>();
+
 // Helper to safely unsubscribe a listener
 const safeUnsubscribe = async (
   listenerId: string,
@@ -699,62 +710,103 @@ export const chatCanisterService = {
   },
 
   /**
-   * Subscribe to real-time updates for conversation summaries (including last messages)
+   * Subscribe to real-time updates for conversation summaries (including last messages).
+   * Uses a shared listener pattern (same as notificationCanisterService) so the
+   * underlying Firestore onSnapshot survives component unmount/remount cycles
+   * (e.g. NavigationBar remounting on every route change).
    */
   async subscribeToConversationSummaries(
     userId: string,
-    onUpdate: (summaries: any[]) => void,
+    onUpdate: (summaries: FrontendConversationSummary[]) => void,
     onError?: (error: Error) => void,
   ): Promise<AsyncUnsubscribe> {
-    let unsubscribed = false;
+    const listenerId = `conversation-summaries-${userId}`;
+    const existing = sharedConversationSummariesListeners.get(listenerId);
 
-    // Debounce the update function
-    const updateSummaries = debounce((conversations: any[]) => {
-      if (unsubscribed) return;
-
-      try {
-        const summaries = conversations.map((conv) => {
-          const backendSummary = {
-            conversation: conv,
-            lastMessage: [],
-          };
-          return adaptBackendConversationSummary(backendSummary);
-        });
-
-        // Sort by last message time (most recent first)
-        summaries.sort((a, b) => {
-          const timeA =
-            a.conversation.lastMessageAt || a.conversation.createdAt;
-          const timeB =
-            b.conversation.lastMessageAt || b.conversation.createdAt;
-          return new Date(timeB).getTime() - new Date(timeA).getTime();
-        });
-
-        if (!unsubscribed) {
-          onUpdate(summaries);
+    if (existing) {
+      existing.callbacks.add(onUpdate);
+      if (existing.lastData) {
+        onUpdate(existing.lastData);
+      }
+      return async () => {
+        const l = sharedConversationSummariesListeners.get(listenerId);
+        if (l) {
+          l.callbacks.delete(onUpdate);
+          if (l.callbacks.size === 0) {
+            setTimeout(async () => {
+              const current =
+                sharedConversationSummariesListeners.get(listenerId);
+              if (current && current.callbacks.size === 0) {
+                await current.unsubscribe();
+                sharedConversationSummariesListeners.delete(listenerId);
+              }
+            }, 1000);
+          }
         }
-      } catch (error) {}
+      };
+    }
+
+    // First subscriber — create the shared listener
+    const notifyAll = debounce((summaries: FrontendConversationSummary[]) => {
+      const listener = sharedConversationSummariesListeners.get(listenerId);
+      if (listener) {
+        listener.lastData = summaries;
+        listener.callbacks.forEach((cb) => cb(summaries));
+      }
     }, 300);
 
-    try {
-      const unsubscribe = await this.subscribeToConversations(
-        userId,
-        (conversations) => {
-          if (unsubscribed) return;
-          updateSummaries(conversations);
-        },
-        onError,
-      );
+    const unsubscribe = await this.subscribeToConversations(
+      userId,
+      (conversations) => {
+        try {
+          const summaries = conversations.map((conv) => {
+            const backendSummary = {
+              conversation: conv,
+              lastMessage: [],
+            };
+            return adaptBackendConversationSummary(backendSummary);
+          });
 
-      return async () => {
-        if (unsubscribed) return;
-        unsubscribed = true;
-        await unsubscribe();
-      };
-    } catch (error) {
-      if (onError) onError(error as Error);
-      return async () => {};
-    }
+          summaries.sort((a, b) => {
+            const timeA =
+              a.conversation.lastMessageAt || a.conversation.createdAt;
+            const timeB =
+              b.conversation.lastMessageAt || b.conversation.createdAt;
+            return new Date(timeB).getTime() - new Date(timeA).getTime();
+          });
+
+          notifyAll(summaries);
+        } catch (error) {}
+      },
+      onError,
+    );
+
+    const entry = {
+      unsubscribe,
+      callbacks: new Set<(summaries: FrontendConversationSummary[]) => void>([
+        onUpdate,
+      ]),
+      lastData: null as FrontendConversationSummary[] | null,
+    };
+
+    sharedConversationSummariesListeners.set(listenerId, entry);
+
+    return async () => {
+      const l = sharedConversationSummariesListeners.get(listenerId);
+      if (l) {
+        l.callbacks.delete(onUpdate);
+        if (l.callbacks.size === 0) {
+          setTimeout(async () => {
+            const current =
+              sharedConversationSummariesListeners.get(listenerId);
+            if (current && current.callbacks.size === 0) {
+              await current.unsubscribe();
+              sharedConversationSummariesListeners.delete(listenerId);
+            }
+          }, 1000);
+        }
+      }
+    };
   },
 };
 

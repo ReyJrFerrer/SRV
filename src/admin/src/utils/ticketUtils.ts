@@ -1,5 +1,20 @@
 import { REPORT_PREFIX } from "./constants";
 
+export interface AiAnalysisData {
+  threatLevel?: string;
+  confidence?: number;
+  patterns?: string[];
+  summary?: string;
+  recommendation?: string;
+  clientId?: string;
+  clientName?: string;
+  providerId?: string;
+  providerName?: string;
+  reviewId?: string;
+  rating?: number;
+  comment?: string;
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -20,6 +35,7 @@ export interface Ticket {
   tags: string[];
   comments?: Comment[];
   attachments?: string[];
+  aiAnalysis?: AiAnalysisData;
 }
 
 export interface Comment {
@@ -48,6 +64,13 @@ const buildTagsFromSource = (source: string, category: string): string[] => {
     tags.push("provider");
   } else if (source === "client_report" || source === "client_cancellation") {
     tags.push("client");
+  }
+
+  if (source === "ai_analysis" || source?.includes?.("ai_analysis")) {
+    tags.push("ai-analysis");
+  }
+  if (source?.includes?.("consecutive_bad_reviews")) {
+    tags.push("review-bomb");
   }
 
   if (category === "cancellation") {
@@ -82,6 +105,22 @@ export const convertReportsToTickets = (
         tags: tags,
         comments: [],
         attachments: report.attachments || [],
+        aiAnalysis: parsedData.aiAnalysis
+          ? {
+              threatLevel: parsedData.aiAnalysis.threatLevel,
+              confidence: parsedData.aiAnalysis.confidence,
+              patterns: parsedData.aiAnalysis.patterns,
+              summary: parsedData.aiAnalysis.summary,
+              recommendation: parsedData.aiAnalysis.recommendation,
+              clientId: parsedData.clientId,
+              clientName: parsedData.clientName,
+              providerId: parsedData.providerId,
+              providerName: parsedData.providerName,
+              reviewId: parsedData.reviewId,
+              rating: parsedData.rating,
+              comment: parsedData.comment,
+            }
+          : undefined,
       };
     } else {
       ticket = {

@@ -411,3 +411,13 @@ exports.isAdminPasswordSet = isAdminPasswordSet;
 // Export Contact Form Handler
 const {sendContactEmail} = require("./sendContactEmail");
 exports.sendContactEmail = sendContactEmail;
+
+// Export Review Analysis Functions (Gemini AI)
+const {
+  analyzeNewReview,
+  queueReviewAnalysis,
+  batchAnalyzeReviews,
+} = require("./src/queueReviewAnalysis");
+exports.analyzeNewReview = analyzeNewReview;
+exports.queueReviewAnalysis = queueReviewAnalysis;
+exports.batchAnalyzeReviews = batchAnalyzeReviews;
