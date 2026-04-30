@@ -156,37 +156,37 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
   return (
     <>
       <header
-        className={`sticky top-0 z-40 w-full border-b border-gray-100 bg-white/90 px-4 py-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] backdrop-blur-md ${className}`}
+        className={`sticky top-0 z-40 w-full border-b border-gray-100 bg-white/90 px-4 py-4 shadow-sm ${className}`}
       >
         <div className="mx-auto flex w-full max-w-screen-lg items-center justify-between">
-          <div className="flex w-12 items-center justify-start">
+          <div className="flex w-10 items-center justify-start">
             {showBackButton && (
               <button
                 onClick={handleBack}
-                className="flex h-10 w-10 items-center justify-center text-blue-600 transition-colors hover:text-blue-700 active:scale-95"
+                className="flex h-9 w-9 items-center justify-center text-blue-600 transition-colors hover:text-blue-700 active:scale-95"
                 aria-label="Go back"
               >
-                <ChevronLeftIcon className="h-6 w-6" />
+                <ChevronLeftIcon className="h-5 w-5" />
               </button>
             )}
           </div>
 
-          <div className="flex flex-1 justify-center px-4">
-            <h1 className="truncate text-xl font-bold text-gray-900">
+          <div className="flex flex-1 justify-center px-2">
+            <h1 className="truncate text-lg font-bold text-gray-900">
               {title}
             </h1>
           </div>
 
-          <div className="flex w-12 items-center justify-end gap-2">
+          <div className="flex w-10 items-center justify-end gap-2">
             {rightAction}
             {showBurger && (
               <button
                 onClick={handleMenuToggle}
-                className="flex h-10 w-10 items-center justify-center text-blue-600 transition-colors hover:text-blue-700 active:scale-95"
+                className="flex h-9 w-9 items-center justify-center text-blue-600 transition-colors hover:text-blue-700 active:scale-95"
                 aria-label="Menu"
                 aria-expanded={showMenu}
               >
-                <Bars3Icon className="h-6 w-6" />
+                <Bars3Icon className="h-5 w-5" />
               </button>
             )}
           </div>

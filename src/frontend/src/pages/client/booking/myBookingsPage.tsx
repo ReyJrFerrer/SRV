@@ -399,18 +399,18 @@ const MyBookingsPage: React.FC = () => {
     <>
       <div className="flex min-h-screen flex-col bg-gray-50">
         <SpotlightTour flowType="client-bookings" />
-        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
-          <div className="flex h-16 w-full items-center justify-between px-4">
-            <div className="flex h-10 w-10" />
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
+        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white py-4 shadow-sm">
+          <div className="flex h-full w-full items-center justify-between px-4">
+            <div className="flex w-10 items-center justify-center" />
+            <h1 className="text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
               My Bookings
             </h1>
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="flex h-10 w-10 items-center justify-center text-blue-600 hover:text-blue-700"
+              className="flex w-9 items-center justify-center text-blue-600 hover:text-blue-700"
             >
               <svg
-                className="h-6 w-6"
+                className="h-5 w-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
