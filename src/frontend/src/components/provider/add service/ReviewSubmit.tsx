@@ -71,7 +71,7 @@ const ReviewSubmit: React.FC<Props> = ({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="flex items-start gap-3 rounded-xl bg-gray-50 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg">
                 <MapPinIcon className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
@@ -90,7 +90,7 @@ const ReviewSubmit: React.FC<Props> = ({
             </div>
 
             <div className="flex items-start gap-3 rounded-xl bg-gray-50 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg ">
                 <CalendarDaysIcon className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
@@ -113,7 +113,7 @@ const ReviewSubmit: React.FC<Props> = ({
             </div>
 
             <div className="flex items-start gap-3 rounded-xl bg-gray-50 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg">
                 <AdjustmentsVerticalIcon className="h-5 w-5 text-yellow-600" />
               </div>
               <div>

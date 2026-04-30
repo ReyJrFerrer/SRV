@@ -48,13 +48,13 @@ const HeroSection: React.FC<Props> = ({
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const [currentImageSrc, setCurrentImageSrc] = React.useState<string>("");
 
-  // Check if we have a valid cached/loaded image (data URL or blob URL)
-  const hasValidImage =
-    serviceImages &&
-    serviceImages.length > 0 &&
-    serviceImages[0].dataUrl &&
-    (serviceImages[0].dataUrl.startsWith("data:") ||
-      serviceImages[0].dataUrl.startsWith("blob:"));
+  // Get the first image - prefer dataUrl (loaded), fall back to url (raw)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const firstImage: any = serviceImages && serviceImages.length > 0 ? serviceImages[0] : null;
+  const imageSrc = firstImage?.dataUrl || firstImage?.url || null;
+
+  // Check if we have a valid image (dataUrl or url)
+  const hasValidImage = !!(firstImage && (firstImage.dataUrl || firstImage.url));
 
   // Determine the fallback image source
   const getFallbackImageSrc = () => {
@@ -67,9 +67,7 @@ const HeroSection: React.FC<Props> = ({
   // Effect to handle image loading and preloading
   React.useEffect(() => {
     const loadImage = async () => {
-      if (hasValidImage && serviceImages[0].dataUrl) {
-        const imageSrc = serviceImages[0].dataUrl;
-
+      if (hasValidImage && imageSrc) {
         // If it's already the current image and loaded, no need to reload
         if (currentImageSrc === imageSrc && imageLoaded) {
           return;
@@ -79,9 +77,22 @@ const HeroSection: React.FC<Props> = ({
         setImageLoaded(false);
         setCurrentImageSrc(imageSrc);
 
-        // For SVG or data URLs, mark as loaded immediately
-        if (imageSrc.endsWith(".svg") || imageSrc.startsWith("data:")) {
-          setImageLoaded(true);
+        // For SVG, data URLs, or remote URLs, handle appropriately
+        if (imageSrc.endsWith(".svg") || imageSrc.startsWith("data:") || imageSrc.startsWith("http")) {
+          // For remote URLs and SVGs, we need to check if they load
+          if (imageSrc.startsWith("http")) {
+            const img = new Image();
+            img.onload = () => {
+              setImageLoaded(true);
+            };
+            img.onerror = () => {
+              setCurrentImageSrc(getFallbackImageSrc());
+              setImageLoaded(true);
+            };
+            img.src = imageSrc;
+          } else {
+            setImageLoaded(true);
+          }
           return;
         }
 
@@ -110,8 +121,11 @@ const HeroSection: React.FC<Props> = ({
   }, [
     serviceImages,
     hasValidImage,
+    imageSrc,
     isLoadingServiceImages,
     service.category?.slug,
+    currentImageSrc,
+    imageLoaded,
   ]);
 
   return (
