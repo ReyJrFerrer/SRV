@@ -142,22 +142,30 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
       return () =>
         document.removeEventListener("mousedown", handleClickOutside);
     }
-}, [showMenu]);
+  }, [showMenu]);
 
   interface MenuItemData {
-  label: string;
-  to: string;
-  icon?: React.ComponentType<{ className?: string }>;
-}
+    label: string;
+    to: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }
 
-const menuItemsData: MenuItemData[] = [
+  const menuItemsData: MenuItemData[] = [
     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
     { label: "My Services", to: "/provider/services", icon: Cog6ToothIcon },
     { label: "Wallet", to: "/provider/wallet", icon: CurrencyDollarIcon },
     { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
-    { label: "Terms & Conditions", to: "/provider/terms", icon: DocumentTextIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/provider/terms",
+      icon: DocumentTextIcon,
+    },
     { label: "Report", to: "/provider/report", icon: ExclamationTriangleIcon },
-    { label: "Help & Support", to: "/provider/help", icon: QuestionMarkCircleIcon },
+    {
+      label: "Help & Support",
+      to: "/provider/help",
+      icon: QuestionMarkCircleIcon,
+    },
   ];
 
   const handleMenuClick = (to: string) => {
@@ -169,6 +177,8 @@ const menuItemsData: MenuItemData[] = [
   const headerRef = useRef<HTMLDivElement | null>(null);
   // const [setHeaderHeight] = useState<number | null>(null);
   const [isMini, setIsMini] = useState(false);
+  
+  // Disabled: increased thresholds to prevent mini header at top
   useEffect(() => {
     // Hysteresis + rAF; robustly pick the correct scroll source (container or window)
     const candidate = scrollTargetRef?.current ?? null;
@@ -181,8 +191,8 @@ const menuItemsData: MenuItemData[] = [
     const getScrollY = () =>
       targetEl instanceof Window ? targetEl.scrollY : targetEl.scrollTop || 0;
     let ticking = false;
-    const ENTER_MINI_AT = 140;
-    const EXIT_MINI_BELOW = 100;
+    const ENTER_MINI_AT = 200; // increased - only activate when well scrolled down
+    const EXIT_MINI_BELOW = 150; // hysteresis
 
     const onScroll = () => {
       const y = getScrollY();

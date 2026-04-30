@@ -1,5 +1,9 @@
 import React from "react";
-import { XMarkIcon, ArrowRightOnRectangleIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import {
+  XMarkIcon,
+  ArrowRightOnRectangleIcon,
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
 import { useLogout } from "../../hooks/logout";
 
 interface MenuItem {
@@ -71,7 +75,7 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
           )}
 
           {/* Menu Items */}
-          <div className="flex-1 overflow-y-auto py-3 bg-blue-50">
+          <div className="flex-1 overflow-y-auto bg-blue-50 py-3">
             {items.map((item, index) => (
               <button
                 key={index}

@@ -5,12 +5,9 @@ import {
   ProviderNotification,
 } from "../../hooks/useProviderNotificationsWithPush";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
-import {
-  EnvelopeOpenIcon,
-  InboxIcon,
-  EllipsisVerticalIcon,
-} from "@heroicons/react/24/solid";
+import { EnvelopeOpenIcon, InboxIcon } from "@heroicons/react/24/solid";
 import NotificationItem from "../../components/provider/NotificationItem";
+import SmartHeader from "../../components/common/SmartHeader";
 
 const NotificationsPageSP = () => {
   const navigate = useNavigate();
@@ -298,133 +295,52 @@ const NotificationsPageSP = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="sticky top-0 z-20 bg-white">
-        <div className="relative flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-center text-xl font-extrabold tracking-tight text-black lg:text-2xl">
-            Notifications
-          </h1>
-          {stableNotifications.length > 0 && (
-            <>
-              <div className="hidden sm:block" aria-hidden="true" />
-
-              <div
-                className={`absolute inset-y-0 right-4 hidden items-center gap-2 transition-opacity duration-200 lg:flex ${
-                  loading ? "pointer-events-none opacity-0" : "opacity-100"
-                }`}
+      <SmartHeader
+        title="Notifications"
+        showBackButton={false}
+        userRole="provider"
+        rightAction={
+          stableNotifications.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (!editMode) {
+                    setEditMode(true);
+                    clearSelection();
+                  } else {
+                    setEditMode(false);
+                    clearSelection();
+                  }
+                }}
+                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
               >
-                <button
-                  onClick={() => {
-                    if (!editMode) {
-                      setEditMode(true);
-                      clearSelection();
-                    } else {
-                      setEditMode(false);
-                      clearSelection();
-                    }
-                  }}
-                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-                >
-                  {editMode ? "Done" : "Edit"}
-                </button>
-                <button
-                  onClick={handleSelectAll}
-                  className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-                >
-                  {selectedIds.length > 0 &&
-                  selectedIds.length ===
-                    stableNotifications.filter(
-                      (n) => !deletedIds.includes(n.id),
-                    ).length
-                    ? "Clear"
-                    : "Select all"}
-                </button>
-                {unread.length > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-                  >
-                    <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-                    Mark all as read
-                  </button>
-                )}
-              </div>
-
-              <div
-                className={`absolute inset-y-0 right-4 flex items-center transition-opacity duration-200 lg:hidden ${
-                  loading ? "pointer-events-none opacity-0" : "opacity-100"
-                }`}
+                {editMode ? "Done" : "Edit"}
+              </button>
+              <button
+                onClick={handleSelectAll}
+                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
               >
+                {selectedIds.length > 0 &&
+                selectedIds.length ===
+                  stableNotifications.filter(
+                    (n) => !deletedIds.includes(n.id),
+                  ).length
+                  ? "Clear"
+                  : "Select all"}
+              </button>
+              {unread.length > 0 && (
                 <button
-                  ref={mobileMenuButtonRef}
-                  onClick={() => setMobileMenuOpen((s) => !s)}
-                  className="text-black-600 rounded-full p-2 hover:bg-gray-100"
-                  aria-haspopup="true"
-                  aria-expanded={mobileMenuOpen}
+                  onClick={markAllAsRead}
+                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
                 >
-                  <EllipsisVerticalIcon className="h-6 w-6" />
+                  <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                  Mark all as read
                 </button>
-
-                {mobileMenuOpen && (
-                  <div
-                    ref={mobileMenuRef}
-                    className="absolute right-0 top-full z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-blue-500 ring-opacity-5"
-                  >
-                    <div className="py-1" role="menu">
-                      <button
-                        onClick={() => {
-                          if (!editMode) {
-                            setEditMode(true);
-                            clearSelection();
-                          } else {
-                            setEditMode(false);
-                            clearSelection();
-                          }
-                          setMobileMenuOpen(false);
-                        }}
-                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
-                        role="menuitem"
-                      >
-                        {editMode ? "Done" : "Edit"}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          handleSelectAll();
-                          setMobileMenuOpen(false);
-                        }}
-                        className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
-                        role="menuitem"
-                      >
-                        {selectedIds.length > 0 &&
-                        selectedIds.length ===
-                          stableNotifications.filter(
-                            (n) => !deletedIds.includes(n.id),
-                          ).length
-                          ? "Clear selection"
-                          : "Select all"}
-                      </button>
-
-                      {unread.length > 0 && (
-                        <button
-                          onClick={() => {
-                            markAllAsRead();
-                            setMobileMenuOpen(false);
-                          }}
-                          className="flex w-full items-center px-4 py-2 text-left text-sm font-medium text-blue-700 hover:bg-gray-100"
-                          role="menuitem"
-                        >
-                          <EnvelopeOpenIcon className="mr-2 h-4 w-4" />
-                          Mark all as read
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </header>
+              )}
+            </div>
+          ) : undefined
+        }
+      />
 
       {/* Tabs navigation for notification categories */}
       <div className="mx-auto mb-6 mt-4 max-w-2xl px-4">

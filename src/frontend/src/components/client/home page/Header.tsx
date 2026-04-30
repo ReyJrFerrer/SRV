@@ -67,10 +67,11 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const miniMapRef = useRef<MapFunctionsHandle | null>(null);
   useEffect(() => {
     // Add hysteresis + rAF throttling to avoid rapid toggle near boundary
+    // Only enable mini mode AFTER scrolling down significantly, never at top
     let lastY = window.scrollY;
     let ticking = false;
-    const ENTER_MINI_AT = 140; // px
-    const EXIT_MINI_BELOW = 100; // px
+    const ENTER_MINI_AT = 200; // increased threshold - only activate when well scrolled down
+    const EXIT_MINI_BELOW = 150; // hysteresis to prevent flickering
 
     const onScroll = () => {
       const y = window.scrollY;
@@ -119,20 +120,28 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       return () =>
         document.removeEventListener("mousedown", handleClickOutside);
     }
-}, [showMenu]);
+  }, [showMenu]);
 
   interface MenuItemData {
-  label: string;
-  to: string;
-  icon?: React.ComponentType<{ className?: string }>;
-}
+    label: string;
+    to: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }
 
-const menuItemsData: MenuItemData[] = [
+  const menuItemsData: MenuItemData[] = [
     { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
     { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
-    { label: "Terms & Conditions", to: "/client/terms", icon: DocumentTextIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/client/terms",
+      icon: DocumentTextIcon,
+    },
     { label: "Report", to: "/client/report", icon: ExclamationTriangleIcon },
-    { label: "Help & Support", to: "/client/help", icon: QuestionMarkCircleIcon },
+    {
+      label: "Help & Support",
+      to: "/client/help",
+      icon: QuestionMarkCircleIcon,
+    },
   ];
 
   const handleMenuClick = (to: string) => {

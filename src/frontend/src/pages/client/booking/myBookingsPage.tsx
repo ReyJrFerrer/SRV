@@ -18,11 +18,17 @@ import {
   SparklesIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  UserCircleIcon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/solid";
 import MonthlyBookingsCalendar, {
   CalendarItem,
 } from "../../../components/common/calendar/MonthlyBookingsCalendar";
 import SpotlightTour from "../../../components/common/SpotlightTour";
+import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
+import authCanisterService from "../../../services/authCanisterService";
 
 type BookingStatusTab =
   | "ALL"
@@ -39,6 +45,31 @@ const MyBookingsPage: React.FC = () => {
   const { getServiceReviews, calculateServiceRating } = useReviewManagement({
     autoLoadUserReviews: false,
   });
+
+  // Side menu state
+  const [showMenu, setShowMenu] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+
+  // Fetch user profile
+  useEffect(() => {
+    authCanisterService.getMyProfile()
+      .then(setProfile)
+      .catch(() => {});
+  }, []);
+
+  const displayName = profile?.name ? profile.name.split(" ")[0] : "User";
+
+  const menuItemsData = [
+    { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
+    { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
+    { label: "Terms & Conditions", to: "/client/terms", icon: DocumentTextIcon },
+    { label: "Help & Support", to: "/client/help", icon: QuestionMarkCircleIcon },
+  ];
+
+  const handleMenuClick = (to: string) => {
+    setShowMenu(false);
+    navigate(to);
+  };
 
   // Status filter (now inside dropdown)
   const [statusFilter, setStatusFilter] = useState<BookingStatusTab>("ALL");
@@ -365,9 +396,25 @@ const MyBookingsPage: React.FC = () => {
             <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
               My Bookings
             </h1>
-            <div className="flex h-10 w-10" />
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
         </header>
+
+        {/* Side Menu */}
+        <SideMenuDrawer
+          isOpen={showMenu}
+          onClose={() => setShowMenu(false)}
+          items={menuItemsData}
+          onItemClick={handleMenuClick}
+          userInfo={{ name: displayName, to: "/client/profile" }}
+        />
 
         <div className="sticky z-10 bg-white px-4 pt-4 shadow-sm">
           <div className="tour-bookings-filter mb-4 flex items-center justify-between">

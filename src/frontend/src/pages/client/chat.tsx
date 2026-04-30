@@ -8,8 +8,14 @@ import {
   PaperAirplaneIcon,
   ChatBubbleLeftRightIcon,
   ArrowLeftIcon,
+  UserCircleIcon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/solid";
 import EmptyState from "../../components/common/EmptyState";
+import SideMenuDrawer from "../../components/common/SideMenuDrawer";
+import authCanisterService from "../../services/authCanisterService";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -32,12 +38,38 @@ const ClientChatPage: React.FC = () => {
   const [isDesktop, setIsDesktop] = useState<boolean>(
     window.innerWidth >= 1024,
   );
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(location.state?.conversationId || null);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
+    location.state?.conversationId || null,
+  );
   const [selectedOtherUserName, setSelectedOtherUserName] = useState<string>(
     location.state?.otherUserName || "",
   );
+
+  // Side menu state
+  const [showMenu, setShowMenu] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+
+  // Fetch user profile
+  useEffect(() => {
+    authCanisterService.getMyProfile()
+      .then(setProfile)
+      .catch(() => {});
+  }, []);
+
+  const displayName = profile?.name ? profile.name.split(" ")[0] : "User";
+
+  const menuItemsData = [
+    { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
+    { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
+    { label: "Terms & Conditions", to: "/client/terms", icon: DocumentTextIcon },
+    { label: "Help & Support", to: "/client/help", icon: QuestionMarkCircleIcon },
+  ];
+
+  const handleMenuClick = (to: string) => {
+    setShowMenu(false);
+    navigate(to);
+  };
+
   const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
     useState<string>(location.state?.otherUserImage || "");
 
@@ -172,19 +204,19 @@ const ClientChatPage: React.FC = () => {
           } else {
             el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
           }
-        } else {
-          // For mobile where the window itself is the scrollable container
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: "smooth",
-          });
         }
+        // Disabled: was causing page to scroll unwanted when leaving chat
+        // else {
+        //   window.scrollTo({
+        //     top: document.documentElement.scrollHeight,
+        //     behavior: "smooth",
+        //   });
+        // }
       } catch {
-        // Fallback
-        window.scrollTo(0, document.documentElement.scrollHeight);
+        // Fallback - disabled to prevent unwanted scrolling
       }
     };
-    // Immediate
+    // Immediate - only scroll within container
     scrollBottom();
     // Next frame(s) for layout updates
     const raf1 = requestAnimationFrame(scrollBottom);
@@ -360,9 +392,25 @@ const ClientChatPage: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             Messages
           </h1>
-          <div className="flex h-10 w-10" />
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </div>
       </header>
+
+      {/* Side Menu */}
+      <SideMenuDrawer
+        isOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        items={menuItemsData}
+        onItemClick={handleMenuClick}
+        userInfo={{ name: displayName, to: "/client/profile" }}
+      />
 
       <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (

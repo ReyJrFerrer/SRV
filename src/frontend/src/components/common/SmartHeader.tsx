@@ -12,6 +12,8 @@ import {
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useLogout } from "../../hooks/logout";
+import { useAuth } from "../../context/AuthContext";
+import authCanisterService from "../../services/authCanisterService";
 
 interface MenuItem {
   label: string;
@@ -46,8 +48,21 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const { logout } = useLogout();
+  const { isAuthenticated } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user profile for display name
+  useEffect(() => {
+    if (isAuthenticated) {
+      authCanisterService.getMyProfile()
+        .then(setProfile)
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
+
+  const displayName = profile?.name ? profile.name.split(" ")[0] : "User";
 
   const handleBack = () => {
     if (onBack) {
@@ -83,18 +98,34 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
   const defaultClientMenuItems: MenuItem[] = [
     { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
     { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
-    { label: "Terms & Conditions", to: "/client/terms", icon: DocumentTextIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/client/terms",
+      icon: DocumentTextIcon,
+    },
     { label: "Report", to: "/client/report", icon: ExclamationTriangleIcon },
-    { label: "Help & Support", to: "/client/help", icon: QuestionMarkCircleIcon },
+    {
+      label: "Help & Support",
+      to: "/client/help",
+      icon: QuestionMarkCircleIcon,
+    },
   ];
 
   const defaultProviderMenuItems: MenuItem[] = [
     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
     { label: "My Services", to: "/provider/services", icon: Cog6ToothIcon },
     { label: "Wallet", to: "/provider/wallet", icon: CurrencyDollarIcon },
-    { label: "Terms & Conditions", to: "/provider/terms", icon: DocumentTextIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/provider/terms",
+      icon: DocumentTextIcon,
+    },
     { label: "Report", to: "/provider/report", icon: ExclamationTriangleIcon },
-    { label: "Help & Support", to: "/provider/help", icon: QuestionMarkCircleIcon },
+    {
+      label: "Help & Support",
+      to: "/provider/help",
+      icon: QuestionMarkCircleIcon,
+    },
   ];
 
   const items =
@@ -176,7 +207,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
             className="animate-slide-in-from-right fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] bg-white shadow-2xl"
           >
             <div className="flex h-full flex-col">
-              {/* Profile Section */}
+{/* Profile Section */}
               <button
                 onClick={() => {
                   handleCloseMenu();
@@ -188,24 +219,24 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
                   <UserCircleIcon className="h-8 w-8" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold">View Profile</p>
+                  <p className="font-semibold">{displayName}</p>
                   <p className="text-sm text-white/80">Tap to edit</p>
                 </div>
               </button>
 
               {/* Menu Items */}
-              <div className="flex-1 overflow-y-auto py-3 bg-blue-50">
+              <div className="flex-1 overflow-y-auto bg-blue-50 py-3">
                 {items.map((item, index) => (
                   <button
                     key={index}
                     onClick={() => handleMenuClick(item)}
                     className={`flex w-full items-center gap-4 px-5 py-4 text-left text-base font-medium transition-colors hover:bg-blue-100 ${
-                      item.danger ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:text-blue-700"
+                      item.danger
+                        ? "text-red-600 hover:bg-red-50"
+                        : "text-gray-700 hover:text-blue-700"
                     }`}
                   >
-                    {item.icon && (
-                      <item.icon className="h-5 w-5" />
-                    )}
+                    {item.icon && <item.icon className="h-5 w-5" />}
                     {item.label}
                   </button>
                 ))}
