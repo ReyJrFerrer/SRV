@@ -208,9 +208,7 @@ const ActionButtons: React.FC<Props> = ({
     const alreadyNotified = Boolean(
       (booking as any)?.navigationStartedNotified,
     );
-    const startLabel = alreadyNotified
-      ? "Continue"
-      : "Start";
+    const startLabel = alreadyNotified ? "Continue" : "Start";
 
     buttons.push(
       <button

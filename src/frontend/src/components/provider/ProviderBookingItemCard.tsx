@@ -14,12 +14,14 @@ import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
+  review?: any;
+  reputation?: any;
   onDeclineClick: () => void;
   onCancelClick: (booking: ProviderEnhancedBooking) => void;
   isDeclining: boolean;
   acceptBookingById: any;
   isBookingActionInProgress: any;
-  startBookingById: any;
+  startBookingById?: any;
   startNavigationById: any;
 }
 

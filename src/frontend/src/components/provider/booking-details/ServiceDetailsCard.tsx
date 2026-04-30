@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  BriefcaseIcon,
-  ClipboardDocumentListIcon,
-  CalendarDaysIcon,
-  MapPinIcon,
-  CurrencyDollarIcon,
-  ClockIcon,
-} from "@heroicons/react/24/solid";
+import { CalendarDaysIcon, MapPinIcon, ClockIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   serviceName: string;
@@ -18,10 +11,10 @@ interface Props {
   displayAddress?: string;
   preciseAddress?: string;
   geocodedAddress?: string;
-  hasExplicitCoords: boolean;
-  clientLocation: { lat: number; lng: number };
+  hasExplicitCoords?: boolean;
+  clientLocation?: { lat: number; lng: number };
   price?: number;
-  amountToPay: number;
+  amountToPay?: number;
   duration: string | number;
   formatDateRange: (
     requestedDate: Date | string | number,
@@ -31,123 +24,63 @@ interface Props {
 
 const ServiceDetailsCard: React.FC<Props> = ({
   serviceName,
-  packageTitle,
   packageName,
   requestedDate,
   scheduledDate,
   bookingLocation,
-  displayAddress,
-  preciseAddress,
-  geocodedAddress,
-  hasExplicitCoords,
-  clientLocation,
   price,
-  amountToPay,
   duration,
   formatDateRange,
 }) => {
   return (
-    <div className="min-w-full flex-1 rounded-2xl bg-white p-4 shadow-lg lg:min-w-[320px]">
-      <h3 className="text-md mb-3 flex items-center gap-2 font-bold text-blue-700 lg:text-lg">
-        <BriefcaseIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
-        <span>Service Section</span>
-      </h3>
-      <div className="mb-2 flex items-start gap-2 lg:items-center">
-        <BriefcaseIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
-        <span className="min-w-0 font-medium text-gray-700">
-          Service:{" "}
-          <span className="break-words font-semibold text-blue-900">
-            {serviceName}
-          </span>
-        </span>
-      </div>
-      {packageTitle && (
-        <div className="mb-2 flex items-start gap-2 lg:items-center">
-          <ClipboardDocumentListIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
-          <span className="font-medium text-gray-700">
-            Package:{" "}
-            <span className="font-normal text-gray-700">{packageName}</span>
-          </span>
+    <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="p-5">
+        <h3 className="mb-4 text-lg font-bold text-gray-900">
+          {serviceName}
+        </h3>
+        
+        {packageName && (
+          <p className="mb-3 text-sm text-gray-600">
+            Package: <span className="font-medium">{packageName}</span>
+          </p>
+        )}
+
+        {/* Date/Time */}
+        <div className="mb-3 flex items-start gap-3">
+          <CalendarDaysIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+          <div>
+            <p className="text-sm font-medium text-gray-700">
+              {formatDateRange(requestedDate, scheduledDate)}
+            </p>
+          </div>
         </div>
-      )}
-      <div className="mb-2 flex items-start gap-2 lg:items-center">
-        <CalendarDaysIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
-        <span className="font-medium text-gray-700">
-          Date:{" "}
-          <span className="font-normal text-gray-700">
-            {formatDateRange(requestedDate, scheduledDate)}
-          </span>
-        </span>
-      </div>
-      <div className="mb-2 flex items-start gap-2">
-        <MapPinIcon className="mt-0.5 h-5 w-5 text-blue-500" />
-        <div className="flex flex-col">
-          <span className="font-medium text-gray-700">Location:</span>
-          <span className="text-sm font-normal leading-snug text-gray-700">
-            {bookingLocation}
-          </span>
-          {(displayAddress || preciseAddress || geocodedAddress) && (
-            <div className="mt-1 space-y-0.5">
-              {displayAddress && (
-                <p className="text-[11px] text-gray-700">
-                  <span className="font-medium">Display:</span> {displayAddress}
-                </p>
-              )}
-              {preciseAddress && preciseAddress !== displayAddress && (
-                <p className="text-[11px] text-gray-500">
-                  <span className="font-medium text-gray-600">
-                    Provider ref:
-                  </span>{" "}
-                  {preciseAddress}
-                </p>
-              )}
-              {geocodedAddress &&
-                geocodedAddress !== displayAddress &&
-                geocodedAddress !== preciseAddress && (
-                  <p className="text-[11px] text-gray-400">
-                    <span className="font-medium text-gray-500">Geocoded:</span>{" "}
-                    {geocodedAddress}
-                  </p>
-                )}
-              {hasExplicitCoords && (
-                <p className="text-[10px] text-gray-400">
-                  Lat/Lng: {clientLocation.lat.toFixed(5)},{" "}
-                  {clientLocation.lng.toFixed(5)}
-                </p>
-              )}
-            </div>
-          )}
+
+        {/* Location */}
+        <div className="mb-3 flex items-start gap-3">
+          <MapPinIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+          <div>
+            <p className="text-sm font-medium text-gray-700">Location</p>
+            <p className="text-sm text-gray-500">{bookingLocation}</p>
+          </div>
         </div>
-      </div>
-      {price !== undefined && (
-        <div className="mb-2 flex items-start gap-2 lg:items-center">
-          <CurrencyDollarIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
-          <span className="font-medium text-gray-700">
-            Price:{" "}
-            <span className="font-semibold text-green-700">
+
+        {/* Price */}
+        {price !== undefined && (
+          <div className="mb-3">
+            <p className="text-lg font-bold text-gray-900">
               ₱{price.toFixed(2)}
-            </span>
-          </span>
-        </div>
-      )}
-      <div className="mb-2 flex items-start gap-2 lg:items-center">
-        <CurrencyDollarIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
-        <span className="font-medium text-gray-700">
-          Client's amount to pay:{" "}
-          <span className="font-semibold text-green-700">
-            ₱{amountToPay.toFixed(2)}
-          </span>
-        </span>
+            </p>
+          </div>
+        )}
+
+        {/* Duration */}
+        {duration !== "N/A" && (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <ClockIcon className="h-4 w-4" />
+            <span>Duration: {duration}</span>
+          </div>
+        )}
       </div>
-      {duration !== "N/A" && (
-        <div className="mb-2 flex items-start gap-2 lg:items-center">
-          <ClockIcon className="h-5 w-5 flex-shrink-0 text-blue-500" />
-          <span className="font-medium text-gray-700">
-            Duration:{" "}
-            <span className="font-normal text-gray-700">{duration}</span>
-          </span>
-        </div>
-      )}
     </div>
   );
 };

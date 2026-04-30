@@ -685,7 +685,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         />
       </div>
 
-      <main className="container mx-auto space-y-6 p-4 sm:p-6">
+      <main className="container mx-auto space-y-6 p-4 sm:p-6 pb-24 md:pb-6">
         {isLoading ? (
           <BookingDetailsSkeleton />
         ) : (
@@ -746,30 +746,58 @@ const ProviderBookingDetailsPage: React.FC = () => {
             {/* Booking Notes Section */}
             <BookingNotes notes={(specificBooking as any)?.notes} />
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Desktop Only */}
             {specificBooking && (
-              <ActionButtons
-                booking={specificBooking}
-                onChat={handleChatClient}
-                onAccept={handleAcceptBooking}
-                onDecline={handleDeclineBooking}
-                onCancel={() => setCancellingBooking(specificBooking)}
-                onStart={handleStartService}
-                isStartingService={isStartingService}
-                onComplete={handleCompleteService}
-                canStartServiceNow={canStartServiceNow}
-                isBookingActionInProgress={isBookingActionInProgress}
-                status={specificBooking.status}
-                onReport={() =>
-                  navigate("/provider/report", {
-                    state: { bookingId: specificBooking.id },
-                  })
-                }
-              />
+              <div className="hidden md:block">
+                <ActionButtons
+                  booking={specificBooking}
+                  onChat={handleChatClient}
+                  onAccept={handleAcceptBooking}
+                  onDecline={handleDeclineBooking}
+                  onCancel={() => setCancellingBooking(specificBooking)}
+                  onStart={handleStartService}
+                  isStartingService={isStartingService}
+                  onComplete={handleCompleteService}
+                  canStartServiceNow={canStartServiceNow}
+                  isBookingActionInProgress={isBookingActionInProgress}
+                  status={specificBooking.status}
+                  onReport={() =>
+                    navigate("/provider/report", {
+                      state: { bookingId: specificBooking.id },
+                    })
+                  }
+                />
+              </div>
             )}
           </>
         )}
       </main>
+
+      {/* Sticky Action Buttons - Mobile Only */}
+      {specificBooking && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-gray-100 bg-white p-3 pb-3 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] md:hidden">
+          <div className="flex gap-2">
+            <ActionButtons
+              booking={specificBooking}
+              onChat={handleChatClient}
+              onAccept={handleAcceptBooking}
+              onDecline={handleDeclineBooking}
+              onCancel={() => setCancellingBooking(specificBooking)}
+              onStart={handleStartService}
+              isStartingService={isStartingService}
+              onComplete={handleCompleteService}
+              canStartServiceNow={canStartServiceNow}
+              isBookingActionInProgress={isBookingActionInProgress}
+              status={specificBooking.status}
+              onReport={() =>
+                navigate("/provider/report", {
+                  state: { bookingId: specificBooking.id },
+                })
+              }
+            />
+          </div>
+        </div>
+      )}
       {/* Cancel Booking Dialog */}
       <CancelWithReasonButton
         show={!!cancellingBooking}
