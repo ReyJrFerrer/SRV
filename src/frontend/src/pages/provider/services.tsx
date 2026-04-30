@@ -18,10 +18,6 @@ import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovement
 import DeleteConfirmDialog from "../../components/provider/service-details/DeleteConfirmDialog";
 import SmartHeader from "../../components/common/SmartHeader";
 
-// ServiceCard has been extracted to a separate component under components/provider
-
-// Tooltip now provided by ../../components/common/Tooltip
-
 const MyServicesPage: React.FC = () => {
   const {
     userServices,
@@ -202,136 +198,136 @@ const MyServicesPage: React.FC = () => {
       />
       <SmartHeader
         title="My Services"
+        showBackButton={false}
+        showBurger={true}
         userRole="provider"
-        rightAction={
-          <div className="flex flex-1 items-center justify-end gap-4">
-            <button
-              onClick={() => setShowArchived(!showArchived)}
-              className="text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              {showArchived
-                ? "View Active"
-                : `View Archived (${archivedServicesList.length})`}
-            </button>
-            <Link
-              to="/provider/services/add"
-              onClick={(e) => {
-                if (activeServicesList.length >= 5) {
-                  e.preventDefault();
-                  toast.error("You can only have a maximum of 5 services.");
-                }
-              }}
-              className={`flex items-center rounded-lg bg-blue-600 px-2 py-1 text-sm font-medium text-white transition-colors hover:bg-blue-700 lg:px-3 lg:py-2 ${
-                activeServicesList.length >= 5
-                  ? "cursor-not-allowed opacity-50"
-                  : ""
-              }`}
-              aria-label="Add new service"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span className="ml-1 hidden sm:inline">Add new service</span>
-            </Link>
-          </div>
-        }
       />
 
       <main className="container mx-auto flex-grow p-6 pb-10">
-        <div className="mt-4">
-          {loading ? (
-            <ServiceGridSkeleton count={6} />
-          ) : error ? (
-            <div className="py-12 text-center">
-              <p className="mb-4 text-red-500">{error}</p>
-              <button
-                onClick={refreshServices}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : showArchived ? (
-            archivedServicesList.length > 0 ? (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {archivedServicesList.map((service, idx) => {
-                  const activeCount = getServiceActiveBookingsCount(service.id);
-                  const plural = activeCount !== 1 ? "s" : "";
-
-                  return (
-                    <Appear
-                      key={service.id}
-                      delayMs={idx * 30}
-                      variant="fade-up"
-                    >
-                      <CompactServiceCard
-                        service={service}
-                        isActive={false}
-                        isArchived={true}
-                        activeCount={activeCount}
-                        plural={plural}
-                        hasActiveBookings={hasActiveBookings}
-                        handleRestoreService={handleRestoreService}
-                        setDeleteConfirmId={setDeleteConfirmId}
-                        deletingId={deletingId}
-                      />
-                    </Appear>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-gray-500">
-                <TrashIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
-                <p className="text-lg">No archived services found.</p>
-              </div>
-            )
-          ) : activeServicesList.length > 0 ? (
+        <div className="mt-4 flex items-center justify-end gap-4 md:hidden">
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="text-sm font-medium text-gray-600 hover:text-gray-900"
+          >
+            {showArchived
+              ? "View Active"
+              : `View Archived (${archivedServicesList.length})`}
+          </button>
+        </div>
+<div className="mt-4 flex items-center justify-end">
+          <Link
+            to="/provider/services/add"
+            onClick={(e) => {
+              if (activeServicesList.length >= 5) {
+                e.preventDefault();
+                toast.error("You can only have a maximum of 5 services.");
+              }
+            }}
+            className={`flex items-center rounded-lg bg-blue-600 px-2 py-1 text-sm font-medium text-white transition-colors hover:bg-blue-700 lg:px-3 lg:py-2 ${
+              activeServicesList.length >= 5
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            }`}
+            aria-label="Add new service"
+          >
+            <PlusIcon className="h-5 w-5" />
+            <span className="ml-1 hidden sm:inline">Add new service</span>
+          </Link>
+        </div>
+        {loading ? (
+          <ServiceGridSkeleton count={6} />
+        ) : error ? (
+          <div className="py-12 text-center">
+            <p className="mb-4 text-red-500">{error}</p>
+            <button
+              onClick={refreshServices}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : showArchived ? (
+          archivedServicesList.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {activeServicesList.map((service, idx) => (
-                <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                  <ServiceCard
-                    service={service}
-                    onToggleActive={handleToggleActive}
-                    onDelete={setDeleteConfirmId}
-                    hasActiveBookings={hasActiveBookings}
-                    getServiceActiveBookingsCount={
-                      getServiceActiveBookingsCount
-                    }
-                    updatingId={updatingId}
-                    deletingId={deletingId}
-                  />
-                </Appear>
-              ))}
+              {archivedServicesList.map((service, idx) => {
+                const activeCount = getServiceActiveBookingsCount(service.id);
+                const plural = activeCount !== 1 ? "s" : "";
+
+                return (
+                  <Appear
+                    key={service.id}
+                    delayMs={idx * 30}
+                    variant="fade-up"
+                  >
+                    <CompactServiceCard
+                      service={service}
+                      isActive={false}
+                      isArchived={true}
+                      activeCount={activeCount}
+                      plural={plural}
+                      hasActiveBookings={hasActiveBookings}
+                      handleRestoreService={handleRestoreService}
+                      setDeleteConfirmId={setDeleteConfirmId}
+                      deletingId={deletingId}
+                    />
+                  </Appear>
+                );
+              })}
             </div>
           ) : (
             <div className="py-12 text-center text-gray-500">
-              <WrenchScrewdriverIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
-              <p className="mb-2 text-lg">
-                You haven't listed any active services yet.
-              </p>
-              <Tooltip
-                content="You have reached the maximum of 5 services."
-                showWhenDisabled={activeServicesList.length >= 5}
-              >
-                <Link
-                  to="/provider/services/add"
-                  onClick={(e) => {
-                    if (activeServicesList.length >= 5) {
-                      e.preventDefault();
-                      toast.error("You can only have a maximum of 5 services.");
-                    }
-                  }}
-                  className={`mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700 ${
-                    activeServicesList.length >= 5
-                      ? "cursor-not-allowed opacity-50"
-                      : ""
-                  }`}
-                >
-                  <PlusIcon className="mr-2 h-5 w-5" />
-                  Add your first service
-                </Link>
-              </Tooltip>
+              <TrashIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
+              <p className="text-lg">No archived services found.</p>
             </div>
-          )}
-        </div>
+          )
+        ) : activeServicesList.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {activeServicesList.map((service, idx) => (
+              <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
+                <ServiceCard
+                  service={service}
+                  onToggleActive={handleToggleActive}
+                  onDelete={setDeleteConfirmId}
+                  hasActiveBookings={hasActiveBookings}
+                  getServiceActiveBookingsCount={
+                    getServiceActiveBookingsCount
+                  }
+                  updatingId={updatingId}
+                  deletingId={deletingId}
+                />
+              </Appear>
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 text-center text-gray-500">
+            <WrenchScrewdriverIcon className="mx-auto mb-3 h-14 w-14 text-gray-300" />
+            <p className="mb-2 text-lg">
+              You haven't listed any active services yet.
+            </p>
+            <Tooltip
+              content="You have reached the maximum of 5 services."
+              showWhenDisabled={activeServicesList.length >= 5}
+            >
+              <Link
+                to="/provider/services/add"
+                onClick={(e) => {
+                  if (activeServicesList.length >= 5) {
+                    e.preventDefault();
+                    toast.error("You can only have a maximum of 5 services.");
+                  }
+                }}
+                className={`mt-2 inline-flex items-center rounded-lg bg-blue-600 px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-700 ${
+                  activeServicesList.length >= 5
+                    ? "cursor-not-allowed opacity-50"
+                    : ""
+                }`}
+              >
+                <PlusIcon className="mr-2 h-5 w-5" />
+                Add your first service
+              </Link>
+            </Tooltip>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -1046,7 +1046,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   if (loading && !service) {
     return (
       <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
-        <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-center border-b border-gray-200 bg-white px-4 shadow-sm">
+        <header className="sticky top-0 z-20 flex w-full items-center justify-center border-b border-gray-200 bg-white py-4 shadow-sm">
           <div className="h-7 w-32 animate-pulse rounded bg-gray-200 lg:h-8"></div>
         </header>
 
@@ -1335,8 +1335,8 @@ const ProviderServiceDetailPage: React.FC = () => {
         onConfirm={confirmDeletePackage}
       />
 
-      <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-center border-b border-gray-200 bg-white px-4 shadow-sm">
-        <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
+      <header className="sticky top-0 z-20 flex w-full items-center justify-center border-b border-gray-200 bg-white py-4 shadow-sm">
+        <h1 className="text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
           Service Details
         </h1>
       </header>

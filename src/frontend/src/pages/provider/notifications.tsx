@@ -298,10 +298,11 @@ const NotificationsPageSP = () => {
       <SmartHeader
         title="Notifications"
         showBackButton={false}
+        showBurger={true}
         userRole="provider"
         rightAction={
           stableNotifications.length > 0 ? (
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 md:flex">
               <button
                 onClick={() => {
                   if (!editMode) {

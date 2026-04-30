@@ -366,9 +366,9 @@ const WalletPage: React.FC = () => {
 
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-          <div className="flex w-full items-center justify-center px-4 py-3">
-            <h1 className="text-2xl font-extrabold tracking-tight text-black">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white py-4 shadow-sm">
+          <div className="flex w-full items-center justify-center px-4">
+            <h1 className="text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
               My Wallet
             </h1>
             <button

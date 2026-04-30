@@ -479,7 +479,7 @@ const ProviderProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <SmartHeader title="Profile" showBackButton={false} userRole="provider" />
+      <SmartHeader title="Profile" showBackButton={false} showBurger={true} userRole="provider" />
 
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
         {loading || !profile ? (

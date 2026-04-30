@@ -56,6 +56,7 @@ const SettingsPage: React.FC = () => {
       <SmartHeader
         title="Settings"
         showBackButton={false}
+        showBurger={true}
         userRole="provider"
       />
 

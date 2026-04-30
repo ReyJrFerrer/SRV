@@ -236,7 +236,7 @@ const CompleteServicePage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white py-4 shadow-sm">
         <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
