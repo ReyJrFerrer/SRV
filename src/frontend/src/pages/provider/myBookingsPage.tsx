@@ -1,10 +1,27 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
-import { useProviderBookingManagement, ProviderEnhancedBooking } from "../../hooks/useProviderBookingManagement";
+import {
+  useProviderBookingManagement,
+  ProviderEnhancedBooking,
+} from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { SparklesIcon, CalendarDaysIcon, MagnifyingGlassIcon, UserCircleIcon, Cog6ToothIcon, DocumentTextIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+import {
+  SparklesIcon,
+  CalendarDaysIcon,
+  MagnifyingGlassIcon,
+  UserCircleIcon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/solid";
 import { ServiceCategory } from "../../services/serviceCanisterService";
 import useClientRating from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
@@ -70,7 +87,8 @@ const ProviderBookingsPage: React.FC = () => {
 
   // Fetch user profile
   useEffect(() => {
-    authCanisterService.getMyProfile()
+    authCanisterService
+      .getMyProfile()
       .then(setProfile)
       .catch(() => {});
   }, []);
@@ -80,8 +98,16 @@ const ProviderBookingsPage: React.FC = () => {
   const menuItemsData = [
     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
     { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
-    { label: "Terms & Conditions", to: "/provider/terms", icon: DocumentTextIcon },
-    { label: "Help & Support", to: "/provider/help", icon: QuestionMarkCircleIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/provider/terms",
+      icon: DocumentTextIcon,
+    },
+    {
+      label: "Help & Support",
+      to: "/provider/help",
+      icon: QuestionMarkCircleIcon,
+    },
   ];
 
   const handleMenuClick = (to: string) => {
@@ -518,8 +544,18 @@ const ProviderBookingsPage: React.FC = () => {
               onClick={() => setShowMenu(!showMenu)}
               className="flex w-9 items-center justify-center text-blue-600 hover:text-blue-700"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
           </div>

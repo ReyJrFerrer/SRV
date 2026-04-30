@@ -201,20 +201,7 @@ const MyServicesPage: React.FC = () => {
         showBackButton={false}
         showBurger={true}
         userRole="provider"
-      />
-
-      <main className="container mx-auto flex-grow p-6 pb-10">
-        <div className="mt-4 flex items-center justify-end gap-4 md:hidden">
-          <button
-            onClick={() => setShowArchived(!showArchived)}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-          >
-            {showArchived
-              ? "View Active"
-              : `View Archived (${archivedServicesList.length})`}
-          </button>
-        </div>
-<div className="mt-4 flex items-center justify-end">
+        leftAction={
           <Link
             to="/provider/services/add"
             onClick={(e) => {
@@ -231,8 +218,20 @@ const MyServicesPage: React.FC = () => {
             aria-label="Add new service"
           >
             <PlusIcon className="h-5 w-5" />
-            <span className="ml-1 hidden sm:inline">Add new service</span>
           </Link>
+        }
+      />
+
+      <main className="container mx-auto flex-grow p-6 pb-10">
+        <div className="mt-4 flex items-center justify-end gap-4 md:hidden">
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="text-sm font-medium text-gray-600 hover:text-gray-900"
+          >
+            {showArchived
+              ? "View Active"
+              : `View Archived (${archivedServicesList.length})`}
+          </button>
         </div>
         {loading ? (
           <ServiceGridSkeleton count={6} />
@@ -254,11 +253,7 @@ const MyServicesPage: React.FC = () => {
                 const plural = activeCount !== 1 ? "s" : "";
 
                 return (
-                  <Appear
-                    key={service.id}
-                    delayMs={idx * 30}
-                    variant="fade-up"
-                  >
+                  <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
                     <CompactServiceCard
                       service={service}
                       isActive={false}
@@ -289,9 +284,7 @@ const MyServicesPage: React.FC = () => {
                   onToggleActive={handleToggleActive}
                   onDelete={setDeleteConfirmId}
                   hasActiveBookings={hasActiveBookings}
-                  getServiceActiveBookingsCount={
-                    getServiceActiveBookingsCount
-                  }
+                  getServiceActiveBookingsCount={getServiceActiveBookingsCount}
                   updatingId={updatingId}
                   deletingId={deletingId}
                 />

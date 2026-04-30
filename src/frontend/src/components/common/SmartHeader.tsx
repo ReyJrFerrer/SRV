@@ -28,6 +28,7 @@ interface SmartHeaderProps {
   showBackButton?: boolean;
   onBack?: () => void;
   rightAction?: React.ReactNode;
+  leftAction?: React.ReactNode;
   className?: string;
   userRole?: "client" | "provider";
   menuItems?: MenuItem[];
@@ -40,6 +41,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
   showBackButton = true,
   onBack,
   rightAction,
+  leftAction,
   className = "",
   userRole = "client",
   menuItems,
@@ -169,6 +171,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
             )}
+            {!showBackButton && leftAction}
           </div>
 
           <div className="flex flex-1 justify-center px-2">

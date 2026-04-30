@@ -49,14 +49,15 @@ const ClientChatPage: React.FC = () => {
 
   const [messageText, setMessageText] = useState<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  
+
   // Side menu state
   const [showMenu, setShowMenu] = useState(false);
   const [profile, setProfile] = useState<any>(null);
 
   // Fetch user profile
   useEffect(() => {
-    authCanisterService.getMyProfile()
+    authCanisterService
+      .getMyProfile()
       .then(setProfile)
       .catch(() => {});
   }, []);
@@ -66,8 +67,16 @@ const ClientChatPage: React.FC = () => {
   const menuItemsData = [
     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
     { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
-    { label: "Terms & Conditions", to: "/provider/terms", icon: DocumentTextIcon },
-    { label: "Help & Support", to: "/provider/help", icon: QuestionMarkCircleIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/provider/terms",
+      icon: DocumentTextIcon,
+    },
+    {
+      label: "Help & Support",
+      to: "/provider/help",
+      icon: QuestionMarkCircleIcon,
+    },
   ];
 
   const handleMenuClick = (to: string) => {
@@ -347,8 +356,18 @@ const ClientChatPage: React.FC = () => {
             onClick={() => setShowMenu(!showMenu)}
             className="flex w-9 items-center justify-center text-blue-600 hover:text-blue-700"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
         </div>
