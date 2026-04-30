@@ -482,7 +482,8 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
     const existingFlags = data.detectionFlags || [];
 
     if (existingFlags.includes("ReviewBomb")) {
-      console.log(`[deductReputationForSuspiciousReview] User ${userId} already has ReviewBomb flag`);
+      console.log(`[deductReputationForSuspiciousReview] 
+        User ${userId} already has ReviewBomb flag`);
       return {success: true, data, message: "Already flagged"};
     }
 
