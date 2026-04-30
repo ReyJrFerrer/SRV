@@ -38,9 +38,9 @@ const ClientChatPage: React.FC = () => {
   const [isDesktop, setIsDesktop] = useState<boolean>(
     window.innerWidth >= 1024,
   );
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
-    location.state?.conversationId || null,
-  );
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(location.state?.conversationId || null);
   const [selectedOtherUserName, setSelectedOtherUserName] = useState<string>(
     location.state?.otherUserName || "",
   );
@@ -51,7 +51,8 @@ const ClientChatPage: React.FC = () => {
 
   // Fetch user profile
   useEffect(() => {
-    authCanisterService.getMyProfile()
+    authCanisterService
+      .getMyProfile()
       .then(setProfile)
       .catch(() => {});
   }, []);
@@ -61,8 +62,16 @@ const ClientChatPage: React.FC = () => {
   const menuItemsData = [
     { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
     { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
-    { label: "Terms & Conditions", to: "/client/terms", icon: DocumentTextIcon },
-    { label: "Help & Support", to: "/client/help", icon: QuestionMarkCircleIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/client/terms",
+      icon: DocumentTextIcon,
+    },
+    {
+      label: "Help & Support",
+      to: "/client/help",
+      icon: QuestionMarkCircleIcon,
+    },
   ];
 
   const handleMenuClick = (to: string) => {
@@ -394,10 +403,20 @@ const ClientChatPage: React.FC = () => {
           </h1>
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+            className="flex h-10 w-10 items-center justify-center text-blue-600 hover:text-blue-700"
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
         </div>

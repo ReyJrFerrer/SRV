@@ -177,7 +177,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const headerRef = useRef<HTMLDivElement | null>(null);
   // const [setHeaderHeight] = useState<number | null>(null);
   const [isMini, setIsMini] = useState(false);
-  
+
   // Disabled: increased thresholds to prevent mini header at top
   useEffect(() => {
     // Hysteresis + rAF; robustly pick the correct scroll source (container or window)

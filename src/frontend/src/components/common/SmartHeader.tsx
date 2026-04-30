@@ -56,7 +56,8 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
   // Fetch user profile for display name
   useEffect(() => {
     if (isAuthenticated) {
-      authCanisterService.getMyProfile()
+      authCanisterService
+        .getMyProfile()
         .then(setProfile)
         .catch(() => {});
     }
@@ -162,7 +163,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
             {showBackButton && (
               <button
                 onClick={handleBack}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-gray-700 transition-colors hover:bg-gray-100 active:scale-95"
+                className="flex h-10 w-10 items-center justify-center text-blue-600 transition-colors hover:text-blue-700 active:scale-95"
                 aria-label="Go back"
               >
                 <ChevronLeftIcon className="h-6 w-6" />
@@ -181,7 +182,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
             {showBurger && (
               <button
                 onClick={handleMenuToggle}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-gray-700 transition-colors hover:bg-gray-100 active:scale-95"
+                className="flex h-10 w-10 items-center justify-center text-blue-600 transition-colors hover:text-blue-700 active:scale-95"
                 aria-label="Menu"
                 aria-expanded={showMenu}
               >
@@ -207,11 +208,15 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
             className="animate-slide-in-from-right fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] bg-white shadow-2xl"
           >
             <div className="flex h-full flex-col">
-{/* Profile Section */}
+              {/* Profile Section */}
               <button
                 onClick={() => {
                   handleCloseMenu();
-                  navigate(userRole === "provider" ? "/provider/profile" : "/client/profile");
+                  navigate(
+                    userRole === "provider"
+                      ? "/provider/profile"
+                      : "/client/profile",
+                  );
                 }}
                 className="flex items-center gap-3 bg-blue-600 p-5 text-left text-white transition-colors hover:bg-blue-700"
               >
