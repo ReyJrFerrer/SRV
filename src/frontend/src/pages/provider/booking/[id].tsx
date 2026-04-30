@@ -685,7 +685,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         />
       </div>
 
-      <main className="container mx-auto space-y-6 p-4 sm:p-6 pb-24 md:pb-6">
+      <main className="container mx-auto space-y-6 p-4 pb-24 sm:p-6 md:pb-6">
         {isLoading ? (
           <BookingDetailsSkeleton />
         ) : (

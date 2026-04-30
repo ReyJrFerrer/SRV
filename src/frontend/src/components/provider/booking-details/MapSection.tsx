@@ -49,9 +49,7 @@ const MapSection: React.FC<Props> = ({
   return (
     <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
       <div className="p-4">
-        <h3 className="text-lg font-bold text-gray-900">
-          Service Location
-        </h3>
+        <h3 className="text-lg font-bold text-gray-900">Service Location</h3>
         <p className="mb-3 text-xs text-gray-500">
           Interactive map centered on the client's provided location.
         </p>

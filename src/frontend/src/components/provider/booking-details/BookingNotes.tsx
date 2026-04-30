@@ -8,10 +8,8 @@ export default function BookingNotes({ notes }: Props) {
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
       <div className="p-4">
-        <h4 className="mb-2 text-sm font-semibold text-gray-700">
-          Notes
-        </h4>
-        <p className="text-sm text-gray-600 whitespace-pre-wrap break-words">
+        <h4 className="mb-2 text-sm font-semibold text-gray-700">Notes</h4>
+        <p className="whitespace-pre-wrap break-words text-sm text-gray-600">
           {notes}
         </p>
       </div>

@@ -1,5 +1,9 @@
 import React from "react";
-import { CalendarDaysIcon, MapPinIcon, ClockIcon } from "@heroicons/react/24/outline";
+import {
+  CalendarDaysIcon,
+  MapPinIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
   serviceName: string;
@@ -35,10 +39,8 @@ const ServiceDetailsCard: React.FC<Props> = ({
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
       <div className="p-5">
-        <h3 className="mb-4 text-lg font-bold text-gray-900">
-          {serviceName}
-        </h3>
-        
+        <h3 className="mb-4 text-lg font-bold text-gray-900">{serviceName}</h3>
+
         {packageName && (
           <p className="mb-3 text-sm text-gray-600">
             Package: <span className="font-medium">{packageName}</span>

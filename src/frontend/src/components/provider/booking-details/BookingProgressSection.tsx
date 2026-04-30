@@ -38,9 +38,7 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
     return (
       <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
         <div className="p-4 text-center">
-          <p className="text-sm font-medium text-gray-500">
-            Booking {status}
-          </p>
+          <p className="text-sm font-medium text-gray-500">Booking {status}</p>
         </div>
       </section>
     );
@@ -50,7 +48,7 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
     const isCompleted = idx < currentStep;
     const isCurrent = idx === currentStep;
     const isCompletedStatus = normalizedStatus === "completed";
-    
+
     if (isCompletedStatus || isCompleted) {
       return {
         circle: "bg-blue-600 text-white",
@@ -75,10 +73,8 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
   return (
     <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
       <div className="p-4">
-        <h3 className="mb-4 text-sm font-semibold text-gray-500">
-          Progress
-        </h3>
-        
+        <h3 className="mb-4 text-sm font-semibold text-gray-500">Progress</h3>
+
         {/* Steps */}
         <div className="flex items-center justify-between">
           {steps.map((step, idx) => {
@@ -99,7 +95,7 @@ const BookingProgressSection: React.FC<{ status?: string }> = ({ status }) => {
 
                 {/* Connector Line */}
                 {idx < steps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-2 ${styles.line}`} />
+                  <div className={`mx-2 h-0.5 flex-1 ${styles.line}`} />
                 )}
               </React.Fragment>
             );
