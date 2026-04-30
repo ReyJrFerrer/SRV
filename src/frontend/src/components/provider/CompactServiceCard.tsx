@@ -73,7 +73,9 @@ const CompactServiceCard: React.FC<CompactServiceCardProps> = ({
         />
 
         {/* Status text indicator */}
-        <span className={`absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold backdrop-blur-sm ${statusDisplay.className}`}>
+        <span
+          className={`absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold backdrop-blur-sm ${statusDisplay.className}`}
+        >
           {isActive ? "Active" : statusDisplay.text}
         </span>
       </div>
@@ -94,9 +96,7 @@ const CompactServiceCard: React.FC<CompactServiceCardProps> = ({
           <span className="font-semibold text-gray-900">
             {averageRating || "0"}
           </span>
-          <span className="ml-1 text-gray-500">
-            ({reviewCount})
-          </span>
+          <span className="ml-1 text-gray-500">({reviewCount})</span>
         </div>
 
         {/* Action buttons - compact */}
@@ -108,9 +108,9 @@ const CompactServiceCard: React.FC<CompactServiceCardProps> = ({
             >
               <button
                 type="button"
-                className={`flex-1 flex items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
+                className={`flex flex-1 items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
                   hasActiveBookings(service.id)
-                    ? "cursor-not-allowed opacity-50 border-gray-300 text-gray-400"
+                    ? "cursor-not-allowed border-gray-300 text-gray-400 opacity-50"
                     : "border-blue-400 text-blue-600 hover:bg-blue-50"
                 }`}
                 onClick={async (e) => {
@@ -131,12 +131,12 @@ const CompactServiceCard: React.FC<CompactServiceCardProps> = ({
             >
               <button
                 type="button"
-                className={`flex-1 flex items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
+                className={`flex flex-1 items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
                   hasActiveBookings(service.id)
-                    ? "cursor-not-allowed opacity-50 border-gray-300 text-gray-400"
+                    ? "cursor-not-allowed border-gray-300 text-gray-400 opacity-50"
                     : isActive
-                    ? "border-gray-400 text-gray-600 hover:bg-gray-50"
-                    : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                      ? "border-gray-400 text-gray-600 hover:bg-gray-50"
+                      : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
                 }`}
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -154,9 +154,9 @@ const CompactServiceCard: React.FC<CompactServiceCardProps> = ({
           {isArchived ? (
             <button
               type="button"
-              className={`flex-1 flex items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
+              className={`flex flex-1 items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
                 deletingId === service.id
-                  ? "cursor-not-allowed opacity-50 border-gray-300 text-gray-400"
+                  ? "cursor-not-allowed border-gray-300 text-gray-400 opacity-50"
                   : "border-red-500 bg-red-500 text-white hover:bg-red-600"
               }`}
               onClick={(e) => {
@@ -174,9 +174,9 @@ const CompactServiceCard: React.FC<CompactServiceCardProps> = ({
             >
               <button
                 type="button"
-                className={`flex-1 flex items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
+                className={`flex flex-1 items-center justify-center rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
                   hasActiveBookings(service.id)
-                    ? "cursor-not-allowed opacity-50 border-gray-300 text-gray-400"
+                    ? "cursor-not-allowed border-gray-300 text-gray-400 opacity-50"
                     : "border-red-400 text-red-600 hover:bg-red-50"
                 }`}
                 onClick={(e) => {

@@ -50,7 +50,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { images } = useServiceImages(service.id, service.imageUrls);
-  const { reviews, getAverageRating } = useServiceReviews(service?.id as string);
+  const { reviews, getAverageRating } = useServiceReviews(
+    service?.id as string,
+  );
   const statusDisplay = getStatusText(service.status);
   const isActive = service.status === "Available";
 
@@ -89,7 +91,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         />
 
         {/* Status text indicator - top right */}
-        <span className={`service-status-pill bg-white/90 backdrop-blur-sm ${statusDisplay.className}`}>
+        <span
+          className={`service-status-pill bg-white/90 backdrop-blur-sm ${statusDisplay.className}`}
+        >
           {statusDisplay.text}
         </span>
       </div>
@@ -122,12 +126,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             showWhenDisabled={hasActiveBookings(service.id)}
           >
             <button
-              className={`flex-1 flex items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
+              className={`flex flex-1 items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
                 hasActiveBookings(service.id)
-                  ? "cursor-not-allowed opacity-50 border-gray-300 text-gray-400"
+                  ? "cursor-not-allowed border-gray-300 text-gray-400 opacity-50"
                   : isActive
-                  ? "border-gray-400 text-gray-700 hover:bg-gray-50"
-                  : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                    ? "border-gray-400 text-gray-700 hover:bg-gray-50"
+                    : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
               }`}
               onClick={(e) => {
                 e.stopPropagation();
@@ -158,9 +162,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             showWhenDisabled={hasActiveBookings(service.id)}
           >
             <button
-              className={`flex-1 flex items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
+              className={`flex flex-1 items-center justify-center rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
                 hasActiveBookings(service.id)
-                  ? "cursor-not-allowed opacity-50 border-gray-300 text-gray-400"
+                  ? "cursor-not-allowed border-gray-300 text-gray-400 opacity-50"
                   : "border-red-400 text-red-600 hover:bg-red-50"
               }`}
               onClick={(e) => {

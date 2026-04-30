@@ -226,14 +226,16 @@ const MyServicesPage: React.FC = () => {
           <button
             onClick={() => setShowArchived(!showArchived)}
             className={`text-sm font-medium transition-colors ${
-              showArchived ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+              showArchived
+                ? "text-blue-600"
+                : "text-gray-600 hover:text-gray-900"
             }`}
           >
             {showArchived
               ? "View Active"
               : archivedServicesList.length > 0
-              ? `Archived (${archivedServicesList.length})`
-              : "Archived"}
+                ? `Archived (${archivedServicesList.length})`
+                : "Archived"}
           </button>
         </div>
         {loading ? (
@@ -274,7 +276,9 @@ const MyServicesPage: React.FC = () => {
             </div>
           ) : (
             <div className="service-empty-state">
-              <p className="service-empty-state-text">No archived services found.</p>
+              <p className="service-empty-state-text">
+                No archived services found.
+              </p>
             </div>
           )
         ) : activeServicesList.length > 0 ? (
@@ -295,7 +299,7 @@ const MyServicesPage: React.FC = () => {
           </div>
         ) : (
           <div className="service-empty-state">
-            <p className="mb-2 service-empty-state-text">
+            <p className="service-empty-state-text mb-2">
               You haven't listed any active services yet.
             </p>
             <Tooltip

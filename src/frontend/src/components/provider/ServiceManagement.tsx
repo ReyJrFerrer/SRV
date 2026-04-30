@@ -144,9 +144,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
               <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
                 <h3 className="mb-2 text-lg font-bold text-gray-900">
-                  {isArchivedDelete
-                    ? "Delete Service?"
-                    : "Archive Service?"}
+                  {isArchivedDelete ? "Delete Service?" : "Archive Service?"}
                 </h3>
                 <p className="mb-5 text-sm text-gray-600">
                   {isArchivedDelete
@@ -192,9 +190,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         })()}
 
       <div className="flex items-center justify-between py-5">
-        <h2 className="text-xl font-bold text-gray-900">
-          My Services
-        </h2>
+        <h2 className="text-xl font-bold text-gray-900">My Services</h2>
         <Tooltip
           content="You have reached the maximum of 5 services."
           showWhenDisabled={services.length >= 5}
@@ -222,7 +218,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         <div className={`rounded-2xl bg-white p-8 shadow-sm ${className}`}>
           <div className="flex flex-col items-center justify-center py-8">
             <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-            <p className="mt-4 text-sm text-gray-500">Loading your services...</p>
+            <p className="mt-4 text-sm text-gray-500">
+              Loading your services...
+            </p>
           </div>
         </div>
       ) : error ? (
@@ -269,10 +267,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           {/* View All Services Button */}
           {services.length > 4 && (
             <div className="mt-6 flex justify-center">
-              <Link
-                to="/provider/services"
-                className="service-view-all-btn"
-              >
+              <Link to="/provider/services" className="service-view-all-btn">
                 View All Services
               </Link>
             </div>
