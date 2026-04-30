@@ -3,7 +3,13 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeftIcon,
   Bars3Icon,
-  XMarkIcon,
+  ArrowRightOnRectangleIcon as LogoutIcon,
+  UserCircleIcon,
+  Cog6ToothIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useLogout } from "../../hooks/logout";
 
@@ -75,20 +81,20 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
   }, [showMenu]);
 
   const defaultClientMenuItems: MenuItem[] = [
-    { label: "Profile", to: "/client/profile" },
-    { label: "Settings", to: "/client/settings" },
-    { label: "Terms & Conditions", to: "/client/terms" },
-    { label: "Report", to: "/client/report" },
-    { label: "Help & Support", to: "/client/help" },
+    { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
+    { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
+    { label: "Terms & Conditions", to: "/client/terms", icon: DocumentTextIcon },
+    { label: "Report", to: "/client/report", icon: ExclamationTriangleIcon },
+    { label: "Help & Support", to: "/client/help", icon: QuestionMarkCircleIcon },
   ];
 
   const defaultProviderMenuItems: MenuItem[] = [
-    { label: "Profile", to: "/provider/profile" },
-    { label: "My Services", to: "/provider/services" },
-    { label: "Wallet", to: "/provider/wallet" },
-    { label: "Terms & Conditions", to: "/provider/terms" },
-    { label: "Report", to: "/provider/report" },
-    { label: "Help & Support", to: "/provider/help" },
+    { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
+    { label: "My Services", to: "/provider/services", icon: Cog6ToothIcon },
+    { label: "Wallet", to: "/provider/wallet", icon: CurrencyDollarIcon },
+    { label: "Terms & Conditions", to: "/provider/terms", icon: DocumentTextIcon },
+    { label: "Report", to: "/provider/report", icon: ExclamationTriangleIcon },
+    { label: "Help & Support", to: "/provider/help", icon: QuestionMarkCircleIcon },
   ];
 
   const items =
@@ -170,39 +176,48 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
             className="animate-slide-in-from-right fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] bg-white shadow-2xl"
           >
             <div className="flex h-full flex-col">
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
-                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
-                <button
-                  onClick={handleCloseMenu}
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100 active:scale-95"
-                  aria-label="Close menu"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
+              {/* Profile Section */}
+              <button
+                onClick={() => {
+                  handleCloseMenu();
+                  navigate(userRole === "provider" ? "/provider/profile" : "/client/profile");
+                }}
+                className="flex items-center gap-3 bg-blue-600 p-5 text-left text-white transition-colors hover:bg-blue-700"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
+                  <UserCircleIcon className="h-8 w-8" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold">View Profile</p>
+                  <p className="text-sm text-white/80">Tap to edit</p>
+                </div>
+              </button>
 
               {/* Menu Items */}
-              <div className="flex-1 overflow-y-auto py-2">
+              <div className="flex-1 overflow-y-auto py-3 bg-blue-50">
                 {items.map((item, index) => (
                   <button
                     key={index}
                     onClick={() => handleMenuClick(item)}
-                    className={`w-full px-4 py-4 text-left text-base font-medium transition-colors hover:bg-gray-50 ${
-                      item.danger ? "text-red-600" : "text-gray-700"
+                    className={`flex w-full items-center gap-4 px-5 py-4 text-left text-base font-medium transition-colors hover:bg-blue-100 ${
+                      item.danger ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:text-blue-700"
                     }`}
                   >
+                    {item.icon && (
+                      <item.icon className="h-5 w-5" />
+                    )}
                     {item.label}
                   </button>
                 ))}
               </div>
 
               {/* Log Out Button */}
-              <div className="border-t border-gray-100 py-4">
+              <div className="border-t border-gray-200 bg-blue-50 py-3">
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-4 text-left text-base font-medium text-red-600 transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center gap-4 px-5 py-4 text-left text-base font-medium text-red-600 transition-colors hover:bg-red-50"
                 >
+                  <LogoutIcon className="h-5 w-5" />
                   Log Out
                 </button>
               </div>

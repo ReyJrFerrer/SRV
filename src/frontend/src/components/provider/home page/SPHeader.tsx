@@ -4,13 +4,17 @@ import {
   MapPinIcon,
   UserCircleIcon,
   Bars3Icon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
+  Cog6ToothIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useLocationStore } from "../../../store/locationStore";
-import { useLogout } from "../../../hooks/logout";
+import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
 import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
@@ -27,7 +31,6 @@ export interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { logout } = useLogout();
 
   // --- Use Zustand location store ---
   const { locationStatus, addressMode } = useLocationStore();
@@ -139,27 +142,27 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
       return () =>
         document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [showMenu]);
+}, [showMenu]);
 
-  // --- Menu items ---
-  const menuItems = [
-    { label: "Profile", to: "/provider/profile" },
-    { label: "My Services", to: "/provider/services" },
-    { label: "Wallet", to: "/provider/wallet" },
-    { label: "Settings", to: "/provider/settings" },
-    { label: "Terms & Conditions", to: "/provider/terms" },
-    { label: "Report", to: "/provider/report" },
-    { label: "Help & Support", to: "/provider/help" },
+  interface MenuItemData {
+  label: string;
+  to: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+const menuItemsData: MenuItemData[] = [
+    { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
+    { label: "My Services", to: "/provider/services", icon: Cog6ToothIcon },
+    { label: "Wallet", to: "/provider/wallet", icon: CurrencyDollarIcon },
+    { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
+    { label: "Terms & Conditions", to: "/provider/terms", icon: DocumentTextIcon },
+    { label: "Report", to: "/provider/report", icon: ExclamationTriangleIcon },
+    { label: "Help & Support", to: "/provider/help", icon: QuestionMarkCircleIcon },
   ];
 
   const handleMenuClick = (to: string) => {
     setShowMenu(false);
     navigate(to);
-  };
-
-  const handleLogout = () => {
-    setShowMenu(false);
-    logout();
   };
 
   // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
@@ -298,29 +301,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                   >
                     <Bars3Icon className="h-7 w-7 text-gray-700 group-hover:text-blue-600" />
                   </button>
-
-                  {showMenu && (
-                    <div className="animate-slide-in absolute right-0 top-12 z-50 w-56 rounded-xl border border-gray-100 bg-white shadow-lg">
-                      <div className="py-2">
-                        {menuItems.map((item, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleMenuClick(item.to!)}
-                            className="w-full px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                        <div className="my-2 border-t border-gray-100" />
-                        <button
-                          onClick={handleLogout}
-                          className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-gray-50"
-                        >
-                          Log Out
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -353,31 +333,13 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
 
       {/* Slide-out Menu */}
       {showMenu && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/50 animate-fade-in" onClick={() => setShowMenu(false)} />
-          <div className="fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] animate-slide-in-from-right bg-white shadow-2xl">
-            <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
-                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
-                <button onClick={() => setShowMenu(false)} className="flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100">
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto py-2">
-                {menuItems.map((item, index) => (
-                  <button key={index} onClick={() => handleMenuClick(item.to!)} className="w-full px-4 py-4 text-left text-base font-medium text-gray-700 hover:bg-gray-50">
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-              <div className="border-t border-gray-100 py-4">
-                <button onClick={handleLogout} className="w-full px-4 py-4 text-left text-base font-medium text-red-600 hover:bg-gray-50">
-                  Log Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
+        <SideMenuDrawer
+          isOpen={showMenu}
+          onClose={() => setShowMenu(false)}
+          items={menuItemsData}
+          onItemClick={handleMenuClick}
+          userInfo={{ name: displayName, to: "/provider/profile" }}
+        />
       )}
 
       {/* Mini sticky header as a fixed overlay */}

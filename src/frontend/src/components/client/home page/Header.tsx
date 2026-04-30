@@ -3,17 +3,20 @@ import {
   MapPinIcon,
   UserCircleIcon,
   Bars3Icon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useServiceManagement } from "../../../hooks/serviceManagement";
+import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
 import authCanisterService from "../../../services/authCanisterService";
 import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
 import { useLocationStore } from "../../../store/locationStore";
-import { useLogout } from "../../../hooks/logout";
 
 // --- Props ---
 export interface HeaderProps {
@@ -26,7 +29,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const { services } = useServiceManagement();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { logout } = useLogout();
 
   // --- Use Zustand location store ---
   const { locationLoading, locationStatus, addressMode } = useLocationStore();
@@ -117,25 +119,25 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       return () =>
         document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [showMenu]);
+}, [showMenu]);
 
-  // --- Menu items ---
-  const menuItems = [
-    { label: "Profile", to: "/client/profile" },
-    { label: "Settings", to: "/client/settings" },
-    { label: "Terms & Conditions", to: "/client/terms" },
-    { label: "Report", to: "/client/report" },
-    { label: "Help & Support", to: "/client/help" },
+  interface MenuItemData {
+  label: string;
+  to: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+const menuItemsData: MenuItemData[] = [
+    { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
+    { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
+    { label: "Terms & Conditions", to: "/client/terms", icon: DocumentTextIcon },
+    { label: "Report", to: "/client/report", icon: ExclamationTriangleIcon },
+    { label: "Help & Support", to: "/client/help", icon: QuestionMarkCircleIcon },
   ];
 
   const handleMenuClick = (to: string) => {
     setShowMenu(false);
     navigate(to);
-  };
-
-  const handleLogout = () => {
-    setShowMenu(false);
-    logout();
   };
 
   // --- State: Search suggestions ---
@@ -484,44 +486,13 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
       {/* Slide-out Menu */}
       {showMenu && (
-        <>
-          <div
-            className="animate-fade-in fixed inset-0 z-50 bg-black/50"
-            onClick={() => setShowMenu(false)}
-          />
-          <div className="animate-slide-in-from-right fixed right-0 top-0 z-50 h-full w-[65%] max-w-[280px] bg-white shadow-2xl">
-            <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
-                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
-                <button
-                  onClick={() => setShowMenu(false)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto py-2">
-                {menuItems.map((item, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleMenuClick(item.to!)}
-                    className="w-full px-4 py-4 text-left text-base font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-              <div className="border-t border-gray-100 py-4">
-                <button
-                  onClick={handleLogout}
-                  className="w-full px-4 py-4 text-left text-base font-medium text-red-600 hover:bg-gray-50"
-                >
-                  Log Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
+        <SideMenuDrawer
+          isOpen={showMenu}
+          onClose={() => setShowMenu(false)}
+          items={menuItemsData}
+          onItemClick={handleMenuClick}
+          userInfo={{ name: displayName, to: "/client/profile" }}
+        />
       )}
     </>
   );
