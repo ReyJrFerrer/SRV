@@ -180,14 +180,14 @@ const ActiveServicePage: React.FC = () => {
             {/* Timer removed */}
 
             {/* Details and Actions Section */}
-            <div className="mt-4 space-y-4 sm:mt-6 md:space-y-0 md:flex md:gap-6 lg:gap-8">
+            <div className="mt-4 space-y-4 sm:mt-6 md:flex md:gap-6 md:space-y-0 lg:gap-8">
               {/* Left Column: Booking Details */}
               <section className="w-full overflow-hidden rounded-2xl bg-white shadow-sm md:flex-1">
                 <div className="p-5">
                   <h2 className="mb-4 text-lg font-bold text-gray-900">
                     Service Details
                   </h2>
-                  
+
                   {/* Client Name */}
                   <div className="mb-4">
                     <p className="text-sm text-gray-500">Client</p>
@@ -261,7 +261,7 @@ const ActiveServicePage: React.FC = () => {
                   <h3 className="mb-4 text-lg font-bold text-gray-900">
                     Actions
                   </h3>
-                  
+
                   <div className="space-y-3">
                     {/* Upload Photo Button */}
                     <input
@@ -271,7 +271,7 @@ const ActiveServicePage: React.FC = () => {
                       className="hidden"
                       onChange={handleFileChange}
                     />
-                    
+
                     {uploadedImageName && (
                       <div className="mb-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
                         Photo uploaded: {uploadedImageName}

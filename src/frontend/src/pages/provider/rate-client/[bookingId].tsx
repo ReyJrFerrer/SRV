@@ -192,7 +192,8 @@ const ProviderRateClientPage: React.FC = () => {
               Already Reviewed
             </h2>
             <p className="text-sm text-gray-500">
-              You have already submitted a review for this client. Redirecting...
+              You have already submitted a review for this client.
+              Redirecting...
             </p>
           </div>
         </main>
@@ -286,7 +287,9 @@ const ProviderRateClientPage: React.FC = () => {
                   >
                     <StarIcon
                       className={`h-9 w-9 transition-colors ${(hovered ?? rating) >= star ? "text-yellow-500" : "text-gray-200"}`}
-                      fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
+                      fill={
+                        (hovered ?? rating) >= star ? "currentColor" : "none"
+                      }
                     />
                   </button>
                 ))}
