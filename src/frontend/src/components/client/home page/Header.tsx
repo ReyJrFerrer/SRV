@@ -144,11 +144,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     },
   ];
 
-  const handleMenuClick = (to: string) => {
-    setShowMenu(false);
-    navigate(to);
-  };
-
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -499,7 +494,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           isOpen={showMenu}
           onClose={() => setShowMenu(false)}
           items={menuItemsData}
-          onItemClick={handleMenuClick}
           userInfo={{ name: displayName, to: "/client/profile" }}
         />
       )}

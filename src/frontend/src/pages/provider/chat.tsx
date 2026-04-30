@@ -79,11 +79,6 @@ const ClientChatPage: React.FC = () => {
     },
   ];
 
-  const handleMenuClick = (to: string) => {
-    setShowMenu(false);
-    navigate(to);
-  };
-
   const lastMarkedRef = useRef<{ id: string; t: number } | null>(null);
   const prevUnreadMapRef = useRef<Map<string, number>>(new Map());
   const defaultTitleRef = useRef<string>("Messages | SRV");
@@ -373,14 +368,13 @@ const ClientChatPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Side Menu */}
-      <SideMenuDrawer
-        isOpen={showMenu}
-        onClose={() => setShowMenu(false)}
-        items={menuItemsData}
-        onItemClick={handleMenuClick}
-        userInfo={{ name: displayName, to: "/provider/profile" }}
-      />
+{/* Side Menu */}
+        <SideMenuDrawer
+          isOpen={showMenu}
+          onClose={() => setShowMenu(false)}
+          items={menuItemsData}
+          userInfo={{ name: displayName, to: "/provider/profile" }}
+        />
 
       <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (

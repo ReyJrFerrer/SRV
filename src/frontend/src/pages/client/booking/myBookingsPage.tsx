@@ -75,10 +75,6 @@ const MyBookingsPage: React.FC = () => {
     },
   ];
 
-  const handleMenuClick = (to: string) => {
-    setShowMenu(false);
-    navigate(to);
-  };
 
   // Status filter (now inside dropdown)
   const [statusFilter, setStatusFilter] = useState<BookingStatusTab>("ALL");
@@ -431,7 +427,6 @@ const MyBookingsPage: React.FC = () => {
           isOpen={showMenu}
           onClose={() => setShowMenu(false)}
           items={menuItemsData}
-          onItemClick={handleMenuClick}
           userInfo={{ name: displayName, to: "/client/profile" }}
         />
 

@@ -95,7 +95,7 @@ const ProviderBookingsPage: React.FC = () => {
 
   const displayName = profile?.name ? profile.name.split(" ")[0] : "User";
 
-  const menuItemsData = [
+const menuItemsData = [
     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
     { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
     {
@@ -109,11 +109,6 @@ const ProviderBookingsPage: React.FC = () => {
       icon: QuestionMarkCircleIcon,
     },
   ];
-
-  const handleMenuClick = (to: string) => {
-    setShowMenu(false);
-    navigate(to);
-  };
 
   const {
     bookings,
@@ -566,7 +561,6 @@ const ProviderBookingsPage: React.FC = () => {
           isOpen={showMenu}
           onClose={() => setShowMenu(false)}
           items={menuItemsData}
-          onItemClick={handleMenuClick}
           userInfo={{ name: displayName, to: "/provider/profile" }}
         />
 

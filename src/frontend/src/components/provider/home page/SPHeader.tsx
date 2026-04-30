@@ -5,9 +5,7 @@ import {
   UserCircleIcon,
   Bars3Icon,
   Cog6ToothIcon,
-  CurrencyDollarIcon,
   DocumentTextIcon,
-  ExclamationTriangleIcon,
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
@@ -152,26 +150,18 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
 
   const menuItemsData: MenuItemData[] = [
     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
-    { label: "My Services", to: "/provider/services", icon: Cog6ToothIcon },
-    { label: "Wallet", to: "/provider/wallet", icon: CurrencyDollarIcon },
     { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
     {
       label: "Terms & Conditions",
       to: "/provider/terms",
       icon: DocumentTextIcon,
     },
-    { label: "Report", to: "/provider/report", icon: ExclamationTriangleIcon },
     {
       label: "Help & Support",
       to: "/provider/help",
       icon: QuestionMarkCircleIcon,
     },
   ];
-
-  const handleMenuClick = (to: string) => {
-    setShowMenu(false);
-    navigate(to);
-  };
 
   // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
   const headerRef = useRef<HTMLDivElement | null>(null);
@@ -347,7 +337,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           isOpen={showMenu}
           onClose={() => setShowMenu(false)}
           items={menuItemsData}
-          onItemClick={handleMenuClick}
           userInfo={{ name: displayName, to: "/provider/profile" }}
         />
       )}
