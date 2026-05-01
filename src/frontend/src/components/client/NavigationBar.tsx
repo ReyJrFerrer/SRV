@@ -142,7 +142,6 @@ const BottomNavigation: React.FC = () => {
     "Chat",
     "Notifications",
     "Settings",
-    "Profile",
   ];
 
   const mobileItems = mobileOrder
