@@ -3,11 +3,12 @@ import ProtectedRoute from "./ProtectedRoute";
 import ProviderOnRouteBanner from "../provider/OnRouteBanner";
 import ActiveServiceBanner from "../provider/ActiveServiceBanner";
 import RouteTransition from "../common/pageFlowImprovements/RouteTransition";
+import BottomNavigation from "../provider/NavigationBar";
 
 export default function ProviderLayout() {
   return (
     <ProtectedRoute requiredRole="ServiceProvider">
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-20 md:pb-0 md:pl-20">
         <ProviderOnRouteBanner />
         <ActiveServiceBanner />
         {/* Provider-specific header/navigation can go here */}
@@ -17,6 +18,7 @@ export default function ProviderLayout() {
           </RouteTransition>
         </main>
         {/* Provider-specific footer can go here */}
+        <BottomNavigation />
       </div>
     </ProtectedRoute>
   );

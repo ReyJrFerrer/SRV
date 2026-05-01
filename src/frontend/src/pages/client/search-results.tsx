@@ -8,7 +8,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useReputation } from "../../hooks/useReputation";
 import ServiceListItem from "../../components/client/home page/ServiceListingCard";
-import BottomNavigation from "../../components/client/NavigationBar";
 import SearchBar from "../../components/client/SearchBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
 import EmptyState from "../../components/common/EmptyState";
@@ -337,7 +336,6 @@ const SearchResultsPage: React.FC = () => {
           </div>
         )}
       </main>
-      <BottomNavigation />
     </div>
   );
 };

@@ -1,22 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  UserIcon,
+  CalendarDaysIcon,
   MapPinIcon,
-  CalendarIcon,
-  CurrencyDollarIcon,
-  // CameraIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  PaperAirplaneIcon,
+  PhotoIcon,
   PhoneIcon,
   ChatBubbleLeftRightIcon,
-} from "@heroicons/react/24/solid";
-import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
+  CheckCircleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import useChat from "../../../hooks/useChat";
 import { useAuth } from "../../../context/AuthContext";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
 import { toast } from "sonner";
 import { bookingCanisterService } from "../../../services/bookingCanisterService";
@@ -29,14 +24,7 @@ const ActiveServicePage: React.FC = () => {
   );
   const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
-  const [commissionValidation, setCommissionValidation] = useState<{
-    estimatedCommission: number;
-  }>({
-    estimatedCommission: 0,
-  });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const { checkCommissionValidation } = useProviderBookingManagement();
 
   // Use cached booking hook - fetches once, shares across all pages
   const {
@@ -70,26 +58,6 @@ const ActiveServicePage: React.FC = () => {
       document.title = "Active Service | SRV Provider";
     }
   }, [booking]);
-
-  // Check commission validation for cash bookings
-  useEffect(() => {
-    const validateCommission = async () => {
-      // Only validate commission for cash payment bookings
-      if (!booking || booking.paymentMethod !== "CashOnHand") {
-        setCommissionValidation({ estimatedCommission: 0 });
-        return;
-      }
-
-      try {
-        const validation = await checkCommissionValidation(booking);
-        setCommissionValidation(validation);
-      } catch (error) {
-        setCommissionValidation({ estimatedCommission: 0 });
-      }
-    };
-
-    validateCommission();
-  }, [booking, checkCommissionValidation]);
 
   const handleMarkCompleted = async () => {
     if (!booking) return;
@@ -186,9 +154,9 @@ const ActiveServicePage: React.FC = () => {
   // --- UI Section ---
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
-      <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-2xl font-extrabold tracking-tight text-black">
+      <header className="fixed inset-x-0 top-0 z-20 border-b border-gray-200 bg-white py-4 shadow-sm">
+        <div className="flex w-full items-center justify-center px-4">
+          <h1 className="text-lg font-bold tracking-tight text-gray-900">
             Service In Progress
           </h1>
         </div>
@@ -212,22 +180,26 @@ const ActiveServicePage: React.FC = () => {
             {/* Timer removed */}
 
             {/* Details and Actions Section */}
-            <div className="mt-6 py-14 sm:mt-8 md:flex md:gap-8 lg:gap-12">
+            <div className="mt-4 space-y-4 sm:mt-6 md:flex md:gap-6 md:space-y-0 lg:gap-8">
               {/* Left Column: Booking Details */}
-              <section className="w-full rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:flex-1">
-                <h2 className="mb-4 border-b border-blue-100 pb-3 text-xl font-bold text-blue-800 sm:text-2xl">
-                  Service Details
-                </h2>
-                <div className="space-y-4 text-base text-gray-700">
-                  <div className="flex items-center">
-                    <UserIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                    <span className="font-semibold text-gray-800">
+              <section className="w-full overflow-hidden rounded-2xl bg-white shadow-sm md:flex-1">
+                <div className="p-5">
+                  <h2 className="mb-4 text-lg font-bold text-gray-900">
+                    Service Details
+                  </h2>
+
+                  {/* Client Name */}
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-500">Client</p>
+                    <p className="font-semibold text-gray-900">
                       {booking.clientName || "Unknown Client"}
-                    </span>
+                    </p>
                   </div>
+
+                  {/* Phone */}
                   {booking.clientPhone && (
-                    <div className="flex items-center">
-                      <PhoneIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-500">Phone</p>
                       <a
                         href={`tel:${booking.clientPhone}`}
                         className="font-medium text-blue-600 hover:underline"
@@ -236,107 +208,116 @@ const ActiveServicePage: React.FC = () => {
                       </a>
                     </div>
                   )}
-                  <div className="flex items-center">
-                    <CalendarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                    <span>
-                      {booking.scheduledDate
-                        ? new Date(booking.scheduledDate).toLocaleString([], {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : new Date(booking.requestedDate).toLocaleString([], {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                    </span>
-                  </div>
-                  <div className="flex items-start">
-                    <MapPinIcon className="mr-3 mt-1 h-6 w-6 flex-shrink-0 text-blue-400" />
-                    <span className="break-words font-medium text-gray-800">
-                      {booking.formattedLocation || "Location not specified"}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                    <div className="flex flex-col">
-                      <span className="font-medium text-gray-700">
-                        Price:{" "}
-                        <span className="font-semibold text-green-700">
-                          ₱
-                          {Number(
-                            booking.price +
-                              commissionValidation.estimatedCommission,
-                          ).toFixed(2)}
-                        </span>
-                      </span>
+
+                  {/* Date/Time */}
+                  <div className="mb-4 flex items-start gap-3">
+                    <CalendarDaysIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Scheduled</p>
+                      <p className="font-medium text-gray-900">
+                        {booking.scheduledDate
+                          ? new Date(booking.scheduledDate).toLocaleString([], {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : new Date(booking.requestedDate).toLocaleString([], {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center">
-                    <CurrencyDollarIcon className="mr-3 h-6 w-6 flex-shrink-0 text-blue-400" />
-                    <div className="flex flex-col">
-                      <span className="font-medium text-gray-700">
-                        Client's amount to pay:{" "}
-                        <span className="font-semibold text-green-700">
-                          ₱{Number(booking.amountPaid).toFixed(2)}
-                        </span>
-                      </span>
+
+                  {/* Location */}
+                  <div className="mb-4 flex items-start gap-3">
+                    <MapPinIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Location</p>
+                      <p className="font-medium text-gray-900">
+                        {booking.formattedLocation || "Location not specified"}
+                      </p>
                     </div>
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <p className="text-sm text-gray-500">Price</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      ₱{Number(booking.price).toFixed(2)}
+                    </p>
                   </div>
                 </div>
               </section>
 
               {/* Right Column: Actions */}
-              <section className="mt-8 rounded-2xl bg-white p-6 shadow-lg sm:p-8 md:mt-0 md:w-auto md:max-w-xs lg:w-1/3 xl:w-1/4">
-                <h3 className="mb-5 text-lg font-bold text-blue-800 sm:text-xl">
-                  Actions
-                </h3>
-                <div className="space-y-4">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                  {uploadedImageName && (
-                    <div className="mt-2 flex items-center gap-2 rounded bg-green-50 px-3 py-2 text-sm text-green-700">
-                      <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                      Image "{uploadedImageName}" uploaded!
-                    </div>
-                  )}
-                  <button
-                    onClick={handleContactClient}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-yellow-200 bg-white px-4 py-3 text-base font-semibold text-yellow-700 transition-colors hover:bg-yellow-50"
-                  >
-                    <PaperAirplaneIcon className="h-5 w-5" /> Contact{" "}
-                    {booking.clientName?.split(" ")[0] || "Client"}
-                  </button>
-                  <button
-                    onClick={handleChatClient}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-yellow-200 bg-white px-4 py-3 text-base font-semibold text-yellow-700 transition-colors hover:bg-yellow-50"
-                  >
-                    <ChatBubbleLeftRightIcon className="h-5 w-5" /> Chat{" "}
-                    {booking.clientName?.split(" ")[0] || "Client"}
-                  </button>
-                  <button
-                    onClick={handleMarkCompleted}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-green-700"
-                  >
-                    <CheckCircleIcon className="h-5 w-5" /> Mark as Completed
-                  </button>
-                  <button
-                    onClick={() => setIsCancelModalOpen(true)}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-red-700"
-                  >
-                    <XCircleIcon className="h-5 w-5" />
-                    Cancel Service
-                  </button>
+              <section className="w-full overflow-hidden rounded-2xl bg-white shadow-sm md:w-auto md:max-w-xs lg:w-1/3 xl:w-1/4">
+                <div className="p-5">
+                  <h3 className="mb-4 text-lg font-bold text-gray-900">
+                    Actions
+                  </h3>
+
+                  <div className="space-y-3">
+                    {/* Upload Photo Button */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+
+                    {uploadedImageName && (
+                      <div className="mb-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                        Photo uploaded: {uploadedImageName}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      <PhotoIcon className="h-4 w-4" />
+                      Upload Photo
+                    </button>
+
+                    <button
+                      onClick={handleContactClient}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      <PhoneIcon className="h-4 w-4" />
+                      Contact {booking.clientName?.split(" ")[0] || "Client"}
+                    </button>
+
+                    <button
+                      onClick={handleChatClient}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      <ChatBubbleLeftRightIcon className="h-4 w-4" />
+                      Chat
+                    </button>
+
+                    <button
+                      onClick={handleMarkCompleted}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                    >
+                      <CheckCircleIcon className="h-4 w-4" />
+                      Mark as Completed
+                    </button>
+
+                    <button
+                      onClick={() => setIsCancelModalOpen(true)}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+                    >
+                      <XCircleIcon className="h-4 w-4" />
+                      Cancel Service
+                    </button>
+                  </div>
                 </div>
               </section>
             </div>
@@ -355,7 +336,6 @@ const ActiveServicePage: React.FC = () => {
         cancelText="Back"
         isSubmitting={isCancelling}
       />
-      <BottomNavigation />
     </div>
   );
 };

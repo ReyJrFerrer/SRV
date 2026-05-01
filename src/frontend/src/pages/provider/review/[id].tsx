@@ -12,7 +12,6 @@ import {
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { useBookingRating } from "../../../hooks/reviewManagement";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 
 // Memoized skeleton components to prevent unnecessary re-renders
 const BookingDetailsSkeleton = memo(() => (
@@ -285,7 +284,7 @@ export default function ProviderReviewView() {
   return (
     <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white py-4 shadow-sm">
         <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
@@ -463,8 +462,6 @@ export default function ProviderReviewView() {
             </button>
           </div> */}
       </main>
-
-      <BottomNavigation />
     </div>
   );
 }

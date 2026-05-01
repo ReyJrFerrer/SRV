@@ -1,10 +1,18 @@
 // --- Imports ---
 import React, { useState, useEffect, useRef } from "react";
-import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import {
+  MapPinIcon,
+  UserCircleIcon,
+  Bars3Icon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useLocationStore } from "../../../store/locationStore";
+import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
 import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
@@ -32,6 +40,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
   const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
   const miniMapRef = useRef<MapFunctionsHandle | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Effect: fetch user profile when auth loads (location handled by post-login modal)
   useEffect(() => {
@@ -118,10 +128,47 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
     }
   };
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMenu]);
+
+  interface MenuItemData {
+    label: string;
+    to: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }
+
+  const menuItemsData: MenuItemData[] = [
+    { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
+    { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/provider/terms",
+      icon: DocumentTextIcon,
+    },
+    {
+      label: "Help & Support",
+      to: "/provider/help",
+      icon: QuestionMarkCircleIcon,
+    },
+  ];
+
   // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
   const headerRef = useRef<HTMLDivElement | null>(null);
   // const [setHeaderHeight] = useState<number | null>(null);
   const [isMini, setIsMini] = useState(false);
+
+  // Disabled: increased thresholds to prevent mini header at top
   useEffect(() => {
     // Hysteresis + rAF; robustly pick the correct scroll source (container or window)
     const candidate = scrollTargetRef?.current ?? null;
@@ -134,8 +181,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
     const getScrollY = () =>
       targetEl instanceof Window ? targetEl.scrollY : targetEl.scrollTop || 0;
     let ticking = false;
-    const ENTER_MINI_AT = 140;
-    const EXIT_MINI_BELOW = 100;
+    const ENTER_MINI_AT = 200; // increased - only activate when well scrolled down
+    const EXIT_MINI_BELOW = 150; // hysteresis
 
     const onScroll = () => {
       const y = getScrollY();
@@ -246,13 +293,15 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 Hi, {displayName}
               </span>
               {isAuthenticated && (
-                <button
-                  onClick={handleProfileClick}
-                  className="group relative rounded-full bg-gray-50 p-1.5 transition-all hover:bg-gray-100"
-                  aria-label="Profile"
-                >
-                  <UserCircleIcon className="h-7 w-7 text-gray-700 group-hover:text-blue-600" />
-                </button>
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="group relative rounded-full bg-gray-50 p-1.5 transition-all hover:bg-gray-100"
+                    aria-label="Menu"
+                  >
+                    <Bars3Icon className="h-7 w-7 text-gray-700 group-hover:text-blue-600" />
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -281,7 +330,18 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           </div>
         </div>
       </header>
-      {/* Mini sticky header as a fixed overlay so it always shows regardless of nesting/overflow */}
+
+      {/* Slide-out Menu */}
+      {showMenu && (
+        <SideMenuDrawer
+          isOpen={showMenu}
+          onClose={() => setShowMenu(false)}
+          items={menuItemsData}
+          userInfo={{ name: displayName, to: "/provider/profile" }}
+        />
+      )}
+
+      {/* Mini sticky header as a fixed overlay */}
       {isMini && (
         <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)]">
           <div className="w-full border-b border-gray-100 bg-white/95 p-3 shadow-sm backdrop-blur-md">

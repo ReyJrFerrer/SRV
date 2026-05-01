@@ -9,10 +9,10 @@ import {
   BellIcon,
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import { useLogout } from "../../hooks/logout";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import RoleSwitchButton from "../../components/common/RoleSwitchButton";
+import SmartHeader from "../../components/common/SmartHeader";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
 
@@ -53,13 +53,12 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white py-3 shadow-sm">
-        <div className="flex w-full items-center justify-center px-4">
-          <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
-            Settings
-          </h1>
-        </div>
-      </header>
+      <SmartHeader
+        title="Settings"
+        showBackButton={false}
+        showBurger={true}
+        userRole="provider"
+      />
 
       <main className="mx-auto max-w-2xl p-4">
         {isAuthenticated ? (
@@ -199,7 +198,6 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
       </main>
-      <BottomNavigation />
     </div>
   );
 };

@@ -1,27 +1,12 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
-import BottomNavigation from "../components/client/NavigationBar";
+import { ShieldCheckIcon } from "@heroicons/react/24/outline";
+import SmartHeader from "../components/common/SmartHeader";
 
 const TermsAndConditionsPage: React.FC = () => {
-  const navigate = useNavigate();
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 pb-24 md:pb-6">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100 active:scale-95"
-          >
-            <ArrowLeftIcon className="h-6 w-6" />
-          </button>
-          <h1 className="text-xl font-black tracking-tight text-blue-950">
-            Terms
-          </h1>
-          <div className="w-10" />
-        </div>
-      </header>
+      <SmartHeader title="Terms" userRole="client" />
 
       <main className="mx-auto w-full max-w-2xl px-4 py-6">
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
@@ -352,8 +337,6 @@ const TermsAndConditionsPage: React.FC = () => {
           </div>
         </div>
       </main>
-
-      <BottomNavigation />
     </div>
   );
 };

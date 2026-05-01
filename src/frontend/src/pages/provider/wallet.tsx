@@ -11,7 +11,6 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { CurrencyDollarIcon, XCircleIcon } from "@heroicons/react/24/solid";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import { useWallet } from "../../hooks/useWallet";
 import { Transaction } from "../../services/walletCanisterService";
 import { Toaster, toast } from "sonner";
@@ -367,9 +366,9 @@ const WalletPage: React.FC = () => {
 
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-          <div className="flex w-full items-center justify-center px-4 py-3">
-            <h1 className="text-2xl font-extrabold tracking-tight text-black">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white py-4 shadow-sm">
+          <div className="flex w-full items-center justify-center px-4">
+            <h1 className="text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
               My Wallet
             </h1>
             <button
@@ -844,7 +843,6 @@ const WalletPage: React.FC = () => {
           </div>
         </div>
       )}
-      {!showOnboardingModal && <BottomNavigation />}
     </div>
   );
 };

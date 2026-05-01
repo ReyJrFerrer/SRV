@@ -142,27 +142,29 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           const isArchivedDelete = serviceToDelete?.status === "Archived";
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
-                <h3 className="mb-2 text-lg font-bold text-red-700">
-                  {isArchivedDelete
-                    ? "Permanently Delete Service?"
-                    : "Delete Service?"}
+              <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+                <h3 className="mb-2 text-lg font-bold text-gray-900">
+                  {isArchivedDelete ? "Delete Service?" : "Archive Service?"}
                 </h3>
-                <p className="mb-4 text-sm text-gray-700">
+                <p className="mb-5 text-sm text-gray-600">
                   {isArchivedDelete
                     ? `Are you sure you want to permanently delete "${serviceToDelete?.title || "this service"}"? This cannot be undone.`
-                    : `Are you sure you want to delete "${serviceToDelete?.title || "this service"}"?  archived for 30 days. You can restore it during this time.`}
+                    : `Are you sure you want to archive "${serviceToDelete?.title || "this service"}"? You can restore it within 30 days.`}
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
-                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                    className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
                     onClick={() => setDeleteConfirmId(null)}
                     disabled={deletingId === deleteConfirmId}
                   >
                     Cancel
                   </button>
                   <button
-                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                    className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
+                      isArchivedDelete
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-yellow-500 hover:bg-yellow-600"
+                    }`}
                     onClick={async () => {
                       if (isArchivedDelete) {
                         await handlePermanentDelete(deleteConfirmId);
@@ -187,10 +189,8 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
           );
         })()}
 
-      <div className="flex items-center justify-between py-4 md:py-5 lg:py-8">
-        <h2 className="text-xl font-bold tracking-tight text-gray-900">
-          My Services
-        </h2>
+      <div className="flex items-center justify-between py-5">
+        <h2 className="text-xl font-bold text-gray-900">My Services</h2>
         <Tooltip
           content="You have reached the maximum of 5 services."
           showWhenDisabled={services.length >= 5}
@@ -203,32 +203,34 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
                 toast.error("You can only have a maximum of 5 services.");
               }
             }}
-            className={`flex items-center rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700 sm:px-4 ${
+            className={`flex items-center rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:px-4 ${
               services.length >= 5 ? "cursor-not-allowed opacity-50" : ""
             }`}
             aria-label="Add new service"
           >
             <PlusIcon className="h-5 w-5" />
-            <span className="ml-1 hidden sm:inline">Add new service</span>
+            <span className="ml-1 hidden sm:inline">Add new</span>
           </Link>
         </Tooltip>
       </div>
 
       {loading ? (
-        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
-            <p className="mt-4 text-gray-500">Loading your services...</p>
+        <div className={`rounded-2xl bg-white p-8 shadow-sm ${className}`}>
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+            <p className="mt-4 text-sm text-gray-500">
+              Loading your services...
+            </p>
           </div>
         </div>
       ) : error ? (
-        <div className={`rounded-2xl bg-white p-8 shadow-lg ${className}`}>
-          <div className="py-12 text-center">
-            <p className="mb-4 text-red-500">{error}</p>
+        <div className={`rounded-2xl bg-white p-8 shadow-sm ${className}`}>
+          <div className="py-8 text-center">
+            <p className="mb-4 text-sm text-red-500">{error}</p>
             {onRefresh && (
               <button
                 onClick={onRefresh}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
               >
                 Try Again
               </button>
@@ -264,19 +266,16 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 
           {/* View All Services Button */}
           {services.length > 4 && (
-            <div className="mt-8 flex justify-center">
-              <Link
-                to="/provider/services"
-                className="rounded-xl border border-gray-200 bg-white px-6 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-gray-50"
-              >
+            <div className="mt-6 flex justify-center">
+              <Link to="/provider/services" className="service-view-all-btn">
                 View All Services
               </Link>
             </div>
           )}
         </>
       ) : (
-        <div className="py-12 text-center text-gray-400">
-          No services found.
+        <div className="service-empty-state">
+          <p className="text-sm text-gray-500">No services found.</p>
         </div>
       )}
     </>

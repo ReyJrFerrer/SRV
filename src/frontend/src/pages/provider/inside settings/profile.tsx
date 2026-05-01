@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Toast from "../../../components/ToastNotifications";
-import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeftIcon,
   PencilIcon,
   CameraIcon,
   InformationCircleIcon,
@@ -13,12 +11,12 @@ import {
   ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";
 import SpotlightTour from "../../../components/common/SpotlightTour";
 import RoleSwitchButton from "../../../components/common/RoleSwitchButton";
+import SmartHeader from "../../../components/common/SmartHeader";
 import {
   ProfileSkeleton,
   ReputationScoreSkeleton,
@@ -366,9 +364,8 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   );
 };
 
-// SECTION: ClientProfilePage — main profile view and interactions
-const ClientProfilePage: React.FC = () => {
-  const navigate = useNavigate();
+// ProviderProfilePage: Main profile view for providers
+const ProviderProfilePage: React.FC = () => {
   const {
     profile,
     loading,
@@ -488,19 +485,12 @@ const ClientProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="tour-client-profile-header sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-md">
-        <div className="relative flex w-full items-center px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
-          >
-            <ArrowLeftIcon className="h-5 w-5" />
-          </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
-            My Profile
-          </h1>
-        </div>
-      </header>
+      <SmartHeader
+        title="Profile"
+        showBackButton={false}
+        showBurger={true}
+        userRole="provider"
+      />
 
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
         {loading || !profile ? (
@@ -693,7 +683,14 @@ const ClientProfilePage: React.FC = () => {
           </div>
         )}
       </main>
-      <BottomNavigation />
+      <div className="mt-8 block w-full px-4 lg:hidden">
+        <button
+          onClick={logout}
+          className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+        >
+          Log Out
+        </button>
+      </div>
     </div>
   );
 };

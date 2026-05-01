@@ -11,11 +11,11 @@ import {
   DevicePhoneMobileIcon,
   PlayIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/client/NavigationBar";
 import { useLogout } from "../../hooks/logout";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
+import SmartHeader from "../../components/common/SmartHeader";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
 import SpotlightTour from "../../components/common/SpotlightTour";
 
@@ -78,15 +78,7 @@ const SettingsPage: React.FC = () => {
           onTourComplete={() => setStartTourOpen(false)}
         />
       )}
-      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex h-16 w-full items-center justify-between px-4">
-          <div className="flex h-10 w-10" />
-          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
-            Settings
-          </h1>
-          <div className="flex h-10 w-10" />
-        </div>
-      </header>
+      <SmartHeader title="Settings" showBackButton={false} userRole="client" />
 
       <main className="mx-auto max-w-2xl p-4">
         {isAuthenticated ? (
@@ -232,7 +224,6 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
       </main>
-      <BottomNavigation />
     </div>
   );
 };

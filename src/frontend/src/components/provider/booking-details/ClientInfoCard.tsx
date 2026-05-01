@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PhoneIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
+import { PhoneIcon } from "@heroicons/react/24/solid";
 import ClientReputationScore from "./ClientReputationScore";
 import ClientRatingSummary from "./ClientRatingSummary";
 import ClientRatingInfoModal from "../../common/ClientRatingInfoModal";
@@ -7,10 +7,10 @@ import ClientRatingInfoModal from "../../common/ClientRatingInfoModal";
 interface Props {
   providerImage: string;
   clientName: string;
-  clientContact: string | undefined;
+  clientContact?: string;
   clientId?: string;
-  reviews: any;
-  reputation: any;
+  reviews?: any;
+  reputation?: any;
 }
 
 const ClientInfoCard: React.FC<Props> = ({
@@ -22,59 +22,88 @@ const ClientInfoCard: React.FC<Props> = ({
   reputation,
 }) => {
   const [showRatingInfo, setShowRatingInfo] = useState(false);
+  const hasClientData = (reviews && reviews.length > 0) || reputation !== null;
+
   return (
-    <div className="relative min-w-full max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl lg:min-w-[320px]">
-      {/* Header Section */}
-      <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 p-8">
-        {/* Profile Image */}
-        <img
-          src={providerImage}
-          alt={`${clientName} profile`}
-          className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-md"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/default-client.svg";
-          }}
-        />
-
-        {/* Client Name */}
-        <h2 className="mt-2 text-2xl font-bold text-slate-800">{clientName}</h2>
-
-        {/* Reputation and Contact (Side-by-Side) */}
-        <div className="mt-2 flex w-full flex-col items-center justify-center gap-2">
-          {/* Reputation Score */}
-          {clientId && <ClientReputationScore reputation={reputation} />}
-
-          {/* Contact Info */}
-          {clientContact && clientContact !== "Contact not available" && (
-            <div className="flex items-center text-sm font-medium text-gray-600">
-              <PhoneIcon className="mr-2 h-5 w-5 text-blue-500" />
-              <span>{clientContact}</span>
-            </div>
-          )}
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="p-5">
+        {/* Profile Image - centered with ring effect */}
+        <div className="flex justify-center">
+          <div className="relative">
+            <img
+              src={providerImage}
+              alt={`${clientName} profile`}
+              className="h-24 w-24 rounded-full object-cover shadow-md ring-4 ring-blue-50"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/default-client.svg";
+              }}
+            />
+          </div>
         </div>
 
-        {/* Rating Summary (Bottom) */}
-        {clientId && (
-          <div className="mt-2 border-t border-blue-200 pt-2">
-            <div className="flex items-center justify-between gap-2">
-              <ClientRatingSummary reviews={reviews} />
+        {/* Client Name */}
+        <div className="mt-4 text-center">
+          <h2 className="text-xl font-bold text-gray-900">{clientName}</h2>
+        </div>
+
+        {/* Contact Info */}
+        {clientContact && clientContact !== "Contact not available" && (
+          <div className="mt-3 flex items-center justify-center gap-2 text-sm text-gray-600">
+            <PhoneIcon className="h-4 w-4 text-blue-500" />
+            <span>{clientContact}</span>
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="mt-5 border-t border-gray-100" />
+
+        {/* Stats Section */}
+        <div className="mt-4 flex items-center justify-center gap-6">
+          {/* Reputation Score */}
+          {clientId && reputation && (
+            <div className="text-center">
+              <ClientReputationScore reputation={reputation} />
+            </div>
+          )}
+
+          {/* Rating */}
+          {clientId && (
+            <div className="flex items-center gap-2">
+              {hasClientData ? (
+                <ClientRatingSummary reviews={reviews} />
+              ) : (
+                <div className="h-4 w-16 animate-pulse rounded bg-gray-200" />
+              )}
               <button
                 type="button"
                 aria-label="About ratings"
                 className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 onClick={() => setShowRatingInfo(true)}
               >
-                <InformationCircleIcon className="h-5 w-5 text-blue-500" />
+                <svg
+                  className="h-4 w-4 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
               </button>
             </div>
-          </div>
-        )}
-        <ClientRatingInfoModal
-          isOpen={showRatingInfo}
-          onClose={() => setShowRatingInfo(false)}
-          role="provider"
-        />
+          )}
+        </div>
       </div>
+
+      <ClientRatingInfoModal
+        isOpen={showRatingInfo}
+        onClose={() => setShowRatingInfo(false)}
+        role="provider"
+      />
     </div>
   );
 };

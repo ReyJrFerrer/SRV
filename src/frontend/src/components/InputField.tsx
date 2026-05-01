@@ -27,7 +27,7 @@ export function InputField({
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={`font-inherit mr-2 rounded-lg border border-gray-500 bg-gray-800 px-5 py-3 text-base text-white transition-colors duration-200 focus:border-blue-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${className} `.trim()}
+      className={`w-full rounded-xl border border-gray-300 bg-white px-5 py-3 text-base text-gray-900 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:opacity-75 ${className}`.trim()}
     />
   );
 }

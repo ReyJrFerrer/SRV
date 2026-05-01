@@ -31,7 +31,6 @@ import ImagesSection from "../../../components/provider/service-details/ImagesSe
 import HeroSection from "../../../components/provider/service-details/HeroSection";
 import LocationAvailabilitySection from "../../../components/provider/service-details/LocationAvailabilitySection";
 import ActionButtons from "../../../components/provider/service-details/ActionButtons";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import useNoBackNavigation from "../../../hooks/useNoBackNavigation";
 
 // WeeklyScheduleEntry now provided by AvailabilityEditor types
@@ -1046,11 +1045,9 @@ const ProviderServiceDetailPage: React.FC = () => {
   // Show loading screen during initialization or data loading
   if (loading && !service) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
-        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-          <div className="flex w-full items-center justify-center px-4 py-3">
-            <div className="h-7 w-32 animate-pulse rounded bg-gray-200 lg:h-8"></div>
-          </div>
+      <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
+        <header className="sticky top-0 z-20 flex w-full items-center justify-center border-b border-gray-200 bg-white py-4 shadow-sm">
+          <div className="h-7 w-32 animate-pulse rounded bg-gray-200 lg:h-8"></div>
         </header>
 
         <main className="mx-auto max-w-full space-y-10 px-4 py-16 sm:px-8">
@@ -1240,7 +1237,6 @@ const ProviderServiceDetailPage: React.FC = () => {
             <div className="h-12 w-full animate-pulse rounded-lg bg-gray-200"></div>
           </div>
         </main>
-        <BottomNavigation />
       </div>
     );
   }
@@ -1294,13 +1290,13 @@ const ProviderServiceDetailPage: React.FC = () => {
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <button
               onClick={handleRetry}
-              className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
+              className="rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-white transition-colors hover:bg-yellow-600"
             >
               Try Loading Again
             </button>
             <Link
               to="/provider/services"
-              className="rounded-lg bg-gray-600 px-6 py-2 text-white transition-colors hover:bg-gray-700"
+              className="rounded-lg border border-yellow-500 bg-white px-6 py-2 font-semibold text-yellow-600 transition-colors hover:bg-yellow-50"
             >
               Back to Services
             </Link>
@@ -1311,7 +1307,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 pb-24 md:pb-0">
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
       <Toaster position="top-center" richColors />
       <PreviewModal
         previewUrl={previewUrl}
@@ -1339,16 +1335,14 @@ const ProviderServiceDetailPage: React.FC = () => {
         onConfirm={confirmDeletePackage}
       />
 
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="flex w-full items-center justify-center px-4 py-3">
-          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
-            Service Details
-          </h1>
-        </div>
+      <header className="sticky top-0 z-20 flex w-full items-center justify-center border-b border-gray-200 bg-white py-4 shadow-sm">
+        <h1 className="text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
+          Service Details
+        </h1>
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-full space-y-10 px-4 pb-10 sm:px-8">
+      <main className="mx-auto max-w-full space-y-10 px-4 py-8 sm:px-8">
         {/** Compute edit-lock state */}
         {/** Only the section currently being edited remains interactive */}
         {/** Others get blurred and non-interactive to prevent concurrent edits */}
@@ -1539,7 +1533,6 @@ const ProviderServiceDetailPage: React.FC = () => {
           />
         </LockableSection>
       </main>
-      <BottomNavigation />
     </div>
   );
 };

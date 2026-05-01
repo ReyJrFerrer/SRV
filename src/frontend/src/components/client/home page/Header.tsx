@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import {
+  MapPinIcon,
+  UserCircleIcon,
+  Bars3Icon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useServiceManagement } from "../../../hooks/serviceManagement";
+import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
 import authCanisterService from "../../../services/authCanisterService";
 import MapFunctions, {
   MapFunctionsHandle,
@@ -32,6 +41,8 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- State: Search bar ---
   const [searchQuery, setSearchQuery] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   // Static search bar placeholders
   const searchPlaceholders = [
     "Looking for a plumber?",
@@ -56,10 +67,11 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const miniMapRef = useRef<MapFunctionsHandle | null>(null);
   useEffect(() => {
     // Add hysteresis + rAF throttling to avoid rapid toggle near boundary
+    // Only enable mini mode AFTER scrolling down significantly, never at top
     let lastY = window.scrollY;
     let ticking = false;
-    const ENTER_MINI_AT = 140; // px
-    const EXIT_MINI_BELOW = 100; // px
+    const ENTER_MINI_AT = 200; // increased threshold - only activate when well scrolled down
+    const EXIT_MINI_BELOW = 150; // hysteresis to prevent flickering
 
     const onScroll = () => {
       const y = window.scrollY;
@@ -95,6 +107,42 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     else document.body.classList.remove("has-mini-header");
     return () => document.body.classList.remove("has-mini-header");
   }, [isMini]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMenu]);
+
+  interface MenuItemData {
+    label: string;
+    to: string;
+    icon?: React.ComponentType<{ className?: string }>;
+  }
+
+  const menuItemsData: MenuItemData[] = [
+    { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
+    { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
+    {
+      label: "Terms & Conditions",
+      to: "/client/terms",
+      icon: DocumentTextIcon,
+    },
+    { label: "Report", to: "/client/report", icon: ExclamationTriangleIcon },
+    {
+      label: "Help & Support",
+      to: "/client/help",
+      icon: QuestionMarkCircleIcon,
+    },
+  ];
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -251,7 +299,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         ref={headerRef}
         data-tour="client-header"
         // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
-        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm ${className}`}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-yellow-200  p-4 shadow-sm ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
         <div
@@ -299,10 +347,10 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               </Link>
               {isAuthenticated && (
                 <button
-                  onClick={handleProfileClick}
+                  onClick={() => setShowMenu(!showMenu)}
                   className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
                 >
-                  <UserCircleIcon className="h-8 w-8 text-yellow-500 transition-colors group-hover:text-yellow-600" />
+                  <Bars3Icon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-blue-700" />
                 </button>
               )}
             </div>
@@ -438,6 +486,16 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Slide-out Menu */}
+      {showMenu && (
+        <SideMenuDrawer
+          isOpen={showMenu}
+          onClose={() => setShowMenu(false)}
+          items={menuItemsData}
+          userInfo={{ name: displayName, to: "/client/profile" }}
+        />
       )}
     </>
   );

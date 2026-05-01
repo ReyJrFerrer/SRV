@@ -4,11 +4,12 @@ import {
   StarIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
+  ArrowLeftIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import useClientRating from "../../../hooks/useClientRating";
 import ClientRatingInfoModal from "../../../components/common/ClientRatingInfoModal";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 const quickFeedbackOptions = [
   "Paid on Time",
@@ -169,18 +170,33 @@ const ProviderRateClientPage: React.FC = () => {
   // Show message if provider has already reviewed this booking
   if (hasExistingReview === true) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="max-w-md text-center">
-          <div className="mb-4 text-blue-500">
-            <CheckCircleIcon className="mx-auto h-16 w-16" />
+      <div className="flex min-h-screen flex-col bg-gray-50 pb-24">
+        <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+          <div className="flex w-full items-center justify-between px-4 py-4">
+            <button
+              onClick={() => navigate("/provider/home")}
+              className="rounded-full p-2 hover:bg-gray-100"
+            >
+              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">Rate Client</h1>
+            <div className="w-9" />
           </div>
-          <h2 className="mb-2 text-xl font-bold text-gray-900">
-            Already Reviewed
-          </h2>
-          <p className="mb-4 text-gray-600">
-            You have already submitted a review for this client. Redirecting...
-          </p>
-        </div>
+        </header>
+        <main className="flex flex-1 items-center justify-center px-4">
+          <div className="text-center">
+            <div className="mb-4 text-blue-500">
+              <CheckCircleIcon className="mx-auto h-12 w-12" />
+            </div>
+            <h2 className="mb-2 text-lg font-semibold text-gray-900">
+              Already Reviewed
+            </h2>
+            <p className="text-sm text-gray-500">
+              You have already submitted a review for this client.
+              Redirecting...
+            </p>
+          </div>
+        </main>
       </div>
     );
   }
@@ -188,147 +204,158 @@ const ProviderRateClientPage: React.FC = () => {
   // Show loading state while booking is being fetched
   if (isLoadingBooking || !booking) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white pb-24">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
+    <div className="flex min-h-screen flex-col bg-gray-50 pb-24">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+        <div className="flex w-full items-center justify-between px-4 py-4">
           <button
             onClick={() => navigate("/provider/home")}
             className="rounded-full p-2 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-extrabold tracking-tight text-black">
-            Rate Client
-          </h1>
+          <h1 className="text-lg font-bold text-gray-900">Rate Client</h1>
+          <div className="w-9" />
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 p-4">
-        <div className="mx-auto mt-2 max-w-2xl rounded-lg bg-white p-6 shadow">
+      <main className="flex-1 px-4 py-6">
+        <div className="mx-auto max-w-md space-y-4">
           {/* Booking Details Card */}
-          <div className="mx-auto mb-8 w-full rounded-2xl border border-blue-200 bg-white p-6 shadow-lg">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-extrabold tracking-tight text-blue-700">
+          <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <h3 className="font-semibold text-gray-900">Booking Details</h3>
               <button
                 onClick={() => setShowRatingInfo(true)}
                 aria-label="About client ratings"
-                className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 font-bold text-white"
+                className="rounded-full p-1 hover:bg-gray-100"
               >
-                i
+                <InformationCircleIcon className="h-5 w-5 text-gray-400" />
               </button>
-              Booking Details
-            </h3>
-            <div className="grid grid-cols-1 gap-4 text-base text-gray-700 md:grid-cols-2">
+            </div>
+            <div className="space-y-3 px-5 py-4">
               <div>
-                <span className="font-bold">Client:</span>{" "}
-                {booking.clientName || "Client"}
+                <p className="text-xs text-gray-500">Client</p>
+                <p className="font-medium text-gray-900">
+                  {booking.clientName || "Client"}
+                </p>
               </div>
               <div>
-                <span className="font-bold">Service:</span>{" "}
-                {booking.serviceDetails!.title}
+                <p className="text-xs text-gray-500">Service</p>
+                <p className="font-medium text-gray-900">
+                  {booking.serviceDetails!.title}
+                </p>
               </div>
               <div>
-                <span className="font-bold">Package:</span>{" "}
-                {booking.packageName}
+                <p className="text-xs text-gray-500">Package</p>
+                <p className="font-medium text-gray-900">
+                  {booking.packageName}
+                </p>
               </div>
               <div>
-                <span className="font-bold">Price:</span> ₱
-                {(booking.price || 0).toFixed(2)}
+                <p className="text-xs text-gray-500">Price</p>
+                <p className="font-semibold text-gray-900">
+                  ₱{(booking.price || 0).toFixed(2)}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Star Rating Section */}
-          <div className="flex flex-col items-center px-8 py-6">
-            <h2 className="mb-3 text-center text-lg font-bold tracking-tight text-blue-800">
-              How was your experience with this client?
-            </h2>
-            <div className="mb-3 flex justify-center space-x-3">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                  className={`transition-transform focus:outline-none ${!submitting ? "hover:scale-110 focus:scale-110" : ""}`}
-                  onClick={() => !submitting && handleRating(star)}
-                  onMouseEnter={() => !submitting && setHovered(star)}
-                  onMouseLeave={() => !submitting && setHovered(null)}
-                  disabled={submitting}
-                >
-                  <StarIcon
-                    className={`h-10 w-10 drop-shadow transition-colors lg:h-12 lg:w-12 ${(hovered ?? rating) >= star ? "text-yellow-500" : "text-gray-200"}`}
-                    fill={(hovered ?? rating) >= star ? "currentColor" : "none"}
-                  />
-                </button>
-              ))}
-            </div>
-            <div className="text-center text-lg font-semibold text-blue-700">
-              <span>{ratingLabel}</span>
+          <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+            <div className="px-5 py-6 text-center">
+              <h2 className="mb-4 text-base font-semibold text-gray-900">
+                How was your experience with this client?
+              </h2>
+              <div className="mb-3 flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                    className={`transition-transform focus:outline-none ${!submitting ? "hover:scale-110 focus:scale-110" : ""}`}
+                    onClick={() => !submitting && handleRating(star)}
+                    onMouseEnter={() => !submitting && setHovered(star)}
+                    onMouseLeave={() => !submitting && setHovered(null)}
+                    disabled={submitting}
+                  >
+                    <StarIcon
+                      className={`h-9 w-9 transition-colors ${(hovered ?? rating) >= star ? "text-yellow-500" : "text-gray-200"}`}
+                      fill={
+                        (hovered ?? rating) >= star ? "currentColor" : "none"
+                      }
+                    />
+                  </button>
+                ))}
+              </div>
+              <div className="text-sm font-medium text-gray-700">
+                {ratingLabel}
+              </div>
             </div>
           </div>
 
           {/* Feedback Section */}
-          <div className="mb-8 px-2 py-4 sm:px-8 sm:py-6">
-            <h2 className="mb-3 text-center text-lg font-bold tracking-tight text-blue-800">
-              Add a comment (optional):
-            </h2>
-            <div className="mb-4 flex flex-wrap justify-center gap-2 sm:gap-3">
-              {quickFeedbackOptions.map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => handleFeedbackButtonClick(opt)}
-                  disabled={submitting}
-                  className="w-full rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-800 shadow transition-colors hover:border-blue-400 hover:bg-blue-50 disabled:opacity-50 sm:w-auto"
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-            <textarea
-              placeholder="Write your feedback... (optional, up to 500 characters)"
-              className="min-h-[96px] w-full resize-none rounded-xl border border-gray-300 p-3 text-base shadow focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 sm:min-h-[80px]"
-              rows={4}
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              disabled={submitting}
-              maxLength={500}
-            />
-            <div className="mt-1 text-right text-xs text-gray-500">
-              {feedback.length}/500 characters
+          <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+            <div className="px-5 py-4">
+              <h2 className="mb-3 text-base font-semibold text-gray-900">
+                Add a comment (optional)
+              </h2>
+              <div className="mb-3 flex flex-wrap gap-2">
+                {quickFeedbackOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => handleFeedbackButtonClick(opt)}
+                    disabled={submitting}
+                    className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                placeholder="Write your feedback..."
+                className="min-h-[100px] w-full resize-none rounded-xl border border-gray-200 p-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
+                rows={4}
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                disabled={submitting}
+                maxLength={500}
+              />
+              <div className="mt-2 text-right text-xs text-gray-400">
+                {feedback.length}/500
+              </div>
             </div>
           </div>
 
           {(formError || reviewError) && (
-            <div className="mt-4 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
-              <ExclamationCircleIcon className="mr-2 h-5 w-5" />
-              <span className="text-sm">
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+              <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0 text-red-500" />
+              <span className="text-sm text-red-700">
                 {formError || "You already reviewed this client."}
               </span>
             </div>
           )}
 
-          <div className="mt-6 flex justify-center gap-3">
+          {/* Action Buttons */}
+          <div className="flex gap-3">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/provider/home")}
               disabled={submitting}
-              className="w-full rounded-lg border border-yellow-500 bg-white px-4 py-2 font-semibold text-yellow-600 hover:bg-yellow-50 disabled:opacity-50"
+              className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={!isFormValid || submitting}
-              className="flex w-full items-center justify-center rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="flex-1 rounded-xl border border-blue-600 bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-200"
             >
-              {submitting && (
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
-              )}
               {submitting ? "Submitting..." : "Submit"}
             </button>
           </div>
