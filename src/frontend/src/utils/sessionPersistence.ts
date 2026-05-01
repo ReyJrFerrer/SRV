@@ -281,13 +281,9 @@ export function detectPlatform(): {
  * Get recommended session duration based on platform
  */
 export function getRecommendedSessionDuration(): number {
-  const { isPWA, isMobile } = detectPlatform();
-
-  if (isPWA || isMobile) {
-    // 7 days for mobile/PWA (in nanoseconds for IC)
-    return 7 * 24 * 60 * 60 * 1000 * 1000 * 1000;
-  } else {
-    // 30 days for desktop (in nanoseconds for IC)
-    return 30 * 24 * 60 * 60 * 1000 * 1000 * 1000;
-  }
+  // 180 days for all platforms (in nanoseconds for IC).
+  // The IC delegation is only used to extract the principal on first login;
+  // the Cloud Function does not verify the delegation. A long TTL prevents
+  // the AuthClient from wiping stored credentials on reload.
+  return 180 * 24 * 60 * 60 * 1000 * 1000 * 1000;
 }

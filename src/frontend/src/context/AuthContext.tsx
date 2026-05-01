@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { AuthClient } from "@dfinity/auth-client";
@@ -111,6 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   const [isExplicitLogin, setIsExplicitLogin] = useState(false);
   const [isRefreshingSession, setIsRefreshingSession] = useState(false);
+  const isRefreshingFirebase = useRef(false);
   // Post-login location prompt state
   const [postLoginLocationPromptVisible, setPostLoginLocationPromptVisible] =
     useState(false);
@@ -134,17 +136,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (
         document.visibilityState === "visible" &&
         isAuthenticated &&
-        identity
+        !isRefreshingFirebase.current
       ) {
         try {
           const needsRefresh = await sessionManager.needsRefresh();
           if (needsRefresh) {
-            // Refresh Firebase token
-            const principal = identity.getPrincipal().toString();
-            const sessionDuration =
-              getRecommendedSessionDuration() / (1000 * 1000); // Convert ns to ms
-            await signInWithInternetIdentity(principal, sessionDuration);
-            await sessionManager.updateLastRefresh();
+            // Use stored principal — the Cloud Function doesn't verify
+            // the IC delegation, so this works even after delegation expiry.
+            const storedSession = await sessionManager.getSession();
+            const principal =
+              storedSession?.principal ??
+              identity?.getPrincipal().toString();
+            if (principal) {
+              const sessionDuration =
+                getRecommendedSessionDuration() / (1000 * 1000);
+              await signInWithInternetIdentity(principal, sessionDuration);
+              await sessionManager.updateLastRefresh();
+            }
           }
         } catch (error) {
           // Silent fail - will retry on next visibility change
@@ -161,12 +169,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Handle automatic session refresh events
   useEffect(() => {
     const handleSessionRefresh = async () => {
-      if (isRefreshingSession || !isAuthenticated || !identity) return;
+      if (isRefreshingSession || isRefreshingFirebase.current || !isAuthenticated) return;
 
       setIsRefreshingSession(true);
       try {
-        const principal = identity.getPrincipal().toString();
-        const sessionDuration = getRecommendedSessionDuration() / (1000 * 1000); // Convert ns to ms
+        // Use stored principal — works even if IC delegation has expired
+        const storedSession = await sessionManager.getSession();
+        const principal =
+          storedSession?.principal ??
+          identity?.getPrincipal().toString();
+        if (!principal) {
+          setIsRefreshingSession(false);
+          return;
+        }
+        const sessionDuration = getRecommendedSessionDuration() / (1000 * 1000);
         await signInWithInternetIdentity(principal, sessionDuration);
         await sessionManager.updateLastRefresh();
       } catch (error) {
@@ -234,18 +250,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setFirebaseUser(user);
+      // Guard against recursive calls — signInWithCustomToken triggers
+      // onAuthStateChanged(signOut) then onAuthStateChanged(signIn),
+      // which would otherwise re-enter this handler mid-refresh
+      if (isRefreshingFirebase.current) return;
 
-      // If Firebase session expired but IC session is still valid, refresh
-      if (!user && isAuthenticated && identity) {
+      // If Firebase session expired but we're still authenticated, refresh.
+      // Use stored principal as fallback when identity object is unavailable
+      // (e.g. IC delegation expired but session data persists).
+      if (!user && isAuthenticated) {
+        isRefreshingFirebase.current = true;
         try {
-          const principal = identity.getPrincipal().toString();
+          const storedSession = await sessionManager.getSession();
+          const principal =
+            storedSession?.principal ??
+            identity?.getPrincipal().toString();
+          if (!principal) {
+            setFirebaseUser(null);
+            return;
+          }
           const result = await signInWithInternetIdentity(principal);
           setFirebaseUser(result.user);
         } catch (error) {
-          // Silent fail — Cloud Function doesn't verify IC delegation,
-          // so refresh will succeed on next retry or visibility change
+          // Only null out if refresh genuinely failed
+          setFirebaseUser(null);
+        } finally {
+          isRefreshingFirebase.current = false;
         }
+      } else {
+        setFirebaseUser(user);
       }
     });
 
@@ -318,17 +351,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const client = await AuthClient.create();
+        const client = await AuthClient.create({
+          idleOptions: { disableIdle: true },
+        });
         setAuthClient(client);
         const isAuth = await client.isAuthenticated();
-        setIsAuthenticated(isAuth);
+
         if (isAuth) {
           const identity = client.getIdentity();
+          setIsAuthenticated(true);
           setIdentity(identity);
           updateAllActors(identity);
-          // await initializeCanisters(isAuth, identity);
         } else {
-          updateAllActors(null);
+          // IC delegation expired — try to restore from stored session.
+          // The principal is permanent and the Cloud Function doesn't verify
+          // the IC delegation, so we can re-authenticate with Firebase using
+          // the stored principal alone.
+          const storedSession = await sessionManager.getSession();
+          if (storedSession?.principal) {
+            try {
+              const sessionDuration =
+                getRecommendedSessionDuration() / (1000 * 1000);
+              const result = await signInWithInternetIdentity(
+                storedSession.principal,
+                sessionDuration,
+              );
+              setFirebaseUser(result.user);
+              setIsAuthenticated(true);
+              setIdentity(client.getIdentity());
+              setProfileStatus({
+                hasProfile: result.hasProfile,
+                needsProfile: result.needsProfile,
+              });
+            } catch {
+              await sessionManager.clearSession();
+              updateAllActors(null);
+            }
+          } else {
+            updateAllActors(null);
+          }
         }
       } catch (e) {
       } finally {
