@@ -15,8 +15,6 @@ interface ServiceImageUploadProps {
   handleRemoveCertification?: (index: number) => void;
 }
 
-const MAX_PDF_SIZE = 450 * 1024; // 450 KB
-
 const UploadZone: React.FC<{
   id: string;
   accept: string;
@@ -63,13 +61,14 @@ const UploadZone: React.FC<{
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-all ${
+      className={`relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-all ${
         isDragging
           ? "border-yellow-400 bg-yellow-50"
           : hasFiles
             ? "border-gray-200 bg-gray-50"
             : "border-gray-200 bg-white hover:border-yellow-300 hover:bg-yellow-50"
       }`}
+      onClick={() => fileInputRef.current?.click()}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -104,19 +103,13 @@ const UploadZone: React.FC<{
           </svg>
         </div>
         <p className="mb-1 text-sm font-medium text-gray-700">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="text-yellow-600 hover:underline"
-          >
-            Click to browse
-          </button>{" "}
-          or drag and drop
+          <span className="text-yellow-600">Click to browse</span> or drag and
+          drop
         </p>
         <p className="text-xs text-gray-400">
           {id.includes("service")
-            ? "PNG, JPG, GIF up to 10MB"
-            : "PNG, JPG, PDF up to 450KB"}
+            ? "PNG, JPG up to 10MB"
+            : "PNG, JPG up to 450KB"}
         </p>
       </div>
     </div>
@@ -150,24 +143,6 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
       return;
     }
 
-    // Validate PDF size
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (
-        file.type === "application/pdf" ||
-        file.name.toLowerCase().endsWith(".pdf")
-      ) {
-        if (file.size > MAX_PDF_SIZE) {
-          toast.error(
-            `PDF "${file.name}" is too large. Please upload a PDF of 450 KB or less.`,
-          );
-          // Reset the input so user can select again
-          e.target.value = "";
-          return;
-        }
-      }
-    }
-
     handleCertificationFilesChange?.(e);
     toast.success(`${files.length} certification file(s) selected!`);
   };
@@ -188,7 +163,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
         </p>
         <UploadZone
           id="serviceImages"
-          accept="image/png, image/jpeg, image/gif"
+          accept="image/png, image/jpeg"
           multiple={true}
           onChange={onImageFilesChange}
           files={serviceImageFiles}
@@ -248,7 +223,7 @@ const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
         </p>
         <UploadZone
           id="certificationImages"
-          accept="image/png, image/jpeg,application/pdf"
+          accept="image/png, image/jpeg"
           multiple={true}
           onChange={onCertificationFilesChange}
           files={certificationFiles}
