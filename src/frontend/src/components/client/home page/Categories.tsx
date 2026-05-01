@@ -266,10 +266,10 @@ const Categories: React.FC<CategoriesProps> = React.memo(
                 <button
                   key={category.id}
                   onClick={() => handleCategoryClick(category.slug)}
-              className={
-                itemBaseClass +
-                ` group min-w-0 hover:scale-105 hover:text-blue-700 ${mainRowCount === 3 ? "min-w-0 flex-1" : mainRowCount === 5 ? "w-1/6" : "min-w-0 flex-1"}`
-              }
+                  className={
+                    itemBaseClass +
+                    ` group min-w-0 hover:scale-105 hover:text-blue-700 ${mainRowCount === 3 ? "min-w-0 flex-1" : mainRowCount === 5 ? "w-1/6" : "min-w-0 flex-1"}`
+                  }
                 >
                   <span className="flex flex-col items-center transition-all duration-200 group-hover:scale-110 group-hover:text-blue-700">
                     <img
