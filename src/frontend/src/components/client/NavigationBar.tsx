@@ -6,6 +6,7 @@ import {
   ChatBubbleOvalLeftEllipsisIcon,
   BellIcon,
   UserCircleIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { useNotifications } from "../../hooks/useNotificationsWithPush";
 import { useChatNotifications } from "../../hooks/useChatNotifications";
@@ -89,6 +90,22 @@ const BottomNavigation: React.FC = () => {
     } catch {}
   }, [stableProfileSrc]);
 
+  React.useEffect(() => {
+    const apply = () => {
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        document.body.classList.add("has-left-sidebar");
+      } else {
+        document.body.classList.remove("has-left-sidebar");
+      }
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => {
+      document.body.classList.remove("has-left-sidebar");
+      window.removeEventListener("resize", apply);
+    };
+  }, []);
+
   const isRouteActive = (label: string, to: string) => {
     if (label === "Profile") return location.pathname === to;
     return location.pathname.startsWith(to);
@@ -109,16 +126,23 @@ const BottomNavigation: React.FC = () => {
       icon: null,
       count: filteredNotificationUnreadCount,
     },
-    { to: "/client/settings", label: "Settings", icon: null, count: 0 },
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
 
-  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
+  const settingsItem = {
+    to: "/client/settings",
+    label: "Settings",
+    icon: null as null,
+    count: 0,
+  };
+
+  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Settings", "Profile"];
 
   const mobileItems = mobileOrder
-    .map(
-      (label: string) => navItems.find((i: any) => i.label === label) || null,
-    )
+    .map((label: string) => {
+      if (label === "Settings") return settingsItem;
+      return navItems.find((i: any) => i.label === label) || null;
+    })
     .filter((i: any): i is any => !!i);
 
   return (
@@ -182,7 +206,9 @@ const BottomNavigation: React.FC = () => {
                                     ? BellIcon
                                     : displayItem.label === "Chat"
                                       ? ChatBubbleOvalLeftEllipsisIcon
-                                      : HomeIcon;
+                                      : displayItem.label === "Settings"
+                                        ? Cog6ToothIcon
+                                        : HomeIcon;
                           return (
                             <Icon
                               className={`transition-colors duration-300 ${
@@ -249,16 +275,24 @@ const BottomNavigation: React.FC = () => {
                 }}
               >
                 {item.label === "Profile" ? (
-                  <img
-                    src={stableProfileSrc}
-                    alt="Profile"
-                    className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
+                  <div
+                    className={`flex items-center justify-center transition-all duration-300 ease-out ${
                       isActive
-                        ? "h-9 w-9 border-2 border-yellow-400"
-                        : "h-8 w-8 md:group-hover:scale-105"
+                        ? "h-12 w-12 rounded-2xl bg-blue-600 shadow-md"
+                        : "h-12 w-12 rounded-2xl bg-transparent hover:bg-gray-50"
                     }`}
-                    draggable={false}
-                  />
+                  >
+                    <img
+                      src={stableProfileSrc}
+                      alt="Profile"
+                      className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
+                        isActive
+                          ? "h-9 w-9 border-2 border-yellow-400"
+                          : "h-8 w-8 md:group-hover:scale-105"
+                      }`}
+                      draggable={false}
+                    />
+                  </div>
                 ) : (
                   (() => {
                     const ItemIcon =
@@ -272,13 +306,21 @@ const BottomNavigation: React.FC = () => {
                               ? BellIcon
                               : HomeIcon;
                     return (
-                      <ItemIcon
-                        className={`transition-colors duration-300 ${
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
                           isActive
-                            ? "h-6 w-6 text-yellow-400"
-                            : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
+                            ? "rounded-2xl bg-blue-600 shadow-md"
+                            : "rounded-2xl bg-transparent hover:bg-gray-50"
                         }`}
-                      />
+                      >
+                        <ItemIcon
+                          className={`transition-colors duration-300 ${
+                            isActive
+                              ? "h-6 w-6 text-yellow-400"
+                              : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
+                          }`}
+                        />
+                      </div>
                     );
                   })()
                 )}
@@ -306,6 +348,39 @@ const BottomNavigation: React.FC = () => {
               </Link>
             );
           })}
+        </div>
+
+        {/* Bottom section: Settings anchored at bottom */}
+        <div className="mb-6 mt-auto flex w-full flex-col items-center border-t border-gray-100 pt-4">
+          <Link
+            to="/client/settings"
+            className="group relative flex w-full flex-col items-center justify-center py-2"
+          >
+            <div
+              className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
+                isRouteActive("Settings", "/client/settings")
+                  ? "rounded-2xl bg-blue-600 shadow-md"
+                  : "rounded-2xl bg-transparent hover:bg-gray-50"
+              }`}
+            >
+              <Cog6ToothIcon
+                className={`transition-colors duration-300 ${
+                  isRouteActive("Settings", "/client/settings")
+                    ? "h-6 w-6 text-yellow-400"
+                    : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
+                }`}
+              />
+            </div>
+            <span
+              className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
+                isRouteActive("Settings", "/client/settings")
+                  ? "font-black text-blue-700 opacity-100"
+                  : "font-bold text-gray-600 opacity-80 group-hover:text-blue-600"
+              }`}
+            >
+              Settings
+            </span>
+          </Link>
         </div>
       </aside>
     </>
