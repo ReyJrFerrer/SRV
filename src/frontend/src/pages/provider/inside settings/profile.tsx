@@ -409,7 +409,6 @@ const ClientProfilePage: React.FC = () => {
   const reputationDisplay = getReputationDisplay();
   const reputationScore = reputationDisplay?.score ?? 0;
 
- 
   useEffect(() => {
     document.title = "My Profile | SRV";
   }, []);
@@ -420,7 +419,6 @@ const ClientProfilePage: React.FC = () => {
       setPhone(profile.phone || "");
     }
   }, [profile]);
-
 
   const handleImageUploadClick = () => fileInputRef.current?.click();
 
