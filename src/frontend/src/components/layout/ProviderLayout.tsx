@@ -8,7 +8,7 @@ import BottomNavigation from "../provider/NavigationBar";
 export default function ProviderLayout() {
   return (
     <ProtectedRoute requiredRole="ServiceProvider">
-      <div className="min-h-screen bg-gray-50 pb-20 md:pb-0 md:pl-20">
+      <div className="min-h-screen bg-gray-50 pb-20">
         <ProviderOnRouteBanner />
         <ActiveServiceBanner />
         {/* Provider-specific header/navigation can go here */}
