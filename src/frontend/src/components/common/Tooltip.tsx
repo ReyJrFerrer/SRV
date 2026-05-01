@@ -33,13 +33,13 @@ const Tooltip: React.FC<TooltipProps> = ({
 
   return (
     <div
-      className={`group relative overflow-visible align-middle${className ? ` ${className}` : ""}`}
+      className={`group/tooltip relative overflow-visible align-middle${className ? ` ${className}` : ""}`}
     >
       {children}
       {showWhenDisabled && (
         <div
           role="tooltip"
-          className={`pointer-events-none absolute z-[9999] whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 ${positionClass}`}
+          className={`pointer-events-none absolute z-[9999] whitespace-nowrap rounded-lg bg-gray-800 px-3 py-2 text-sm text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover/tooltip:opacity-100 ${positionClass}`}
         >
           {content}
           {/* Arrow */}

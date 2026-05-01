@@ -70,7 +70,7 @@ const ReceiptPage: React.FC = () => {
   // Set document title
   useEffect(() => {
     if (booking) {
-      document.title = `Receipt - ${booking.serviceName} | SRV Provider`;
+      document.title = `Receipt - ${booking.packageName || booking.serviceName || "Service"} | SRV Provider`;
     } else {
       document.title = "Receipt | SRV Provider";
     }

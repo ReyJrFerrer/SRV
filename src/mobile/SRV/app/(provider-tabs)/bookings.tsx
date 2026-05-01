@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -26,7 +26,24 @@ type BookingStatusFilter =
 export default function MyBookingsScreen() {
   const [searchTerm, setSearchTerm] = useState("");
   const [timingFilter, setTimingFilter] =
-    useState<BookingTimingFilter>("Scheduled");
+    useState<BookingTimingFilter>("Same Day");
+
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const hasSameDay = mockBookings.some((b) => {
+      const bookingDate = new Date(b.scheduledDate);
+      if (isNaN(bookingDate.getTime())) return false;
+      const day = new Date(bookingDate);
+      day.setHours(0, 0, 0, 0);
+      return day.getTime() === today.getTime();
+    });
+
+    if (!hasSameDay) {
+      setTimingFilter("Scheduled");
+    }
+  }, []);
   const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("All");
 
   const getStatusPriority = (status: string) => {
