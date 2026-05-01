@@ -136,7 +136,14 @@ const BottomNavigation: React.FC = () => {
     count: 0,
   };
 
-  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Settings", "Profile"];
+  const mobileOrder = [
+    "Home",
+    "Booking",
+    "Chat",
+    "Notifications",
+    "Settings",
+    "Profile",
+  ];
 
   const mobileItems = mobileOrder
     .map((label: string) => {
