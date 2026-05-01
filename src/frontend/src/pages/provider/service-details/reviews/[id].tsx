@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
   StarIcon as StarSolid,
-  EyeSlashIcon,
-  ChartBarIcon,
+  EyeSlashIcon
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../../hooks/reviewManagement";
 import { useServiceManagement } from "../../../../hooks/serviceManagement";
