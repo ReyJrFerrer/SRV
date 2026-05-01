@@ -6,9 +6,9 @@ import {
   PencilIcon,
   CameraIcon,
   InformationCircleIcon,
-  ExclamationTriangleIcon,
-  SparklesIcon,
   StarIcon,
+  SparklesIcon,
+  ExclamationTriangleIcon,
   TrophyIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
@@ -17,19 +17,19 @@ import BottomNavigation from "../../../components/provider/NavigationBar";
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useLogout } from "../../../hooks/logout";
 import { useReputation } from "../../../hooks/useReputation";
+import SpotlightTour from "../../../components/common/SpotlightTour";
 import RoleSwitchButton from "../../../components/common/RoleSwitchButton";
 import {
   ProfileSkeleton,
   ReputationScoreSkeleton,
 } from "../../../components/SkeletonLoader";
-
-// AboutReputationScoreModal: Provider version
 interface AboutReputationScoreModalProps {
   show: boolean;
   onClose: () => void;
   reputationDisplay: any;
 }
 
+// SECTION: AboutReputationScoreModal — modal explaining reputation score
 const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
   show,
   onClose,
@@ -50,17 +50,17 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
         </h2>
         <div className="mb-4 text-sm text-gray-700">
           <p>
-            Your reputation score (0-100) reflects your reliability and activity
-            as a provider. It increases when you complete bookings and get
-            positive ratings, and decreases if you get flagged for suspicious
-            activity or have low activity as a new provider.
+            Your reputation score (0-100) reflects your reliability and
+            activity. It increases when you complete bookings and get positive
+            ratings, and decreases if you get flagged for suspicious activity or
+            have low activity as a new user.
           </p>
           <ul className="mt-3 list-disc pl-5 text-xs text-gray-600">
             <li>
               Completing bookings and getting good ratings increases your score.
             </li>
             <li>
-              Flags for suspicious activity or low activity as a new provider
+              Flags for suspicious activity or low activity as a new user
               decrease your score.
             </li>
             <li>Your badge level is based on your score.</li>
@@ -86,7 +86,7 @@ const AboutReputationScoreModal: React.FC<AboutReputationScoreModalProps> = ({
   );
 };
 
-// TrustLevelBadge: Provider version
+// SECTION: TrustLevelBadge — trust level display with info button
 interface TrustLevelBadgeProps {
   trustLevel: string;
   onInfoClick?: () => void;
@@ -101,52 +101,51 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
     switch (level) {
       case "New":
         return {
-          color: "bg-white text-yellow-900 border-yellow-200",
+          color: "bg-white text-blue-700 shadow-sm border-blue-200",
           icon: SparklesIcon,
           description: (
             <>
-              <span className="mb-1 flex items-center justify-center gap-2 text-lg font-bold text-yellow-700">
-                <SparklesIcon className="h-6 w-6 text-yellow-500" /> Welcome to
+              <span className="mb-2 flex items-center justify-center gap-2 text-lg font-black tracking-tight text-blue-600">
+                <SparklesIcon className="h-5 w-5 text-blue-500" /> Welcome to
                 SRV!
               </span>
-              <span className="block text-gray-700">
-                Complete your first booking to start building your reputation as
-                a provider.
+              <span className="block text-sm font-medium text-blue-800/70">
+                Complete your first booking to start building your reputation.
               </span>
             </>
           ),
         };
       case "Low":
         return {
-          color: "bg-white text-red-800 border-red-200",
+          color: "bg-white text-red-700 shadow-sm border-red-200",
           icon: ExclamationTriangleIcon,
           description:
-            "Building trust - Focus on completing bookings and maintaining good conduct to improve your provider rating.",
+            "Building trust - Focus on completing bookings and maintaining good conduct to improve your client rating.",
         };
       case "Medium":
         return {
-          color: "bg-white text-blue-800 border-blue-200",
+          color: "bg-white text-yellow-700 shadow-sm border-yellow-200",
           icon: StarIcon,
           description:
-            "Reliable provider - You're building a good reputation! Keep up the excellent conduct.",
+            "Reliable client - You're building a good reputation! Keep up the excellent conduct.",
         };
       case "High":
         return {
-          color: "bg-white text-yellow-800 border-yellow-200",
+          color: "bg-white text-blue-700 shadow-sm border-blue-200",
           icon: TrophyIcon,
           description:
-            "Trusted provider - Excellent reputation! Clients trust you as a reliable provider.",
+            "Trusted client - Excellent reputation! Service providers trust you as a reliable client.",
         };
       case "VeryHigh":
         return {
-          color: "bg-white text-green-700 border-green-200",
+          color: "bg-white text-green-700 shadow-sm border-green-200",
           icon: ShieldCheckIcon,
           description:
-            "Premium provider - Outstanding reputation! You're among the top-rated providers on our platform.",
+            "Premium client - Outstanding reputation! You're among the top-rated clients on our platform.",
         };
       default:
         return {
-          color: "bg-white text-gray-700 border-gray-200",
+          color: "bg-white text-gray-700 shadow-sm border-gray-200",
           icon: InformationCircleIcon,
           description: "Trust level not available.",
         };
@@ -155,11 +154,11 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
   const config = getTrustLevelConfig(trustLevel);
   const IconComponent = config.icon;
   return (
-    <div className="mt-4 flex flex-col items-center">
+    <div className="flex w-full flex-col items-center">
       <div
-        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold ${config.color}`}
+        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-bold uppercase tracking-wide ${config.color}`}
       >
-        <IconComponent className="mr-2 h-5 w-5" />
+        <IconComponent className="mr-2 h-4 w-4" />
         {trustLevel === "VeryHigh"
           ? "Premium"
           : trustLevel === "High"
@@ -170,24 +169,25 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
                 ? "Building Trust"
                 : trustLevel}{" "}
         User
+        {/* Info button for all badges */}
         <button
           type="button"
           aria-label="Show badge info"
-          className="ml-2 rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="ml-2 rounded-full p-1 transition-colors hover:bg-black/5 focus:outline-none"
           onClick={onInfoClick}
         >
           <InformationCircleIcon
-            className={`h-5 w-5 text-blue-500 transition-transform ${infoOpen ? "rotate-90" : ""}`}
+            className={`h-5 w-5 text-current opacity-60 transition-transform hover:opacity-100 ${infoOpen ? "rotate-90" : ""}`}
           />
         </button>
       </div>
-      <div className="mt-3 flex w-full max-w-md flex-col items-center">
+      <div className="mt-4 flex w-full flex-col items-center">
         {trustLevel === "New" ? (
-          <div className="w-full rounded-lg border border-yellow-100 bg-white p-4 text-center shadow-sm">
+          <div className="w-full rounded-2xl border-none bg-gradient-to-br from-blue-50 to-indigo-50 p-5 text-center shadow-sm">
             {config.description}
           </div>
         ) : (
-          <p className="max-w-sm text-center text-xs leading-relaxed text-gray-600">
+          <p className="max-w-sm text-center text-sm font-medium leading-relaxed text-gray-500">
             {config.description}
           </p>
         )}
@@ -196,7 +196,7 @@ const TrustLevelBadge: React.FC<TrustLevelBadgeProps> = ({
   );
 };
 
-// TrustLevelInfoModal: Provider version
+// SECTION: TrustLevelInfoModal — modal with badge levels information
 const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
   show,
   onClose,
@@ -211,14 +211,14 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
         className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-4 text-center text-xl font-bold text-yellow-700">
-          Provider Badge Levels
+        <h2 className="mb-4 text-center text-xl font-bold text-blue-700">
+          User Badge Levels
         </h2>
         <ul className="space-y-4">
-          <li className="flex flex-col gap-1 rounded-lg border border-yellow-200 bg-white p-3">
+          <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-white p-3">
             <div className="flex items-center gap-3">
-              <SparklesIcon className="h-6 w-6 text-yellow-500" />
-              <span className="font-semibold text-yellow-700">New User</span>
+              <SparklesIcon className="h-6 w-6 text-blue-500" />
+              <span className="font-semibold text-blue-700">New User</span>
               <span className="text-xs text-gray-500">Score: 50</span>
             </div>
             <span className="text-xs text-gray-700">
@@ -234,29 +234,29 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
             </div>
             <span className="text-xs text-gray-700">
               Signifies: Building trust. Focus on completing bookings and
-              maintaining good conduct to improve your provider rating.
-            </span>
-          </li>
-          <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-white p-3">
-            <div className="flex items-center gap-3">
-              <StarIcon className="h-6 w-6 text-blue-500" />
-              <span className="font-semibold text-blue-700">Reliable</span>
-              <span className="text-xs text-gray-500">Score: 20.01 - 50.0</span>
-            </div>
-            <span className="text-xs text-gray-700">
-              Signifies: Reliable provider. You're building a good reputation!
-              Keep up the excellent conduct.
+              maintaining good conduct to improve your client rating.
             </span>
           </li>
           <li className="flex flex-col gap-1 rounded-lg border border-yellow-200 bg-white p-3">
             <div className="flex items-center gap-3">
-              <TrophyIcon className="h-6 w-6 text-yellow-600" />
-              <span className="font-semibold text-yellow-700">Trusted</span>
+              <StarIcon className="h-6 w-6 text-yellow-500" />
+              <span className="font-semibold text-yellow-700">Reliable</span>
+              <span className="text-xs text-gray-500">Score: 20.01 - 50.0</span>
+            </div>
+            <span className="text-xs text-gray-700">
+              Signifies: Reliable client. You're building a good reputation!
+              Keep up the excellent conduct.
+            </span>
+          </li>
+          <li className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-100 p-3">
+            <div className="flex items-center gap-3">
+              <TrophyIcon className="h-6 w-6 text-blue-600" />
+              <span className="font-semibold text-blue-700">Trusted</span>
               <span className="text-xs text-gray-500">Score: 50.01 - 80.0</span>
             </div>
             <span className="text-xs text-gray-700">
-              Signifies: Trusted provider. Excellent reputation! Clients trust
-              you as a reliable provider.
+              Signifies: Trusted client. Excellent reputation! Service providers
+              trust you as a reliable client.
             </span>
           </li>
           <li className="flex flex-col gap-1 rounded-lg border border-green-200 bg-green-50 p-3">
@@ -268,8 +268,8 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
               </span>
             </div>
             <span className="text-xs text-gray-700">
-              Signifies: Premium provider. Outstanding reputation! You're among
-              the top-rated providers on our platform.
+              Signifies: Premium client. Outstanding reputation! You're among
+              the top-rated clients on our platform.
             </span>
           </li>
         </ul>
@@ -284,10 +284,7 @@ const TrustLevelInfoModal: React.FC<{ show: boolean; onClose: () => void }> = ({
     </div>
   );
 };
-
-// ProviderStats: Displays booking and activity summary stats for providers
-
-// ProfilePictureModal: Provider version
+// SECTION: ProfilePictureModal — profile image with preview modal
 interface ProfilePictureModalProps {
   src: string | null | undefined;
   isLoading: boolean;
@@ -299,7 +296,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
 }) => {
   const [showModal, setShowModal] = React.useState(false);
   const [displaySrc, setDisplaySrc] = React.useState(
-    src || "/default-provider.svg",
+    src || "/default-client.svg",
   );
 
   // Update display src only when src is actually loaded (not during loading)
@@ -326,14 +323,14 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
         }}
       >
         {isLoading && !hasValidImage ? (
-          <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-lg">
+          <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-gray-200 shadow-sm">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
           </div>
         ) : (
           <img
             src={displaySrc}
             alt="Profile Picture"
-            className="h-32 w-32 rounded-full border-4 border-blue-200 object-cover shadow-lg transition-all duration-200 hover:border-yellow-400 focus:border-yellow-400"
+            className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-sm transition-all duration-200"
             tabIndex={-1}
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/default-provider.svg";
@@ -369,8 +366,8 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
   );
 };
 
-// ProviderProfilePage: Main profile view for providers
-const ProviderProfilePage: React.FC = () => {
+// SECTION: ClientProfilePage — main profile view and interactions
+const ClientProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const {
     profile,
@@ -392,36 +389,38 @@ const ProviderProfilePage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  // Error states for validation
   const [nameError, setNameError] = useState("");
+  const [, setPhoneError] = useState("");
   const [editError, setEditError] = useState("");
 
+  // Toast notification state
   const [toast, setToast] = useState<{
     message: string;
     type?: "success" | "error";
   } | null>(null);
 
+  // State: Editing profile, switching role, modal visibility, and reputation display
   const [showAboutInfo, setShowAboutInfo] = useState(false);
   const [showBadgeInfo, setShowBadgeInfo] = useState(false);
   const reputationDisplay = getReputationDisplay();
   const reputationScore = reputationDisplay?.score ?? 0;
 
+ 
   useEffect(() => {
-    document.title = "My Provider Profile | SRV";
+    document.title = "My Profile | SRV";
   }, []);
 
   useEffect(() => {
     if (profile) {
       setName(profile.name);
+      setPhone(profile.phone || "");
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (error) {
-      setToast({ message: error, type: "error" });
-    }
-  }, [profile]);
 
   const handleImageUploadClick = () => fileInputRef.current?.click();
 
@@ -435,6 +434,7 @@ const ProviderProfilePage: React.FC = () => {
 
   const handleSaveChanges = async () => {
     setNameError("");
+    setPhoneError("");
     setEditError("");
     let valid = true;
     const nameTrimmed = name.trim();
@@ -445,8 +445,17 @@ const ProviderProfilePage: React.FC = () => {
     } else if (nameWords.length < 2) {
       setNameError("Please enter your full name (first and last).");
       valid = false;
-    } else if (nameWords.some((w) => w.length < 2)) {
-      setNameError("Each part of your name must be at least 2 characters.");
+    }
+    const phoneTrimmed = phone.trim();
+    const phoneDigits = phoneTrimmed.replace(/[^\d]/g, "");
+    if (!phoneTrimmed) {
+      setPhoneError("Phone number is required.");
+      valid = false;
+    } else if (phoneDigits.length !== 11) {
+      setPhoneError("Phone number must be exactly 11 digits.");
+      valid = false;
+    } else if (!phoneDigits.startsWith("09")) {
+      setPhoneError("Phone number must start with '09'.");
       valid = false;
     }
     if (!valid) {
@@ -461,20 +470,19 @@ const ProviderProfilePage: React.FC = () => {
       refetchImage();
       setToast({ message: "Profile updated successfully!", type: "success" });
     }
-    // The error is now set inside useUserProfile and displayed via the `error` state
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setName(profile?.name || "");
-    setNameError("");
-    setEditError("");
+    setPhone(profile?.phone || "");
     setImageFile(null);
     setPreviewImage(null);
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-100 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <SpotlightTour flowType="client-profile" />
       {toast && (
         <Toast
           message={toast.message}
@@ -482,15 +490,15 @@ const ProviderProfilePage: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+      <header className="tour-client-profile-header sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-md">
         <div className="relative flex w-full items-center px-4 py-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full hover:bg-gray-100"
+            className="rounded-full border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
           >
-            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
+            <ArrowLeftIcon className="h-5 w-5" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
             My Profile
           </h1>
         </div>
@@ -498,150 +506,134 @@ const ProviderProfilePage: React.FC = () => {
 
       <main className="mx-auto w-full max-w-6xl flex-1 p-4">
         {loading || !profile ? (
-          <ProfileSkeleton role="provider" />
+          <ProfileSkeleton role="client" />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
-            {/* --- Left Column: Profile Info, Edit, Switch, Logout --- */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-8">
             <div className="flex flex-col space-y-4 lg:col-span-1">
-              {/* Profile Info Card (top left) */}
-              <div className="rounded-xl bg-white p-6 shadow-md">
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative mb-4">
-                    <ProfilePictureModal
-                      src={previewImage || profileImageUrl}
-                      isLoading={isImageLoading}
-                    />
-                    {isEditing && (
-                      <>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          className="hidden"
-                          accept="image/png, image/jpeg"
-                        />
-                        <button
-                          onClick={handleImageUploadClick}
-                          className="absolute bottom-1 right-1 rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
-                        >
-                          <CameraIcon className="h-5 w-5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                  {!isEditing ? (
+              <div className="flex flex-col items-center rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div className="relative mb-4">
+                  <ProfilePictureModal
+                    src={previewImage || profileImageUrl}
+                    isLoading={isImageLoading}
+                  />
+                  {isEditing && (
                     <>
-                      <h2 className="text-2xl font-bold text-gray-800">
-                        {profile?.name || "Provider Name"}
-                      </h2>
-                      <p className="text-md text-gray-500">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/png, image/jpeg"
+                      />
+                      <button
+                        onClick={handleImageUploadClick}
+                        className="absolute bottom-0 right-0 rounded-full border-2 border-white bg-blue-600 p-2.5 text-white shadow-sm transition-colors hover:bg-blue-700"
+                      >
+                        <CameraIcon className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {!isEditing ? (
+                  <div className="w-full text-center">
+                    <h2 className="text-2xl font-black tracking-tight text-gray-900">
+                      {profile?.name || "Client Name"}
+                    </h2>
+                    <p className="mt-1 text-sm font-medium text-gray-500">
+                      {profile?.phone || "No phone number"}
+                    </p>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="mt-6 flex w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-800 transition transition-all duration-300 hover:border-gray-300 active:scale-95"
+                    >
+                      <PencilIcon className="mr-2 h-4 w-4 text-gray-500" />
+                      Edit Profile
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-4 w-full space-y-4">
+                    <div>
+                      <label
+                        htmlFor="name"
+                        className="block text-left text-xs font-bold uppercase tracking-wider text-gray-500"
+                      >
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (nameError) setNameError("");
+                          if (editError) setEditError("");
+                        }}
+                        className="mt-1 block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      {nameError && (
+                        <p className="mt-1 text-xs font-medium text-red-500">
+                          {nameError}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <label
+                        htmlFor="phone"
+                        className="block text-xs font-bold uppercase tracking-wider text-gray-500"
+                      >
+                        Phone Number
+                      </label>
+                      <p className="mt-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-900">
                         {profile?.phone || "No phone number"}
                       </p>
-                    </>
-                  ) : (
-                    <div className="mt-4 w-full max-w-sm space-y-4">
-                      <div>
-                        <label
-                          htmlFor="name"
-                          className="block text-left text-sm font-medium text-gray-700"
-                        >
-                          Full Name
-                        </label>
-                        <input
-                          type="text"
-                          id="name"
-                          value={name}
-                          onChange={(e) => {
-                            setName(e.target.value);
-                            if (nameError) setNameError("");
-                            if (editError) setEditError("");
-                          }}
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                        />
-                        {nameError && (
-                          <p className="mt-1 text-sm text-red-500">
-                            {nameError}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <label
-                          htmlFor="phone"
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Phone Number
-                        </label>
-                        <p className="mt-1 text-gray-800">
-                          {profile?.phone || "No phone number"}
-                        </p>
-                        <div className="mt-2 flex items-start gap-2 rounded-md border border-yellow-200 bg-white p-3">
-                          <InformationCircleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" />
-                          <p className="text-xs text-yellow-800">
-                            Your phone number is linked to your account for
-                            security and cannot be changed here. Please contact
-                            support for assistance if you need to update it.
-                          </p>
-                        </div>
-                      </div>
+                      <p className="mt-2 flex items-start gap-1.5 px-1 text-xs text-gray-500">
+                        <InformationCircleIcon className="h-4 w-4 shrink-0 text-blue-500" />
+                        Phone number is linked for security. Contact support to
+                        update.
+                      </p>
                     </div>
-                  )}
-                  <div className="mt-6">
-                    {!isEditing ? (
+                    <div className="flex gap-3 pt-2">
                       <button
-                        onClick={() => setIsEditing(true)}
-                        className="flex items-center rounded-lg border border-yellow-200 bg-white px-6 py-2 font-semibold text-yellow-700 transition-colors hover:bg-yellow-50"
+                        onClick={handleCancelEdit}
+                        className="flex-1 rounded-2xl bg-gray-100 px-5 py-3.5 text-sm font-bold text-gray-700 transition transition-all duration-300 hover:bg-gray-200 active:scale-95"
                       >
-                        <PencilIcon className="mr-2 h-4 w-4" />
-                        Edit Profile
+                        Cancel
                       </button>
-                    ) : (
-                      <div className="flex space-x-3">
-                        <button
-                          onClick={handleCancelEdit}
-                          className="rounded-lg bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition-colors hover:bg-gray-300"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleSaveChanges}
-                          disabled={loading}
-                          className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
-                        >
-                          {loading ? "Saving..." : "Save Changes"}
-                        </button>
-                      </div>
-                    )}
+                      <button
+                        onClick={handleSaveChanges}
+                        disabled={loading}
+                        className="flex-1 rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition transition-all duration-300 hover:bg-blue-700 active:scale-95 disabled:opacity-50"
+                      >
+                        {loading ? "Saving..." : "Save"}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-              {/* Switch to Client Button (below profile info) */}
-              <div className="rounded-lg bg-blue-600 shadow-sm">
-                <RoleSwitchButton currentRole="provider" />
-              </div>
-
+              <RoleSwitchButton currentRole="provider" />
               <div className="hidden lg:block">
                 <button
                   onClick={logout}
-                  className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
+                  className="mt-2 flex w-full items-center justify-center rounded-2xl border border-red-200 bg-white px-6 py-3 text-sm font-bold text-red-600 shadow-sm transition-colors hover:bg-red-50"
                 >
                   Log Out
                 </button>
               </div>
             </div>
-            {/* --- Right Column: Reputation and Stats --- */}
-            <div className="mt-1 lg:col-span-2 lg:mt-0">
-              <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100 p-8 shadow-xl">
-                <div className="mb-6 flex items-center justify-center gap-2">
-                  <h3 className="text-center text-2xl font-bold tracking-tight text-black drop-shadow-sm">
-                    Your Reputation Score
+            <div className="mt-2 lg:col-span-2 lg:mt-0">
+              <div className="tour-client-reputation-score tour-client-profile-reputation rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+                <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+                  <h3 className="text-xl font-bold tracking-tight text-gray-900">
+                    Your Reputation
                   </h3>
                   <button
                     type="button"
                     aria-label="What is reputation score?"
-                    className="rounded-full p-1 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="rounded-full border border-gray-200 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     onClick={() => setShowAboutInfo(true)}
                   >
-                    <InformationCircleIcon className="h-6 w-6 text-blue-500" />
+                    <InformationCircleIcon className="h-5 w-5" />
                   </button>
                   <AboutReputationScoreModal
                     show={showAboutInfo}
@@ -671,67 +663,68 @@ const ProviderProfilePage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-6">
-                    <div className="mb-2 flex items-center justify-center gap-2">
+                    <div className="relative mb-2 flex items-center justify-center">
                       <ReputationScore score={reputationScore} />
                     </div>
                     {reputationDisplay && (
-                      <>
-                        <div className="flex w-full justify-center">
-                          <TrustLevelBadge
-                            trustLevel={reputationDisplay.level}
-                            onInfoClick={() => setShowBadgeInfo(true)}
-                            infoOpen={showBadgeInfo}
-                          />
-                        </div>
+                      <div className="flex w-full flex-col items-center gap-4">
+                        <TrustLevelBadge
+                          trustLevel={reputationDisplay.level}
+                          onInfoClick={() => setShowBadgeInfo(true)}
+                          infoOpen={showBadgeInfo}
+                        />
                         <TrustLevelInfoModal
                           show={showBadgeInfo}
                           onClose={() => setShowBadgeInfo(false)}
                         />
-                        <AboutReputationScoreModal
-                          show={showAboutInfo}
-                          onClose={() => setShowAboutInfo(false)}
-                          reputationDisplay={reputationDisplay}
-                        />
-                      </>
+                      </div>
                     )}
                   </div>
                 )}
               </div>
             </div>
+            {editError && (
+              <p className="mt-4 text-center text-red-500">{editError}</p>
+            )}
+            {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+            {reputationError && !error && (
+              <p className="mt-4 text-center text-red-500">
+                Reputation: {reputationError}
+              </p>
+            )}
           </div>
         )}
       </main>
-      <div className="mt-8 block w-full px-4 lg:hidden">
-        <button
-          onClick={logout}
-          className="mt-2 flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-lg font-semibold text-red-600 shadow transition-colors hover:bg-red-50"
-        >
-          Log Out
-        </button>
-      </div>
       <BottomNavigation />
     </div>
   );
 };
 
+// SECTION: ReputationScore — radial score visualization
 const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   const getScoreColor = (value: number) => {
-    if (value >= 80) return "#2563eb";
-    if (value >= 60) return "#60a5fa";
-    if (value >= 40) return "#facc15";
-    return "#fef08a";
+    if (value >= 80) return "#2563eb"; // blue-600
+    if (value >= 60) return "#60a5fa"; // blue-300
+    if (value >= 40) return "#facc15"; // yellow-400
+    return "#fef08a"; // yellow-200
   };
 
   const color = getScoreColor(score);
-  const circumference = 2 * Math.PI * 45;
+  const circumference = 2 * Math.PI * 45; // 45 is the radius
   const offset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="relative flex h-48 w-48 items-center justify-center">
-      <svg className="absolute h-full w-full" viewBox="0 0 100 100">
+    <div className="relative flex h-56 w-56 items-center justify-center">
+      {/* Outer subtle glow */}
+      <div className="absolute inset-0 rounded-full bg-gray-100 opacity-70 blur-xl"></div>
+
+      <svg
+        className="absolute h-full w-full drop-shadow-sm"
+        viewBox="0 0 100 100"
+      >
         <circle
-          className="text-gray-200"
-          strokeWidth="10"
+          className="text-gray-100"
+          strokeWidth="8"
           stroke="currentColor"
           fill="transparent"
           r="45"
@@ -740,7 +733,7 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
         />
         <circle
           stroke={color}
-          strokeWidth="10"
+          strokeWidth="8"
           strokeLinecap="round"
           fill="transparent"
           r="45"
@@ -751,15 +744,20 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
             strokeDashoffset: offset,
             transform: "rotate(-90deg)",
             transformOrigin: "50% 50%",
-            transition: "stroke-dashoffset 0.5s ease-in-out",
+            transition: "stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         />
       </svg>
-      <div className="text-center">
-        <span className="text-5xl font-bold text-gray-800">{score}</span>
+      <div className="z-10 flex h-36 w-36 flex-col items-center justify-center rounded-full bg-white shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+        <span className="text-5xl font-black tracking-tighter text-gray-900">
+          {score}
+        </span>
+        <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+          Trust Score
+        </span>
       </div>
     </div>
   );
 };
 
-export default ProviderProfilePage;
+export default ClientProfilePage;

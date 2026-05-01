@@ -316,10 +316,6 @@ const ServiceReviewsPage: React.FC = () => {
             </div>
             {isServiceOwner && (
               <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600 md:justify-start">
-                <span className="flex items-center">
-                  <ChartBarIcon className="mr-1 h-4 w-4 text-green-600" />
-                  {visibleReviews.length} Visible
-                </span>
                 {hiddenReviews.length > 0 && (
                   <span className="flex items-center">
                     <EyeSlashIcon className="mr-1 h-4 w-4 text-yellow-600" />
