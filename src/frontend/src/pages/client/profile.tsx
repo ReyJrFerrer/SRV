@@ -8,7 +8,6 @@ import {
   CameraIcon,
   BriefcaseIcon,
   CheckBadgeIcon,
-  CurrencyEuroIcon,
   CalendarIcon,
   InformationCircleIcon,
   StarIcon,
@@ -319,7 +318,7 @@ const ClientStats: React.FC = () => {
     {
       name: "Total Spent",
       value: formattedStats.totalSpent,
-      icon: CurrencyEuroIcon,
+      icon: "₱",
       bg: "text-blue-700",
     },
     {
@@ -382,7 +381,11 @@ const ClientStats: React.FC = () => {
               <div
                 className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg} shadow-sm`}
               >
-                <stat.icon className="h-5 w-5" />
+                {typeof stat.icon === "string" ? (
+                  <span className="text-lg font-bold">{stat.icon}</span>
+                ) : (
+                  <stat.icon className="h-5 w-5" />
+                )}
               </div>
               <p className="mb-1 w-full text-center text-xl font-black text-gray-900">
                 {stat.value}
