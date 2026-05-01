@@ -114,12 +114,6 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       icon: null,
       count: 0,
     },
-    {
-      to: "/provider/profile",
-      label: "Profile",
-      icon: null,
-      count: 0,
-    },
   ];
 
   const settingsItem = {
@@ -463,6 +457,66 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       : filteredNotificationUnreadCount}
                   </span>
                 )}
+              </Link>
+            );
+          })()}
+
+          {/* Profile Button */}
+          {(() => {
+            const isActive = isActivePath("/provider/profile");
+            const onClick = async (e: React.MouseEvent) => {
+              e.preventDefault();
+              if (isActive) {
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }, 120);
+                return;
+              }
+              if (onNavigateAttempt) {
+                try {
+                  const result = await onNavigateAttempt("/provider/profile");
+                  if (result === false) return;
+                } catch {
+                  return;
+                }
+              }
+              navigate("/provider/profile");
+            };
+
+            return (
+              <Link
+                key="Profile"
+                to="/provider/profile"
+                className="group relative flex w-full flex-col items-center justify-center py-2"
+                onClick={onClick}
+              >
+                <div
+                  className={`flex items-center justify-center transition-all duration-300 ease-out ${
+                    isActive
+                      ? "h-12 w-12 rounded-2xl bg-yellow-500 shadow-md"
+                      : "h-12 w-12 rounded-2xl bg-transparent hover:bg-gray-50"
+                  }`}
+                >
+                  <img
+                    src={stableProfileSrc}
+                    alt="Profile"
+                    className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
+                      isActive
+                        ? "h-9 w-9 border-2 border-blue-600"
+                        : "h-8 w-8 md:group-hover:scale-105"
+                    }`}
+                    draggable={false}
+                  />
+                </div>
+                <span
+                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
+                    isActive
+                      ? "font-black text-yellow-700 opacity-100"
+                      : "font-bold text-gray-600 opacity-80 group-hover:text-yellow-600"
+                  }`}
+                >
+                  Profile
+                </span>
               </Link>
             );
           })()}
