@@ -354,11 +354,12 @@ export default function SpotlightTour({
           : ".tour-client-nav-mobile",
         headline: "Welcome to SRV!",
         content:
-          "Use this menu to navigate between your home, bookings, messages, and profile.",
+          "Use this menu to navigate between your home, bookings, messages, notifications and profile.",
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: isDesktopLayout ? "right-start" : "top",
         disableBeacon: true,
         disableScroll: true,
+        spotlightPadding: 0,
       } as CustomStep,
       {
         target: '[data-tour="client-header"]',
