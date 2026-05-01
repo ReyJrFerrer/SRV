@@ -145,8 +145,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // the IC delegation, so this works even after delegation expiry.
             const storedSession = await sessionManager.getSession();
             const principal =
-              storedSession?.principal ??
-              identity?.getPrincipal().toString();
+              storedSession?.principal ?? identity?.getPrincipal().toString();
             if (principal) {
               const sessionDuration =
                 getRecommendedSessionDuration() / (1000 * 1000);
@@ -169,15 +168,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Handle automatic session refresh events
   useEffect(() => {
     const handleSessionRefresh = async () => {
-      if (isRefreshingSession || isRefreshingFirebase.current || !isAuthenticated) return;
+      if (
+        isRefreshingSession ||
+        isRefreshingFirebase.current ||
+        !isAuthenticated
+      )
+        return;
 
       setIsRefreshingSession(true);
       try {
         // Use stored principal — works even if IC delegation has expired
         const storedSession = await sessionManager.getSession();
         const principal =
-          storedSession?.principal ??
-          identity?.getPrincipal().toString();
+          storedSession?.principal ?? identity?.getPrincipal().toString();
         if (!principal) {
           setIsRefreshingSession(false);
           return;
@@ -263,8 +266,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const storedSession = await sessionManager.getSession();
           const principal =
-            storedSession?.principal ??
-            identity?.getPrincipal().toString();
+            storedSession?.principal ?? identity?.getPrincipal().toString();
           if (!principal) {
             setFirebaseUser(null);
             return;
