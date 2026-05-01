@@ -679,10 +679,10 @@ const ProviderBookingsPage: React.FC = () => {
             <div className="flex items-center justify-center px-4 pb-4">
               <div className="relative flex w-full max-w-sm rounded-2xl bg-gray-100 p-1.5">
                 <div
-                  className={`absolute bottom-1.5 left-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
+                  className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
                     timingFilter === "Scheduled"
-                      ? "translate-x-full bg-blue-600"
-                      : "translate-x-0 bg-yellow-400"
+                      ? "left-1/2 bg-blue-600"
+                      : "left-1.5 bg-yellow-400"
                   }`}
                 />
                 <button
@@ -804,10 +804,10 @@ const ProviderBookingsPage: React.FC = () => {
                     <div className="ml-auto">
                       <div className="relative flex w-48 rounded-xl bg-gray-100 p-1">
                         <div
-                          className={`absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-lg shadow-sm transition-all duration-300 ease-out ${
+                          className={`absolute bottom-1 top-1 w-[calc(50%-4px)] rounded-lg shadow-sm transition-all duration-300 ease-out ${
                             scheduledView === "list"
-                              ? "translate-x-full bg-blue-600"
-                              : "translate-x-0 bg-yellow-500"
+                              ? "left-1/2 bg-blue-600"
+                              : "left-1 bg-yellow-500"
                           }`}
                         />
                         <button
