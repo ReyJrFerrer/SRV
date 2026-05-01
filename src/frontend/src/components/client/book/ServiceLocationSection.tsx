@@ -108,6 +108,7 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
 }) => {
   const { locationStatus, location } = useLocationStore();
   const [showFullScreenMap, setShowFullScreenMap] = React.useState(false);
+  const [mapInitialized, setMapInitialized] = React.useState(false);
 
   useEffect(() => {
     if (locationStatus === "allowed") {
@@ -301,13 +302,18 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                       }
                     } catch {}
                   }}
+                  onCameraChanged={() => {
+                    setMapInitialized(true);
+                  }}
                 >
-                  <AdvancedMarker
-                    position={{
-                      lat: geoLocation.latitude,
-                      lng: geoLocation.longitude,
-                    }}
-                  />
+                  {mapInitialized && geoLocation && (
+                    <AdvancedMarker
+                      position={{
+                        lat: geoLocation.latitude,
+                        lng: geoLocation.longitude,
+                      }}
+                    />
+                  )}
                   {/* Show a subtle accuracy circle around the detected location when available */}
                   {typeof scaledAccuracy === "number" && scaledAccuracy > 0 && (
                     <AccuracyCircle

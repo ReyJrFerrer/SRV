@@ -79,7 +79,7 @@ export default function MyBookingsScreen() {
       if (priorityA !== priorityB) return priorityA - priorityB;
       const dateA = new Date(a.scheduledDate).getTime();
       const dateB = new Date(b.scheduledDate).getTime();
-      return dateA - dateB;
+      return dateB - dateA;
     });
 
     return filtered;

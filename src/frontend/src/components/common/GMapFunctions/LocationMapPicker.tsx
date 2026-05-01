@@ -484,23 +484,27 @@ const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
             mapId={"6922634ff75ae05ac38cc473"}
             gestureHandling="greedy"
           >
-            <AdvancedMarker
-              position={internalPosition}
-              draggable={true}
-              onDragEnd={(e: any) => {
-                const ll = (e?.detail?.latLng || e?.latLng) as any;
-                const lat = typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
-                const lng = typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
-                if (typeof lat === "number" && typeof lng === "number") {
-                  const pos = { lat, lng };
-                  setInternalPosition(pos);
-                  try {
-                    mapRef.current?.panTo(pos);
-                  } catch {}
-                  reverseGeocodeAndUpdate(pos);
-                }
-              }}
-            />
+            {mapReady && (
+              <AdvancedMarker
+                position={internalPosition}
+                draggable={true}
+                onDragEnd={(e: any) => {
+                  const ll = (e?.detail?.latLng || e?.latLng) as any;
+                  const lat =
+                    typeof ll?.lat === "function" ? ll.lat() : ll?.lat;
+                  const lng =
+                    typeof ll?.lng === "function" ? ll.lng() : ll?.lng;
+                  if (typeof lat === "number" && typeof lng === "number") {
+                    const pos = { lat, lng };
+                    setInternalPosition(pos);
+                    try {
+                      mapRef.current?.panTo(pos);
+                    } catch {}
+                    reverseGeocodeAndUpdate(pos);
+                  }
+                }}
+              />
+            )}
           </Map>
         </div>
       </div>
