@@ -10,7 +10,14 @@
   font-display: swap;
 }
 
-/* Set nunito as the global body font */
+@font-face {
+  font-family: "sf-pro";
+  src: url("/fonts/SF-Pro.ttf") format("truetype");
+  font-display: swap;
+}
+
+
+/* Set sf-pro as the global body font */
 body {
-  font-family: "nunito", sans-serif;
+  font-family: "sf-pro", sans-serif;
 }
