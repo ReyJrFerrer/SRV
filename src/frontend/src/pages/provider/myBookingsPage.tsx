@@ -17,18 +17,13 @@ import {
   SparklesIcon,
   CalendarDaysIcon,
   MagnifyingGlassIcon,
-  UserCircleIcon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
-  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/solid";
 import { ServiceCategory } from "../../services/serviceCanisterService";
 import useClientRating from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
 import CancelWithReasonButton from "../../components/common/cancellation/CancelWithReasonButton";
 import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
-import SideMenuDrawer from "../../components/common/SideMenuDrawer";
-import authCanisterService from "../../services/authCanisterService";
+import SmartHeader from "../../components/common/SmartHeader";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
@@ -80,35 +75,6 @@ const ProviderBookingsPage: React.FC = () => {
   const [isCancelling, setIsCancelling] = useState<boolean>(false);
 
   const timingDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Side menu state
-  const [showMenu, setShowMenu] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-
-  // Fetch user profile
-  useEffect(() => {
-    authCanisterService
-      .getMyProfile()
-      .then(setProfile)
-      .catch(() => {});
-  }, []);
-
-  const displayName = profile?.name ? profile.name.split(" ")[0] : "User";
-
-  const menuItemsData = [
-    { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
-    { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
-    {
-      label: "Terms & Conditions",
-      to: "/provider/terms",
-      icon: DocumentTextIcon,
-    },
-    {
-      label: "Help & Support",
-      to: "/provider/help",
-      icon: QuestionMarkCircleIcon,
-    },
-  ];
 
   const {
     bookings,
@@ -529,42 +495,13 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-50">
-        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white py-4 shadow-sm">
-          <div className="flex w-full items-center justify-between px-4">
-            <div className="flex w-10 items-center justify-center" />
-            <h1 className="text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
-              My Bookings
-            </h1>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="flex w-9 items-center justify-center text-blue-600 hover:text-blue-700"
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-          </div>
-        </header>
-
-        {/* Side Menu */}
-        <SideMenuDrawer
-          isOpen={showMenu}
-          onClose={() => setShowMenu(false)}
-          items={menuItemsData}
-          userInfo={{ name: displayName, to: "/provider/profile" }}
+        <SmartHeader
+          title="My Bookings"
+          userRole="provider"
+          showBackButton={false}
         />
 
-        <div className="sticky z-10 border-b border-gray-100 bg-white px-4 pt-4 shadow-sm">
+        <div className="sticky z-10 mb-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="relative flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">

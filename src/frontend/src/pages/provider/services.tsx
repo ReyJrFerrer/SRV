@@ -5,6 +5,7 @@ import {
   TrashIcon,
   LockOpenIcon,
   LockClosedIcon,
+  ArchiveBoxIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceManagement } from "../../hooks/serviceManagement";
 import CompactServiceCard from "../../components/provider/CompactServiceCard";
@@ -222,20 +223,21 @@ const MyServicesPage: React.FC = () => {
       />
 
       <main className="container mx-auto flex-grow px-4 py-6 pb-10 md:px-6">
-        <div className="mb-4 flex items-center justify-end md:hidden">
+        <div className="mb-4 flex items-center justify-end">
           <button
             onClick={() => setShowArchived(!showArchived)}
-            className={`text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-lg border-2 px-3 py-1.5 text-sm font-medium  text-white transition-all ${
               showArchived
-                ? "text-blue-600"
-                : "text-gray-600 hover:text-gray-900"
+                ? "border-yellow-500  bg-yellow-500 hover:border-yellow-500"
+                : "border-blue-600 bg-blue-600  hover:border-blue-700 hover:bg-blue-700"
             }`}
           >
+            <ArchiveBoxIcon className="h-4 w-4" />
             {showArchived
-              ? "View Active"
+              ? "View Active Services"
               : archivedServicesList.length > 0
-                ? `Archived (${archivedServicesList.length})`
-                : "Archived"}
+                ? `View Archived Services (${archivedServicesList.length})`
+                : "View Archived Services"}
           </button>
         </div>
         {loading ? (

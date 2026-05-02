@@ -158,7 +158,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
   return (
     <>
       <header
-        className={`sticky top-0 z-40 w-full border-b border-gray-100 bg-white/90 px-4 py-4 shadow-sm ${className}`}
+        className={`sticky top-0 z-40 w-full border-b border-gray-100 bg-white/90 px-4 py-4 shadow-sm md:mb-6 ${className}`}
       >
         <div className="mx-auto flex w-full max-w-screen-lg items-center justify-between">
           <div className="flex w-10 items-center justify-start">
@@ -185,7 +185,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
             {showBurger && (
               <button
                 onClick={handleMenuToggle}
-                className="flex h-9 w-9 items-center justify-center text-blue-600 transition-colors hover:text-blue-700 active:scale-95"
+                className="flex h-9 w-9 items-center justify-center text-blue-600 transition-colors hover:text-blue-700 active:scale-95 md:hidden"
                 aria-label="Menu"
                 aria-expanded={showMenu}
               >

@@ -755,4 +755,4 @@ const ReputationScore: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
-export default ClientProfilePage;
+export default ProviderProfilePage;
