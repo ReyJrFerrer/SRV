@@ -1,5 +1,6 @@
 // SECTION: Imports — dependencies for this page
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Toast from "../../components/ToastNotifications";
 import {
   PencilIcon,
@@ -522,6 +523,7 @@ const ProfilePictureModal: React.FC<ProfilePictureModalProps> = ({
 
 // SECTION: ClientProfilePage — main profile view and interactions
 const ClientProfilePage: React.FC = () => {
+  const navigate = useNavigate();
   const { firebaseUser } = useAuth();
   const {
     profile,
@@ -649,6 +651,7 @@ const ClientProfilePage: React.FC = () => {
     const avg = total ? sum / total : 0;
     return { total, counts, avg };
   }, [reviews]);
+
   useEffect(() => {
     document.title = "My Profile | SRV";
   }, []);
@@ -975,9 +978,19 @@ const ClientProfilePage: React.FC = () => {
 
                         {/* Detailed Reviews List */}
                         <div className="mt-6 border-t border-gray-100 pt-6">
-                          <h5 className="mb-4 text-sm font-black uppercase tracking-wider text-gray-900">
-                            Recent Feedback
-                          </h5>
+                          <div className="mb-4 flex items-center justify-between">
+                            <h5 className="text-sm font-black uppercase tracking-wider text-gray-900">
+                              Recent Feedback
+                            </h5>
+                            <button
+                              onClick={() => navigate("/client/ratings")}
+                              className="text-sm font-medium text-blue-600 hover:underline"
+                            >
+                              {reviews.length > 0
+                                ? `View All (${reviews.length})`
+                                : "View All"}
+                            </button>
+                          </div>
                           {reviews.length === 0 ? (
                             <div className="flex flex-col items-center justify-center rounded-2xl bg-gray-50 py-8 text-center">
                               <StarIconOutline className="mb-2 h-8 w-8 text-gray-400" />
@@ -987,7 +1000,7 @@ const ClientProfilePage: React.FC = () => {
                             </div>
                           ) : (
                             <div className="space-y-4">
-                              {reviews.map((rev) => (
+                              {reviews.slice(0, 3).map((rev) => (
                                 <div
                                   key={rev.id}
                                   className="rounded-2xl border border-gray-100 bg-gray-50 p-4"

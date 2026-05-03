@@ -144,6 +144,7 @@ const ClientCategory = lazy(
 );
 const ClientReview = lazy(() => import("./src/pages/client/review/[id]"));
 const ClientProfilePage = lazy(() => import("./src/pages/client/profile"));
+const ClientRatingsPage = lazy(() => import("./src/pages/client/ratings"));
 const SettingsPageC = lazy(() => import("./src/pages/client/settings"));
 const TermsAndConditionsPage = lazy(() => import("./src/pages/terms"));
 const ReportIssuePage = lazy(() => import("./src/pages/report"));
@@ -427,6 +428,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                     <Route path="chat" element={<ClientChat />} />
                     <Route path="settings" element={<SettingsPageC />} />
                     <Route path="profile" element={<ClientProfilePage />} />
+                    <Route path="ratings" element={<ClientRatingsPage />} />
                     <Route path="search-results" element={<SearchResults />} />
                     <Route path="terms" element={<TermsAndConditionsPage />} />
                     <Route path="report" element={<ReportIssuePage />} />
