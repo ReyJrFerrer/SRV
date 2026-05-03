@@ -149,7 +149,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   }
 
   const menuItemsData: MenuItemData[] = [
-     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
+    { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
     {
       label: "Terms & Conditions",
       to: "/provider/terms",

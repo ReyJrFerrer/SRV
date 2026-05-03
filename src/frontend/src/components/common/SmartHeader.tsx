@@ -179,10 +179,7 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
         items={items}
         userInfo={{
           name: displayName,
-          to:
-            userRole === "provider"
-              ? "/provider/profile"
-              : "/client/profile",
+          to: userRole === "provider" ? "/provider/profile" : "/client/profile",
         }}
       />
     </>
