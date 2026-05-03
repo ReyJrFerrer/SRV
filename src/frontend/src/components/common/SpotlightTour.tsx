@@ -358,7 +358,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: isDesktopLayout ? "right-start" : "top",
         arrowSpacing: 100,
-        arrowColor:  "#eff6ff",
+        arrowColor: "#eff6ff",
         disableBeacon: true,
         disableScroll: true,
         spotlightPadding: 0,

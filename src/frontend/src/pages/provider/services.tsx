@@ -262,7 +262,9 @@ const MyServicesPage: React.FC = () => {
                       onRestore={handleRestoreService}
                       onDelete={setDeleteConfirmId}
                       hasActiveBookings={hasActiveBookings}
-                      getServiceActiveBookingsCount={getServiceActiveBookingsCount}
+                      getServiceActiveBookingsCount={
+                        getServiceActiveBookingsCount
+                      }
                       deletingId={deletingId}
                     />
                   </Appear>

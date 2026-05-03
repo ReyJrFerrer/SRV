@@ -204,6 +204,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     }
                   }
                   navigate(to);
+                  window.scrollTo(0, 0);
                 };
 
                 return (
@@ -316,6 +317,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate(item.to);
+              window.scrollTo(0, 0);
             };
 
             return (
@@ -428,6 +430,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate("/provider/notifications");
+              window.scrollTo(0, 0);
             };
 
             return (
@@ -499,6 +502,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate("/provider/profile");
+              window.scrollTo(0, 0);
             };
 
             return (
@@ -562,6 +566,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate(item.to);
+              window.scrollTo(0, 0);
             };
 
             return (

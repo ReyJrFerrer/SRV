@@ -168,6 +168,8 @@ const BottomNavigation: React.FC = () => {
                         setTimeout(() => {
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }, 120);
+                      } else {
+                        window.scrollTo(0, 0);
                       }
                     }}
                   >
@@ -271,6 +273,8 @@ const BottomNavigation: React.FC = () => {
                     setTimeout(() => {
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }, 120);
+                  } else {
+                    window.scrollTo(0, 0);
                   }
                 }}
               >
@@ -355,6 +359,16 @@ const BottomNavigation: React.FC = () => {
           <Link
             to="/client/settings"
             className="group relative flex w-full flex-col items-center justify-center py-2"
+            onClick={(e) => {
+              if (!isRouteActive("Settings", "/client/settings")) {
+                window.scrollTo(0, 0);
+              } else {
+                e.preventDefault();
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }, 120);
+              }
+            }}
           >
             <div
               className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
