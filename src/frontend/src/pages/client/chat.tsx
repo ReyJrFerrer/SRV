@@ -8,13 +8,9 @@ import {
   PaperAirplaneIcon,
   ChatBubbleLeftRightIcon,
   ArrowLeftIcon,
-  UserCircleIcon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
-  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/solid";
 import EmptyState from "../../components/common/EmptyState";
-import SideMenuDrawer from "../../components/common/SideMenuDrawer";
+import SmartHeader from "../../components/common/SmartHeader";
 import authCanisterService from "../../services/authCanisterService";
 
 const ClientChatPage: React.FC = () => {
@@ -45,34 +41,13 @@ const ClientChatPage: React.FC = () => {
     location.state?.otherUserName || "",
   );
 
-  // Side menu state
-  const [showMenu, setShowMenu] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-
   // Fetch user profile
   useEffect(() => {
     authCanisterService
       .getMyProfile()
-      .then(setProfile)
       .catch(() => {});
   }, []);
 
-  const displayName = profile?.name ? profile.name.split(" ")[0] : "User";
-
-  const menuItemsData = [
-    { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
-    { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
-    {
-      label: "Terms & Conditions",
-      to: "/client/terms",
-      icon: DocumentTextIcon,
-    },
-    {
-      label: "Help & Support",
-      to: "/client/help",
-      icon: QuestionMarkCircleIcon,
-    },
-  ];
 
   const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
     useState<string>(location.state?.otherUserImage || "");
@@ -390,39 +365,11 @@ const ClientChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white py-4 shadow-sm">
-        <div className="flex h-full w-full items-center justify-between px-4">
-          <div className="flex w-10 items-center justify-center" />
-          <h1 className="text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
-            Messages
-          </h1>
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="flex w-9 items-center justify-center text-blue-600 hover:text-blue-700"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-        </div>
-      </header>
-
       {/* Side Menu */}
-      <SideMenuDrawer
-        isOpen={showMenu}
-        onClose={() => setShowMenu(false)}
-        items={menuItemsData}
-        userInfo={{ name: displayName, to: "/client/profile" }}
+      <SmartHeader
+         title="Chats"
+          userRole="client"
+          showBackButton={false}
       />
 
       <div className="mt-0 w-full px-2 md:px-4">
