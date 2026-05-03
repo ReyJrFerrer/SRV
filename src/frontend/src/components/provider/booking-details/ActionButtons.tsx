@@ -248,7 +248,7 @@ const ActionButtons: React.FC<Props> = ({
         onClick={(e) => e.stopPropagation()}
         className={`${baseButtonClass} w-full bg-white ${outlineColor.review}`}
       >
-        <StarIcon className="mr-2 h-4 w-4" /> View
+        <StarIcon className="mr-2 h-4 w-4" /> View Reviews
       </Link>,
     );
   }
