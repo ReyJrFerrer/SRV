@@ -72,6 +72,10 @@ const BookingDetailsPage: React.FC = () => {
   const { userImageUrl } = useUserImage(
     specificBooking?.providerProfile?.profilePicture?.imageUrl || null,
   );
+  const serviceName =
+    specificBooking?.serviceDetails?.description ||
+    specificBooking?.packageName ||
+    "Service";
 
   // Geocode enhancement state
   const [showStreetView, setShowStreetView] = useState<boolean>(false);
@@ -533,6 +537,7 @@ const BookingDetailsPage: React.FC = () => {
                     providerId={providerProfile?.id}
                   />
                   <ServiceDetails
+                    serviceName={serviceName}
                     packageName={packageName}
                     requestedDate={requestedDate}
                     scheduledDate={scheduledDate}

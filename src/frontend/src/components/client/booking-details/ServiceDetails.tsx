@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/solid";
 
 type ServiceDetailsProps = {
+  serviceName: string;
   packageName?: string | null;
   requestedDate?: any;
   scheduledDate?: any;
@@ -61,12 +62,13 @@ const formatDateRange = (
 };
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
+  serviceName,
   packageName,
   requestedDate,
   scheduledDate,
   formattedLocation,
   price,
-amountToPay,
+  amountToPay,
 }) => {
   return (
     <div className="pt-4 lg:col-span-3 lg:pl-8 lg:pt-0">
@@ -74,6 +76,15 @@ amountToPay,
         <BriefcaseIcon className="h-5 w-5 text-yellow-500" /> Service Details
       </h3>
       <div className="space-y-4 text-sm text-gray-800">
+        <div className="flex items-start">
+                  <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+                  <span className="min-w-0">
+                    <strong className="text-gray-900">Service:</strong>{" "}
+                    <span className="inline-block max-w-full break-words align-bottom">
+                      {serviceName}
+                    </span>
+                  </span>
+                </div>
         <div className="flex items-start">
           <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
           <span className="min-w-0">
@@ -106,7 +117,7 @@ amountToPay,
         {price != null && (
           <div className="flex items-start">
             <CurrencyDollarIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
-          <span>
+            <span>
               <strong className="text-gray-900">Payment:</strong> ₱
               {price.toFixed(2)}
               {amountToPay != null && amountToPay > 0 && (
