@@ -291,17 +291,14 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
             <div className="flex items-center gap-3">
               <span className="text-lg font-bold tracking-tight text-gray-900">
                 Hi, {displayName}
-              </span>
-              {isAuthenticated && (
-                <div className="relative" ref={menuRef}>
-                  <button
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="group relative rounded-full bg-gray-50 p-1.5 transition-all hover:bg-gray-100"
-                    aria-label="Menu"
-                  >
-                    <Bars3Icon className="h-7 w-7 text-gray-700 group-hover:text-blue-600" />
-                  </button>
-                </div>
+            </span>
+            {isAuthenticated && (
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
+                >
+                  <Bars3Icon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-blue-700" />
+                </button>
               )}
             </div>
           </div>
