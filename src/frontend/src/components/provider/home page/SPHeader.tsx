@@ -4,9 +4,9 @@ import {
   MapPinIcon,
   UserCircleIcon,
   Bars3Icon,
-  Cog6ToothIcon,
   DocumentTextIcon,
   QuestionMarkCircleIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -149,13 +149,13 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   }
 
   const menuItemsData: MenuItemData[] = [
-    { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
-    { label: "Settings", to: "/provider/settings", icon: Cog6ToothIcon },
+     { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
     {
       label: "Terms & Conditions",
       to: "/provider/terms",
       icon: DocumentTextIcon,
     },
+    { label: "Report", to: "/provider/report", icon: ExclamationTriangleIcon },
     {
       label: "Help & Support",
       to: "/provider/help",

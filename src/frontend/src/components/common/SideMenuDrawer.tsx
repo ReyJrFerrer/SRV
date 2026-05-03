@@ -10,6 +10,7 @@ interface MenuItem {
   label: string;
   to?: string;
   icon?: React.ComponentType<{ className?: string }>;
+  action?: () => void;
   danger?: boolean;
 }
 
@@ -36,10 +37,12 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  const navigateTo = (path: string) => {
+  const handleItemClick = (item: MenuItem) => {
     onClose();
-    if (path) {
-      navigate(path);
+    if (item.action) {
+      item.action();
+    } else if (item.to) {
+      navigate(item.to);
     }
   };
 
@@ -50,7 +53,10 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
         {/* Profile Section */}
         {userInfo && (
           <div
-            onClick={() => navigateTo(userInfo.to)}
+            onClick={() => {
+              onClose();
+              navigate(userInfo.to);
+            }}
             className="flex cursor-pointer items-center gap-3 bg-blue-600 p-5"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
@@ -68,7 +74,7 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
           {items.map((item, index) => (
             <button
               key={index}
-              onClick={() => navigateTo(item.to || "")}
+              onClick={() => handleItemClick(item)}
               className="flex w-full cursor-pointer items-center gap-4 px-5 py-4 text-left text-gray-700 hover:bg-blue-100"
             >
               {item.icon && <item.icon className="h-5 w-5" />}
