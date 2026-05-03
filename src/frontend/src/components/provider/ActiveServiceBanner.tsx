@@ -14,7 +14,8 @@ const ActiveServiceBanner: React.FC = () => {
     location.pathname.startsWith("/provider/directions/") ||
     location.pathname.startsWith("/provider/booking/") ||
     location.pathname.startsWith("/provider/bookings") ||
-    location.pathname.startsWith("/provider/service-details/")
+    location.pathname.startsWith("/provider/service-details/") ||
+    location.pathname.startsWith("/provider/active-service/")
   ) {
     return null;
   }
