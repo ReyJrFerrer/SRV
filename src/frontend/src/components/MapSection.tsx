@@ -1,7 +1,7 @@
 import React from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
-import GStreetView from "../../common/GMapFunctions/GStreetView";
-import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
+import GStreetView from "./common/GMapFunctions/GStreetView";
+import AccuracyCircle from "./common/GMapFunctions/AccuracyCircle";
 import { EyeIcon } from "@heroicons/react/24/solid";
 
 interface Props {

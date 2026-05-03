@@ -13,7 +13,7 @@ import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
-import MapSection from "../../../components/provider/booking-details/MapSection";
+import MapSection from "../../../components/MapSection";
 import ClientAttachments from "../../../components/common/MediaAttachments";
 import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
@@ -720,7 +720,12 @@ const ProviderBookingDetailsPage: React.FC = () => {
                 duration={duration}
                 formatDateRange={formatDateRange}
               />
+                    {/* Client Attachments Section */}
+         
+            {/* Booking Notes Section */}
+            <BookingNotes notes={(specificBooking as any)?.notes} />
             </div>
+       
             {/* Booking Progress Section */}
             <BookingProgressSection status={specificBooking?.status} />
             {/* Map Section */}
@@ -737,14 +742,12 @@ const ProviderBookingDetailsPage: React.FC = () => {
               showStreetView={showStreetView}
               setShowStreetView={setShowStreetView}
             />
-
-            {/* Client Attachments Section */}
-            <ClientAttachments
+               <ClientAttachments
               attachments={(specificBooking as any)?.attachments}
               notes={(specificBooking as any)?.notes}
             />
-            {/* Booking Notes Section */}
-            <BookingNotes notes={(specificBooking as any)?.notes} />
+
+           
 
             {/* Action Buttons - Desktop Only */}
             {specificBooking && (

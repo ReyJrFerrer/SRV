@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { toast, Toaster } from "sonner";
 import { useUserImage } from "../../../hooks/useMediaLoader";
 import { useNavigate, useParams } from "react-router-dom";
@@ -27,6 +27,7 @@ import BookingDetailsSkeleton from "../../../components/client/booking-details/B
 import { dispatchBookingInteracted } from "../../../utils/interactionEvents";
 import ClientAttachments from "../../../components/common/MediaAttachments";
 import SpotlightTour from "../../../components/common/SpotlightTour";
+import MapSection from "../../../components/MapSection";
 
 type BookingStatus =
   | "Requested"
@@ -71,6 +72,197 @@ const BookingDetailsPage: React.FC = () => {
   const { userImageUrl } = useUserImage(
     specificBooking?.providerProfile?.profilePicture?.imageUrl || null,
   );
+
+  // Geocode enhancement state
+  const [showStreetView, setShowStreetView] = useState<boolean>(false);
+  const [resolvedCoords, setResolvedCoords] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [geocodeStatus, setGeocodeStatus] = useState<
+    "idle" | "pending" | "ok" | "failed"
+  >("idle");
+  const [, setGeocodeSource] = useState<string>("");
+
+  const [mapsReady, setMapsReady] = useState(false);
+  useEffect(() => {
+    if ((window as any).google?.maps) {
+      setMapsReady(true);
+      return;
+    }
+    const iv = setInterval(() => {
+      if ((window as any).google?.maps) {
+        setMapsReady(true);
+        clearInterval(iv);
+      }
+    }, 200);
+    return () => clearInterval(iv);
+  }, []);
+
+  const clientLocation = useMemo(() => {
+    try {
+      const lat = (specificBooking as any)?.latitude;
+      const lng = (specificBooking as any)?.longitude;
+      if (
+        typeof lat === "number" &&
+        !isNaN(lat) &&
+        typeof lng === "number" &&
+        !isNaN(lng)
+      ) {
+        return { lat, lng };
+      }
+      const rawLocation = (specificBooking as any)?.location;
+      let locString: string | undefined;
+      if (typeof rawLocation === "string") {
+        locString = rawLocation;
+      } else if (rawLocation && typeof rawLocation === "object") {
+        if (typeof rawLocation.address === "string")
+          locString = rawLocation.address;
+        else if (typeof rawLocation.displayAddress === "string")
+          locString = rawLocation.displayAddress;
+      }
+      if (locString && typeof locString === "string") {
+        const match = locString.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+        if (match) {
+          return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+        }
+      }
+    } catch {}
+    return { lat: 16.413, lng: 120.5914 };
+  }, [specificBooking]);
+
+  const hasExplicitCoords = useMemo(() => {
+    return (
+      typeof (specificBooking as any)?.latitude === "number" &&
+      typeof (specificBooking as any)?.longitude === "number"
+    );
+  }, [specificBooking]);
+
+  const preciseAddress = (specificBooking as any)?.preciseAddress;
+  const displayAddress = (specificBooking as any)?.displayAddress;
+  const geocodedAddress = (specificBooking as any)?.geocodedAddress;
+
+  let bookingLocation = "Location not specified";
+  if (
+    typeof specificBooking?.location === "string" &&
+    (specificBooking.location as string).trim() !== ""
+  ) {
+    bookingLocation = specificBooking.location as string;
+  } else if (
+    typeof specificBooking?.formattedLocation === "string" &&
+    (specificBooking.formattedLocation as string).trim() !== ""
+  ) {
+    bookingLocation = specificBooking.formattedLocation as string;
+  }
+
+  // Geocode Cache Helpers
+  const GEOCODE_CACHE_KEY = "GEOCODE_CACHE_V1";
+  interface CachedGeo {
+    lat: number;
+    lng: number;
+    ts: number;
+  }
+  const loadGeoCache = (): Record<string, CachedGeo> => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(GEOCODE_CACHE_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw) || {};
+    } catch {
+      return {};
+    }
+  };
+  const saveGeoCache = (cache: Record<string, CachedGeo>) => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(cache));
+    } catch {}
+  };
+  const normalizeAddr = (addr: string) => addr.trim().toLowerCase();
+  const getCachedCoords = (
+    addr: string,
+  ): { lat: number; lng: number } | null => {
+    const cache = loadGeoCache();
+    const hit = cache[normalizeAddr(addr)];
+    if (!hit) return null;
+    const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
+    if (Date.now() - hit.ts > THIRTY_DAYS) return null;
+    return { lat: hit.lat, lng: hit.lng };
+  };
+  const putCachedCoords = (addr: string, lat: number, lng: number) => {
+    const cache = loadGeoCache();
+    cache[normalizeAddr(addr)] = { lat, lng, ts: Date.now() };
+    saveGeoCache(cache);
+  };
+
+  // Geocoding effect
+  useEffect(() => {
+    if (resolvedCoords || geocodeStatus === "pending") return;
+    const hasCoordsAlready = hasExplicitCoords;
+    if (hasCoordsAlready) return;
+    if (!mapsReady) return;
+    const addrCandidates: { label: string; value?: string }[] = [];
+    if (
+      bookingLocation &&
+      bookingLocation !== "Location not specified" &&
+      typeof bookingLocation === "string"
+    ) {
+      addrCandidates.push({ label: "bookingLocation", value: bookingLocation });
+    }
+    if (addrCandidates.length === 0) return;
+
+    for (const c of addrCandidates) {
+      if (!c.value) continue;
+      const cached = getCachedCoords(c.value);
+      if (cached) {
+        setResolvedCoords(cached);
+        setGeocodeStatus("ok");
+        setGeocodeSource(c.label + " (cache)");
+        return;
+      }
+    }
+
+    setGeocodeStatus("pending");
+    if (typeof window === "undefined" || !(window as any).google?.maps) {
+      return;
+    }
+    const geocoder = new google.maps.Geocoder();
+
+    let index = 0;
+    const tryNext = () => {
+      if (index >= addrCandidates.length) {
+        setGeocodeStatus("failed");
+        return;
+      }
+      const candidate = addrCandidates[index++];
+      if (!candidate.value) {
+        tryNext();
+        return;
+      }
+      geocoder.geocode({ address: candidate.value }, (results, status) => {
+        if (status === "OK" && results && results[0]) {
+          const loc = results[0].geometry.location;
+          const lat = loc.lat();
+          const lng = loc.lng();
+          setResolvedCoords({ lat, lng });
+          setGeocodeStatus("ok");
+          setGeocodeSource(candidate.label);
+          if (candidate.value) {
+            putCachedCoords(candidate.value, lat, lng);
+          }
+        } else {
+          tryNext();
+        }
+      });
+    };
+    tryNext();
+  }, [
+    resolvedCoords,
+    geocodeStatus,
+    hasExplicitCoords,
+    mapsReady,
+    bookingLocation,
+  ]);
 
   useEffect(() => {
     document.title = `Booking: ${specificBooking?.serviceName || "Details"} | SRV`;
@@ -364,6 +556,20 @@ const BookingDetailsPage: React.FC = () => {
                 />
               </div>
             </div>
+
+            <MapSection
+              mapsReady={mapsReady}
+              resolvedCoords={resolvedCoords}
+              clientLocation={clientLocation}
+              hasExplicitCoords={hasExplicitCoords}
+              bookingLocation={bookingLocation}
+              geocodeStatus={geocodeStatus}
+              displayAddress={displayAddress}
+              preciseAddress={preciseAddress}
+              geocodedAddress={geocodedAddress}
+              showStreetView={showStreetView}
+              setShowStreetView={setShowStreetView}
+            />
 
             {/* Client Attachments */}
             {(specificBooking as any)?.attachments?.length > 0 && (
