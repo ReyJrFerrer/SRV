@@ -14,6 +14,7 @@ type ServiceDetailsProps = {
   formattedLocation?: string | null;
   price?: number | null;
   commissionEstimate?: number;
+  amountToPay?: number;
 };
 
 const formatDateRange = (
@@ -65,7 +66,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
   scheduledDate,
   formattedLocation,
   price,
-  commissionEstimate,
+amountToPay,
 }) => {
   return (
     <div className="pt-4 lg:col-span-3 lg:pl-8 lg:pt-0">
@@ -105,9 +106,15 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
         {price != null && (
           <div className="flex items-start">
             <CurrencyDollarIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
-            <span>
+          <span>
               <strong className="text-gray-900">Payment:</strong> ₱
-              {(price + (commissionEstimate || 0)).toFixed(2)} (Cash)
+              {price.toFixed(2)}
+              {amountToPay != null && amountToPay > 0 && (
+                <span className="text-gray-500">
+                  {" "}
+                  (Amount to Pay: ₱{amountToPay.toFixed(2)})
+                </span>
+              )}
             </span>
           </div>
         )}

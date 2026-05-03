@@ -476,6 +476,7 @@ const BookingDetailsPage: React.FC = () => {
     price,
     status,
     scheduledDate,
+    amountPaid,
   } = specificBooking || {};
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
@@ -540,6 +541,7 @@ const BookingDetailsPage: React.FC = () => {
                     commissionEstimate={
                       commissionValidation.estimatedCommission
                     }
+                    amountToPay={amountPaid}
                   />
                 </div>
               </div>
