@@ -8,7 +8,7 @@ import {
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
 import { toast } from "sonner";
 import Tooltip from "../common/Tooltip";
-import CompactServiceCard from "./CompactServiceCard";
+import ServiceCard from "./ServiceCard";
 
 interface ServiceManagementProps {
   services?: EnhancedService[];
@@ -241,23 +241,16 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
         <>
           <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayedServices.map((service) => {
-              const isActive = service.status === "Available";
-              const isArchived = service.status === "Archived";
-              const activeCount = getServiceActiveBookingsCount(service.id);
-              const plural = activeCount !== 1 ? "s" : "";
-
               return (
-                <CompactServiceCard
+                <ServiceCard
                   key={service.id}
                   service={service}
-                  isActive={isActive}
-                  isArchived={isArchived}
-                  activeCount={activeCount}
-                  plural={plural}
+                  onToggleActive={handleToggleActive}
+                  onDelete={setDeleteConfirmId}
+                  onRestore={handleRestoreService}
                   hasActiveBookings={hasActiveBookings}
-                  handleToggleActive={handleToggleActive}
-                  handleRestoreService={handleRestoreService}
-                  setDeleteConfirmId={setDeleteConfirmId}
+                  getServiceActiveBookingsCount={getServiceActiveBookingsCount}
+                  updatingId={null}
                   deletingId={deletingId}
                 />
               );

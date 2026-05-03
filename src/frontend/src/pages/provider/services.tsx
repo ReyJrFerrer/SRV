@@ -8,7 +8,6 @@ import {
   ArchiveBoxIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceManagement } from "../../hooks/serviceManagement";
-import CompactServiceCard from "../../components/provider/CompactServiceCard";
 import ServiceCard from "../../components/provider/ServiceCard";
 import { Toaster, toast } from "sonner";
 import useProviderBookingManagement from "../../hooks/useProviderBookingManagement";
@@ -256,20 +255,14 @@ const MyServicesPage: React.FC = () => {
           archivedServicesList.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {archivedServicesList.map((service, idx) => {
-                const activeCount = getServiceActiveBookingsCount(service.id);
-                const plural = activeCount !== 1 ? "s" : "";
-
                 return (
                   <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
-                    <CompactServiceCard
+                    <ServiceCard
                       service={service}
-                      isActive={false}
-                      isArchived={true}
-                      activeCount={activeCount}
-                      plural={plural}
+                      onRestore={handleRestoreService}
+                      onDelete={setDeleteConfirmId}
                       hasActiveBookings={hasActiveBookings}
-                      handleRestoreService={handleRestoreService}
-                      setDeleteConfirmId={setDeleteConfirmId}
+                      getServiceActiveBookingsCount={getServiceActiveBookingsCount}
                       deletingId={deletingId}
                     />
                   </Appear>
