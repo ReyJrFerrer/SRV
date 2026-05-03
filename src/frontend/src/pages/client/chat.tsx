@@ -43,11 +43,8 @@ const ClientChatPage: React.FC = () => {
 
   // Fetch user profile
   useEffect(() => {
-    authCanisterService
-      .getMyProfile()
-      .catch(() => {});
+    authCanisterService.getMyProfile().catch(() => {});
   }, []);
-
 
   const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
     useState<string>(location.state?.otherUserImage || "");
@@ -366,11 +363,7 @@ const ClientChatPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Side Menu */}
-      <SmartHeader
-         title="Chats"
-          userRole="client"
-          showBackButton={false}
-      />
+      <SmartHeader title="Chats" userRole="client" showBackButton={false} />
 
       <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (
