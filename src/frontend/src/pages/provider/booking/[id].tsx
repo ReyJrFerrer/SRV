@@ -237,6 +237,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     setIsStartingService(true);
     try {
       await startNavigationById(specificBooking.id);
+      window.scrollTo(0, 0);
       navigate(`/provider/directions/${specificBooking.id}`);
     } catch (error) {
     } finally {

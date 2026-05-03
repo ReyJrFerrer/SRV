@@ -198,9 +198,11 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     try {
       if (locationDetection === "automatic") {
         await startNavigationById(booking.id);
+        window.scrollTo(0, 0);
         navigate(`/provider/directions/${booking.id}`);
       } else {
         await startNavigationById(booking.id);
+        window.scrollTo(0, 0);
         navigate(`/provider/directions/${booking.id}`);
       }
     } catch (error) {
