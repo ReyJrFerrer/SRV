@@ -77,14 +77,14 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
       </h3>
       <div className="space-y-4 text-sm text-gray-800">
         <div className="flex items-start">
-                  <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
-                  <span className="min-w-0">
-                    <strong className="text-gray-900">Service:</strong>{" "}
-                    <span className="inline-block max-w-full break-words align-bottom">
-                      {serviceName}
-                    </span>
-                  </span>
-                </div>
+          <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+          <span className="min-w-0">
+            <strong className="text-gray-900">Service:</strong>{" "}
+            <span className="inline-block max-w-full break-words align-bottom">
+              {serviceName}
+            </span>
+          </span>
+        </div>
         <div className="flex items-start">
           <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
           <span className="min-w-0">
