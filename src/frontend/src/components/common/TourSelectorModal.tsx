@@ -1,10 +1,20 @@
 import React from "react";
 import { XMarkIcon, PlayIcon } from "@heroicons/react/24/outline";
-import { SpotlightTour } from "./SpotlightTour";
+import SpotlightTour from "./SpotlightTour";
 
 export interface TourOption {
   name: string;
-  flowType: "client" | "provider" | "client-service" | "client-bookings" | "client-booking-details" | "client-ratings" | "client-profile" | "client-receipt" | "provider-bookings" | "provider-services";
+  flowType:
+    | "client"
+    | "provider"
+    | "client-service"
+    | "client-bookings"
+    | "client-booking-details"
+    | "client-ratings"
+    | "client-profile"
+    | "client-receipt"
+    | "provider-bookings"
+    | "provider-services";
   description: string;
   icon?: string;
 }
@@ -65,7 +75,9 @@ export function TourSelectorModal({
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-gray-900">{tour.name}</h3>
-                  <p className="mt-1 text-sm text-gray-500">{tour.description}</p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {tour.description}
+                  </p>
                 </div>
               </button>
             ))}

@@ -502,7 +502,10 @@ const ProviderBookingsPage: React.FC = () => {
         />
 
         <div className="sticky z-10 mb-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3" data-tour="provider-bookings-search">
+          <div
+            className="mb-4 flex items-center justify-between gap-3"
+            data-tour="provider-bookings-search"
+          >
             <div className="relative flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
@@ -659,7 +662,10 @@ const ProviderBookingsPage: React.FC = () => {
               <BookingListSkeleton count={6} />
             </div>
           ) : sameDayBookings.length > 0 || scheduledBookings.length > 0 ? (
-            <div className="space-y-10 px-4 py-4" data-tour="provider-bookings-list">
+            <div
+              className="space-y-10 px-4 py-4"
+              data-tour="provider-bookings-list"
+            >
               {timingFilter === "Same Day" && sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">

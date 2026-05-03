@@ -17,7 +17,9 @@ import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import SmartHeader from "../../components/common/SmartHeader";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
-import TourSelectorModal, { type TourOption } from "../../components/common/TourSelectorModal";
+import TourSelectorModal, {
+  type TourOption,
+} from "../../components/common/TourSelectorModal";
 
 const SettingsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -59,7 +61,9 @@ const SettingsPage: React.FC = () => {
   const [pwaOpen, setPwaOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [tourModalOpen, setTourModalOpen] = React.useState(false);
-  const [selectedTour, setSelectedTour] = React.useState<TourOption | null>(null);
+  const [selectedTour, setSelectedTour] = React.useState<TourOption | null>(
+    null,
+  );
 
   const clientTourOptions: TourOption[] = [
     {
@@ -103,10 +107,10 @@ const SettingsPage: React.FC = () => {
     // Clear localStorage to force replay
     localStorage.removeItem(`srv_spotlight_tour_${tour.flowType}`);
     localStorage.removeItem("srv_spotlight_seen_home_welcome");
-    
+
     // Navigate to the appropriate page
     const routeMap: Record<string, string> = {
-      "client": "/client/home",
+      client: "/client/home",
       "client-bookings": "/client/booking",
       "client-profile": "/client/profile",
       "client-ratings": "/client/ratings",
@@ -114,9 +118,9 @@ const SettingsPage: React.FC = () => {
       "client-booking-details": "/client/booking",
       "client-receipt": "/client/booking",
     };
-    
+
     const targetRoute = routeMap[tour.flowType] || "/client/home";
-    
+
     // Navigate first, then set selected tour
     navigate(targetRoute);
     setSelectedTour(tour);
