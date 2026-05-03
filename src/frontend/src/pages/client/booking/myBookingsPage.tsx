@@ -366,7 +366,7 @@ const MyBookingsPage: React.FC = () => {
           showBackButton={false}
         />
 
-        <div className="sticky z-10 bg-white px-4 pt-4 shadow-sm">
+        <div className="sticky z-10 mb-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
           <div className="tour-bookings-filter mb-4 flex items-center justify-between">
             <div className="relative mr-2 flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
