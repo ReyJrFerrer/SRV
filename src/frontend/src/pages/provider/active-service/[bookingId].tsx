@@ -162,7 +162,7 @@ const ActiveServicePage: React.FC = () => {
         </div>
       </header>
 
-      <main className="container mx-auto flex-grow space-y-10 px-4 pt-28 pb-16 sm:px-8">
+      <main className="container mx-auto flex-grow space-y-10 px-4 pb-16 pt-28 sm:px-8">
         {isLoadingBooking || !booking ? (
           <div className="flex min-h-screen items-center justify-center">
             <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
