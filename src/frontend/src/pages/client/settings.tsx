@@ -17,7 +17,7 @@ import RoleSwitchButton from "../../components/common/RoleSwitchButton";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import SmartHeader from "../../components/common/SmartHeader";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
-import SpotlightTour from "../../components/common/SpotlightTour";
+import TourSelectorModal, { type TourOption } from "../../components/common/TourSelectorModal";
 
 const SettingsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -58,7 +58,36 @@ const SettingsPage: React.FC = () => {
 
   const [pwaOpen, setPwaOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
-  const [startTourOpen, setStartTourOpen] = React.useState(false);
+  const [tourModalOpen, setTourModalOpen] = React.useState(false);
+  const [selectedTour, setSelectedTour] = React.useState<TourOption | null>(null);
+
+  const clientTourOptions: TourOption[] = [
+    {
+      name: "Home Tour",
+      flowType: "client",
+      description: "Learn how to find & book services near you",
+    },
+    {
+      name: "Bookings Tour",
+      flowType: "client-bookings",
+      description: "Manage your bookings & appointments",
+    },
+    {
+      name: "Profile Tour",
+      flowType: "client-profile",
+      description: "View your reputation & ratings",
+    },
+    {
+      name: "Ratings Tour",
+      flowType: "client-ratings",
+      description: "See provider feedback about you",
+    },
+    {
+      name: "Service Tour",
+      flowType: "client-service",
+      description: "Learn about service details & booking",
+    },
+  ];
 
   const handleMenuClick = (item: {
     name?: string;
@@ -66,18 +95,46 @@ const SettingsPage: React.FC = () => {
     href?: string;
   }) => {
     if (item.action === "startTour") {
-      setStartTourOpen(true);
+      setTourModalOpen(true);
     }
+  };
+
+  const handleSelectTour = (tour: TourOption) => {
+    // Clear localStorage to force replay
+    localStorage.removeItem(`srv_spotlight_tour_${tour.flowType}`);
+    localStorage.removeItem("srv_spotlight_seen_home_welcome");
+    
+    // Navigate to the appropriate page
+    const routeMap: Record<string, string> = {
+      "client": "/client/home",
+      "client-bookings": "/client/booking",
+      "client-profile": "/client/profile",
+      "client-ratings": "/client/ratings",
+      "client-service": "/client/service/view-all",
+      "client-booking-details": "/client/booking",
+      "client-receipt": "/client/booking",
+    };
+    
+    const targetRoute = routeMap[tour.flowType] || "/client/home";
+    
+    // Navigate first, then set selected tour
+    navigate(targetRoute);
+    setSelectedTour(tour);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {startTourOpen && (
-        <SpotlightTour
-          flowType="client"
-          onTourComplete={() => setStartTourOpen(false)}
-        />
-      )}
+      <TourSelectorModal
+        isOpen={tourModalOpen}
+        onClose={() => {
+          setTourModalOpen(false);
+          setSelectedTour(null);
+        }}
+        onSelectTour={handleSelectTour}
+        tours={clientTourOptions}
+        selectedTour={selectedTour}
+        onTourComplete={() => setSelectedTour(null)}
+      />
       <SmartHeader title="Settings" showBackButton={false} userRole="client" />
 
       <main className="mx-auto max-w-2xl p-4">

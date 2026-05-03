@@ -20,7 +20,9 @@ export type FlowType =
   | "client-booking-details"
   | "client-ratings"
   | "client-profile"
-  | "client-receipt";
+  | "client-receipt"
+  | "provider-bookings"
+  | "provider-services";
 
 interface SpotlightTourProps {
   flowType: FlowType;
@@ -479,6 +481,75 @@ export default function SpotlightTour({
       } as CustomStep,
     ];
 
+    const PROVIDER_BOOKINGS_STEPS: CustomStep[] = [
+      {
+        target: "[data-tour='provider-bookings-search']",
+        headline: "Find Bookings",
+        content:
+          "Use the search bar to quickly find bookings by client name, service, or booking ID.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: "[data-tour='provider-bookings-filters']",
+        headline: "Filter Your Bookings",
+        content:
+          "Filter bookings by status (Pending, Confirmed, In Progress, Completed, Cancelled) or by service category.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: "[data-tour='provider-bookings-timing']",
+        headline: "Same Day vs Scheduled",
+        content:
+          "Toggle between Same Day and Scheduled bookings to view jobs based on their timing.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "top",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: "[data-tour='provider-bookings-list']",
+        headline: "Your Bookings",
+        content:
+          "View all your bookings here. Click on any booking to view details, accept, decline, or start working on it.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "top",
+        disableBeacon: true,
+      } as CustomStep,
+    ];
+
+    const PROVIDER_SERVICES_STEPS: CustomStep[] = [
+      {
+        target: "[data-tour='provider-services-add']",
+        headline: "Add New Service",
+        content:
+          "Click here to create a new service. You can have up to 5 active services at a time.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "bottom",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: "[data-tour='provider-services-filter']",
+        headline: "View Archived Services",
+        content:
+          "Toggle to view your archived services. Archived services are hidden from clients but can be restored.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "left",
+        disableBeacon: true,
+      } as CustomStep,
+      {
+        target: "[data-tour='provider-services-list']",
+        headline: "Your Service Listings",
+        content:
+          "This is where all your active services are displayed. Click on any service to edit details, update pricing, or manage availability.",
+        image: "/images/srv characters (SVG)/tutor.svg",
+        placement: "top",
+        disableBeacon: true,
+      } as CustomStep,
+    ];
+
     const currentSteps =
       flowType === "client"
         ? CLIENT_STEPS
@@ -494,7 +565,11 @@ export default function SpotlightTour({
                   ? CLIENT_PROFILE_STEPS
                   : flowType === "client-receipt"
                     ? CLIENT_RECEIPT_STEPS
-                    : PROVIDER_STEPS;
+                    : flowType === "provider-bookings"
+                      ? PROVIDER_BOOKINGS_STEPS
+                      : flowType === "provider-services"
+                        ? PROVIDER_SERVICES_STEPS
+                        : PROVIDER_STEPS;
 
     setSteps(currentSteps);
   }, [flowType, isDesktop]);
@@ -596,6 +671,10 @@ export default function SpotlightTour({
         return "Profile Tour";
       case "client-receipt":
         return "Receipt Tour";
+      case "provider-bookings":
+        return "Bookings Tour";
+      case "provider-services":
+        return "Services Tour";
       default:
         return "SRV Tour";
     }

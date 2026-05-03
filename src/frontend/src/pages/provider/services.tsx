@@ -202,6 +202,7 @@ const MyServicesPage: React.FC = () => {
         userRole="provider"
         leftAction={
           <Link
+            data-tour="provider-services-add"
             to="/provider/services/add"
             onClick={(e) => {
               if (activeServicesList.length >= 5) {
@@ -222,7 +223,7 @@ const MyServicesPage: React.FC = () => {
       />
 
       <main className="container mx-auto flex-grow px-4 py-6 pb-10 md:px-6">
-        <div className="mb-4 flex items-center justify-end">
+        <div className="mb-4 flex items-center justify-end" data-tour="provider-services-filter">
           <button
             onClick={() => setShowArchived(!showArchived)}
             className={`flex items-center gap-1.5 rounded-lg border-2 px-3 py-1.5 text-sm font-medium  text-white transition-all ${
@@ -253,7 +254,7 @@ const MyServicesPage: React.FC = () => {
           </div>
         ) : showArchived ? (
           archivedServicesList.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-tour="provider-services-list">
               {archivedServicesList.map((service, idx) => {
                 return (
                   <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
@@ -279,7 +280,7 @@ const MyServicesPage: React.FC = () => {
             </div>
           )
         ) : activeServicesList.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-tour="provider-services-list">
             {activeServicesList.map((service, idx) => (
               <Appear key={service.id} delayMs={idx * 30} variant="fade-up">
                 <ServiceCard

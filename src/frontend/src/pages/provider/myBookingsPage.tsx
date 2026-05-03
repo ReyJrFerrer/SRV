@@ -502,7 +502,7 @@ const ProviderBookingsPage: React.FC = () => {
         />
 
         <div className="sticky z-10 mb-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="mb-4 flex items-center justify-between gap-3" data-tour="provider-bookings-search">
             <div className="relative flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
@@ -516,7 +516,7 @@ const ProviderBookingsPage: React.FC = () => {
               />
             </div>
             {/* Filters: Timing + Category */}
-            <div className="flex gap-2">
+            <div className="flex gap-2" data-tour="provider-bookings-filters">
               {/* Filter Dropdown: Status + Category */}
               <div className="relative" ref={timingDropdownRef}>
                 <button
@@ -612,7 +612,7 @@ const ProviderBookingsPage: React.FC = () => {
             </div>
           </div>
           {/* Top toggle: Same Day / Scheduled */}
-          <div className="w-full">
+          <div className="w-full" data-tour="provider-bookings-timing">
             <div className="flex items-center justify-center px-4 pb-4">
               <div className="relative flex w-full max-w-sm rounded-2xl bg-gray-100 p-1.5">
                 <div
@@ -659,7 +659,7 @@ const ProviderBookingsPage: React.FC = () => {
               <BookingListSkeleton count={6} />
             </div>
           ) : sameDayBookings.length > 0 || scheduledBookings.length > 0 ? (
-            <div className="space-y-10 px-4 py-4">
+            <div className="space-y-10 px-4 py-4" data-tour="provider-bookings-list">
               {timingFilter === "Same Day" && sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">

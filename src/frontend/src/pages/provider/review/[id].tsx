@@ -287,14 +287,13 @@ export default function ProviderReviewView() {
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white py-4 shadow-sm">
         {/* Added 'relative' to the container */}
         <div className="relative flex w-full items-center justify-center px-4">
-          
           <button
             onClick={() => navigate(-1)}
             className="absolute left-4 rounded-full p-2 transition-colors hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          
+
           <h1 className="text-lg font-bold tracking-tight text-gray-900">
             Client Review
           </h1>

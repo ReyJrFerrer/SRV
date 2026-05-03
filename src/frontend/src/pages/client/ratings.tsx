@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftIcon, StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
-import { XMarkIcon, StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  StarIcon as StarIconSolid,
+} from "@heroicons/react/24/solid";
+import {
+  XMarkIcon,
+  StarIcon as StarIconOutline,
+} from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
-import useClientRating, { type ClientReview } from "../../hooks/useClientRating";
+import useClientRating, {
+  type ClientReview,
+} from "../../hooks/useClientRating";
 import authCanisterService from "../../services/authCanisterService";
 
 const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
@@ -128,7 +136,8 @@ const ClientRatingsPage: React.FC = () => {
 
   const sortedReviews = useMemo(() => {
     return [...reviews].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }, [reviews]);
 
@@ -202,7 +211,8 @@ const ClientRatingsPage: React.FC = () => {
                     ))}
                   </div>
                   <span className="mt-2 text-sm font-bold text-gray-500">
-                    {reviewsStats.total} Review{reviewsStats.total === 1 ? "" : "s"}
+                    {reviewsStats.total} Review
+                    {reviewsStats.total === 1 ? "" : "s"}
                   </span>
                 </div>
 
@@ -229,7 +239,9 @@ const ClientRatingsPage: React.FC = () => {
               {sortedReviews.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl bg-gray-50 py-12 text-center">
                   <StarIconOutline className="mb-2 h-10 w-10 text-gray-400" />
-                  <p className="text-sm font-medium text-gray-500">No reviews yet</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    No reviews yet
+                  </p>
                   <p className="mt-1 text-xs text-gray-400">
                     Complete bookings to receive feedback from service providers
                   </p>
@@ -259,11 +271,14 @@ const ClientRatingsPage: React.FC = () => {
                           </div>
                         </div>
                         <span className="text-xs font-bold text-gray-400">
-                          {new Date(rev.createdAt).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                          {new Date(rev.createdAt).toLocaleDateString(
+                            undefined,
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            },
+                          )}
                         </span>
                       </div>
                       {rev.comment ? (
