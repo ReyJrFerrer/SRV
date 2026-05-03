@@ -64,18 +64,18 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
         )}
 
         {/* Menu Items */}
-          <div className="flex-1 overflow-y-auto bg-blue-50 py-3">
-            {items.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => navigateTo(item.to || "")}
-                className="flex w-full cursor-pointer items-center gap-4 px-5 py-4 text-left text-gray-700 hover:bg-blue-100"
-              >
-                {item.icon && <item.icon className="h-5 w-5" />}
-                {item.label}
-              </button>
-            ))}
-          </div>
+        <div className="flex-1 overflow-y-auto bg-blue-50 py-3">
+          {items.map((item, index) => (
+            <button
+              key={index}
+              onClick={() => navigateTo(item.to || "")}
+              className="flex w-full cursor-pointer items-center gap-4 px-5 py-4 text-left text-gray-700 hover:bg-blue-100"
+            >
+              {item.icon && <item.icon className="h-5 w-5" />}
+              {item.label}
+            </button>
+          ))}
+        </div>
 
         {/* Log Out */}
         <div className="border-t border-gray-200 bg-blue-50 py-3">

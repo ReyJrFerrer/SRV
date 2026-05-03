@@ -357,6 +357,8 @@ export default function SpotlightTour({
           "Use this menu to navigate between your home, bookings, messages, notifications and profile.",
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: isDesktopLayout ? "right-start" : "top",
+        arrowSpacing: 100,
+        arrowColor:  "#eff6ff",
         disableBeacon: true,
         disableScroll: true,
         spotlightPadding: 0,

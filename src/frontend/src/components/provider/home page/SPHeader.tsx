@@ -291,8 +291,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
             <div className="flex items-center gap-3">
               <span className="text-lg font-bold tracking-tight text-gray-900">
                 Hi, {displayName}
-            </span>
-            {isAuthenticated && (
+              </span>
+              {isAuthenticated && (
                 <button
                   onClick={() => setShowMenu(!showMenu)}
                   className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
