@@ -13,7 +13,9 @@ export default function ProviderLayout() {
 
   return (
     <ProtectedRoute requiredRole="ServiceProvider">
-      <div className={`min-h-screen bg-gray-50${isFullScreenRoute ? "" : " pb-20"}`}>
+      <div
+        className={`min-h-screen bg-gray-50${isFullScreenRoute ? "" : " pb-20"}`}
+      >
         <ProviderOnRouteBanner />
         <ActiveServiceBanner />
         {/* Provider-specific header/navigation can go here */}
