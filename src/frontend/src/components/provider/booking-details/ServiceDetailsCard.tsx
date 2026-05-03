@@ -1,9 +1,12 @@
 import React from "react";
 import {
+  BriefcaseIcon,
   CalendarDaysIcon,
   MapPinIcon,
+  CurrencyDollarIcon,
   ClockIcon,
-} from "@heroicons/react/24/outline";
+  ArchiveBoxIcon,
+} from "@heroicons/react/24/solid";
 
 interface Props {
   serviceName: string;
@@ -33,53 +36,71 @@ const ServiceDetailsCard: React.FC<Props> = ({
   scheduledDate,
   bookingLocation,
   price,
+  amountToPay,
   duration,
   formatDateRange,
 }) => {
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-      <div className="p-5">
-        <h3 className="mb-4 text-lg font-bold text-gray-900">{serviceName}</h3>
-
+    <div>
+      <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
+        <BriefcaseIcon className="h-5 w-5 text-yellow-500" /> Service Details
+      </h3>
+      <div className="space-y-4 text-sm text-gray-800">
+        <div className="flex items-start">
+          <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+          <span className="min-w-0">
+            <strong className="text-gray-900">Service:</strong>{" "}
+            <span className="inline-block max-w-full break-words align-bottom">
+              {serviceName}
+            </span>
+          </span>
+        </div>
         {packageName && (
-          <p className="mb-3 text-sm text-gray-600">
-            Package: <span className="font-medium">{packageName}</span>
-          </p>
-        )}
-
-        {/* Date/Time */}
-        <div className="mb-3 flex items-start gap-3">
-          <CalendarDaysIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
-          <div>
-            <p className="text-sm font-medium text-gray-700">
-              {formatDateRange(requestedDate, scheduledDate)}
-            </p>
-          </div>
-        </div>
-
-        {/* Location */}
-        <div className="mb-3 flex items-start gap-3">
-          <MapPinIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
-          <div>
-            <p className="text-sm font-medium text-gray-700">Location</p>
-            <p className="text-sm text-gray-500">{bookingLocation}</p>
-          </div>
-        </div>
-
-        {/* Price */}
-        {price !== undefined && (
-          <div className="mb-3">
-            <p className="text-lg font-bold text-gray-900">
-              ₱{price.toFixed(2)}
-            </p>
+          <div className="flex items-start">
+            <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+            <span className="min-w-0">
+              <strong className="text-gray-900">Package:</strong>{" "}
+              <span className="inline-block max-w-full break-words align-bottom">
+                {packageName}
+              </span>
+            </span>
           </div>
         )}
-
-        {/* Duration */}
+        <div className="flex items-start">
+          <CalendarDaysIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+          <span>
+            <strong className="text-gray-900">Scheduled:</strong>{" "}
+            {formatDateRange(requestedDate, scheduledDate)}
+          </span>
+        </div>
+        <div className="flex items-start">
+          <MapPinIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+          <span>
+            <strong className="text-gray-900">Location:</strong>{" "}
+            {bookingLocation}
+          </span>
+        </div>
+        {price != null && (
+          <div className="flex items-start">
+            <CurrencyDollarIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+            <span>
+              <strong className="text-gray-900">Payment:</strong> ₱
+              {price.toFixed(2)}
+              {amountToPay != null && amountToPay > 0 && (
+                <span className="text-gray-500">
+                  {" "}
+                  (Amount to Pay: ₱{amountToPay.toFixed(2)})
+                </span>
+              )}
+            </span>
+          </div>
+        )}
         {duration !== "N/A" && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <ClockIcon className="h-4 w-4" />
-            <span>Duration: {duration}</span>
+          <div className="flex items-start">
+            <ClockIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+            <span>
+              <strong className="text-gray-900">Duration:</strong> {duration}
+            </span>
           </div>
         )}
       </div>

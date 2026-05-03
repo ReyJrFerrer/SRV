@@ -1,17 +1,44 @@
-import React, { useState } from "react";
-import { PhoneIcon } from "@heroicons/react/24/solid";
-import ClientReputationScore from "./ClientReputationScore";
-import ClientRatingSummary from "./ClientRatingSummary";
+import React from "react";
+import { PhoneIcon, StarIcon } from "@heroicons/react/24/solid";
 import ClientRatingInfoModal from "../../common/ClientRatingInfoModal";
+import { useReputation } from "../../../hooks/useReputation";
 
 interface Props {
   providerImage: string;
   clientName: string;
   clientContact?: string;
   clientId?: string;
-  reviews?: any;
+  reviews?: any[];
   reputation?: any;
+  loadingStats?: boolean;
 }
+
+const ReputationScore: React.FC<{ clientId: string }> = ({ clientId }) => {
+  const { fetchUserReputation } = useReputation();
+  const [reputationScore, setReputationScore] = React.useState<number>(50);
+  React.useEffect(() => {
+    const loadReputation = async () => {
+      try {
+        const reputation = await fetchUserReputation(clientId);
+        if (reputation) setReputationScore(Math.round(reputation.trustScore));
+        else setReputationScore(50);
+      } catch {
+        setReputationScore(50);
+      }
+    };
+    if (clientId) loadReputation();
+  }, [clientId, fetchUserReputation]);
+
+  return (
+    <span
+      className="mb-2 mt-2 flex items-center gap-2 text-sm font-semibold text-gray-900"
+      style={{ minWidth: 0 }}
+    >
+      <span>Reputation Score:</span>
+      <span>{reputationScore}</span>
+    </span>
+  );
+};
 
 const ClientInfoCard: React.FC<Props> = ({
   providerImage,
@@ -19,82 +46,57 @@ const ClientInfoCard: React.FC<Props> = ({
   clientContact,
   clientId,
   reviews,
-  reputation,
+  loadingStats,
 }) => {
-  const [showRatingInfo, setShowRatingInfo] = useState(false);
-  const hasClientData = (reviews && reviews.length > 0) || reputation !== null;
+  const [showRatingInfo, setShowRatingInfo] = React.useState(false);
+
+  const averageRating =
+    reviews && reviews.length > 0
+      ? reviews.reduce((sum: number, r: any) => sum + (r.rating ?? 0), 0) /
+        reviews.length
+      : null;
+  const reviewCount = reviews?.length ?? null;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="p-5">
-        {/* Profile Image - centered with ring effect */}
-        <div className="flex justify-center">
-          <div className="relative">
-            <img
-              src={providerImage}
-              alt={`${clientName} profile`}
-              className="h-24 w-24 rounded-full object-cover shadow-md ring-4 ring-blue-50"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/default-client.svg";
-              }}
-            />
-          </div>
+    <div>
+      <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
+        <PhoneIcon className="h-5 w-5 text-blue-600" /> Client Details
+      </h3>
+      <div className="flex items-center gap-5">
+        <div className="flex-shrink-0">
+          <img
+            src={providerImage || "/default-client.svg"}
+            alt={clientName || "Client"}
+            className="h-20 w-20 rounded-full border border-gray-100 bg-gray-50 object-cover shadow-sm"
+          />
         </div>
-
-        {/* Client Name */}
-        <div className="mt-4 text-center">
-          <h2 className="text-xl font-bold text-gray-900">{clientName}</h2>
-        </div>
-
-        {/* Contact Info */}
-        {clientContact && clientContact !== "Contact not available" && (
-          <div className="mt-3 flex items-center justify-center gap-2 text-sm text-gray-600">
-            <PhoneIcon className="h-4 w-4 text-blue-500" />
-            <span>{clientContact}</span>
+        <div className="flex-1">
+          <p className="text-lg font-bold text-gray-900">
+            {clientName || "N/A"}
+          </p>
+          {clientId && <ReputationScore clientId={clientId} />}
+          <div className="mt-1 flex items-center gap-3 text-sm">
+            {loadingStats ? (
+              <p className="text-sm text-gray-400">Loading reviews...</p>
+            ) : averageRating != null && reviewCount != null ? (
+              <>
+                <div className="flex items-center text-sm font-bold text-yellow-500">
+                  <StarIcon className="mr-1 h-4 w-4" />
+                  <span>{averageRating.toFixed(1)}</span>
+                </div>
+                <span className="text-sm text-gray-500">
+                  ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+                </span>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400">No reviews yet</p>
+            )}
           </div>
-        )}
-
-        {/* Divider */}
-        <div className="mt-5 border-t border-gray-100" />
-
-        {/* Stats Section */}
-        <div className="mt-4 flex items-center justify-center gap-6">
-          {/* Reputation Score */}
-          {clientId && reputation && (
-            <div className="text-center">
-              <ClientReputationScore reputation={reputation} />
-            </div>
-          )}
-
-          {/* Rating */}
-          {clientId && (
-            <div className="flex items-center gap-2">
-              {hasClientData ? (
-                <ClientRatingSummary reviews={reviews} />
-              ) : (
-                <div className="h-4 w-16 animate-pulse rounded bg-gray-200" />
-              )}
-              <button
-                type="button"
-                aria-label="About ratings"
-                className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                onClick={() => setShowRatingInfo(true)}
-              >
-                <svg
-                  className="h-4 w-4 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-            </div>
+          {clientContact && clientContact !== "Contact not available" && (
+            <p className="mt-1 flex items-center text-sm text-gray-500">
+              <PhoneIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+              {clientContact}
+            </p>
           )}
         </div>
       </div>
