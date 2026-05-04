@@ -133,7 +133,8 @@ const BottomNavigation: React.FC = () => {
 
   const mobileItems = mobileOrder
     .map((label: string) => {
-      if (label === "Profile") return navItems.find((i: any) => i.label === "Profile");
+      if (label === "Profile")
+        return navItems.find((i: any) => i.label === "Profile");
       return navItems.find((i: any) => i.label === label) || null;
     })
     .filter((i: any): i is any => !!i);

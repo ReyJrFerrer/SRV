@@ -17,19 +17,24 @@ export const useLogout = () => {
       // Clear any additional local storage that might persist auth state
       if (typeof window !== "undefined") {
         // Preserve tour seen flags so walkthrough doesn't appear on re-login
-        const tourSeenHomeWelcome = localStorage.getItem("srv_spotlight_seen_home_welcome");
+        const tourSeenHomeWelcome = localStorage.getItem(
+          "srv_spotlight_seen_home_welcome",
+        );
         const tourSeen = localStorage.getItem("srv_spotlight_seen");
-        
+
         localStorage.clear();
-        
+
         // Restore tour flags
         if (tourSeenHomeWelcome) {
-          localStorage.setItem("srv_spotlight_seen_home_welcome", tourSeenHomeWelcome);
+          localStorage.setItem(
+            "srv_spotlight_seen_home_welcome",
+            tourSeenHomeWelcome,
+          );
         }
         if (tourSeen) {
           localStorage.setItem("srv_spotlight_seen", tourSeen);
         }
-        
+
         sessionStorage.clear();
       }
 
