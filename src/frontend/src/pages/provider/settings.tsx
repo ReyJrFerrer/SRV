@@ -93,8 +93,8 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleSelectTour = (tour: TourOption) => {
-    // Clear localStorage to force replay
-    localStorage.removeItem(`srv_spotlight_tour_${tour.flowType}`);
+    // Set sessionStorage flag to indicate this specific tour was intentionally selected
+    sessionStorage.setItem('pending_tour', tour.flowType);
 
     // Navigate to the appropriate page
     const routeMap: Record<string, string> = {
@@ -105,7 +105,7 @@ const SettingsPage: React.FC = () => {
 
     const targetRoute = routeMap[tour.flowType] || "/provider/home";
 
-    // Navigate first, then set selected tour
+    // Navigate to the page
     navigate(targetRoute);
     setSelectedTour(tour);
   };

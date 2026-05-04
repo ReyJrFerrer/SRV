@@ -577,6 +577,16 @@ export default function SpotlightTour({
   useEffect(() => {
     // Check and show welcome screen ONLY on first visit to home page
     const timer = setTimeout(() => {
+      // Check sessionStorage first - if this page's tour was intentionally selected
+      const pendingTour = sessionStorage.getItem('pending_tour');
+      
+      if (pendingTour === flowType) {
+        // This specific tour was selected from settings - run it and clear the flag
+        sessionStorage.removeItem('pending_tour');
+        setShowWelcome(true);
+        return;
+      }
+      
       // Only show welcome on home page for first visit
       if (flowType !== "client") {
         // Add delay to ensure DOM and steps are rendered

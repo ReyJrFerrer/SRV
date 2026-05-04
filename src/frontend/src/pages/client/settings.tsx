@@ -86,11 +86,6 @@ const SettingsPage: React.FC = () => {
       flowType: "client-ratings",
       description: "See provider feedback about you",
     },
-    {
-      name: "Service Tour",
-      flowType: "client-service",
-      description: "Learn about service details & booking",
-    },
   ];
 
   const handleMenuClick = (item: {
@@ -104,9 +99,8 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleSelectTour = (tour: TourOption) => {
-    // Clear localStorage to force replay
-    localStorage.removeItem(`srv_spotlight_tour_${tour.flowType}`);
-    localStorage.removeItem("srv_spotlight_seen_home_welcome");
+    // Set sessionStorage flag to indicate this specific tour was intentionally selected
+    sessionStorage.setItem('pending_tour', tour.flowType);
 
     // Navigate to the appropriate page
     const routeMap: Record<string, string> = {
@@ -114,14 +108,11 @@ const SettingsPage: React.FC = () => {
       "client-bookings": "/client/booking",
       "client-profile": "/client/profile",
       "client-ratings": "/client/ratings",
-      "client-service": "/client/service/view-all",
-      "client-booking-details": "/client/booking",
-      "client-receipt": "/client/booking",
     };
 
     const targetRoute = routeMap[tour.flowType] || "/client/home";
 
-    // Navigate first, then set selected tour
+    // Navigate to the page
     navigate(targetRoute);
     setSelectedTour(tour);
   };

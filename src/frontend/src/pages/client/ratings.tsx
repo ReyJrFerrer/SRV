@@ -10,6 +10,7 @@ import useClientRating, {
   type ClientReview,
 } from "../../hooks/useClientRating";
 import authCanisterService from "../../services/authCanisterService";
+import SpotlightTour from "../../components/common/SpotlightTour";
 
 const StarBar: React.FC<{ label: string; value: number; total: number }> = ({
   label,
@@ -167,6 +168,7 @@ const ClientRatingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SpotlightTour flowType="client-ratings" />
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-white/80 shadow-sm backdrop-blur-md">
         <div className="relative flex w-full items-center px-4 py-4">
           <button
