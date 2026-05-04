@@ -1018,7 +1018,7 @@ const AddServicePage: React.FC = () => {
         <ProgressTracker currentStep={currentStep} />
         {renderStep()}
         {/* Navigation Buttons */}
-        <div className="mb-20 mt-6 flex justify-between lg:mb-8">
+        <div className="mt-6 flex justify-between lg:mb-8">
           {currentStep > 1 && (
             <button
               onClick={handleBack}

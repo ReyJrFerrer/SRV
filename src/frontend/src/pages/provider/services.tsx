@@ -224,7 +224,7 @@ const MyServicesPage: React.FC = () => {
 
       <main className="container mx-auto flex-grow px-4 py-6 pb-10 md:px-6">
         <div
-          className="mb-4 flex items-center justify-end"
+          className="mt-2 mb-4 flex items-center justify-end"
           data-tour="provider-services-filter"
         >
           <button

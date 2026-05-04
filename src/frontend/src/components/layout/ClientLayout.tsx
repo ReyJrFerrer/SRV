@@ -8,7 +8,7 @@ import BottomNavigation from "../client/NavigationBar";
 export default function ClientLayout() {
   return (
     <ProtectedRoute requiredRole="Client">
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-gray-50">
         <ClientOnRouteBanner />
         <ClientActiveServiceBanner />
         {/* Client-specific header/navigation can go here */}
