@@ -129,18 +129,11 @@ const BottomNavigation: React.FC = () => {
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
 
-  const settingsItem = {
-    to: "/client/settings",
-    label: "Settings",
-    icon: null as null,
-    count: 0,
-  };
-
-  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Settings"];
+  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
 
   const mobileItems = mobileOrder
     .map((label: string) => {
-      if (label === "Settings") return settingsItem;
+      if (label === "Profile") return navItems.find((i: any) => i.label === "Profile");
       return navItems.find((i: any) => i.label === label) || null;
     })
     .filter((i: any): i is any => !!i);
