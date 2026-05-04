@@ -841,7 +841,7 @@ const ClientProfilePage: React.FC = () => {
                 )}
               </div>
               <RoleSwitchButton currentRole="client" />
-              <div className="hidden lg:block">
+              <div >
                 <button
                   onClick={logout}
                   className="flex w-full items-center justify-center rounded-2xl border border-red-200 bg-white px-6 py-3 text-sm font-bold text-red-600 shadow-sm transition-colors hover:bg-red-50"
