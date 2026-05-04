@@ -176,10 +176,12 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
       <SideMenuDrawer
         isOpen={showMenu}
         onClose={handleCloseMenu}
-        items={items}
+        userRole={userRole}
         userInfo={{
           name: displayName,
+          email: profile?.email,
           to: userRole === "provider" ? "/provider/profile" : "/client/profile",
+          profileImage: profile?.profilePicture?.imageUrl,
         }}
       />
     </>

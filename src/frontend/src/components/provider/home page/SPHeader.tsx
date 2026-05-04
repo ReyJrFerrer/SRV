@@ -333,8 +333,13 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
         <SideMenuDrawer
           isOpen={showMenu}
           onClose={() => setShowMenu(false)}
-          items={menuItemsData}
-          userInfo={{ name: displayName, to: "/provider/profile" }}
+          userRole="provider"
+          userInfo={{ 
+            name: displayName, 
+            email: profile?.email,
+            to: "/provider/profile",
+            profileImage: profile?.profilePicture?.imageUrl,
+          }}
         />
       )}
 

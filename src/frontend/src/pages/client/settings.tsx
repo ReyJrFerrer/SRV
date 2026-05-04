@@ -100,7 +100,7 @@ const SettingsPage: React.FC = () => {
 
   const handleSelectTour = (tour: TourOption) => {
     // Set sessionStorage flag to indicate this specific tour was intentionally selected
-    sessionStorage.setItem('pending_tour', tour.flowType);
+    sessionStorage.setItem("pending_tour", tour.flowType);
 
     // Navigate to the appropriate page
     const routeMap: Record<string, string> = {

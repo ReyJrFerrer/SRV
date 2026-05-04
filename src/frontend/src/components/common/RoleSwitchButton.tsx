@@ -10,12 +10,14 @@ type RoleSwitchButtonProps = {
   currentRole: "client" | "provider";
   className?: string;
   onSwitchSuccess?: () => void;
+  variant?: "full" | "compact";
 };
 
 const RoleSwitchButton: React.FC<RoleSwitchButtonProps> = ({
   currentRole,
   className = "",
   onSwitchSuccess,
+  variant = "full",
 }) => {
   const navigate = useNavigate();
   const { switchRole } = useUserProfile();
@@ -26,7 +28,7 @@ const RoleSwitchButton: React.FC<RoleSwitchButtonProps> = ({
 
   const newRole = isClient ? "provider" : "client";
   const buttonText = isClient
-    ? "Switch to SRVice Provider"
+    ? "Switch to Service Provider"
     : "Switch to Client";
   const navPath = `/${newRole}/home`;
 
@@ -50,17 +52,23 @@ const RoleSwitchButton: React.FC<RoleSwitchButtonProps> = ({
   const solidHover = isProvider ? "hover:bg-yellow-600" : "hover:bg-blue-700";
   const iconColor = isProvider ? "text-yellow-900" : "text-white";
 
+  // Variant styles
+  const isCompact = variant === "compact";
+  const padding = isCompact ? "px-4 py-3" : "px-5 py-3.5";
+  const iconSize = isCompact ? "h-5 w-5" : "h-6 w-6";
+  const textSize = isCompact ? "text-sm" : "text-base";
+
   return (
     <button
       onClick={handleSwitch}
       disabled={switching}
-      className={`flex w-full items-center justify-between rounded-2xl ${solidBg} ${solidHover} px-5 py-3.5 font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50 ${className}`}
+      className={`flex w-full items-center justify-between rounded-2xl ${solidBg} ${solidHover} ${padding} font-bold text-white shadow-sm transition-all active:scale-95 disabled:opacity-50 ${className}`}
     >
       <div className="flex items-center">
         <ArrowPathRoundedSquareIcon
-          className={`mr-3 h-6 w-6 ${iconColor} ${switching ? "animate-spin" : ""}`}
+          className={`mr-3 ${iconSize} ${iconColor} ${switching ? "animate-spin" : ""}`}
         />
-        <span className={switching ? "opacity-70" : ""}>
+        <span className={`${textSize} ${switching ? "opacity-70" : ""}`}>
           {switching ? "Switching..." : buttonText}
         </span>
       </div>
