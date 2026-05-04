@@ -1,4 +1,3 @@
-import React from "react";
 import { XMarkIcon, PlayIcon } from "@heroicons/react/24/outline";
 import SpotlightTour from "./SpotlightTour";
 

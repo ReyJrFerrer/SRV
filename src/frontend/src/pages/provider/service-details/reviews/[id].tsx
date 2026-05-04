@@ -4,7 +4,6 @@ import {
   ArrowLeftIcon,
   StarIcon as StarSolid,
   EyeSlashIcon,
-  ChartBarIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../../hooks/reviewManagement";
 import { useServiceManagement } from "../../../../hooks/serviceManagement";
