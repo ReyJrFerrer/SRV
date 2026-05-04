@@ -10,6 +10,7 @@ import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useLocationStore } from "../../../store/locationStore";
 import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
+import TourSelectorModal, { TourOption } from "../../../components/common/TourSelectorModal";
 import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
@@ -38,7 +39,28 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
   const miniMapRef = useRef<MapFunctionsHandle | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [showTourSelector, setShowTourSelector] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<TourOption | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const providerTourOptions: TourOption[] = [
+    { name: "Dashboard Tour", flowType: "provider", description: "Overview of your earnings, jobs & stats" },
+    { name: "Bookings Tour", flowType: "provider-bookings", description: "Manage incoming & upcoming bookings" },
+    { name: "Services Tour", flowType: "provider-services", description: "Create & manage your service listings" },
+  ];
+
+  const handleTourSelect = (tour: TourOption) => {
+    sessionStorage.setItem("pending_tour", tour.flowType);
+    const routeMap: Record<string, string> = {
+      "provider": "/provider/home",
+      "provider-bookings": "/provider/bookings",
+      "provider-services": "/provider/services",
+    };
+    const targetRoute = routeMap[tour.flowType] || "/provider/home";
+    navigate(targetRoute);
+    setShowTourSelector(false);
+    setSelectedTour(tour);
+  };
 
   // Effect: fetch user profile when auth loads (location handled by post-login modal)
   useEffect(() => {
@@ -316,8 +338,19 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
             to: "/provider/profile",
             profileImage: profile?.profilePicture?.imageUrl,
           }}
+          onOpenTourSelector={() => setShowTourSelector(true)}
         />
       )}
+
+      {/* Tour Selector Modal */}
+      <TourSelectorModal
+        isOpen={showTourSelector}
+        onClose={() => setShowTourSelector(false)}
+        onSelectTour={handleTourSelect}
+        tours={providerTourOptions}
+        selectedTour={selectedTour}
+        onTourComplete={() => setSelectedTour(null)}
+      />
 
       {/* Mini sticky header as a fixed overlay */}
       {isMini && (

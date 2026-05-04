@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRightOnRectangleIcon,
@@ -15,7 +15,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { useLogout } from "../../hooks/logout";
 import RoleSwitchButton from "./RoleSwitchButton";
-import TourSelectorModal, { TourOption } from "./TourSelectorModal";
 
 interface MenuItem {
   label: string;
@@ -38,6 +37,7 @@ interface SideMenuDrawerProps {
   onClose: () => void;
   userRole: "client" | "provider";
   userInfo?: UserInfo;
+  onOpenTourSelector?: () => void;
 }
 
 const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
@@ -45,47 +45,32 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
   onClose,
   userRole,
   userInfo,
+  onOpenTourSelector,
 }) => {
   const navigate = useNavigate();
   const { logout } = useLogout();
 
   const isClient = userRole === "client";
 
-  const [showTourSelector, setShowTourSelector] = useState(false);
-  const [selectedTour, setSelectedTour] = useState<TourOption | null>(null);
-
-  const clientTourOptions: TourOption[] = [
-    { name: "Home Tour", flowType: "client", description: "Learn how to find & book services near you" },
-    { name: "Bookings Tour", flowType: "client-bookings", description: "Manage your bookings & appointments" },
-    { name: "Profile Tour", flowType: "client-profile", description: "View your reputation & ratings" },
-    { name: "Ratings Tour", flowType: "client-ratings", description: "See provider feedback about you" },
-  ];
-
-  const providerTourOptions: TourOption[] = [
-    { name: "Dashboard Tour", flowType: "provider", description: "Overview of your earnings, jobs & stats" },
-    { name: "Bookings Tour", flowType: "provider-bookings", description: "Manage incoming & upcoming bookings" },
-    { name: "Services Tour", flowType: "provider-services", description: "Create & manage your service listings" },
-  ];
-
   const navigationItems: MenuItem[] = [
-    { 
-      label: "Install App", 
+    {
+      label: "Install App",
       to: isClient ? "/client/settings" : "/provider/settings",
       icon: DevicePhoneMobileIcon,
     },
-    { 
-      label: "Push Notifications", 
-      to: isClient ? "/client/settings" : "/provider/settings", 
+    {
+      label: "Push Notifications",
+      to: isClient ? "/client/settings" : "/provider/settings",
       icon: BellIcon,
     },
-    { 
-      label: "Start Tour", 
+    {
+      label: "Start Tour",
       icon: PlayIcon,
-      action: () => setShowTourSelector(true),
+      action: () => onOpenTourSelector?.(),
     },
-    { 
-      label: "Settings", 
-      to: isClient ? "/client/settings" : "/provider/settings", 
+    {
+      label: "Settings",
+      to: isClient ? "/client/settings" : "/provider/settings",
       icon: Cog6ToothIcon,
     },
   ];
@@ -109,34 +94,23 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
   ];
 
   const handleItemClick = (item: MenuItem) => {
-    onClose();
     if (item.action) {
       item.action();
+      onClose();
     } else if (item.to) {
-      const section = item.label === "Install App" ? "pwa" : item.label === "Push Notifications" ? "notifications" : null;
+      onClose();
+      const section =
+        item.label === "Install App"
+          ? "pwa"
+          : item.label === "Push Notifications"
+            ? "notifications"
+            : null;
       if (section) {
         navigate(item.to, { state: { expandSection: section } });
       } else {
         navigate(item.to);
       }
     }
-  };
-
-  const handleTourSelect = (tour: TourOption) => {
-    sessionStorage.setItem("pending_tour", tour.flowType);
-    const routeMap: Record<string, string> = {
-      "client": "/client/home",
-      "client-bookings": "/client/booking",
-      "client-profile": "/client/profile",
-      "client-ratings": "/client/ratings",
-      "provider": "/provider/home",
-      "provider-bookings": "/provider/bookings",
-      "provider-services": "/provider/services",
-    };
-    const targetRoute = routeMap[tour.flowType] || (isClient ? "/client/home" : "/provider/home");
-    navigate(targetRoute);
-    setShowTourSelector(false);
-    setSelectedTour(tour);
   };
 
   const handleLogout = () => {
@@ -283,16 +257,6 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Tour Selector Modal */}
-      <TourSelectorModal
-        isOpen={showTourSelector}
-        onClose={() => setShowTourSelector(false)}
-        onSelectTour={handleTourSelect}
-        tours={isClient ? clientTourOptions : providerTourOptions}
-        selectedTour={selectedTour}
-        onTourComplete={() => setSelectedTour(null)}
-      />
 
       {/* Chevron icon helper */}
       <svg

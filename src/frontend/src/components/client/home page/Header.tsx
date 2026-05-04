@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useServiceManagement } from "../../../hooks/serviceManagement";
 import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
+import TourSelectorModal, { TourOption } from "../../../components/common/TourSelectorModal";
 import authCanisterService from "../../../services/authCanisterService";
 import MapFunctions, {
   MapFunctionsHandle,
@@ -38,7 +39,30 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   // --- State: Search bar ---
   const [searchQuery, setSearchQuery] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [showTourSelector, setShowTourSelector] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<TourOption | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const clientTourOptions: TourOption[] = [
+    { name: "Home Tour", flowType: "client", description: "Learn how to find & book services near you" },
+    { name: "Bookings Tour", flowType: "client-bookings", description: "Manage your bookings & appointments" },
+    { name: "Profile Tour", flowType: "client-profile", description: "View your reputation & ratings" },
+    { name: "Ratings Tour", flowType: "client-ratings", description: "See provider feedback about you" },
+  ];
+
+  const handleTourSelect = (tour: TourOption) => {
+    sessionStorage.setItem("pending_tour", tour.flowType);
+    const routeMap: Record<string, string> = {
+      "client": "/client/home",
+      "client-bookings": "/client/booking",
+      "client-profile": "/client/profile",
+      "client-ratings": "/client/ratings",
+    };
+    const targetRoute = routeMap[tour.flowType] || "/client/home";
+    navigate(targetRoute);
+    setShowTourSelector(false);
+    setSelectedTour(tour);
+  };
   // Static search bar placeholders
   const searchPlaceholders = [
     "Looking for a plumber?",
@@ -469,8 +493,19 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           onClose={() => setShowMenu(false)}
           userRole="client"
           userInfo={{ name: displayName, to: "/client/profile" }}
+          onOpenTourSelector={() => setShowTourSelector(true)}
         />
       )}
+
+      {/* Tour Selector Modal */}
+      <TourSelectorModal
+        isOpen={showTourSelector}
+        onClose={() => setShowTourSelector(false)}
+        onSelectTour={handleTourSelect}
+        tours={clientTourOptions}
+        selectedTour={selectedTour}
+        onTourComplete={() => setSelectedTour(null)}
+      />
     </>
   );
 };

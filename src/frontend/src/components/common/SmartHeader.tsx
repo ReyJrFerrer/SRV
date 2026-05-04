@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ChevronLeftIcon,
-  Bars3Icon,
-} from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
 import authCanisterService from "../../services/authCanisterService";
 import SideMenuDrawer from "./SideMenuDrawer";
