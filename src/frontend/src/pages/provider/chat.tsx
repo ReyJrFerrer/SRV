@@ -420,7 +420,7 @@ const ClientChatPage: React.FC = () => {
               )}
               {(selectedConversationId || isDesktop) && (
                 <div
-                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "flex h-full flex-1 flex-col overflow-hidden"}`}
+                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "fixed inset-0 z-[60] flex h-[100dvh] flex-col bg-white"}`}
                 >
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
@@ -533,7 +533,7 @@ const ClientChatPage: React.FC = () => {
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="border-t border-gray-200 bg-white p-3 pb-1 md:sticky md:bottom-0 md:bg-white md:pb-3">
+                      <div className="shrink-0 border-t border-gray-200 bg-white p-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:sticky md:bottom-0 md:bg-white md:p-3">
                         <form
                           onSubmit={handleSendMessage}
                           className="flex items-center gap-3"

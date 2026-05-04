@@ -4,6 +4,7 @@ export type StickyConfirmBarProps = {
   formError: string | null;
   isSubmitting: boolean;
   onConfirm: () => void;
+  isValid?: boolean;
   highlight?: boolean;
 };
 
@@ -11,6 +12,7 @@ const StickyConfirmBar: React.FC<StickyConfirmBarProps> = ({
   formError,
   isSubmitting,
   onConfirm,
+  isValid = true,
 }) => (
   <div className="mx-auto max-w-md">
     {formError && (
@@ -21,12 +23,18 @@ const StickyConfirmBar: React.FC<StickyConfirmBarProps> = ({
     <button
       onClick={onConfirm}
       className="hover: disabled:-none flex w-full items-center justify-center rounded-2xl bg-blue-600 px-5 py-3.5 text-lg font-bold tracking-wide text-white shadow-sm transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-95 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
-      disabled={isSubmitting}
+      disabled={isSubmitting || !isValid}
     >
-      {isSubmitting && (
-        <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+      {isSubmitting ? (
+        <>
+          <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+          Submitting...
+        </>
+      ) : !isValid ? (
+        "Fill Required Fields"
+      ) : (
+        "Confirm Booking"
       )}
-      {isSubmitting ? "Submitting..." : "Confirm Booking"}
     </button>
   </div>
 );

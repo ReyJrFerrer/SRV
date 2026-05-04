@@ -10,7 +10,9 @@ import { useAuth } from "../../../context/AuthContext";
 import authCanisterService from "../../../services/authCanisterService";
 import { useLocationStore } from "../../../store/locationStore";
 import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
-import TourSelectorModal, { TourOption } from "../../../components/common/TourSelectorModal";
+import TourSelectorModal, {
+  TourOption,
+} from "../../../components/common/TourSelectorModal";
 import MapFunctions, {
   MapFunctionsHandle,
 } from "../../common/GMapFunctions/MapFunctions";
@@ -44,15 +46,27 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const providerTourOptions: TourOption[] = [
-    { name: "Dashboard Tour", flowType: "provider", description: "Overview of your earnings, jobs & stats" },
-    { name: "Bookings Tour", flowType: "provider-bookings", description: "Manage incoming & upcoming bookings" },
-    { name: "Services Tour", flowType: "provider-services", description: "Create & manage your service listings" },
+    {
+      name: "Dashboard Tour",
+      flowType: "provider",
+      description: "Overview of your earnings, jobs & stats",
+    },
+    {
+      name: "Bookings Tour",
+      flowType: "provider-bookings",
+      description: "Manage incoming & upcoming bookings",
+    },
+    {
+      name: "Services Tour",
+      flowType: "provider-services",
+      description: "Create & manage your service listings",
+    },
   ];
 
   const handleTourSelect = (tour: TourOption) => {
     sessionStorage.setItem("pending_tour", tour.flowType);
     const routeMap: Record<string, string> = {
-      "provider": "/provider/home",
+      provider: "/provider/home",
       "provider-bookings": "/provider/bookings",
       "provider-services": "/provider/services",
     };
