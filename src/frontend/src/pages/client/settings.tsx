@@ -1,6 +1,6 @@
 // SECTION: Imports — dependencies for this page
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   QuestionMarkCircleIcon,
@@ -34,6 +34,23 @@ const SettingsPage: React.FC = () => {
   useEffect(() => {
     document.title = "Settings | SRV";
   }, []);
+
+  const location = useLocation();
+  const expandFromMenu = location.state?.expandSection;
+
+  useEffect(() => {
+    if (expandFromMenu === "pwa") {
+      setPwaOpen(true);
+    } else if (expandFromMenu === "notifications") {
+      setNotifOpen(true);
+    }
+  }, [expandFromMenu]);
+
+  useEffect(() => {
+    if (expandFromMenu) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [expandFromMenu, location.pathname, navigate]);
 
   const menuItems = [
     {

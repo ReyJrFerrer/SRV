@@ -3,10 +3,6 @@ import {
   MapPinIcon,
   UserCircleIcon,
   Bars3Icon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
-  ExclamationTriangleIcon,
-  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -121,28 +117,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showMenu]);
-
-  interface MenuItemData {
-    label: string;
-    to: string;
-    icon?: React.ComponentType<{ className?: string }>;
-  }
-
-  const menuItemsData: MenuItemData[] = [
-    { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
-    { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
-    {
-      label: "Terms & Conditions",
-      to: "/client/terms",
-      icon: DocumentTextIcon,
-    },
-    { label: "Report", to: "/client/report", icon: ExclamationTriangleIcon },
-    {
-      label: "Help & Support",
-      to: "/client/help",
-      icon: QuestionMarkCircleIcon,
-    },
-  ];
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -493,7 +467,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         <SideMenuDrawer
           isOpen={showMenu}
           onClose={() => setShowMenu(false)}
-          items={menuItemsData}
+          userRole="client"
           userInfo={{ name: displayName, to: "/client/profile" }}
         />
       )}

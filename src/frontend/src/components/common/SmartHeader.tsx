@@ -3,11 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronLeftIcon,
   Bars3Icon,
-  UserCircleIcon,
-  Cog6ToothIcon,
-  DocumentTextIcon,
-  ExclamationTriangleIcon,
-  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
 import authCanisterService from "../../services/authCanisterService";
@@ -92,43 +87,6 @@ const SmartHeader: React.FC<SmartHeaderProps> = ({
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [showMenu]);
-
-  const defaultClientMenuItems: MenuItem[] = [
-    { label: "Profile", to: "/client/profile", icon: UserCircleIcon },
-    { label: "Settings", to: "/client/settings", icon: Cog6ToothIcon },
-    {
-      label: "Terms & Conditions",
-      to: "/client/terms",
-      icon: DocumentTextIcon,
-    },
-    { label: "Report", to: "/client/report", icon: ExclamationTriangleIcon },
-    {
-      label: "Help & Support",
-      to: "/client/help",
-      icon: QuestionMarkCircleIcon,
-    },
-  ];
-
-  const defaultProviderMenuItems: MenuItem[] = [
-    { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
-    {
-      label: "Terms & Conditions",
-      to: "/provider/terms",
-      icon: DocumentTextIcon,
-    },
-    { label: "Report", to: "/provider/report", icon: ExclamationTriangleIcon },
-    {
-      label: "Help & Support",
-      to: "/provider/help",
-      icon: QuestionMarkCircleIcon,
-    },
-  ];
-
-  const items =
-    menuItems ||
-    (userRole === "provider"
-      ? defaultProviderMenuItems
-      : defaultClientMenuItems);
 
   const showBurger = propShowBurger ?? (!menuItems || menuItems.length > 0);
 

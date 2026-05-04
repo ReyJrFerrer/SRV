@@ -4,9 +4,6 @@ import {
   MapPinIcon,
   UserCircleIcon,
   Bars3Icon,
-  DocumentTextIcon,
-  QuestionMarkCircleIcon,
-  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
@@ -141,27 +138,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
         document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showMenu]);
-
-  interface MenuItemData {
-    label: string;
-    to: string;
-    icon?: React.ComponentType<{ className?: string }>;
-  }
-
-  const menuItemsData: MenuItemData[] = [
-    { label: "Profile", to: "/provider/profile", icon: UserCircleIcon },
-    {
-      label: "Terms & Conditions",
-      to: "/provider/terms",
-      icon: DocumentTextIcon,
-    },
-    { label: "Report", to: "/provider/report", icon: ExclamationTriangleIcon },
-    {
-      label: "Help & Support",
-      to: "/provider/help",
-      icon: QuestionMarkCircleIcon,
-    },
-  ];
 
   // --- Sticky mini header behavior (provider shows only location) with hysteresis + layout preservation ---
   const headerRef = useRef<HTMLDivElement | null>(null);
