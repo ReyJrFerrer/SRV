@@ -247,7 +247,7 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
         </div>
 
         {/* Logout Section */}
-        <div className="border-t border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 pb-17">
           <button
             onClick={handleLogout}
             className="flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left font-medium text-red-600 transition-all hover:bg-red-50"

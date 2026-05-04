@@ -186,28 +186,47 @@ const BookingPage: React.FC = () => {
   // Section: Form validation - can submit check
   const canSubmit = useMemo(() => {
     if (isSubmitting) return false;
-    
+
     const hasPackage = packages.some((p) => p.checked);
     if (!hasPackage) return false;
-    
+
     if (!bookingOption) return false;
-    
+
     if (!selectedTime) return false;
-    
-    const isUsingMapPin = !showFallbackForms && !!(mapLocation && mapLocation.lat && mapLocation.lng);
+
+    const isUsingMapPin =
+      !showFallbackForms &&
+      !!(mapLocation && mapLocation.lat && mapLocation.lng);
     if (!isUsingMapPin) {
       if (!selectedBarangay.trim()) return false;
-      if (selectedBarangay === "__other__" && (!otherBarangay || otherBarangay.trim().length < 3)) return false;
+      if (
+        selectedBarangay === "__other__" &&
+        (!otherBarangay || otherBarangay.trim().length < 3)
+      )
+        return false;
       if (!street.trim() || street.trim().length < 3) return false;
       if (!houseNumber.trim() || !/\d/.test(houseNumber)) return false;
     }
-    
+
     if (paymentMethod === "CashOnHand" && packages.some((p) => p.checked)) {
       if (!amountPaid.trim()) return false;
     }
-    
+
     return true;
-  }, [packages, bookingOption, selectedTime, showFallbackForms, mapLocation, selectedBarangay, otherBarangay, street, houseNumber, paymentMethod, amountPaid, isSubmitting]);
+  }, [
+    packages,
+    bookingOption,
+    selectedTime,
+    showFallbackForms,
+    mapLocation,
+    selectedBarangay,
+    otherBarangay,
+    street,
+    houseNumber,
+    paymentMethod,
+    amountPaid,
+    isSubmitting,
+  ]);
 
   // Section: Drafts
   const DRAFT_KEY_PREFIX = "booking_draft_v1_";
@@ -2101,18 +2120,18 @@ const BookingPage: React.FC = () => {
                   )}
                 </div>
                 <div className="mx-auto max-w-5xl pb-6 pt-4">
-                    {lastSavedAt && (
-                      <div className="mb-2 text-center text-xs text-gray-600 sm:hidden">
-                        Saved • {timeAgo(lastSavedAt)}
-                      </div>
-                    )}
-                    <StickyConfirmBar
-                      formError={formError}
-                      isSubmitting={isSubmitting}
-                      onConfirm={handleConfirmBooking}
-                      isValid={canSubmit}
-                    />
-                  </div>
+                  {lastSavedAt && (
+                    <div className="mb-2 text-center text-xs text-gray-600 sm:hidden">
+                      Saved • {timeAgo(lastSavedAt)}
+                    </div>
+                  )}
+                  <StickyConfirmBar
+                    formError={formError}
+                    isSubmitting={isSubmitting}
+                    onConfirm={handleConfirmBooking}
+                    isValid={canSubmit}
+                  />
+                </div>
               </div>
             </div>
           </div>
