@@ -345,7 +345,7 @@ const NotificationsPageSP = () => {
       {/* Tabs navigation for notification categories */}
       <div className="mx-auto mb-6 mt-4 max-w-2xl px-4">
         <div className="hide-scrollbar flex overflow-x-auto whitespace-nowrap pb-2">
-          <nav className="flex w-full space-x-2 rounded-xl border border-gray-100 bg-white p-1 shadow-sm sm:w-auto">
+          <nav className="flex w-max space-x-2 rounded-xl border border-gray-100 bg-white p-1 shadow-sm sm:w-auto">
             {TAB_ITEMS.map((tab) => (
               <button
                 key={tab}
