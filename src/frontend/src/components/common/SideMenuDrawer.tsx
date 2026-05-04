@@ -52,17 +52,49 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
   const isClient = userRole === "client";
 
   const navigationItems: MenuItem[] = [
-    { label: "Home", to: isClient ? "/client/home" : "/provider/home", icon: HomeIcon },
-    { label: "My Bookings", to: isClient ? "/client/booking" : "/provider/bookings", icon: ClipboardDocumentListIcon },
-    { label: "Messages", to: isClient ? "/client/chat" : "/provider/chat", icon: ChatBubbleLeftRightIcon },
-    { label: "Notifications", to: isClient ? "/client/notifications" : "/provider/notifications", icon: BellIcon },
-    { label: "Settings", to: isClient ? "/client/settings" : "/provider/settings", icon: Cog6ToothIcon },
+    {
+      label: "Home",
+      to: isClient ? "/client/home" : "/provider/home",
+      icon: HomeIcon,
+    },
+    {
+      label: "My Bookings",
+      to: isClient ? "/client/booking" : "/provider/bookings",
+      icon: ClipboardDocumentListIcon,
+    },
+    {
+      label: "Messages",
+      to: isClient ? "/client/chat" : "/provider/chat",
+      icon: ChatBubbleLeftRightIcon,
+    },
+    {
+      label: "Notifications",
+      to: isClient ? "/client/notifications" : "/provider/notifications",
+      icon: BellIcon,
+    },
+    {
+      label: "Settings",
+      to: isClient ? "/client/settings" : "/provider/settings",
+      icon: Cog6ToothIcon,
+    },
   ];
 
   const supportItems: MenuItem[] = [
-    { label: "Terms & Conditions", to: isClient ? "/client/terms" : "/provider/terms", icon: DocumentTextIcon },
-    { label: "Report", to: isClient ? "/client/report" : "/provider/report", icon: ExclamationTriangleIcon },
-    { label: "Help & Support", to: isClient ? "/client/help" : "/provider/help", icon: QuestionMarkCircleIcon },
+    {
+      label: "Terms & Conditions",
+      to: isClient ? "/client/terms" : "/provider/terms",
+      icon: DocumentTextIcon,
+    },
+    {
+      label: "Report",
+      to: isClient ? "/client/report" : "/provider/report",
+      icon: ExclamationTriangleIcon,
+    },
+    {
+      label: "Help & Support",
+      to: isClient ? "/client/help" : "/provider/help",
+      icon: QuestionMarkCircleIcon,
+    },
   ];
 
   const handleItemClick = (item: MenuItem) => {
@@ -84,19 +116,19 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
   return (
     <>
       {/* Backdrop with blur */}
-      <div 
-        className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm" 
-        onClick={onClose} 
+      <div
+        className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
+        onClick={onClose}
       />
-      
+
       {/* Drawer */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-[85%] max-w-[320px] flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="animate-in slide-in-from-right fixed right-0 top-0 z-50 flex h-full w-[85%] max-w-[320px] flex-col bg-white shadow-2xl duration-300">
         {/* Header with gradient */}
         <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-700 p-6 pt-12">
           {/* Decorative circles */}
           <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-xl" />
           <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-white/10 blur-lg" />
-          
+
           {/* Close button */}
           <button
             onClick={onClose}
@@ -107,11 +139,13 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
 
           {/* Role badge */}
           <div className="mb-4">
-            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
-              isClient 
-                ? "bg-yellow-500 text-yellow-900" 
-                : "bg-blue-500 text-white"
-            }`}>
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                isClient
+                  ? "bg-yellow-500 text-yellow-900"
+                  : "bg-blue-500 text-white"
+              }`}
+            >
               Current: {isClient ? "Client" : "Provider"}
             </span>
           </div>
@@ -127,8 +161,8 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
                 {userInfo.profileImage ? (
-                  <img 
-                    src={userInfo.profileImage} 
+                  <img
+                    src={userInfo.profileImage}
                     alt={userInfo.name}
                     className="h-12 w-12 rounded-full object-cover"
                   />
@@ -149,8 +183,8 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
 
         {/* Role Switch Button */}
         <div className="border-b border-slate-200 bg-white px-4 py-4">
-          <RoleSwitchButton 
-            currentRole={userRole} 
+          <RoleSwitchButton
+            currentRole={userRole}
             variant="compact"
             onSwitchSuccess={onClose}
           />
@@ -161,7 +195,9 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
           {/* Navigation Section */}
           <div className="border-b border-slate-100">
             <div className="mb-2 px-4 pt-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Navigation</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Navigation
+              </p>
             </div>
             <nav className="px-2">
               {navigationItems.map((item, index) => (
@@ -170,9 +206,7 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
                   onClick={() => handleItemClick(item)}
                   className="flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left text-slate-700 transition-all hover:bg-blue-50 hover:text-blue-600"
                 >
-                  {item.icon && (
-                    <item.icon className="h-5 w-5 text-blue-600" />
-                  )}
+                  {item.icon && <item.icon className="h-5 w-5 text-blue-600" />}
                   <span className="flex-1 font-medium">{item.label}</span>
                   <ChevronRightIcon className="h-4 w-4 text-slate-300" />
                 </button>
@@ -183,7 +217,9 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
           {/* Support Section */}
           <div className="py-2">
             <div className="mb-2 px-4 pt-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Support</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Support
+              </p>
             </div>
             <nav className="px-2">
               {supportItems.map((item, index) => (
@@ -216,8 +252,19 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
       </div>
 
       {/* Chevron icon helper */}
-      <svg className="hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+      <svg
+        className="hidden"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m8.25 4.5 7.5 7.5-7.5 7.5"
+        />
       </svg>
     </>
   );

@@ -334,8 +334,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           isOpen={showMenu}
           onClose={() => setShowMenu(false)}
           userRole="provider"
-          userInfo={{ 
-            name: displayName, 
+          userInfo={{
+            name: displayName,
             email: profile?.email,
             to: "/provider/profile",
             profileImage: profile?.profilePicture?.imageUrl,
