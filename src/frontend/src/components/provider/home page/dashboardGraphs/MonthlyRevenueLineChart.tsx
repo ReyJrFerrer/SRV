@@ -186,7 +186,7 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
                         }}
                         className={`${
                           active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                        } block w-full px-4 py-2 text-left text-sm`}
+                        } block w-full px-3 py-1.5 text-left text-xs md:px-4 md:py-2 md:text-sm`}
                       >
                         {range.label}
                         {range.key === "custom" && (
@@ -197,9 +197,9 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
                   </Menu.Item>
                 ))}
                 {timeRange === "custom" && (
-                  <div className="border-t border-gray-100 p-4">
+                  <div className="border-t border-gray-100 p-3 md:p-4">
                     <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                      <label className="mb-1 block text-[10px] font-medium text-gray-700 md:text-xs">
                         From:
                       </label>
                       <input
@@ -209,11 +209,11 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
                           const val = e.target.value;
                           if (val) setCustomStartDate(parseISO(val));
                         }}
-                        className="w-full rounded border border-gray-300 p-1 text-sm"
+                        className="w-full rounded border border-gray-300 p-0.5 text-xs md:p-1 md:text-sm"
                       />
                     </div>
                     <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                      <label className="mb-1 block text-[10px] font-medium text-gray-700 md:text-xs">
                         To:
                       </label>
                       <input
@@ -223,12 +223,12 @@ const MonthlyRevenueLineChart: React.FC<MonthlyRevenueLineChartProps> = ({
                           const val = e.target.value;
                           if (val) setCustomEndDate(parseISO(val));
                         }}
-                        className="w-full rounded border border-gray-300 p-1 text-sm"
+                        className="w-full rounded border border-gray-300 p-0.5 text-xs md:p-1 md:text-sm"
                       />
                     </div>
                     <button
                       // No need to setShowDatePicker, variable removed
-                      className="w-full rounded bg-blue-600 px-3 py-1 text-sm text-white transition-colors hover:bg-blue-700"
+                      className="w-full rounded bg-blue-600 px-3 py-0.5 text-xs text-white transition-colors hover:bg-blue-700 md:py-1 md:text-sm"
                     >
                       Apply
                     </button>
