@@ -656,6 +656,19 @@ export default function SpotlightTour({
     return () => clearTimeout(timer);
   }, [flowType]);
 
+  useEffect(() => {
+    const handleStartTour = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { flowType?: string } | undefined;
+      if (detail?.flowType !== flowType) return;
+      sessionStorage.removeItem("pending_tour");
+      setRun(false);
+      setShowWelcome(false);
+      setTimeout(() => setShowWelcome(true), 50);
+    };
+    window.addEventListener("srv:start-tour", handleStartTour);
+    return () => window.removeEventListener("srv:start-tour", handleStartTour);
+  }, [flowType]);
+
   const handleStartTour = () => {
     setShowWelcome(false);
     // Mark home welcome as seen when user starts the tour

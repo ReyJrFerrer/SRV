@@ -148,6 +148,9 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
 
   const handleTourSelect = (tour: TourOption) => {
     sessionStorage.setItem("pending_tour", tour.flowType);
+    window.dispatchEvent(
+      new CustomEvent("srv:start-tour", { detail: { flowType: tour.flowType } }),
+    );
     const routeMap: Record<string, string> = {
       client: "/client/home",
       "client-bookings": "/client/booking",
@@ -157,9 +160,10 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
       "provider-services": "/provider/services",
     };
     const targetRoute = routeMap[tour.flowType] || (isClient ? "/client/home" : "/provider/booking");
-    navigate(targetRoute);
     setShowTourSelector(false);
     setSelectedTour(tour);
+    onClose();
+    navigate(targetRoute);
   };
 
   const navigationItems: MenuItem[] = [
