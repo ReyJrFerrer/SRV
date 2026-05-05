@@ -169,14 +169,14 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
 
   return (
     <div className="relative flex h-[275px] w-full flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-col items-start gap-2 lg:flex-row lg:items-center lg:justify-between">
         <h3 className="flex items-center gap-2 text-lg font-bold text-blue-900">
           <CalendarDaysIcon className="h-6 w-6 text-blue-400" />
           Bookings Overview
         </h3>
         <div className="relative">
           <Menu as="div" className="relative inline-block text-left">
-            <Menu.Button className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <Menu.Button className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:px-3 md:py-1.5 md:text-sm">
               {getTimeRangeLabel()}
               <svg
                 className="h-4 w-4 text-gray-500"
