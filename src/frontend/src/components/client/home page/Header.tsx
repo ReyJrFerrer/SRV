@@ -102,14 +102,13 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const [isMini, setIsMini] = useState(false);
   const [showMiniLocation, setShowMiniLocation] = useState(false);
   const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
-  const miniMapRef = useRef<MapFunctionsHandle | null>(null);
   useEffect(() => {
     // Add hysteresis + rAF throttling to avoid rapid toggle near boundary
     // Only enable mini mode AFTER scrolling down significantly, never at top
     let lastY = window.scrollY;
     let ticking = false;
-    const ENTER_MINI_AT = 200; // increased threshold - only activate when well scrolled down
-    const EXIT_MINI_BELOW = 150; // hysteresis to prevent flickering
+    const ENTER_MINI_AT = 250; // increased threshold - only activate when well scrolled down
+    const EXIT_MINI_BELOW = 120; // hysteresis to prevent flickering
 
     const onScroll = () => {
       const y = window.scrollY;
@@ -290,10 +289,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const handleLocationClick = () => {
     if (primaryMapRef.current?.openChangeLocation) {
       primaryMapRef.current.openChangeLocation();
-      return;
-    }
-    if (miniMapRef.current?.openChangeLocation) {
-      miniMapRef.current.openChangeLocation();
     }
   };
 
@@ -462,7 +457,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               }`}
             >
               <div className="-mt-1 mb-1 ml-1 flex items-center gap-2">
-                <MapFunctions ref={miniMapRef} />
+                <MapFunctions ref={primaryMapRef} />
               </div>
             </div>
 
