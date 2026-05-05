@@ -133,6 +133,11 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
 
   const providerTourOptions: TourOption[] = [
     {
+      name: "Dashboard Tour",
+      flowType: "provider",
+      description: "Overview of your earnings, jobs & stats",
+    },
+    {
       name: "Bookings Tour",
       flowType: "provider-bookings",
       description: "Manage your incoming bookings",
@@ -156,7 +161,8 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
       "client-bookings": "/client/booking",
       "client-profile": "/client/profile",
       "client-ratings": "/client/ratings",
-      "provider-bookings": "/provider/booking",
+      provider: "/provider/home",
+      "provider-bookings": "/provider/bookings",
       "provider-services": "/provider/services",
     };
     const targetRoute = routeMap[tour.flowType] || (isClient ? "/client/home" : "/provider/booking");
