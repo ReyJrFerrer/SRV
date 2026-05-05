@@ -9,8 +9,7 @@ export default function ProviderLayout() {
   const location = useLocation();
   const isFullScreenRoute =
     location.pathname.startsWith("/provider/directions/") ||
-    location.pathname.startsWith("/provider/active-service/") ||
-    location.pathname.startsWith("/provider/services/add");
+    location.pathname.startsWith("/provider/active-service/");
 
   return (
     <ProtectedRoute requiredRole="ServiceProvider">
