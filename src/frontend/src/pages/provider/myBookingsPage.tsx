@@ -24,6 +24,7 @@ import { useReputation } from "../../hooks/useReputation";
 import CancelWithReasonButton from "../../components/common/cancellation/CancelWithReasonButton";
 import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import SmartHeader from "../../components/common/SmartHeader";
+import SpotlightTour from "../../components/common/SpotlightTour";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
@@ -495,6 +496,7 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-50">
+        <SpotlightTour flowType="provider-bookings" />
         <SmartHeader
           title="My Bookings"
           userRole="provider"

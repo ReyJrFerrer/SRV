@@ -16,6 +16,7 @@ import Appear from "../../components/common/pageFlowImprovements/Appear";
 import { ServiceGridSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import DeleteConfirmDialog from "../../components/provider/service-details/DeleteConfirmDialog";
 import SmartHeader from "../../components/common/SmartHeader";
+import SpotlightTour from "../../components/common/SpotlightTour";
 
 const MyServicesPage: React.FC = () => {
   const {
@@ -174,6 +175,7 @@ const MyServicesPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 pb-16 md:pb-0">
+      <SpotlightTour flowType="provider-services" />
       <Toaster position="top-center" richColors />
       <DeleteConfirmDialog
         open={!!deleteConfirmId}
