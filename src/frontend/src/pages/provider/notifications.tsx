@@ -300,46 +300,7 @@ const NotificationsPageSP = () => {
         showBackButton={false}
         showBurger={true}
         userRole="provider"
-        rightAction={
-          stableNotifications.length > 0 ? (
-            <div className="hidden items-center gap-2 md:flex">
-              <button
-                onClick={() => {
-                  if (!editMode) {
-                    setEditMode(true);
-                    clearSelection();
-                  } else {
-                    setEditMode(false);
-                    clearSelection();
-                  }
-                }}
-                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-              >
-                {editMode ? "Done" : "Edit"}
-              </button>
-              <button
-                onClick={handleSelectAll}
-                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-              >
-                {selectedIds.length > 0 &&
-                selectedIds.length ===
-                  stableNotifications.filter((n) => !deletedIds.includes(n.id))
-                    .length
-                  ? "Clear"
-                  : "Select all"}
-              </button>
-              {unread.length > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
-                >
-                  <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
-                  Mark all as read
-                </button>
-              )}
-            </div>
-          ) : undefined
-        }
+        rightAction={undefined}
       />
 
       {/* Tabs navigation for notification categories */}
@@ -372,37 +333,82 @@ const NotificationsPageSP = () => {
         </div>
       </div>
 
-      {editMode && (
-        <div className="sticky top-14 z-30 mx-auto flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
-          <div className="text-sm text-gray-700">
-            {selectedIds.length} selected
-          </div>
-          <div className="flex items-center gap-2">
-            {unread.length > 0 && (
-              <button
-                onClick={bulkMarkAsRead}
-                disabled={selectedIds.length === 0}
-                className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
-              >
-                Mark as read
-              </button>
-            )}
-            <button
-              onClick={bulkDeleteSelected}
-              disabled={selectedIds.length === 0}
-              className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
-            >
-              Delete
-            </button>
+      {stableNotifications.length > 0 && (
+        <div className="mx-auto mb-4 max-w-2xl px-2 md:px-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-md">
             <button
               onClick={() => {
-                setEditMode(false);
-                clearSelection();
+                if (!editMode) {
+                  setEditMode(true);
+                  clearSelection();
+                } else {
+                  setEditMode(false);
+                  clearSelection();
+                }
               }}
-              className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700"
+              className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
             >
-              Cancel
+              {editMode ? "Done" : "Edit"}
             </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleSelectAll}
+                className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+              >
+                {selectedIds.length > 0 &&
+                selectedIds.length ===
+                  stableNotifications.filter((n) => !deletedIds.includes(n.id))
+                    .length
+                  ? "Clear"
+                  : "Select all"}
+              </button>
+              {unread.length > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                >
+                  <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                  Mark all as read
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editMode && (
+        <div className="sticky top-14 z-30 mx-auto max-w-2xl px-2 md:px-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-md">
+            <div className="text-sm text-gray-700 whitespace-nowrap">
+              {selectedIds.length} selected
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {unread.length > 0 && (
+                <button
+                  onClick={bulkMarkAsRead}
+                  disabled={selectedIds.length === 0}
+                  className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
+                >
+                  Mark as read
+                </button>
+              )}
+              <button
+                onClick={bulkDeleteSelected}
+                disabled={selectedIds.length === 0}
+                className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => {
+                  setEditMode(false);
+                  clearSelection();
+                }}
+                className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -97,6 +97,7 @@ const NotificationItem: React.FC<Props> = ({
               e.stopPropagation();
               onToggleSelect?.();
             }}
+            onClick={(e) => e.stopPropagation()}
             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             aria-label="Select notification"
           />
