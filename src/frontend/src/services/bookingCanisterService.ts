@@ -136,6 +136,7 @@ export interface Booking {
   location: Location;
   evidence?: Evidence;
   attachments?: string[];
+  providerAttachments?: string[];
   notes?: string;
   paymentMethod: PaymentMethod;
   paymentId?: string; // Reference to external payment (Xendit invoice ID)
@@ -592,6 +593,26 @@ export const bookingCanisterService = {
       return responseData;
     } catch (error) {
       throw new Error(`Failed to release payment: ${error}`);
+    }
+  },
+
+  /**
+   * Update provider service proof images
+   * Merges new attachment URLs into the existing providerAttachments array on the booking document
+   */
+  async updateProviderAttachments(
+    bookingId: string,
+    newAttachmentUrls: string[],
+  ): Promise<void> {
+    try {
+      const bookingRef = doc(getDb(), "bookings", bookingId);
+      const { updateDoc, arrayUnion } = await import("firebase/firestore");
+      await updateDoc(bookingRef, {
+        providerAttachments: arrayUnion(...newAttachmentUrls),
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      throw new Error(`Failed to update provider attachments: ${error}`);
     }
   },
 
