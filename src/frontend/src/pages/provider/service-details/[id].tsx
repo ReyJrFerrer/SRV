@@ -1045,7 +1045,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   // Show loading screen during initialization or data loading
   if (loading && !service) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
+      <div className="min-h-screen bg-gray-50 md:pb-0">
         <header className="sticky top-0 z-20 flex w-full items-center justify-center border-b border-gray-200 bg-white py-4 shadow-sm">
           <div className="h-7 w-32 animate-pulse rounded bg-gray-200 lg:h-8"></div>
         </header>
@@ -1320,7 +1320,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
+    <div className="min-h-screen bg-gray-50 md:pb-0">
       <Toaster position="top-center" richColors />
       <PreviewModal
         previewUrl={previewUrl}
@@ -1395,7 +1395,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         )}
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Left: Location & Packages */}
           <div className="flex flex-col gap-8">
             <LockableSection
@@ -1458,7 +1458,7 @@ const ProviderServiceDetailPage: React.FC = () => {
           </div>
 
           {/* Right: Certifications & Service Images */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 sm:sticky sm:top-16 lg:self-start">
             <LockableSection
               locked={
                 (editTitleCategory ||
