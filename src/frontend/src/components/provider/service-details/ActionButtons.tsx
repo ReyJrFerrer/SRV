@@ -85,10 +85,10 @@ const ActionButtons: React.FC<Props> = ({
         <button
           onClick={onDeleteClick}
           disabled={isDeleting || hasActiveBookings}
-          className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-all sm:w-auto ${
+          className={`flex h-12 w-full items-center justify-center bg-red-500 text-white gap-2 shadow-sm rounded-xl px-4 text-sm font-medium transition-all sm:w-auto ${
             isDeleting || hasActiveBookings
               ? "cursor-not-allowed text-red-300"
-              : "text-red-500 hover:bg-red-50 hover:text-red-700"
+              : "text-red-500 hover:bg-red-700 "
           }`}
         >
           <TrashIcon className="h-5 w-5" />
