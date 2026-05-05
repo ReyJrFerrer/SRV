@@ -15,6 +15,7 @@ import {
 import { useLogout } from "../../hooks/logout";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import RoleSwitchButton from "./RoleSwitchButton";
+import TourSelectorModal, { TourOption } from "./TourSelectorModal";
 
 interface MenuItem {
   label: string;
@@ -37,7 +38,6 @@ interface SideMenuDrawerProps {
   onClose: () => void;
   userRole: "client" | "provider";
   userInfo?: UserInfo;
-  onOpenTourSelector?: () => void;
 }
 
 const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
@@ -45,7 +45,6 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
   onClose,
   userRole,
   userInfo,
-  onOpenTourSelector,
 }) => {
   const navigate = useNavigate();
   const { logout } = useLogout();
@@ -53,6 +52,8 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
     useUserProfile();
 
   const isClient = userRole === "client";
+  const [showTourSelector, setShowTourSelector] = React.useState(false);
+  const [selectedTour, setSelectedTour] = React.useState<TourOption | null>(null);
 
   // Avatar caching to prevent flickering
   const defaultAvatar = "/default-avatar.svg";
@@ -107,6 +108,60 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
     } catch {}
   }, [stableProfileSrc]);
 
+  const clientTourOptions: TourOption[] = [
+    {
+      name: "Home Tour",
+      flowType: "client",
+      description: "Learn how to find & book services near you",
+    },
+    {
+      name: "Bookings Tour",
+      flowType: "client-bookings",
+      description: "Manage your bookings & appointments",
+    },
+    {
+      name: "Profile Tour",
+      flowType: "client-profile",
+      description: "View your reputation & ratings",
+    },
+    {
+      name: "Ratings Tour",
+      flowType: "client-ratings",
+      description: "See provider feedback about you",
+    },
+  ];
+
+  const providerTourOptions: TourOption[] = [
+    {
+      name: "Bookings Tour",
+      flowType: "provider-bookings",
+      description: "Manage your incoming bookings",
+    },
+    {
+      name: "Services Tour",
+      flowType: "provider-services",
+      description: "Manage your service offerings",
+    },
+  ];
+
+  const tourOptions = isClient ? clientTourOptions : providerTourOptions;
+
+  const handleTourSelect = (tour: TourOption) => {
+    sessionStorage.setItem("pending_tour", tour.flowType);
+    const routeMap: Record<string, string> = {
+      client: "/client/home",
+      "client-bookings": "/client/booking",
+      "client-profile": "/client/profile",
+      "client-ratings": "/client/ratings",
+      "provider-bookings": "/provider/booking",
+      "provider-services": "/provider/services",
+    };
+    const targetRoute = routeMap[tour.flowType] || (isClient ? "/client/home" : "/provider/booking");
+    navigate(targetRoute);
+    setShowTourSelector(false);
+    setSelectedTour(tour);
+  };
+
   const navigationItems: MenuItem[] = [
     {
       label: "Install App",
@@ -121,7 +176,7 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
     {
       label: "Start Tour",
       icon: PlayIcon,
-      action: () => onOpenTourSelector?.(),
+      action: () => setShowTourSelector(true),
     },
     {
       label: "Settings",
@@ -151,7 +206,6 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
   const handleItemClick = (item: MenuItem) => {
     if (item.action) {
       item.action();
-      onClose();
     } else if (item.to) {
       onClose();
       const section =
@@ -324,6 +378,15 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
           d="m8.25 4.5 7.5 7.5-7.5 7.5"
         />
       </svg>
+
+      <TourSelectorModal
+        isOpen={showTourSelector}
+        onClose={() => setShowTourSelector(false)}
+        onSelectTour={handleTourSelect}
+        tours={tourOptions}
+        selectedTour={selectedTour}
+        onTourComplete={() => setSelectedTour(null)}
+      />
     </>
   );
 };
