@@ -1109,23 +1109,36 @@ const ProviderServiceDetailPage: React.FC = () => {
                       {[...Array(3)].map((_, index) => (
                         <div
                           key={index}
-                          // Matching the exact classes of the real card container for alignment
-                          className="flex w-full flex-col items-start rounded-xl border border-blue-100 bg-white/80 p-3 shadow sm:w-auto sm:min-w-[140px]"
+                          className="flex w-full flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
                         >
-                          {/* Day Name Badge Bone (e.g., "Monday") */}
-                          <div className="mb-3 flex h-6 w-28 items-center gap-2 rounded-full bg-gray-200 px-3"></div>
+                          {/* Day Name Badge Bone */}
+                          <div className="flex items-center gap-2 border-b border-gray-100 pb-2.5 pt-0.5">
+                            <div className="h-7 w-7 rounded-full bg-gray-200"></div>
+                            <div className="h-5 w-24 rounded bg-gray-200"></div>
+                          </div>
 
                           {/* Time Slots List Bones */}
-                          <div className="ml-1 flex flex-col gap-2">
-                            {/* Slot 1 Bone (e.g., 9:00 AM - 5:00 PM) */}
-                            <div className="flex items-center gap-2">
-                              <div className="h-6 w-32 rounded bg-gray-200"></div>
-                            </div>
-                            {/* Slot 2 Bone (Optional second slot) */}
-                            <div
-                              className={`flex items-center gap-2 ${index === 1 ? "hidden" : ""}`}
-                            >
-                              <div className="h-6 w-24 rounded bg-gray-200"></div>
+                          <div className="flex flex-col lg:flex-row lg:flex-wrap gap-2.5 lg:gap-2 pt-1">
+                            {/* Slot 1 Bone */}
+                            <React.Fragment>
+                              {/* Mobile/Tablet */}
+                              <div className="flex lg:hidden items-center gap-2.5">
+                                <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-200"></div>
+                                <div className="h-4 w-32 rounded bg-gray-100"></div>
+                              </div>
+                              {/* Laptop/Desktop */}
+                              <div className="hidden lg:block h-[30px] w-[130px] rounded-md bg-gray-100 border border-gray-200"></div>
+                            </React.Fragment>
+
+                            {/* Slot 2 Bone */}
+                            <div className={index === 1 ? "hidden" : "contents"}>
+                              {/* Mobile/Tablet */}
+                              <div className="flex lg:hidden items-center gap-2.5">
+                                <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-200"></div>
+                                <div className="h-4 w-28 rounded bg-gray-100"></div>
+                              </div>
+                              {/* Laptop/Desktop */}
+                              <div className="hidden lg:block h-[30px] w-[110px] rounded-md bg-gray-100 border border-gray-200"></div>
                             </div>
                           </div>
                         </div>
