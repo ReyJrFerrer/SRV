@@ -1,17 +1,44 @@
-import React, { useState } from "react";
-import { PhoneIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
-import ClientReputationScore from "./ClientReputationScore";
-import ClientRatingSummary from "./ClientRatingSummary";
+import React from "react";
+import { PhoneIcon, StarIcon } from "@heroicons/react/24/solid";
 import ClientRatingInfoModal from "../../common/ClientRatingInfoModal";
+import { useReputation } from "../../../hooks/useReputation";
 
 interface Props {
   providerImage: string;
   clientName: string;
-  clientContact: string | undefined;
+  clientContact?: string;
   clientId?: string;
-  reviews: any;
-  reputation: any;
+  reviews?: any[];
+  reputation?: any;
+  loadingStats?: boolean;
 }
+
+const ReputationScore: React.FC<{ clientId: string }> = ({ clientId }) => {
+  const { fetchUserReputation } = useReputation();
+  const [reputationScore, setReputationScore] = React.useState<number>(50);
+  React.useEffect(() => {
+    const loadReputation = async () => {
+      try {
+        const reputation = await fetchUserReputation(clientId);
+        if (reputation) setReputationScore(Math.round(reputation.trustScore));
+        else setReputationScore(50);
+      } catch {
+        setReputationScore(50);
+      }
+    };
+    if (clientId) loadReputation();
+  }, [clientId, fetchUserReputation]);
+
+  return (
+    <span
+      className="mb-2 mt-2 flex items-center gap-2 text-sm font-semibold text-gray-900"
+      style={{ minWidth: 0 }}
+    >
+      <span>Reputation Score:</span>
+      <span>{reputationScore}</span>
+    </span>
+  );
+};
 
 const ClientInfoCard: React.FC<Props> = ({
   providerImage,
@@ -19,62 +46,66 @@ const ClientInfoCard: React.FC<Props> = ({
   clientContact,
   clientId,
   reviews,
-  reputation,
+  loadingStats,
 }) => {
-  const [showRatingInfo, setShowRatingInfo] = useState(false);
+  const [showRatingInfo, setShowRatingInfo] = React.useState(false);
+
+  const averageRating =
+    reviews && reviews.length > 0
+      ? reviews.reduce((sum: number, r: any) => sum + (r.rating ?? 0), 0) /
+        reviews.length
+      : null;
+  const reviewCount = reviews?.length ?? null;
+
   return (
-    <div className="relative min-w-full max-w-md flex-1 overflow-hidden rounded-2xl bg-white shadow-xl lg:min-w-[320px]">
-      {/* Header Section */}
-      <div className="flex flex-col items-center gap-2 border-b border-blue-100 bg-gradient-to-r from-blue-100 to-yellow-50 p-8">
-        {/* Profile Image */}
-        <img
-          src={providerImage}
-          alt={`${clientName} profile`}
-          className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-md"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/default-client.svg";
-          }}
-        />
-
-        {/* Client Name */}
-        <h2 className="mt-2 text-2xl font-bold text-slate-800">{clientName}</h2>
-
-        {/* Reputation and Contact (Side-by-Side) */}
-        <div className="mt-2 flex w-full flex-col items-center justify-center gap-2">
-          {/* Reputation Score */}
-          {clientId && <ClientReputationScore reputation={reputation} />}
-
-          {/* Contact Info */}
+    <div>
+      <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
+        <PhoneIcon className="h-5 w-5 text-blue-600" /> Client Details
+      </h3>
+      <div className="flex items-center gap-5">
+        <div className="flex-shrink-0">
+          <img
+            src={providerImage || "/default-client.svg"}
+            alt={clientName || "Client"}
+            className="h-20 w-20 rounded-full border border-gray-100 bg-gray-50 object-cover shadow-sm"
+          />
+        </div>
+        <div className="flex-1">
+          <p className="text-lg font-bold text-gray-900">
+            {clientName || "N/A"}
+          </p>
+          {clientId && <ReputationScore clientId={clientId} />}
+          <div className="mt-1 flex items-center gap-3 text-sm">
+            {loadingStats ? (
+              <p className="text-sm text-gray-400">Loading reviews...</p>
+            ) : averageRating != null && reviewCount != null ? (
+              <>
+                <div className="flex items-center text-sm font-bold text-yellow-500">
+                  <StarIcon className="mr-1 h-4 w-4" />
+                  <span>{averageRating.toFixed(1)}</span>
+                </div>
+                <span className="text-sm text-gray-500">
+                  ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+                </span>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400">No reviews yet</p>
+            )}
+          </div>
           {clientContact && clientContact !== "Contact not available" && (
-            <div className="flex items-center text-sm font-medium text-gray-600">
-              <PhoneIcon className="mr-2 h-5 w-5 text-blue-500" />
-              <span>{clientContact}</span>
-            </div>
+            <p className="mt-1 flex items-center text-sm text-gray-500">
+              <PhoneIcon className="mr-1.5 h-4 w-4 text-gray-400" />
+              {clientContact}
+            </p>
           )}
         </div>
-
-        {/* Rating Summary (Bottom) */}
-        {clientId && (
-          <div className="mt-2 border-t border-blue-200 pt-2">
-            <div className="flex items-center justify-between gap-2">
-              <ClientRatingSummary reviews={reviews} />
-              <button
-                type="button"
-                aria-label="About ratings"
-                className="rounded-full p-1 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                onClick={() => setShowRatingInfo(true)}
-              >
-                <InformationCircleIcon className="h-5 w-5 text-blue-500" />
-              </button>
-            </div>
-          </div>
-        )}
-        <ClientRatingInfoModal
-          isOpen={showRatingInfo}
-          onClose={() => setShowRatingInfo(false)}
-          role="provider"
-        />
       </div>
+
+      <ClientRatingInfoModal
+        isOpen={showRatingInfo}
+        onClose={() => setShowRatingInfo(false)}
+        role="provider"
+      />
     </div>
   );
 };

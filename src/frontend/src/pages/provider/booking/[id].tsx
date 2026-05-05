@@ -13,12 +13,11 @@ import {
   ProviderEnhancedBooking,
   useProviderBookingManagement,
 } from "../../../hooks/useProviderBookingManagement";
-import MapSection from "../../../components/provider/booking-details/MapSection";
+import MapSection from "../../../components/MapSection";
 import ClientAttachments from "../../../components/common/MediaAttachments";
 import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { useReviewManagement } from "../../../hooks/reviewManagement";
 import { useReputation } from "../../../hooks/useReputation";
 import ClientInfoCard from "../../../components/provider/booking-details/ClientInfoCard";
@@ -238,6 +237,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
     setIsStartingService(true);
     try {
       await startNavigationById(specificBooking.id);
+      window.scrollTo(0, 0);
       navigate(`/provider/directions/${specificBooking.id}`);
     } catch (error) {
     } finally {
@@ -647,9 +647,24 @@ const ProviderBookingDetailsPage: React.FC = () => {
     }
   };
 
+  const getStatusPillStyle = (status: string) => {
+    const styles: { [key: string]: string } = {
+      REQUESTED: "text-yellow-700 border border-yellow-200 bg-yellow-50",
+      ACCEPTED: "text-emerald-700 border border-emerald-200 bg-emerald-50",
+      INPROGRESS: "text-blue-700 border border-blue-200 bg-blue-50",
+      COMPLETED: "text-indigo-700 border border-indigo-200 bg-indigo-50",
+      CANCELLED: "text-red-700 border border-red-200 bg-red-50",
+      DECLINED: "text-red-700 border border-red-200 bg-red-50",
+    };
+    return (
+      styles[status?.toUpperCase()] ||
+      "text-slate-700 border border-slate-200 bg-slate-50"
+    );
+  };
+
   // --- Main Page Layout ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 ">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Decline Confirmation Dialog */}
       <DeclineConfirmDialog
         show={showDeclineConfirm}
@@ -660,70 +675,94 @@ const ProviderBookingDetailsPage: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
+      <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-100 bg-white shadow-sm">
+        <div className="flex max-w-4xl items-center px-4 py-3.5 sm:px-6 md:pl-24 lg:pl-24">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 transition-colors hover:bg-gray-100"
-            aria-label="Go back"
+            className="flex-shrink-0 rounded-full p-1 transition-colors hover:bg-gray-50 lg:mr-4"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-700 lg:h-6 lg:w-6" />
+            <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold tracking-tight text-gray-900 lg:text-xl">
             Booking Details
           </h1>
         </div>
       </header>
 
-      {/* Cancellation reasons (frontend-only / informational) */}
-      {/* Add top margin so this block isn't hidden behind the sticky header */}
-      <div>
-        <CancellationReasons
-          bookingId={specificBooking?.id}
-          cancelledBy={(specificBooking as any)?.cancelledBy}
-          cancellationReason={(specificBooking as any)?.cancelReason}
-          // cancellationNotes={(specificBooking as any)?.cancellationNotes ?? "lmao"}
-        />
-      </div>
-
-      <main className="container mx-auto space-y-6 p-4 sm:p-6">
+      <main className="sm:pt-13 mx-auto max-w-4xl space-y-5 p-4 pt-20 sm:p-6">
         {isLoading ? (
           <BookingDetailsSkeleton />
         ) : (
           <>
-            {/* Side by side layout for provider and service details */}
-            <div className="mt-4 flex flex-col gap-6 md:flex-row">
-              {/* Provider (client) info card - left */}
-              <ClientInfoCard
-                providerImage={providerImage}
-                clientName={clientName}
-                clientContact={clientContact}
-                clientId={clientId || ""}
-                reviews={clientReviews}
-                reputation={clientReputation}
-              />
+            {/* Cancellation reasons (frontend-only / informational) */}
+            {specificBooking?.status === "Cancelled" && (
+              <div>
+                <CancellationReasons
+                  bookingId={specificBooking?.id}
+                  cancelledBy={(specificBooking as any)?.cancelledBy}
+                  cancellationReason={(specificBooking as any)?.cancelReason}
+                />
+              </div>
+            )}
 
-              {/* Service and package details - right */}
-              <ServiceDetailsCard
-                serviceName={serviceName}
-                packageTitle={specificBooking?.packageDetails?.title}
-                packageName={specificBooking?.packageName}
-                requestedDate={specificBooking?.requestedDate || ""}
-                scheduledDate={specificBooking?.scheduledDate || ""}
-                bookingLocation={bookingLocation}
-                displayAddress={displayAddress}
-                preciseAddress={preciseAddress}
-                geocodedAddress={geocodedAddress}
-                hasExplicitCoords={hasExplicitCoords}
-                clientLocation={clientLocation}
-                price={price !== undefined ? price : undefined}
-                amountToPay={amountToPay}
-                duration={duration}
-                formatDateRange={formatDateRange}
-              />
+            {/* Main booking card with status pill */}
+            <div>
+              <div className="relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+                <span
+                  className={`absolute right-5 top-5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusPillStyle(specificBooking?.status || "")}`}
+                  aria-label="Booking status"
+                >
+                  {specificBooking?.status?.replace("_", " ")}
+                </span>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
+                  {/* Client info - left */}
+                  <div className="border-r-0 border-gray-100 pr-0 lg:col-span-2 lg:border-r lg:pr-8">
+                    <ClientInfoCard
+                      providerImage={providerImage}
+                      clientName={clientName}
+                      clientContact={clientContact}
+                      clientId={clientId || ""}
+                      reviews={clientReviews}
+                      reputation={clientReputation}
+                    />
+                  </div>
+
+                  {/* Service details - right */}
+                  <div className="pt-4 lg:col-span-3 lg:pl-8 lg:pt-0">
+                    <ServiceDetailsCard
+                      serviceName={serviceName}
+                      packageTitle={specificBooking?.packageDetails?.title}
+                      packageName={specificBooking?.packageName}
+                      requestedDate={specificBooking?.requestedDate || ""}
+                      scheduledDate={specificBooking?.scheduledDate || ""}
+                      bookingLocation={bookingLocation}
+                      displayAddress={displayAddress}
+                      preciseAddress={preciseAddress}
+                      geocodedAddress={geocodedAddress}
+                      hasExplicitCoords={hasExplicitCoords}
+                      clientLocation={clientLocation}
+                      price={price !== undefined ? price : undefined}
+                      amountToPay={amountToPay}
+                      duration={duration}
+                      formatDateRange={formatDateRange}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
+
             {/* Booking Progress Section */}
-            <BookingProgressSection status={specificBooking?.status} />
+            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+              <h3 className="mb-6 flex items-center gap-2 text-base font-bold text-gray-900">
+                <CalendarDaysIcon className="h-5 w-5 text-blue-600" /> Booking
+                Progress
+              </h3>
+              <div className="px-2 sm:px-8">
+                <BookingProgressSection status={specificBooking?.status} />
+              </div>
+            </div>
+
             {/* Map Section */}
             <MapSection
               mapsReady={mapsReady}
@@ -739,12 +778,17 @@ const ProviderBookingDetailsPage: React.FC = () => {
               setShowStreetView={setShowStreetView}
             />
 
-            {/* Client Attachments Section */}
-            <ClientAttachments
-              attachments={(specificBooking as any)?.attachments}
-              notes={(specificBooking as any)?.notes}
-            />
-            {/* Booking Notes Section */}
+            {/* Client Attachments */}
+            {(specificBooking as any)?.attachments?.length > 0 && (
+              <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+                <ClientAttachments
+                  attachments={(specificBooking as any)?.attachments}
+                  notes={(specificBooking as any)?.notes}
+                />
+              </div>
+            )}
+
+            {/* Booking Notes */}
             <BookingNotes notes={(specificBooking as any)?.notes} />
 
             {/* Action Buttons */}
@@ -771,7 +815,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           </>
         )}
       </main>
-      <BottomNavigation />
+
       {/* Cancel Booking Dialog */}
       <CancelWithReasonButton
         show={!!cancellingBooking}

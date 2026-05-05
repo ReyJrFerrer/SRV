@@ -3,6 +3,7 @@ import RouteTransition from "../common/pageFlowImprovements/RouteTransition";
 import ProtectedRoute from "./ProtectedRoute";
 import ClientOnRouteBanner from "../client/OnRouteBanner";
 import ClientActiveServiceBanner from "../client/ActiveServiceBanner";
+import BottomNavigation from "../client/NavigationBar";
 
 export default function ClientLayout() {
   return (
@@ -17,6 +18,7 @@ export default function ClientLayout() {
           </RouteTransition>
         </main>
         {/* Client-specific footer can go here */}
+        <BottomNavigation />
       </div>
     </ProtectedRoute>
   );

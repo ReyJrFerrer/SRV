@@ -149,14 +149,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     };
   }, []);
 
-  const mobileOrder = [
-    "Home",
-    "Booking",
-    "Chat",
-    "Services",
-    "Notifications",
-    "Settings",
-  ];
+  const mobileOrder = ["Home", "Booking", "Chat", "Services", "Notifications"];
 
   return (
     <>
@@ -166,7 +159,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
             data-tour="provider-nav"
             className="tour-provider-nav-mobile mx-auto flex w-full max-w-full items-center justify-center"
           >
-            <div className="grid w-full grid-cols-6 font-medium">
+            <div className="grid w-full grid-cols-5 font-medium">
               {mobileOrder.map((label) => {
                 let to = "";
                 let count = 0;
@@ -177,9 +170,12 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                   count = filteredNotificationUnreadCount;
                   active = isActivePath(to);
                 } else if (label === "Settings") {
-                  to = settingsItem.to;
-                  count = 0;
-                  active = isActivePath(to);
+                  const item = navItems.find((it) => it.label === label);
+                  if (item) {
+                    to = item.to;
+                    count = item.count;
+                    active = isActivePath(to);
+                  }
                 } else {
                   const item = navItems.find((it) => it.label === label);
                   if (item) {
@@ -208,20 +204,8 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     }
                   }
                   navigate(to);
+                  window.scrollTo(0, 0);
                 };
-
-                const Icon =
-                  label === "Home"
-                    ? HomeIcon
-                    : label === "Booking"
-                      ? CalendarDaysIcon
-                      : label === "Chat"
-                        ? ChatBubbleOvalLeftEllipsisIcon
-                        : label === "Services"
-                          ? WrenchScrewdriverIcon
-                          : label === "Notifications"
-                            ? BellIcon
-                            : Cog6ToothIcon;
 
                 return (
                   <Link
@@ -238,13 +222,44 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                             : "h-8 w-14 bg-transparent"
                         }`}
                       >
-                        <Icon
-                          className={`transition-colors duration-300 ${
-                            active
-                              ? "h-5 w-5 text-blue-600"
-                              : "h-6 w-6 text-yellow-500 group-hover:text-blue-600"
-                          }`}
-                        />
+                        {label === "Profile" ? (
+                          <img
+                            src={stableProfileSrc}
+                            alt="Profile"
+                            className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
+                              active
+                                ? "h-6 w-6 border-2 border-blue-600"
+                                : "h-6 w-6"
+                            }`}
+                            draggable={false}
+                          />
+                        ) : (
+                          (() => {
+                            const Icon =
+                              label === "Home"
+                                ? HomeIcon
+                                : label === "Booking"
+                                  ? CalendarDaysIcon
+                                  : label === "Chat"
+                                    ? ChatBubbleOvalLeftEllipsisIcon
+                                    : label === "Services"
+                                      ? WrenchScrewdriverIcon
+                                      : label === "Settings"
+                                        ? Cog6ToothIcon
+                                        : label === "Notifications"
+                                          ? BellIcon
+                                          : HomeIcon;
+                            return (
+                              <Icon
+                                className={`transition-colors duration-300 ${
+                                  active
+                                    ? "h-5 w-5 text-blue-600"
+                                    : "h-6 w-6 text-yellow-500 group-hover:text-blue-600"
+                                }`}
+                              />
+                            );
+                          })()
+                        )}
                       </div>
                       <span
                         className={`mt-1 text-[10px] tracking-wide transition-all duration-300 ease-out ${
@@ -302,6 +317,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate(item.to);
+              window.scrollTo(0, 0);
             };
 
             return (
@@ -339,11 +355,15 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                         ? HomeIcon
                         : item.label === "Booking"
                           ? CalendarDaysIcon
-                          : item.label === "Services"
-                            ? WrenchScrewdriverIcon
-                            : item.label === "Chat"
-                              ? ChatBubbleOvalLeftEllipsisIcon
-                              : HomeIcon;
+                          : item.label === "Chat"
+                            ? ChatBubbleOvalLeftEllipsisIcon
+                            : item.label === "Services"
+                              ? WrenchScrewdriverIcon
+                              : item.label === "Settings"
+                                ? Cog6ToothIcon
+                                : item.label === "Notifications"
+                                  ? BellIcon
+                                  : HomeIcon;
                     return (
                       <div
                         className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
@@ -410,6 +430,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate("/provider/notifications");
+              window.scrollTo(0, 0);
             };
 
             return (
@@ -481,6 +502,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate("/provider/profile");
+              window.scrollTo(0, 0);
             };
 
             return (
@@ -544,6 +566,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 }
               }
               navigate(item.to);
+              window.scrollTo(0, 0);
             };
 
             return (

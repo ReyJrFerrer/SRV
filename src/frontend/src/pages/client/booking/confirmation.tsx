@@ -84,7 +84,7 @@ const BookingConfirmationPage: React.FC = () => {
 
       <main className="flex flex-1 items-center justify-center p-4">
         {bookingDetails ? (
-          <div className="w-full max-w-md">
+          <div className="mb-20 w-full max-w-md">
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
               <div className="mb-6 text-center">
                 <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">

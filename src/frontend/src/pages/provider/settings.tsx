@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext"; // Adjust path as needed
 import {
   QuestionMarkCircleIcon,
@@ -8,13 +8,17 @@ import {
   ExclamationCircleIcon,
   BellIcon,
   DevicePhoneMobileIcon,
+  PlayIcon,
 } from "@heroicons/react/24/outline";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import { useLogout } from "../../hooks/logout";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import RoleSwitchButton from "../../components/common/RoleSwitchButton";
+import SmartHeader from "../../components/common/SmartHeader";
 import NotificationSettingsDetailed from "../../components/NotificationSettingsDetailed";
 import PWAInstallDetailed from "../../components/PWAInstallDetailed";
+import TourSelectorModal, {
+  type TourOption,
+} from "../../components/common/TourSelectorModal";
 
 const SettingsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -30,7 +34,29 @@ const SettingsPage: React.FC = () => {
     document.title = "Settings | SRV";
   }, []);
 
+  const location = useLocation();
+  const expandFromMenu = location.state?.expandSection;
+
+  useEffect(() => {
+    if (expandFromMenu === "pwa") {
+      setPwaOpen(true);
+    } else if (expandFromMenu === "notifications") {
+      setNotifOpen(true);
+    }
+  }, [expandFromMenu]);
+
+  useEffect(() => {
+    if (expandFromMenu) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [expandFromMenu, location.pathname, navigate]);
+
   const menuItems = [
+    {
+      name: "Start Tour",
+      icon: PlayIcon,
+      action: "startTour",
+    },
     {
       name: "Terms & Conditions",
       icon: ArrowRightOnRectangleIcon,
@@ -50,16 +76,76 @@ const SettingsPage: React.FC = () => {
 
   const [pwaOpen, setPwaOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
+  const [tourModalOpen, setTourModalOpen] = React.useState(false);
+  const [selectedTour, setSelectedTour] = React.useState<TourOption | null>(
+    null,
+  );
+
+  const providerTourOptions: TourOption[] = [
+    {
+      name: "Dashboard Tour",
+      flowType: "provider",
+      description: "Overview of your earnings, jobs & stats",
+    },
+    {
+      name: "Bookings Tour",
+      flowType: "provider-bookings",
+      description: "Manage incoming & upcoming bookings",
+    },
+    {
+      name: "Services Tour",
+      flowType: "provider-services",
+      description: "Create & manage your service listings",
+    },
+  ];
+
+  const handleMenuClick = (item: {
+    name?: string;
+    action?: string;
+    href?: string;
+  }) => {
+    if (item.action === "startTour") {
+      setTourModalOpen(true);
+    }
+  };
+
+  const handleSelectTour = (tour: TourOption) => {
+    // Set sessionStorage flag to indicate this specific tour was intentionally selected
+    sessionStorage.setItem("pending_tour", tour.flowType);
+
+    // Navigate to the appropriate page
+    const routeMap: Record<string, string> = {
+      provider: "/provider/home",
+      "provider-bookings": "/provider/bookings",
+      "provider-services": "/provider/services",
+    };
+
+    const targetRoute = routeMap[tour.flowType] || "/provider/home";
+
+    // Navigate to the page
+    navigate(targetRoute);
+    setSelectedTour(tour);
+  };
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white py-3 shadow-sm">
-        <div className="flex w-full items-center justify-center px-4">
-          <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
-            Settings
-          </h1>
-        </div>
-      </header>
+      <TourSelectorModal
+        isOpen={tourModalOpen}
+        onClose={() => {
+          setTourModalOpen(false);
+          setSelectedTour(null);
+        }}
+        onSelectTour={handleSelectTour}
+        tours={providerTourOptions}
+        selectedTour={selectedTour}
+        onTourComplete={() => setSelectedTour(null)}
+      />
+      <SmartHeader
+        title="Settings"
+        showBackButton={false}
+        showBurger={true}
+        userRole="provider"
+      />
 
       <main className="mx-auto max-w-2xl p-4">
         {isAuthenticated ? (
@@ -153,7 +239,13 @@ const SettingsPage: React.FC = () => {
                 {menuItems.map((item) => (
                   <li key={item.name}>
                     <button
-                      onClick={() => navigate(item.href)}
+                      onClick={() => {
+                        if (item.action === "startTour") {
+                          handleMenuClick(item);
+                        } else if (item.href) {
+                          navigate(item.href);
+                        }
+                      }}
                       className="flex w-full items-center justify-between p-4 text-left transition-all hover:bg-gray-50"
                     >
                       <div className="flex items-center">
@@ -199,7 +291,6 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
       </main>
-      <BottomNavigation />
     </div>
   );
 };

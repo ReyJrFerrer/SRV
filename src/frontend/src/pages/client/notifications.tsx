@@ -1,74 +1,39 @@
-// SECTION: Imports — dependencies for this page
 import React, { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useNotifications,
   Notification,
 } from "../../hooks/useNotificationsWithPush";
-import BottomNavigation from "../../components/client/NavigationBar";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
-import EmptyState from "../../components/common/EmptyState";
-import { InboxIcon, CheckIcon, PencilIcon } from "@heroicons/react/24/solid";
+import { InboxIcon, EnvelopeOpenIcon } from "@heroicons/react/24/solid";
 import NotificationItem from "../../components/client/NotificationItemClient";
-
-// NotificationItem and NotificationMenu moved to components/notifications
+import SmartHeader from "../../components/common/SmartHeader";
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const { notifications, loading, error, markAsRead, deleteNotification } =
-    useNotifications();
+
+  const {
+    notifications,
+    loading,
+    error,
+    markAsRead,
+    deleteNotification,
+    markAllAsRead,
+  } = useNotifications();
 
   // Track processed notification IDs to prevent flickering from re-renders
-  const processedNotificationsRef = React.useRef<Set<string>>(new Set());
   const [stableNotifications, setStableNotifications] = React.useState<
     Notification[]
   >([]);
 
-  // Track if this is the initial load
-  const isInitialLoadRef = React.useRef(true);
+  // Set the document title
+  useEffect(() => {
+    document.title = "Notifications | SRV";
+  }, []);
 
-  // Stabilize notifications array to prevent flickering
-  React.useEffect(() => {
-    // On initial load, wait for loading to finish before showing anything
-    if (isInitialLoadRef.current && loading) {
-      return;
-    }
-
-    // After initial load completes, mark it as done
-    if (isInitialLoadRef.current && !loading) {
-      isInitialLoadRef.current = false;
-    }
-
-    // If loading again after initial load, keep showing stable notifications
-    if (loading && !isInitialLoadRef.current) {
-      return;
-    }
-
-    // Check if there are new notifications that haven't been processed
-    const newNotifications = notifications.filter(
-      (n) => !processedNotificationsRef.current.has(n.id),
-    );
-
-    if (newNotifications.length > 0 || notifications.length === 0) {
-      // Mark all current notifications as processed
-      notifications.forEach((n) => {
-        processedNotificationsRef.current.add(n.id);
-      });
-
-      // Update stable notifications only when there are actual changes
-      setStableNotifications(notifications);
-    }
-  }, [notifications, loading]);
-
-  // Local-only deleted ids (UI only for now). Backend delete will be wired later.
-  const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
-
-  // Stabilize notifications like the provider page to avoid flicker and
-  // ensure client-side filtering reacts to meaningful changes (read flag,
-  // type, href, etc.) even if the upstream hook mutates the array in place.
+  // Stabilize notifications similar to provider page to detect changes in read status, type, etc.
   const previousNotificationsRef = React.useRef<Map<string, string>>(new Map());
 
-  // Stabilize incoming notifications similar to provider page.
   React.useEffect(() => {
     if (loading) return;
 
@@ -108,6 +73,8 @@ const NotificationsPage = () => {
     }
   }, [notifications, loading]);
 
+  const [deletedIds, setDeletedIds] = React.useState<string[]>([]);
+
   // Tabs for categorizing notifications
   type NotificationTab = "All" | "Bookings" | "Ratings" | "System" | "Admin";
 
@@ -120,6 +87,8 @@ const NotificationsPage = () => {
   ];
 
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
+
+  // Edit / selection mode
   const [editMode, setEditMode] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
 
@@ -145,23 +114,20 @@ const NotificationsPage = () => {
     };
   }, [mobileMenuOpen]);
 
-  const handleLocalDelete = (id: string) => {
-    setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    deleteNotification(id);
-  };
-
-  // Determine if a notification should be displayed on the Notifications page.
-  // We intentionally hide chat messages here, but include booking accepts per new UX.
-  const isVisibleOnPage = (n: Notification) => {
-    const hiddenTypes = new Set([
-      "chat_message",
-      "provider_message",
-      // new_booking_request is client-irrelevant; keep hidden
-      "new_booking_request",
-      // booking_accepted is now included as a visible notification
-    ]);
-    return !hiddenTypes.has(n.type);
-  };
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail as { id?: string } | undefined;
+      const id = detail?.id;
+      if (!id) return;
+      setDeletedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    };
+    window.addEventListener("notification-ui-delete", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "notification-ui-delete",
+        handler as EventListener,
+      );
+  }, []);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) =>
@@ -169,33 +135,14 @@ const NotificationsPage = () => {
     );
   };
 
-  const clearSelection = () => setSelectedIds([]);
-
-  const bulkMarkAsRead = () => {
-    selectedIds.forEach((id) => markAsRead(id));
-    clearSelection();
-    setEditMode(false);
-  };
-
-  const bulkDeleteSelected = () => {
-    selectedIds.forEach((id) => {
-      try {
-        deleteNotification(id);
-      } catch (e) {}
-    });
-    setDeletedIds((prev) => Array.from(new Set([...prev, ...selectedIds])));
-    clearSelection();
-    setEditMode(false);
-  };
-
-  const handleNotificationClick = (notification: Notification) => {
-    if (!notification.read) {
-      markAsRead(notification.id);
-    }
-
-    if (!notification.href) return;
-
-    navigate(notification.href);
+  // Determine if a notification should be displayed on the Notifications page.
+  const isVisibleOnPage = (n: Notification) => {
+    const hiddenTypes = new Set([
+      "chat_message",
+      "provider_message",
+      "new_booking_request",
+    ]);
+    return !hiddenTypes.has(n.type);
   };
 
   // Helper to map notification type to a UI category
@@ -235,8 +182,62 @@ const NotificationsPage = () => {
     return visible.filter((n) => categoryOfType(n.type) === tab).length;
   };
 
+  const clearSelection = () => setSelectedIds([]);
+
+  const handleSelectAll = () => {
+    const visibleIds = stableNotifications
+      .filter((n) => !deletedIds.includes(n.id))
+      .map((n) => n.id);
+    if (!editMode) {
+      setSelectedIds(visibleIds);
+      setEditMode(true);
+      return;
+    }
+    if (selectedIds.length === visibleIds.length && visibleIds.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(visibleIds);
+    }
+  };
+
+  const bulkMarkAsRead = async () => {
+    const idsToMark = [...selectedIds];
+    clearSelection();
+    setEditMode(false);
+
+    await Promise.all(idsToMark.map((id) => markAsRead(id)));
+  };
+
+  const bulkDeleteSelected = async () => {
+    const idsToDelete = [...selectedIds];
+    setDeletedIds((prev) => Array.from(new Set([...prev, ...idsToDelete])));
+    clearSelection();
+    setEditMode(false);
+
+    await Promise.all(
+      idsToDelete.map(async (id) => {
+        try {
+          await deleteNotification(id);
+        } catch (e) {
+          console.error(`Failed to delete notification ${id}:`, e);
+        }
+      }),
+    );
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.read) {
+      markAsRead(notification.id).catch((e) =>
+        console.error("Failed to mark notification as read:", e),
+      );
+    }
+
+    if (!notification.href) return;
+
+    navigate(notification.href);
+  };
+
   const { unread, read } = useMemo(() => {
-    // First filter out locally deleted items and types we purposely hide from this page
     const visible = stableNotifications.filter(
       (n) => !deletedIds.includes(n.id) && isVisibleOnPage(n),
     );
@@ -264,41 +265,17 @@ const NotificationsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex h-16 w-full items-center justify-between px-4">
-          <div className="flex h-10 w-10" />
-          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
-            Notifications
-          </h1>
-          {stableNotifications.length > 0 ? (
-            <button
-              onClick={() => {
-                if (!editMode) {
-                  setEditMode(true);
-                  clearSelection();
-                } else {
-                  setEditMode(false);
-                  clearSelection();
-                }
-              }}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 active:scale-95"
-            >
-              {editMode ? (
-                <CheckIcon className="h-5 w-5" />
-              ) : (
-                <PencilIcon className="h-5 w-5" />
-              )}
-            </button>
-          ) : (
-            <div className="flex h-10 w-10" />
-          )}
-        </div>
-      </header>
+      <SmartHeader
+        title="Notifications"
+        showBackButton={false}
+        userRole="client"
+        rightAction={undefined}
+      />
 
       {/* Tabs navigation for notification categories */}
       <div className="mx-auto mb-6 mt-4 max-w-2xl px-4">
         <div className="hide-scrollbar flex overflow-x-auto whitespace-nowrap pb-2">
-          <nav className="flex w-full space-x-2 rounded-xl border border-gray-100 bg-white p-1 shadow-sm sm:w-auto">
+          <nav className="flex w-max space-x-2 rounded-xl border border-gray-100 bg-white p-1 shadow-sm sm:w-auto">
             {TAB_ITEMS.map((tab) => (
               <button
                 key={tab}
@@ -325,66 +302,111 @@ const NotificationsPage = () => {
         </div>
       </div>
 
-      {editMode && (
-        <div className="sticky top-14 z-30 mx-auto mt-2 flex max-w-2xl items-center justify-between gap-2 rounded-lg bg-white px-4 py-3 shadow">
-          <div className="text-sm text-gray-700">
-            {selectedIds.length} selected
-          </div>
-          <div className="flex items-center gap-2">
-            {unread.length > 0 && (
-              <button
-                onClick={bulkMarkAsRead}
-                disabled={selectedIds.length === 0}
-                className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
-              >
-                Mark as read
-              </button>
-            )}
-            <button
-              onClick={bulkDeleteSelected}
-              disabled={selectedIds.length === 0}
-              className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
-            >
-              Delete
-            </button>
+      {stableNotifications.length > 0 && (
+        <div className="mx-auto mb-4 max-w-2xl px-2 md:px-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-md">
             <button
               onClick={() => {
-                setEditMode(false);
-                clearSelection();
+                if (!editMode) {
+                  setEditMode(true);
+                  clearSelection();
+                } else {
+                  setEditMode(false);
+                  clearSelection();
+                }
               }}
-              className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700"
+              className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
             >
-              Cancel
+              {editMode ? "Done" : "Edit"}
             </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleSelectAll}
+                className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+              >
+                {selectedIds.length > 0 &&
+                selectedIds.length ===
+                  stableNotifications.filter((n) => !deletedIds.includes(n.id))
+                    .length
+                  ? "Clear"
+                  : "Select all"}
+              </button>
+              {unread.length > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                >
+                  <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
+                  Mark all as read
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      <main className="flex-1 px-4 pb-24">
-        {loading && stableNotifications.length === 0 ? (
+      {editMode && (
+        <div className="sticky top-14 z-30 mx-auto max-w-2xl px-2 md:px-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-md">
+            <div className="text-sm text-gray-700 whitespace-nowrap">
+              {selectedIds.length} selected
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {unread.length > 0 && (
+                <button
+                  onClick={bulkMarkAsRead}
+                  disabled={selectedIds.length === 0}
+                  className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50"
+                >
+                  Mark as read
+                </button>
+              )}
+              <button
+                onClick={bulkDeleteSelected}
+                disabled={selectedIds.length === 0}
+                className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => {
+                  setEditMode(false);
+                  clearSelection();
+                }}
+                className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="flex-1 px-2 pb-24 sm:px-4 md:px-8">
+        {loading ? (
           <div className="p-8 text-center text-gray-500">
             Loading notifications…
           </div>
         ) : error ? (
           <div className="p-10 text-center text-red-500">{String(error)}</div>
-        ) : unread.length === 0 && read.length === 0 ? (
-          <div className="py-12">
-            <EmptyState
-              icon={<InboxIcon className="h-12 w-12" />}
-              title="No Notifications Yet"
-              message="We'll let you know when something important happens."
-            />
+        ) : stableNotifications.length === 0 ? (
+          <div className="flex flex-col items-center p-10 text-center text-gray-500">
+            <InboxIcon className="mb-4 h-16 w-16 text-gray-300" />
+            <h3 className="text-lg font-semibold">No Notifications Yet</h3>
+            <p className="text-sm">
+              We'll let you know when something important happens.
+            </p>
           </div>
         ) : (
-          <div className="mx-auto mt-6 max-w-2xl">
+          <div className="mx-auto mt-6 max-w-2xl px-2 md:px-0">
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md">
               {unread.length > 0 && (
                 <section>
-                  <h2 className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-5 py-3 text-sm font-bold tracking-wide text-gray-900">
+                  <h2 className="flex items-center justify-between border-b border-gray-100 bg-white px-5 py-3 text-sm font-bold tracking-wide text-gray-900 shadow-sm">
                     <span>New</span>
                     <span
                       aria-label={`${unread.length} new notifications`}
-                      className="ml-2 inline-flex min-w-[20px] items-center justify-center rounded-full bg-yellow-500 px-2 py-0.5 text-[11px] font-bold text-white"
+                      className="ml-2 inline-flex min-w-[20px] items-center justify-center rounded-full bg-blue-500 px-2 py-0.5 text-[11px] font-bold text-white"
                     >
                       {unread.length > 99 ? "99+" : unread.length}
                     </span>
@@ -399,8 +421,30 @@ const NotificationsPage = () => {
                         <NotificationItem
                           notification={notif}
                           onClick={() => handleNotificationClick(notif)}
-                          onDelete={() => handleLocalDelete(notif.id)}
-                          onMarkAsRead={() => markAsRead(notif.id)}
+                          onDelete={async () => {
+                            try {
+                              setDeletedIds((prev) => [...prev, notif.id]);
+                              await deleteNotification(notif.id);
+                            } catch (e) {
+                              console.error(
+                                "Failed to delete notification:",
+                                e,
+                              );
+                              setDeletedIds((prev) =>
+                                prev.filter((id) => id !== notif.id),
+                              );
+                            }
+                          }}
+                          onMarkAsRead={async () => {
+                            try {
+                              await markAsRead(notif.id);
+                            } catch (e) {
+                              console.error(
+                                "Failed to mark notification as read:",
+                                e,
+                              );
+                            }
+                          }}
                           selectable={editMode}
                           checked={selectedIds.includes(notif.id)}
                           onToggleSelect={() => toggleSelect(notif.id)}
@@ -413,7 +457,7 @@ const NotificationsPage = () => {
               {unread.length > 0 && read.length > 0 && <div className="my-4" />}
               {read.length > 0 && (
                 <section>
-                  <h2 className="border-b border-gray-100 bg-gray-50 px-5 py-3 text-sm font-bold tracking-wide text-gray-900">
+                  <h2 className="border-b border-gray-100 bg-gray-50 px-5 py-3 text-sm font-bold tracking-wide text-gray-900 shadow-sm">
                     Earlier
                   </h2>
                   <div className="divide-y divide-gray-100">
@@ -426,7 +470,7 @@ const NotificationsPage = () => {
                         <NotificationItem
                           notification={notif}
                           onClick={() => handleNotificationClick(notif)}
-                          onDelete={() => handleLocalDelete(notif.id)}
+                          onDelete={() => deleteNotification(notif.id)}
                           onMarkAsRead={() => markAsRead(notif.id)}
                           selectable={editMode}
                           checked={selectedIds.includes(notif.id)}
@@ -442,9 +486,7 @@ const NotificationsPage = () => {
         )}
       </main>
 
-      <div className="fixed bottom-0 left-0 z-30 w-full">
-        <BottomNavigation />
-      </div>
+      <div className="fixed bottom-0 left-0 z-30 w-full"></div>
     </div>
   );
 };

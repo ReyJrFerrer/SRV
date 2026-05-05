@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import CancelWithReasonButton from "../../../components/common/cancellation/CancelWithReasonButton";
-import BottomNavigation from "../../../components/client/NavigationBar";
 import ClientBookingItemCard from "../../../components/client/ClientBookingItemCard";
 import {
   useBookingManagement,
@@ -24,6 +23,7 @@ import MonthlyBookingsCalendar, {
   CalendarItem,
 } from "../../../components/common/calendar/MonthlyBookingsCalendar";
 import SpotlightTour from "../../../components/common/SpotlightTour";
+import SmartHeader from "../../../components/common/SmartHeader";
 
 type BookingStatusTab =
   | "ALL"
@@ -360,17 +360,13 @@ const MyBookingsPage: React.FC = () => {
     <>
       <div className="flex min-h-screen flex-col bg-gray-50">
         <SpotlightTour flowType="client-bookings" />
-        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
-          <div className="flex h-16 w-full items-center justify-between px-4">
-            <div className="flex h-10 w-10" />
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
-              My Bookings
-            </h1>
-            <div className="flex h-10 w-10" />
-          </div>
-        </header>
+        <SmartHeader
+          title="My Bookings"
+          userRole="client"
+          showBackButton={false}
+        />
 
-        <div className="sticky z-10 bg-white px-4 pt-4 shadow-sm">
+        <div className="sticky z-10 mb-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
           <div className="tour-bookings-filter mb-4 flex items-center justify-between">
             <div className="relative mr-2 flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -487,10 +483,10 @@ const MyBookingsPage: React.FC = () => {
             <div className="tour-bookings-tabs flex items-center justify-center px-4 pb-4">
               <div className="relative flex w-full max-w-sm rounded-2xl bg-gray-100 p-1.5">
                 <div
-                  className={`absolute bottom-1.5 left-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
+                  className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
                     timingFilter === "Scheduled"
-                      ? "translate-x-full bg-blue-600"
-                      : "translate-x-0 bg-yellow-400"
+                      ? "left-1/2 bg-blue-600"
+                      : "left-1.5 bg-yellow-400"
                   }`}
                 />
                 <button
@@ -608,10 +604,10 @@ const MyBookingsPage: React.FC = () => {
                     <div className="ml-auto">
                       <div className="relative flex w-48 rounded-xl bg-gray-100 p-1">
                         <div
-                          className={`absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-lg shadow-sm transition-all duration-300 ease-out ${
+                          className={`absolute bottom-1 top-1 w-[calc(50%-4px)] rounded-lg shadow-sm transition-all duration-300 ease-out ${
                             scheduledView === "list"
-                              ? "translate-x-full bg-blue-600"
-                              : "translate-x-0 bg-yellow-500"
+                              ? "left-1/2 bg-blue-600"
+                              : "left-1 bg-yellow-500"
                           }`}
                         />
                         <button
@@ -720,9 +716,7 @@ const MyBookingsPage: React.FC = () => {
           )}
         </main>
 
-        <div>
-          <BottomNavigation />
-        </div>
+        <div></div>
       </div>
 
       <CancelWithReasonButton

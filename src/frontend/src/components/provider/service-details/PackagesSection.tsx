@@ -70,10 +70,10 @@ const PackagesSection: React.FC<Props> = ({
     setPackageFormPrice(numericValue);
   };
   return (
-    <section className="flex flex-col gap-6 rounded-2xl border border-blue-100 bg-white/90 p-6 shadow-lg">
+    <section className="flex flex-col gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between border-b pb-3">
-        <h3 className="text-md flex items-center gap-2 font-bold text-blue-800 lg:text-xl">
-          <BriefcaseIcon className="h-6 w-6 text-blue-400" />
+        <h3 className="text-md flex items-center gap-2 font-bold text-gray-900 lg:text-xl">
+          <BriefcaseIcon className="h-6 w-6 text-yellow-600" />
           Service Packages ({packages.length})
         </h3>
         {!isAddingOrEditingPackage && (
@@ -93,7 +93,7 @@ const PackagesSection: React.FC<Props> = ({
                   ? undefined
                   : onAddPackage
               }
-              className={`inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 ${
+              className={`inline-flex items-center rounded-md bg-yellow-500 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-yellow-600 ${
                 hasActiveBookings || packages.length >= 5
                   ? "cursor-not-allowed opacity-50"
                   : ""
@@ -111,23 +111,23 @@ const PackagesSection: React.FC<Props> = ({
 
       <div className="space-y-4">
         {isAddingOrEditingPackage && (
-          <div className="rounded-lg border border-blue-300 bg-blue-50 p-4 shadow-inner">
-            <h4 className="mb-3 text-lg font-semibold text-blue-800">
+          <div className="rounded-lg border border-gray-300 bg-gray-50 p-4 ">
+            <h4 className="mb-3 text-lg font-semibold text-gray-900">
               {currentPackageId ? "Edit Package" : "Add New Package"}
             </h4>
             {packageFormLoading ? (
               // Skeleton UI when saving package
               <div className="animate-pulse space-y-3">
-                <div className="h-10 w-full rounded-lg bg-blue-200/50"></div>
-                <div className="h-24 w-full rounded-lg bg-blue-200/50"></div>
-                <div className="h-10 w-full rounded-lg bg-blue-200/50"></div>
+                <div className="h-10 w-full rounded-lg bg-gray-200"></div>
+                <div className="h-24 w-full rounded-lg bg-gray-200"></div>
+                <div className="h-10 w-full rounded-lg bg-gray-200"></div>
               </div>
             ) : (
               <div className="space-y-3">
                 <div>
                   <label
                     htmlFor="packageTitle"
-                    className="mb-1 block text-sm font-medium text-blue-700"
+                    className="mb-1 block text-sm font-medium text-gray-700"
                   >
                     Title
                   </label>
@@ -136,7 +136,7 @@ const PackagesSection: React.FC<Props> = ({
                     id="packageTitle"
                     value={packageFormTitle}
                     onChange={(e) => setPackageFormTitle(e.target.value)}
-                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-yellow-500 focus:ring-yellow-500"
                     placeholder="e.g., Basic Cleaning, Premium Tune-up"
                     required
                     maxLength={40}
@@ -146,7 +146,7 @@ const PackagesSection: React.FC<Props> = ({
                 <div>
                   <label
                     htmlFor="packageDescription"
-                    className="mb-1 block text-sm font-medium text-blue-700"
+                    className="mb-1 block text-sm font-medium text-gray-700"
                   >
                     Description
                   </label>
@@ -155,7 +155,7 @@ const PackagesSection: React.FC<Props> = ({
                     value={packageFormDescription}
                     onChange={(e) => setPackageFormDescription(e.target.value)}
                     rows={3}
-                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-yellow-500 focus:ring-yellow-500"
                     placeholder="Brief description of what's included in this package"
                     required
                     maxLength={100}
@@ -165,7 +165,7 @@ const PackagesSection: React.FC<Props> = ({
                 <div>
                   <label
                     htmlFor="packagePrice"
-                    className="mb-1 block text-sm font-medium text-blue-700"
+                    className="mb-1 block text-sm font-medium text-gray-700"
                   >
                     Price (₱)
                   </label>
@@ -174,7 +174,7 @@ const PackagesSection: React.FC<Props> = ({
                     id="packagePrice"
                     value={packageFormPrice}
                     onChange={(e) => handlePriceInputChange(e.target.value)}
-                    className="w-full rounded-md border border-blue-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-yellow-500 focus:ring-yellow-500"
                     placeholder="e.g., 500.00"
                     required
                     disabled={packageFormLoading}
@@ -183,14 +183,14 @@ const PackagesSection: React.FC<Props> = ({
                 <div className="flex gap-2">
                   <button
                     onClick={onCancelPackageEdit}
-                    className="w-full rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                     disabled={packageFormLoading}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={onSavePackage}
-                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    className="w-full rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600"
                     disabled={packageFormLoading}
                   >
                     {packageFormLoading && (
@@ -215,11 +215,9 @@ const PackagesSection: React.FC<Props> = ({
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="group relative overflow-visible rounded-2xl border border-blue-100 bg-white shadow-sm"
+                  className="group relative overflow-visible rounded-2xl border border-gray-200 bg-white shadow-sm"
                 >
                   {/* Header ribbon */}
-                  <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-blue-50 via-white to-yellow-50" />
-
                   <div className="relative z-10 animate-pulse p-4 pb-3 sm:p-5">
                     {/* Package badge skeleton */}
                     <div className="mb-2 h-5 w-20 rounded-full bg-gray-200"></div>
@@ -265,13 +263,11 @@ const PackagesSection: React.FC<Props> = ({
             packages.map((pkg) => (
               <div
                 key={pkg.id}
-                className="group relative overflow-visible rounded-2xl border border-blue-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl"
+                className="group relative overflow-visible rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md"
               >
                 {/* Header ribbon */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-blue-50 via-white to-yellow-50" />
-
                 <div className="relative z-10 p-4 pb-3 sm:p-5">
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-gray-50 px-2 py-1 text-[11px] font-semibold text-gray-700">
                     <TagIcon className="h-3.5 w-3.5" /> Package
                   </div>
 
@@ -286,8 +282,8 @@ const PackagesSection: React.FC<Props> = ({
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <BanknotesIcon className="h-5 w-5 text-blue-500 sm:h-6 sm:w-6" />
-                        <span className="text-xl font-extrabold tracking-tight text-blue-700 sm:text-2xl">
+                        <BanknotesIcon className="h-5 w-5 text-gray-400 hover:text-gray-600 sm:h-6 sm:w-6" />
+                        <span className="text-xl font-extrabold tracking-tight text-gray-700 sm:text-2xl">
                           ₱{pkg.price.toFixed(2)}
                         </span>
                       </div>
@@ -322,7 +318,7 @@ const PackagesSection: React.FC<Props> = ({
                       className={`flex w-full items-center justify-center whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
                         hasActiveBookings || isAddingOrEditingPackage
                           ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                          : "bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:scale-95"
+                          : "bg-yellow-500 text-white shadow-sm hover:bg-yellow-600 active:scale-95"
                       }`}
                       aria-label={`Edit ${pkg.title}`}
                       disabled={hasActiveBookings || isAddingOrEditingPackage}
@@ -365,8 +361,8 @@ const PackagesSection: React.FC<Props> = ({
           ) : !isAddingOrEditingPackage ? (
             <div className="col-span-full">
               <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
-                  <BriefcaseIcon className="h-8 w-8 text-blue-400" />
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
+                  <BriefcaseIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">
                   No packages available

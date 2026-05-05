@@ -1,29 +1,32 @@
 import React, {
   useState,
-  useEffect,
   useMemo,
+  useEffect,
   useRef,
   useCallback,
 } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import BottomNavigation from "../../components/provider/NavigationBar";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import ProviderBookingItemCard from "../../components/provider/ProviderBookingItemCard";
 import {
   useProviderBookingManagement,
   ProviderEnhancedBooking,
 } from "../../hooks/useProviderBookingManagement";
 import { FunnelIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { SparklesIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
+import {
+  SparklesIcon,
+  CalendarDaysIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/solid";
 import { ServiceCategory } from "../../services/serviceCanisterService";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import useClientRating from "../../hooks/useClientRating";
 import { useReputation } from "../../hooks/useReputation";
 import CancelWithReasonButton from "../../components/common/cancellation/CancelWithReasonButton";
+import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
+import SmartHeader from "../../components/common/SmartHeader";
 import DeclineConfirmDialog from "../../components/provider/booking-details/DeclineConfirmDialog";
-import { toast } from "sonner";
 import { bookingCanisterService } from "../../services/bookingCanisterService";
 import Appear from "../../components/common/pageFlowImprovements/Appear";
-import { BookingListSkeleton } from "../../components/common/pageFlowImprovements/Skeletons";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 import MonthlyBookingsCalendar, {
@@ -492,16 +495,17 @@ const ProviderBookingsPage: React.FC = () => {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-gray-50">
-        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
-          <div className="flex w-full items-center justify-center px-4 py-4">
-            <h1 className="text-xl font-black tracking-tight text-gray-900 lg:text-2xl">
-              My Bookings
-            </h1>
-          </div>
-        </header>
+        <SmartHeader
+          title="My Bookings"
+          userRole="provider"
+          showBackButton={false}
+        />
 
-        <div className="sticky z-10 border-b border-gray-100 bg-white px-4 pt-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="sticky z-10 mb-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+          <div
+            className="mb-4 flex items-center justify-between gap-3"
+            data-tour="provider-bookings-search"
+          >
             <div className="relative flex-grow">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                 <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
@@ -515,7 +519,7 @@ const ProviderBookingsPage: React.FC = () => {
               />
             </div>
             {/* Filters: Timing + Category */}
-            <div className="flex gap-2">
+            <div className="flex gap-2" data-tour="provider-bookings-filters">
               {/* Filter Dropdown: Status + Category */}
               <div className="relative" ref={timingDropdownRef}>
                 <button
@@ -611,14 +615,14 @@ const ProviderBookingsPage: React.FC = () => {
             </div>
           </div>
           {/* Top toggle: Same Day / Scheduled */}
-          <div className="w-full">
+          <div className="w-full" data-tour="provider-bookings-timing">
             <div className="flex items-center justify-center px-4 pb-4">
               <div className="relative flex w-full max-w-sm rounded-2xl bg-gray-100 p-1.5">
                 <div
-                  className={`absolute bottom-1.5 left-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
+                  className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl shadow-sm transition-all duration-300 ease-out ${
                     timingFilter === "Scheduled"
-                      ? "translate-x-full bg-blue-600"
-                      : "translate-x-0 bg-yellow-400"
+                      ? "left-1/2 bg-blue-600"
+                      : "left-1.5 bg-yellow-400"
                   }`}
                 />
                 <button
@@ -658,7 +662,10 @@ const ProviderBookingsPage: React.FC = () => {
               <BookingListSkeleton count={6} />
             </div>
           ) : sameDayBookings.length > 0 || scheduledBookings.length > 0 ? (
-            <div className="space-y-10 px-4 py-4">
+            <div
+              className="space-y-10 px-4 py-4"
+              data-tour="provider-bookings-list"
+            >
               {timingFilter === "Same Day" && sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
@@ -740,10 +747,10 @@ const ProviderBookingsPage: React.FC = () => {
                     <div className="ml-auto">
                       <div className="relative flex w-48 rounded-xl bg-gray-100 p-1">
                         <div
-                          className={`absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-lg shadow-sm transition-all duration-300 ease-out ${
+                          className={`absolute bottom-1 top-1 w-[calc(50%-4px)] rounded-lg shadow-sm transition-all duration-300 ease-out ${
                             scheduledView === "list"
-                              ? "translate-x-full bg-blue-600"
-                              : "translate-x-0 bg-yellow-500"
+                              ? "left-1/2 bg-blue-600"
+                              : "left-1 bg-yellow-500"
                           }`}
                         />
                         <button
@@ -862,7 +869,6 @@ const ProviderBookingsPage: React.FC = () => {
             </div>
           )}
         </main>
-        <BottomNavigation />
       </div>
 
       {/* Decline Confirmation Dialog */}

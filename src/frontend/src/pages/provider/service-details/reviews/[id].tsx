@@ -3,13 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
   StarIcon as StarSolid,
-  EyeSlashIcon
+  EyeSlashIcon,
 } from "@heroicons/react/24/solid";
 import { useServiceReviews } from "../../../../hooks/reviewManagement";
 import { useServiceManagement } from "../../../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { useUserImage } from "../../../../hooks/useMediaLoader";
-import BottomNavigation from "../../../../components/provider/NavigationBar";
 
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
@@ -496,7 +495,6 @@ const ServiceReviewsPage: React.FC = () => {
           </div>
         )}
       </main>
-      <BottomNavigation />
     </div>
   );
 };

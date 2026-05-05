@@ -5,7 +5,6 @@ import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
 import { Filter } from "bad-words";
 import { Toaster, toast } from "sonner";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 import ServiceDrafts from "../../../components/provider/add service/ServiceDrafts";
 import {
   getFilesEntries,
@@ -180,15 +179,15 @@ const AddServicePage: React.FC = () => {
     handleBack();
   };
 
-  const handleNavigateAttempt = (to: string): boolean => {
-    if (
-      serviceDraftsRef.current &&
-      typeof serviceDraftsRef.current.handleNavigateAttempt === "function"
-    ) {
-      return serviceDraftsRef.current.handleNavigateAttempt(to);
-    }
-    return true;
-  };
+  // const handleNavigateAttempt = (to: string): boolean => {
+  //   if (
+  //     serviceDraftsRef.current &&
+  //     typeof serviceDraftsRef.current.handleNavigateAttempt === "function"
+  //   ) {
+  //     return serviceDraftsRef.current.handleNavigateAttempt(to);
+  //   }
+  //   return true;
+  // };
 
   // --- Image Handlers ---
   const handleImageFilesChange = async (
@@ -1019,7 +1018,7 @@ const AddServicePage: React.FC = () => {
         <ProgressTracker currentStep={currentStep} />
         {renderStep()}
         {/* Navigation Buttons */}
-        <div className="mb-20 mt-6 flex justify-between lg:mb-8">
+        <div className="mt-6 flex justify-between lg:mb-8">
           {currentStep > 1 && (
             <button
               onClick={handleBack}
@@ -1057,7 +1056,6 @@ const AddServicePage: React.FC = () => {
           )}
         </div>
       </main>
-      <BottomNavigation onNavigateAttempt={handleNavigateAttempt} />
     </div>
   );
 };

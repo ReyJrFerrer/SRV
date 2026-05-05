@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
-import BottomNavigation from "../../components/provider/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 import {
   PaperAirplaneIcon,
@@ -11,6 +10,7 @@ import {
   ArrowLeftIcon,
 } from "@heroicons/react/24/solid";
 import EmptyState from "../../components/common/EmptyState";
+import SmartHeader from "../../components/common/SmartHeader";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -44,6 +44,7 @@ const ClientChatPage: React.FC = () => {
 
   const [messageText, setMessageText] = useState<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+
   const lastMarkedRef = useRef<{ id: string; t: number } | null>(null);
   const prevUnreadMapRef = useRef<Map<string, number>>(new Map());
   const defaultTitleRef = useRef<string>("Messages | SRV");
@@ -306,13 +307,11 @@ const ClientChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-4xl justify-center px-4 py-3">
-          <h1 className="text-xl font-extrabold tracking-tight text-black lg:text-2xl">
-            Messages
-          </h1>
-        </div>
-      </header>
+      <SmartHeader
+        title="Messages"
+        userRole="provider"
+        showBackButton={false}
+      />
 
       <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (
@@ -421,7 +420,7 @@ const ClientChatPage: React.FC = () => {
               )}
               {(selectedConversationId || isDesktop) && (
                 <div
-                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "flex h-full flex-1 flex-col overflow-hidden"}`}
+                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "fixed inset-0 z-[60] flex h-[100dvh] flex-col bg-white"}`}
                 >
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
@@ -534,7 +533,7 @@ const ClientChatPage: React.FC = () => {
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="border-t border-gray-200 bg-white p-3 pb-1 md:sticky md:bottom-0 md:bg-white md:pb-3">
+                      <div className="shrink-0 border-t border-gray-200 bg-white p-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:sticky md:bottom-0 md:bg-white md:p-3">
                         <form
                           onSubmit={handleSendMessage}
                           className="flex items-center gap-3"
@@ -597,8 +596,6 @@ const ClientChatPage: React.FC = () => {
           </div>
         )}
       </div>
-
-      <BottomNavigation />
     </div>
   );
 };

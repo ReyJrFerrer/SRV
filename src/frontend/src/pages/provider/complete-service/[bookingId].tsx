@@ -10,7 +10,6 @@ import { useProviderBookingManagement } from "../../../hooks/useProviderBookingM
 import { useCachedProviderBooking } from "../../../hooks/useCachedBooking";
 import { releaseHeldPayment } from "../../../services/firebase";
 import bookingCanisterService from "../../../services/bookingCanisterService";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 
 const MAX_CASH_RECEIVED = 1000000; // Set a reasonable upper limit for cash received
 
@@ -237,7 +236,7 @@ const CompleteServicePage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white py-4 shadow-sm">
         <div className="relative flex w-full items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
@@ -391,7 +390,6 @@ const CompleteServicePage: React.FC = () => {
           </div>
         </div>
       </main>
-      <BottomNavigation />
     </div>
   );
 };

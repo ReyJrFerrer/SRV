@@ -3,9 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import {
   HomeIcon,
   CalendarDaysIcon,
-  StarIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   BellIcon,
+  UserCircleIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { useNotifications } from "../../hooks/useNotificationsWithPush";
@@ -90,37 +90,6 @@ const BottomNavigation: React.FC = () => {
     } catch {}
   }, [stableProfileSrc]);
 
-  const isRouteActive = (label: string, to: string) => {
-    if (label === "Profile") return location.pathname === to;
-    return location.pathname.startsWith(to);
-  };
-
-  const navItems = [
-    { to: "/client/home", label: "Home", icon: null, count: 0 },
-    {
-      to: "/client/booking",
-      label: "Booking",
-      icon: null,
-      count: bookingAcceptedCount,
-    },
-    { to: "/client/profile/reviews", label: "Ratings", icon: null, count: 0 },
-    { to: "/client/chat", label: "Chat", icon: null, count: unreadChatCount },
-    {
-      to: "/client/notifications",
-      label: "Notifications",
-      icon: null,
-      count: filteredNotificationUnreadCount,
-    },
-    { to: "/client/profile", label: "Profile", icon: null, count: 0 },
-  ];
-
-  const settingsItem = {
-    to: "/client/settings",
-    label: "Settings",
-    icon: null as null,
-    count: 0,
-  };
-
   React.useEffect(() => {
     const apply = () => {
       if (window.matchMedia("(min-width: 768px)").matches) {
@@ -137,29 +106,46 @@ const BottomNavigation: React.FC = () => {
     };
   }, []);
 
-  const mobileOrder = [
-    "Home",
-    "Booking",
-    "Chat",
-    "Ratings",
-    "Notifications",
-    "Settings",
+  const isRouteActive = (label: string, to: string) => {
+    if (label === "Profile") return location.pathname === to;
+    return location.pathname.startsWith(to);
+  };
+
+  const navItems = [
+    { to: "/client/home", label: "Home", icon: null, count: 0 },
+    {
+      to: "/client/booking",
+      label: "Booking",
+      icon: null,
+      count: bookingAcceptedCount,
+    },
+    { to: "/client/chat", label: "Chat", icon: null, count: unreadChatCount },
+    {
+      to: "/client/notifications",
+      label: "Notifications",
+      icon: null,
+      count: filteredNotificationUnreadCount,
+    },
+    { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];
 
+  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
+
   const mobileItems = mobileOrder
-    .map((label) => {
-      if (label === "Settings") return settingsItem;
-      return navItems.find((i) => i.label === label) || null;
+    .map((label: string) => {
+      if (label === "Profile")
+        return navItems.find((i: any) => i.label === "Profile");
+      return navItems.find((i: any) => i.label === label) || null;
     })
-    .filter((i): i is (typeof navItems)[number] | typeof settingsItem => !!i);
+    .filter((i: any): i is any => !!i);
 
   return (
     <>
       {!location.pathname.startsWith("/client/chat/") && (
         <div className="safe-area-inset-bottom fixed bottom-0 left-0 z-50 w-full border-t border-gray-100 bg-white/90 pb-2 pt-2 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] backdrop-blur-xl md:hidden">
           <nav className="tour-client-nav-mobile mx-auto flex w-full max-w-full items-center justify-center">
-            <div className="grid w-full grid-cols-6 font-medium">
-              {mobileItems.map((item) => {
+            <div className="grid w-full grid-cols-5 font-medium">
+              {mobileItems.map((item: any) => {
                 const displayItem = item;
                 const isActive = isRouteActive(
                   displayItem.label,
@@ -176,6 +162,8 @@ const BottomNavigation: React.FC = () => {
                         setTimeout(() => {
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }, 120);
+                      } else {
+                        window.scrollTo(0, 0);
                       }
                     }}
                   >
@@ -188,13 +176,28 @@ const BottomNavigation: React.FC = () => {
                         }`}
                       >
                         {(() => {
+                          if (displayItem.label === "Profile") {
+                            return (
+                              <img
+                                src={stableProfileSrc}
+                                alt="Profile"
+                                className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
+                                  isActive
+                                    ? "h-6 w-6 border-2 border-yellow-400"
+                                    : "h-6 w-6"
+                                }`}
+                                draggable={false}
+                              />
+                            );
+                          }
+
                           const Icon =
                             displayItem.label === "Home"
                               ? HomeIcon
                               : displayItem.label === "Booking"
                                 ? CalendarDaysIcon
-                                : displayItem.label === "Ratings"
-                                  ? StarIcon
+                                : displayItem.label === "Profile"
+                                  ? UserCircleIcon
                                   : displayItem.label === "Notifications"
                                     ? BellIcon
                                     : displayItem.label === "Chat"
@@ -264,46 +267,42 @@ const BottomNavigation: React.FC = () => {
                     setTimeout(() => {
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }, 120);
+                  } else {
+                    window.scrollTo(0, 0);
                   }
                 }}
               >
                 {item.label === "Profile" ? (
-                  <>
-                    <div
-                      className={`flex items-center justify-center transition-all duration-300 ease-out ${
+                  <div
+                    className={`flex items-center justify-center transition-all duration-300 ease-out ${
+                      isActive
+                        ? "h-12 w-12 rounded-2xl bg-blue-600 shadow-md"
+                        : "h-12 w-12 rounded-2xl bg-transparent hover:bg-gray-50"
+                    }`}
+                  >
+                    <img
+                      src={stableProfileSrc}
+                      alt="Profile"
+                      className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
                         isActive
-                          ? "h-12 w-12 rounded-2xl bg-blue-600 shadow-md"
-                          : "h-12 w-12 rounded-2xl bg-transparent hover:bg-gray-50"
+                          ? "h-9 w-9 border-2 border-yellow-400"
+                          : "h-8 w-8 md:group-hover:scale-105"
                       }`}
-                    >
-                      <img
-                        src={stableProfileSrc}
-                        alt="Profile"
-                        className={`rounded-xl object-cover transition-all duration-300 ease-out active:scale-95 ${
-                          isActive
-                            ? "h-9 w-9 border-2 border-yellow-400"
-                            : "h-8 w-8 md:group-hover:scale-105"
-                        }`}
-                        draggable={false}
-                      />
-                    </div>
-                  </>
+                      draggable={false}
+                    />
+                  </div>
                 ) : (
                   (() => {
-                    const Icon =
+                    const ItemIcon =
                       item.label === "Home"
                         ? HomeIcon
                         : item.label === "Booking"
                           ? CalendarDaysIcon
-                          : item.label === "Ratings"
-                            ? StarIcon
+                          : item.label === "Chat"
+                            ? ChatBubbleOvalLeftEllipsisIcon
                             : item.label === "Notifications"
                               ? BellIcon
-                              : item.label === "Chat"
-                                ? ChatBubbleOvalLeftEllipsisIcon
-                                : item.label === "Settings"
-                                  ? Cog6ToothIcon
-                                  : HomeIcon;
+                              : HomeIcon;
                     return (
                       <div
                         className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
@@ -312,7 +311,7 @@ const BottomNavigation: React.FC = () => {
                             : "rounded-2xl bg-transparent hover:bg-gray-50"
                         }`}
                       >
-                        <Icon
+                        <ItemIcon
                           className={`transition-colors duration-300 ${
                             isActive
                               ? "h-6 w-6 text-yellow-400"
@@ -351,51 +350,45 @@ const BottomNavigation: React.FC = () => {
 
         {/* Bottom section: Settings anchored at bottom */}
         <div className="mb-6 mt-auto flex w-full flex-col items-center border-t border-gray-100 pt-4">
-          {(() => {
-            const item = settingsItem;
-            const isActive = location.pathname.startsWith(item.to);
-
-            return (
-              <Link
-                key={item.label}
-                to={item.to}
-                className="group relative flex w-full flex-col items-center justify-center py-2"
-                onClick={(e) => {
-                  if (isActive) {
-                    e.preventDefault();
-                    setTimeout(() => {
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }, 120);
-                  }
-                }}
-              >
-                <div
-                  className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
-                    isActive
-                      ? "rounded-2xl bg-blue-600 shadow-md"
-                      : "rounded-2xl bg-transparent hover:bg-gray-50"
-                  }`}
-                >
-                  <Cog6ToothIcon
-                    className={`transition-colors duration-300 ${
-                      isActive
-                        ? "h-6 w-6 text-yellow-400"
-                        : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
-                    }`}
-                  />
-                </div>
-                <span
-                  className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
-                    isActive
-                      ? "font-black text-blue-700 opacity-100"
-                      : "font-bold text-gray-600 opacity-80 group-hover:text-blue-600"
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })()}
+          <Link
+            to="/client/settings"
+            className="group relative flex w-full flex-col items-center justify-center py-2"
+            onClick={(e) => {
+              if (!isRouteActive("Settings", "/client/settings")) {
+                window.scrollTo(0, 0);
+              } else {
+                e.preventDefault();
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }, 120);
+              }
+            }}
+          >
+            <div
+              className={`flex h-12 w-12 items-center justify-center transition-all duration-300 ease-out ${
+                isRouteActive("Settings", "/client/settings")
+                  ? "rounded-2xl bg-blue-600 shadow-md"
+                  : "rounded-2xl bg-transparent hover:bg-gray-50"
+              }`}
+            >
+              <Cog6ToothIcon
+                className={`transition-colors duration-300 ${
+                  isRouteActive("Settings", "/client/settings")
+                    ? "h-6 w-6 text-yellow-400"
+                    : "h-6 w-6 text-blue-500 group-hover:text-yellow-600"
+                }`}
+              />
+            </div>
+            <span
+              className={`mt-1.5 hidden text-[10px] tracking-wide transition-all duration-300 md:block ${
+                isRouteActive("Settings", "/client/settings")
+                  ? "font-black text-blue-700 opacity-100"
+                  : "font-bold text-gray-600 opacity-80 group-hover:text-blue-600"
+              }`}
+            >
+              Settings
+            </span>
+          </Link>
         </div>
       </aside>
     </>

@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
-import BottomNavigation from "../../components/client/NavigationBar";
 import { ProfileImage } from "../../components/common/ProfileImage";
 import {
   PaperAirplaneIcon,
@@ -11,6 +10,8 @@ import {
   ArrowLeftIcon,
 } from "@heroicons/react/24/solid";
 import EmptyState from "../../components/common/EmptyState";
+import SmartHeader from "../../components/common/SmartHeader";
+import authCanisterService from "../../services/authCanisterService";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, identity } = useAuth();
@@ -39,6 +40,12 @@ const ClientChatPage: React.FC = () => {
   const [selectedOtherUserName, setSelectedOtherUserName] = useState<string>(
     location.state?.otherUserName || "",
   );
+
+  // Fetch user profile
+  useEffect(() => {
+    authCanisterService.getMyProfile().catch(() => {});
+  }, []);
+
   const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
     useState<string>(location.state?.otherUserImage || "");
 
@@ -173,19 +180,19 @@ const ClientChatPage: React.FC = () => {
           } else {
             el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
           }
-        } else {
-          // For mobile where the window itself is the scrollable container
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: "smooth",
-          });
         }
+        // Disabled: was causing page to scroll unwanted when leaving chat
+        // else {
+        //   window.scrollTo({
+        //     top: document.documentElement.scrollHeight,
+        //     behavior: "smooth",
+        //   });
+        // }
       } catch {
-        // Fallback
-        window.scrollTo(0, document.documentElement.scrollHeight);
+        // Fallback - disabled to prevent unwanted scrolling
       }
     };
-    // Immediate
+    // Immediate - only scroll within container
     scrollBottom();
     // Next frame(s) for layout updates
     const raf1 = requestAnimationFrame(scrollBottom);
@@ -355,15 +362,8 @@ const ClientChatPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex h-16 w-full items-center justify-between px-4">
-          <div className="flex h-10 w-10" />
-          <h1 className="text-xl font-bold tracking-tight text-gray-900 lg:text-2xl">
-            Messages
-          </h1>
-          <div className="flex h-10 w-10" />
-        </div>
-      </header>
+      {/* Side Menu */}
+      <SmartHeader title="Chats" userRole="client" showBackButton={false} />
 
       <div className="mt-0 w-full px-2 md:px-4">
         {isAuthenticated ? (
@@ -472,7 +472,7 @@ const ClientChatPage: React.FC = () => {
               )}
               {(selectedConversationId || isDesktop) && (
                 <div
-                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "flex h-full flex-1 flex-col overflow-hidden"}`}
+                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "fixed inset-0 z-[60] flex h-[100dvh] flex-col bg-white"}`}
                 >
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">
@@ -658,7 +658,7 @@ const ClientChatPage: React.FC = () => {
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="border-t border-gray-200 bg-white p-3 pb-1 md:sticky md:bottom-0 md:bg-white md:pb-3">
+                      <div className="shrink-0 border-t border-gray-200 bg-white p-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:sticky md:bottom-0 md:bg-white md:p-3">
                         <form
                           onSubmit={handleSendMessage}
                           className="flex items-center gap-3"
@@ -721,8 +721,6 @@ const ClientChatPage: React.FC = () => {
           </div>
         )}
       </div>
-
-      <BottomNavigation />
     </div>
   );
 };

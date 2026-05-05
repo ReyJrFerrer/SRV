@@ -8,12 +8,14 @@ import {
 } from "@heroicons/react/24/solid";
 
 type ServiceDetailsProps = {
+  serviceName: string;
   packageName?: string | null;
   requestedDate?: any;
   scheduledDate?: any;
   formattedLocation?: string | null;
   price?: number | null;
   commissionEstimate?: number;
+  amountToPay?: number;
 };
 
 const formatDateRange = (
@@ -60,12 +62,13 @@ const formatDateRange = (
 };
 
 const ServiceDetails: React.FC<ServiceDetailsProps> = ({
+  serviceName,
   packageName,
   requestedDate,
   scheduledDate,
   formattedLocation,
   price,
-  commissionEstimate,
+  amountToPay,
 }) => {
   return (
     <div className="pt-4 lg:col-span-3 lg:pl-8 lg:pt-0">
@@ -73,6 +76,15 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
         <BriefcaseIcon className="h-5 w-5 text-yellow-500" /> Service Details
       </h3>
       <div className="space-y-4 text-sm text-gray-800">
+        <div className="flex items-start">
+          <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+          <span className="min-w-0">
+            <strong className="text-gray-900">Service:</strong>{" "}
+            <span className="inline-block max-w-full break-words align-bottom">
+              {serviceName}
+            </span>
+          </span>
+        </div>
         <div className="flex items-start">
           <ArchiveBoxIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
           <span className="min-w-0">
@@ -107,7 +119,13 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
             <CurrencyDollarIcon className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
             <span>
               <strong className="text-gray-900">Payment:</strong> ₱
-              {(price + (commissionEstimate || 0)).toFixed(2)} (Cash)
+              {price.toFixed(2)}
+              {amountToPay != null && amountToPay > 0 && (
+                <span className="text-gray-500">
+                  {" "}
+                  (Amount to Pay: ₱{amountToPay.toFixed(2)})
+                </span>
+              )}
             </span>
           </div>
         )}

@@ -1,8 +1,8 @@
 import React from "react";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
-import GStreetView from "../../common/GMapFunctions/GStreetView";
-import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
-import { MapPinIcon, EyeIcon } from "@heroicons/react/24/solid";
+import GStreetView from "./common/GMapFunctions/GStreetView";
+import AccuracyCircle from "./common/GMapFunctions/AccuracyCircle";
+import { EyeIcon } from "@heroicons/react/24/solid";
 
 interface Props {
   mapsReady: boolean;
@@ -47,14 +47,13 @@ const MapSection: React.FC<Props> = ({
         ? 40
         : undefined;
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-lg">
-      <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-700">
-        <MapPinIcon className="h-5 w-5 text-blue-500" /> Service Location
-      </h3>
-      <p className="mb-2 text-xs text-gray-500">
-        Interactive map centered on the client's provided location. Use the
-        navigation button to open directions in Google Maps.
-      </p>
+    <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="p-4">
+        <h3 className="text-lg font-bold text-gray-900">Service Location</h3>
+        <p className="mb-3 text-xs text-gray-500">
+          Interactive map centered on the client's provided location.
+        </p>
+      </div>
       {!mapsReady && (
         <div className="relative mb-3 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
           <div className="flex h-64 w-full items-center justify-center text-xs text-gray-400">

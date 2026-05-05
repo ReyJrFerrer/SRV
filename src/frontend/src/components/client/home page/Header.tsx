@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MapPinIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import {
+  MapPinIcon,
+  UserCircleIcon,
+  Bars3Icon,
+} from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useServiceManagement } from "../../../hooks/serviceManagement";
+import SideMenuDrawer from "../../../components/common/SideMenuDrawer";
+import TourSelectorModal, {
+  TourOption,
+} from "../../../components/common/TourSelectorModal";
 import authCanisterService from "../../../services/authCanisterService";
 import MapFunctions, {
   MapFunctionsHandle,
@@ -32,6 +40,47 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   // --- State: Search bar ---
   const [searchQuery, setSearchQuery] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const [showTourSelector, setShowTourSelector] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<TourOption | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const clientTourOptions: TourOption[] = [
+    {
+      name: "Home Tour",
+      flowType: "client",
+      description: "Learn how to find & book services near you",
+    },
+    {
+      name: "Bookings Tour",
+      flowType: "client-bookings",
+      description: "Manage your bookings & appointments",
+    },
+    {
+      name: "Profile Tour",
+      flowType: "client-profile",
+      description: "View your reputation & ratings",
+    },
+    {
+      name: "Ratings Tour",
+      flowType: "client-ratings",
+      description: "See provider feedback about you",
+    },
+  ];
+
+  const handleTourSelect = (tour: TourOption) => {
+    sessionStorage.setItem("pending_tour", tour.flowType);
+    const routeMap: Record<string, string> = {
+      client: "/client/home",
+      "client-bookings": "/client/booking",
+      "client-profile": "/client/profile",
+      "client-ratings": "/client/ratings",
+    };
+    const targetRoute = routeMap[tour.flowType] || "/client/home";
+    navigate(targetRoute);
+    setShowTourSelector(false);
+    setSelectedTour(tour);
+  };
   // Static search bar placeholders
   const searchPlaceholders = [
     "Looking for a plumber?",
@@ -56,10 +105,11 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const miniMapRef = useRef<MapFunctionsHandle | null>(null);
   useEffect(() => {
     // Add hysteresis + rAF throttling to avoid rapid toggle near boundary
+    // Only enable mini mode AFTER scrolling down significantly, never at top
     let lastY = window.scrollY;
     let ticking = false;
-    const ENTER_MINI_AT = 140; // px
-    const EXIT_MINI_BELOW = 100; // px
+    const ENTER_MINI_AT = 200; // increased threshold - only activate when well scrolled down
+    const EXIT_MINI_BELOW = 150; // hysteresis to prevent flickering
 
     const onScroll = () => {
       const y = window.scrollY;
@@ -95,6 +145,20 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     else document.body.classList.remove("has-mini-header");
     return () => document.body.classList.remove("has-mini-header");
   }, [isMini]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMenu]);
 
   // --- State: Search suggestions ---
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -251,7 +315,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
         ref={headerRef}
         data-tour="client-header"
         // style={{ minHeight: headerHeight ? `${headerHeight}px` : undefined }}
-        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm ${className}`}
+        className={`sticky top-0 z-40 w-full max-w-full rounded-xl border border-yellow-200  p-4 shadow-sm ${className}`}
       >
         {/* Full header content always rendered; visually hidden when mini is active to prevent layout jump */}
         <div
@@ -299,10 +363,10 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               </Link>
               {isAuthenticated && (
                 <button
-                  onClick={handleProfileClick}
+                  onClick={() => setShowMenu(!showMenu)}
                   className="group relative rounded-full bg-white p-2 shadow-sm transition-all hover:scale-105 hover:shadow-md"
                 >
-                  <UserCircleIcon className="h-8 w-8 text-yellow-500 transition-colors group-hover:text-yellow-600" />
+                  <Bars3Icon className="h-8 w-8 text-blue-600 transition-colors group-hover:text-blue-700" />
                 </button>
               )}
             </div>
@@ -439,6 +503,27 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </div>
         </div>
       )}
+
+      {/* Slide-out Menu */}
+      {showMenu && (
+        <SideMenuDrawer
+          isOpen={showMenu}
+          onClose={() => setShowMenu(false)}
+          userRole="client"
+          userInfo={{ name: displayName, to: "/client/profile" }}
+          onOpenTourSelector={() => setShowTourSelector(true)}
+        />
+      )}
+
+      {/* Tour Selector Modal */}
+      <TourSelectorModal
+        isOpen={showTourSelector}
+        onClose={() => setShowTourSelector(false)}
+        onSelectTour={handleTourSelect}
+        tours={clientTourOptions}
+        selectedTour={selectedTour}
+        onTourComplete={() => setSelectedTour(null)}
+      />
     </>
   );
 };

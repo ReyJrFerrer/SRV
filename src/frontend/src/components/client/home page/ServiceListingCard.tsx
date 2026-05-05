@@ -261,19 +261,17 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
           className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-xl border border-gray-200 bg-white pb-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group-hover:pb-2`}
         >
           <div className="relative">
-            <div className="aspect-video w-full rounded-t-2xl bg-blue-50">
-              <img
-                src={imageSrc}
-                alt={service.title}
-                className={`service-image relative z-10 h-full w-full rounded-t-2xl object-cover transition-opacity duration-1000 
+            <img
+              src={imageSrc}
+              alt={service.title}
+              className={`service-image h-40 w-full rounded-t-2xl object-cover transition-opacity duration-1000
                   ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/images/ai-sp/others.svg";
-                  setImageLoaded(true);
-                }}
-              />
-            </div>
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/images/ai-sp/others.svg";
+                setImageLoaded(true);
+              }}
+            />
             <div className="absolute left-2 right-2 top-2 z-20 flex items-center justify-between">
               <div className="flex items-center">
                 {service.category?.slug && (

@@ -12,7 +12,6 @@ import {
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useProviderBookingManagement } from "../../../hooks/useProviderBookingManagement";
 import { useBookingRating } from "../../../hooks/reviewManagement";
-import BottomNavigation from "../../../components/provider/NavigationBar";
 
 // Memoized skeleton components to prevent unnecessary re-renders
 const BookingDetailsSkeleton = memo(() => (
@@ -283,17 +282,19 @@ export default function ProviderReviewView() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-20 md:pb-0">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 to-yellow-50 pb-20 md:pb-0">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
-        <div className="relative flex w-full items-center px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white py-4 shadow-sm">
+        {/* Added 'relative' to the container */}
+        <div className="relative flex w-full items-center justify-center px-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 transition-colors hover:bg-gray-100"
+            className="absolute left-4 rounded-full p-2 transition-colors hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-extrabold tracking-tight text-black lg:text-2xl">
+
+          <h1 className="text-lg font-bold tracking-tight text-gray-900">
             Client Review
           </h1>
         </div>
@@ -463,8 +464,6 @@ export default function ProviderReviewView() {
             </button>
           </div> */}
       </main>
-
-      <BottomNavigation />
     </div>
   );
 }
