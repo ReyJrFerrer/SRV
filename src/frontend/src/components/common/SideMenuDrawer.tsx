@@ -8,12 +8,12 @@ import {
   DocumentTextIcon,
   ExclamationTriangleIcon,
   QuestionMarkCircleIcon,
-  UserCircleIcon,
   ChevronRightIcon,
   DevicePhoneMobileIcon,
   PlayIcon,
 } from "@heroicons/react/24/outline";
 import { useLogout } from "../../hooks/logout";
+import { useUserProfile } from "../../hooks/useUserProfile";
 import RoleSwitchButton from "./RoleSwitchButton";
 
 interface MenuItem {
@@ -49,8 +49,63 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
 }) => {
   const navigate = useNavigate();
   const { logout } = useLogout();
+  const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
+    useUserProfile();
 
   const isClient = userRole === "client";
+
+  // Avatar caching to prevent flickering
+  const defaultAvatar = "/default-avatar.svg";
+  const avatarCacheKey = "side-menu:avatar";
+  const [stableProfileSrc, setStableProfileSrc] = React.useState<string>(() => {
+    const cached =
+      typeof window !== "undefined"
+        ? localStorage.getItem(avatarCacheKey)
+        : null;
+    return (
+      cached ||
+      (profile?.profilePicture?.imageUrl as string | undefined) ||
+      defaultAvatar
+    );
+  });
+
+  React.useEffect(() => {
+    if (isImageLoading) {
+      const raw =
+        (profile?.profilePicture?.imageUrl as string | undefined) || null;
+      if (raw && stableProfileSrc !== raw) {
+        setStableProfileSrc(raw);
+      }
+      return;
+    }
+
+    const hasReal =
+      !isUsingDefaultAvatar &&
+      !!profileImageUrl &&
+      profileImageUrl !== defaultAvatar;
+    const next = hasReal
+      ? profileImageUrl
+      : localStorage.getItem(avatarCacheKey) ||
+        (profile?.profilePicture?.imageUrl as string | undefined) ||
+        defaultAvatar;
+    if (next && stableProfileSrc !== next) {
+      setStableProfileSrc(next);
+    }
+  }, [
+    profileImageUrl,
+    isUsingDefaultAvatar,
+    isImageLoading,
+    profile,
+    stableProfileSrc,
+  ]);
+
+  React.useEffect(() => {
+    try {
+      if (stableProfileSrc) {
+        localStorage.setItem(avatarCacheKey, stableProfileSrc);
+      }
+    } catch {}
+  }, [stableProfileSrc]);
 
   const navigationItems: MenuItem[] = [
     {
@@ -167,15 +222,11 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               className="flex items-center gap-3 text-left"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                {userInfo.profileImage ? (
-                  <img
-                    src={userInfo.profileImage}
-                    alt={userInfo.name}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <UserCircleIcon className="h-8 w-8 text-white" />
-                )}
+                <img
+                  src={stableProfileSrc}
+                  alt={userInfo.name}
+                  className="h-12 w-12 rounded-full object-cover"
+                />
               </div>
               <div className="flex-1">
                 <p className="font-bold text-white">{userInfo.name}</p>
