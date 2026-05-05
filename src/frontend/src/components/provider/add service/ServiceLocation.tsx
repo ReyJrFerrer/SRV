@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MapPinIcon } from "@heroicons/react/24/solid";
 import phLocations from "../../../data/ph_locations.json"; // Adjust path as needed
 import { useLocationStore } from "../../../store/locationStore";
@@ -13,13 +13,24 @@ interface ServiceLocationProps {
   validationErrors?: {
     locationMunicipalityCity?: string;
   };
+  scrollToErrorTrigger?: number;
 }
 
 const ServiceLocation: React.FC<ServiceLocationProps> = ({
   setFormData,
   validationErrors: _validationErrors,
   formData,
+  scrollToErrorTrigger,
 }) => {
+  const hasLocationError = !!_validationErrors?.locationMunicipalityCity;
+
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollToErrorTrigger && hasLocationError && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [scrollToErrorTrigger, hasLocationError]);
   // Use Zustand location store
   const {
     location: geoLocation,

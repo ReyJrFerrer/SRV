@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { DayOfWeek } from "../../../hooks/serviceManagement"; // Adjust path as needed
 import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
 import { nanoid } from "nanoid";
@@ -26,6 +26,7 @@ interface ServiceAvailabilityProps {
     availabilitySchedule?: string;
     timeSlots?: string;
   };
+  scrollToErrorTrigger?: number;
 }
 
 const allDays: DayOfWeek[] = [
@@ -201,7 +202,19 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   formData,
   setFormData,
   validationErrors = {},
+  scrollToErrorTrigger,
 }) => {
+  const hasDayError = !!validationErrors.availabilitySchedule;
+  const hasTimeSlotError = !!validationErrors.timeSlots;
+
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollToErrorTrigger && (hasDayError || hasTimeSlotError) && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [scrollToErrorTrigger, hasDayError, hasTimeSlotError]);
+
   const weekdays: DayOfWeek[] = [
     "Monday",
     "Tuesday",
