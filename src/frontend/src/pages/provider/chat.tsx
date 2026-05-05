@@ -128,16 +128,9 @@ const ClientChatPage: React.FC = () => {
           } else {
             el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
           }
-        } else {
-          // For mobile where the window itself is the scrollable container
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: "smooth",
-          });
         }
       } catch {
-        // Fallback
-        window.scrollTo(0, document.documentElement.scrollHeight);
+        // Fallback - disabled to prevent unwanted scrolling
       }
     };
     // Immediate
