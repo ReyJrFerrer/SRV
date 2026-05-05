@@ -57,10 +57,10 @@ const DeleteConfirmDialog: React.FC<Props> = ({
             {isDeleting
               ? isAlreadyArchived
                 ? "Deleting..."
-                : "Archiving..."
+                : "Deleting..."
               : isAlreadyArchived
                 ? "Delete"
-                : "Archive"}
+                : "Delete"}
           </button>
         </div>
       </div>
