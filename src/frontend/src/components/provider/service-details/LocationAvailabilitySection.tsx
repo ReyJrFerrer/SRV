@@ -234,26 +234,33 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                   .map((entry: any) => (
                     <div
                       key={entry.day}
-                      className="flex w-full flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4"
+                      className="flex w-full flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-50">
+                      <div className="flex items-center gap-2 border-b border-gray-100 pb-2.5">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow-50">
                           <CalendarDaysIcon className="h-4 w-4 text-yellow-600" />
                         </div>
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-[15px] font-bold text-gray-900">
                           {entry.day}
                         </span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:gap-1.5">
+                      <div className="flex flex-col lg:flex-row lg:flex-wrap gap-2 pt-1">
                         {entry.availability.slots.map(
                           (slot: any, idx: number) => (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center whitespace-nowrap rounded-lg bg-gray-100 px-3 py-1.5 text-[13px] font-semibold text-gray-700"
-                            >
-                              {formatTime(slot.startTime)} -{" "}
-                              {formatTime(slot.endTime)}
-                            </span>
+                            <React.Fragment key={idx}>
+                              <div className="flex lg:hidden items-center gap-2.5 text-[13.5px] text-gray-600">
+                                <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-400"></div>
+                                <span className="font-medium tracking-wide">
+                                  {formatTime(slot.startTime)} -{" "}
+                                  {formatTime(slot.endTime)}
+                                </span>
+                              </div>
+
+                              <span className="hidden lg:inline-flex items-center whitespace-nowrap rounded-md bg-gray-50 border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100">
+                                {formatTime(slot.startTime)} -{" "}
+                                {formatTime(slot.endTime)}
+                              </span>
+                            </React.Fragment>
                           ),
                         )}
                       </div>
