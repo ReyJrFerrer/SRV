@@ -11,6 +11,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 interface ClientAttachmentsProps {
   attachments?: string[];
   notes?: string | null;
+  title?: string;
 }
 
 const isVideoUrl = (url: string) => {
@@ -26,6 +27,7 @@ const isVideoUrl = (url: string) => {
 const ClientAttachments: React.FC<ClientAttachmentsProps> = ({
   attachments,
   notes,
+  title = "Media Attachments",
 }) => {
   const items = useMemo(() => {
     const list: string[] = [];
@@ -133,7 +135,7 @@ const ClientAttachments: React.FC<ClientAttachmentsProps> = ({
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-md">
       <h2 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-700">
         <PaperClipIcon className="h-5 w-5 text-blue-600" aria-hidden="true" />
-        <span>Media Attachments</span>
+        <span>{title}</span>
       </h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {items.map((original, idx) => {

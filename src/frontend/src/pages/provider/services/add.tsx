@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
@@ -148,6 +148,33 @@ const AddServicePage: React.FC = () => {
 
   // Used to trigger scroll/highlight on error
   const [scrollToErrorTrigger, setScrollToErrorTrigger] = useState(0);
+
+  // Ref for scrolling to top on validation errors
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  // Check if there are validation errors
+  const hasErrors = useMemo(() => {
+    if (!validationErrors || Object.keys(validationErrors).length === 0) return false;
+    const errorKeysToCheck = [
+      "serviceOfferingTitle",
+      "categoryId",
+      "servicePackages",
+      "availabilitySchedule",
+      "timeSlots",
+      "locationMunicipalityCity",
+      "general",
+      "profanity",
+    ];
+    for (const key of errorKeysToCheck) {
+      if (validationErrors[key as keyof ValidationErrors]) return true;
+    }
+    if (validationErrors.packageFields) {
+      for (const pkgErrors of Object.values(validationErrors.packageFields)) {
+        if (pkgErrors?.name || pkgErrors?.price || pkgErrors?.description) return true;
+      }
+    }
+    return false;
+  }, [validationErrors]);
 
   // Local draft autosave key (used by submission to clear saved draft)
   const ADD_SERVICE_DRAFT_KEY = "add_service_draft_v1";
@@ -565,12 +592,22 @@ const AddServicePage: React.FC = () => {
   ]);
 
   // --- Navigation Handlers ---
+  const scrollToTop = () => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
   const handleNext = () => {
     if (isProcessingImages) {
       setValidationErrors({
         general:
           "Please wait for images to finish processing before continuing.",
       });
+      scrollToTop();
       return;
     }
     const errors = validateCurrentStep();
@@ -579,6 +616,7 @@ const AddServicePage: React.FC = () => {
     if (errors.timeSlots) {
       setValidationErrors(errors);
       setScrollToErrorTrigger((prev) => prev + 1);
+      scrollToTop();
       return;
     }
 
@@ -588,6 +626,7 @@ const AddServicePage: React.FC = () => {
     } else {
       setValidationErrors(errors);
       setScrollToErrorTrigger((prev) => prev + 1);
+      scrollToTop();
     }
   };
 
@@ -914,6 +953,7 @@ const AddServicePage: React.FC = () => {
             formData={formData}
             setFormData={setFormData}
             validationErrors={validationErrors}
+            scrollToErrorTrigger={scrollToErrorTrigger}
           />
         );
       case 3:
@@ -923,6 +963,7 @@ const AddServicePage: React.FC = () => {
             formData={formData}
             setFormData={setFormData}
             validationErrors={validationErrors}
+            scrollToErrorTrigger={scrollToErrorTrigger}
           />
         );
       case 4:
@@ -1014,8 +1055,8 @@ const AddServicePage: React.FC = () => {
       </header>
       {/* Draft UI & logic moved into ServiceDrafts (renders modals and banner) */}
       {/* Main Content */}
-      <main className="container mx-auto flex-grow px-4 pt-4 sm:p-6">
-        <ProgressTracker currentStep={currentStep} />
+      <main ref={mainContentRef} className="container mx-auto flex-grow px-4 pt-4 sm:p-6">
+        <ProgressTracker currentStep={currentStep} hasErrors={hasErrors} />
         {renderStep()}
         {/* Navigation Buttons */}
         <div className="mt-6 flex justify-between lg:mb-8">

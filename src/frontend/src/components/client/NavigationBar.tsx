@@ -14,7 +14,7 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 
 const BottomNavigation: React.FC = () => {
   const location = useLocation();
-  const { notifications } = useNotifications();
+  const { notifications, filteredUnreadCount } = useNotifications();
   const { unreadChatCount } = useChatNotifications();
 
   // Section: Derived notification counts
@@ -22,16 +22,6 @@ const BottomNavigation: React.FC = () => {
     () =>
       notifications.filter((n) => !n.read && n.type === "booking_accepted")
         .length,
-    [notifications],
-  );
-
-  // Section: Notification filters
-  const filteredNotificationUnreadCount = React.useMemo(
-    () =>
-      notifications.filter(
-        (n) =>
-          !n.read && n.type !== "chat_message" && n.type !== "provider_message",
-      ).length,
     [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
@@ -124,7 +114,7 @@ const BottomNavigation: React.FC = () => {
       to: "/client/notifications",
       label: "Notifications",
       icon: null,
-      count: filteredNotificationUnreadCount,
+      count: filteredUnreadCount,
     },
     { to: "/client/profile", label: "Profile", icon: null, count: 0 },
   ];

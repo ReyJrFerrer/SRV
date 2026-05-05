@@ -31,7 +31,7 @@ const ClientChatPage: React.FC = () => {
   } = useChat();
   const [, setTick] = React.useState(0);
   const [isDesktop, setIsDesktop] = useState<boolean>(
-    window.innerWidth >= 1024,
+    window.innerWidth >= 768,
   );
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
@@ -65,7 +65,7 @@ const ClientChatPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const onResize = () => setIsDesktop(window.innerWidth >= 1024);
+    const onResize = () => setIsDesktop(window.innerWidth >= 768);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -128,16 +128,9 @@ const ClientChatPage: React.FC = () => {
           } else {
             el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
           }
-        } else {
-          // For mobile where the window itself is the scrollable container
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: "smooth",
-          });
         }
       } catch {
-        // Fallback
-        window.scrollTo(0, document.documentElement.scrollHeight);
+        // Fallback - disabled to prevent unwanted scrolling
       }
     };
     // Immediate
@@ -331,11 +324,11 @@ const ClientChatPage: React.FC = () => {
             </div>
           ) : conversations.length > 0 ? (
             <div
-              className={`w-full ${isDesktop ? "mx-auto my-4 flex h-[calc(100vh-80px)] max-w-6xl overflow-hidden border border-gray-100 bg-white shadow-sm md:rounded-2xl" : "pb-[70px]"}`}
+              className={`w-full ${isDesktop ? "mx-auto my-4 flex max-h-[95vh] md:h-[calc(95vh-80px)] max-w-6xl overflow-hidden border border-gray-100 bg-white shadow-sm md:rounded-2xl" : "pb-[70px]"}`}
             >
               {(!selectedConversationId || isDesktop) && (
                 <ul
-                  className={`${isDesktop ? "md:h-full md:w-[420px] md:flex-shrink-0 md:overflow-y-auto" : ""} space-y-1 py-2`}
+                  className={`${isDesktop ? "md:h-full md:w-[300px] md:flex-shrink-0 md:overflow-y-auto" : ""} space-y-1 py-2`}
                 >
                   {conversations
                     .slice()
@@ -420,7 +413,7 @@ const ClientChatPage: React.FC = () => {
               )}
               {(selectedConversationId || isDesktop) && (
                 <div
-                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "fixed inset-0 z-[60] flex h-[100dvh] flex-col bg-white"}`}
+                  className={`${isDesktop ? "md:flex md:flex-1 md:flex-col md:overflow-hidden md:border-l md:border-gray-100" : "fixed inset-0 z-[60] flex h-[100dvh] flex-col bg-white pb-[70px]"}`}
                 >
                   {selectedConversationId ? (
                     <div className="flex h-full flex-col">

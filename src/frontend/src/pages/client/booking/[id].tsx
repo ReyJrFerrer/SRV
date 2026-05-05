@@ -584,6 +584,17 @@ const BookingDetailsPage: React.FC = () => {
                 <ClientAttachments
                   attachments={(specificBooking as any)?.attachments}
                   notes={(specificBooking as any)?.notes}
+                  title="Your Attachments"
+                />
+              </div>
+            )}
+
+            {/* Provider Service Proof */}
+            {(specificBooking as any)?.providerAttachments?.length > 0 && (
+              <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+                <ClientAttachments
+                  attachments={(specificBooking as any)?.providerAttachments}
+                  title="Service Proof from Provider"
                 />
               </div>
             )}
