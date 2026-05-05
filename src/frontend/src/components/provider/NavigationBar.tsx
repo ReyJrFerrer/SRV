@@ -22,20 +22,14 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 }) => {
   const location = useLocation();
   const { unreadChatCount } = useChatNotifications();
-  const { notifications } = useProviderNotificationsWithPush();
+  const { notifications, filteredUnreadCount } =
+    useProviderNotificationsWithPush();
 
   // Section: Derived notification counts
   const newBookingRequestCount = React.useMemo(
     () =>
       notifications.filter((n) => !n.read && n.type === "new_booking_request")
         .length,
-    [notifications],
-  );
-
-  // Section: Notification filters
-  const filteredNotificationUnreadCount = React.useMemo(
-    () =>
-      notifications.filter((n) => !n.read && n.type !== "chat_message").length,
     [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
@@ -167,7 +161,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
                 if (label === "Notifications") {
                   to = "/provider/notifications";
-                  count = filteredNotificationUnreadCount;
+                  count = filteredUnreadCount;
                   active = isActivePath(to);
                 } else if (label === "Settings") {
                   const item = navItems.find((it) => it.label === label);
@@ -464,18 +458,18 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 >
                   Notifications
                 </span>
-                {filteredNotificationUnreadCount > 0 && (
+                {filteredUnreadCount > 0 && (
                   <span
                     aria-label={
-                      filteredNotificationUnreadCount > 99
+                      filteredUnreadCount > 99
                         ? "99+ new notifications"
-                        : `${filteredNotificationUnreadCount} new notifications`
+                        : `${filteredUnreadCount} new notifications`
                     }
                     className="absolute right-2 top-1 flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-black text-white shadow-sm"
                   >
-                    {filteredNotificationUnreadCount > 99
+                    {filteredUnreadCount > 99
                       ? "99+"
-                      : filteredNotificationUnreadCount}
+                      : filteredUnreadCount}
                   </span>
                 )}
               </Link>

@@ -35,10 +35,17 @@ export interface ProviderNotification {
 // In-memory store for provider unread count
 const providerNotificationStore = {
   count: 0,
+  filteredCount: 0,
   listeners: new Set<() => void>(),
   setCount(count: number) {
     if (this.count !== count) {
       this.count = count;
+      this.listeners.forEach((listener) => listener());
+    }
+  },
+  setFilteredCount(count: number) {
+    if (this.filteredCount !== count) {
+      this.filteredCount = count;
       this.listeners.forEach((listener) => listener());
     }
   },
@@ -146,6 +153,9 @@ export const useProviderNotificationsWithPush = () => {
   const [unreadCount, setUnreadCount] = useState(
     providerNotificationStore.count,
   );
+  const [filteredUnreadCount, setFilteredUnreadCount] = useState(
+    providerNotificationStore.filteredCount,
+  );
   const previousNotificationIdsRef = useRef<Set<string>>(new Set());
 
   // Get user ID
@@ -170,6 +180,7 @@ export const useProviderNotificationsWithPush = () => {
   useEffect(() => {
     const unsubscribe = providerNotificationStore.subscribe(() => {
       setUnreadCount(providerNotificationStore.count);
+      setFilteredUnreadCount(providerNotificationStore.filteredCount);
     });
     return () => {
       unsubscribe();
@@ -224,7 +235,11 @@ export const useProviderNotificationsWithPush = () => {
 
       setNotifications(allNotifications);
       const newUnreadCount = allNotifications.filter((n) => !n.read).length;
+      const newFilteredUnreadCount = allNotifications.filter(
+        (n) => !n.read && n.type !== "chat_message",
+      ).length;
       providerNotificationStore.setCount(newUnreadCount);
+      providerNotificationStore.setFilteredCount(newFilteredUnreadCount);
       setLoading(false);
     } catch (error) {
       setError("Failed to load provider notifications");
@@ -271,7 +286,11 @@ export const useProviderNotificationsWithPush = () => {
           const newUnreadCount = formattedNotifications.filter(
             (n) => !n.read,
           ).length;
+          const newFilteredUnreadCount = formattedNotifications.filter(
+            (n) => !n.read && n.type !== "chat_message",
+          ).length;
           providerNotificationStore.setCount(newUnreadCount);
+          providerNotificationStore.setFilteredCount(newFilteredUnreadCount);
           setLoading(false);
         },
         { userType: "provider" },
@@ -323,7 +342,11 @@ export const useProviderNotificationsWithPush = () => {
           targetIds.includes(n.id) ? { ...n, read: true } : n,
         );
         const newUnreadCount = updated.filter((n) => !n.read).length;
+        const newFilteredUnreadCount = updated.filter(
+          (n) => !n.read && n.type !== "chat_message",
+        ).length;
         providerNotificationStore.setCount(newUnreadCount);
+        providerNotificationStore.setFilteredCount(newFilteredUnreadCount);
         return updated;
       });
     };
@@ -354,7 +377,11 @@ export const useProviderNotificationsWithPush = () => {
         n.id === notificationId ? { ...n, read: true } : n,
       );
       const newUnreadCount = newNotifications.filter((n) => !n.read).length;
+      const newFilteredUnreadCount = newNotifications.filter(
+        (n) => !n.read && n.type !== "chat_message",
+      ).length;
       providerNotificationStore.setCount(newUnreadCount);
+      providerNotificationStore.setFilteredCount(newFilteredUnreadCount);
       return newNotifications;
     });
   }, []);
@@ -378,7 +405,11 @@ export const useProviderNotificationsWithPush = () => {
         n.id === notificationId ? { ...n, read: false } : n,
       );
       const newUnreadCount = newNotifications.filter((n) => !n.read).length;
+      const newFilteredUnreadCount = newNotifications.filter(
+        (n) => !n.read && n.type !== "chat_message",
+      ).length;
       providerNotificationStore.setCount(newUnreadCount);
+      providerNotificationStore.setFilteredCount(newFilteredUnreadCount);
       return newNotifications;
     });
   }, []);
@@ -398,6 +429,7 @@ export const useProviderNotificationsWithPush = () => {
 
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     providerNotificationStore.setCount(0);
+    providerNotificationStore.setFilteredCount(0);
   }, [notifications]);
 
   // Delete a notification from canister and update local state
@@ -411,7 +443,11 @@ export const useProviderNotificationsWithPush = () => {
     setNotifications((prev) => {
       const newNotifications = prev.filter((n) => n.id !== notificationId);
       const newUnreadCount = newNotifications.filter((n) => !n.read).length;
+      const newFilteredUnreadCount = newNotifications.filter(
+        (n) => !n.read && n.type !== "chat_message",
+      ).length;
       providerNotificationStore.setCount(newUnreadCount);
+      providerNotificationStore.setFilteredCount(newFilteredUnreadCount);
       return newNotifications;
     });
   }, []);
@@ -419,6 +455,7 @@ export const useProviderNotificationsWithPush = () => {
   return {
     notifications,
     unreadCount,
+    filteredUnreadCount,
     loading: loading || bookingLoading,
     error: error || bookingError,
     markAsRead,
