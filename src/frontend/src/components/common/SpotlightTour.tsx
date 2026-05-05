@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Joyride,
   EventData,
@@ -43,58 +43,91 @@ function WelcomeModal({
   onSkip: () => void;
   flowTitle: string;
 }) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    startButtonRef.current?.focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onSkip();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [onSkip]);
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onSkip();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-[10001] flex items-center justify-center p-4"
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="welcome-title"
+    >
       <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md transition-opacity duration-300"
-        onClick={onSkip}
-      />
-      <div className="animate-in fade-in zoom-in-95 relative w-full max-w-md overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] duration-300">
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-700 p-8 text-center">
-          {/* Decorative background shapes */}
+        ref={modalRef}
+        className="animate-in fade-in zoom-in-95 relative w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] duration-300 sm:max-w-md"
+      >
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-700 p-6 text-center sm:p-8">
           <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
           <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
 
           <button
             onClick={onSkip}
-            className="absolute right-4 top-4 rounded-full bg-black/10 p-2 text-white/90 transition-all hover:bg-black/20 hover:text-white"
+            className="absolute right-3 top-3 rounded-full bg-black/10 p-2 text-white/90 transition-all hover:bg-black/20 hover:text-white sm:right-4 sm:top-4"
+            aria-label="Close"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
-          <div className="relative mx-auto mb-5 flex h-28 w-28 items-center justify-center rounded-full bg-white/10 shadow-inner backdrop-blur-sm">
+          <div className="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-white/10 shadow-inner backdrop-blur-sm sm:mb-5 sm:h-28 sm:w-28">
             <img
               src="/images/srv characters (SVG)/tutor.svg"
               alt="Sir V"
-              className="h-24 w-24 animate-bounce object-contain drop-shadow-md"
+              className="h-20 w-20 animate-bounce object-contain drop-shadow-md sm:h-24 sm:w-24"
             />
           </div>
-          <div className="mb-3 inline-block rounded-full border border-white/20 bg-white/20 px-4 py-1.5 shadow-sm backdrop-blur-md">
-            <p className="text-sm font-bold tracking-wide text-white">
+          <div className="mb-3 inline-block rounded-full border border-white/20 bg-white/20 px-3 py-1 shadow-sm backdrop-blur-md sm:mb-3 sm:px-4 sm:py-1.5">
+            <p className="text-xs font-bold tracking-wide text-white sm:text-sm">
               Hi, I'm Sir V!
             </p>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-sm">
+          <h1
+            id="welcome-title"
+            className="text-xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-2xl"
+          >
             {flowTitle}
           </h1>
-          <p className="mt-2 text-sm font-medium text-blue-100">
+          <p className="mt-1.5 text-xs font-medium text-blue-100 sm:mt-2 sm:text-sm">
             I'll be your tour guide through SRV!
           </p>
         </div>
-        <div className="px-8 py-7 text-center">
-          <p className="mb-7 text-sm leading-relaxed text-gray-500">
+        <div className="px-5 py-5 text-center sm:px-8 sm:py-7">
+          <p className="mb-5 text-xs leading-relaxed text-gray-500 sm:mb-7 sm:text-sm">
             We'll walk you through the key features in just a few simple steps.
             Ready to explore?
           </p>
-          <div className="flex flex-col-reverse gap-3 sm:flex-row">
+          <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:gap-3">
             <button
+              ref={startButtonRef}
               onClick={onSkip}
-              className="flex-1 rounded-2xl border-2 border-gray-100 bg-white py-3.5 text-sm font-bold text-gray-500 transition-all hover:border-gray-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98]"
+              className="flex-1 rounded-2xl border-2 border-gray-100 bg-white py-3 text-xs font-bold text-gray-500 transition-all hover:border-gray-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] sm:py-3.5 sm:text-sm"
             >
               Maybe Later
             </button>
             <button
               onClick={onStart}
-              className="flex-1 rounded-2xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)] transition-all hover:bg-blue-700 hover:shadow-[0_12px_20px_-6px_rgba(37,99,235,0.5)] active:scale-[0.98]"
+              className="flex-1 rounded-2xl bg-blue-600 py-3 text-xs font-bold text-white shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)] transition-all hover:bg-blue-700 hover:shadow-[0_12px_20px_-6px_rgba(37,99,235,0.5)] active:scale-[0.98] sm:py-3.5 sm:text-sm"
             >
               Start Tour
             </button>
@@ -248,29 +281,39 @@ function Tooltip({
   size,
 }: TooltipRenderProps & { size?: number }) {
   const customStep = step as CustomStep;
+  const backButtonRef = useRef<HTMLButtonElement>(null);
+  const nextButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    nextButtonRef.current?.focus();
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
 
   return (
     <div
       {...tooltipProps}
-      className="animate-in slide-in-from-bottom-4 fade-in relative flex w-[21rem] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300 md:w-[32rem] md:flex-row"
+      className="animate-in slide-in-from-bottom-4 fade-in relative flex w-[calc(100vw-2rem)] max-w-[21rem] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300 md:w-[32rem] md:flex-row"
+      role="dialog"
+      aria-modal="true"
     >
       <button
         {...closeProps}
-        className="absolute right-3 top-3 z-10 rounded-full bg-gray-50/80 p-1.5 text-gray-400/80 backdrop-blur-sm transition-all hover:bg-gray-100 hover:text-gray-700 active:scale-95"
+        className="absolute right-2 top-2 z-10 rounded-full bg-gray-50/80 p-1.5 text-gray-400/80 backdrop-blur-sm transition-all hover:bg-gray-100 hover:text-gray-700 active:scale-95 md:right-3 md:top-3"
         aria-label="Skip walkthrough"
       >
         <XMarkIcon className="h-4 w-4" />
       </button>
 
-      {/* Left/Top Side: Visuals - Soft gradient background */}
-      <div className="relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 md:w-2/5">
-        {/* Decorative circle */}
-        <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200/40 blur-xl"></div>
+      <div className="relative flex w-full items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/50 p-5 md:w-2/5 md:p-6">
+        <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200/40 blur-xl md:h-32 md:w-32"></div>
         {customStep.image && (
           <img
             src={customStep.image}
             alt="SRV Character"
-            className="relative z-10 h-auto w-24 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] md:w-32"
+            className="relative z-10 h-auto w-20 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] md:w-32"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = target.src.replace(/ /g, "%20");
@@ -279,46 +322,49 @@ function Tooltip({
         )}
       </div>
 
-      {/* Right/Bottom Side: Content */}
-      <div className="flex w-full flex-col justify-between p-6 md:w-3/5">
+      <div className="flex w-full flex-col justify-between p-4 md:w-3/5 md:p-6">
         <div className="animate-in slide-in-from-right-2 fade-in duration-300">
-          <div className="mb-2 flex items-center justify-between pr-8">
+          <div className="mb-1.5 flex items-center justify-between pr-6 md:mb-2 md:pr-8">
             {size && (
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">
+              <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600 md:px-2 md:text-[10px]">
                 Step {index + 1} of {size}
               </span>
             )}
           </div>
           {customStep.headline && (
-            <h2 className="mb-2 text-xl font-extrabold tracking-tight text-slate-900 md:mt-0">
+            <h2 className="mb-1.5 text-lg font-extrabold tracking-tight text-slate-900 md:mb-2 md:text-xl">
               {customStep.headline}
             </h2>
           )}
-          <p className="mb-6 text-sm leading-relaxed text-slate-600">
+          <p className="mb-4 text-xs leading-relaxed text-slate-600 md:mb-6 md:text-sm">
             {step.content as React.ReactNode}
           </p>
         </div>
 
-        {/* Navigation Controls */}
-        <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
-          <div className="flex w-full justify-between space-x-3">
+        <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-3 md:pt-4">
+          <div className="flex w-full justify-between space-x-2">
             {index > 0 ? (
               <button
+                ref={backButtonRef}
                 {...backProps}
-                className="flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95"
+                className="flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 md:px-4 md:py-2.5 md:text-xs"
               >
-                <ChevronLeftIcon className="mr-1 h-3.5 w-3.5" /> Back
+                <ChevronLeftIcon className="mr-0.5 h-3 w-3 md:h-3.5 md:w-3.5" />{" "}
+                Back
               </button>
             ) : (
               <div />
             )}
 
             <button
+              ref={nextButtonRef}
               {...primaryProps}
-              className="flex flex-1 items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_10px_-2px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-700 hover:shadow-[0_8px_16px_-4px_rgba(37,99,235,0.4)] active:scale-[0.98]"
+              className="flex flex-1 items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-[0_4px_10px_-2px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-700 hover:shadow-[0_8px_16px_-4px_rgba(37,99,235,0.4)] active:scale-[0.98] md:px-5 md:py-2.5 md:text-sm"
             >
               {isLastStep ? "Finish Tour" : "Next"}
-              {!isLastStep && <ChevronRightIcon className="ml-1 h-4 w-4" />}
+              {!isLastStep && (
+                <ChevronRightIcon className="ml-0.5 h-3 w-3 md:h-4 md:w-4" />
+              )}
             </button>
           </div>
         </div>
@@ -710,7 +756,7 @@ export default function SpotlightTour({
       steps={steps}
       tooltipComponent={Tooltip}
       options={{
-        overlayColor: "rgba(15, 23, 42, 0.6)",
+        overlayColor: "rgba(15, 23, 42, 0.7)",
         zIndex: 10001,
         scrollDuration: 600,
         scrollOffset: 80,
