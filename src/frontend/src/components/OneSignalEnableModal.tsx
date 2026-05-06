@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { 
-  BellIcon, 
-  CalendarDaysIcon, 
-  ChatBubbleLeftRightIcon, 
-  UserCircleIcon 
+import { createPortal } from "react-dom";
+import {
+  BellIcon,
+  CalendarDaysIcon,
+  ChatBubbleLeftRightIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { usePWA } from "../hooks/usePWA";
 import { useAuth } from "../context/AuthContext";
@@ -59,7 +60,7 @@ export const OneSignalEnableModal: React.FC<OneSignalEnableModalProps> = ({
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/70 p-4 sm:p-6">
       <div className="flex w-full max-w-2xl flex-col max-h-[90dvh] rounded-xl bg-white shadow-2xl">
         <div className="overflow-y-auto p-6 sm:p-8">
@@ -160,7 +161,8 @@ export const OneSignalEnableModal: React.FC<OneSignalEnableModalProps> = ({
         </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

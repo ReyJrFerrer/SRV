@@ -60,7 +60,7 @@ const LocationPermissionPromptModal: React.FC<Props> = ({
   if (permissionState && permissionState !== "prompt") return null;
 
   const content = (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/60">
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         {/* Character / Branding (optional image kept consistent with other modal) */}
         <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
