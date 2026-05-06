@@ -680,7 +680,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               </div>
 
               {/* Right: Provider Details */}
-              <div className="flex min-w-[280px] flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+              <div className="flex min-w-0 w-full sm:min-w-[280px] sm:w-auto flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
                 <div className="flex items-center gap-4">
                   <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100">
                     <img
