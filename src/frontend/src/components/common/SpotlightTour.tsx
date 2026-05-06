@@ -286,10 +286,6 @@ function Tooltip({
 
   useEffect(() => {
     nextButtonRef.current?.focus();
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, []);
 
   return (
@@ -390,6 +386,19 @@ export default function SpotlightTour({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Global scroll lock when tour is active
+  useEffect(() => {
+    if (!run) return;
+    const htmlOverflow = document.documentElement.style.overflow;
+    const bodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = htmlOverflow;
+      document.body.style.overflow = bodyOverflow;
+    };
+  }, [run]);
 
   useEffect(() => {
     const isDesktopLayout =
@@ -497,6 +506,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "center",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
       {
         target: '[data-tour="provider-stats"]',
@@ -506,6 +516,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "bottom",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
       {
         target: '[data-tour="provider-requests"]',
@@ -515,6 +526,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "bottom",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
       {
         target: '[data-tour="provider-services"]',
@@ -524,6 +536,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "top",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
     ];
 
@@ -536,6 +549,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "bottom",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
       {
         target: "[data-tour='provider-bookings-filters']",
@@ -545,6 +559,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "bottom",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
       {
         target: "[data-tour='provider-bookings-timing']",
@@ -554,6 +569,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "top",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
       {
         target: "[data-tour='provider-bookings-list']",
@@ -563,6 +579,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "top",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
     ];
 
@@ -575,6 +592,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "bottom",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
       {
         target: "[data-tour='provider-services-filter']",
@@ -584,6 +602,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "left",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
       {
         target: "[data-tour='provider-services-list']",
@@ -593,6 +612,7 @@ export default function SpotlightTour({
         image: "/images/srv characters (SVG)/tutor.svg",
         placement: "top",
         disableBeacon: true,
+        disableScroll: true,
       } as CustomStep,
     ];
 
@@ -772,7 +792,7 @@ export default function SpotlightTour({
         overlayColor: "rgba(15, 23, 42, 0.7)",
         zIndex: 10001,
         scrollDuration: 600,
-        scrollOffset: 80,
+        scrollOffset: 120,
       }}
       styles={{
         tooltip: {
