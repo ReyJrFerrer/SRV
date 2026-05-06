@@ -8,9 +8,11 @@ import { useProviderBookingManagement } from "../../hooks/useProviderBookingMana
 import { useProviderReviews } from "../../hooks/reviewManagement";
 import SPHeader from "../../components/provider/home page/SPHeader";
 import {
-  OneSignalBlockedModal,
-  isOneSignalBlockedModalDismissed,
-} from "../../components/OneSignalBlockedModal";
+  OneSignalEnableModal,
+  isOneSignalEnableModalDismissed,
+} from "../../components/OneSignalEnableModal";
+import oneSignalService from "../../services/oneSignalService";
+import OneSignal from "react-onesignal";
 import SpotlightTour from "../../components/common/SpotlightTour";
 
 const ProviderHomePage: React.FC = () => {
@@ -18,33 +20,25 @@ const ProviderHomePage: React.FC = () => {
   const [initializationAttempts, setInitializationAttempts] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [showOneSignalBlockedModal, setShowOneSignalBlockedModal] =
+  const [showOneSignalEnableModal, setShowOneSignalEnableModal] =
     useState(false);
 
-  // Check for OneSignal blocking on mount
+  // Check for OneSignal status on mount
   useEffect(() => {
-    const checkOneSignalBlocking = () => {
-      // Check if OneSignal SDK failed to load
-      const oneSignalScript = document.querySelector(
-        'script[src*="OneSignalSDK"]',
-      );
-      if (oneSignalScript) {
-        oneSignalScript.addEventListener("error", () => {
-          if (!isOneSignalBlockedModalDismissed())
-            setShowOneSignalBlockedModal(true);
-        });
-      }
+    const checkOneSignalStatus = async () => {
+      // Wait for the SDK to be ready
+      const ready = await oneSignalService.waitForReady(15000);
+      if (!ready) return;
 
-      // Also check if window.OneSignal is undefined after a delay
-      setTimeout(() => {
-        if (typeof window.OneSignal === "undefined") {
-          if (!isOneSignalBlockedModalDismissed())
-            setShowOneSignalBlockedModal(true);
+      try {
+        const isSubscribed = OneSignal.User.PushSubscription.optedIn;
+        if (!isSubscribed && !isOneSignalEnableModalDismissed()) {
+          setShowOneSignalEnableModal(true);
         }
-      }, 5000); // Give it 5 seconds to load
+      } catch {}
     };
 
-    checkOneSignalBlocking();
+    checkOneSignalStatus();
   }, []);
 
   // Use the service management hook
@@ -202,10 +196,10 @@ const ProviderHomePage: React.FC = () => {
   return (
     <>
       <SpotlightTour flowType="provider" />
-      {/* OneSignal Blocked Modal */}
-      {showOneSignalBlockedModal && (
-        <OneSignalBlockedModal
-          onClose={() => setShowOneSignalBlockedModal(false)}
+      {/* OneSignal Enable Modal */}
+      {showOneSignalEnableModal && (
+        <OneSignalEnableModal
+          onClose={() => setShowOneSignalEnableModal(false)}
         />
       )}
 

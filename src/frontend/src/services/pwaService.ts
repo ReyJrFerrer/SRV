@@ -317,8 +317,9 @@ class PWAService {
   async subscribeToPushNotifications(
     _vapidPublicKey: string,
   ): Promise<string | null> {
-    // Check if OneSignal is initialized
-    if (!oneSignalService.isReady()) {
+    // Wait for OneSignal to finish initializing
+    const ready = await oneSignalService.waitForReady();
+    if (!ready) {
       throw new Error(
         "Your browser may not be compatible with push notifications at this time.",
       );

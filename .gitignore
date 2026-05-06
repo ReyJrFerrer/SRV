@@ -45,4 +45,4 @@ src/sui/build/srv_reputation
 .kilo
 
 package-lock.json
-bun-lock.json
+bun.lock

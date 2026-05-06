@@ -18,6 +18,7 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
+import OneSignal from "react-onesignal";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
 // import GlobalChatDock from "./src/components/chat/GlobalChatDock";
@@ -201,29 +202,36 @@ const ProviderReview = lazy(() => import("./src/pages/provider/review/[id]"));
 // Initialize version checker for automatic cache clearing on new deployments
 initVersionChecker();
 
-// Initialize OneSignal when SDK is loaded
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-window.OneSignalDeferred.push(async function (OneSignal) {
-  try {
-    await OneSignal.init({
-      appId: "7bd5300e-16ce-4334-8462-93e1a1458579",
-      safari_web_id: "web.onesignal.auto.0d6d1ede-d24a-45d0-ba73-2f88839c0735",
-      allowLocalhostAsSecureOrigin: true, // Enable for local development
-      notifyButton: {
-        enable: false,
-      },
-      // Let OneSignal use default scope "/" for push notifications to work properly
-      // Our custom sw.js will be disabled to avoid conflicts
-      serviceWorkerPath: "OneSignalSDKWorker.js",
-    });
-
-    // Wait a bit to ensure OneSignal is fully ready
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Setup our service wrapper after OneSignal is fully initialized
-    oneSignalService.setupAfterInit();
-  } catch (error) {}
-});
+// Initialize OneSignal via NPM package (bundled, immune to ad blockers)
+OneSignal.init({
+  appId: "7bd5300e-16ce-4334-8462-93e1a1458579",
+  safari_web_id:
+    "web.onesignal.auto.0d6d1ede-d24a-45d0-ba73-2f88839c0735",
+  allowLocalhostAsSecureOrigin: true,
+  notifyButton: {
+    enable: false,
+    prenotify: false,
+    showCredit: false,
+    text: {
+      "tip.state.unsubscribed": "Subscribe to notifications",
+      "tip.state.subscribed": "You're subscribed to notifications",
+      "tip.state.blocked": "You've blocked notifications",
+      "message.prenotify": "Click to subscribe to notifications",
+      "message.action.subscribed": "Thanks for subscribing!",
+      "message.action.subscribing": "Subscribing...",
+      "message.action.resubscribed": "You're subscribed to notifications",
+      "message.action.unsubscribed": "You won't receive notifications again",
+      "dialog.main.title": "Manage Site Notifications",
+      "dialog.main.button.subscribe": "Subscribe",
+      "dialog.main.button.unsubscribe": "Unsubscribe",
+      "dialog.blocked.title": "Unblock Notifications",
+      "dialog.blocked.message": "Follow these instructions to allow notifications:",
+    },
+  },
+  serviceWorkerPath: "OneSignalSDKWorker.js",
+}).then(() => {
+  oneSignalService.setupAfterInit();
+}).catch(() => {});
 
 const NotificationsPageSP = lazy(
   () => import("./src/pages/provider/notifications"),

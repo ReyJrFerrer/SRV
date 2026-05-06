@@ -8,9 +8,11 @@ import { useServiceManagement } from "../../hooks/serviceManagement";
 import ClientHeader from "../../components/client/home page/Header";
 import SpotlightTour from "../../components/common/SpotlightTour";
 import {
-  OneSignalBlockedModal,
-  isOneSignalBlockedModalDismissed,
-} from "../../components/OneSignalBlockedModal";
+  OneSignalEnableModal,
+  isOneSignalEnableModalDismissed,
+} from "../../components/OneSignalEnableModal";
+import oneSignalService from "../../services/oneSignalService";
+import OneSignal from "react-onesignal";
 import {
   ArrowPathRoundedSquareIcon,
   ChevronRightIcon,
@@ -23,32 +25,24 @@ const ClientHomePage: React.FC = () => {
   const { error } = useServiceManagement();
   const [beProviderLoading, setBeProviderLoading] = useState(false);
   const { switchRole } = useUserProfile();
-  const [showOneSignalBlockedModal, setShowOneSignalBlockedModal] =
+  const [showOneSignalEnableModal, setShowOneSignalEnableModal] =
     useState(false);
 
   useEffect(() => {
-    const checkOneSignalBlocking = () => {
-      // Check if OneSignal SDK failed to load
-      const oneSignalScript = document.querySelector(
-        'script[src*="OneSignalSDK"]',
-      );
-      if (oneSignalScript) {
-        oneSignalScript.addEventListener("error", () => {
-          if (!isOneSignalBlockedModalDismissed())
-            setShowOneSignalBlockedModal(true);
-        });
-      }
+    const checkOneSignalStatus = async () => {
+      // Wait for the SDK to be ready
+      const ready = await oneSignalService.waitForReady(15000);
+      if (!ready) return;
 
-      // Also check if window.OneSignal is undefined after a delay
-      setTimeout(() => {
-        if (typeof window.OneSignal === "undefined") {
-          if (!isOneSignalBlockedModalDismissed())
-            setShowOneSignalBlockedModal(true);
+      try {
+        const isSubscribed = OneSignal.User.PushSubscription.optedIn;
+        if (!isSubscribed && !isOneSignalEnableModalDismissed()) {
+          setShowOneSignalEnableModal(true);
         }
-      }, 5000); // Give it 5 seconds to load
+      } catch {}
     };
 
-    checkOneSignalBlocking();
+    checkOneSignalStatus();
   }, []);
 
   useEffect(() => {
@@ -61,10 +55,10 @@ const ClientHomePage: React.FC = () => {
       {/* SECTION: Feedback popup */}
       <FeedbackPopup />
 
-      {/* SECTION: OneSignal Blocked Modal */}
-      {showOneSignalBlockedModal && (
-        <OneSignalBlockedModal
-          onClose={() => setShowOneSignalBlockedModal(false)}
+      {/* SECTION: OneSignal Enable Modal */}
+      {showOneSignalEnableModal && (
+        <OneSignalEnableModal
+          onClose={() => setShowOneSignalEnableModal(false)}
         />
       )}
 

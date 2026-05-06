@@ -10,6 +10,8 @@
  * - Sync player IDs with backend
  */
 
+import OneSignal from "react-onesignal";
+
 interface PlayerIdMetadata {
   playerId: string;
   timestamp: number;
@@ -20,11 +22,17 @@ class OneSignalService {
   private static instance: OneSignalService;
   private isInitialized = false;
   private currentPlayerId: string | null = null;
+  private readyResolve: (() => void) | null = null;
+  private readyPromise: Promise<void>;
 
   // Storage keys
   private readonly PLAYER_ID_STORAGE_KEY = "onesignal_player_metadata";
 
-  private constructor() {}
+  private constructor() {
+    this.readyPromise = new Promise((resolve) => {
+      this.readyResolve = resolve;
+    });
+  }
 
   static getInstance(): OneSignalService {
     if (!OneSignalService.instance) {
@@ -69,11 +77,12 @@ class OneSignalService {
     }
 
     // Check if OneSignal SDK is loaded
-    if (typeof window.OneSignal === "undefined") {
+    if (typeof OneSignal === "undefined") {
       return;
     }
 
     this.isInitialized = true;
+    this.readyResolve?.();
 
     // Setup event listeners
     this.setupEventListeners();
@@ -81,11 +90,11 @@ class OneSignalService {
     // Check if user is already subscribed (non-blocking)
     // Note: optedIn is a property getter, not a Promise
     try {
-      const isSubscribed = window.OneSignal.User.PushSubscription.optedIn;
+      const isSubscribed = OneSignal.User.PushSubscription.optedIn;
       if (isSubscribed) {
         // Get player ID (OneSignal User ID)
         try {
-          const playerId = window.OneSignal.User.onesignalId;
+          const playerId = OneSignal.User.onesignalId;
           if (playerId) {
             this.currentPlayerId = playerId;
             this.savePlayerIdMetadata(playerId, true);
@@ -100,7 +109,7 @@ class OneSignalService {
    */
   private setupEventListeners(): void {
     // Listen for subscription changes
-    window.OneSignal.User.PushSubscription.addEventListener(
+    OneSignal.User.PushSubscription.addEventListener(
       "change",
       (event: any) => {
         if (event.current.optedIn) {
@@ -117,7 +126,7 @@ class OneSignalService {
     );
 
     // Listen for notification clicks
-    window.OneSignal.Notifications.addEventListener("click", (event: any) => {
+    OneSignal.Notifications.addEventListener("click", (event: any) => {
       // Handle notification click
       const url = event.notification?.url || event.notification?.data?.url;
       if (url) {
@@ -126,7 +135,7 @@ class OneSignalService {
     });
 
     // Listen for foreground notifications
-    window.OneSignal.Notifications.addEventListener(
+    OneSignal.Notifications.addEventListener(
       "foregroundWillDisplay",
       () => {},
     );
@@ -137,14 +146,16 @@ class OneSignalService {
    * @returns Promise that resolves to player ID if successful, null otherwise
    */
   async subscribe(): Promise<string | null> {
-    if (!this.isInitialized) {
+    // Wait for OneSignal to finish initializing
+    const ready = await this.waitForReady();
+    if (!ready) {
       return null;
     }
 
     try {
       // Check current permission (property access, not Promise)
       // Note: OneSignal returns boolean (true/false) not string ("granted"/"denied"/"default")
-      const permissionGranted = window.OneSignal.Notifications.permission;
+      const permissionGranted = OneSignal.Notifications.permission;
 
       // Check native browser permission for more accurate status
       const nativePermission =
@@ -161,7 +172,7 @@ class OneSignalService {
       if (!permissionGranted) {
         try {
           const newPermissionGranted =
-            await window.OneSignal.Notifications.requestPermission();
+            await OneSignal.Notifications.requestPermission();
           if (!newPermissionGranted) {
             // Check if user actually denied or if there was another issue
             const updatedNativePermission = Notification.permission;
@@ -181,9 +192,9 @@ class OneSignalService {
       }
 
       // Check if already subscribed before opting in (property access, not Promise)
-      const alreadySubscribed = window.OneSignal.User.PushSubscription.optedIn;
+      const alreadySubscribed = OneSignal.User.PushSubscription.optedIn;
       if (alreadySubscribed) {
-        const existingPlayerId = window.OneSignal.User.onesignalId;
+        const existingPlayerId = OneSignal.User.onesignalId;
         if (existingPlayerId) {
           this.currentPlayerId = existingPlayerId;
           this.savePlayerIdMetadata(existingPlayerId, true);
@@ -191,7 +202,7 @@ class OneSignalService {
         }
       }
 
-      await window.OneSignal.User.PushSubscription.optIn();
+      await OneSignal.User.PushSubscription.optIn();
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -216,7 +227,7 @@ class OneSignalService {
         await this.registerPlayerId(playerId);
         return playerId;
       } else {
-        window.OneSignal.User.PushSubscription.optedIn;
+        OneSignal.User.PushSubscription.optedIn;
 
         // Always fail if player ID wasn't found - don't wait for event listener
         throw new Error(
@@ -240,7 +251,7 @@ class OneSignalService {
     }
 
     try {
-      await window.OneSignal.User.PushSubscription.optOut();
+      await OneSignal.User.PushSubscription.optOut();
       await this.unregisterPlayerId();
       this.currentPlayerId = null;
       this.clearPlayerIdMetadata();
@@ -261,29 +272,29 @@ class OneSignalService {
 
     try {
       // Check if User object exists
-      if (!window.OneSignal.User) {
+      if (!OneSignal.User) {
         return null;
       }
 
       // Check if PushSubscription exists
-      if (!window.OneSignal.User.PushSubscription) {
+      if (!OneSignal.User.PushSubscription) {
         return null;
       }
 
       // Try multiple possible locations for the player ID
-      let playerId = window.OneSignal.User.onesignalId;
+      let playerId: string | null = OneSignal.User.onesignalId ?? null;
 
       if (!playerId) {
         // Fallback: try push subscription ID
-        playerId = window.OneSignal.User.PushSubscription.id;
+        playerId = OneSignal.User.PushSubscription.id ?? null;
       }
 
       if (!playerId) {
         // Fallback: try push token
-        playerId = window.OneSignal.User.PushSubscription.token;
+        playerId = OneSignal.User.PushSubscription.token ?? null;
       }
 
-      return playerId || null;
+      return playerId;
     } catch (error) {
       return null;
     }
@@ -299,8 +310,8 @@ class OneSignalService {
 
     try {
       // Property access, not Promise
-      const optedIn = window.OneSignal.User.PushSubscription.optedIn;
-      return optedIn;
+      const optedIn = OneSignal.User.PushSubscription.optedIn;
+      return optedIn ?? false;
     } catch (error) {
       return false;
     }
@@ -322,7 +333,7 @@ class OneSignalService {
       }
 
       // Fallback: check OneSignal's boolean permission
-      const permissionGranted = window.OneSignal.Notifications.permission;
+      const permissionGranted = OneSignal.Notifications.permission;
       return permissionGranted ? "granted" : "default";
     } catch (error) {
       return "default";
@@ -339,7 +350,7 @@ class OneSignalService {
     }
 
     try {
-      await window.OneSignal.login(externalId);
+      await OneSignal.login(externalId);
       return true;
     } catch (error) {
       return false;
@@ -355,7 +366,7 @@ class OneSignalService {
     }
 
     try {
-      await window.OneSignal.logout();
+      await OneSignal.logout();
       return true;
     } catch (error) {
       return false;
@@ -372,7 +383,7 @@ class OneSignalService {
     }
 
     try {
-      await window.OneSignal.User.addTags(tags);
+      await OneSignal.User.addTags(tags);
       return true;
     } catch (error) {
       return false;
@@ -389,7 +400,7 @@ class OneSignalService {
     }
 
     try {
-      await window.OneSignal.User.removeTags(tagKeys);
+      await OneSignal.User.removeTags(tagKeys);
       return true;
     } catch (error) {
       return false;
@@ -504,19 +515,26 @@ class OneSignalService {
     return this.isInitialized;
   }
 
+  async waitForReady(timeoutMs = 15000): Promise<boolean> {
+    if (this.isInitialized) return true;
+    try {
+      await Promise.race([
+        this.readyPromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("OneSignal init timeout")), timeoutMs),
+        ),
+      ]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Get current cached player ID
    */
   getCachedPlayerId(): string | null {
     return this.currentPlayerId;
-  }
-}
-
-// Type definitions for OneSignal
-declare global {
-  interface Window {
-    OneSignal: any;
-    OneSignalDeferred: Array<(oneSignal: any) => void>;
   }
 }
 
