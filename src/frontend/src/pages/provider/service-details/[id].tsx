@@ -1355,7 +1355,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-full space-y-10 px-4 py-8 sm:px-8">
+      <main className="mx-auto min-h-[calc(100vh-5rem)] max-w-full space-y-10 px-4 py-8 sm:px-8">
         {/** Compute edit-lock state */}
         {/** Only the section currently being edited remains interactive */}
         {/** Others get blurred and non-interactive to prevent concurrent edits */}
