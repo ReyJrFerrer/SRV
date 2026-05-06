@@ -315,14 +315,14 @@ const NotificationsPage = () => {
                   clearSelection();
                 }
               }}
-              className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+              className="rounded-lg bg-gray-100 px-2 py-2 text-xs sm:text-sm sm:px-3 font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
             >
               {editMode ? "Done" : "Edit"}
             </button>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={handleSelectAll}
-                className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                className="rounded-lg bg-gray-100 px-2 py-2 text-xs sm:text-sm sm:px-3 font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
               >
                 {selectedIds.length > 0 &&
                 selectedIds.length ===
@@ -334,7 +334,7 @@ const NotificationsPage = () => {
               {unread.length > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-2 py-2 text-xs sm:text-sm sm:px-3 font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
                 >
                   <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
                   Mark all as read
