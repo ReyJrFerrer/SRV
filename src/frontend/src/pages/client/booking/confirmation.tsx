@@ -70,6 +70,7 @@ const BookingConfirmationPage: React.FC = () => {
   const location = useLocation();
   const bookingDetails: BookingDetails | null = location.state?.details || null;
   useEffect(() => {
+    window.scrollTo(0, 0);
     document.title = "Booking Confirmed - SRV Client";
   }, []);
   useNoBackNavigation("/client/booking");
