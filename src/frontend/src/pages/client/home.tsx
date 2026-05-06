@@ -72,7 +72,7 @@ const ClientHomePage: React.FC = () => {
       )}
       {/* SECTION: Main content */}
 
-      <div className="w-full max-w-full px-4 pb-16 pt-4">
+      <div className="w-full max-w-full px-4 pt-4">
         {/* SECTION: Header */}
         <ClientHeader className="mb-6 w-full max-w-full" />
         {/* SECTION: Categories */}
