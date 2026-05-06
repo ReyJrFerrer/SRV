@@ -222,7 +222,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ className = "" }) => {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-10">
           {servicesWithData.map(({ service, serviceData }) => (
             <div key={service.id}>
               <ServiceListItem service={service} serviceData={serviceData} />
