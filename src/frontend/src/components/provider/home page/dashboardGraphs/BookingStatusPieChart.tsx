@@ -107,7 +107,7 @@ const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
         aspectRatio: "1.5 / 1",
       }}
     >
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-col items-start gap-2 lg:flex-row lg:items-center lg:justify-between">
         <h3 className="flex items-center gap-2 text-lg font-bold text-blue-900">
           <InformationCircleIcon className="h-6 w-6 text-blue-400" />
           Booking Status
@@ -119,7 +119,7 @@ const BookingStatusPieChart: React.FC<BookingStatusPieChartsProps> = ({
             onChange={(e) =>
               setPeriod(e.target.value as "7d" | "30d" | "12m" | "all")
             }
-            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 md:px-3 md:py-1.5 md:text-sm"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>

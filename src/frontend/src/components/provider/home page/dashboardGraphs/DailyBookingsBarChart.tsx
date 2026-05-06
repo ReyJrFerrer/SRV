@@ -169,14 +169,14 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
 
   return (
     <div className="relative flex h-[275px] w-full flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-col items-start gap-2 lg:flex-row lg:items-center lg:justify-between">
         <h3 className="flex items-center gap-2 text-lg font-bold text-blue-900">
           <CalendarDaysIcon className="h-6 w-6 text-blue-400" />
           Bookings Overview
         </h3>
         <div className="relative">
           <Menu as="div" className="relative inline-block text-left">
-            <Menu.Button className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <Menu.Button className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:px-3 md:py-1.5 md:text-sm">
               {getTimeRangeLabel()}
               <svg
                 className="h-4 w-4 text-gray-500"
@@ -203,7 +203,7 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
                         }}
                         className={`${
                           active ? "bg-gray-100 text-gray-900" : "text-gray-700"
-                        } block w-full px-4 py-2 text-left text-sm`}
+                        } block w-full px-3 py-1.5 text-left text-xs md:px-4 md:py-2 md:text-sm`}
                       >
                         {range.label}
                         {range.key === "custom" && (
@@ -214,9 +214,9 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
                   </Menu.Item>
                 ))}
                 {timeRange === "custom" && (
-                  <div className="border-t border-gray-100 p-4">
+                  <div className="border-t border-gray-100 p-3 md:p-4">
                     <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                      <label className="mb-1 block text-[10px] font-medium text-gray-700 md:text-xs">
                         From:
                       </label>
                       <input
@@ -226,11 +226,11 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
                           const val = e.target.value;
                           if (val) setCustomStartDate(parseISO(val));
                         }}
-                        className="w-full rounded border border-gray-300 p-1 text-sm"
+                        className="w-full rounded border border-gray-300 p-0.5 text-xs md:p-1 md:text-sm"
                       />
                     </div>
                     <div className="mb-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-700">
+                      <label className="mb-1 block text-[10px] font-medium text-gray-700 md:text-xs">
                         To:
                       </label>
                       <input
@@ -240,7 +240,7 @@ const DailyBookingsBarChart: React.FC<DailyBookingsBarChartProps> = ({
                           const val = e.target.value;
                           if (val) setCustomEndDate(parseISO(val));
                         }}
-                        className="w-full rounded border border-gray-300 p-1 text-sm"
+                        className="w-full rounded border border-gray-300 p-0.5 text-xs md:p-1 md:text-sm"
                       />
                     </div>
                   </div>

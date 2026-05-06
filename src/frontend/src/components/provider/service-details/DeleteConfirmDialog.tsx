@@ -54,13 +54,7 @@ const DeleteConfirmDialog: React.FC<Props> = ({
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting
-              ? isAlreadyArchived
-                ? "Deleting..."
-                : "Archiving..."
-              : isAlreadyArchived
-                ? "Delete"
-                : "Archive"}
+            {isDeleting ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>

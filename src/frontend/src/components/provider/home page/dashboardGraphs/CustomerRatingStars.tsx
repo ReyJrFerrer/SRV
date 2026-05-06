@@ -91,37 +91,41 @@ const CustomerRatingStars: React.FC<CustomerRatingStarsProps> = ({
   };
 
   return (
-    <div className="relative flex h-[275px] w-full flex-col items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-      <h3 className="mb-2 text-lg font-bold tracking-tight text-blue-900">
-        Customer Rating
-      </h3>
-      <div className="mb-2 flex items-center gap-1">{renderStars()}</div>
-      <div className="absolute right-4 top-4 flex items-center gap-2">
-        <span className="text-xs text-gray-400">Timeframe</span>
-        <select
-          value={period}
-          onChange={(e) =>
-            setPeriod(e.target.value as "7d" | "30d" | "12m" | "all")
-          }
-          className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-          <option value="12m">Last 12 months</option>
-          <option value="all">All time</option>
-        </select>
+    <div className="relative flex h-[275px] w-full flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="mb-2 flex flex-col items-start gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <h3 className="text-lg font-bold tracking-tight text-blue-900">
+          Customer Rating
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">Timeframe</span>
+          <select
+            value={period}
+            onChange={(e) =>
+              setPeriod(e.target.value as "7d" | "30d" | "12m" | "all")
+            }
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 md:px-3 md:py-1.5 md:text-sm"
+          >
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="12m">Last 12 months</option>
+            <option value="all">All time</option>
+          </select>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-2xl font-extrabold text-yellow-500 drop-shadow">
-          {averageRating.toFixed(1)}
-        </span>
-        <span className="text-sm text-gray-500">/ 5</span>
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <div className="mb-2 flex items-center gap-1">{renderStars()}</div>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-extrabold text-yellow-500 drop-shadow">
+            {averageRating.toFixed(1)}
+          </span>
+          <span className="text-sm text-gray-500">/ 5</span>
+        </div>
+        <p className="mt-2 text-sm text-gray-500">
+          {totalReviews > 0
+            ? `${totalReviews} review${totalReviews > 1 ? "s" : ""}`
+            : "No reviews yet"}
+        </p>
       </div>
-      <p className="mt-2 text-sm text-gray-500">
-        {totalReviews > 0
-          ? `${totalReviews} review${totalReviews > 1 ? "s" : ""}`
-          : "No reviews yet"}
-      </p>
     </div>
   );
 };

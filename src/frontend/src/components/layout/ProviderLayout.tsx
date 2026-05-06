@@ -14,7 +14,7 @@ export default function ProviderLayout() {
   return (
     <ProtectedRoute requiredRole="ServiceProvider">
       <div
-        className={`min-h-screen bg-gray-50${isFullScreenRoute ? "" : " pb-20"}`}
+        className={`min-h-screen bg-gray-50${isFullScreenRoute ? "" : " pb-20 md:pb-5 lg:pb-0"}`}
       >
         <ProviderOnRouteBanner />
         <ActiveServiceBanner />

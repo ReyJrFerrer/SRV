@@ -36,7 +36,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const [profile, setProfile] = useState<any>(null);
   const displayName = profile?.name ? profile.name.split(" ")[0] : "Guest";
   const primaryMapRef = useRef<MapFunctionsHandle | null>(null);
-  const miniMapRef = useRef<MapFunctionsHandle | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -120,10 +119,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const handleLocationClick = () => {
     if (primaryMapRef.current?.openChangeLocation) {
       primaryMapRef.current.openChangeLocation();
-      return;
-    }
-    if (miniMapRef.current?.openChangeLocation) {
-      miniMapRef.current.openChangeLocation();
     }
   };
 
@@ -159,8 +154,8 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
     const getScrollY = () =>
       targetEl instanceof Window ? targetEl.scrollY : targetEl.scrollTop || 0;
     let ticking = false;
-    const ENTER_MINI_AT = 200; // increased - only activate when well scrolled down
-    const EXIT_MINI_BELOW = 150; // hysteresis
+    const ENTER_MINI_AT = 250; // increased - only activate when well scrolled down
+    const EXIT_MINI_BELOW = 120; // hysteresis
 
     const onScroll = () => {
       const y = getScrollY();
@@ -299,7 +294,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 </span>
               </button>
             </div>
-            <div className="mt-2">
+            <div className={`mt-2 transition-all duration-200 ${isMini ? "invisible h-0 opacity-0" : "visible opacity-100"}`}>
               <MapFunctions ref={primaryMapRef} />
             </div>
           </div>
@@ -324,7 +319,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
 
       {/* Mini sticky header as a fixed overlay */}
       {isMini && (
-        <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)]">
+        <div className="mini-header fixed inset-x-0 top-0 z-50 w-full pt-[env(safe-area-inset-top)] transition-opacity duration-200">
           <div className="w-full border-b border-gray-100 bg-white/95 p-3 shadow-sm backdrop-blur-md">
             <div className="flex items-center gap-2 pb-1">
               <MapPinIcon className="h-5 w-5 text-blue-600" />
@@ -333,7 +328,7 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
               </span>
             </div>
             <div className="-mt-1 flex items-center gap-2">
-              <MapFunctions ref={miniMapRef} />
+              <MapFunctions ref={primaryMapRef} />
             </div>
           </div>
         </div>
