@@ -1585,7 +1585,7 @@ const BookingPage: React.FC = () => {
               </div>
             </header>
 
-            <div className="flex-grow pb-28 pt-16 md:pt-0">
+            <div className="flex-grow pb-10 pt-16 md:pt-0">
               <div className="mx-auto max-w-5xl px-2 py-8 md:px-8">
                 <div className="md:flex md:gap-x-8">
                   {/* Left Column Skeleton */}
@@ -1787,7 +1787,7 @@ const BookingPage: React.FC = () => {
             </div>
           </header>
 
-          <div className="flex-grow pb-28 pt-16 md:pt-0" ref={pageContainerRef}>
+          <div className="flex-grow pb-10 pt-16 md:pt-0" ref={pageContainerRef}>
             <div className="mx-auto max-w-5xl px-2 py-8 md:px-8">
               <div className="md:flex md:gap-x-8">
                 {/* Left column (Desktop): Packages → Schedule → Location */}
