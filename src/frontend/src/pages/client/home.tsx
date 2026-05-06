@@ -87,7 +87,7 @@ const ClientHomePage: React.FC = () => {
       </div>
       {/* SECTION: Provider CTA */}
       <div className="flex w-full flex-col items-center justify-center">
-        <div className="mx-auto flex w-full max-w-md flex-col items-center rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mx-auto flex w-[90%] md:w-full max-w-md flex-col items-center rounded-2xl border border-gray-200 bg-white p-4 md:p-6 shadow-sm">
           <h3 className="mb-2 text-center text-lg font-semibold text-blue-700">
             Not enough services in your area?
           </h3>
