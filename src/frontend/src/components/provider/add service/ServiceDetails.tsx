@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { TrashIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
 import { ServiceCategory } from "../../../services/serviceCanisterService";
+import { ResponsiveSelect } from "../../ui/ResponsiveDropdown";
 
 // Validation errors interface
 interface ValidationErrors {
@@ -145,11 +146,6 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
     handleChange(e);
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setHideCategoryError(true);
-    handleChange(e);
-  };
-
   // Check if selected category requires client proof images
   const requiresProofKeywords = [
     "repair",
@@ -267,35 +263,28 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                 >
                   Select Category
                 </label>
-                <select
+                <ResponsiveSelect
                   name="categoryId"
                   id="categoryId"
                   value={formData.categoryId}
-                  onChange={handleCategoryChange}
-                  required
-                  ref={categoryRef}
-                  className={`block w-full rounded-xl border px-4 py-3 shadow-sm transition-all focus:ring-2 focus:ring-yellow-400 sm:text-sm ${
-                    validationErrors.categoryId && !hideCategoryError
-                      ? "border-red-300 bg-red-50 focus:border-red-500"
-                      : "border-gray-200 bg-gray-50 focus:border-yellow-400"
-                  }`}
-                >
-                  <option value="" disabled>
-                    Select a category
-                  </option>
-                  {loadingCategories ? (
-                    <option disabled>Loading categories...</option>
-                  ) : (
-                    categories
-                      .filter((cat) => !cat.parentId)
-                      .map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))
-                  )}
-                  {/* 'Other' custom category removed */}
-                </select>
+                  onChange={(value) => {
+                    const event = {
+                      target: {
+                        name: "categoryId",
+                        value: value,
+                      },
+                    } as React.ChangeEvent<HTMLSelectElement>;
+                    handleChange(event);
+                    setHideCategoryError(true);
+                  }}
+                  options={categories
+                    .filter((cat) => !cat.parentId)
+                    .map((cat) => ({ value: cat.id, label: cat.name }))}
+                  placeholder="Select a category"
+                  error={!!(validationErrors.categoryId && !hideCategoryError)}
+                  loading={loadingCategories}
+                  required={true}
+                />
                 {categoryRequiresProof && (
                   <div className="mt-2 flex items-start gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
                     <svg

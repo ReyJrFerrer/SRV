@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MapPinIcon } from "@heroicons/react/24/solid";
+import { ResponsiveSelect } from "../../ui/ResponsiveDropdown";
 import phLocations from "../../../data/ph_locations.json"; // Adjust path as needed
 import { useLocationStore } from "../../../store/locationStore";
 
@@ -68,8 +69,7 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
   const [manualCityOptions, setManualCityOptions] = useState<string[]>([]);
 
   // Handle province dropdown change
-  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const province = e.target.value;
+  const handleProvinceChange = (province: string) => {
     setManualProvince(province);
     setManualCity("");
     setFormData((prev: any) => ({
@@ -92,8 +92,7 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
   };
 
   // Handle city dropdown change
-  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const city = e.target.value;
+  const handleCityChange = (city: string) => {
     setManualCity(city);
     setFormData((prev: any) => ({
       ...prev,
@@ -414,38 +413,38 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                 Province
                 <span className="ml-1 text-red-500">*</span>
               </label>
-              <select
-                className="rounded-md border border-blue-300 px-3 py-2"
+              <ResponsiveSelect
+                name="locationProvince"
+                id="locationProvince"
                 value={manualProvince}
                 onChange={handleProvinceChange}
-              >
-                <option value="">Select Province</option>
-                {phLocations &&
-                  Array.isArray(phLocations.provinces) &&
-                  phLocations.provinces.map((prov: any) => (
-                    <option key={prov.name} value={prov.name}>
-                      {prov.name}
-                    </option>
-                  ))}
-              </select>
+                options={
+                  phLocations && Array.isArray(phLocations.provinces)
+                    ? phLocations.provinces.map((prov: any) => ({
+                        value: prov.name,
+                        label: prov.name,
+                      }))
+                    : []
+                }
+                placeholder="Select Province"
+              />
 
               <label className="text-sm font-medium text-blue-700">
                 City / Municipality
                 <span className="ml-1 text-red-500">*</span>
               </label>
-              <select
-                className="rounded-md border border-blue-300 px-3 py-2"
+              <ResponsiveSelect
+                name="locationMunicipalityCity"
+                id="locationMunicipalityCity"
                 value={manualCity}
                 onChange={handleCityChange}
+                options={manualCityOptions.map((city) => ({
+                  value: city,
+                  label: city,
+                }))}
+                placeholder="Select City / Municipality"
                 disabled={!manualProvince}
-              >
-                <option value="">Select City / Municipality</option>
-                {manualCityOptions.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
         )}
