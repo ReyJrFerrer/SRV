@@ -1458,7 +1458,7 @@ const ProviderServiceDetailPage: React.FC = () => {
           </div>
 
           {/* Right: Certifications & Service Images */}
-          <div className="flex flex-col gap-8 sm:sticky sm:top-16 lg:self-start">
+          <div className="flex flex-col gap-8 md:sticky md:top-16 md:self-start">
             <LockableSection
               locked={
                 (editTitleCategory ||
