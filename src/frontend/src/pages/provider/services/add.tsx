@@ -620,9 +620,10 @@ const AddServicePage: React.FC = () => {
       return;
     }
 
-    if (Object.keys(errors).length === 0) {
-      setCurrentStep((prev) => prev + 1);
-      setValidationErrors({});
+if (Object.keys(errors).length === 0) {
+    scrollToTop();
+    setCurrentStep((prev) => prev + 1);
+    setValidationErrors({});
     } else {
       setValidationErrors(errors);
       setScrollToErrorTrigger((prev) => prev + 1);
