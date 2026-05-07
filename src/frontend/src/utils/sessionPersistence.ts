@@ -15,6 +15,8 @@ export interface SessionData {
   hasProfile: boolean;
   needsProfile: boolean;
   sessionDuration: number; // Original session duration in ms
+  loginMethod?: "ii" | "zklogin"; // Auth method used for this session
+  zkLoginAddress?: string; // zkLogin Sui address (when loginMethod is "zklogin")
 }
 
 export class SessionManager {

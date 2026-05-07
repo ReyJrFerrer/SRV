@@ -21,6 +21,7 @@ import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import OneSignal from "react-onesignal";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
+import { isZkLoginCallback } from "./src/services/zkLoginService";
 // import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 import LocationBlockedModal from "./src/components/common/locationAccessPermission/LocationBlockedModal";
 import LocationPermissionPromptModal from "./src/components/common/locationAccessPermission/LocationPermissionPromptModal";
@@ -98,6 +99,8 @@ import { CreateProfileGuard } from "./src/components/layout/CreateProfileGuard";
 
 // Auth Pages
 const CreateProfile = lazy(() => import("./src/pages/createProfile"));
+// ZkLoginCallback is imported eagerly — it's needed before HashRouter renders
+import ZkLoginCallback from "./src/pages/auth/ZkLoginCallback";
 
 // Client Pages
 const ClientHome = lazy(() => import("./src/pages/client/home"));
@@ -401,8 +404,33 @@ const GlobalLocationModals: React.FC = () => {
   );
 };
 
+// ---------------------------------------------------------------------------
+// Pre-router OAuth callback handling
+// ---------------------------------------------------------------------------
+// Google redirects to /auth/callback?id_token=<JWT> (path-based, no hash).
+// We detect this BEFORE HashRouter renders so the callback can be processed
+// without needing a matching route inside the hash-based router.
+// ---------------------------------------------------------------------------
+
+const ZkLoginCallbackWrapper: React.FC = () => (
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ZkLoginCallback />
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
+);
+
+// ---------------------------------------------------------------------------
+// Normal app (HashRouter-based)
+// ---------------------------------------------------------------------------
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
+    {isZkLoginCallback() ? (
+      <ZkLoginCallbackWrapper />
+    ) : (
     <ErrorBoundary>
       <HashRouterFix />
       <QueryClientProvider client={queryClient}>
@@ -589,6 +617,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         </HashRouter>
       </QueryClientProvider>
     </ErrorBoundary>
+    )}
   </React.StrictMode>,
 );
 

@@ -20,9 +20,9 @@ const LandingPage = () => {
   const location = useLocation();
   const {
     isAuthenticated,
-    identity,
     firebaseUser,
     login,
+    loginWithGoogle,
     isLoading,
     profileStatus,
     isExplicitLogin,
@@ -33,7 +33,7 @@ const LandingPage = () => {
 
   useEffect(() => {
     const checkProfileAndRedirect = async () => {
-      if (isAuthenticated && identity && firebaseUser) {
+      if (isAuthenticated && firebaseUser) {
         setIsCheckingProfile(true);
 
         try {
@@ -98,7 +98,7 @@ const LandingPage = () => {
         } finally {
           setIsCheckingProfile(false);
         }
-      } else if (isAuthenticated && identity && !firebaseUser) {
+      } else if (isAuthenticated && !firebaseUser) {
         setIsCheckingProfile(true);
       } else {
         // Not authenticated - done checking
@@ -108,7 +108,6 @@ const LandingPage = () => {
     checkProfileAndRedirect();
   }, [
     isAuthenticated,
-    identity,
     firebaseUser,
     profileStatus,
     isExplicitLogin,
@@ -141,7 +140,8 @@ const LandingPage = () => {
     <main className="bg-gray-50">
       {currentView === "main" && (
         <MainPage
-          onLoginClick={login}
+          onLoginClick={loginWithGoogle}
+          onLoginWithII={login}
           isLoginLoading={isLoading}
           onNavigateToAbout={handleNavigateToAbout}
           onNavigateToContact={handleNavigateToContact}

@@ -29,6 +29,12 @@ import {
 import { usePWA, PWAState } from "../hooks/usePWA";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import authCanisterService from "../services/authCanisterService";
+import {
+  initiateGoogleLogin,
+  completeZkLoginFromCallback,
+  clearEphemeralData,
+  isZkLoginCallback,
+} from "../services/zkLoginService";
 
 // Re-export types for backward compatibility
 export type { LocationStatus, Location, ManualFields };
@@ -39,11 +45,14 @@ interface AuthContextType {
   identity: Identity | null;
   firebaseUser: FirebaseUser | null;
   login: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  completeZkLogin: () => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
   profileStatus: { hasProfile: boolean; needsProfile: boolean } | null;
   isExplicitLogin: boolean;
+  loginMethod: "ii" | "zklogin" | null;
   // --- Location properties (now delegated to Zustand store) ---
   location: Location | null;
   locationStatus: LocationStatus;
@@ -111,6 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isExplicitLogin, setIsExplicitLogin] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<"ii" | "zklogin" | null>(null);
   const [isRefreshingSession, setIsRefreshingSession] = useState(false);
   const isRefreshingFirebase = useRef(false);
   // Post-login location prompt state
@@ -353,6 +363,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        // Check if we're returning from a zkLogin OAuth callback.
+        // If so, skip II initialization — the callback page will call
+        // completeZkLogin() to finalize the auth flow.
+        if (isZkLoginCallback()) {
+          setIsLoading(false);
+          return;
+        }
+
         const client = await AuthClient.create({
           idleOptions: { disableIdle: true },
         });
@@ -363,6 +381,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const identity = client.getIdentity();
           setIsAuthenticated(true);
           setIdentity(identity);
+          setLoginMethod("ii");
           updateAllActors(identity);
         } else {
           // IC delegation expired — try to restore from stored session.
@@ -380,7 +399,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               );
               setFirebaseUser(result.user);
               setIsAuthenticated(true);
-              setIdentity(client.getIdentity());
+              setLoginMethod(storedSession.loginMethod ?? "ii");
+              // Only set II identity if the session was II-based
+              if (!storedSession.loginMethod || storedSession.loginMethod === "ii") {
+                setIdentity(client.getIdentity());
+              }
               setProfileStatus({
                 hasProfile: result.hasProfile,
                 needsProfile: result.needsProfile,
@@ -409,6 +432,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     setError(null);
     setIsExplicitLogin(true);
+    setLoginMethod("ii");
 
     try {
       // Get platform-specific session duration
@@ -444,6 +468,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               principal,
               sessionDurationMs,
             );
+            // Tag session with login method
+            const session = await sessionManager.getSession();
+            if (session) {
+              session.loginMethod = "ii";
+              await sessionManager.storeSession(session);
+            }
             setFirebaseUser(result.user);
             // Store profile status from backend response (avoids race condition with Firestore)
             setProfileStatus({
@@ -469,10 +499,79 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Login with Google via zkLogin: generates ephemeral keys, redirects to Google OAuth
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    setError(null);
+    setIsExplicitLogin(true);
+    setLoginMethod("zklogin");
+
+    try {
+      await initiateGoogleLogin();
+      // The browser will redirect to Google OAuth — no further code runs here.
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to start Google sign-in. Please try again.",
+      );
+      setIsLoading(false);
+    }
+  };
+
+  // Complete zkLogin flow after OAuth callback redirect
+  const completeZkLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const session = await completeZkLoginFromCallback();
+      const sessionDurationNs = getRecommendedSessionDuration();
+      const sessionDurationMs = sessionDurationNs / (1000 * 1000);
+
+      // Bridge to Firebase using the zkLogin address as the identifier.
+      // The Cloud Function accepts any stable string — it doesn't verify
+      // whether it's an IC principal or a Sui address.
+      const result = await signInWithInternetIdentity(
+        session.address,
+        sessionDurationMs,
+      );
+
+      // Tag session with login method
+      const storedSession = await sessionManager.getSession();
+      if (storedSession) {
+        storedSession.loginMethod = "zklogin";
+        await sessionManager.storeSession(storedSession);
+      }
+
+      setFirebaseUser(result.user);
+      setIsAuthenticated(true);
+      setProfileStatus({
+        hasProfile: result.hasProfile,
+        needsProfile: result.needsProfile,
+      });
+
+      try {
+        await authCanisterService.updateUserActiveStatus(true);
+      } catch {}
+
+      // Clear the ephemeral key data from sessionStorage
+      clearEphemeralData();
+    } catch (err) {
+      clearEphemeralData();
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Authentication failed. Please try again.",
+      );
+      throw err; // Re-throw so the callback page can handle it
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Logout: updates online status, clears Firebase/IC sessions, resets state
   const logout = async () => {
-    if (!authClient) return;
-
     // Update user active status to false before logout
     try {
       await authCanisterService.updateUserActiveStatus(false);
@@ -484,20 +583,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear stored IC custom token (legacy)
     clearICCustomToken();
 
+    // Clear zkLogin ephemeral data
+    clearEphemeralData();
+
     // Logout from Firebase
     const auth = getFirebaseAuth();
     try {
       await firebaseSignOut(auth).catch(() => {});
     } catch (error) {}
 
-    // Logout from Internet Identity
-    await authClient.logout();
+    // Logout from Internet Identity (if II client is available)
+    if (authClient) {
+      await authClient.logout();
+    }
 
     // Clear profile status
     setProfileStatus(null);
     setIsAuthenticated(false);
     setIdentity(null);
     setFirebaseUser(null);
+    setLoginMethod(null);
     updateAllActors(null);
   };
 
@@ -541,11 +646,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     identity,
     firebaseUser,
     login,
+    loginWithGoogle,
+    completeZkLogin,
     logout,
     isLoading,
     error,
     profileStatus,
     isExplicitLogin,
+    loginMethod,
     // Delegate location properties to Zustand store
     location: locationStore.location,
     locationStatus: locationStore.locationStatus,
