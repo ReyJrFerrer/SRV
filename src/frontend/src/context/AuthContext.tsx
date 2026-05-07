@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useCallback,
   ReactNode,
 } from "react";
 import { AuthClient } from "@dfinity/auth-client";
@@ -383,6 +384,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIdentity(identity);
           setLoginMethod("ii");
           updateAllActors(identity);
+          // Restore isExplicitLogin if it was persisted before a reload/redirect
+          if (sessionStorage.getItem("isExplicitLogin") === "true") {
+            setIsExplicitLogin(true);
+          }
         } else {
           // IC delegation expired — try to restore from stored session.
           // The principal is permanent and the Cloud Function doesn't verify
@@ -393,21 +398,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             try {
               const sessionDuration =
                 getRecommendedSessionDuration() / (1000 * 1000);
-              const result = await signInWithInternetIdentity(
-                storedSession.principal,
-                sessionDuration,
-              );
+              const signInWithTimeout = Promise.race([
+                signInWithInternetIdentity(
+                  storedSession.principal,
+                  sessionDuration,
+                ),
+                new Promise<never>((_, reject) =>
+                  setTimeout(
+                    () => reject(new Error("Session restoration timed out")),
+                    15000,
+                  ),
+                ),
+              ]);
+              const result = await signInWithTimeout;
               setFirebaseUser(result.user);
               setIsAuthenticated(true);
               setLoginMethod(storedSession.loginMethod ?? "ii");
-              // Only set II identity if the session was II-based
-              if (!storedSession.loginMethod || storedSession.loginMethod === "ii") {
-                setIdentity(client.getIdentity());
-              }
+              setIdentity(client.getIdentity());
               setProfileStatus({
                 hasProfile: result.hasProfile,
                 needsProfile: result.needsProfile,
               });
+              // Restore isExplicitLogin if it was persisted before a reload/redirect
+              if (sessionStorage.getItem("isExplicitLogin") === "true") {
+                setIsExplicitLogin(true);
+              }
             } catch {
               await sessionManager.clearSession();
               updateAllActors(null);
@@ -418,10 +433,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (e) {
       } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
+    }
     };
-
     initializeAuth();
   }, []);
 
@@ -432,6 +446,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     setError(null);
     setIsExplicitLogin(true);
+    sessionStorage.setItem("isExplicitLogin", "true");
     setLoginMethod("ii");
 
     try {
@@ -480,9 +495,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               hasProfile: result.hasProfile,
               needsProfile: result.needsProfile,
             });
-            try {
-              await authCanisterService.updateUserActiveStatus(true);
-            } catch (error) {}
+            if (result.hasProfile) {
+              try {
+                await authCanisterService.updateUserActiveStatus(true);
+              } catch (error) {}
+            }
           } catch (fbError) {
             setError("Authentication failed. Please try again.");
           }
@@ -504,6 +521,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     setError(null);
     setIsExplicitLogin(true);
+    sessionStorage.setItem("isExplicitLogin", "true");
     setLoginMethod("zklogin");
 
     try {
@@ -520,7 +538,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Complete zkLogin flow after OAuth callback redirect
-  const completeZkLogin = async () => {
+  const completeZkLogin = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -551,13 +569,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         needsProfile: result.needsProfile,
       });
 
-      try {
-        await authCanisterService.updateUserActiveStatus(true);
-      } catch {}
+      if (result.hasProfile) {
+        try {
+          await authCanisterService.updateUserActiveStatus(true);
+        } catch {}
+      }
 
       // Clear the ephemeral key data from sessionStorage
       clearEphemeralData();
     } catch (err) {
+      console.error("[AuthContext] completeZkLogin failed:", err);
       clearEphemeralData();
       setError(
         err instanceof Error
@@ -568,7 +589,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [
+    completeZkLoginFromCallback,
+    sessionManager,
+    signInWithInternetIdentity,
+    authCanisterService,
+    clearEphemeralData,
+    getRecommendedSessionDuration,
+    setFirebaseUser,
+    setIsAuthenticated,
+    setProfileStatus,
+    setError,
+    setIsLoading,
+  ]);
 
   // Logout: updates online status, clears Firebase/IC sessions, resets state
   const logout = async () => {
@@ -585,6 +618,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Clear zkLogin ephemeral data
     clearEphemeralData();
+
+    // Clear persisted explicit login flag
+    sessionStorage.removeItem("isExplicitLogin");
 
     // Logout from Firebase
     const auth = getFirebaseAuth();

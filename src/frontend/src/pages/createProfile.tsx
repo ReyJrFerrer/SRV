@@ -18,7 +18,7 @@ export default function CreateProfilePage() {
   const [showTerms, setShowTerms] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, identity, login } = useAuth();
+  const { isAuthenticated, firebaseUser, login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -82,7 +82,7 @@ export default function CreateProfilePage() {
   // Check if user already has a profile and redirect accordingly
   useEffect(() => {
     const checkExistingProfile = async () => {
-      if (!isAuthenticated || !identity) {
+      if (!isAuthenticated || !firebaseUser) {
         // Not authenticated - redirect to landing page after delay
         const timer = setTimeout(() => {
           navigate("/");
@@ -110,7 +110,7 @@ export default function CreateProfilePage() {
     };
 
     checkExistingProfile();
-  }, [isAuthenticated, identity, navigate]);
+  }, [isAuthenticated, firebaseUser, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -289,7 +289,7 @@ export default function CreateProfilePage() {
     setError("");
     setReauthRequired(false);
 
-    if (!isAuthenticated || !identity) {
+    if (!isAuthenticated || !firebaseUser) {
       setError("Authentication session not found.");
       setReauthRequired(true);
       setIsCreatingProfile(false);

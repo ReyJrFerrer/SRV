@@ -1,49 +1,64 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 type CallbackStatus = "processing" | "error";
+
+const COMPLETE_ZKLOGIN_TIMEOUT_MS = 30000;
 
 /**
  * zkLogin OAuth callback handler.
  *
  * This component is rendered OUTSIDE the HashRouter (in main.tsx) because
- * Google redirects to a path-based URL (/auth/callback?id_token=...) which
- * HashRouter can't match. After processing, it redirects to the hash-based
- * home route (/#/) where the normal app takes over.
+ * Google returns the id_token in the URL fragment (#id_token=...) which
+ * HashRouter can't match as a route. After processing, it redirects to the
+ * hash-based home route (/#/) and reloads so the normal app mounts.
  */
 export default function ZkLoginCallback() {
   const { completeZkLogin } = useAuth();
   const [status, setStatus] = useState<CallbackStatus>("processing");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const hasRun = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    if (hasRun.current) return;
+    hasRun.current = true;
 
     const handleCallback = async () => {
       try {
-        await completeZkLogin();
-        if (!cancelled) {
-          // Auth state is now set — redirect to hash-based home.
-          // The LandingPage in App.tsx will handle profile-check / redirect.
-          window.location.href = `${window.location.origin}/#/`;
-        }
+        // Race completeZkLogin against a timeout so the user is never
+        // stuck on the spinner indefinitely if the Cloud Function hangs.
+        await Promise.race([
+          completeZkLogin(),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () =>
+                reject(
+                  new Error(
+                    "Sign-in is taking longer than expected. Please try again.",
+                  ),
+                ),
+              COMPLETE_ZKLOGIN_TIMEOUT_MS,
+            ),
+          ),
+        ]);
+
+        // Auth state is now set — redirect to hash-based home and reload.
+        // We must reload because this component lives outside HashRouter;
+        // a hash change alone won't remount the normal app tree.
+        window.location.hash = "#/";
+        window.location.reload();
       } catch (err) {
-        if (!cancelled) {
-          setStatus("error");
-          setErrorMessage(
-            err instanceof Error
-              ? err.message
-              : "Authentication failed. Please try again.",
-          );
-        }
+        console.error("[ZkLoginCallback] completeZkLogin failed:", err);
+        setStatus("error");
+        setErrorMessage(
+          err instanceof Error
+            ? err.message
+            : "Authentication failed. Please try again.",
+        );
       }
     };
 
     handleCallback();
-
-    return () => {
-      cancelled = true;
-    };
   }, [completeZkLogin]);
 
   if (status === "error") {

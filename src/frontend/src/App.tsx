@@ -39,6 +39,7 @@ const LandingPage = () => {
         try {
           // Only navigate to create-profile if login button was explicitly clicked
           if (profileStatus && profileStatus.needsProfile && isExplicitLogin) {
+            sessionStorage.removeItem("isExplicitLogin");
             navigate("/create-profile");
             setIsCheckingProfile(false);
             return;
@@ -71,6 +72,7 @@ const LandingPage = () => {
 
           // If profile exists, redirect based on role
           if (profile && profile.name && profile.phone) {
+            sessionStorage.removeItem("isExplicitLogin");
             if (profile.activeRole === "Client") {
               navigate("/client/home");
             } else if (profile.activeRole === "ServiceProvider") {
@@ -85,6 +87,7 @@ const LandingPage = () => {
             }
           } else if (isExplicitLogin) {
             // Only navigate to create-profile if this was an explicit login
+            sessionStorage.removeItem("isExplicitLogin");
             navigate("/create-profile");
           } else {
             // Automatic login with no profile - go to landing page

@@ -179,11 +179,11 @@ export function buildGoogleOAuthUrl(nonce: string): string {
     );
   }
 
-  // Path-based redirect URI — Google will redirect to:
-  //   <origin>/auth/callback?id_token=<JWT>
-  // The Vite dev server / production server serves index.html for this path,
-  // and main.tsx intercepts it before HashRouter renders.
-  const redirectUri = `${window.location.origin}/auth/callback`;
+  // Google returns the id_token in the URL fragment (hash) when using
+  // response_type=id_token (implicit flow). We redirect to the app root
+  // so main.tsx can detect the hash-based callback before HashRouter renders.
+  // Fragment example: <origin>/#id_token=<JWT>
+  const redirectUri = window.location.origin;
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -203,28 +203,29 @@ export function buildGoogleOAuthUrl(nonce: string): string {
 /**
  * Extract the `id_token` from the current URL.
  *
- * Google redirects to a path-based URL (no hash):
- *   http://localhost:5173/auth/callback?id_token=<JWT>
+ * Google redirects to the origin with the token in the URL fragment (hash):
+ *   http://localhost:5173/#id_token=<JWT>
  *
- * So `window.location.search` contains: ?id_token=<JWT>
+ * So `window.location.hash` contains: #id_token=<JWT>
  */
 export function parseJwtFromCallbackUrl(): string | null {
-  const search = window.location.search;
-  if (!search) return null;
+  const hash = window.location.hash;
+  if (!hash) return null;
 
-  const params = new URLSearchParams(search);
+  // Remove leading '#' and parse as search params
+  const params = new URLSearchParams(hash.slice(1));
   return params.get("id_token");
 }
 
 /**
  * Check if the current URL is a zkLogin OAuth callback.
  * Used by main.tsx to intercept before HashRouter renders.
+ *
+ * Google returns the id_token in the URL fragment (hash), e.g.:
+ *   http://localhost:5173/#id_token=<JWT>
  */
 export function isZkLoginCallback(): boolean {
-  return (
-    window.location.pathname === "/auth/callback" &&
-    !!new URLSearchParams(window.location.search).get("id_token")
-  );
+  return !!new URLSearchParams(window.location.hash.slice(1)).get("id_token");
 }
 
 /**

@@ -18,7 +18,7 @@ export const CreateProfileGuard: React.FC<CreateProfileGuardProps> = ({
   children,
 }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [canAccessCreateProfile, setCanAccessCreateProfile] = useState(false);
 
@@ -26,8 +26,8 @@ export const CreateProfileGuard: React.FC<CreateProfileGuardProps> = ({
     const checkProfileAccess = async () => {
       setIsChecking(true);
 
-      // If not authenticated, redirect to landing page
-      if (!isAuthenticated || !identity) {
+      // If not authenticated (or Firebase user not yet available), redirect to landing page
+      if (!isAuthenticated || !firebaseUser) {
         navigate("/", { replace: true });
         return;
       }
@@ -55,7 +55,7 @@ export const CreateProfileGuard: React.FC<CreateProfileGuardProps> = ({
     };
 
     checkProfileAccess();
-  }, [isAuthenticated, identity, navigate]);
+  }, [isAuthenticated, firebaseUser, navigate]);
 
   // Show loading while checking profile
   if (isChecking) {
