@@ -13,7 +13,7 @@ import EmptyState from "../../components/common/EmptyState";
 import SmartHeader from "../../components/common/SmartHeader";
 
 const ClientChatPage: React.FC = () => {
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -111,10 +111,10 @@ const ClientChatPage: React.FC = () => {
 
   // Reload conversation when selectedConversationId changes (handles returning from sub-page)
   useEffect(() => {
-    if (selectedConversationId && identity) {
+    if (selectedConversationId && firebaseUser) {
       loadConversation(selectedConversationId);
     }
-  }, [selectedConversationId, identity, loadConversation]);
+  }, [selectedConversationId, firebaseUser, loadConversation]);
 
   // Scroll to bottom on message updates (robust: after layout and assets)
   useEffect(() => {
@@ -167,7 +167,7 @@ const ClientChatPage: React.FC = () => {
 
   // Compute unread total for current user
   const unreadTotal = React.useMemo(() => {
-    const myId = identity?.getPrincipal().toString();
+    const myId = firebaseUser?.uid;
     if (!myId) return 0;
     try {
       return conversations.reduce((sum, s) => {
@@ -179,13 +179,13 @@ const ClientChatPage: React.FC = () => {
     } catch {
       return 0;
     }
-  }, [conversations, identity]);
+  }, [conversations, firebaseUser]);
 
   // Update tab title with sender name
   useEffect(() => {
     if (!isAuthenticated || !isDesktop) return;
     let updated = false;
-    const myId = identity?.getPrincipal().toString();
+    const myId = firebaseUser?.uid;
     conversations.forEach((summary) => {
       const c = summary.conversation;
       if (!c || !c.unreadCount || !myId) return;
@@ -205,7 +205,7 @@ const ClientChatPage: React.FC = () => {
         document.title = defaultTitleRef.current;
       } catch {}
     }
-  }, [conversations, identity, isAuthenticated, isDesktop, unreadTotal]);
+  }, [conversations, firebaseUser, isAuthenticated, isDesktop, unreadTotal]);
 
   // Restore title on unmount
   useEffect(() => {
@@ -283,12 +283,12 @@ const ClientChatPage: React.FC = () => {
     if (
       !messageText.trim() ||
       !currentConversation ||
-      !identity ||
+      !firebaseUser ||
       sendingMessage
     )
       return;
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
       const receiverId =
         currentConversation.clientId === currentUserId
           ? currentConversation.providerId
@@ -345,8 +345,8 @@ const ClientChatPage: React.FC = () => {
                       const conversation = conversationSummary.conversation;
                       const lastMessage =
                         conversationSummary.lastMessage?.[0] || undefined;
-                      const currentUserId =
-                        identity?.getPrincipal().toString() || "";
+                        const currentUserId =
+                        firebaseUser?.uid || "";
                       const otherUserId = conversationSummary.otherUserId;
                       const otherUserName =
                         conversationSummary.otherUserName ||
@@ -460,7 +460,7 @@ const ClientChatPage: React.FC = () => {
                           <>
                             {messages.map((message) => {
                               const isMine =
-                                identity?.getPrincipal().toString() ===
+                                firebaseUser?.uid ===
                                 message.senderId;
                               return (
                                 <div

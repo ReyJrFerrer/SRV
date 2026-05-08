@@ -33,7 +33,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   isBookingActionInProgress,
   startNavigationById,
 }) => {
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const navigate = useNavigate();
 
   const { conversations, createConversation } = useChat();
@@ -213,9 +213,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // Section: Handlers (chat)
   const handleChatClient = async () => {
-    if (!booking.clientId || !identity) return;
+    if (!booking.clientId || !firebaseUser) return;
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
       // Check if there's an existing conversation with this client
       const existingConversation = conversations.find(
         (conv) =>

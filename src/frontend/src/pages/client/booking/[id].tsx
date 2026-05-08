@@ -51,7 +51,7 @@ const BookingDetailsPage: React.FC = () => {
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const { conversations, loading: chatLoading, createConversation } = useChat();
   const [chatErrorMessage, setChatErrorMessage] = useState<string | null>(null);
   const { getServiceReviews, calculateServiceRating } = useReviewManagement({
@@ -378,13 +378,13 @@ const BookingDetailsPage: React.FC = () => {
       setChatErrorMessage("Provider information is missing.");
       return;
     }
-    if (!identity) {
+    if (!firebaseUser) {
       setChatErrorMessage("You must be logged in to start a conversation.");
       return;
     }
     setChatErrorMessage(null);
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
       const providerIdString = specificBooking.providerId.toString();
       const existingConversation = conversations.find(
         (conv) =>

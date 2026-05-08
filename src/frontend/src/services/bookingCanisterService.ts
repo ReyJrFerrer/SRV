@@ -168,7 +168,7 @@ export const bookingCanisterService = {
    */
   async createBookingWithPackage(
     serviceId: string,
-    providerId: Principal,
+    providerId: string,
     price: number,
     location: Location,
     requestedDate: Date,
@@ -199,7 +199,7 @@ export const bookingCanisterService = {
    */
   async createBooking(
     serviceId: string,
-    providerId: Principal,
+    providerId: string,
     price: number,
     location: Location,
     requestedDate: Date,
@@ -265,7 +265,7 @@ export const bookingCanisterService = {
   /**
    * Get all bookings for a client
    */
-  async getClientBookings(clientId: Principal): Promise<Booking[]> {
+  async getClientBookings(clientId: string): Promise<Booking[]> {
     try {
       const getClientBookingsFn = httpsCallable(
         getFunctions(),
@@ -291,7 +291,7 @@ export const bookingCanisterService = {
   /**
    * Get all bookings for a provider
    */
-  async getProviderBookings(providerId: Principal): Promise<Booking[]> {
+  async getProviderBookings(providerId: string): Promise<Booking[]> {
     try {
       const getProviderBookingsFn = httpsCallable(
         getFunctions(),
@@ -541,7 +541,7 @@ export const bookingCanisterService = {
    * Get client analytics
    */
   async getClientAnalytics(
-    clientId: Principal,
+    clientId: string,
     startDate?: Date,
     endDate?: Date,
   ): Promise<ClientAnalytics | null> {
@@ -659,13 +659,13 @@ export const bookingCanisterService = {
    * Subscribe to all bookings for a client with realtime updates
    */
   subscribeToClientBookings(
-    clientId: Principal,
+    clientId: string,
     callback: (bookings: Booking[]) => void,
   ): Unsubscribe {
-    const listenerId = `client-${clientId.toString()}`;
+    const listenerId = `client-${clientId}`;
     const q = query(
       collection(getDb(), "bookings"),
-      where("clientId", "==", clientId.toString()),
+      where("clientId", "==", clientId),
     );
     return createSharedBookingListener(listenerId, q, callback);
   },
@@ -674,10 +674,10 @@ export const bookingCanisterService = {
    * Subscribe to all bookings for a provider with realtime updates
    */
   subscribeToProviderBookings(
-    providerId: Principal,
+    providerId: string,
     callback: (bookings: Booking[]) => void,
   ): Unsubscribe {
-    const listenerId = `provider-${providerId.toString()}`;
+    const listenerId = `provider-${providerId}`;
     const q = query(
       collection(getDb(), "bookings"),
       where("providerId", "==", providerId.toString()),

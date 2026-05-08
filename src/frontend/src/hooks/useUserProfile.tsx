@@ -10,7 +10,7 @@ import { useProfileImage } from "./useMediaLoader";
  * Custom hook to manage the client's profile data, including fetching and updating.
  */
 export const useUserProfile = () => {
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
 
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ export const useUserProfile = () => {
   } = useProfileImage(profile?.profilePicture?.imageUrl);
 
   const fetchProfile = useCallback(async () => {
-    if (isAuthenticated && identity) {
+    if (isAuthenticated && firebaseUser) {
       setLoading(true);
       setError(null);
       try {
@@ -39,7 +39,7 @@ export const useUserProfile = () => {
     } else {
       setLoading(false);
     }
-  }, [isAuthenticated, identity]);
+  }, [isAuthenticated, firebaseUser]);
 
   const uploadImageToServer = async (
     imageFile: File,

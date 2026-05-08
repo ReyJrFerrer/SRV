@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Principal } from "@dfinity/principal";
 import {
   Booking as BaseBooking,
   BookingStatus,
@@ -583,9 +582,8 @@ export const useBookingManagement = (): BookingManagementHook => {
         throw new Error("No authenticated user found");
       }
 
-      const userPrincipal = Principal.fromText(currentUserId);
       const rawBookings =
-        await bookingCanisterService.getClientBookings(userPrincipal);
+        await bookingCanisterService.getClientBookings(currentUserId);
 
       // Transform base bookings to extended bookings with package support
       const transformedBookings = rawBookings.map(transformBooking);
@@ -626,9 +624,8 @@ export const useBookingManagement = (): BookingManagementHook => {
     clearError();
 
     try {
-      const userPrincipal = Principal.fromText(currentUserId);
       const bookings =
-        await bookingCanisterService.getClientBookings(userPrincipal);
+        await bookingCanisterService.getClientBookings(currentUserId);
 
       // Use the debounced handler to process the bookings
       await handleBookingsUpdate(bookings);
@@ -874,11 +871,9 @@ export const useBookingManagement = (): BookingManagementHook => {
     clearError();
 
     try {
-      const userPrincipal = Principal.fromText(currentUserId);
-
       // Subscribe to realtime updates with debounced handler
       const unsubscribe = bookingCanisterService.subscribeToClientBookings(
-        userPrincipal,
+        currentUserId,
         debouncedHandleBookingsUpdate,
       );
 

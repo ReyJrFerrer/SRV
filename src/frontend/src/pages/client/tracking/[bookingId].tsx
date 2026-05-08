@@ -20,7 +20,7 @@ import MapErrorBoundary from "../../../components/common/MapErrorBoundary";
 const ClientTrackingPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const { bookings, loading: bookingsLoading } = useBookingManagement();
   const { conversations, createConversation } = useChat();
 
@@ -132,10 +132,10 @@ const ClientTrackingPage: React.FC = () => {
 
   // Handle chat with provider
   const handleChat = useCallback(async () => {
-    if (!booking?.providerId || !identity) return;
+    if (!booking?.providerId || !firebaseUser) return;
 
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
       const providerIdString = booking.providerId.toString();
 
       // Check for existing conversation
@@ -174,7 +174,7 @@ const ClientTrackingPage: React.FC = () => {
     } catch (error) {
       console.error("Failed to start chat:", error);
     }
-  }, [booking, identity, conversations, createConversation, navigate]);
+  }, [booking, firebaseUser, conversations, createConversation, navigate]);
 
   // Handle booking cancellation
   const handleCancel = useCallback(() => {

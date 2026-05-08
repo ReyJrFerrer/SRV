@@ -40,7 +40,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const navigate = useNavigate();
   const { checkCommissionValidation } = useProviderBookingManagement();
   const { conversations, createConversation } = useChat();
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
 
   // Section: State
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
@@ -256,13 +256,13 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       toast.error("Provider information is missing.");
       return;
     }
-    if (!identity) {
+    if (!firebaseUser) {
       toast.error("You must be logged in to start a conversation.");
       return;
     }
 
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
       const providerIdString = booking.providerProfile.id.toString();
 
       const existingConversation = conversations.find(
@@ -308,7 +308,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
           : "Could not start conversation. Please try again.",
       );
     }
-  }, [booking, conversations, createConversation, identity, navigate]);
+  }, [booking, conversations, createConversation, firebaseUser, navigate]);
 
   // Emit booking-interacted when user performs actions from the card
   const emitInteraction = useCallback(() => {

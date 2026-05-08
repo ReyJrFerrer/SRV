@@ -28,7 +28,7 @@ interface PaymentPendingState {
 const PaymentPendingPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const { createBookingRequest } = useBookRequest();
 
   const [paymentStatus, setPaymentStatus] = useState<
@@ -135,7 +135,7 @@ const PaymentPendingPage: React.FC = () => {
         paymentId: state.invoiceId,
       };
 
-      if (!identity) {
+      if (!firebaseUser) {
         throw new Error("Authentication required. Please log in again.");
       }
 

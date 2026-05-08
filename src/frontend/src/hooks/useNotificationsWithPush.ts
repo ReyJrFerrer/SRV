@@ -146,7 +146,7 @@ export const useNotificationsWithPush = () => {
     error: bookingError,
   } = useBookingManagement();
 
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const { pwaState } = usePWA();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -160,13 +160,13 @@ export const useNotificationsWithPush = () => {
 
   // Get user ID
   const getUserId = (): string => {
-    return identity?.getPrincipal().toString() || "anonymous";
+    return firebaseUser?.uid || "anonymous";
   };
 
   // Initialize notification integration service
   useEffect(() => {
     const initializeIntegration = async () => {
-      if (identity && pwaState.pushSubscribed) {
+      if (firebaseUser && pwaState.pushSubscribed) {
         await notificationIntegrationService.initialize(
           getUserId(),
           pwaState.pushSubscribed,
@@ -174,7 +174,7 @@ export const useNotificationsWithPush = () => {
       }
     };
     initializeIntegration();
-  }, [identity, pwaState.pushSubscribed]);
+  }, [firebaseUser, pwaState.pushSubscribed]);
 
   // Subscribe to the notification store to keep the unread count in sync
   useEffect(() => {
@@ -196,7 +196,7 @@ export const useNotificationsWithPush = () => {
       // Fetch notifications from canister first
       const canisterNotifications =
         await notificationCanisterService.getUserNotifications(
-          identity?.getPrincipal().toString(),
+          firebaseUser?.uid,
           { userType: "client" },
         );
 
@@ -257,7 +257,7 @@ export const useNotificationsWithPush = () => {
 
   // Set up real-time listener for notifications
   useEffect(() => {
-    if (!identity) {
+    if (!firebaseUser) {
       return;
     }
 
@@ -304,7 +304,7 @@ export const useNotificationsWithPush = () => {
     return () => {
       unsubscribe();
     };
-  }, [identity]);
+  }, [firebaseUser]);
 
   // Decrease booking badge when a booking is interacted (clicked/opened)
   // Listens for a global event 'booking-interacted' with optional detail { bookingId?: string }

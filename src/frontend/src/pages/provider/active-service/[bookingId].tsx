@@ -59,7 +59,7 @@ const ActiveServicePage: React.FC = () => {
     }
   }, [booking, isLoadingBooking, bookingId, navigate, isValidating]);
 
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const { conversations, createConversation } = useChat();
 
   useEffect(() => {
@@ -206,7 +206,7 @@ const ActiveServicePage: React.FC = () => {
   };
 
   const handleChatClient = async () => {
-    if (!booking || !identity) return;
+    if (!booking || !firebaseUser) return;
     const clientId =
       booking.clientProfile?.id?.toString() || booking.clientId?.toString();
     if (!clientId) {
@@ -214,7 +214,7 @@ const ActiveServicePage: React.FC = () => {
       return;
     }
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
       const existingConversation = conversations.find(
         (conv) =>
           (conv.conversation.providerId === currentUserId &&

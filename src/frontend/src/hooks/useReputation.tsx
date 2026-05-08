@@ -16,7 +16,7 @@ export interface ReputationScore {
 
 // Hook
 export const useReputation = () => {
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
 
   const [reputation, setReputation] = useState<ReputationScore | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,11 +83,11 @@ export const useReputation = () => {
           return null;
         }
       },
-    [isAuthenticated, identity],
+    [isAuthenticated, firebaseUser],
   );
 
   const fetchReputation = useCallback(async () => {
-    if (!isAuthenticated || !identity) {
+    if (!isAuthenticated || !firebaseUser) {
       setLoading(false);
       setError("Authentication required");
       return;
@@ -98,7 +98,7 @@ export const useReputation = () => {
 
     try {
       try {
-        const userId = identity.getPrincipal().toString();
+        const userId = firebaseUser.uid;
         const reputationData =
           await reputationService.getMyReputationScore(userId);
 
@@ -120,7 +120,7 @@ export const useReputation = () => {
         setReputation(formattedReputation);
       } catch (fetchError: any) {
         if (fetchError.message.includes("No reputation score found")) {
-          const userId = identity.getPrincipal().toString();
+          const userId = firebaseUser.uid;
           const initialReputation =
             await reputationService.initializeMyReputation(userId);
 
@@ -151,7 +151,7 @@ export const useReputation = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, identity]);
+  }, [isAuthenticated, firebaseUser]);
 
   const refreshReputation = useCallback(async () => {
     await fetchReputation();

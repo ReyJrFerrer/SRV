@@ -414,7 +414,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setFirebaseUser(result.user);
               setIsAuthenticated(true);
               setLoginMethod(storedSession.loginMethod ?? "ii");
-              setIdentity(client.getIdentity());
+              // Only set II identity if the session was II-based
+              if (!storedSession.loginMethod || storedSession.loginMethod === "ii") {
+                setIdentity(client.getIdentity());
+              }
               setProfileStatus({
                 hasProfile: result.hasProfile,
                 needsProfile: result.needsProfile,
@@ -456,15 +459,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       await authClient.login({
         identityProvider:
-          // NOTE FOR FUTURE REY - the localhost internet identity does not work anymore because
-          // it gives the error value - Response verification failed: Certification values not found
-          // Intuition tells me it's the dfx version and since they're we're using the latest localhost internet identity
-          // then it might be deprecated already.
-          // process.env.DFX_NETWORK === "ic" ||
-          // process.env.DFX_NETWORK === "playground"
-          // ?
           `https://id.ai`,
-        // : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`
         // Set session duration based on platform (7 days mobile/PWA, 30 days desktop)
         maxTimeToLive: BigInt(sessionDurationNs),
 

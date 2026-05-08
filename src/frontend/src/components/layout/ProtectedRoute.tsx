@@ -13,7 +13,7 @@ export default function ProtectedRoute({
   children,
   requiredRole,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, identity, isLoading } = useAuth();
+  const { isAuthenticated, firebaseUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const [showSuspensionModal, setShowSuspensionModal] = useState(false);
 
@@ -21,7 +21,7 @@ export default function ProtectedRoute({
     const checkAuthAndRole = async () => {
       if (isLoading) return; // Still checking auth status
 
-      if (!isAuthenticated || !identity) {
+      if (!isAuthenticated || !firebaseUser) {
         // Redirect to home for authentication
         navigate("/");
         return;
@@ -57,7 +57,7 @@ export default function ProtectedRoute({
     };
 
     checkAuthAndRole();
-  }, [isAuthenticated, identity, isLoading, requiredRole, navigate]);
+  }, [isAuthenticated, firebaseUser, isLoading, requiredRole, navigate]);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -70,7 +70,7 @@ export default function ProtectedRoute({
   }
 
   // Don't render children if not authenticated
-  if (!isAuthenticated || !identity) {
+  if (!isAuthenticated || !firebaseUser) {
     return null;
   }
 

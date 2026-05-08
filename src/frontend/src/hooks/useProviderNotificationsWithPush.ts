@@ -142,7 +142,7 @@ export const useProviderNotificationsWithPush = () => {
     error: bookingError,
   } = useProviderBookingManagement();
 
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const { pwaState } = usePWA();
 
   const [notifications, setNotifications] = useState<ProviderNotification[]>(
@@ -160,13 +160,13 @@ export const useProviderNotificationsWithPush = () => {
 
   // Get user ID
   const getUserId = (): string => {
-    return identity?.getPrincipal().toString() || "anonymous";
+    return firebaseUser?.uid || "anonymous";
   };
 
   // Initialize notification integration service
   useEffect(() => {
     const initializeIntegration = async () => {
-      if (identity && pwaState.pushSubscribed) {
+      if (firebaseUser && pwaState.pushSubscribed) {
         await notificationIntegrationService.initialize(
           getUserId(),
           pwaState.pushSubscribed,
@@ -174,7 +174,7 @@ export const useProviderNotificationsWithPush = () => {
       }
     };
     initializeIntegration();
-  }, [identity, pwaState.pushSubscribed]);
+  }, [firebaseUser, pwaState.pushSubscribed]);
 
   // Subscribe to the provider notification store
   useEffect(() => {
@@ -196,7 +196,7 @@ export const useProviderNotificationsWithPush = () => {
       // Fetch notifications from canister first
       const canisterNotifications =
         await notificationCanisterService.getUserNotifications(
-          identity?.getPrincipal().toString(),
+          firebaseUser?.uid,
           { userType: "provider" },
         );
 
@@ -256,7 +256,7 @@ export const useProviderNotificationsWithPush = () => {
 
   // Set up real-time listener for provider notifications
   useEffect(() => {
-    if (!identity) {
+    if (!firebaseUser) {
       return;
     }
 
@@ -299,7 +299,7 @@ export const useProviderNotificationsWithPush = () => {
     return () => {
       unsubscribe();
     };
-  }, [identity]);
+  }, [firebaseUser]);
 
   // Decrease booking request badge when a provider interacts with a booking request
   // Listens for global 'booking-interacted' with optional detail { bookingId?: string }

@@ -12,7 +12,7 @@ import authCanisterService from "../../services/authCanisterService";
 const NotFound: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, identity, firebaseUser } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
   const [debugInfo, setDebugInfo] = useState<string>("");
 
   useEffect(() => {
@@ -31,7 +31,7 @@ const NotFound: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // If user is fully authenticated (both IC and Firebase)
-      if (isAuthenticated && identity && firebaseUser) {
+      if (isAuthenticated && firebaseUser) {
         try {
           // Try to get user profile to determine their role
           const profile = await authCanisterService.getMyProfile();
@@ -61,7 +61,7 @@ const NotFound: React.FC = () => {
     };
 
     redirectUser();
-  }, [isAuthenticated, identity, firebaseUser, navigate, location]);
+  }, [isAuthenticated, firebaseUser, navigate, location]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">

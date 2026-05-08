@@ -294,7 +294,7 @@ const useDebounce = <F extends (...args: any[]) => any>(
 
 export const useServiceManagement = (): ServiceManagementHook => {
   // Authentication - Using identity from custom AuthContext
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
 
   // Core state management
   const [services, setServices] = useState<EnhancedService[]>([]);
@@ -336,12 +336,12 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // User services filtered from all services
   const userServices = useMemo(() => {
-    if (!identity) return [];
-    const currentUserIdString = identity.getPrincipal().toString();
+    if (!firebaseUser) return [];
+    const currentUserIdString = firebaseUser.uid;
     return services.filter(
       (service) => service.providerId.toString() === currentUserIdString,
     );
-  }, [services, identity]);
+  }, [services, firebaseUser]);
 
   // Helper function to update loading state
   const setLoadingState = useCallback(
@@ -380,7 +380,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   // Fetch user profile
   const fetchUserProfile = useCallback(async () => {
     // Wait for authentication context to be properly initialized
-    if (!isAuthenticated || !identity) return;
+    if (!isAuthenticated || !firebaseUser) return;
 
     try {
       setLoadingState("profile", true);
@@ -388,7 +388,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const profileData = await authCanisterService.getProfile(
-        identity.getPrincipal().toString(),
+        firebaseUser.uid,
       );
       setUserProfile(profileData);
     } catch (error) {
@@ -396,7 +396,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     } finally {
       setLoadingState("profile", false);
     }
-  }, [isAuthenticated, identity, setLoadingState, handleError]);
+  }, [isAuthenticated, firebaseUser, setLoadingState, handleError]);
 
   // Fetch provider profile
   const fetchProviderProfile = useCallback(
@@ -1159,12 +1159,12 @@ export const useServiceManagement = (): ServiceManagementHook => {
   );
 
   const getCurrentUserId = useCallback((): string | null => {
-    return identity ? identity.getPrincipal().toString() : null;
-  }, [identity]);
+    return firebaseUser ? firebaseUser.uid : null;
+  }, [firebaseUser]);
 
   const isUserAuthenticated = useCallback((): boolean => {
-    return isAuthenticated && identity !== null;
-  }, [isAuthenticated, identity]);
+    return isAuthenticated && firebaseUser !== null;
+  }, [isAuthenticated, firebaseUser]);
 
   const retryOperation = useCallback(
     async (operation: string): Promise<void> => {
@@ -1279,10 +1279,10 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Effects
   useEffect(() => {
-    if (isAuthenticated && identity) {
+    if (isAuthenticated && firebaseUser) {
       fetchUserProfile();
     }
-  }, [isAuthenticated, identity, fetchUserProfile]);
+  }, [isAuthenticated, firebaseUser, fetchUserProfile]);
 
   // Memoized service update handler
   const handleServicesUpdate = useCallback(
@@ -1317,7 +1317,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Subscribe to all services with realtime updates
   useEffect(() => {
-    if (!isAuthenticated || !identity) {
+    if (!isAuthenticated || !firebaseUser) {
       return;
     }
 

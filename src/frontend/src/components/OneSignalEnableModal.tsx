@@ -17,7 +17,7 @@ export const OneSignalEnableModal: React.FC<OneSignalEnableModalProps> = ({
   onClose,
 }) => {
   const { enablePushNotifications, error } = usePWA();
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const nativePermission =
@@ -34,7 +34,7 @@ export const OneSignalEnableModal: React.FC<OneSignalEnableModalProps> = ({
   const handleEnable = async () => {
     setLoading(true);
     try {
-      const userId = identity?.getPrincipal().toString() || "anonymous";
+      const userId = firebaseUser?.uid || "anonymous";
       const success = await enablePushNotifications(userId);
       if (success) {
         try {

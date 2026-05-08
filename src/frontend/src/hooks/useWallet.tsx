@@ -9,7 +9,7 @@ import walletCanisterService, {
  * Custom hook to manage wallet data, including balance, transactions, and transfers
  */
 export const useWallet = () => {
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
 
   const [balance, setBalance] = useState<number>(0);
   const [heldBalance, setHeldBalance] = useState<number>(0);
@@ -33,7 +33,7 @@ export const useWallet = () => {
    * Fetch wallet balance
    */
   const fetchBalance = useCallback(async () => {
-    if (!isAuthenticated || !identity) {
+    if (!isAuthenticated || !firebaseUser) {
       setBalance(0);
       setHeldBalance(0);
       setAvailableBalance(0);
@@ -44,7 +44,7 @@ export const useWallet = () => {
     try {
       setError(null);
       const walletDetails = await walletCanisterService.getWalletDetails(
-        identity.getPrincipal().toString(),
+        firebaseUser.uid,
       );
 
       setBalance(walletDetails.balance);
@@ -58,13 +58,13 @@ export const useWallet = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, identity]);
+  }, [isAuthenticated, firebaseUser]);
 
   /**
    * Fetch transaction history
    */
   const fetchTransactions = useCallback(async () => {
-    if (!isAuthenticated || !identity) {
+    if (!isAuthenticated || !firebaseUser) {
       setAllTransactions([]);
       setDisplayedTransactions([]);
       return;
@@ -74,7 +74,7 @@ export const useWallet = () => {
       setTransactionLoading(true);
       setError(null);
       const history = await walletCanisterService.getTransactionHistory(
-        identity.getPrincipal().toString(),
+        firebaseUser.uid,
       );
       // Sort transactions by timestamp (newest first)
       const sortedTransactions = history.sort(
@@ -95,7 +95,7 @@ export const useWallet = () => {
     } finally {
       setTransactionLoading(false);
     }
-  }, [isAuthenticated, identity]);
+  }, [isAuthenticated, firebaseUser]);
 
   /**
    * Load more transactions
@@ -146,7 +146,7 @@ export const useWallet = () => {
    */
   const transfer = useCallback(
     async (to: Principal, amount: number): Promise<string | null> => {
-      if (!isAuthenticated || !identity) {
+      if (!isAuthenticated || !firebaseUser) {
         throw new Error("Authentication required for transfers");
       }
 
@@ -163,7 +163,7 @@ export const useWallet = () => {
         setError(null);
 
         const transactionId = await walletCanisterService.transfer(
-          identity.getPrincipal().toString(),
+          firebaseUser.uid,
           to.toString(),
           amount,
         );
@@ -181,7 +181,7 @@ export const useWallet = () => {
         setTransferLoading(false);
       }
     },
-    [isAuthenticated, identity, balance, fetchBalance, fetchTransactions],
+    [isAuthenticated, firebaseUser, balance, fetchBalance, fetchTransactions],
   );
 
   /**
@@ -195,7 +195,7 @@ export const useWallet = () => {
       paymentChannel?: string,
       description?: string,
     ): Promise<number> => {
-      if (!isAuthenticated || !identity) {
+      if (!isAuthenticated || !firebaseUser) {
         throw new Error("Authentication required for crediting wallet");
       }
 
@@ -230,7 +230,7 @@ export const useWallet = () => {
         setTransferLoading(false);
       }
     },
-    [isAuthenticated, identity, fetchBalance, fetchTransactions],
+    [isAuthenticated, firebaseUser, fetchBalance, fetchTransactions],
   );
 
   /**
@@ -257,7 +257,7 @@ export const useWallet = () => {
    */
   const getTransactionDisplay = useCallback(
     (transaction: Transaction) => {
-      const userPrincipal = identity?.getPrincipal().toString();
+      const userPrincipal = firebaseUser?.uid;
 
       if (!userPrincipal)
         return { type: "Unknown", color: "text-gray-500", sign: "" };
@@ -286,7 +286,7 @@ export const useWallet = () => {
           return { type: "Unknown", color: "text-gray-500", sign: "" };
       }
     },
-    [identity],
+    [firebaseUser],
   );
 
   /**
@@ -301,7 +301,7 @@ export const useWallet = () => {
 
   // Initial data fetch
   useEffect(() => {
-    if (isAuthenticated && identity) {
+    if (isAuthenticated && firebaseUser) {
       refreshWalletData();
     } else {
       setBalance(0);
@@ -311,7 +311,7 @@ export const useWallet = () => {
       setDisplayedTransactions([]);
       setLoading(false);
     }
-  }, [isAuthenticated, identity, refreshWalletData]);
+  }, [isAuthenticated, firebaseUser, refreshWalletData]);
 
   return {
     // State

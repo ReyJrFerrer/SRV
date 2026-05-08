@@ -47,7 +47,7 @@ function formatTime12Hour(time: string): string {
 const ClientServiceDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
 
   const {
     service,
@@ -88,7 +88,7 @@ const ClientServiceDetailsPage: React.FC = () => {
 
   useEffect(() => {
     const checkReputations = async () => {
-      if (!service?.providerId || !identity) {
+      if (!service?.providerId || !firebaseUser) {
         setHasSufficientReputation(true);
         return;
       }
@@ -98,7 +98,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         setReputationError(null);
 
         const currentUserRep = await fetchUserReputation(
-          identity.getPrincipal().toString(),
+          firebaseUser.uid,
         );
         const fetchedProviderRep = await fetchUserReputation(
           service.providerId,
@@ -134,7 +134,7 @@ const ClientServiceDetailsPage: React.FC = () => {
     };
 
     checkReputations();
-  }, [service, identity, fetchUserReputation]);
+  }, [service, firebaseUser, fetchUserReputation]);
 
   useEffect(() => {
     if (service) {
@@ -170,9 +170,9 @@ const ClientServiceDetailsPage: React.FC = () => {
   };
 
   const isOwnService = Boolean(
-    identity &&
+    firebaseUser &&
     service &&
-    identity.getPrincipal().toString() === service.providerId,
+    firebaseUser.uid === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -181,7 +181,7 @@ const ClientServiceDetailsPage: React.FC = () => {
       return;
     }
 
-    if (!identity) {
+    if (!firebaseUser) {
       setChatErrorMessage("You must be logged in to start a conversation.");
       return;
     }
@@ -192,7 +192,7 @@ const ClientServiceDetailsPage: React.FC = () => {
     setIsCreatingChat(true);
 
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
 
       const existingConversation = conversations.find(
         (conv) =>

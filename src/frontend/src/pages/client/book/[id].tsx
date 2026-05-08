@@ -50,7 +50,7 @@ const BookingPage: React.FC = () => {
   }, []);
 
   // Section: Auth and stores
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
 
   // Section: Location store
   const {
@@ -1332,7 +1332,7 @@ const BookingPage: React.FC = () => {
       }
 
       if (paymentMethod === "GCash") {
-        if (!identity) {
+        if (!firebaseUser) {
           setFormError("You must be logged in to make digital payments.");
           return;
         }
@@ -1345,7 +1345,7 @@ const BookingPage: React.FC = () => {
           );
           return;
         }
-        const clientId = identity.getPrincipal().toString();
+        const clientId = firebaseUser.uid;
         const paymentResult = await createDirectPayment({
           bookingId: `temp_${Date.now()}`,
           clientId,

@@ -55,7 +55,7 @@ export interface OptimisticMessage {
  * Custom hook to manage chat functionality including conversations and messaging
  */
 export const useChat = () => {
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
   const isMountedRef = useIsMounted();
 
   // State management
@@ -129,9 +129,9 @@ export const useChat = () => {
     async (
       conversationSummaries: FrontendConversationSummary[],
     ): Promise<EnhancedConversationSummary[]> => {
-      if (!identity) return [];
+      if (!firebaseUser) return [];
 
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
 
       const enhancedConversations = await Promise.all(
         conversationSummaries.map(
@@ -174,18 +174,18 @@ export const useChat = () => {
 
       return enhancedConversations;
     },
-    [identity, getUserName],
+    [firebaseUser, getUserName],
   );
 
   /**
    * Setup real-time listener for conversations
    */
   const setupConversationsListener = useCallback(async () => {
-    if (!isAuthenticated || !identity || !isMountedRef.current) {
+    if (!isAuthenticated || !firebaseUser || !isMountedRef.current) {
       return;
     }
 
-    const userId = identity.getPrincipal().toString();
+    const userId = firebaseUser.uid;
 
     // Cleanup existing listener
     if (conversationsUnsubscribe.current) {
@@ -216,7 +216,7 @@ export const useChat = () => {
                 setConversations(enhancedConversations);
                 // compute number of conversations that have unread messages for current user
                 try {
-                  const currentUserId = identity?.getPrincipal().toString();
+                  const currentUserId = firebaseUser?.uid;
                   const unreadConversations = enhancedConversations.reduce(
                     (acc, c) => {
                       if (!currentUserId) return acc;
@@ -254,7 +254,7 @@ export const useChat = () => {
         setLoading(false);
       }
     }
-  }, [isAuthenticated, identity, enhanceConversationsWithNames, isMountedRef]);
+  }, [isAuthenticated, firebaseUser, enhanceConversationsWithNames, isMountedRef]);
 
   /**
    * Fetch messages for a specific conversation
@@ -265,7 +265,7 @@ export const useChat = () => {
       limit: number = 50,
       offset: number = 0,
     ): Promise<FrontendMessagePage> => {
-      if (!isAuthenticated || !identity) {
+      if (!isAuthenticated || !firebaseUser) {
         throw new Error("Authentication required");
       }
 
@@ -280,7 +280,7 @@ export const useChat = () => {
         throw new Error("Could not load messages.");
       }
     },
-    [isAuthenticated, identity],
+    [isAuthenticated, firebaseUser],
   );
 
   /**
@@ -288,7 +288,7 @@ export const useChat = () => {
    */
   const loadConversation = useCallback(
     async (conversationId: string) => {
-      if (!isAuthenticated || !identity) {
+      if (!isAuthenticated || !firebaseUser) {
         if (isMountedRef.current) {
           loadConversationRequestIdRef.current += 1;
           activeConversationIdRef.current = null;
@@ -392,7 +392,7 @@ export const useChat = () => {
         ) {
           await chatCanisterService.markMessagesAsRead(
             conversationId,
-            identity.getPrincipal().toString(),
+            firebaseUser.uid,
           );
           try {
             dispatchChatsRead();
@@ -405,7 +405,7 @@ export const useChat = () => {
         }
       }
     },
-    [isAuthenticated, identity, isMountedRef],
+    [isAuthenticated, firebaseUser, isMountedRef],
   );
 
   /**
@@ -413,7 +413,7 @@ export const useChat = () => {
    */
   const sendMessage = useCallback(
     async (content: string, receiverId: string, retryMessageId?: string) => {
-      if (!isAuthenticated || !identity || !currentConversation) {
+      if (!isAuthenticated || !firebaseUser || !currentConversation) {
         throw new Error("Authentication and active conversation required");
       }
 
@@ -425,7 +425,7 @@ export const useChat = () => {
         throw new Error("Message cannot exceed 500 characters");
       }
 
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
 
       // If retrying a failed message, remove the old optimistic message first
       if (retryMessageId) {
@@ -488,7 +488,7 @@ export const useChat = () => {
         throw err;
       }
     },
-    [isAuthenticated, identity, currentConversation],
+    [isAuthenticated, firebaseUser, currentConversation],
   );
 
   /**
@@ -501,7 +501,7 @@ export const useChat = () => {
         return;
       }
 
-      const currentUserId = identity?.getPrincipal().toString();
+      const currentUserId = firebaseUser?.uid;
       if (!currentUserId) return;
 
       const receiverId =
@@ -511,7 +511,7 @@ export const useChat = () => {
 
       await sendMessage(optimisticMsg.content, receiverId, messageId);
     },
-    [optimisticMessages, currentConversation, identity, sendMessage],
+    [optimisticMessages, currentConversation, firebaseUser, sendMessage],
   );
 
   /**
@@ -519,7 +519,7 @@ export const useChat = () => {
    */
   const createConversation = useCallback(
     async (clientId: string, providerId: string) => {
-      if (!isAuthenticated || !identity) {
+      if (!isAuthenticated || !firebaseUser) {
         throw new Error("Authentication required");
       }
 
@@ -540,7 +540,7 @@ export const useChat = () => {
         setLoading(false);
       }
     },
-    [isAuthenticated, identity],
+    [isAuthenticated, firebaseUser],
   );
 
   /**
@@ -548,36 +548,36 @@ export const useChat = () => {
    */
   const markAsRead = useCallback(
     async (conversationId: string) => {
-      if (!isAuthenticated || !identity) {
+      if (!isAuthenticated || !firebaseUser) {
         return;
       }
 
       try {
         await chatCanisterService.markMessagesAsRead(
           conversationId,
-          identity.getPrincipal().toString(),
+          firebaseUser.uid,
         );
         try {
           dispatchChatsRead();
         } catch (e) {}
       } catch (err) {}
     },
-    [isAuthenticated, identity],
+    [isAuthenticated, firebaseUser],
   );
 
   /**
    * Get total unread message count across all conversations
    */
   const getUnreadCount = useCallback((): number => {
-    if (!identity) return 0;
+    if (!firebaseUser) return 0;
 
-    const currentUserId = identity.getPrincipal().toString();
+    const currentUserId = firebaseUser.uid;
 
     return conversations.reduce((total, convoSummary) => {
       const count = convoSummary.conversation.unreadCount?.[currentUserId] || 0;
       return total + (count > 0 ? 1 : 0);
     }, 0);
-  }, [conversations, identity]);
+  }, [conversations, firebaseUser]);
 
   /**
    * Cleanup all real-time listeners
@@ -621,7 +621,7 @@ export const useChat = () => {
 
   // Setup real-time listeners on auth state change
   useEffect(() => {
-    if (isAuthenticated && identity && isMountedRef.current) {
+    if (isAuthenticated && firebaseUser && isMountedRef.current) {
       setupConversationsListener();
     } else {
       cleanupListeners();
@@ -636,7 +636,7 @@ export const useChat = () => {
     };
   }, [
     isAuthenticated,
-    identity,
+    firebaseUser,
     setupConversationsListener,
     cleanupListeners,
     clearCurrentConversation,

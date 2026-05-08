@@ -17,11 +17,11 @@ export const NotificationSettingsDetailed: React.FC<
 > = ({ className = "" }) => {
   const { pwaState, enablePushNotifications, disablePushNotifications, error } =
     usePWA();
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const getUserId = (): string => {
-    return identity?.getPrincipal().toString() || "anonymous";
+    return firebaseUser?.uid || "anonymous";
   };
 
   const handleEnableNotifications = async () => {

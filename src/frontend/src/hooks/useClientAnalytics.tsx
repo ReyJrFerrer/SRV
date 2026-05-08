@@ -8,19 +8,19 @@ import bookingCanisterService, {
  * Custom hook to manage client analytics data
  */
 export const useClientAnalytics = () => {
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
 
   const [analytics, setAnalytics] = useState<ClientAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAnalytics = useCallback(async () => {
-    if (isAuthenticated && identity) {
+    if (isAuthenticated && firebaseUser) {
       setLoading(true);
       setError(null);
       try {
         const clientAnalytics = await bookingCanisterService.getClientAnalytics(
-          identity.getPrincipal(),
+          firebaseUser.uid,
         );
         setAnalytics(clientAnalytics);
       } catch (err) {
@@ -32,7 +32,7 @@ export const useClientAnalytics = () => {
       setLoading(false);
       setAnalytics(null);
     }
-  }, [isAuthenticated, identity]);
+  }, [isAuthenticated, firebaseUser]);
 
   // Fetch analytics when authentication status changes
   useEffect(() => {

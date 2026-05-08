@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Principal } from "@dfinity/principal";
+
 import serviceCanisterService, {
   Service,
   ServicePackage,
@@ -399,7 +399,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
         // Create booking through canister
         const booking = await bookingCanisterService.createBooking(
           bookingData.serviceId,
-          Principal.fromText(bookingData.providerId),
+          bookingData.providerId,
           totalPrice, // This should now be a valid number
           location,
           requestedDate,

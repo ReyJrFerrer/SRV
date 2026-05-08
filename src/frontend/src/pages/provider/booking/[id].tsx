@@ -53,7 +53,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const [clientReviews, setClientReviews] = useState<any[]>([]);
   const [clientReputation, setClientReputation] = useState<any>(null);
 
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const { conversations, createConversation } = useChat();
   const { getUserReviews } = useReviewManagement({
     autoLoadUserReviews: false,
@@ -252,7 +252,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
 
   // Chat button handler (ProviderBookingItemCard logic)
   const handleChatClient = useCallback(async () => {
-    if (!specificBooking || !identity) return;
+    if (!specificBooking || !firebaseUser) return;
     const clientId =
       specificBooking.clientProfile?.id?.toString() ||
       specificBooking.clientId?.toString();
@@ -261,7 +261,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
       return;
     }
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
       // Check for existing conversation
       const existingConversation = conversations.find(
         (conv) =>
@@ -302,7 +302,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
           : "Could not start conversation. Please try again.",
       );
     }
-  }, [specificBooking, identity, conversations, navigate, createConversation]);
+  }, [specificBooking, firebaseUser, conversations, navigate, createConversation]);
 
   // Check if today is the service date and time, or after
   const canStartServiceNow = useCallback(() => {

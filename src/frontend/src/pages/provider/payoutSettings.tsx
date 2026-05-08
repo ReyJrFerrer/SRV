@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 const PayoutSettingsPage: React.FC = () => {
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -33,14 +33,14 @@ const PayoutSettingsPage: React.FC = () => {
 
   // Initialize form with user data
   useEffect(() => {
-    if (identity) {
+    if (firebaseUser) {
       setFormData((prev) => ({
         ...prev,
         email: prev.email || "",
         phoneNumber: prev.phoneNumber || "",
       }));
     }
-  }, [identity]);
+  }, [firebaseUser]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -108,7 +108,7 @@ const PayoutSettingsPage: React.FC = () => {
       return;
     }
 
-    if (!identity) {
+    if (!firebaseUser) {
       setError("You must be logged in to set up payout settings");
       return;
     }
@@ -116,7 +116,7 @@ const PayoutSettingsPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const providerId = identity?.getPrincipal().toString();
+      const providerId = firebaseUser?.uid;
       if (!providerId) {
         throw new Error("Unable to get provider ID");
       }

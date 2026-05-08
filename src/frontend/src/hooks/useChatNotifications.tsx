@@ -46,7 +46,7 @@ function installAudioPrimer() {
  * Plays a notification sound when new unread conversations arrive.
  */
 export const useChatNotifications = () => {
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +81,7 @@ export const useChatNotifications = () => {
 
   // Real-time subscription to conversations
   useEffect(() => {
-    if (!isAuthenticated || !identity) {
+    if (!isAuthenticated || !firebaseUser) {
       setUnreadChatCount(0);
       conversationsRef.current = [];
       prevUnreadMessagesRef.current = -1;
@@ -90,7 +90,7 @@ export const useChatNotifications = () => {
     }
 
     let cancelled = false;
-    const userId = identity.getPrincipal().toString();
+    const userId = firebaseUser.uid;
 
     const setup = async () => {
       try {
@@ -152,14 +152,14 @@ export const useChatNotifications = () => {
         unsubscribeRef.current = null;
       }
     };
-  }, [isAuthenticated, identity, playNotificationSound]);
+  }, [isAuthenticated, firebaseUser, playNotificationSound]);
 
   // Sync with chat page mark-as-read events
   useEffect(() => {
     const handleChatsRead = () => {
       // Re-check conversations from the stored ref
-      if (!identity) return;
-      const userId = identity.getPrincipal().toString();
+      if (!firebaseUser) return;
+      const userId = firebaseUser.uid;
       const unreadConversations = conversationsRef.current.reduce(
         (count, s) => {
           const unread = s.conversation.unreadCount?.[userId] || 0;
@@ -180,16 +180,16 @@ export const useChatNotifications = () => {
 
     window.addEventListener(CHATS_READ_EVENT, handleChatsRead);
     return () => window.removeEventListener(CHATS_READ_EVENT, handleChatsRead);
-  }, [identity]);
+  }, [firebaseUser]);
 
   /**
    * Mark all conversations as read
    */
   const markChatsAsRead = useCallback(async () => {
-    if (!isAuthenticated || !identity) return;
+    if (!isAuthenticated || !firebaseUser) return;
 
     try {
-      const currentUserId = identity.getPrincipal().toString();
+      const currentUserId = firebaseUser.uid;
       const conversations = conversationsRef.current;
 
       await Promise.all(
@@ -205,7 +205,7 @@ export const useChatNotifications = () => {
       prevUnreadMessagesRef.current = 0;
       window.dispatchEvent(new CustomEvent(CHATS_READ_EVENT));
     } catch {}
-  }, [isAuthenticated, identity]);
+  }, [isAuthenticated, firebaseUser]);
 
   /**
    * Re-fetch conversations manually (forces subscription callback)

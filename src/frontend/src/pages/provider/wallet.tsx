@@ -24,7 +24,7 @@ import authCanisterService from "../../services/authCanisterService";
 
 const WalletPage: React.FC = () => {
   const navigate = useNavigate();
-  const { identity } = useAuth();
+  const { firebaseUser } = useAuth();
   const {
     balance,
     transactions,
@@ -88,20 +88,20 @@ const WalletPage: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   // Check if user needs onboarding
-  useEffect(() => {
-    if (!isAuthenticated || !identity) return;
+    useEffect(() => {
+      if (!isAuthenticated || !firebaseUser) return;
 
-    const checkOnboardingStatus = async () => {
-      try {
-        const profile = await authCanisterService.getMyProfile();
-        if (profile && !profile.isOnboarded) {
-          setShowOnboardingModal(true);
-        }
-      } catch (error) {}
-    };
+      const checkOnboardingStatus = async () => {
+        try {
+          const profile = await authCanisterService.getMyProfile();
+          if (profile && !profile.isOnboarded) {
+            setShowOnboardingModal(true);
+          }
+        } catch (error) {}
+      };
 
-    checkOnboardingStatus();
-  }, [isAuthenticated, identity]);
+      checkOnboardingStatus();
+    }, [isAuthenticated, firebaseUser]);
 
   // Periodically check for completed payments
   useEffect(() => {
@@ -123,7 +123,7 @@ const WalletPage: React.FC = () => {
 
   // Function to check for completed payments and update UI
   const checkAndCreditCompletedPayments = async () => {
-    if (!identity || activeInvoices.size === 0) return;
+    if (!firebaseUser || activeInvoices.size === 0) return;
 
     const completedInvoices = new Set<string>();
 
@@ -185,7 +185,7 @@ const WalletPage: React.FC = () => {
   };
 
   const handleTopUpSubmit = async () => {
-    if (!identity) {
+    if (!firebaseUser) {
       toast.error("Please authenticate first");
       return;
     }
@@ -203,7 +203,7 @@ const WalletPage: React.FC = () => {
 
     setTopUpLoading(true);
     try {
-      const providerId = identity.getPrincipal().toString();
+      const providerId = firebaseUser.uid;
       const request: TopupInvoiceRequest = {
         providerId,
         amount,

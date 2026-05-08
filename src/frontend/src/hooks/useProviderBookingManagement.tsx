@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Principal } from "@dfinity/principal";
 import {
   Booking,
   BookingStatus,
@@ -782,9 +781,8 @@ export const useProviderBookingManagement =
           throw new Error("No authenticated provider found");
         }
 
-        const providerPrincipal = Principal.fromText(currentProviderId);
         const rawBookings =
-          await bookingCanisterService.getProviderBookings(providerPrincipal);
+          await bookingCanisterService.getProviderBookings(currentProviderId);
 
         // Enrich bookings with client data in parallel
         const enrichedBookings = await Promise.all(
@@ -1502,11 +1500,9 @@ export const useProviderBookingManagement =
       clearError();
 
       try {
-        const providerPrincipal = Principal.fromText(currentProviderId);
-
         // Subscribe to realtime updates with debounced handler
         const unsubscribe = bookingCanisterService.subscribeToProviderBookings(
-          providerPrincipal,
+          currentProviderId,
           debouncedBookingsUpdate,
         );
 

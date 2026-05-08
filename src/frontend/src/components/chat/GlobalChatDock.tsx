@@ -27,7 +27,7 @@ interface ActiveConversationState {
 const DESKTOP_MIN_WIDTH = 1024; // Tailwind lg breakpoint
 
 const GlobalChatDock: React.FC = () => {
-  const { isAuthenticated, identity } = useAuth();
+  const { isAuthenticated, firebaseUser } = useAuth();
   const {
     conversations,
     messages,
@@ -76,7 +76,7 @@ const GlobalChatDock: React.FC = () => {
     /\/create-profile/.test(path) ||
     /\/provider\/services\/add(\/|$)/.test(path);
   // Current user principal
-  const myPrincipal = identity?.getPrincipal().toString();
+  const myPrincipal = firebaseUser?.uid;
 
   // Sound toggle persisted
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
@@ -614,7 +614,7 @@ const GlobalChatDock: React.FC = () => {
                 ) : (
                   <ul className="space-y-2">
                     {messages.map((m) => {
-                      const myPrincipal = identity?.getPrincipal().toString();
+                      const myPrincipal = firebaseUser?.uid;
                       const isMine = m.senderId === myPrincipal;
                       const isSending =
                         typeof m.id === "string" && m.id.startsWith("temp-");
