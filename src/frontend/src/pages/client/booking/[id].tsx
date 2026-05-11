@@ -535,7 +535,7 @@ const BookingDetailsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <SpotlightTour flowType="client-booking-details" />
       <header className="fixed inset-x-0 top-0 z-30 border-b border-gray-100 bg-white shadow-sm">
-        <div className="flex max-w-4xl items-center px-4 py-3.5 sm:px-6 md:pl-24 lg:pl-24">
+        <div className="mx-auto flex max-w-4xl items-center px-4 py-3.5 sm:px-6 md:px-24 lg:px-24">
           <button
             onClick={() => navigate(-1)}
             className="flex-shrink-0 rounded-full p-1 transition-colors hover:bg-gray-50 lg:mr-4"
@@ -548,7 +548,7 @@ const BookingDetailsPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="sm:pt-13 mx-auto max-w-4xl space-y-5 p-4 pt-20 sm:p-6">
+      <main className="mx-auto max-w-4xl space-y-5 px-4 pb-4 pt-20 sm:px-6 sm:pb-6 sm:pt-24">
         {isLoading ? (
           <BookingDetailsSkeleton />
         ) : (
@@ -565,7 +565,7 @@ const BookingDetailsPage: React.FC = () => {
             )}
 
             {showScheduledBanner && (
-              <div className="flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
+              <div className="flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5 md:px-24 lg:px-24">
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
                   <ClockIcon className="h-6 w-6 text-amber-600" />
                 </div>
