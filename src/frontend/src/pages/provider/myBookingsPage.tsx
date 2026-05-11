@@ -864,7 +864,10 @@ const ProviderBookingsPage: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="flex h-[calc(100vh-250px)] flex-col items-center justify-center px-4 py-16 text-center">
+            <div
+              className="flex h-[calc(100vh-250px)] flex-col items-center justify-center px-4 py-16 text-center"
+              data-tour="provider-bookings-list"
+            >
               <p className="text-lg text-gray-500">
                 No bookings found with the current filters.
               </p>
