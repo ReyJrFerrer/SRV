@@ -33,6 +33,11 @@ import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 import MonthlyBookingsCalendar, {
   CalendarItem,
 } from "../../components/common/calendar/MonthlyBookingsCalendar";
+import CollapsibleBookingSection from "../../components/common/CollapsibleBookingSection";
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/solid";
 
 type BookingStatusTab =
   | "ALL"
@@ -293,45 +298,41 @@ const ProviderBookingsPage: React.FC = () => {
       });
     }
 
+    // When filtering for COMPLETED or CANCELLED, return empty (handled by collapsible sections)
+    if (statusFilter === "COMPLETED" || statusFilter === "CANCELLED") {
+      return [];
+    }
+
     // --- Custom sort when statusFilter is ALL: requested > accepted > inprogress > others ---
+    // Completed and Cancelled are excluded (shown in separate collapsible sections)
     if (statusFilter === "ALL") {
+      const toLower = (s?: string) => (s || "").toLowerCase();
+
+      const pending = filteredBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "pending" || s === "requested";
+      });
+      const confirmed = filteredBookings.filter((b) => {
+        const s = toLower(b.status);
+        return s === "accepted" || s === "confirmed";
+      });
       const inProgress = filteredBookings.filter(
-        (b) => b.status?.toLowerCase() === "inprogress",
-      );
-      const confirmed = filteredBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() === "confirmed" ||
-          b.status?.toLowerCase() === "accepted",
-      );
-      const pending = filteredBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() === "pending" ||
-          b.status?.toLowerCase() === "requested",
-      );
-      const completed = filteredBookings.filter(
-        (b) => b.status?.toLowerCase() === "completed",
-      );
-      const cancelled = filteredBookings.filter(
-        (b) =>
-          b.status?.toLowerCase() === "cancelled" ||
-          b.status?.toLowerCase() === "declined",
+        (b) => toLower(b.status) === "inprogress",
       );
       const others = filteredBookings.filter((b) => {
-        const s = b.status?.toLowerCase();
+        const s = toLower(b.status);
         return (
-          s !== "inprogress" &&
-          s !== "confirmed" &&
-          s !== "accepted" &&
           s !== "pending" &&
           s !== "requested" &&
+          s !== "accepted" &&
+          s !== "confirmed" &&
+          s !== "inprogress" &&
           s !== "completed" &&
           s !== "cancelled" &&
           s !== "declined"
         );
       });
 
-      // Secondary sort: within each default group, sort by date (scheduledDateTime || createdAt)
-      // We sort newest first so recent bookings appear at the top of each group.
       const getBookingTime = (b: ProviderEnhancedBooking) => {
         try {
           const dateStr =
@@ -347,25 +348,151 @@ const ProviderBookingsPage: React.FC = () => {
       const sortByDateDesc = (arr: ProviderEnhancedBooking[]) =>
         arr.sort((a, b) => getBookingTime(b) - getBookingTime(a));
 
-      sortByDateDesc(inProgress);
-      sortByDateDesc(confirmed);
       sortByDateDesc(pending);
-      sortByDateDesc(completed);
-      sortByDateDesc(cancelled);
+      sortByDateDesc(confirmed);
+      sortByDateDesc(inProgress);
       sortByDateDesc(others);
 
-      return [
-        ...inProgress,
-        ...confirmed,
-        ...pending,
-        ...completed,
-        ...cancelled,
-        ...others,
-      ];
+      return [...pending, ...confirmed, ...inProgress, ...others];
     }
 
     return filteredBookings;
   }, [statusFilter, bookings, searchTerm, timingFilter, selectedCategoryId]);
+
+  // Completed bookings (separate collapsible section)
+  const completedBookings: ProviderEnhancedBooking[] = useMemo(() => {
+    let filtered = (bookings || []).filter(
+      (b) => b.status?.toLowerCase() === "completed",
+    );
+
+    if (timingFilter !== "All") {
+      filtered = filtered.filter((booking) => {
+        const bookingDateString =
+          (booking as any).scheduledDateTime ||
+          (booking as any).requestedDate ||
+          (booking as any).requestedDateTime ||
+          (booking as any).createdAt;
+        if (!bookingDateString) return false;
+        const bookingDate = new Date(bookingDateString);
+        if (isNaN(bookingDate.getTime())) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isSameDay =
+          bookingDate.getDate() === today.getDate() &&
+          bookingDate.getMonth() === today.getMonth() &&
+          bookingDate.getFullYear() === today.getFullYear();
+        if (timingFilter === "Same Day") return isSameDay;
+        if (timingFilter === "Scheduled") return !isSameDay;
+        return false;
+      });
+    }
+
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter((booking) => {
+        const serviceName = (booking.serviceName || "").toString();
+        const clientName = (
+          booking.clientName || booking.clientProfile?.name || ""
+        ).toString();
+        const categoryName = (
+          booking.serviceDetails?.category?.name || ""
+        ).toString();
+        return (
+          serviceName.toLowerCase().includes(q) ||
+          clientName.toLowerCase().includes(q) ||
+          categoryName.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    if (selectedCategoryId) {
+      filtered = filtered.filter(
+        (booking) => booking.serviceDetails?.category?.id === selectedCategoryId,
+      );
+    }
+
+    const getBookingTime = (b: ProviderEnhancedBooking) => {
+      try {
+        const dateStr =
+          (b as any).scheduledDateTime ||
+          (b as any).requestedDate ||
+          b.createdAt;
+        return new Date(dateStr).getTime() || 0;
+      } catch {
+        return 0;
+      }
+    };
+
+    return filtered.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+  }, [bookings, searchTerm, timingFilter, selectedCategoryId]);
+
+  // Cancelled/Declined bookings (separate collapsible section)
+  const cancelledBookings: ProviderEnhancedBooking[] = useMemo(() => {
+    let filtered = (bookings || []).filter((b) => {
+      const s = b.status?.toLowerCase();
+      return s === "cancelled" || s === "declined";
+    });
+
+    if (timingFilter !== "All") {
+      filtered = filtered.filter((booking) => {
+        const bookingDateString =
+          (booking as any).scheduledDateTime ||
+          (booking as any).requestedDate ||
+          (booking as any).requestedDateTime ||
+          (booking as any).createdAt;
+        if (!bookingDateString) return false;
+        const bookingDate = new Date(bookingDateString);
+        if (isNaN(bookingDate.getTime())) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isSameDay =
+          bookingDate.getDate() === today.getDate() &&
+          bookingDate.getMonth() === today.getMonth() &&
+          bookingDate.getFullYear() === today.getFullYear();
+        if (timingFilter === "Same Day") return isSameDay;
+        if (timingFilter === "Scheduled") return !isSameDay;
+        return false;
+      });
+    }
+
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter((booking) => {
+        const serviceName = (booking.serviceName || "").toString();
+        const clientName = (
+          booking.clientName || booking.clientProfile?.name || ""
+        ).toString();
+        const categoryName = (
+          booking.serviceDetails?.category?.name || ""
+        ).toString();
+        return (
+          serviceName.toLowerCase().includes(q) ||
+          clientName.toLowerCase().includes(q) ||
+          categoryName.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    if (selectedCategoryId) {
+      filtered = filtered.filter(
+        (booking) => booking.serviceDetails?.category?.id === selectedCategoryId,
+      );
+    }
+
+    const getBookingTime = (b: ProviderEnhancedBooking) => {
+      try {
+        const dateStr =
+          (b as any).scheduledDateTime ||
+          (b as any).requestedDate ||
+          b.createdAt;
+        return new Date(dateStr).getTime() || 0;
+      } catch {
+        return 0;
+      }
+    };
+
+    return filtered.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+  }, [bookings, searchTerm, timingFilter, selectedCategoryId]);
 
   // Section: Separate Same Day vs Scheduled, based on date (scheduledDateTime || requestedDate || requestedDateTime || createdAt)
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
@@ -663,7 +790,7 @@ const ProviderBookingsPage: React.FC = () => {
             <div className="px-4 py-4">
               <BookingListSkeleton count={6} />
             </div>
-          ) : sameDayBookings.length > 0 || scheduledBookings.length > 0 ? (
+          ) : sameDayBookings.length > 0 || scheduledBookings.length > 0 || completedBookings.length > 0 || cancelledBookings.length > 0 ? (
             <div
               className="space-y-10 px-4 py-4"
               data-tour="provider-bookings-list"
@@ -861,6 +988,110 @@ const ProviderBookingsPage: React.FC = () => {
                     </div>
                   )}
                 </section>
+              )}
+              {/* Completed Bookings - Collapsible Section */}
+              {completedBookings.length > 0 && (
+                <CollapsibleBookingSection
+                  title="Completed"
+                  icon={<CheckCircleIcon className="mr-2 h-5 w-5 text-green-500" />}
+                  count={completedBookings.length}
+                  variant="default"
+                  defaultExpanded={false}
+                  forceExpanded={statusFilter === "COMPLETED" ? true : undefined}
+                >
+                  {completedBookings.map((booking, idx) => {
+                    const clientId =
+                      booking.clientProfile?.id?.toString() ||
+                      booking.clientId?.toString();
+                    const clientData =
+                      clientId && clientDataMap[clientId]
+                        ? clientDataMap[clientId]
+                        : { reviews: [], reputation: null };
+                    return (
+                      <Appear
+                        key={booking.id}
+                        delayMs={idx * 30}
+                        variant="fade-up"
+                      >
+                        <div
+                          onClick={() => {
+                            if (booking.id) {
+                              navigate(`/provider/booking/${booking.id}`);
+                            }
+                          }}
+                          className="w-full cursor-pointer transition-shadow hover:shadow-lg"
+                        >
+                          <ProviderBookingItemCard
+                            booking={booking}
+                            review={clientData.reviews}
+                            reputation={clientData.reputation}
+                            onDeclineClick={() => {}}
+                            onCancelClick={() => {}}
+                            isDeclining={false}
+                            acceptBookingById={acceptBookingById}
+                            isBookingActionInProgress={
+                              isBookingActionInProgress
+                            }
+                            startBookingById={startBookingById}
+                            startNavigationById={startNavigationById}
+                          />
+                        </div>
+                      </Appear>
+                    );
+                  })}
+                </CollapsibleBookingSection>
+              )}
+              {/* Cancelled/Declined Bookings - Collapsible Section */}
+              {cancelledBookings.length > 0 && (
+                <CollapsibleBookingSection
+                  title="Cancelled / Declined"
+                  icon={<XCircleIcon className="mr-2 h-5 w-5 text-red-400" />}
+                  count={cancelledBookings.length}
+                  variant="warning"
+                  defaultExpanded={false}
+                  forceExpanded={statusFilter === "CANCELLED" ? true : undefined}
+                >
+                  {cancelledBookings.map((booking, idx) => {
+                    const clientId =
+                      booking.clientProfile?.id?.toString() ||
+                      booking.clientId?.toString();
+                    const clientData =
+                      clientId && clientDataMap[clientId]
+                        ? clientDataMap[clientId]
+                        : { reviews: [], reputation: null };
+                    return (
+                      <Appear
+                        key={booking.id}
+                        delayMs={idx * 30}
+                        variant="fade-up"
+                      >
+                        <div
+                          onClick={() => {
+                            if (booking.id) {
+                              navigate(`/provider/booking/${booking.id}`);
+                            }
+                          }}
+                          className="w-full cursor-pointer transition-shadow hover:shadow-lg"
+                        >
+                          <ProviderBookingItemCard
+                            booking={booking}
+                            review={clientData.reviews}
+                            reputation={clientData.reputation}
+                            onDeclineClick={() => {}}
+                            onCancelClick={() => {}}
+                            isDeclining={false}
+                            acceptBookingById={acceptBookingById}
+                            isBookingActionInProgress={
+                              isBookingActionInProgress
+                            }
+                            startBookingById={startBookingById}
+                            startNavigationById={startNavigationById}
+                          />
+                        </div>
+                      </Appear>
+                    );
+                  })}
+                </CollapsibleBookingSection>
               )}
             </div>
           ) : (

@@ -18,12 +18,15 @@ import {
   SparklesIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  CheckCircleIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/solid";
 import MonthlyBookingsCalendar, {
   CalendarItem,
 } from "../../../components/common/calendar/MonthlyBookingsCalendar";
 import SpotlightTour from "../../../components/common/SpotlightTour";
 import SmartHeader from "../../../components/common/SmartHeader";
+import CollapsibleBookingSection from "../../../components/common/CollapsibleBookingSection";
 
 type BookingStatusTab =
   | "ALL"
@@ -132,12 +135,16 @@ const MyBookingsPage: React.FC = () => {
       });
     }
 
+    if (statusFilter === "COMPLETED" || statusFilter === "CANCELLED") {
+      return [];
+    }
+
     if (statusFilter === "ALL") {
       const toLower = (s?: string) => (s || "").toLowerCase();
 
-      const inProgress = processedBookings.filter((b) => {
+      const pending = processedBookings.filter((b) => {
         const s = toLower(b.status);
-        return s === "in progress" || s === "in_progress" || s === "inprogress";
+        return s === "requested" || s === "pending";
       });
 
       const confirmed = processedBookings.filter((b) => {
@@ -145,18 +152,9 @@ const MyBookingsPage: React.FC = () => {
         return s === "accepted" || s === "confirmed";
       });
 
-      const pending = processedBookings.filter((b) => {
+      const inProgress = processedBookings.filter((b) => {
         const s = toLower(b.status);
-        return s === "requested" || s === "pending";
-      });
-
-      const completed = processedBookings.filter(
-        (b) => toLower(b.status) === "completed",
-      );
-
-      const cancelled = processedBookings.filter((b) => {
-        const s = toLower(b.status);
-        return s === "cancelled" || s === "declined";
+        return s === "in progress" || s === "in_progress" || s === "inprogress";
       });
 
       const others = processedBookings.filter((b) => {
@@ -186,25 +184,94 @@ const MyBookingsPage: React.FC = () => {
       const sortByDateDesc = (arr: EnhancedBooking[]) =>
         arr.sort((a, b) => getBookingTime(b) - getBookingTime(a));
 
-      sortByDateDesc(inProgress);
-      sortByDateDesc(confirmed);
       sortByDateDesc(pending);
-      sortByDateDesc(completed);
-      sortByDateDesc(cancelled);
+      sortByDateDesc(confirmed);
+      sortByDateDesc(inProgress);
       sortByDateDesc(others);
 
-      return [
-        ...inProgress,
-        ...confirmed,
-        ...pending,
-        ...completed,
-        ...cancelled,
-        ...others,
-      ];
+      return [...pending, ...confirmed, ...inProgress, ...others];
     }
 
     return processedBookings;
   }, [statusFilter, bookingManagement.bookings, searchTerm, selectedCategory]);
+
+  // Completed bookings (separate collapsible section)
+  const completedBookings = useMemo(() => {
+    let filtered = (bookingManagement.bookings || []).filter(
+      (b) => b && typeof b.status === "string" && b.status.toLowerCase() === "completed",
+    );
+
+    if (selectedCategory) {
+      filtered = filtered.filter(
+        (b) => b.serviceDetails?.category?.name === selectedCategory,
+      );
+    }
+
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter((b) => {
+        const serviceName = (b.serviceName || "").toString();
+        const providerName = (b.providerProfile?.name || "").toString();
+        const categoryName = (b.serviceDetails?.category?.name || "").toString();
+        return (
+          serviceName.toLowerCase().includes(q) ||
+          providerName.toLowerCase().includes(q) ||
+          categoryName.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    const getBookingTime = (b: EnhancedBooking) => {
+      try {
+        return new Date(b.requestedDate || b.createdAt).getTime() || 0;
+      } catch {
+        return 0;
+      }
+    };
+
+    return filtered.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+  }, [bookingManagement.bookings, searchTerm, selectedCategory]);
+
+  // Cancelled/Declined bookings (separate collapsible section)
+  const cancelledBookings = useMemo(() => {
+    let filtered = (bookingManagement.bookings || []).filter(
+      (b) =>
+        b &&
+        typeof b.status === "string" &&
+        (b.status.toLowerCase() === "cancelled" ||
+          b.status.toLowerCase() === "declined"),
+    );
+
+    if (selectedCategory) {
+      filtered = filtered.filter(
+        (b) => b.serviceDetails?.category?.name === selectedCategory,
+      );
+    }
+
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter((b) => {
+        const serviceName = (b.serviceName || "").toString();
+        const providerName = (b.providerProfile?.name || "").toString();
+        const categoryName = (b.serviceDetails?.category?.name || "").toString();
+        return (
+          serviceName.toLowerCase().includes(q) ||
+          providerName.toLowerCase().includes(q) ||
+          categoryName.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    const getBookingTime = (b: EnhancedBooking) => {
+      try {
+        return new Date(b.requestedDate || b.createdAt).getTime() || 0;
+      } catch {
+        return 0;
+      }
+    };
+
+    return filtered.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+  }, [bookingManagement.bookings, searchTerm, selectedCategory]);
 
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
     const today = new Date();
@@ -541,7 +608,7 @@ const MyBookingsPage: React.FC = () => {
                 Retry
               </button>
             </div>
-          ) : filteredBookings.length > 0 ? (
+          ) : filteredBookings.length > 0 || completedBookings.length > 0 || cancelledBookings.length > 0 ? (
             <div className="my-4 space-y-6 pb-16">
               {timingFilter === "Same Day" && sameDayBookings.length > 0 && (
                 <section>
@@ -702,6 +769,84 @@ const MyBookingsPage: React.FC = () => {
                     </p>
                   </div>
                 )}
+              {/* Completed Bookings - Collapsible Section */}
+              {completedBookings.length > 0 && (
+                <CollapsibleBookingSection
+                  title="Completed"
+                  icon={<CheckCircleIcon className="mr-2 h-5 w-5 text-green-500" />}
+                  count={completedBookings.length}
+                  variant="default"
+                  defaultExpanded={false}
+                  forceExpanded={statusFilter === "COMPLETED" ? true : undefined}
+                >
+                  {completedBookings.map((booking, idx) => (
+                    <Appear
+                      key={booking.id}
+                      delayMs={idx * 30}
+                      variant="fade-up"
+                    >
+                      <ClientBookingItemCard
+                        booking={booking}
+                        onCancelClick={setCancellingBooking}
+                        averageRating={
+                          serviceStatsMap[booking.serviceId || ""]
+                            ?.averageRating
+                        }
+                        reviewCount={
+                          serviceStatsMap[booking.serviceId || ""]?.reviews
+                            .length ?? 0
+                        }
+                        reviews={
+                          serviceStatsMap[booking.serviceId || ""]?.reviews
+                        }
+                        reputation={
+                          serviceStatsMap[booking.serviceId || ""]
+                            ?.reputation
+                        }
+                      />
+                    </Appear>
+                  ))}
+                </CollapsibleBookingSection>
+              )}
+              {/* Cancelled/Declined Bookings - Collapsible Section */}
+              {cancelledBookings.length > 0 && (
+                <CollapsibleBookingSection
+                  title="Cancelled / Declined"
+                  icon={<XCircleIcon className="mr-2 h-5 w-5 text-red-400" />}
+                  count={cancelledBookings.length}
+                  variant="warning"
+                  defaultExpanded={false}
+                  forceExpanded={statusFilter === "CANCELLED" ? true : undefined}
+                >
+                  {cancelledBookings.map((booking, idx) => (
+                    <Appear
+                      key={booking.id}
+                      delayMs={idx * 30}
+                      variant="fade-up"
+                    >
+                      <ClientBookingItemCard
+                        booking={booking}
+                        onCancelClick={setCancellingBooking}
+                        averageRating={
+                          serviceStatsMap[booking.serviceId || ""]
+                            ?.averageRating
+                        }
+                        reviewCount={
+                          serviceStatsMap[booking.serviceId || ""]?.reviews
+                            .length ?? 0
+                        }
+                        reviews={
+                          serviceStatsMap[booking.serviceId || ""]?.reviews
+                        }
+                        reputation={
+                          serviceStatsMap[booking.serviceId || ""]
+                            ?.reputation
+                        }
+                      />
+                    </Appear>
+                  ))}
+                </CollapsibleBookingSection>
+              )}
             </div>
           ) : (
             <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm">
