@@ -679,7 +679,7 @@ const MyBookingsPage: React.FC = () => {
                         />
                         <button
                           type="button"
-                          className={`relative z-10 w-1/2 rounded-lg py-2 text-center text-sm font-bold transition-colors duration-300 ${
+                          className={`relative w-1/2 rounded-lg py-2 text-center text-sm font-bold transition-colors duration-300 ${
                             scheduledView === "calendar"
                               ? "text-gray-900"
                               : "text-gray-600 hover:text-gray-900"
