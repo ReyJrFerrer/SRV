@@ -291,25 +291,25 @@ function Tooltip({
   return (
     <div
       {...tooltipProps}
-      className="animate-in slide-in-from-bottom-4 fade-in relative flex max-h-[85vh] w-[calc(100vw-2rem)] max-w-[21rem] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300 md:w-[32rem] md:flex-row"
+      className="animate-in slide-in-from-bottom-4 fade-in relative flex max-h-[85vh] w-[calc(100vw-2rem)] sm:w-[22rem] md:w-[24rem] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300"
       role="dialog"
       aria-modal="true"
     >
       <button
         {...closeProps}
-        className="absolute right-2 top-2 z-10 rounded-full bg-gray-50/80 p-1.5 text-gray-400/80 backdrop-blur-sm transition-all hover:bg-gray-100 hover:text-gray-700 active:scale-95 md:right-3 md:top-3"
+        className="absolute right-2 top-2 z-20 rounded-full bg-gray-50/80 p-1.5 text-gray-400/80 backdrop-blur-sm transition-all hover:bg-gray-100 hover:text-gray-700 active:scale-95 md:right-3 md:top-3"
         aria-label="Skip walkthrough"
       >
         <XMarkIcon className="h-4 w-4" />
       </button>
 
-      <div className="relative flex w-full shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/50 p-3 md:w-2/5 md:p-6">
-        <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200/40 blur-xl md:h-32 md:w-32"></div>
+      <div className="relative flex w-full shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 md:p-5">
+        <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200/40 blur-xl"></div>
         {customStep.image && (
           <img
             src={customStep.image}
             alt="SRV Character"
-            className="relative z-10 h-auto w-14 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] md:w-32"
+            className="relative z-10 h-16 w-16 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = target.src.replace(/ /g, "%20");
@@ -318,7 +318,7 @@ function Tooltip({
         )}
       </div>
 
-      <div className="flex w-full flex-col justify-between overflow-y-auto p-4 md:w-3/5 md:p-6">
+      <div className="flex w-full flex-col justify-between overflow-y-auto p-4 md:p-5">
         <div className="animate-in slide-in-from-right-2 fade-in duration-300">
           <div className="mb-1.5 flex items-center justify-between pr-6 md:mb-2 md:pr-8">
             {size && (
@@ -332,7 +332,7 @@ function Tooltip({
               {customStep.headline}
             </h2>
           )}
-          <p className="mb-4 text-xs leading-relaxed text-slate-600 md:mb-6 md:text-sm">
+          <p className="mb-4 text-xs leading-relaxed text-slate-600 md:mb-5 md:text-sm">
             {step.content as React.ReactNode}
           </p>
         </div>
