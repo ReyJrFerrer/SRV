@@ -98,12 +98,12 @@ const CertificationsSection: React.FC<Props> = ({
                   key={index}
                   className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
                 >
-                  {certificate.error ? (
-                    <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                      <AcademicCapIcon className="mx-auto h-8 w-8 text-gray-300" />
-                      <p className="mt-1">Failed to load</p>
+                  {!certificate.dataUrl && (
+                    <div className="absolute bottom-1 left-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                      Failed to load
                     </div>
-                  ) : certificate.dataUrl ? (
+                  )}
+                  {certificate.dataUrl ? (
                     <img
                       src={certificate.dataUrl}
                       alt={`Certificate ${index + 1}`}
@@ -233,12 +233,12 @@ const CertificationsSection: React.FC<Props> = ({
                   aria-label="Inspect certificate"
                 >
                   {statusBadge}
-                  {certificate.error ? (
-                    <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                      <AcademicCapIcon className="mx-auto h-8 w-8 text-gray-300" />
-                      <p className="mt-1">Failed to load</p>
+                  {!url && (
+                    <div className="absolute bottom-1 left-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                      Failed to load
                     </div>
-                  ) : isPdfFile(url) ? (
+                  )}
+                  {certificate.url && isPdfFile(certificate.url) ? (
                     <div className="flex flex-col items-center justify-center">
                       <DocumentIcon className="h-12 w-12 text-red-500" />
                       <span className="mt-1 text-xs text-gray-700">
