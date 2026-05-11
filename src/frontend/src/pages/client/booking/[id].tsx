@@ -7,6 +7,7 @@ import {
   StarIcon,
   CheckCircleIcon,
   CalendarDaysIcon,
+  ClockIcon,
 } from "@heroicons/react/24/solid";
 import {
   EnhancedBooking,
@@ -485,6 +486,51 @@ const BookingDetailsPage: React.FC = () => {
   const canCancel = ["Requested", "Accepted"].includes(status || "");
   const reviewButtonContent = getReviewButtonContent();
   const isLoading = hookLoading || isInitialLoad || loadingStats;
+
+  const isServiceDay = useMemo(() => {
+    if (!requestedDate) return false;
+    try {
+      const dateObj = new Date(requestedDate);
+      const today = new Date();
+      return dateObj.toDateString() === today.toDateString();
+    } catch {
+      return false;
+    }
+  }, [requestedDate]);
+
+  const isFutureService = useMemo(() => {
+    if (!requestedDate || status !== "Accepted") return false;
+    try {
+      return new Date(requestedDate).getTime() > Date.now();
+    } catch {
+      return false;
+    }
+  }, [requestedDate, status]);
+
+  const showServiceDayBanner =
+    isServiceDay &&
+    !isFutureService &&
+    ["Accepted", "InProgress"].includes(status || "");
+  const showScheduledBanner = isFutureService;
+
+  const formattedScheduledDateTime = useMemo(() => {
+    if (!requestedDate) return "";
+    try {
+      const d = new Date(requestedDate);
+      return (
+        d.toLocaleDateString([], {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }) +
+        " at " +
+        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      );
+    } catch {
+      return "";
+    }
+  }, [requestedDate]);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <SpotlightTour flowType="client-booking-details" />
@@ -515,6 +561,43 @@ const BookingDetailsPage: React.FC = () => {
                   cancelledBy={(specificBooking as any)?.cancelledBy}
                   cancellationReason={(specificBooking as any)?.cancelReason}
                 />
+              </div>
+            )}
+
+            {showScheduledBanner && (
+              <div className="flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
+                  <ClockIcon className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-amber-900">
+                    Your service is scheduled
+                  </h3>
+                  <p className="mt-1 text-sm text-amber-700">
+                    Your provider will begin service on{" "}
+                    {formattedScheduledDateTime}.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {showServiceDayBanner && (
+              <div className="flex items-center gap-4 rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm sm:p-5">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
+                  <CalendarDaysIcon className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-blue-900">
+                    {status === "InProgress"
+                      ? "Your service is in progress."
+                      : "Your service is scheduled for today!"}
+                  </h3>
+                  <p className="mt-1 text-sm text-blue-700">
+                    {status === "InProgress"
+                      ? "The provider is currently working on your request."
+                      : "Please be ready for your scheduled service."}
+                  </p>
+                </div>
               </div>
             )}
 
