@@ -1,3 +1,11 @@
+// ============================================================================
+// DEV_MODE: For development testing only - SpotlightTour will always show on refresh
+// TODO: Remove this block before going to production
+// ============================================================================
+// eslint-disable-next-line
+const DEV_MODE_SPOTLIGHT = true; // Set to true to always show tours
+// ============================================================================
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Joyride,
@@ -291,7 +299,7 @@ function Tooltip({
   return (
     <div
       {...tooltipProps}
-      className="animate-in slide-in-from-bottom-4 fade-in relative flex max-h-[85vh] w-[calc(100vw-2rem)] sm:w-[22rem] md:w-[24rem] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300"
+      className="animate-in slide-in-from-bottom-4 fade-in relative flex max-h-[85vh] w-[calc(100vw-2rem)] sm:w-[20rem] md:w-[22rem] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300"
       role="dialog"
       aria-modal="true"
     >
@@ -303,36 +311,36 @@ function Tooltip({
         <XMarkIcon className="h-4 w-4" />
       </button>
 
-      <div className="relative flex w-full shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 md:p-5">
-        <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200/40 blur-xl"></div>
-        {customStep.image && (
+      {customStep.image && (
+        <div className="relative flex w-full shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/50 py-2 md:py-3">
+          <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-200/40 blur-lg"></div>
           <img
             src={customStep.image}
             alt="SRV Character"
-            className="relative z-10 h-16 w-16 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+            className="relative z-10 h-10 w-10 md:h-12 md:w-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.1)]"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = target.src.replace(/ /g, "%20");
             }}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex w-full flex-col justify-between overflow-y-auto p-4 md:p-5">
         <div className="animate-in slide-in-from-right-2 fade-in duration-300">
           <div className="mb-1.5 flex items-center justify-between pr-6 md:mb-2 md:pr-8">
             {size && (
-              <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600 md:px-2 md:text-[10px]">
+              <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-blue-600 md:px-2 md:text-[10px]">
                 Step {index + 1} of {size}
               </span>
             )}
           </div>
           {customStep.headline && (
-            <h2 className="mb-1.5 text-lg font-extrabold tracking-tight text-slate-900 md:mb-2 md:text-xl">
+            <h2 className="mb-1.5 text-sm sm:text-base font-extrabold tracking-tight text-slate-900 md:mb-2 md:text-lg">
               {customStep.headline}
             </h2>
           )}
-          <p className="mb-4 text-xs leading-relaxed text-slate-600 md:mb-5 md:text-sm">
+          <p className="mb-4 text-[10px] leading-snug sm:text-xs sm:leading-relaxed text-slate-600 md:mb-5">
             {step.content as React.ReactNode}
           </p>
         </div>
@@ -343,7 +351,7 @@ function Tooltip({
               <button
                 ref={backButtonRef}
                 {...backProps}
-                className="flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 md:px-4 md:py-2.5 md:text-xs"
+                className="flex items-center justify-center rounded-xl border border-slate-200 px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 md:px-4 md:py-2.5 md:text-xs"
               >
                 <ChevronLeftIcon className="mr-0.5 h-3 w-3 md:h-3.5 md:w-3.5" />{" "}
                 Back
@@ -355,7 +363,7 @@ function Tooltip({
             <button
               ref={nextButtonRef}
               {...primaryProps}
-              className="flex flex-1 items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-[0_4px_10px_-2px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-700 hover:shadow-[0_8px_16px_-4px_rgba(37,99,235,0.4)] active:scale-[0.98] md:px-5 md:py-2.5 md:text-sm"
+              className="flex flex-1 items-center justify-center rounded-xl bg-blue-600 px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-white shadow-[0_4px_10px_-2px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-700 hover:shadow-[0_8px_16px_-4px_rgba(37,99,235,0.4)] active:scale-[0.98] md:px-5 md:py-2.5 md:text-sm"
             >
               {isLastStep ? "Finish Tour" : "Next"}
               {!isLastStep && (
@@ -514,7 +522,7 @@ export default function SpotlightTour({
         content:
           "Here is a quick snapshot of your earnings, completed jobs, and upcoming bookings.",
         image: "/images/srv characters (SVG)/tutor.svg",
-        placement: isDesktop ? "top" : "center",
+        placement: "center",
         disableBeacon: true,
         disableScroll: true,
       } as CustomStep,
@@ -572,12 +580,12 @@ export default function SpotlightTour({
         disableScroll: true,
       } as CustomStep,
       {
-        target: "[data-tour='provider-bookings-list']",
+        target: isDesktop ? "body" : "[data-tour='provider-bookings-list']",
         headline: "Your Bookings",
         content:
           "View all your bookings here. Click on any booking to view details, accept, decline, or start working on it.",
         image: "/images/srv characters (SVG)/tutor.svg",
-        placement: "top",
+        placement: "center",
         disableBeacon: true,
         disableScroll: true,
       } as CustomStep,
@@ -609,7 +617,6 @@ export default function SpotlightTour({
         headline: "Your Service Listings",
         content:
           "This is where all your active services are displayed. Click on any service to edit details, update pricing, or manage availability.",
-        image: "/images/srv characters (SVG)/tutor.svg",
         placement: "top",
         disableBeacon: true,
         disableScroll: true,
@@ -643,6 +650,16 @@ export default function SpotlightTour({
   useEffect(() => {
     // Check and show welcome screen ONLY on first visit to home page
     const timer = setTimeout(() => {
+      // DEV_MODE: Always show tours for development testing
+      if (DEV_MODE_SPOTLIGHT) {
+        if (flowType === "client" || flowType === "provider") {
+          setShowWelcome(true);
+        } else {
+          setRun(true);
+        }
+        return;
+      }       // DEV_MODE: Always show tours for development testing
+
       // Check sessionStorage first - if this page's tour was intentionally selected
       const pendingTour = sessionStorage.getItem("pending_tour");
 
