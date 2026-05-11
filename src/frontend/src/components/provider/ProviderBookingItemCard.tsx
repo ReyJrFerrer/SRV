@@ -23,6 +23,7 @@ interface ProviderBookingItemCardProps {
   isBookingActionInProgress: any;
   startBookingById?: any;
   startNavigationById: any;
+  hasNotification?: boolean;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
@@ -32,6 +33,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   acceptBookingById,
   isBookingActionInProgress,
   startNavigationById,
+  hasNotification = false,
 }) => {
   const { firebaseUser } = useAuth();
   const navigate = useNavigate();
@@ -278,7 +280,20 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
 
   // Section: UI Components
   const BookingCardContent = ({ showDurationInDetails = true }) => (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+    <div
+      className={`overflow-hidden rounded-2xl shadow-sm transition-all duration-200 border ${
+        hasNotification
+          ? (() => {
+              const st = booking.status?.toLowerCase();
+              if (st === "cancelled" || st === "declined")
+                return "border-l-4 border-l-red-500 border-red-200 bg-red-50/40";
+              if (st === "completed")
+                return "border-l-4 border-l-green-600 border-green-200 bg-green-50/40";
+              return "border-l-4 border-l-amber-500 border-amber-200 bg-amber-50/40";
+            })()
+          : "border-gray-100 bg-white"
+      }`}
+    >
       {/* Service Image */}
       <div className="relative h-40 w-full">
         <img
@@ -290,11 +305,33 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           }}
         />
         {/* Status badge overlay */}
-        <span
-          className={`absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold backdrop-blur-sm ${getEnhancedStatusColor(status)}`}
-        >
-          {status.replace("_", " ")}
-        </span>
+        <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5 sm:flex-row sm:items-center">
+          {hasNotification && (() => {
+            const st = booking.status?.toLowerCase();
+            const isCancelled = st === "cancelled" || st === "declined";
+            const isCompleted = st === "completed";
+            const color = isCancelled
+              ? "bg-red-500 ring-red-200"
+              : isCompleted
+                ? "bg-green-600 ring-green-200"
+                : "bg-amber-500 ring-white/50";
+            const label = isCancelled
+              ? "ALERT"
+              : isCompleted
+                ? "SUCCESS"
+                : "NEW REQUEST";
+            return (
+              <span className={`animate-pulse rounded-full ${color} px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-sm ring-1 backdrop-blur-md`}>
+                {label}
+              </span>
+            );
+           })()}
+          <span
+            className={`rounded-full bg-white/90 px-3 py-1 text-xs font-semibold backdrop-blur-sm ${getEnhancedStatusColor(status)}`}
+          >
+            {status.replace("_", " ")}
+          </span>
+        </div>
       </div>
 
       {/* Booking Details */}

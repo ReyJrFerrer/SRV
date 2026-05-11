@@ -7,6 +7,7 @@ interface CollapsibleBookingSectionProps {
   title: string;
   icon: React.ReactNode;
   count: number;
+  unreadCount?: number;
   children: React.ReactNode;
   defaultExpanded?: boolean;
   variant?: Variant;
@@ -35,6 +36,7 @@ const CollapsibleBookingSection: React.FC<CollapsibleBookingSectionProps> = ({
   title,
   icon,
   count,
+  unreadCount = 0,
   children,
   defaultExpanded = false,
   variant = "default",
@@ -66,6 +68,11 @@ const CollapsibleBookingSection: React.FC<CollapsibleBookingSectionProps> = ({
         <span className="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs font-bold text-gray-600">
           {count}
         </span>
+        {unreadCount > 0 && (
+          <span className="ml-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white shadow-sm ring-1 ring-white">
+            {unreadCount}
+          </span>
+        )}
         <ChevronDownIcon
           className={`ml-auto h-5 w-5 text-gray-400 transition-transform duration-200 ${
             expanded ? "rotate-180" : ""

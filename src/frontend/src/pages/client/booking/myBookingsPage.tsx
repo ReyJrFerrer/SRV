@@ -27,6 +27,7 @@ import MonthlyBookingsCalendar, {
 import SpotlightTour from "../../../components/common/SpotlightTour";
 import SmartHeader from "../../../components/common/SmartHeader";
 import CollapsibleBookingSection from "../../../components/common/CollapsibleBookingSection";
+import { useNotifications } from "../../../hooks/useNotificationsWithPush";
 
 type BookingStatusTab =
   | "ALL"
@@ -58,6 +59,16 @@ const MyBookingsPage: React.FC = () => {
   const [cancellingBooking, setCancellingBooking] =
     useState<EnhancedBooking | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+
+  const { notifications } = useNotifications();
+
+  const notificationBookingIds = useMemo(() => {
+    return new Set(
+      notifications
+        .filter((n) => !n.read && n.bookingId)
+        .map((n) => n.bookingId),
+    );
+  }, [notifications]);
 
   useEffect(() => {
     const queryTab = searchParams.get("tab");
@@ -295,6 +306,22 @@ const MyBookingsPage: React.FC = () => {
     );
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [filteredBookings]);
+
+  const unreadSameDayCount = useMemo(() => {
+    return sameDayBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+  }, [sameDayBookings, notificationBookingIds]);
+
+  const unreadScheduledCount = useMemo(() => {
+    return scheduledBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+  }, [scheduledBookings, notificationBookingIds]);
+
+  const unreadCompletedCount = useMemo(() => {
+    return completedBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+  }, [completedBookings, notificationBookingIds]);
+
+  const unreadCancelledCount = useMemo(() => {
+    return cancelledBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+  }, [cancelledBookings, notificationBookingIds]);
 
   // View toggle for Scheduled section (default to list)
   const [scheduledView, setScheduledView] = useState<"calendar" | "list">(
@@ -558,7 +585,7 @@ const MyBookingsPage: React.FC = () => {
                 />
                 <button
                   type="button"
-                  className={`relative z-10 flex-1 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
                     timingFilter === "Same Day"
                       ? "text-gray-900"
                       : "text-gray-500 hover:text-gray-700"
@@ -568,11 +595,16 @@ const MyBookingsPage: React.FC = () => {
                     setSearchParams({ tab: "same-day" });
                   }}
                 >
-                  Same Day
+                  <span>Same Day</span>
+                  {unreadSameDayCount > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow-sm ring-2 ring-white">
+                      {unreadSameDayCount}
+                    </span>
+                  )}
                 </button>
                 <button
                   type="button"
-                  className={`relative z-10 flex-1 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
                     timingFilter === "Scheduled"
                       ? "text-white"
                       : "text-gray-500 hover:text-gray-700"
@@ -582,7 +614,14 @@ const MyBookingsPage: React.FC = () => {
                     setSearchParams({ tab: "scheduled" });
                   }}
                 >
-                  Scheduled
+                  <span>Scheduled</span>
+                  {unreadScheduledCount > 0 && (
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-xs shadow-sm ring-2 ${
+                      timingFilter === "Scheduled" ? "bg-white text-red-600 ring-blue-600" : "bg-red-500 text-white ring-gray-100"
+                    }`}>
+                      {unreadScheduledCount}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -642,6 +681,9 @@ const MyBookingsPage: React.FC = () => {
                           reputation={
                             serviceStatsMap[booking.serviceId || ""]?.reputation
                           }
+                          hasNotification={notificationBookingIds.has(
+                            booking.id,
+                          )}
                         />
                       </Appear>
                     ))}
@@ -749,6 +791,7 @@ const MyBookingsPage: React.FC = () => {
                               serviceStatsMap[booking.serviceId || ""]
                                 ?.reputation
                             }
+                            hasNotification={notificationBookingIds.has(booking.id)}
                           />
                         </Appear>
                       ))}
@@ -775,6 +818,7 @@ const MyBookingsPage: React.FC = () => {
                   title="Completed"
                   icon={<CheckCircleIcon className="mr-2 h-5 w-5 text-green-500" />}
                   count={completedBookings.length}
+                  unreadCount={unreadCompletedCount}
                   variant="default"
                   defaultExpanded={false}
                   forceExpanded={statusFilter === "COMPLETED" ? true : undefined}
@@ -803,6 +847,7 @@ const MyBookingsPage: React.FC = () => {
                           serviceStatsMap[booking.serviceId || ""]
                             ?.reputation
                         }
+                        hasNotification={notificationBookingIds.has(booking.id)}
                       />
                     </Appear>
                   ))}
@@ -814,6 +859,7 @@ const MyBookingsPage: React.FC = () => {
                   title="Cancelled / Declined"
                   icon={<XCircleIcon className="mr-2 h-5 w-5 text-red-400" />}
                   count={cancelledBookings.length}
+                  unreadCount={unreadCancelledCount}
                   variant="warning"
                   defaultExpanded={false}
                   forceExpanded={statusFilter === "CANCELLED" ? true : undefined}
@@ -842,6 +888,7 @@ const MyBookingsPage: React.FC = () => {
                           serviceStatsMap[booking.serviceId || ""]
                             ?.reputation
                         }
+                        hasNotification={notificationBookingIds.has(booking.id)}
                       />
                     </Appear>
                   ))}

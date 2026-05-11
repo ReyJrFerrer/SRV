@@ -18,10 +18,9 @@ const BottomNavigation: React.FC = () => {
   const { unreadChatCount } = useChatNotifications();
 
   // Section: Derived notification counts
-  const bookingAcceptedCount = React.useMemo(
+  const bookingNotificationCount = React.useMemo(
     () =>
-      notifications.filter((n) => !n.read && n.type === "booking_accepted")
-        .length,
+      notifications.filter((n) => !n.read && n.bookingId).length,
     [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
@@ -107,7 +106,7 @@ const BottomNavigation: React.FC = () => {
       to: "/client/booking",
       label: "Booking",
       icon: null,
-      count: bookingAcceptedCount,
+      count: bookingNotificationCount,
     },
     { to: "/client/chat", label: "Chat", icon: null, count: unreadChatCount },
     {

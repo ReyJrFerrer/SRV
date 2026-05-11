@@ -28,6 +28,7 @@ interface ClientBookingItemCardProps {
   reviewCount?: number | null;
   reviews?: any[];
   reputation: any;
+  hasNotification?: boolean;
 }
 
 const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
@@ -36,6 +37,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   averageRating,
   reviewCount,
   reputation,
+  hasNotification = false,
 }) => {
   const navigate = useNavigate();
   const { checkCommissionValidation } = useProviderBookingManagement();
@@ -432,12 +434,21 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   return (
     <Link
       to={`/client/booking/${booking.id}`}
-      className="block cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      className={`relative block cursor-pointer overflow-hidden rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+        hasNotification
+          ? (() => {
+              const st = booking.status?.toLowerCase();
+              if (st === "cancelled" || st === "declined")
+                return "border-l-4 border-l-red-500 border-red-200 bg-red-50/40 hover:border-red-300";
+              if (st === "completed")
+                return "border-l-4 border-l-green-600 border-green-200 bg-green-50/40 hover:border-green-300";
+              return "border-l-4 border-l-blue-500 border-blue-200 bg-blue-50/40 hover:border-blue-300";
+            })()
+          : "border-gray-100 bg-white hover:border-blue-300"
+      }`}
       onClick={() => {
-        // If this booking is Accepted we trigger interaction so badge decrements
-        if (booking.status === "Accepted") {
-          dispatchBookingInteracted(booking.id);
-        }
+        // Trigger interaction to decrement badge regardless of status
+        dispatchBookingInteracted(booking.id);
       }}
     >
       <div className="flex flex-col">
@@ -461,11 +472,33 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               <p className="truncate text-xs font-bold uppercase tracking-wider text-indigo-500">
                 {serviceTitle}
               </p>
-              <span
-                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getStatusColor(booking.status)}`}
-              >
-                {booking.status.replace("_", " ")}
-              </span>
+              <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center">
+                {hasNotification && (() => {
+                  const st = booking.status?.toLowerCase();
+                  const isCancelled = st === "cancelled" || st === "declined";
+                  const isCompleted = st === "completed";
+                  const color = isCancelled
+                    ? "bg-red-500 ring-red-200"
+                    : isCompleted
+                      ? "bg-green-600 ring-green-200"
+                      : "bg-blue-500 ring-white";
+                  const label = isCancelled
+                    ? "ALERT"
+                    : isCompleted
+                      ? "SUCCESS"
+                      : "NEW UPDATE";
+                  return (
+                    <span className={`shrink-0 animate-pulse rounded-full ${color} px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm ring-1`}>
+                      {label}
+                    </span>
+                  );
+                })()}
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getStatusColor(booking.status)}`}
+                >
+                  {booking.status.replace("_", " ")}
+                </span>
+              </div>
             </div>
 
             <h3

@@ -38,6 +38,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/solid";
+import { useProviderNotificationsWithPush } from "../../hooks/useProviderNotificationsWithPush";
 
 type BookingStatusTab =
   | "ALL"
@@ -92,6 +93,16 @@ const ProviderBookingsPage: React.FC = () => {
     startBookingById,
     startNavigationById,
   } = useProviderBookingManagement();
+
+  const { notifications } = useProviderNotificationsWithPush();
+
+  const notificationBookingIds = useMemo(() => {
+    return new Set(
+      notifications
+        .filter((n) => !n.read && n.bookingId)
+        .map((n) => n.bookingId),
+    );
+  }, [notifications]);
 
   const { getClientReviewsByUser } = useClientRating();
   const { fetchUserReputation } = useReputation();
@@ -538,6 +549,22 @@ const ProviderBookingsPage: React.FC = () => {
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
   }, [currentBookings]);
 
+  const unreadSameDayCount = useMemo(() => {
+    return sameDayBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+  }, [sameDayBookings, notificationBookingIds]);
+
+  const unreadScheduledCount = useMemo(() => {
+    return scheduledBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+  }, [scheduledBookings, notificationBookingIds]);
+
+  const unreadCompletedCount = useMemo(() => {
+    return completedBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+  }, [completedBookings, notificationBookingIds]);
+
+  const unreadCancelledCount = useMemo(() => {
+    return cancelledBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+  }, [cancelledBookings, notificationBookingIds]);
+
   // View toggle for Scheduled section
   const [scheduledView, setScheduledView] = useState<"calendar" | "list">(
     "list",
@@ -756,7 +783,7 @@ const ProviderBookingsPage: React.FC = () => {
                 />
                 <button
                   type="button"
-                  className={`relative z-10 flex-1 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
                     timingFilter === "Same Day"
                       ? "text-gray-900"
                       : "text-gray-500 hover:text-gray-700"
@@ -765,11 +792,16 @@ const ProviderBookingsPage: React.FC = () => {
                     setTimingFilter("Same Day");
                   }}
                 >
-                  Same Day
+                  <span>Same Day</span>
+                  {unreadSameDayCount > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white shadow-sm ring-2 ring-white">
+                      {unreadSameDayCount}
+                    </span>
+                  )}
                 </button>
                 <button
                   type="button"
-                  className={`relative z-10 flex-1 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
+                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
                     timingFilter === "Scheduled"
                       ? "text-white"
                       : "text-gray-500 hover:text-gray-700"
@@ -778,7 +810,14 @@ const ProviderBookingsPage: React.FC = () => {
                     setTimingFilter("Scheduled");
                   }}
                 >
-                  Scheduled
+                  <span>Scheduled</span>
+                  {unreadScheduledCount > 0 && (
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-xs shadow-sm ring-2 ${
+                      timingFilter === "Scheduled" ? "bg-white text-red-600 ring-blue-600" : "bg-red-500 text-white ring-gray-100"
+                    }`}>
+                      {unreadScheduledCount}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -829,9 +868,7 @@ const ProviderBookingsPage: React.FC = () => {
                                   `/provider/active-service/${booking.id}`,
                                 );
                               } else if (booking.id) {
-                                if (booking.status === "Requested") {
-                                  dispatchBookingInteracted(booking.id);
-                                }
+                                dispatchBookingInteracted(booking.id);
                                 navigate(`/provider/booking/${booking.id}`);
                               }
                             }}
@@ -858,6 +895,9 @@ const ProviderBookingsPage: React.FC = () => {
                               }
                               startBookingById={startBookingById}
                               startNavigationById={startNavigationById}
+                              hasNotification={notificationBookingIds.has(
+                                booking.id,
+                              )}
                             />
                           </div>
                         </Appear>
@@ -917,9 +957,7 @@ const ProviderBookingsPage: React.FC = () => {
                             (b) => b.id === id,
                           );
                           if (!booking) return;
-                          if (booking.status === "Requested") {
-                            dispatchBookingInteracted(booking.id);
-                          }
+                          dispatchBookingInteracted(booking.id);
                           navigate(`/provider/booking/${booking.id}`);
                         }}
                       />
@@ -951,9 +989,7 @@ const ProviderBookingsPage: React.FC = () => {
                                     `/provider/active-service/${booking.id}`,
                                   );
                                 } else if (booking.id) {
-                                  if (booking.status === "Requested") {
-                                    dispatchBookingInteracted(booking.id);
-                                  }
+                                  dispatchBookingInteracted(booking.id);
                                   navigate(`/provider/booking/${booking.id}`);
                                 }
                               }}
@@ -980,6 +1016,7 @@ const ProviderBookingsPage: React.FC = () => {
                                 }
                                 startBookingById={startBookingById}
                                 startNavigationById={startNavigationById}
+                                hasNotification={notificationBookingIds.has(booking.id)}
                               />
                             </div>
                           </Appear>
@@ -995,6 +1032,7 @@ const ProviderBookingsPage: React.FC = () => {
                   title="Completed"
                   icon={<CheckCircleIcon className="mr-2 h-5 w-5 text-green-500" />}
                   count={completedBookings.length}
+                  unreadCount={unreadCompletedCount}
                   variant="default"
                   defaultExpanded={false}
                   forceExpanded={statusFilter === "COMPLETED" ? true : undefined}
@@ -1016,6 +1054,7 @@ const ProviderBookingsPage: React.FC = () => {
                         <div
                           onClick={() => {
                             if (booking.id) {
+                              dispatchBookingInteracted(booking.id);
                               navigate(`/provider/booking/${booking.id}`);
                             }
                           }}
@@ -1034,6 +1073,7 @@ const ProviderBookingsPage: React.FC = () => {
                             }
                             startBookingById={startBookingById}
                             startNavigationById={startNavigationById}
+                            hasNotification={notificationBookingIds.has(booking.id)}
                           />
                         </div>
                       </Appear>
@@ -1047,6 +1087,7 @@ const ProviderBookingsPage: React.FC = () => {
                   title="Cancelled / Declined"
                   icon={<XCircleIcon className="mr-2 h-5 w-5 text-red-400" />}
                   count={cancelledBookings.length}
+                  unreadCount={unreadCancelledCount}
                   variant="warning"
                   defaultExpanded={false}
                   forceExpanded={statusFilter === "CANCELLED" ? true : undefined}
@@ -1068,6 +1109,7 @@ const ProviderBookingsPage: React.FC = () => {
                         <div
                           onClick={() => {
                             if (booking.id) {
+                              dispatchBookingInteracted(booking.id);
                               navigate(`/provider/booking/${booking.id}`);
                             }
                           }}
@@ -1086,6 +1128,7 @@ const ProviderBookingsPage: React.FC = () => {
                             }
                             startBookingById={startBookingById}
                             startNavigationById={startNavigationById}
+                            hasNotification={notificationBookingIds.has(booking.id)}
                           />
                         </div>
                       </Appear>

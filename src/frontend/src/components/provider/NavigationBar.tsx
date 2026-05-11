@@ -26,10 +26,9 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     useProviderNotificationsWithPush();
 
   // Section: Derived notification counts
-  const newBookingRequestCount = React.useMemo(
+  const bookingNotificationCount = React.useMemo(
     () =>
-      notifications.filter((n) => !n.read && n.type === "new_booking_request")
-        .length,
+      notifications.filter((n) => !n.read && n.bookingId).length,
     [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
@@ -94,7 +93,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
       to: "/provider/bookings",
       label: "Booking",
       icon: null,
-      count: newBookingRequestCount,
+      count: bookingNotificationCount,
     },
     {
       to: "/provider/chat",
