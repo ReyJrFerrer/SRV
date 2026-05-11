@@ -357,7 +357,12 @@ const ProviderBookingsPage: React.FC = () => {
       };
 
       const sortByDateDesc = (arr: ProviderEnhancedBooking[]) =>
-        arr.sort((a, b) => getBookingTime(b) - getBookingTime(a));
+        arr.sort((a, b) => {
+          const aNotif = notificationBookingIds.has(a.id) ? 0 : 1;
+          const bNotif = notificationBookingIds.has(b.id) ? 0 : 1;
+          if (aNotif !== bNotif) return aNotif - bNotif;
+          return getBookingTime(b) - getBookingTime(a);
+        });
 
       sortByDateDesc(pending);
       sortByDateDesc(confirmed);
@@ -368,7 +373,7 @@ const ProviderBookingsPage: React.FC = () => {
     }
 
     return filteredBookings;
-  }, [statusFilter, bookings, searchTerm, timingFilter, selectedCategoryId]);
+  }, [statusFilter, bookings, searchTerm, timingFilter, selectedCategoryId, notificationBookingIds]);
 
   // Completed bookings (separate collapsible section)
   const completedBookings: ProviderEnhancedBooking[] = useMemo(() => {
@@ -434,8 +439,13 @@ const ProviderBookingsPage: React.FC = () => {
       }
     };
 
-    return filtered.sort((a, b) => getBookingTime(b) - getBookingTime(a));
-  }, [bookings, searchTerm, timingFilter, selectedCategoryId]);
+    return filtered.sort((a, b) => {
+      const aNotif = notificationBookingIds.has(a.id) ? 0 : 1;
+      const bNotif = notificationBookingIds.has(b.id) ? 0 : 1;
+      if (aNotif !== bNotif) return aNotif - bNotif;
+      return getBookingTime(b) - getBookingTime(a);
+    });
+  }, [bookings, searchTerm, timingFilter, selectedCategoryId, notificationBookingIds]);
 
   // Cancelled/Declined bookings (separate collapsible section)
   const cancelledBookings: ProviderEnhancedBooking[] = useMemo(() => {
@@ -502,8 +512,13 @@ const ProviderBookingsPage: React.FC = () => {
       }
     };
 
-    return filtered.sort((a, b) => getBookingTime(b) - getBookingTime(a));
-  }, [bookings, searchTerm, timingFilter, selectedCategoryId]);
+    return filtered.sort((a, b) => {
+      const aNotif = notificationBookingIds.has(a.id) ? 0 : 1;
+      const bNotif = notificationBookingIds.has(b.id) ? 0 : 1;
+      if (aNotif !== bNotif) return aNotif - bNotif;
+      return getBookingTime(b) - getBookingTime(a);
+    });
+  }, [bookings, searchTerm, timingFilter, selectedCategoryId, notificationBookingIds]);
 
   // Section: Separate Same Day vs Scheduled, based on date (scheduledDateTime || requestedDate || requestedDateTime || createdAt)
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
@@ -531,6 +546,9 @@ const ProviderBookingsPage: React.FC = () => {
     });
 
     scheduled.sort((a, b) => {
+      const aNotif = notificationBookingIds.has(a.id) ? 0 : 1;
+      const bNotif = notificationBookingIds.has(b.id) ? 0 : 1;
+      if (aNotif !== bNotif) return aNotif - bNotif;
       const getTs = (x: ProviderEnhancedBooking) => {
         try {
           const s =
@@ -547,15 +565,43 @@ const ProviderBookingsPage: React.FC = () => {
     });
 
     return { sameDayBookings: sameDay, scheduledBookings: scheduled };
-  }, [currentBookings]);
+  }, [currentBookings, notificationBookingIds]);
+
+  // Split ALL bookings by timing for notification counts (includes completed/cancelled)
+  const { allSameDayBookingIds, allScheduledBookingIds } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sameDayIds = new Set<string>();
+    const scheduledIds = new Set<string>();
+
+    (bookings || []).forEach((b) => {
+      const dateStr =
+        (b as any).scheduledDateTime ||
+        (b as any).requestedDate ||
+        (b as any).requestedDateTime ||
+        (b as any).createdAt;
+      if (!dateStr) return;
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return;
+      const day = new Date(d);
+      day.setHours(0, 0, 0, 0);
+      if (day.getTime() === today.getTime()) {
+        sameDayIds.add(b.id);
+      } else {
+        scheduledIds.add(b.id);
+      }
+    });
+
+    return { allSameDayBookingIds: sameDayIds, allScheduledBookingIds: scheduledIds };
+  }, [bookings]);
 
   const unreadSameDayCount = useMemo(() => {
-    return sameDayBookings.filter((b) => notificationBookingIds.has(b.id)).length;
-  }, [sameDayBookings, notificationBookingIds]);
+    return [...notificationBookingIds].filter((id) => id && allSameDayBookingIds.has(id)).length;
+  }, [notificationBookingIds, allSameDayBookingIds]);
 
   const unreadScheduledCount = useMemo(() => {
-    return scheduledBookings.filter((b) => notificationBookingIds.has(b.id)).length;
-  }, [scheduledBookings, notificationBookingIds]);
+    return [...notificationBookingIds].filter((id) => id && allScheduledBookingIds.has(id)).length;
+  }, [notificationBookingIds, allScheduledBookingIds]);
 
   const unreadCompletedCount = useMemo(() => {
     return completedBookings.filter((b) => notificationBookingIds.has(b.id)).length;

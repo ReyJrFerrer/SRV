@@ -319,7 +319,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
               ? "ALERT"
               : isCompleted
                 ? "SUCCESS"
-                : "NEW REQUEST";
+                : "NEW UPDATE";
             return (
               <span className={`animate-pulse rounded-full ${color} px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-sm ring-1 backdrop-blur-md`}>
                 {label}
