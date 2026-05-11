@@ -317,6 +317,14 @@ export const useProviderNotificationsWithPush = () => {
               n.bookingId === detail.bookingId),
         )
         .map((n) => n.id);
+        // Fallback: if we couldn't find a matching notification for the provided bookingId,
+      // mark the most recent unread new_booking_request notification so the badge decrements.
+      if (targetIds.length === 0) {
+        const fallback = notifications.find(
+          (n) => !n.read && n.type === "new_booking_request",
+        );
+        if (fallback) targetIds = [fallback.id];
+      }
 
       if (targetIds.length === 0) return;
 
