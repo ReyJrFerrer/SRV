@@ -317,21 +317,11 @@ export const useNotificationsWithPush = () => {
         .filter(
           (n) =>
             !n.read &&
-            n.type === "booking_accepted" &&
+            n.bookingId &&
             (!detail?.bookingId ||
-              (n.bookingId && n.bookingId === detail.bookingId)),
+              n.bookingId === detail.bookingId),
         )
         .map((n) => n.id);
-
-      // Fallback: if a specific bookingId was provided but we couldn't find a matching
-      // notification (e.g., bookingId missing on notif or notifications not yet enriched),
-      // mark the most recent unread booking_accepted notification to ensure the badge decrements.
-      if (targetIds.length === 0) {
-        const fallback = notifications.find(
-          (n) => !n.read && n.type === "booking_accepted",
-        );
-        if (fallback) targetIds = [fallback.id];
-      }
 
       if (targetIds.length === 0) return;
 

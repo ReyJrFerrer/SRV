@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import { ProviderEnhancedBooking } from "../../../hooks/useProviderBookingManagement";
+import Tooltip from "../../common/Tooltip";
 import {
   containerDefault,
   baseButtonDefault,
@@ -78,7 +79,9 @@ const ActionButtons: React.FC<Props> = ({
   // validation fails or an accept action is in progress. This ensures the button is
   // visible for Requested bookings even when a decline-only flag is absent.
   const showAccept = !!booking?.canAccept;
-  const showStart = !!(booking?.canStart && canStartServiceNow());
+  const showStart = booking?.status === "Accepted";
+  const canStartNow =
+    typeof canStartServiceNow === "function" ? canStartServiceNow() : false;
   const showComplete = !!booking?.canComplete;
   const showViewReview = booking?.status === "Completed";
   const showReport = !!(
@@ -209,14 +212,14 @@ const ActionButtons: React.FC<Props> = ({
       (booking as any)?.navigationStartedNotified,
     );
     const startLabel = alreadyNotified ? "Continue" : "Start";
+    const isDisabled = startInProgress || !canStartNow;
 
-    buttons.push(
+    const button = (
       <button
-        key="start"
         onClick={stopAndRun(onStart)}
-        disabled={startInProgress}
-        aria-disabled={startInProgress}
-        className={`${baseButtonClass} w-full bg-blue-600 text-white hover:bg-blue-700 ${startInProgress ? "cursor-not-allowed opacity-60" : ""}`}
+        disabled={isDisabled}
+        aria-disabled={isDisabled}
+        className={`${baseButtonClass} w-full ${canStartNow ? "bg-blue-600 text-white hover:bg-blue-700" : "cursor-not-allowed bg-gray-300 text-gray-500"} ${startInProgress ? "cursor-not-allowed opacity-60" : ""}`}
       >
         {startInProgress ? (
           <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
@@ -224,8 +227,45 @@ const ActionButtons: React.FC<Props> = ({
           <ArrowPathIcon className="mr-2 h-4 w-4" />
         )}
         {startLabel}
-      </button>,
+      </button>
     );
+
+    if (!canStartNow && booking?.requestedDate) {
+      try {
+        const d = new Date(booking.requestedDate);
+        const formattedDate =
+          d.toLocaleDateString([], {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }) +
+          " at " +
+          d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+        buttons.push(
+          <div key="start" className="w-full">
+            <Tooltip
+              content={`You can start this service on ${formattedDate}`}
+              showWhenDisabled
+            >
+              {button}
+            </Tooltip>
+          </div>,
+        );
+      } catch {
+        buttons.push(
+          <div key="start" className="w-full">
+            {button}
+          </div>,
+        );
+      }
+    } else {
+      buttons.push(
+        <div key="start" className="w-full">
+          {button}
+        </div>,
+      );
+    }
   }
 
   if (showComplete) {

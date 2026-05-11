@@ -19,6 +19,12 @@ import { useAuth } from "../../context/AuthContext";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 import ActionButtons from "./booking-details/ActionButtons";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
+import {
+  BookingNotificationBadge,
+  BookingStatusPill,
+  getNotificationBorderClasses,
+  getNotificationBorderHoverClasses,
+} from "../common/BookingStatusBadge";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -28,6 +34,7 @@ interface ClientBookingItemCardProps {
   reviewCount?: number | null;
   reviews?: any[];
   reputation: any;
+  hasNotification?: boolean;
 }
 
 const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
@@ -36,6 +43,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   averageRating,
   reviewCount,
   reputation,
+  hasNotification = false,
 }) => {
   const navigate = useNavigate();
   const { checkCommissionValidation } = useProviderBookingManagement();
@@ -225,31 +233,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
-  // Section: Utilities (status)
-  const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case "REQUESTED":
-      case "PENDING":
-        return "text-amber-700 bg-amber-50 border border-amber-100";
-      case "ACCEPTED":
-      case "CONFIRMED":
-        return "text-emerald-700 bg-emerald-50 border border-emerald-100";
-      case "INPROGRESS":
-      case "IN_PROGRESS":
-        return "text-blue-700 bg-blue-50 border border-blue-100";
-      case "COMPLETED":
-        return "text-indigo-700 bg-indigo-50 border border-indigo-100";
-      case "CANCELLED":
-        return "text-rose-700 bg-rose-50 border border-rose-100";
-      case "DECLINED":
-        return "text-slate-700 bg-slate-50 border border-slate-100";
-      case "DISPUTED":
-        return "text-orange-700 bg-orange-50 border border-orange-100";
-      default:
-        return "text-slate-700 bg-slate-50 border border-slate-100";
-    }
-  };
-
   // Section: Handlers
   const handleChat = useCallback(async () => {
     if (!booking.providerProfile?.id) {
@@ -432,12 +415,14 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   return (
     <Link
       to={`/client/booking/${booking.id}`}
-      className="block cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      className={`relative block cursor-pointer overflow-hidden rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+        hasNotification
+          ? `${getNotificationBorderClasses(booking.status)} ${getNotificationBorderHoverClasses(booking.status)}`
+          : "border-gray-100 bg-white hover:border-blue-300"
+      }`}
       onClick={() => {
-        // If this booking is Accepted we trigger interaction so badge decrements
-        if (booking.status === "Accepted") {
-          dispatchBookingInteracted(booking.id);
-        }
+        // Trigger interaction to decrement badge regardless of status
+        dispatchBookingInteracted(booking.id);
       }}
     >
       <div className="flex flex-col">
@@ -461,11 +446,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               <p className="truncate text-xs font-bold uppercase tracking-wider text-indigo-500">
                 {serviceTitle}
               </p>
-              <span
-                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getStatusColor(booking.status)}`}
-              >
-                {booking.status.replace("_", " ")}
-              </span>
+              <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center">
+                {hasNotification && (
+                  <BookingNotificationBadge status={booking.status} />
+                )}
+                <BookingStatusPill status={booking.status} />
+              </div>
             </div>
 
             <h3

@@ -17,7 +17,11 @@ import MapSection from "../../../components/MapSection";
 import ClientAttachments from "../../../components/common/MediaAttachments";
 import CancellationReasons from "../../../components/common/cancellation/CancellationReasons";
 import BookingNotes from "../../../components/provider/booking-details/BookingNotes";
-import { ArrowLeftIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  CalendarDaysIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 import { useReviewManagement } from "../../../hooks/reviewManagement";
 import { useReputation } from "../../../hooks/useReputation";
 import ClientInfoCard from "../../../components/provider/booking-details/ClientInfoCard";
@@ -302,7 +306,13 @@ const ProviderBookingDetailsPage: React.FC = () => {
           : "Could not start conversation. Please try again.",
       );
     }
-  }, [specificBooking, firebaseUser, conversations, navigate, createConversation]);
+  }, [
+    specificBooking,
+    firebaseUser,
+    conversations,
+    navigate,
+    createConversation,
+  ]);
 
   // Check if today is the service date and time, or after
   const canStartServiceNow = useCallback(() => {
@@ -604,6 +614,53 @@ const ProviderBookingDetailsPage: React.FC = () => {
   const duration = specificBooking?.duration ?? "N/A";
   const amountToPay = specificBooking?.amountPaid ?? 0;
 
+  const isServiceDay = useMemo(() => {
+    const requestedDate = specificBooking?.requestedDate;
+    if (!requestedDate) return false;
+    try {
+      const dateObj = new Date(requestedDate);
+      const today = new Date();
+      return dateObj.toDateString() === today.toDateString();
+    } catch {
+      return false;
+    }
+  }, [specificBooking?.requestedDate]);
+
+  const isFutureService = useMemo(() => {
+    const requestedDate = specificBooking?.requestedDate;
+    if (!requestedDate || specificBooking?.status !== "Accepted") return false;
+    try {
+      return new Date(requestedDate).getTime() > Date.now();
+    } catch {
+      return false;
+    }
+  }, [specificBooking?.requestedDate, specificBooking?.status]);
+
+  const showServiceDayBanner =
+    isServiceDay &&
+    !isFutureService &&
+    ["Accepted", "InProgress"].includes(specificBooking?.status || "");
+  const showScheduledBanner = isFutureService;
+
+  const formattedScheduledDateTime = useMemo(() => {
+    const requestedDate = specificBooking?.requestedDate;
+    if (!requestedDate) return "";
+    try {
+      const d = new Date(requestedDate);
+      return (
+        d.toLocaleDateString([], {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }) +
+        " at " +
+        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      );
+    } catch {
+      return "";
+    }
+  }, [specificBooking?.requestedDate]);
+
   const formatDateRange = (
     requestedDate: Date | string | number,
     scheduledDate: Date | string | number,
@@ -689,7 +746,7 @@ const ProviderBookingDetailsPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="sm:pt-13 mx-auto max-w-4xl space-y-5 p-4 pt-20 sm:p-6">
+      <main className="mx-auto max-w-4xl space-y-5 px-4 pb-4 pt-20 sm:px-6 sm:pb-6 sm:pt-24">
         {isLoading ? (
           <BookingDetailsSkeleton />
         ) : (
@@ -702,6 +759,42 @@ const ProviderBookingDetailsPage: React.FC = () => {
                   cancelledBy={(specificBooking as any)?.cancelledBy}
                   cancellationReason={(specificBooking as any)?.cancelReason}
                 />
+              </div>
+            )}
+
+            {showScheduledBanner && (
+              <div className="flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
+                  <ClockIcon className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-amber-900">
+                    Service is scheduled
+                  </h3>
+                  <p className="mt-1 text-sm text-amber-700">
+                    You can start this service on {formattedScheduledDateTime}.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {showServiceDayBanner && (
+              <div className="flex items-center gap-4 rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm sm:p-5">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
+                  <CalendarDaysIcon className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-blue-900">
+                    {specificBooking?.status === "InProgress"
+                      ? "Service is currently in progress."
+                      : "You have a service scheduled for today — ready to start?"}
+                  </h3>
+                  <p className="mt-1 text-sm text-blue-700">
+                    {specificBooking?.status === "InProgress"
+                      ? "Complete the service when you're done."
+                      : "Tap the Start button below to begin."}
+                  </p>
+                </div>
               </div>
             )}
 

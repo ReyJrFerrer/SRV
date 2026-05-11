@@ -1,16 +1,12 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function ScrollToTop() {
-  useEffect(() => {
-    if ("scrollRestoration" in window.history) {
-      try {
-        window.history.scrollRestoration = "manual";
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
+  const location = useLocation();
 
-  // Removed auto-scroll to preserve page position
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return null;
 }

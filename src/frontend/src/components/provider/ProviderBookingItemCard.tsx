@@ -1,16 +1,23 @@
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ProviderEnhancedBooking } from "../../hooks/useProviderBookingManagement";
 import {
-  MapPinIcon,
   CalendarDaysIcon,
+  MapPinIcon,
   ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
+  UserIcon,
+} from "@heroicons/react/24/solid";
 import useChat from "../../hooks/useChat";
 import { useAuth } from "../../context/AuthContext";
 import { useUserImage } from "../../hooks/useMediaLoader";
-import { useEffect, useState } from "react";
 import ActionButtons from "./booking-details/ActionButtons";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
+import {
+  BookingNotificationBadge,
+  BookingStatusPill,
+  getNotificationBorderClasses,
+  getNotificationBorderHoverClasses,
+} from "../common/BookingStatusBadge";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -23,6 +30,7 @@ interface ProviderBookingItemCardProps {
   isBookingActionInProgress: any;
   startBookingById?: any;
   startNavigationById: any;
+  hasNotification?: boolean;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
@@ -32,6 +40,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
   acceptBookingById,
   isBookingActionInProgress,
   startNavigationById,
+  hasNotification = false,
 }) => {
   const { firebaseUser } = useAuth();
   const navigate = useNavigate();
@@ -91,16 +100,40 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     serviceTitle += " (Archived)";
   }
 
-  const serviceImage = userImageUrl;
+  let fallbackImage = userImageUrl;
+  if (
+    !fallbackImage ||
+    fallbackImage === "/default-client.svg" ||
+    fallbackImage === "" ||
+    fallbackImage === undefined
+  ) {
+    fallbackImage = "/default-client.svg";
+  }
 
-  // If profilePicture is an object, use its imageUrl property
-  const duration = booking.serviceDuration || "N/A";
   const price = booking.price;
-  const locationAddress = booking.formattedLocation || "Location not specified";
-  const status = booking.status;
+  const bookingLocation =
+    booking.formattedLocation ||
+    (typeof booking.location === "string"
+      ? booking.location
+      : "Location not specified");
   const notes = booking.notes;
 
-  // --- Date range formatting helper ---
+  // --- Utilities ---
+  const formatDate = (date: Date | string | number) => {
+    try {
+      const dateObj = new Date(date);
+      return dateObj.toLocaleDateString([], {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "Date not available";
+    }
+  };
+
   const formatDateRange = (
     requestedDate: Date | string | number,
     scheduledDate: Date | string | number,
@@ -125,7 +158,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         minute: "2-digit",
       });
 
-      // Check if both dates are on the same day
       const isSameDay =
         requestedDateObj.toDateString() === scheduledDateObj.toDateString();
 
@@ -144,40 +176,18 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // --- Status color mapping (text only, no backgrounds) ---
-  const getEnhancedStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case "REQUESTED":
-      case "PENDING":
-        return "text-yellow-600 font-semibold";
-      case "ACCEPTED":
-      case "CONFIRMED":
-        return "text-green-600 font-semibold";
-      case "INPROGRESS":
-      case "IN_PROGRESS":
-        return "text-blue-600 font-semibold";
-      case "COMPLETED":
-        return "text-indigo-600 font-semibold";
-      case "CANCELLED":
-        return "text-red-600 font-semibold";
-      case "DECLINED":
-        return "text-gray-500 font-semibold";
-      case "DISPUTED":
-        return "text-orange-600 font-semibold";
-      default:
-        return "text-gray-500 font-semibold";
-    }
-  };
-
   // Section: Handlers
-  const handleAccept = async () => {
-    // optimistic: emit interaction immediately so badges update in UI
-    emitInteraction();
+  const emitInteraction = useCallback(() => {
+    try {
+      dispatchBookingInteracted(booking.id);
+    } catch {}
+  }, [booking.id]);
 
+  const handleAccept = async () => {
+    emitInteraction();
     const scheduledDate = new Date(booking.scheduledDate);
     const success = await acceptBookingById(booking.id, scheduledDate);
     if (success) {
-      dispatchBookingInteracted(booking.id);
       navigate(`../../provider/booking/${booking.id}`);
     }
   };
@@ -211,12 +221,10 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     }
   };
 
-  // Section: Handlers (chat)
   const handleChatClient = async () => {
     if (!booking.clientId || !firebaseUser) return;
     try {
       const currentUserId = firebaseUser.uid;
-      // Check if there's an existing conversation with this client
       const existingConversation = conversations.find(
         (conv) =>
           (conv.conversation.providerId === currentUserId &&
@@ -226,7 +234,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       );
 
       if (existingConversation) {
-        // Navigate to existing conversation, use clientId as route param
         navigate(`/provider/chat`, {
           state: {
             conversationId: existingConversation.conversation.id,
@@ -235,7 +242,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
           },
         });
       } else {
-        // Create new conversation
         const newConversation = await createConversation(
           currentUserId,
           booking.clientId.toString(),
@@ -258,15 +264,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
       );
     }
   };
-  // Section: Interaction helpers
-  // Emit booking-interacted when provider performs actions from the card
-  const emitInteraction = () => {
-    try {
-      dispatchBookingInteracted(booking.id);
-    } catch {}
-  };
-  // Section: Booking state checks
-  const isInProgress = status === "InProgress";
 
   // --- Helper: Check if booking is scheduled for a future date ---
   const isScheduledForFuture = (() => {
@@ -276,131 +273,146 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     return bookingDate.getTime() > now.getTime();
   })();
 
-  // Section: UI Components
-  const BookingCardContent = ({ showDurationInDetails = true }) => (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-      {/* Service Image */}
-      <div className="relative h-40 w-full">
-        <img
-          src={serviceImage || "/default-client.svg"}
-          alt={clientName}
-          className="h-full w-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/default-client.svg";
-          }}
-        />
-        {/* Status badge overlay */}
-        <span
-          className={`absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold backdrop-blur-sm ${getEnhancedStatusColor(status)}`}
-        >
-          {status.replace("_", " ")}
-        </span>
-      </div>
-
-      {/* Booking Details */}
-      <div className="p-4">
-        {/* Service Title */}
-        <p className="truncate text-xs font-semibold uppercase tracking-wider text-blue-600">
-          {serviceTitle}
-        </p>
-
-        {/* Client Name */}
-        <h3
-          className="mt-1 truncate text-lg font-bold text-gray-900"
-          title={clientName}
-        >
-          {clientName}
-        </h3>
-        <p className="mt-0.5 text-sm text-gray-500">{packageTitle}</p>
-
-        {/* Details - simplified */}
-        <div className="mt-3 space-y-2 text-sm text-gray-600">
-          {/* Date/Time */}
-          <div className="flex items-center gap-2">
-            <CalendarDaysIcon className="h-4 w-4 flex-shrink-0 text-gray-400" />
-            <span className="truncate">
-              {formatDateRange(
-                booking.requestedDate,
-                booking.scheduledDate || "hello",
-              )}
-            </span>
-          </div>
-
-          {/* Location */}
-          <div className="flex items-center gap-2">
-            <MapPinIcon className="h-4 w-4 flex-shrink-0 text-gray-400" />
-            <span className="truncate">{locationAddress}</span>
-          </div>
-
-          {/* Price */}
-          {price !== undefined && (
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900">
-                ₱{price.toFixed(2)}
-              </span>
-            </div>
-          )}
-
-          {/* Duration */}
-          {showDurationInDetails && duration !== "N/A" && (
-            <div className="flex items-center gap-2 text-gray-500">
-              <span>Duration: {duration}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Booking Notes */}
-        {notes && (
-          <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-2.5 text-xs text-gray-600">
-            <span className="font-medium">Note:</span> {notes}
-          </div>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-2 border-t border-gray-100 p-4 pt-3">
-        <ActionButtons
-          booking={booking}
-          onChat={() => {
-            emitInteraction();
-            handleChatClient();
-          }}
-          onAccept={handleAccept}
-          onDecline={() => {
-            emitInteraction();
-            onDeclineClick();
-          }}
-          onCancel={() => {
-            emitInteraction();
-            onCancelClick(booking);
-          }}
-          onStart={() => {
-            emitInteraction();
-            handleStartService();
-          }}
-          isStartingService={isStartingService}
-          onComplete={() => {
-            emitInteraction();
-            handleMarkAsCompleted();
-          }}
-          onReport={() => {
-            emitInteraction();
-            navigate(`/provider/report`, {
-              state: { bookingId: booking.id },
-            });
-          }}
-          canStartServiceNow={() => !isScheduledForFuture}
-          isBookingActionInProgress={isBookingActionInProgress}
-        />
-      </div>
-    </div>
-  );
-
-  // Section: Render
   return (
     <>
-      {/* Booking Card */}
-      <BookingCardContent showDurationInDetails={!isInProgress} />
+      <Link
+        to={`/provider/booking/${booking.id}`}
+        className={`relative block cursor-pointer overflow-hidden rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
+          hasNotification
+            ? `${getNotificationBorderClasses(booking.status)} ${getNotificationBorderHoverClasses(booking.status)}`
+            : "border-gray-100 bg-white hover:border-blue-300"
+        }`}
+        onClick={() => {
+          emitInteraction();
+        }}
+      >
+        <div className="flex flex-col">
+          {/* Header Section */}
+          <div className="flex items-start gap-3">
+            {/* Thumbnail */}
+            {fallbackImage && (
+              <img
+                src={fallbackImage}
+                alt={clientName}
+                className="h-16 w-16 shrink-0 rounded-xl bg-gray-50 object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/default-client.svg";
+                }}
+              />
+            )}
+
+            {/* Right Details */}
+            <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex items-start justify-between gap-2">
+                <p className="truncate text-xs font-bold uppercase tracking-wider text-indigo-500">
+                  {serviceTitle}
+                </p>
+                <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center">
+                  {hasNotification && (
+                    <BookingNotificationBadge status={booking.status} />
+                  )}
+                  <BookingStatusPill status={booking.status} />
+                </div>
+              </div>
+
+              <h3
+                className="mt-0.5 truncate text-base font-bold text-gray-900"
+                title={packageTitle}
+              >
+                {packageTitle}
+              </h3>
+
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-600">
+                <span className="flex items-center gap-1 font-medium text-gray-800">
+                  <UserIcon className="h-3 w-3 shrink-0 text-gray-400" />
+                  <span className="max-w-[120px] truncate">{clientName}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Booking Details Pill */}
+          <div className="mt-3 grid grid-cols-1 gap-2 rounded-xl bg-gray-50 p-3 sm:grid-cols-2 md:flex md:items-start md:justify-between md:gap-4">
+            <div className="flex items-start gap-2 text-sm text-gray-700">
+              <CalendarDaysIcon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+              <span className="font-medium leading-snug">
+                {booking.scheduledDate
+                  ? formatDateRange(
+                      booking.requestedDate || booking.createdAt,
+                      booking.scheduledDate,
+                    )
+                  : formatDate(booking.requestedDate || booking.createdAt)}
+              </span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-gray-600 md:flex-1">
+              <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+              <span className="line-clamp-2 leading-snug">
+                {bookingLocation}
+              </span>
+            </div>
+            {notes && (
+              <div className="mt-2 flex items-start gap-2 border-t border-gray-200/60 pt-2 text-xs text-gray-500 sm:col-span-2 md:border-t-0 md:pt-0">
+                <span className="shrink-0 font-semibold text-gray-700">
+                  Note:
+                </span>
+                <span className="line-clamp-2">{notes}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Area: Price & Actions */}
+          <div className="mt-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            {price !== undefined ? (
+              <div className="flex flex-col">
+                <span className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Total Amount
+                </span>
+                <span className="text-lg font-bold leading-none text-gray-900">
+                  ₱{price.toFixed(2)}
+                </span>
+              </div>
+            ) : (
+              <div className="hidden sm:block"></div>
+            )}
+
+            <div className="flex w-full shrink-0 justify-end sm:w-auto">
+              <ActionButtons
+                booking={booking}
+                onChat={() => {
+                  emitInteraction();
+                  handleChatClient();
+                }}
+                onAccept={handleAccept}
+                onDecline={() => {
+                  emitInteraction();
+                  onDeclineClick();
+                }}
+                onCancel={() => {
+                  emitInteraction();
+                  onCancelClick(booking);
+                }}
+                onStart={() => {
+                  emitInteraction();
+                  handleStartService();
+                }}
+                isStartingService={isStartingService}
+                onComplete={() => {
+                  emitInteraction();
+                  handleMarkAsCompleted();
+                }}
+                onReport={() => {
+                  emitInteraction();
+                  navigate(`/provider/report`, {
+                    state: { bookingId: booking.id },
+                  });
+                }}
+                canStartServiceNow={() => !isScheduledForFuture}
+                isBookingActionInProgress={isBookingActionInProgress}
+              />
+            </div>
+          </div>
+        </div>
+      </Link>
 
       {/* Complete Confirmation Dialog */}
       {showCompleteConfirm && (
