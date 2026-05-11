@@ -19,6 +19,12 @@ import { useAuth } from "../../context/AuthContext";
 import { useProviderBookingManagement } from "../../hooks/useProviderBookingManagement";
 import ActionButtons from "./booking-details/ActionButtons";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
+import {
+  BookingNotificationBadge,
+  BookingStatusPill,
+  getNotificationBorderClasses,
+  getNotificationBorderHoverClasses,
+} from "../common/BookingStatusBadge";
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -227,31 +233,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
-  // Section: Utilities (status)
-  const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case "REQUESTED":
-      case "PENDING":
-        return "text-amber-700 bg-amber-50 border border-amber-100";
-      case "ACCEPTED":
-      case "CONFIRMED":
-        return "text-emerald-700 bg-emerald-50 border border-emerald-100";
-      case "INPROGRESS":
-      case "IN_PROGRESS":
-        return "text-blue-700 bg-blue-50 border border-blue-100";
-      case "COMPLETED":
-        return "text-indigo-700 bg-indigo-50 border border-indigo-100";
-      case "CANCELLED":
-        return "text-rose-700 bg-rose-50 border border-rose-100";
-      case "DECLINED":
-        return "text-slate-700 bg-slate-50 border border-slate-100";
-      case "DISPUTED":
-        return "text-orange-700 bg-orange-50 border border-orange-100";
-      default:
-        return "text-slate-700 bg-slate-50 border border-slate-100";
-    }
-  };
-
   // Section: Handlers
   const handleChat = useCallback(async () => {
     if (!booking.providerProfile?.id) {
@@ -436,14 +417,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
       to={`/client/booking/${booking.id}`}
       className={`relative block cursor-pointer overflow-hidden rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 ${
         hasNotification
-          ? (() => {
-              const st = booking.status?.toLowerCase();
-              if (st === "cancelled" || st === "declined")
-                return "border-l-4 border-l-red-500 border-red-200 bg-red-50/40 hover:border-red-300";
-              if (st === "completed")
-                return "border-l-4 border-l-green-600 border-green-200 bg-green-50/40 hover:border-green-300";
-              return "border-l-4 border-l-blue-500 border-blue-200 bg-blue-50/40 hover:border-blue-300";
-            })()
+          ? `${getNotificationBorderClasses(booking.status)} ${getNotificationBorderHoverClasses(booking.status)}`
           : "border-gray-100 bg-white hover:border-blue-300"
       }`}
       onClick={() => {
@@ -473,31 +447,10 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 {serviceTitle}
               </p>
               <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center">
-                {hasNotification && (() => {
-                  const st = booking.status?.toLowerCase();
-                  const isCancelled = st === "cancelled" || st === "declined";
-                  const isCompleted = st === "completed";
-                  const color = isCancelled
-                    ? "bg-red-500 ring-red-200"
-                    : isCompleted
-                      ? "bg-green-600 ring-green-200"
-                      : "bg-blue-500 ring-white";
-                  const label = isCancelled
-                    ? "ALERT"
-                    : isCompleted
-                      ? "SUCCESS"
-                      : "NEW UPDATE";
-                  return (
-                    <span className={`shrink-0 animate-pulse rounded-full ${color} px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm ring-1`}>
-                      {label}
-                    </span>
-                  );
-                })()}
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getStatusColor(booking.status)}`}
-                >
-                  {booking.status.replace("_", " ")}
-                </span>
+                {hasNotification && (
+                  <BookingNotificationBadge status={booking.status} />
+                )}
+                <BookingStatusPill status={booking.status} />
               </div>
             </div>
 

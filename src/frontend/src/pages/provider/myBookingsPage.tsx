@@ -952,6 +952,18 @@ const ProviderBookingsPage: React.FC = () => {
                   </div>
                 </section>
               )}
+              {timingFilter === "Same Day" &&
+                sameDayBookings.length === 0 && (
+                  <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+                    <SparklesIcon className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+                    <p className="text-sm font-medium text-gray-500">
+                      No Same Day bookings yet.
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Book a service for today to see it here.
+                    </p>
+                  </div>
+                )}
               {timingFilter === "Scheduled" && scheduledBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">

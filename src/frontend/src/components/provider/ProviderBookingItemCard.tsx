@@ -11,6 +11,10 @@ import { useUserImage } from "../../hooks/useMediaLoader";
 import { useEffect, useState } from "react";
 import ActionButtons from "./booking-details/ActionButtons";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
+import {
+  BookingNotificationBadge,
+  getNotificationBorderClasses,
+} from "../common/BookingStatusBadge";
 
 interface ProviderBookingItemCardProps {
   booking: ProviderEnhancedBooking;
@@ -283,14 +287,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
     <div
       className={`overflow-hidden rounded-2xl shadow-sm transition-all duration-200 border ${
         hasNotification
-          ? (() => {
-              const st = booking.status?.toLowerCase();
-              if (st === "cancelled" || st === "declined")
-                return "border-l-4 border-l-red-500 border-red-200 bg-red-50/40";
-              if (st === "completed")
-                return "border-l-4 border-l-green-600 border-green-200 bg-green-50/40";
-              return "border-l-4 border-l-amber-500 border-amber-200 bg-amber-50/40";
-            })()
+          ? getNotificationBorderClasses(booking.status)
           : "border-gray-100 bg-white"
       }`}
     >
@@ -306,26 +303,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({
         />
         {/* Status badge overlay */}
         <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5 sm:flex-row sm:items-center">
-          {hasNotification && (() => {
-            const st = booking.status?.toLowerCase();
-            const isCancelled = st === "cancelled" || st === "declined";
-            const isCompleted = st === "completed";
-            const color = isCancelled
-              ? "bg-red-500 ring-red-200"
-              : isCompleted
-                ? "bg-green-600 ring-green-200"
-                : "bg-amber-500 ring-white/50";
-            const label = isCancelled
-              ? "ALERT"
-              : isCompleted
-                ? "SUCCESS"
-                : "NEW UPDATE";
-            return (
-              <span className={`animate-pulse rounded-full ${color} px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-sm ring-1 backdrop-blur-md`}>
-                {label}
-              </span>
-            );
-           })()}
+          {hasNotification && (
+            <BookingNotificationBadge status={booking.status} size="md" />
+          )}
           <span
             className={`rounded-full bg-white/90 px-3 py-1 text-xs font-semibold backdrop-blur-sm ${getEnhancedStatusColor(status)}`}
           >

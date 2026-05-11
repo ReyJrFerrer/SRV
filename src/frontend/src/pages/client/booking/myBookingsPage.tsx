@@ -217,6 +217,24 @@ const MyBookingsPage: React.FC = () => {
       (b) => b && typeof b.status === "string" && b.status.toLowerCase() === "completed",
     );
 
+    if (timingFilter !== "All") {
+      filtered = filtered.filter((booking) => {
+        const bookingDateString = booking.requestedDate || booking.createdAt;
+        if (!bookingDateString) return false;
+        const bookingDate = new Date(bookingDateString);
+        if (isNaN(bookingDate.getTime())) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isSameDay =
+          bookingDate.getDate() === today.getDate() &&
+          bookingDate.getMonth() === today.getMonth() &&
+          bookingDate.getFullYear() === today.getFullYear();
+        if (timingFilter === "Same Day") return isSameDay;
+        if (timingFilter === "Scheduled") return !isSameDay;
+        return false;
+      });
+    }
+
     if (selectedCategory) {
       filtered = filtered.filter(
         (b) => b.serviceDetails?.category?.name === selectedCategory,
@@ -251,7 +269,7 @@ const MyBookingsPage: React.FC = () => {
       if (aNotif !== bNotif) return aNotif - bNotif;
       return getBookingTime(b) - getBookingTime(a);
     });
-  }, [bookingManagement.bookings, searchTerm, selectedCategory, notificationBookingIds]);
+  }, [bookingManagement.bookings, searchTerm, selectedCategory, notificationBookingIds, timingFilter]);
 
   // Cancelled/Declined bookings (separate collapsible section)
   const cancelledBookings = useMemo(() => {
@@ -263,6 +281,24 @@ const MyBookingsPage: React.FC = () => {
           b.status.toLowerCase() === "declined"),
     );
 
+    if (timingFilter !== "All") {
+      filtered = filtered.filter((booking) => {
+        const bookingDateString = booking.requestedDate || booking.createdAt;
+        if (!bookingDateString) return false;
+        const bookingDate = new Date(bookingDateString);
+        if (isNaN(bookingDate.getTime())) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isSameDay =
+          bookingDate.getDate() === today.getDate() &&
+          bookingDate.getMonth() === today.getMonth() &&
+          bookingDate.getFullYear() === today.getFullYear();
+        if (timingFilter === "Same Day") return isSameDay;
+        if (timingFilter === "Scheduled") return !isSameDay;
+        return false;
+      });
+    }
+
     if (selectedCategory) {
       filtered = filtered.filter(
         (b) => b.serviceDetails?.category?.name === selectedCategory,
@@ -297,7 +333,7 @@ const MyBookingsPage: React.FC = () => {
       if (aNotif !== bNotif) return aNotif - bNotif;
       return getBookingTime(b) - getBookingTime(a);
     });
-  }, [bookingManagement.bookings, searchTerm, selectedCategory, notificationBookingIds]);
+  }, [bookingManagement.bookings, searchTerm, selectedCategory, notificationBookingIds, timingFilter]);
 
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
     const today = new Date();

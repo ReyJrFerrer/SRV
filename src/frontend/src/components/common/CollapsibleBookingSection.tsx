@@ -65,9 +65,6 @@ const CollapsibleBookingSection: React.FC<CollapsibleBookingSectionProps> = ({
         <h2 className={`text-sm font-bold tracking-wide ${styles.header}`}>
           {title}
         </h2>
-        <span className="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs font-bold text-gray-600">
-          {count}
-        </span>
         {unreadCount > 0 && (
           <span className="ml-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white shadow-sm ring-1 ring-white">
             {unreadCount}
