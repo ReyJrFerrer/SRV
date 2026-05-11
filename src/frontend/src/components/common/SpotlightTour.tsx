@@ -1,11 +1,3 @@
-// ============================================================================
-// DEV_MODE: For development testing only - SpotlightTour will always show on refresh
-// TODO: Remove this block before going to production
-// ============================================================================
-// eslint-disable-next-line
-const DEV_MODE_SPOTLIGHT = true; // Set to true to always show tours
-// ============================================================================
-
 import React, { useState, useEffect, useRef } from "react";
 import {
   Joyride,
@@ -650,16 +642,6 @@ export default function SpotlightTour({
   useEffect(() => {
     // Check and show welcome screen ONLY on first visit to home page
     const timer = setTimeout(() => {
-      // DEV_MODE: Always show tours for development testing
-      if (DEV_MODE_SPOTLIGHT) {
-        if (flowType === "client" || flowType === "provider") {
-          setShowWelcome(true);
-        } else {
-          setRun(true);
-        }
-        return;
-      }       // DEV_MODE: Always show tours for development testing
-
       // Check sessionStorage first - if this page's tour was intentionally selected
       const pendingTour = sessionStorage.getItem("pending_tour");
 
