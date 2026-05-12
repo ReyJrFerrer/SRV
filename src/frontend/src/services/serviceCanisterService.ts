@@ -83,6 +83,19 @@ export interface ServiceCategory {
   parentId?: string;
 }
 
+export interface ServiceCertificateMedia {
+  id: string;
+  url: string;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+  mediaType: "ServiceCertificate";
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  validationStatus?: "Pending" | "Validated" | "Rejected";
+}
+
 export interface Service {
   id: string;
   providerId: string;
@@ -97,7 +110,7 @@ export interface Service {
   rating?: number;
   reviewCount: number;
   imageUrls: string[];
-  certificateUrls: string[];
+  certificateMedia: ServiceCertificateMedia[];
   isVerifiedService: boolean;
   weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>;
   instantBookingEnabled?: boolean;
@@ -502,7 +515,7 @@ export const serviceCanisterService = {
               rating: data.rating?.average ?? data.rating ?? 0,
               reviewCount: data.rating?.count ?? data.reviewCount ?? 0,
               imageUrls: data.imageUrls || [],
-              certificateUrls: data.certificateUrls || [],
+              certificateMedia: data.certificateMedia || [],
               isVerifiedService: data.isVerifiedService || false,
               weeklySchedule: data.weeklySchedule,
               instantBookingEnabled: data.instantBookingEnabled,

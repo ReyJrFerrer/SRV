@@ -3,6 +3,7 @@ import {
   Service,
   DayOfWeek,
   DayAvailability,
+  ServiceCertificateMedia,
   serviceCanisterService,
 } from "../services/serviceCanisterService";
 import {
@@ -164,7 +165,7 @@ export interface FormattedServiceDetail {
   media: string[];
   requirements: string[];
   isVerified: boolean;
-  certificateUrls: string[];
+  certificateMedia: ServiceCertificateMedia[];
   slug: string;
   heroImage: string;
   category: {
@@ -243,7 +244,7 @@ const formatServiceForDetailPage = (
     media: service.imageUrls, // Default empty media array
     requirements: [], // Default empty requirements
     isVerified: service.isVerifiedService, // Default value (will be overridden by actual validation check)
-    certificateUrls: service.certificateUrls || [], // Certificate URLs for validation status checking
+    certificateMedia: service.certificateMedia || [], // Certificate media with validation status
     slug: service.id, // Using ID as slug
     heroImage:
       service.category.imageUrl || getCategoryImage(service.category.name),

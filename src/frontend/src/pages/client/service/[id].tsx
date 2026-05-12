@@ -71,7 +71,7 @@ const ClientServiceDetailsPage: React.FC = () => {
   const {
     certificates: serviceCertificates,
     isLoading: isLoadingCertificates,
-  } = useServiceCertificates(service?.id, service?.certificateUrls || []);
+  } = useServiceCertificates(service?.id, service?.certificateMedia || []);
 
   const { conversations, createConversation, loading: chatLoading } = useChat();
   const { userImageUrl } = useUserImage(service?.providerAvatar);

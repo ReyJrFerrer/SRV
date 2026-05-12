@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { doc, getFirestore, getDoc } from "firebase/firestore";
-import { getFirebaseApp } from "../services/firebaseApp";
-import { mediaService, extractMediaIdFromUrl } from "../services/mediaService";
-import { serviceCanisterService } from "../services/serviceCanisterService";
+import { mediaService } from "../services/mediaService";
+import {
+  serviceCanisterService,
+  ServiceCertificateMedia,
+} from "../services/serviceCanisterService";
 import { persistentImageCache } from "../utils/persistentImageCache";
 
 export interface UseImageLoaderOptions {
@@ -442,17 +443,16 @@ export const useServiceImageGallery = (
 
 export const useServiceCertificates = (
   serviceId: string | null | undefined,
-  certificateUrls: (string | null | undefined)[] = [],
+  certificateMedia: ServiceCertificateMedia[] = [],
   options: UseImageLoaderOptions = {},
 ) => {
-  const validUrls = certificateUrls.filter((url): url is string => !!url);
+  const validMedia = certificateMedia.filter((m) => !!m.url);
   const [certificates, setCertificates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const db = getFirestore(getFirebaseApp());
 
   useEffect(() => {
-    if (!serviceId || !validUrls.length) {
+    if (!serviceId || !validMedia.length) {
       setCertificates([]);
       setIsLoading(false);
       return;
@@ -462,40 +462,24 @@ export const useServiceCertificates = (
 
     const loadCertificates = async () => {
       try {
-        const promises = validUrls.map(async (url) => {
+        const promises = validMedia.map(async (media) => {
           try {
-            const dataUrl = await mediaService.getImageDataUrl(url, {
+            const dataUrl = await mediaService.getImageDataUrl(media.url, {
               enableCache: true,
               ...options,
             });
 
-            const mediaId = extractMediaIdFromUrl(url);
-            if (!mediaId) {
-              return {
-                url,
-                dataUrl,
-                validationStatus: undefined,
-                error: "Invalid media URL",
-              };
-            }
-
-            const mediaDocRef = doc(db, "media", mediaId);
-            const mediaDoc = await getDoc(mediaDocRef);
-            const validationStatus = mediaDoc.exists()
-              ? mediaDoc.data().validationStatus || "Pending"
-              : "Pending";
-
             return {
-              url,
+              url: media.url,
               dataUrl,
-              validationStatus,
+              validationStatus: media.validationStatus || "Pending",
               error: null,
             };
           } catch (err) {
             return {
-              url,
+              url: media.url,
               dataUrl: null,
-              validationStatus: undefined,
+              validationStatus: media.validationStatus || "Pending",
               error:
                 err instanceof Error
                   ? err.message
@@ -517,7 +501,7 @@ export const useServiceCertificates = (
     };
 
     loadCertificates();
-  }, [serviceId, JSON.stringify(validUrls), db]);
+  }, [serviceId, JSON.stringify(validMedia)]);
 
   return {
     certificates,
@@ -627,12 +611,12 @@ export const useServiceCertificateUpload = (
  */
 export const useServiceCertificateGallery = (
   serviceId: string | null | undefined,
-  certificateUrls: (string | null | undefined)[] = [],
+  certificateMedia: ServiceCertificateMedia[] = [],
   options: UseImageLoaderOptions = {},
 ) => {
   const certificateLoader = useServiceCertificates(
     serviceId,
-    certificateUrls,
+    certificateMedia,
     options,
   );
   const uploader = useServiceCertificateUpload(serviceId);
@@ -650,8 +634,8 @@ export const useServiceCertificateGallery = (
 
     // Gallery state
     hasCertificates: (certificateLoader.certificates?.length || 0) > 0,
-    canAddMore: (certificateUrls.length || 0) < 10, // Max 10 certificates per service
-    remainingSlots: Math.max(0, 10 - (certificateUrls.length || 0)),
+    canAddMore: (certificateMedia.length || 0) < 10, // Max 10 certificates per service
+    remainingSlots: Math.max(0, 10 - (certificateMedia.length || 0)),
   };
 };
 
@@ -662,13 +646,13 @@ export const useServiceCertificateGallery = (
 export const useServiceMediaGallery = (
   serviceId: string | null | undefined,
   imageUrls: (string | null | undefined)[] = [],
-  certificateUrls: (string | null | undefined)[] = [],
+  certificateMedia: ServiceCertificateMedia[] = [],
   options: UseImageLoaderOptions = {},
 ) => {
   const imageGallery = useServiceImageGallery(serviceId, imageUrls, options);
   const certificateGallery = useServiceCertificateGallery(
     serviceId,
-    certificateUrls,
+    certificateMedia,
     options,
   );
 
@@ -682,7 +666,7 @@ export const useServiceMediaGallery = (
     // Combined state
     isLoading: imageGallery.isLoading || certificateGallery.isLoading,
     hasAnyMedia: imageGallery.hasImages || certificateGallery.hasCertificates,
-    totalMediaCount: (imageUrls.length || 0) + (certificateUrls.length || 0),
+    totalMediaCount: (imageUrls.length || 0) + (certificateMedia.length || 0),
 
     // Combined actions
     async refreshAll() {

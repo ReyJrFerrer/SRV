@@ -95,7 +95,7 @@ const ProviderServiceDetailPage: React.FC = () => {
   // Load service certificates using the useServiceCertificates hook
   const { certificates: serviceCertificates } = useServiceCertificates(
     service?.id,
-    service?.certificateUrls || [],
+    service?.certificateMedia || [],
   );
 
   // Certificate upload hook
@@ -1486,7 +1486,6 @@ const ProviderServiceDetailPage: React.FC = () => {
                   setPreviewUrl(url);
                   setPreviewType(type);
                 }}
-                isPdfFile={isPdfFile}
               />
             </LockableSection>
 
