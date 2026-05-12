@@ -1,7 +1,6 @@
 import React from "react";
 import {
   AcademicCapIcon,
-  DocumentIcon,
   PencilIcon,
   XMarkIcon,
   CheckBadgeIcon,
