@@ -93,12 +93,12 @@ const ImagesSection: React.FC<Props> = ({
                   key={index}
                   className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
                 >
-                  {image.error ? (
-                    <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                      <PhotoIcon className="mx-auto h-8 w-8 text-gray-300" />
-                      <p className="mt-1">Failed to load</p>
+                  {!image.dataUrl && (
+                    <div className="absolute bottom-1 left-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                      Failed to load
                     </div>
-                  ) : image.dataUrl ? (
+                  )}
+                  {image.dataUrl ? (
                     <img
                       src={image.dataUrl}
                       alt={`Service image ${index + 1}`}
@@ -180,7 +180,7 @@ const ImagesSection: React.FC<Props> = ({
               return (
                 <button
                   key={index}
-                  className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm focus:outline-none"
+                  className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm focus:outline-none"
                   onClick={() =>
                     onPreview(url, isPdfFile(url) ? "pdf" : "image")
                   }
@@ -188,12 +188,12 @@ const ImagesSection: React.FC<Props> = ({
                   tabIndex={0}
                   aria-label="Inspect image"
                 >
-                  {image.error ? (
-                    <div className="flex h-full w-full items-center justify-center text-sm text-red-500">
-                      <PhotoIcon className="mx-auto h-8 w-8 text-gray-300" />
-                      <p className="mt-1">Failed to load</p>
+                  {!url && (
+                    <div className="absolute bottom-1 left-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                      Failed to load
                     </div>
-                  ) : isPdfFile(url) ? (
+                  )}
+                  {image.url && isPdfFile(image.url) ? (
                     <div className="flex flex-col items-center justify-center">
                       <DocumentIcon className="h-12 w-12 text-red-500" />
                       <span className="mt-1 text-xs text-gray-700">

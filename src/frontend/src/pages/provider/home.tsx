@@ -243,12 +243,14 @@ const ProviderHomePage: React.FC = () => {
               />
             </div>
 
+            <div data-tour="provider-services">
             <ServiceManagementNextjs
               services={userServices?.filter((s) => s.status !== "Archived")}
               loading={servicesLoading}
               error={servicesError}
               onRefresh={refreshServices}
             />
+          </div>
           </div>
         </main>
       </div>

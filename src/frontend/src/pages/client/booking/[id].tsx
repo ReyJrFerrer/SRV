@@ -405,7 +405,7 @@ const BookingDetailsPage: React.FC = () => {
       }
       const newConv = await createConversation(currentUserId, providerIdString);
       if (newConv && newConv.id) {
-        navigate(`/client/chat/${newConv.id}`, {
+        navigate(`/client/chat`, {
           state: {
             conversationId: newConv.id,
             otherUserName: specificBooking.providerProfile?.name || "Provider",

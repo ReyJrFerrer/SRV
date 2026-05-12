@@ -68,7 +68,7 @@ export function ResponsiveDropdown({
               : "mt-2"
           } ${
             position === "right" ? "right-0" : "left-0"
-          } rounded-xl border border-gray-100 bg-white py-1 shadow-lg focus:outline-none`}
+          } rounded-xl border border-gray-100 bg-white py-1 shadow-lg focus:outline-none max-h-60 overflow-y-auto`}
         >
           {children}
         </div>
