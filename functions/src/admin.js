@@ -762,11 +762,41 @@ exports.updateCertificateValidationStatus = onCall(async (request) => {
       );
     }
 
-    // Update the validation status
+    // Update the validation status in media collection
     await db.collection("media").doc(certificateId).update({
       validationStatus: status,
       updatedAt: new Date().toISOString(),
     });
+
+    // Also update the certificateMedia array in the services collection
+    const certificateUrl = mediaData.url;
+    if (certificateUrl) {
+      const servicesSnapshot = await db.collection("services")
+        .where("certificateUrls", "array-contains", certificateUrl)
+        .get();
+
+      if (!servicesSnapshot.empty) {
+        const batch = db.batch();
+        const now = new Date().toISOString();
+
+        servicesSnapshot.docs.forEach((serviceDoc) => {
+          const serviceData = serviceDoc.data();
+          const updatedCertificateMedia = (serviceData.certificateMedia || []).map((cert) => {
+            if (cert.url === certificateUrl) {
+              return {...cert, validationStatus: status, updatedAt: now};
+            }
+            return cert;
+          });
+
+          batch.update(serviceDoc.ref, {
+            certificateMedia: updatedCertificateMedia,
+            updatedAt: now,
+          });
+        });
+
+        await batch.commit();
+      }
+    }
 
     return {
       success: true,
