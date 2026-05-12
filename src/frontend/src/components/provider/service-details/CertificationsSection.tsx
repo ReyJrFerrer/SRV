@@ -40,7 +40,7 @@ interface Props {
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: (index: number) => void;
   onPreview: (url: string, type: "image" | "pdf") => void;
-  isPdfFile: (url: string) => boolean;
+  
 }
 
 const CertificationsSection: React.FC<Props> = ({
@@ -58,7 +58,7 @@ const CertificationsSection: React.FC<Props> = ({
   onUpload,
   onRemove,
   onPreview,
-  isPdfFile,
+  
 }) => {
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -226,7 +226,7 @@ const CertificationsSection: React.FC<Props> = ({
                   key={index}
                   className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm focus:outline-none"
                   onClick={() =>
-                    onPreview(url, isPdfFile(url) ? "pdf" : "image")
+                    onPreview(url, "image")
                   }
                   type="button"
                   tabIndex={0}
@@ -238,21 +238,14 @@ const CertificationsSection: React.FC<Props> = ({
                       Failed to load
                     </div>
                   )}
-                  {certificate.url && isPdfFile(certificate.url) ? (
-                    <div className="flex flex-col items-center justify-center">
-                      <DocumentIcon className="h-12 w-12 text-red-500" />
-                      <span className="mt-1 text-xs text-gray-700">
-                        View PDF
-                      </span>
-                    </div>
-                  ) : (
+                  
                     <img
                       src={url}
                       alt={`Certificate ${index + 1}`}
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
-                  )}
+                  
                 </button>
               );
             })
