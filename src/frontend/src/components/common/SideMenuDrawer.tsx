@@ -56,8 +56,8 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
   const [selectedTour, setSelectedTour] = React.useState<TourOption | null>(null);
 
   // Avatar caching to prevent flickering
-  const defaultAvatar = "/default-avatar.svg";
-  const avatarCacheKey = "side-menu:avatar";
+  const defaultAvatar = isClient ? "/default-client.svg" : "/default-provider.svg";
+  const avatarCacheKey = isClient ? "nav:client:avatar" : "nav:provider:avatar";
   const [stableProfileSrc, setStableProfileSrc] = React.useState<string>(() => {
     const cached =
       typeof window !== "undefined"
