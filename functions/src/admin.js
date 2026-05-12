@@ -781,7 +781,8 @@ exports.updateCertificateValidationStatus = onCall(async (request) => {
           .get();
         servicesToUpdate = providerServicesSnapshot.docs.filter((doc) => {
           const data = doc.data();
-          return data.certificateMedia && data.certificateMedia.some((m) => m.url === certificateUrl);
+          return data.certificateMedia &&
+          data.certificateMedia.some((m) => m.url === certificateUrl);
         });
       }
 
