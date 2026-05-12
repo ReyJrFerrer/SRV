@@ -1,9 +1,22 @@
 import React from "react";
 import { DocumentIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
 import { useServiceCertificates } from "../../../../frontend/src/hooks/useMediaLoader";
+import type { ServiceCertificateMedia } from "../../services/serviceTypes";
 
 interface ProcessedCertificateCardProps {
-  certificate: any;
+  certificate: {
+    id: string;
+    service: {
+      serviceId: string;
+      serviceTitle: string;
+      providerId: string;
+      certificateMedia: ServiceCertificateMedia[];
+    };
+    certificateIndex: number;
+    certificateUrl: string;
+    approvedAt?: string;
+    rejectedAt?: string;
+  };
   onViewCertificate: (url: string) => void;
   onUndo: (certificate: any) => void;
   isApproved?: boolean;
@@ -29,7 +42,7 @@ export const ProcessedCertificateCard: React.FC<
     error: _certificateError,
   } = useServiceCertificates(
     certificate.service.serviceId,
-    certificate.service.certificateUrls || [],
+    certificate.service.certificateMedia || [],
   );
 
   // Find the corresponding processed certificate

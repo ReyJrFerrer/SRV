@@ -67,7 +67,7 @@ export const getServiceData = async (
       rating: service.rating,
       reviewCount: service.reviewCount,
       imageUrls: service.imageUrls || [],
-      certificateUrls: service.certificateUrls || [],
+      certificateMedia: service.certificateMedia || [],
       weeklySchedule: service.weeklySchedule || [],
       packages: [],
     };

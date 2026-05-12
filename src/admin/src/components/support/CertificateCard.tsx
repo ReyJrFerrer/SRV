@@ -2,6 +2,7 @@ import React from "react";
 import { DocumentIcon } from "@heroicons/react/24/solid";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useServiceCertificates } from "../../../../frontend/src/hooks/useMediaLoader";
+import type { ServiceCertificateMedia } from "../../services/serviceTypes";
 
 interface CertificateCardProps {
   service: {
@@ -9,7 +10,7 @@ interface CertificateCardProps {
     serviceTitle: string;
     providerId: any;
     providerName?: string;
-    certificateUrls: string[];
+    certificateMedia: ServiceCertificateMedia[];
     createdAt: number | bigint;
   };
   certificateUrl: string;
@@ -50,7 +51,7 @@ export const CertificateCard: React.FC<CertificateCardProps> = ({
     certificates: serviceCertificates,
     isLoading: isLoadingCertificates,
     error: _certificateError,
-  } = useServiceCertificates(service.serviceId, service.certificateUrls || []);
+  } = useServiceCertificates(service.serviceId, service.certificateMedia || []);
 
   const processedCert = serviceCertificates?.[certificateIndex];
   const displayUrl =

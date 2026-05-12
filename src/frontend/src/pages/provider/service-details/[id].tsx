@@ -761,14 +761,14 @@ const ProviderServiceDetailPage: React.FC = () => {
         return;
       }
 
-      // Check file size (450KB limit)
-      if (file.size > 450 * 1024) {
-        setCertificateUploadError(
-          `File ${file.name} exceeds the 450KB size limit.`,
-        );
-        event.target.value = "";
-        return;
-      }
+      // // Check file size (450KB limit)
+      // if (file.size > 450 * 1024) {
+      //   setCertificateUploadError(
+      //     `File ${file.name} exceeds the 450KB size limit.`,
+      //   );
+      //   event.target.value = "";
+      //   return;
+      // }
     }
 
     // Check total certificate limit (10 max)

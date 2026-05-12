@@ -771,15 +771,25 @@ exports.updateCertificateValidationStatus = onCall(async (request) => {
     // Also update the certificateMedia array in the services collection
     const certificateUrl = mediaData.url;
     if (certificateUrl) {
-      const servicesSnapshot = await db.collection("services")
-        .where("certificateUrls", "array-contains", certificateUrl)
-        .get();
+      // Find services that contain this certificate by checking provider's services
+      const providerId = mediaData.ownerId;
+      let servicesToUpdate = [];
 
-      if (!servicesSnapshot.empty) {
+      if (providerId) {
+        const providerServicesSnapshot = await db.collection("services")
+          .where("providerId", "==", providerId)
+          .get();
+        servicesToUpdate = providerServicesSnapshot.docs.filter((doc) => {
+          const data = doc.data();
+          return data.certificateMedia && data.certificateMedia.some((m) => m.url === certificateUrl);
+        });
+      }
+
+      if (servicesToUpdate.length > 0) {
         const batch = db.batch();
         const now = new Date().toISOString();
 
-        servicesSnapshot.docs.forEach((serviceDoc) => {
+        servicesToUpdate.forEach((serviceDoc) => {
           const serviceData = serviceDoc.data();
           const updatedCertificateMedia = (serviceData.certificateMedia || []).map((cert) => {
             if (cert.url === certificateUrl) {
@@ -845,20 +855,20 @@ exports.getValidatedCertificates = onCall(async (request) => {
     // Match certificates to services and format
     const certificates = [];
     for (const cert of validatedCerts) {
-      // Find service that contains this certificate URL
+      // Find service that contains this certificate in certificateMedia
       const service = services.find((s) =>
-        s.certificateUrls && s.certificateUrls.includes(cert.url),
+        s.certificateMedia && s.certificateMedia.some((m) => m.url === cert.url),
       );
 
       if (service) {
-        const certificateIndex = service.certificateUrls.indexOf(cert.url);
+        const certificateIndex = service.certificateMedia.findIndex((m) => m.url === cert.url);
         certificates.push({
           id: `${service.id}-${cert.url}-${cert.updatedAt || Date.now()}`,
           service: {
             serviceId: service.id,
             serviceTitle: service.title,
             providerId: service.providerId,
-            certificateUrls: service.certificateUrls,
+            certificateMedia: service.certificateMedia,
           },
           certificateIndex,
           certificateUrl: cert.url,
@@ -908,20 +918,20 @@ exports.getRejectedCertificates = onCall(async (request) => {
     // Match certificates to services and format
     const certificates = [];
     for (const cert of rejectedCerts) {
-      // Find service that contains this certificate URL
+      // Find service that contains this certificate in certificateMedia
       const service = services.find((s) =>
-        s.certificateUrls && s.certificateUrls.includes(cert.url),
+        s.certificateMedia && s.certificateMedia.some((m) => m.url === cert.url),
       );
 
       if (service) {
-        const certificateIndex = service.certificateUrls.indexOf(cert.url);
+        const certificateIndex = service.certificateMedia.findIndex((m) => m.url === cert.url);
         certificates.push({
           id: `${service.id}-${cert.url}-${cert.updatedAt || Date.now()}`,
           service: {
             serviceId: service.id,
             serviceTitle: service.title,
             providerId: service.providerId,
-            certificateUrls: service.certificateUrls,
+            certificateMedia: service.certificateMedia,
           },
           certificateIndex,
           certificateUrl: cert.url,
@@ -966,10 +976,10 @@ exports.getServicesWithCertificates = onCall(async (request) => {
     const servicesWithCerts = [];
 
     for (const service of services) {
-      if (service.certificateUrls && service.certificateUrls.length > 0) {
-        // Filter to only include pending certificate URLs
-        const servicePendingCerts = service.certificateUrls.filter((url) =>
-          pendingCertUrls.includes(url),
+      if (service.certificateMedia && service.certificateMedia.length > 0) {
+        // Filter to only include pending certificate media items
+        const servicePendingCerts = service.certificateMedia.filter((m) =>
+          pendingCertUrls.includes(m.url),
         );
 
         // Only add service if it has pending certificates
@@ -993,7 +1003,7 @@ exports.getServicesWithCertificates = onCall(async (request) => {
             serviceTitle: service.title,
             providerId: service.providerId,
             providerName: providerName,
-            certificateUrls: servicePendingCerts,
+            certificateMedia: servicePendingCerts,
             createdAt: service.createdAt,
           });
         }

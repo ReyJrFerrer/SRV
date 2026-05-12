@@ -71,7 +71,7 @@ const ServiceDetailsPage: React.FC = () => {
   const {
     certificates: serviceCertificates,
     isLoading: isLoadingCertificates,
-  } = useServiceCertificates(service?.id, service?.certificateUrls || []);
+  } = useServiceCertificates(service?.id, service?.certificateMedia || []);
 
   useEffect(() => {
     const loadServiceData = async () => {
@@ -119,7 +119,7 @@ const ServiceDetailsPage: React.FC = () => {
             rating: serviceData.rating,
             reviewCount: serviceData.reviewCount,
             imageUrls: serviceData.imageUrls || [],
-            certificateUrls: serviceData.certificateUrls || [],
+            certificateMedia: serviceData.certificateMedia || [],
             weeklySchedule:
               serviceData.weeklySchedule?.map((schedule) => ({
                 dayOfWeek: dayOfWeekToNumber(schedule.day),

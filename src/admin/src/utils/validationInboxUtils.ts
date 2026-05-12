@@ -4,7 +4,7 @@ export const calculateStats = (
   rejectedCertificates: any[],
 ) => {
   const certificatesPending = servicesWithCertificates.reduce(
-    (total, service) => total + service.certificateUrls.length,
+    (total, service) => total + (service.certificateMedia?.length || 0),
     0,
   );
   const completedTotal = approvedCertificates.length;
@@ -116,14 +116,14 @@ export const removeCertificateFromServices = (
       if (s.serviceId === serviceId) {
         return {
           ...s,
-          certificateUrls: s.certificateUrls.filter(
-            (_url: string, index: number) => index !== certificateIndex,
+          certificateMedia: (s.certificateMedia || []).filter(
+            (_m: any, index: number) => index !== certificateIndex,
           ),
         };
       }
       return s;
     })
-    .filter((s) => s.certificateUrls.length > 0);
+    .filter((s) => (s.certificateMedia || []).length > 0);
 };
 
 export const createCertificateData = (
@@ -154,14 +154,18 @@ export const addCertificateToServices = (
 
   if (existingServiceIndex !== -1) {
     const service = services[existingServiceIndex];
-    if (!service.certificateUrls.includes(certificate.certificateUrl)) {
+    const certMedia = service.certificateMedia || [];
+    const alreadyExists = certMedia.some(
+      (m: any) => m.url === certificate.certificateUrl,
+    );
+    if (!alreadyExists) {
       return services.map((s, idx) =>
         idx === existingServiceIndex
           ? {
               ...s,
-              certificateUrls: [
-                ...s.certificateUrls,
-                certificate.certificateUrl,
+              certificateMedia: [
+                ...certMedia,
+                { url: certificate.certificateUrl },
               ],
             }
           : s,
@@ -173,7 +177,7 @@ export const addCertificateToServices = (
       ...services,
       {
         ...certificate.service,
-        certificateUrls: [certificate.certificateUrl],
+        certificateMedia: [{ url: certificate.certificateUrl }],
       },
     ];
   }

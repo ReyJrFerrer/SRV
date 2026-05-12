@@ -273,8 +273,9 @@ export const ValidationInboxPage: React.FC = () => {
             }}
           >
             {servicesWithCertificates.flatMap((service) => {
-              return service.certificateUrls.map(
-                (url: string, index: number) => {
+              return service.certificateMedia.map(
+                (media: any, index: number) => {
+                  const url = media.url;
                   return (
                     <CertificateCard
                       key={`${service.serviceId}-${index}`}

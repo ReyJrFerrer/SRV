@@ -1,4 +1,17 @@
 // Service data conversion functions
+export interface ServiceCertificateMedia {
+  id: string;
+  url: string;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+  mediaType: "ServiceCertificate";
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  validationStatus?: "Pending" | "Validated" | "Rejected";
+}
+
 export interface ServiceData {
   id: string;
   title: string;
@@ -28,7 +41,7 @@ export interface ServiceData {
   rating?: number;
   reviewCount?: number;
   imageUrls: string[];
-  certificateUrls: string[];
+  certificateMedia: ServiceCertificateMedia[];
   weeklySchedule: Array<{
     dayOfWeek: number;
     availability: {

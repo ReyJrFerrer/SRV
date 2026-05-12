@@ -333,7 +333,6 @@ exports.createService = onCall(async (request) => {
       reviewCount: 0,
       imageUrls: imageMedia.map((m) => m.url),
       imageMedia: imageMedia,
-      certificateUrls: certificateMedia.map((m) => m.url),
       certificateMedia: certificateMedia,
       isVerifiedService: certificateMedia.length > 0,
       weeklySchedule: weeklySchedule || null,
@@ -1332,8 +1331,8 @@ exports.uploadServiceCertificates = onCall(async (request) => {
       );
     }
 
-    const currentCertCount = service.certificateUrls ?
-      service.certificateUrls.length :
+    const currentCertCount = service.certificateMedia ?
+      service.certificateMedia.length :
       0;
     if (currentCertCount + serviceCertificates.length > MAX_SERVICE_CERTIFICATES) {
       throw new HttpsError(
@@ -1352,10 +1351,8 @@ exports.uploadServiceCertificates = onCall(async (request) => {
     // Update service with new certificates
     const existingCertMedia = service.certificateMedia || [];
     const updatedCertMedia = [...existingCertMedia, ...newCertMedia];
-    const updatedCertUrls = updatedCertMedia.map((m) => m.url);
 
     await serviceRef.update({
-      certificateUrls: updatedCertUrls,
       certificateMedia: updatedCertMedia,
       isVerifiedService: updatedCertMedia.length > 0,
       updatedAt: new Date().toISOString(),
@@ -1414,8 +1411,8 @@ exports.removeServiceCertificate = onCall(async (request) => {
     }
 
     if (
-      !service.certificateUrls ||
-        !service.certificateUrls.includes(certificateUrl)
+      !service.certificateMedia ||
+        !service.certificateMedia.some((m) => m.url === certificateUrl)
     ) {
       throw new HttpsError(
         "not-found",
@@ -1434,10 +1431,8 @@ exports.removeServiceCertificate = onCall(async (request) => {
 
     // Remove certificate from service
     const updatedCertMedia = certMedia.filter((m) => m.url !== certificateUrl);
-    const updatedCertUrls = updatedCertMedia.map((m) => m.url);
 
     await serviceRef.update({
-      certificateUrls: updatedCertUrls,
       certificateMedia: updatedCertMedia,
       isVerifiedService: updatedCertMedia.length > 0,
       updatedAt: new Date().toISOString(),

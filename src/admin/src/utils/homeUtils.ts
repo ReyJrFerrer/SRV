@@ -50,7 +50,7 @@ export const calculateDashboardStats = (
   return {
     totalServiceProviders: activeServiceProvidersCount,
     totalPendingValidations: servicesWithCertificates.reduce(
-      (total, service) => total + (service.certificateUrls?.length || 0),
+      (total, service) => total + (service.certificateMedia?.length || 0),
       0,
     ),
     totalPendingTickets: reports.filter(
