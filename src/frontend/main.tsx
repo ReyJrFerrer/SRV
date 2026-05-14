@@ -21,6 +21,7 @@ import { BookingCacheProvider } from "./src/context/BookingCacheContext";
 import OneSignal from "react-onesignal";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
+import { useLocationDataStore } from "./src/store/locationDataStore";
 import { isZkLoginCallback } from "./src/services/zkLoginService";
 // import GlobalChatDock from "./src/components/chat/GlobalChatDock";
 import LocationBlockedModal from "./src/components/common/locationAccessPermission/LocationBlockedModal";
@@ -265,6 +266,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Eagerly load province data so dropdowns are ready before first render
+useLocationDataStore.getState().loadProvinces();
 
 // Global Location Modal Manager Component
 const GlobalLocationModals: React.FC = () => {

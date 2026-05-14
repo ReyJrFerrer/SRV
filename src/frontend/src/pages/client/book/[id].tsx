@@ -10,7 +10,11 @@ import BookingDrafts from "../../../components/client/BookingDrafts";
 import { useParams, useNavigate } from "react-router-dom";
 import useBookRequest, { BookingRequest } from "../../../hooks/bookRequest";
 import useBookingManagement from "../../../hooks/bookingManagement";
-import phLocations from "../../../data/ph_locations.json";
+import {
+  fetchBarangays,
+  fetchMunicipalities,
+  findProvinceByMunicipality,
+} from "../../../data/phLocations";
 import {
   createDirectPayment,
   checkProviderOnboarding,
@@ -522,162 +526,186 @@ const BookingPage: React.FC = () => {
 
   // Section: Effects - manual barangays
   useEffect(() => {
-    try {
-      if (!manualProvince) {
-        setManualBarangayOptions([]);
-        setSelectedBarangay("");
-        return;
-      }
+    let cancelled = false;
 
-      const provinceObj = (phLocations as any).provinces.find(
-        (prov: any) =>
-          prov.name.trim().toLowerCase() ===
-          manualProvince.trim().toLowerCase(),
-      );
+    const loadManualBarangays = async () => {
+      try {
+        if (!manualProvince) {
+          setManualBarangayOptions([]);
+          setSelectedBarangay("");
+          return;
+        }
 
-      if (!provinceObj || !Array.isArray(provinceObj.municipalities)) {
-        setManualBarangayOptions([]);
-        setSelectedBarangay("");
-        return;
-      }
+        const municipalities = await fetchMunicipalities(manualProvince);
+        if (cancelled) return;
 
-      const muniObj = provinceObj.municipalities.find(
-        (muni: any) =>
-          muni.name.trim().toLowerCase() === manualCity.trim().toLowerCase(),
-      );
+        if (municipalities.length === 0) {
+          setManualBarangayOptions([]);
+          setSelectedBarangay("");
+          return;
+        }
 
-      if (muniObj && Array.isArray(muniObj.barangays)) {
-        setManualBarangayOptions(
-          muniObj.barangays.filter(
-            (b: string) =>
-              b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
-          ),
+        // Try to find the selected municipality
+        const matchedMuni = municipalities.find(
+          (m: string) =>
+            m.trim().toLowerCase() === manualCity.trim().toLowerCase(),
         );
-        setSelectedBarangay("");
-        return;
-      }
 
-      const firstMuni = provinceObj.municipalities[0];
-      if (firstMuni && firstMuni.name) {
-        setManualCity(firstMuni.name);
-        if (Array.isArray(firstMuni.barangays)) {
+        if (matchedMuni) {
+          const barangays = await fetchBarangays(manualProvince, matchedMuni);
+          if (cancelled) return;
           setManualBarangayOptions(
-            firstMuni.barangays.filter(
+            barangays.filter(
               (b: string) =>
-                b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+                b &&
+                b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+            ),
+          );
+          setSelectedBarangay("");
+          return;
+        }
+
+        // Fallback: use first municipality
+        const firstMuni = municipalities[0];
+        if (firstMuni) {
+          setManualCity(firstMuni);
+          const barangays = await fetchBarangays(manualProvince, firstMuni);
+          if (cancelled) return;
+          setManualBarangayOptions(
+            barangays.filter(
+              (b: string) =>
+                b &&
+                b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
             ),
           );
         } else {
           setManualBarangayOptions([]);
         }
-      } else {
-        setManualBarangayOptions([]);
+        setSelectedBarangay("");
+      } catch {
+        if (!cancelled) {
+          setManualBarangayOptions([]);
+          setSelectedBarangay("");
+        }
       }
-      setSelectedBarangay("");
-    } catch {
-      setManualBarangayOptions([]);
-      setSelectedBarangay("");
-    }
+    };
+
+    loadManualBarangays();
+    return () => {
+      cancelled = true;
+    };
   }, [manualProvince, manualCity]);
 
   // Section: Effects - detected barangays
   useEffect(() => {
-    let found: string[] = [];
-    const cityNorm = (displayMunicipality || "").trim().toLowerCase();
-    const provinceNorm = (displayProvince || "").trim().toLowerCase();
-    const provinces = (phLocations as any).provinces;
+    let cancelled = false;
 
-    if (
-      (cityNorm === "baguio" || cityNorm === "baguio city") &&
-      ["benguet", "cordillera administrative region", "car", "region"].includes(
-        provinceNorm,
-      )
-    ) {
-      const benguet = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
-      );
-      const baguio = benguet?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === "baguio city",
-      );
-      if (baguio?.barangays) found = baguio.barangays;
-    } else if (
-      (cityNorm === "la trinidad" || cityNorm === "latrinidad") &&
-      provinceNorm === "benguet"
-    ) {
-      const benguet = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
-      );
-      const laTrinidad = benguet?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === "la trinidad",
-      );
-      if (laTrinidad?.barangays) found = laTrinidad.barangays;
-    } else if (cityNorm === "itogon" && provinceNorm === "benguet") {
-      const benguet = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
-      );
-      const itogon = benguet?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === "itogon",
-      );
-      if (itogon?.barangays) found = itogon.barangays;
-    } else if (cityNorm === "tuba" && provinceNorm === "benguet") {
-      const benguet = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "benguet",
-      );
-      const tuba = benguet?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === "tuba",
-      );
-      if (tuba?.barangays) found = tuba.barangays;
-    } else if (
-      (provinceNorm === "pangasinan" &&
-        [
-          "mapandan",
-          "manaoag",
-          "san fabian",
-          "mangaldan",
-          "sta. barbara",
-          "san jacinto",
-          "calasiao",
-        ].includes(cityNorm)) ||
-      (cityNorm === "dagupan" && provinceNorm === "region 1")
-    ) {
-      const pangasinan = provinces.find(
-        (prov: any) => prov.name.trim().toLowerCase() === "pangasinan",
-      );
-      const muni = pangasinan?.municipalities.find(
-        (m: any) => m.name.trim().toLowerCase() === cityNorm,
-      );
-      if (muni?.barangays) found = muni.barangays;
-    } else if (cityNorm) {
-      let matched = false;
-      for (const prov of provinces) {
-        for (const muni of prov.municipalities) {
-          if (
-            typeof muni === "object" &&
-            muni.name.trim().toLowerCase() === cityNorm &&
-            Array.isArray(muni.barangays)
-          ) {
-            found = muni.barangays as string[];
-            matched = true;
-            break;
+    const loadDetectedBarangays = async () => {
+      const cityNorm = (displayMunicipality || "").trim().toLowerCase();
+      const provinceNorm = (displayProvince || "").trim().toLowerCase();
+
+      if (!cityNorm) {
+        if (!cancelled) {
+          setBarangayOptions([]);
+          setSelectedBarangay("");
+        }
+        return;
+      }
+
+      let found: string[] = [];
+
+      try {
+        // Special-case: Baguio City -> Benguet
+        if (
+          (cityNorm === "baguio" || cityNorm === "baguio city") &&
+          [
+            "benguet",
+            "cordillera administrative region",
+            "car",
+            "region",
+          ].includes(provinceNorm)
+        ) {
+          found = await fetchBarangays("Benguet", "Baguio City");
+        }
+        // Special-case: La Trinidad -> Benguet
+        else if (
+          (cityNorm === "la trinidad" || cityNorm === "latrinidad") &&
+          provinceNorm === "benguet"
+        ) {
+          found = await fetchBarangays("Benguet", "La Trinidad");
+        }
+        // Special-case: Itogon -> Benguet
+        else if (cityNorm === "itogon" && provinceNorm === "benguet") {
+          found = await fetchBarangays("Benguet", "Itogon");
+        }
+        // Special-case: Tuba -> Benguet
+        else if (cityNorm === "tuba" && provinceNorm === "benguet") {
+          found = await fetchBarangays("Benguet", "Tuba");
+        }
+        // Special-case: Pangasinan municipalities
+        else if (
+          (provinceNorm === "pangasinan" &&
+            [
+              "mapandan",
+              "manaoag",
+              "san fabian",
+              "mangaldan",
+              "sta. barbara",
+              "san jacinto",
+              "calasiao",
+            ].includes(cityNorm)) ||
+          (cityNorm === "dagupan" && provinceNorm === "region 1")
+        ) {
+          // Capitalize first letter for the API call
+          const muniName =
+            cityNorm.charAt(0).toUpperCase() + cityNorm.slice(1);
+          found = await fetchBarangays("Pangasinan", muniName);
+        }
+        // General case: resolve province from municipality
+        else {
+          const resolvedProvince =
+            provinceNorm && provinceNorm !== "region"
+              ? provinceNorm.charAt(0).toUpperCase() + provinceNorm.slice(1)
+              : await findProvinceByMunicipality(cityNorm);
+
+          if (resolvedProvince) {
+            // Get municipalities to find the exact match
+            const munis = await fetchMunicipalities(resolvedProvince);
+            const matchedMuni = munis.find(
+              (m: string) => m.trim().toLowerCase() === cityNorm,
+            );
+            if (matchedMuni) {
+              found = await fetchBarangays(resolvedProvince, matchedMuni);
+            }
           }
         }
-        if (matched) break;
+      } catch {
+        // On error, found stays empty
       }
-    }
-    if (found.length > 0) {
-      setBarangayOptions(
-        found.filter(
-          (b) => b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
-        ),
-      );
-    } else if (cityNorm) {
-      setBarangayOptions([
-        ...Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
-      ]);
-    } else {
-      setBarangayOptions([]);
-    }
-    setSelectedBarangay("");
+
+      if (cancelled) return;
+
+      if (found.length > 0) {
+        setBarangayOptions(
+          found.filter(
+            (b) =>
+              b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+          ),
+        );
+      } else if (cityNorm) {
+        setBarangayOptions([
+          ...Array.from({ length: 10 }, (_, i) => `Barangay ${i + 1}`),
+        ]);
+      } else {
+        setBarangayOptions([]);
+      }
+      setSelectedBarangay("");
+    };
+
+    loadDetectedBarangays();
+    return () => {
+      cancelled = true;
+    };
   }, [displayMunicipality, displayProvince]);
 
   // Section: Effects - load service

@@ -1,10 +1,10 @@
-import React, { useEffect, Suspense } from "react";
+import React, { useEffect, Suspense, useState } from "react";
 import { useLocationStore } from "../../../store/locationStore";
 const LocationMapPicker = React.lazy(
   () => import("../../common/GMapFunctions/LocationMapPicker"),
 );
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
-import phLocations from "../../../data/ph_locations.json";
+import { useLocationDataStore } from "../../../store/locationDataStore";
 import EnableLocationButton from "../../common/locationAccessPermission/EnableLocationButton";
 import AccuracyCircle from "../../common/GMapFunctions/AccuracyCircle";
 import FullScreenLocationMapModal from "../../common/GMapFunctions/FullScreenLocationMapModal";
@@ -107,8 +107,32 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
   houseNumberRef,
 }) => {
   const { locationStatus, location } = useLocationStore();
+  const { provinces, loadProvinces } = useLocationDataStore();
   const [showFullScreenMap, setShowFullScreenMap] = React.useState(false);
   const [mapInitialized, setMapInitialized] = React.useState(false);
+  const [municipalityOptions, setMunicipalityOptions] = useState<string[]>([]);
+
+  // Load provinces on mount
+  useEffect(() => {
+    loadProvinces();
+  }, [loadProvinces]);
+
+  // Load municipalities when manualProvince changes
+  useEffect(() => {
+    if (!manualProvince) {
+      setMunicipalityOptions([]);
+      return;
+    }
+    let cancelled = false;
+    import("../../../data/phLocations").then(({ fetchMunicipalities }) => {
+      fetchMunicipalities(manualProvince).then((data) => {
+        if (!cancelled) setMunicipalityOptions(data);
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [manualProvince]);
 
   useEffect(() => {
     if (locationStatus === "allowed") {
@@ -597,13 +621,11 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                   <option value="" disabled>
                     Select Province
                   </option>
-                  {phLocations &&
-                    Array.isArray((phLocations as any).provinces) &&
-                    (phLocations as any).provinces.map((prov: any) => (
-                      <option key={prov.name} value={prov.name}>
-                        {prov.name}
-                      </option>
-                    ))}
+                  {provinces.map((name: string) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex-1">
@@ -620,21 +642,11 @@ const ServiceLocationSection: React.FC<ServiceLocationProps> = ({
                     Select City/Municipality
                   </option>
                   {manualProvince &&
-                    phLocations &&
-                    Array.isArray((phLocations as any).provinces) &&
-                    (() => {
-                      const prov = (phLocations as any).provinces.find(
-                        (p: any) => p.name === manualProvince,
-                      );
-                      if (prov && Array.isArray(prov.municipalities)) {
-                        return prov.municipalities.map((m: any) => (
-                          <option key={m.name} value={m.name}>
-                            {m.name}
-                          </option>
-                        ));
-                      }
-                      return null;
-                    })()}
+                    municipalityOptions.map((name: string) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
                 </select>
               </div>
             </div>

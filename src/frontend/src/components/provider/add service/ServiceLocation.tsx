@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MapPinIcon } from "@heroicons/react/24/solid";
 import { ResponsiveSelect } from "../../ui/ResponsiveDropdown";
-import phLocations from "../../../data/ph_locations.json"; // Adjust path as needed
+import { useLocationDataStore } from "../../../store/locationDataStore";
 import { useLocationStore } from "../../../store/locationStore";
 
 interface ServiceLocationProps {
@@ -42,10 +42,18 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
     requestLocation,
   } = useLocationStore();
 
+  // Location data store for provinces/municipalities
+  const { provinces, loadProvinces } = useLocationDataStore();
+
   // New: location input mode
   const [locationInputMode, setLocationInputMode] = useState<
     "detected" | "manual"
   >("detected");
+
+  // Load provinces on mount
+  useEffect(() => {
+    loadProvinces();
+  }, [loadProvinces]);
 
   // Google Maps Geocoding integration (prefer Google over OSM-style resolution from store)
   const mapsApiKey =
@@ -77,18 +85,12 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
       locationProvince: province,
       locationMunicipalityCity: "",
     }));
-    // Find province in phLocations
-    let provinceObj;
-    if (phLocations && Array.isArray(phLocations.provinces)) {
-      provinceObj = phLocations.provinces.find(
-        (prov: any) => prov.name === province,
-      );
-    }
-    if (provinceObj && Array.isArray(provinceObj.municipalities)) {
-      setManualCityOptions(provinceObj.municipalities.map((m: any) => m.name));
-    } else {
-      setManualCityOptions([]);
-    }
+    // Fetch municipalities from the service
+    import("../../../data/phLocations").then(({ fetchMunicipalities }) => {
+      fetchMunicipalities(province).then((data) => {
+        setManualCityOptions(data);
+      });
+    });
   };
 
   // Handle city dropdown change
@@ -165,7 +167,7 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
             lng: geoLocation.longitude,
           },
         },
-        (results: any, status: string) => {
+        async (results: any, status: string) => {
           if (status === "OK" && results && results[0]) {
             const primaryComps = results[0].address_components || [];
 
@@ -208,20 +210,13 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
 
             if (!province || looksLikeRegion(province)) {
               try {
-                const ph = phLocations as any;
-                if (locality && ph?.provinces && Array.isArray(ph.provinces)) {
-                  const match = ph.provinces.find(
-                    (p: any) =>
-                      Array.isArray(p.municipalities) &&
-                      p.municipalities.some(
-                        (m: any) =>
-                          typeof m?.name === "string" &&
-                          m.name.toLowerCase() ===
-                            String(locality).toLowerCase(),
-                      ),
+                if (locality) {
+                  const { findProvinceByMunicipality } = await import(
+                    "../../../data/phLocations"
                   );
-                  if (match?.name) {
-                    province = match.name;
+                  const match = await findProvinceByMunicipality(locality);
+                  if (match) {
+                    province = match;
                   }
                 }
                 // Special-case normalization: Baguio -> Benguet
@@ -419,10 +414,10 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                 value={manualProvince}
                 onChange={handleProvinceChange}
                 options={
-                  phLocations && Array.isArray(phLocations.provinces)
-                    ? phLocations.provinces.map((prov: any) => ({
-                        value: prov.name,
-                        label: prov.name,
+                  provinces.length > 0
+                    ? provinces.map((name: string) => ({
+                        value: name,
+                        label: name,
                       }))
                     : []
                 }

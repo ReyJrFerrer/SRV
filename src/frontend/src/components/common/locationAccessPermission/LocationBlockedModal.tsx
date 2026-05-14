@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocationStore } from "../../../store/locationStore";
-import phLocations from "../../../data/ph_locations.json";
+import { useLocationDataStore } from "../../../store/locationDataStore";
 
 interface Props {
   visible: boolean;
@@ -27,9 +27,34 @@ const LocationBlockedModal: React.FC<Props> = ({
 
   const [province, setProvince] = useState<string>("");
   const [city, setCity] = useState<string>("");
+  const [cityOptions, setCityOptions] = useState<string[]>([]);
   const [geoPermission, setGeoPermission] = useState<string>("unknown");
   const [suppressed, setSuppressed] = useState<boolean>(false);
   const [prevPermission, setPrevPermission] = useState<string>("unknown");
+
+  const { provinces, loadProvinces } = useLocationDataStore();
+
+  // Load provinces on mount
+  useEffect(() => {
+    loadProvinces();
+  }, [loadProvinces]);
+
+  // Load municipalities when province changes
+  useEffect(() => {
+    if (!province) {
+      setCityOptions([]);
+      return;
+    }
+    let cancelled = false;
+    import("../../../data/phLocations").then(({ fetchMunicipalities }) => {
+      fetchMunicipalities(province).then((data) => {
+        if (!cancelled) setCityOptions(data);
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [province]);
 
   // Load suppression flag (avoid flashing after success within same session)
   useEffect(() => {
@@ -124,17 +149,6 @@ const LocationBlockedModal: React.FC<Props> = ({
     if (userAddress) setCity(userAddress);
   }, [userAddress, userProvince]);
 
-  const cityOptions = useMemo(() => {
-    if (!province) return [] as string[];
-    const prov = (phLocations as any).provinces?.find(
-      (p: any) => p.name === province,
-    );
-    if (prov && Array.isArray(prov.municipalities)) {
-      return prov.municipalities.map((m: any) => m.name);
-    }
-    return [] as string[];
-  }, [province]);
-
   const handleSave = () => {
     if (!province || !city) return;
     // Persist to global store so header and booking can use it
@@ -215,12 +229,11 @@ const LocationBlockedModal: React.FC<Props> = ({
                 className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm capitalize focus:border-blue-500 focus:outline-none"
               >
                 <option value="">Select Province</option>
-                {Array.isArray((phLocations as any).provinces) &&
-                  (phLocations as any).provinces.map((prov: any) => (
-                    <option key={prov.name} value={prov.name}>
-                      {prov.name}
-                    </option>
-                  ))}
+                {provinces.map((name: string) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
               </select>
             </div>
 

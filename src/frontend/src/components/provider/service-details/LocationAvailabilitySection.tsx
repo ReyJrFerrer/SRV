@@ -8,7 +8,7 @@ import {
 import Tooltip from "../../common/Tooltip";
 import AvailabilityEditor, { WeeklyScheduleEntry } from "./AvailabilityEditor";
 import { formatTime } from "./timeUtils";
-import phLocations from "../../../data/ph_locations.json";
+import { useLocationDataStore } from "../../../store/locationDataStore";
 
 interface Props {
   editLocationAvailability: boolean;
@@ -55,18 +55,25 @@ const LocationAvailabilitySection: React.FC<Props> = ({
 
   // State for managing city options based on selected province
   const [cityOptions, setCityOptions] = useState<string[]>([]);
+  const { provinces, loadProvinces } = useLocationDataStore();
+
+  // Load provinces on mount
+  useEffect(() => {
+    loadProvinces();
+  }, [loadProvinces]);
 
   // Update city options when province changes
   useEffect(() => {
     if (editedState) {
-      const provinceObj = phLocations.provinces.find(
-        (prov: any) => prov.name === editedState,
-      );
-      if (provinceObj) {
-        setCityOptions(provinceObj.municipalities.map((m: any) => m.name));
-      } else {
-        setCityOptions([]);
-      }
+      let cancelled = false;
+      import("../../../data/phLocations").then(({ fetchMunicipalities }) => {
+        fetchMunicipalities(editedState).then((data) => {
+          if (!cancelled) setCityOptions(data);
+        });
+      });
+      return () => {
+        cancelled = true;
+      };
     } else {
       setCityOptions([]);
     }
@@ -75,12 +82,11 @@ const LocationAvailabilitySection: React.FC<Props> = ({
   // Initialize city options when entering edit mode
   useEffect(() => {
     if (editLocationAvailability && editedState) {
-      const provinceObj = phLocations.provinces.find(
-        (prov: any) => prov.name === editedState,
-      );
-      if (provinceObj) {
-        setCityOptions(provinceObj.municipalities.map((m: any) => m.name));
-      }
+      import("../../../data/phLocations").then(({ fetchMunicipalities }) => {
+        fetchMunicipalities(editedState).then((data) => {
+          setCityOptions(data);
+        });
+      });
     }
   }, [editLocationAvailability, editedState]);
 
@@ -140,9 +146,9 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 focus:border-yellow-500 focus:ring-yellow-500"
               >
                 <option value="">Select Province</option>
-                {phLocations.provinces.map((prov: any) => (
-                  <option key={prov.name} value={prov.name}>
-                    {prov.name}
+                {provinces.map((name: string) => (
+                  <option key={name} value={name}>
+                    {name}
                   </option>
                 ))}
               </select>
