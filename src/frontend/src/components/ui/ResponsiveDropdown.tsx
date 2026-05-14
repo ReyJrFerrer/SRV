@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, Fragment, ReactNode } from "react";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { useState, useRef, useEffect, Fragment, ReactNode, useMemo } from "react";
+import { ChevronDownIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 interface ResponsiveDropdownProps {
   triggerRef: React.RefObject<HTMLButtonElement | null>;
@@ -93,6 +93,8 @@ interface ResponsiveSelectProps {
   disabled?: boolean;
   loading?: boolean;
   required?: boolean;
+  filterable?: boolean;
+  filterPlaceholder?: string;
 }
 
 export function ResponsiveSelect({
@@ -106,15 +108,42 @@ export function ResponsiveSelect({
   disabled = false,
   loading = false,
   required = false,
+  filterable = false,
+  filterPlaceholder = "Type to filter...",
 }: ResponsiveSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [filter, setFilter] = useState("");
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
+
+  const filteredOptions = useMemo(() => {
+    if (!filterable || !filter.trim()) return options;
+    const lower = filter.toLowerCase();
+    return options.filter((opt) => opt.label.toLowerCase().includes(lower));
+  }, [options, filter, filterable]);
+
+  // Focus the filter input when dropdown opens
+  useEffect(() => {
+    if (isOpen && filterable && filterInputRef.current) {
+      // Small delay to avoid the click event stealing focus
+      requestAnimationFrame(() => filterInputRef.current?.focus());
+    }
+  }, [isOpen, filterable]);
+
+  // Reset filter when dropdown closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFilter("");
+    }
+  }, [isOpen]);
 
   const handleSelect = (optionValue: string) => {
     onChange(optionValue);
     setIsOpen(false);
+    setFilter("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -161,28 +190,52 @@ export function ResponsiveSelect({
         width="w-full"
         position="left"
       >
-        {options.length === 0 ? (
-          <div className="px-4 py-3 text-sm text-gray-500">
-            No options available
+        {filterable && (
+          <div className="sticky top-0 z-10 border-b border-gray-100 bg-white px-3 py-2">
+            <div className="relative">
+              <MagnifyingGlassIcon className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                ref={filterInputRef}
+                type="text"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder={filterPlaceholder}
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && filteredOptions.length === 1) {
+                    e.preventDefault();
+                    handleSelect(filteredOptions[0].value);
+                  }
+                }}
+              />
+            </div>
           </div>
-        ) : (
-          options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleSelect(option.value)}
-              className={`flex w-full items-center px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
-                value === option.value
-                  ? "bg-yellow-50 text-yellow-700 font-medium"
-                  : "text-gray-700"
-              }`}
-              role="option"
-              aria-selected={value === option.value}
-            >
-              {option.label}
-            </button>
-          ))
         )}
+
+        <div ref={listRef} className={filterable ? "max-h-48 overflow-y-auto" : undefined}>
+          {filteredOptions.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-gray-500">
+              {filterable && filter ? "No matches found" : "No options available"}
+            </div>
+          ) : (
+            filteredOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleSelect(option.value)}
+                className={`flex w-full items-center px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
+                  value === option.value
+                    ? "bg-yellow-50 text-yellow-700 font-medium"
+                    : "text-gray-700"
+                }`}
+                role="option"
+                aria-selected={value === option.value}
+              >
+                {option.label}
+              </button>
+            ))
+          )}
+        </div>
       </ResponsiveDropdown>
 
       {required && (

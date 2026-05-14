@@ -422,6 +422,8 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                     : []
                 }
                 placeholder="Select Province"
+                filterable
+                filterPlaceholder="Type to filter provinces..."
               />
 
               <label className="text-sm font-medium text-blue-700">
@@ -438,6 +440,8 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
                   label: city,
                 }))}
                 placeholder="Select City / Municipality"
+                filterable
+                filterPlaceholder="Type to filter City/Municipality"
                 disabled={!manualProvince}
               />
             </div>
