@@ -162,10 +162,16 @@
   position: relative;
   overflow: hidden;
 }
+
+/* Scoped container spacing for About hero to avoid affecting other sections */
+.about-hero-section .container {
+  padding-top: 75px;
+}
+
 @media (max-width: 768px) {
   /* Further tighten vertical spacing in About hero for smaller devices */
   .about-hero-section {
-    padding: 2.2rem 0 2.6rem 0;
+    padding: 20rem 0 2.6rem 0;
   }
   .about-hero-content {
     grid-template-columns: 1fr;
