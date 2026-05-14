@@ -361,7 +361,9 @@ const AddServicePage: React.FC = () => {
               description?: string;
             } = {};
 
-            if (pkg.name.trim() || pkg.description.trim() || pkg.price) {
+            const allFieldsEmpty = !pkg.name.trim() && !pkg.description.trim() && !pkg.price;
+
+            if (!allFieldsEmpty) {
               if (!pkg.name.trim()) {
                 pkgErrors.name = "Name is required";
               } else if (pkg.name.length < VALIDATION_LIMITS.MIN_TITLE_LENGTH) {
@@ -397,6 +399,10 @@ const AddServicePage: React.FC = () => {
               } else if (Number(pkg.price) > VALIDATION_LIMITS.MAX_PRICE) {
                 pkgErrors.price = `Price must be no more than ₱${VALIDATION_LIMITS.MAX_PRICE.toLocaleString()}`;
               }
+            } else {
+              pkgErrors.name = "Package name is required";
+              pkgErrors.price = "Price is required";
+              pkgErrors.description = "Description is required";
             }
 
             if (Object.keys(pkgErrors).length > 0) {
