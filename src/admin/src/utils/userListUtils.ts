@@ -5,6 +5,7 @@ export interface UserData {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   createdAt: Date;
   updatedAt: Date;
   profilePicture?: {
@@ -93,6 +94,7 @@ export const convertProfileToUserData = async (
     id: typeof userId === "string" ? userId : userId.toString(),
     name: profile.name || "Unknown",
     phone: profile.phone || "",
+    email: profile.email || undefined,
     createdAt: createdAt,
     updatedAt: updatedAt,
     profilePicture:

@@ -13,6 +13,7 @@ export interface Profile {
   phone: string;
   profilePicture: [] | [ProfileImage];
   activeRole: UserRole;
+  email?: string;
 }
 export interface ProfileImage {
   thumbnailUrl: string;

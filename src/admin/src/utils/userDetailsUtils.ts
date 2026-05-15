@@ -12,6 +12,7 @@ export interface UserData {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   createdAt: Date;
   updatedAt: Date;
   profilePicture?: {
@@ -55,6 +56,7 @@ const extractUserData = (
     id: String(profile.id),
     name: String(profile.name ?? ""),
     phone: String(profile.phone ?? ""),
+    email: profile.email ? String(profile.email) : undefined,
     createdAt,
     updatedAt,
     profilePicture: extractProfilePicture(String(profile.profilePicture ?? "")),
@@ -90,6 +92,7 @@ const getDefaultUserData = (
     id: String(profile.id),
     name: String(profile.name ?? ""),
     phone: String(profile.phone ?? ""),
+    email: profile.email ? String(profile.email) : undefined,
     createdAt: validateDate(
       convertToDate(Number(profile.createdAt) as bigint | number | undefined),
     ),

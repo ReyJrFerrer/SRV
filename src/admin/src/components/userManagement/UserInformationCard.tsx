@@ -3,6 +3,7 @@ import React from "react";
 interface UserInformationCardProps {
   user: {
     phone: string;
+    email?: string;
     id: string;
     createdAt: Date;
     updatedAt: Date;
@@ -36,6 +37,12 @@ export const UserInformationCard: React.FC<UserInformationCardProps> = ({
           <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
           <dd className="mt-1 text-sm text-gray-900">{user.phone}</dd>
         </div>
+        {user.email && (
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Email</dt>
+            <dd className="mt-1 text-sm text-gray-900">{user.email}</dd>
+          </div>
+        )}
         <div>
           <dt className="text-sm font-medium text-gray-500">User ID</dt>
           <dd className="mt-1 font-mono text-sm text-gray-900">{user.id}</dd>

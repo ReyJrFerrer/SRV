@@ -163,7 +163,8 @@ export const UserListPage: React.FC = () => {
     let filtered = users.filter((user) => {
       const matchesSearch =
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phone.includes(searchTerm);
+        user.phone.includes(searchTerm) ||
+        (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
       return matchesSearch;
     });
 

@@ -12,6 +12,7 @@ interface UserData {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   createdAt: Date;
   updatedAt: Date;
   profilePicture?: {
@@ -120,7 +121,7 @@ export const UserListTable: React.FC<UserListTableProps> = ({
               {!showOnlyAdmins && (
                 <>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Phone
+                    Phone / Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Services
@@ -234,7 +235,10 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                   {!showOnlyAdmins && (
                     <>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                        {user.phone}
+                        <div>{user.phone}</div>
+                        {user.email && (
+                          <div className="text-xs text-gray-500">{user.email}</div>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                         <div className="flex items-center">
