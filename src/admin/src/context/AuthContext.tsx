@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   useCallback,
   ReactNode,
 } from "react";
@@ -17,6 +18,10 @@ import { getFirebaseAuth, getFirebaseFirestore } from "../services/firebaseApp";
 import { signInWithInternetIdentity } from "../services/identityBridge";
 import { updateAdminActor } from "../services/adminServiceCanister";
 import { createAdminProfile } from "../services/adminAuthHelper";
+import {
+  sessionManager,
+  getRecommendedSessionDuration,
+} from "../utils/sessionPersistence";
 
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseFunctions } from "../services/firebaseApp";
@@ -71,8 +76,93 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     firebaseUser: FirebaseUser;
     principal: string;
   } | null>(null);
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
+  const isRefreshingFirebase = useRef(false);
+
+  // Initialize session manager on mount
+  useEffect(() => {
+    sessionManager.initialize().catch(() => {});
+  }, []);
+
+  // Handle visibility change to refresh session when app becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (
+        document.visibilityState === "visible" &&
+        isAuthenticated &&
+        !isRefreshingFirebase.current
+      ) {
+        try {
+          const needsRefresh = await sessionManager.needsRefresh();
+          if (needsRefresh) {
+            const storedSession = await sessionManager.getSession();
+            const principal =
+              storedSession?.principal ?? identity?.getPrincipal().toString();
+            if (principal) {
+              const sessionDuration =
+                getRecommendedSessionDuration() / (1000 * 1000);
+              await signInWithInternetIdentity(principal, sessionDuration);
+              await sessionManager.updateLastRefresh();
+            }
+          }
+        } catch (error) {
+          // Silent fail - will retry on next visibility change
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isAuthenticated, identity]);
+
+  // Handle automatic session refresh events
+  useEffect(() => {
+    const handleSessionRefresh = async () => {
+      if (
+        isRefreshingSession ||
+        isRefreshingFirebase.current ||
+        !isAuthenticated
+      )
+        return;
+
+      setIsRefreshingSession(true);
+      try {
+        const storedSession = await sessionManager.getSession();
+        const principal =
+          storedSession?.principal ?? identity?.getPrincipal().toString();
+        if (!principal) {
+          setIsRefreshingSession(false);
+          return;
+        }
+        const sessionDuration = getRecommendedSessionDuration() / (1000 * 1000);
+        await signInWithInternetIdentity(principal, sessionDuration);
+        await sessionManager.updateLastRefresh();
+      } catch (error) {
+        // Retry in 60 seconds
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("admin-session-refresh-needed"),
+          );
+        }, 60000);
+      } finally {
+        setIsRefreshingSession(false);
+      }
+    };
+
+    window.addEventListener("admin-session-refresh-needed", handleSessionRefresh);
+    return () => {
+      window.removeEventListener(
+        "admin-session-refresh-needed",
+        handleSessionRefresh,
+      );
+    };
+  }, [isAuthenticated, identity, isRefreshingSession, authClient]);
 
   const logout = useCallback(async () => {
+    await sessionManager.clearSession();
+
     if (authClient) {
       try {
         await authClient.logout();
@@ -98,19 +188,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     let firestoreUnsubscribe: (() => void) | null = null;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setFirebaseUser(user);
+      // Guard against recursive calls during Firebase refresh
+      if (isRefreshingFirebase.current) return;
 
-      if (!user && isAuthenticated && identity) {
+      // If Firebase session expired but we're still authenticated, refresh.
+      // Use stored principal as fallback when identity object is unavailable.
+      if (!user && isAuthenticated) {
+        isRefreshingFirebase.current = true;
         try {
-          const principal = identity.getPrincipal().toString();
-          const result = await signInWithInternetIdentity(principal);
+          const storedSession = await sessionManager.getSession();
+          const principal =
+            storedSession?.principal ?? identity?.getPrincipal().toString();
+          if (!principal) {
+            setFirebaseUser(null);
+            return;
+          }
+          const sessionDuration =
+            getRecommendedSessionDuration() / (1000 * 1000);
+          const result = await signInWithInternetIdentity(
+            principal,
+            sessionDuration,
+          );
           setFirebaseUser(result.user);
-          await result.user.getIdToken(true);
         } catch (refreshError) {
-          await logout();
-          return;
+          setFirebaseUser(null);
+        } finally {
+          isRefreshingFirebase.current = false;
         }
+        return;
       }
+
+      setFirebaseUser(user);
 
       if (user) {
         if (firestoreUnsubscribe) {
@@ -174,23 +282,94 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         firestoreUnsubscribe();
       }
     };
-  }, [identity, isAuthenticated, logout]);
+  }, [isAuthenticated, identity, logout]);
 
   // Initialize IC auth client on mount and check if already authenticated
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const client = await AuthClient.create();
+        const client = await AuthClient.create({
+          idleOptions: { disableIdle: true },
+        });
         setAuthClient(client);
         const isAuth = await client.isAuthenticated();
-        setIsAuthenticated(isAuth);
 
         if (isAuth) {
           const identity = client.getIdentity();
+          setIsAuthenticated(true);
           setIdentity(identity);
           updateAllAdminActors(identity);
+
+          // Store session for persistence if not already stored
+          const existingSession = await sessionManager.getSession();
+          if (!existingSession) {
+            const sessionDurationNs = getRecommendedSessionDuration();
+            const sessionDurationMs = sessionDurationNs / (1000 * 1000);
+            const principal = identity.getPrincipal().toString();
+            try {
+              const result = await signInWithInternetIdentity(
+                principal,
+                sessionDurationMs,
+              );
+              setFirebaseUser(result.user);
+              await sessionManager.storeSession({
+                principal,
+                firebaseToken: await result.user.getIdToken(),
+                expiresAt: Date.now() + sessionDurationMs,
+                lastRefresh: Date.now(),
+                lastFirebaseRefresh: Date.now(),
+                hasProfile: result.hasProfile,
+                needsProfile: result.needsProfile,
+                sessionDuration: sessionDurationMs,
+              });
+            } catch (e) {
+              // Silent fail - user is still authenticated via IC
+            }
+          }
         } else {
-          updateAllAdminActors(null);
+          // IC delegation expired — try to restore from stored session.
+          // The principal is permanent and the Cloud Function doesn't verify
+          // the IC delegation, so we can re-authenticate with Firebase using
+          // the stored principal alone.
+          const storedSession = await sessionManager.getSession();
+          if (storedSession?.principal) {
+            try {
+              const sessionDurationNs = getRecommendedSessionDuration();
+              const sessionDurationMs = sessionDurationNs / (1000 * 1000);
+              const signInWithTimeout = Promise.race([
+                signInWithInternetIdentity(
+                  storedSession.principal,
+                  sessionDurationMs,
+                ),
+                new Promise<never>((_, reject) =>
+                  setTimeout(
+                    () => reject(new Error("Session restoration timed out")),
+                    15000,
+                  ),
+                ),
+              ]);
+              const result = await signInWithTimeout;
+              setFirebaseUser(result.user);
+              setIsAuthenticated(true);
+              setIdentity(client.getIdentity());
+              // Update stored session
+              await sessionManager.storeSession({
+                principal: storedSession.principal,
+                firebaseToken: await result.user.getIdToken(),
+                expiresAt: Date.now() + sessionDurationMs,
+                lastRefresh: Date.now(),
+                lastFirebaseRefresh: Date.now(),
+                hasProfile: result.hasProfile,
+                needsProfile: result.needsProfile,
+                sessionDuration: sessionDurationMs,
+              });
+            } catch {
+              await sessionManager.clearSession();
+              updateAllAdminActors(null);
+            }
+          } else {
+            updateAllAdminActors(null);
+          }
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "An unknown error occurred");
@@ -215,8 +394,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setHasVerifiedPassword(false);
 
     try {
+      // Get platform-specific session duration
+      const sessionDurationNs = getRecommendedSessionDuration();
+      const sessionDurationMs = sessionDurationNs / (1000 * 1000);
+
       await authClient.login({
         identityProvider: `https://id.ai`,
+        maxTimeToLive: BigInt(sessionDurationNs),
         onSuccess: async () => {
           try {
             const identity = authClient.getIdentity();
@@ -228,8 +412,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             try {
               const principal = identity.getPrincipal().toString();
 
-              const result = await signInWithInternetIdentity(principal);
+              const result = await signInWithInternetIdentity(
+                principal,
+                sessionDurationMs,
+              );
               setFirebaseUser(result.user);
+
+              // Store session for persistence
+              await sessionManager.storeSession({
+                principal,
+                firebaseToken: await result.user.getIdToken(),
+                expiresAt: Date.now() + sessionDurationMs,
+                lastRefresh: Date.now(),
+                lastFirebaseRefresh: Date.now(),
+                hasProfile: result.hasProfile,
+                needsProfile: result.needsProfile,
+                sessionDuration: sessionDurationMs,
+              });
 
               try {
                 const functions = getFirebaseFunctions();
@@ -358,6 +557,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (authClient) {
             await authClient.logout();
           }
+          await sessionManager.clearSession();
           setFirebaseUser(null);
           setIsAuthenticated(false);
         } catch (logoutError) {}

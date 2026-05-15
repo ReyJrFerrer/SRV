@@ -63,16 +63,17 @@ interface SignInResult {
  */
 export async function signInWithInternetIdentity(
   principal: string,
+  sessionDurationMs?: number,
 ): Promise<SignInResult> {
   try {
     // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
     const signInFn = httpsCallable<
-      { principal: string },
+      { principal: string; sessionDurationMs?: number },
       IdentityBridgeResponse
     >(functionsInstance, "signInWithInternetIdentity");
 
-    const result = await signInFn({ principal });
+    const result = await signInFn({ principal, sessionDurationMs });
     const data = result.data;
 
     if (!data.success || !data.customToken) {
