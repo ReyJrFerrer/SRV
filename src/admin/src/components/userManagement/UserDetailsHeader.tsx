@@ -24,6 +24,7 @@ interface UserDetailsHeaderProps {
     isLocked: boolean;
     createdAt: Date;
     lastActivity: Date;
+    servicesCount?: number;
   };
   fromTicket: boolean;
   ticketId: string | null;
@@ -194,12 +195,16 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
   const iconClass = "h-full w-full";
 
   const actionButtons = [
-    {
-      to: `/user/${user.id}/services`,
-      icon: <Squares2X2Icon className={iconClass} />,
-      label: "View Services",
-      variant: "default" as const,
-    },
+    ...(user.servicesCount && user.servicesCount > 0
+      ? [
+          {
+            to: `/user/${user.id}/services`,
+            icon: <Squares2X2Icon className={iconClass} />,
+            label: "View Services",
+            variant: "default" as const,
+          },
+        ]
+      : []),
     {
       onClick: () => navigate(`/user/${user.id}/bookings`),
       icon: <ClipboardDocumentListIcon className={iconClass} />,
@@ -253,6 +258,15 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
                         </span>
                         <span className="hidden lg:inline">{user.name}</span>
                       </h1>
+                      {user.servicesCount && user.servicesCount > 0 ? (
+                        <span className="inline-flex items-center rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                          Service Provider
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                          Client
+                        </span>
+                      )}
                     </div>
                     {user.isLocked && (
                       <span className="inline-flex items-center justify-center gap-1.5 rounded-full bg-red-100 px-3 py-0.5 text-sm font-medium text-red-800">

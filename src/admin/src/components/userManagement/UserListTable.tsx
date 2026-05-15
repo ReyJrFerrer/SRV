@@ -215,6 +215,15 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                           <div className="text-sm font-semibold text-gray-900">
                             {user.name}
                           </div>
+                          {!showOnlyAdmins && (user.servicesCount && user.servicesCount > 0 ? (
+                            <span className="inline-flex items-center rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                              Service Provider
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                              Client
+                            </span>
+                          ))}
                           {user.isLocked && (
                             <span className="inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
                               <LockClosedIcon className="mr-1 h-3 w-3" />
