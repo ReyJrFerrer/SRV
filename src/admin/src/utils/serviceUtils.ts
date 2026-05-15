@@ -44,6 +44,16 @@ export const convertBackendServiceToServiceData = (
   service: any,
   userData: SimpleUserData,
 ): ServiceData => {
+  let createdDate: Date;
+  if (typeof service.createdAt === "string") {
+    createdDate = new Date(service.createdAt);
+  } else {
+    createdDate = new Date(Number(service.createdAt) / DATE_DIVISOR);
+  }
+  if (isNaN(createdDate.getTime())) {
+    createdDate = new Date();
+  }
+
   return {
     id: service.id,
     title: service.title,
@@ -54,7 +64,7 @@ export const convertBackendServiceToServiceData = (
     price: Number(service.price),
     currency: DEFAULT_CURRENCY,
     location: service.location || { address: "N/A", city: "N/A", state: "N/A" },
-    createdDate: new Date(Number(service.createdAt) / DATE_DIVISOR),
+    createdDate,
     rating: service.rating ? Number(service.rating) : undefined,
     reviewCount: Number(service.reviewCount),
     providerId: service.providerId.toString(),
