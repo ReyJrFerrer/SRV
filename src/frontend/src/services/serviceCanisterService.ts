@@ -229,8 +229,15 @@ export const serviceCanisterService = {
       const getServiceFn = httpsCallable(getFunctions(), "getService");
       const result = await getServiceFn({ serviceId });
 
-      const data = result.data as { success: boolean; service: Service };
-      return data.success ? data.service : null;
+      const data = result.data as { success: boolean; service: any };
+      if (!data.success || !data.service) return null;
+
+      const raw = data.service;
+      return {
+        ...raw,
+        rating: raw.averageRating ?? raw.rating ?? 0,
+        reviewCount: raw.reviewCount ?? 0,
+      } as Service;
     } catch (error) {
       return null;
     }
@@ -512,8 +519,8 @@ export const serviceCanisterService = {
                 postalCode: data.location?.postalCode || "",
               },
               status: (data.status as ServiceStatus) || "Unavailable",
-              rating: data.rating?.average ?? data.rating ?? 0,
-              reviewCount: data.rating?.count ?? data.reviewCount ?? 0,
+              rating: data.averageRating ?? data.rating?.average ?? data.rating ?? 0,
+              reviewCount: data.reviewCount ?? data.rating?.count ?? 0,
               imageUrls: data.imageUrls || [],
               certificateMedia: data.certificateMedia || [],
               isVerifiedService: data.isVerifiedService || false,

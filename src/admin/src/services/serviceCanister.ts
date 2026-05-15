@@ -70,6 +70,7 @@ export const serviceCanister = {
       if ((result.data as any).success) {
         return (result.data as any).services.map((service: any) => ({
           ...service,
+          rating: service.averageRating ?? service.rating ?? 0,
           createdAt: service.createdAt
             ? new Date(service.createdAt)
             : new Date(),
@@ -157,13 +158,15 @@ export const serviceCanister = {
       const result = await getService({ serviceId });
 
       if ((result.data as any).success && (result.data as any).service) {
+        const rawService = (result.data as any).service;
         return {
-          ...(result.data as any).service,
-          createdAt: (result.data as any).service.createdAt
-            ? new Date((result.data as any).service.createdAt)
+          ...rawService,
+          rating: rawService.averageRating ?? rawService.rating ?? 0,
+          createdAt: rawService.createdAt
+            ? new Date(rawService.createdAt)
             : new Date(),
-          updatedAt: (result.data as any).service.updatedAt
-            ? new Date((result.data as any).service.updatedAt)
+          updatedAt: rawService.updatedAt
+            ? new Date(rawService.updatedAt)
             : new Date(),
         };
       } else {
