@@ -17,6 +17,7 @@ export interface SessionData {
   sessionDuration: number; // Original session duration in ms
   loginMethod?: "ii" | "zklogin"; // Auth method used for this session
   zkLoginAddress?: string; // zkLogin Sui address (when loginMethod is "zklogin")
+  email?: string; // Email from OAuth provider (zkLogin only)
 }
 
 export class SessionManager {

@@ -62,21 +62,23 @@ interface SignInResult {
  * Exchange Internet Identity Principal for Firebase Auth
  * @param principal - The Internet Identity Principal as string
  * @param sessionDuration - Session duration in milliseconds
+ * @param email - Optional email from OAuth provider (zkLogin only)
  * @returns SignInResult with Firebase User and profile status
  */
 export async function signInWithInternetIdentity(
   principal: string,
   sessionDuration: number = 7 * 24 * 60 * 60 * 1000, // Default 7 days in ms
+  email?: string,
 ): Promise<SignInResult> {
   try {
     // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
     const signInFn = httpsCallable<
-      { principal: string },
+      { principal: string; email?: string },
       IdentityBridgeResponse
     >(functionsInstance, "signInWithInternetIdentity");
 
-    const result = await signInFn({ principal });
+    const result = await signInFn({ principal, email });
     const data = result.data;
 
     if (!data.success || !data.customToken) {
@@ -117,6 +119,7 @@ export async function signInWithInternetIdentity(
       hasProfile: data.hasProfile,
       needsProfile: data.needsProfile,
       sessionDuration,
+      email,
     };
     await sessionManager.storeSession(sessionData);
 
@@ -137,12 +140,14 @@ export async function signInWithInternetIdentity(
  * @param name - User's name
  * @param phone - User's phone number
  * @param role - User's initial role (Client, ServiceProvider, or Admin)
+ * @param email - Optional email from OAuth provider
  * @returns Profile data
  */
 export async function createProfile(
   name: string,
   phone: string,
   role: "Client" | "ServiceProvider" | "Admin",
+  email?: string,
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
@@ -152,6 +157,7 @@ export async function createProfile(
       name,
       phone,
       role,
+      email,
     });
 
     return result.data;

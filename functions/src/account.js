@@ -153,7 +153,7 @@ exports.createProfile = onCall(async (request) => {
   }
 
   const principalId = auth.uid;
-  const {name, phone, role} = data.data || data;
+  const {name, phone, role, email} = data.data || data;
 
   // Validate inputs
   if (!validateName(name)) {
@@ -193,6 +193,17 @@ exports.createProfile = onCall(async (request) => {
   // Create new profile
   const now = new Date().toISOString();
 
+  // Resolve email: prefer request param, fall back to pending_users doc
+  let userEmail = email || null;
+  if (!userEmail) {
+    try {
+      const pendingDoc = await db.collection("pending_users").doc(principalId).get();
+      if (pendingDoc.exists) {
+        userEmail = pendingDoc.data().email || null;
+      }
+    } catch {}
+  }
+
   // Initialize reputation score. But if it fails, creation will push through.
   try {
     await initializeReputationInternal(principalId, now);
@@ -213,9 +224,15 @@ exports.createProfile = onCall(async (request) => {
     biography: null,
     isActive: true,
     totalEarnings: 0,
+    ...(userEmail && {email: userEmail}),
   };
 
   await userRef.set(newProfile);
+
+  // Clean up pending_users doc if it exists
+  try {
+    await db.collection("pending_users").doc(principalId).delete();
+  } catch {}
 
 
   return {

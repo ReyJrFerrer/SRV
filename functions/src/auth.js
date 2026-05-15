@@ -49,7 +49,7 @@ exports.signInWithInternetIdentity = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   try {
-    const {principal: principalText} = data;
+    const {principal: principalText, email} = data;
 
     if (!principalText) {
       throw new HttpsError(
@@ -71,12 +71,25 @@ exports.signInWithInternetIdentity = onCall(async (request) => {
       );
     }
 
+    // Store email in Firestore profile if provided (zkLogin users)
+    if (email) {
+      const db = getFirestore();
+      const userRef = db.collection("users").doc(principalText);
+      if (hasFirestoreProfile) {
+        await userRef.set({email}, {merge: true});
+      } else {
+        // Store email in a pending document so createProfile can pick it up
+        await db.collection("pending_users").doc(principalText).set({email}, {merge: true});
+      }
+    }
+
     // Create Firebase custom token
     const customToken = await admin.auth().createCustomToken(principalText, {
       // Add custom claims here if needed
       provider: "internet-identity",
       icPrincipal: principalText,
       hasProfile: hasFirestoreProfile,
+      ...(email && {email}),
     });
 
     return {

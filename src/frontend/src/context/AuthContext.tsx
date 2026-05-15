@@ -54,6 +54,7 @@ interface AuthContextType {
   profileStatus: { hasProfile: boolean; needsProfile: boolean } | null;
   isExplicitLogin: boolean;
   loginMethod: "ii" | "zklogin" | null;
+  email: string | null;
   // --- Location properties (now delegated to Zustand store) ---
   location: Location | null;
   locationStatus: LocationStatus;
@@ -122,6 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   const [isExplicitLogin, setIsExplicitLogin] = useState(false);
   const [loginMethod, setLoginMethod] = useState<"ii" | "zklogin" | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
   const [isRefreshingSession, setIsRefreshingSession] = useState(false);
   const isRefreshingFirebase = useRef(false);
   // Post-login location prompt state
@@ -160,7 +162,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (principal) {
               const sessionDuration =
                 getRecommendedSessionDuration() / (1000 * 1000);
-              await signInWithInternetIdentity(principal, sessionDuration);
+              await signInWithInternetIdentity(principal, sessionDuration, storedSession?.email);
               await sessionManager.updateLastRefresh();
             }
           }
@@ -197,7 +199,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
         const sessionDuration = getRecommendedSessionDuration() / (1000 * 1000);
-        await signInWithInternetIdentity(principal, sessionDuration);
+        await signInWithInternetIdentity(principal, sessionDuration, storedSession?.email);
         await sessionManager.updateLastRefresh();
       } catch (error) {
         // Retry in 60 seconds — Cloud Function doesn't verify IC delegation,
@@ -282,7 +284,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setFirebaseUser(null);
             return;
           }
-          const result = await signInWithInternetIdentity(principal);
+          const result = await signInWithInternetIdentity(principal, undefined, storedSession?.email);
           setFirebaseUser(result.user);
         } catch (error) {
           // Only null out if refresh genuinely failed
@@ -402,6 +404,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 signInWithInternetIdentity(
                   storedSession.principal,
                   sessionDuration,
+                  storedSession.email,
                 ),
                 new Promise<never>((_, reject) =>
                   setTimeout(
@@ -414,6 +417,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setFirebaseUser(result.user);
               setIsAuthenticated(true);
               setLoginMethod(storedSession.loginMethod ?? "ii");
+              if (storedSession.email) {
+                setEmail(storedSession.email);
+              }
               // Only set II identity if the session was II-based
               if (!storedSession.loginMethod || storedSession.loginMethod === "ii") {
                 setIdentity(client.getIdentity());
@@ -451,6 +457,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsExplicitLogin(true);
     sessionStorage.setItem("isExplicitLogin", "true");
     setLoginMethod("ii");
+    setEmail(null); // II doesn't provide email
 
     try {
       // Get platform-specific session duration
@@ -548,17 +555,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const result = await signInWithInternetIdentity(
         session.address,
         sessionDurationMs,
+        session.email,
       );
 
-      // Tag session with login method
+      // Tag session with login method and email
       const storedSession = await sessionManager.getSession();
       if (storedSession) {
         storedSession.loginMethod = "zklogin";
+        if (session.email) {
+          storedSession.email = session.email;
+        }
         await sessionManager.storeSession(storedSession);
       }
 
       setFirebaseUser(result.user);
       setIsAuthenticated(true);
+      if (session.email) {
+        setEmail(session.email);
+      }
       setProfileStatus({
         hasProfile: result.hasProfile,
         needsProfile: result.needsProfile,
@@ -634,6 +648,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIdentity(null);
     setFirebaseUser(null);
     setLoginMethod(null);
+    setEmail(null);
     updateAllActors(null);
   };
 
@@ -685,6 +700,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profileStatus,
     isExplicitLogin,
     loginMethod,
+    email,
     // Delegate location properties to Zustand store
     location: locationStore.location,
     locationStatus: locationStore.locationStatus,

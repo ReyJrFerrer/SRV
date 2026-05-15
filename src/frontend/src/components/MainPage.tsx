@@ -21,7 +21,7 @@ interface MainPageProps {
 
 export default function MainPage({
   onLoginClick,
-  onLoginWithII,
+  // onLoginWithII,
   isLoginLoading,
   onNavigateToAbout,
   onNavigateToContact,
@@ -452,7 +452,7 @@ export default function MainPage({
                   </>
                 )}
               </button>
-              {onLoginWithII && (
+              {/* {onLoginWithII && (
                 <button
                   onClick={onLoginWithII}
                   disabled={isLoginLoading}
@@ -460,7 +460,7 @@ export default function MainPage({
                 >
                   or sign in with Internet Identity
                 </button>
-              )}
+              )} */}
             </div>
           </div>
         </div>

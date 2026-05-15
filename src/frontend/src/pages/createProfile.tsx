@@ -18,7 +18,7 @@ export default function CreateProfilePage() {
   const [showTerms, setShowTerms] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, firebaseUser, login } = useAuth();
+  const { isAuthenticated, firebaseUser, login, email } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -301,6 +301,7 @@ export default function CreateProfilePage() {
         formData.name.trim(),
         formData.phone.trim(),
         selectedRole as "Client" | "ServiceProvider",
+        email ?? undefined,
       );
 
       if (!result) {

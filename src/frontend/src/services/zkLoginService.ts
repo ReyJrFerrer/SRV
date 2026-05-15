@@ -54,6 +54,7 @@ export interface ZkLoginSession {
   jwt: string;
   decodedJwt: ZkLoginJwtPayload;
   maxEpoch: number;
+  email?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -189,7 +190,7 @@ export function buildGoogleOAuthUrl(nonce: string): string {
     client_id: clientId,
     response_type: "id_token",
     redirect_uri: redirectUri,
-    scope: "openid",
+    scope: "openid email profile",
     nonce,
   });
 
@@ -292,5 +293,6 @@ export async function completeZkLoginFromCallback(): Promise<ZkLoginSession> {
     jwt,
     decodedJwt,
     maxEpoch: ephemeralData?.maxEpoch ?? 0,
+    email: decodedJwt.email,
   };
 }

@@ -28,6 +28,7 @@ export interface FrontendProfile {
   locked?: boolean; // Account suspension status
   suspensionEndDate?: Date | null; // When suspension expires (null for indefinite)
   isOnboarded?: boolean; // Provider onboarding status for payment functionality
+  email?: string; // Email from OAuth provider (zkLogin users)
 }
 
 /**
@@ -53,6 +54,7 @@ function convertFirestoreProfile(firestoreProfile: any): FrontendProfile {
         ? null
         : undefined,
     isOnboarded: firestoreProfile.isOnboarded || false, // Default to false if not specified
+    email: firestoreProfile.email || undefined,
   };
 }
 
@@ -116,17 +118,20 @@ export const authCanisterService = {
    * @param name User's name
    * @param phone User's phone number
    * @param activeRole User's preferred role/mode (Client, ServiceProvider, or Admin)
+   * @param email Optional email from OAuth provider (zkLogin users)
    */
   async createProfile(
     name: string,
     phone: string,
     activeRole: "Client" | "ServiceProvider" | "Admin",
+    email?: string,
   ): Promise<FrontendProfile | null> {
     try {
       const result = await identityBridge.createProfile(
         name,
         phone,
         activeRole,
+        email,
       );
 
       if (result.success && result.profile) {
