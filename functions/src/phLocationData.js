@@ -47,7 +47,7 @@ function loadData() {
 
 /**
  * Get all province names.
- * @return {string[]}
+ * @return {string[]} Array of province names
  */
 function getProvinces() {
   loadData();
@@ -56,8 +56,8 @@ function getProvinces() {
 
 /**
  * Get municipality names for a province.
- * @param {string} province
- * @return {string[]}
+ * @param {string} province - The province name
+ * @return {string[]} Array of municipality names
  */
 function getMunicipalities(province) {
   loadData();
@@ -66,9 +66,9 @@ function getMunicipalities(province) {
 
 /**
  * Get barangay names for a province + municipality.
- * @param {string} province
- * @param {string} municipality
- * @return {string[]}
+ * @param {string} province - The province name
+ * @param {string} municipality - The municipality name
+ * @return {string[]} Array of barangay names
  */
 function getBarangays(province, municipality) {
   loadData();
@@ -79,8 +79,8 @@ function getBarangays(province, municipality) {
 
 /**
  * Find which province contains a given municipality name (case-insensitive).
- * @param {string} municipalityName
- * @return {string|null}
+ * @param {string} municipalityName - The municipality name to search for
+ * @return {string|null} The province name if found, null otherwise
  */
 function findProvinceByMunicipality(municipalityName) {
   loadData();

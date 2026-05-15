@@ -201,7 +201,9 @@ exports.createProfile = onCall(async (request) => {
       if (pendingDoc.exists) {
         userEmail = pendingDoc.data().email || null;
       }
-    } catch {}
+    } catch (err) {
+      // Ignore errors when pending_users lookup fails
+    }
   }
 
   // Initialize reputation score. But if it fails, creation will push through.
@@ -232,7 +234,9 @@ exports.createProfile = onCall(async (request) => {
   // Clean up pending_users doc if it exists
   try {
     await db.collection("pending_users").doc(principalId).delete();
-  } catch {}
+  } catch (err) {
+    // Ignore errors when deleting pending_users doc
+  }
 
 
   return {
