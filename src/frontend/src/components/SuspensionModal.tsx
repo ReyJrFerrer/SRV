@@ -6,11 +6,13 @@ import authCanisterService from "../services/authCanisterService";
 interface SuspensionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  suspensionEndDate?: Date | null;
 }
 
 const SuspensionModal: React.FC<SuspensionModalProps> = ({
   isOpen,
   onClose,
+  suspensionEndDate: suspensionEndDateProp,
 }) => {
   const navigate = useNavigate();
   const [suspensionEndDate, setSuspensionEndDate] = useState<
@@ -19,19 +21,22 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
-    if (isOpen) {
-      // Fetch profile to get suspension end date
-      authCanisterService.getMyProfile().then((profile) => {
-        if (profile?.suspensionEndDate !== undefined) {
-          setSuspensionEndDate(profile.suspensionEndDate);
-        }
-      });
+    if (!isOpen) return;
+
+    if (suspensionEndDateProp !== undefined) {
+      setSuspensionEndDate(suspensionEndDateProp);
+      return;
     }
-  }, [isOpen]);
+
+    authCanisterService.getMyProfile().then((profile) => {
+      if (profile?.suspensionEndDate !== undefined) {
+        setSuspensionEndDate(profile.suspensionEndDate);
+      }
+    });
+  }, [isOpen, suspensionEndDateProp]);
 
   useEffect(() => {
     if (isOpen && suspensionEndDate instanceof Date) {
-      // Update countdown every second
       const interval = setInterval(() => {
         const now = new Date();
         const end = new Date(suspensionEndDate);
@@ -46,7 +51,7 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
           const hours = Math.floor(
             (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
           );
-          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / 60000);
           const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
           if (days > 0) {
@@ -72,7 +77,6 @@ const SuspensionModal: React.FC<SuspensionModalProps> = ({
   }, [isOpen, suspensionEndDate]);
 
   const handleReturnToLanding = () => {
-    // Set the flag BEFORE navigating to prevent the modal from showing again
     sessionStorage.setItem("hasShownSuspensionModal", "true");
     onClose();
     navigate("/");

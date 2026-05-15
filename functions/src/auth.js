@@ -62,6 +62,15 @@ exports.signInWithInternetIdentity = onCall(async (request) => {
     const profile = await getUserProfile(principalText);
     const hasFirestoreProfile = !!profile;
 
+    // Check if account is locked before issuing a token
+    if (profile && profile.locked) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Account has been locked by an administrator.",
+        {suspensionEndDate: profile.suspensionEndDate ?? null},
+      );
+    }
+
     // Create Firebase custom token
     const customToken = await admin.auth().createCustomToken(principalText, {
       // Add custom claims here if needed

@@ -1,22 +1,19 @@
 import { useEffect, useRef, useState } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import SuspensionModal from "../../components/SuspensionModal";
 
-type CallbackStatus = "processing" | "error";
+type CallbackStatus = "processing" | "error" | "locked";
 
 const COMPLETE_ZKLOGIN_TIMEOUT_MS = 30000;
 
-/**
- * zkLogin OAuth callback handler.
- *
- * This component is rendered OUTSIDE the HashRouter (in main.tsx) because
- * Google returns the id_token in the URL fragment (#id_token=...) which
- * HashRouter can't match as a route. After processing, it redirects to the
- * hash-based home route (/#/) and reloads so the normal app mounts.
- */
 export default function ZkLoginCallback() {
   const { completeZkLogin } = useAuth();
   const [status, setStatus] = useState<CallbackStatus>("processing");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [suspensionEndDate, setSuspensionEndDate] = useState<
+    Date | null | undefined
+  >(undefined);
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -25,8 +22,6 @@ export default function ZkLoginCallback() {
 
     const handleCallback = async () => {
       try {
-        // Race completeZkLogin against a timeout so the user is never
-        // stuck on the spinner indefinitely if the Cloud Function hangs.
         await Promise.race([
           completeZkLogin(),
           new Promise<never>((_, reject) =>
@@ -42,24 +37,47 @@ export default function ZkLoginCallback() {
           ),
         ]);
 
-        // Auth state is now set — redirect to hash-based home and reload.
-        // We must reload because this component lives outside HashRouter;
-        // a hash change alone won't remount the normal app tree.
         window.location.hash = "#/";
         window.location.reload();
       } catch (err) {
         console.error("[ZkLoginCallback] completeZkLogin failed:", err);
-        setStatus("error");
-        setErrorMessage(
-          err instanceof Error
-            ? err.message
-            : "Authentication failed. Please try again.",
-        );
+
+        const firebaseError = err as {
+          code?: string;
+          details?: { suspensionEndDate?: string | null };
+        };
+
+        if (firebaseError.code === "functions/failed-precondition") {
+          const raw = firebaseError.details?.suspensionEndDate;
+          setSuspensionEndDate(raw === undefined ? undefined : raw === null ? null : new Date(raw));
+          setStatus("locked");
+        } else {
+          setStatus("error");
+          setErrorMessage(
+            err instanceof Error
+              ? err.message
+              : "Authentication failed. Please try again.",
+          );
+        }
       }
     };
 
     handleCallback();
   }, [completeZkLogin]);
+
+  if (status === "locked") {
+    return (
+      <MemoryRouter>
+        <SuspensionModal
+          isOpen={true}
+          onClose={() => {
+            window.location.href = "/";
+          }}
+          suspensionEndDate={suspensionEndDate}
+        />
+      </MemoryRouter>
+    );
+  }
 
   if (status === "error") {
     return (
