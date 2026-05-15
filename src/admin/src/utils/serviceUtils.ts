@@ -1,7 +1,6 @@
 import type { Profile } from "../types/profile";
 import type { ServiceData } from "../components";
 
-const PRICE_DIVISOR = 100;
 const DATE_DIVISOR = 1000000;
 const DEFAULT_CURRENCY = "PHP";
 const DEFAULT_SERVICE_TYPE = "offered";
@@ -52,9 +51,9 @@ export const convertBackendServiceToServiceData = (
     category: service.category.name,
     status: convertServiceStatus(service.status),
     type: DEFAULT_SERVICE_TYPE,
-    price: Number(service.price) / PRICE_DIVISOR,
+    price: Number(service.price),
     currency: DEFAULT_CURRENCY,
-    location: service.location.address,
+    location: service.location || { address: "N/A", city: "N/A", state: "N/A" },
     createdDate: new Date(Number(service.createdAt) / DATE_DIVISOR),
     rating: service.rating ? Number(service.rating) : undefined,
     reviewCount: Number(service.reviewCount),
