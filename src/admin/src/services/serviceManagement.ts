@@ -1,5 +1,6 @@
 import { callFirebaseFunction, requireAuth } from "./coreUtils";
 import { AdminServiceError, ServiceData } from "./serviceTypes";
+import { serviceCanister } from "./serviceCanister";
 
 /**
  * Delete a service
@@ -43,7 +44,7 @@ export const getServiceData = async (
   try {
     requireAuth();
 
-    const service = await callFirebaseFunction("getService", { serviceId });
+    const service = await serviceCanister.getService(serviceId);
 
     if (!service) return null;
     const serviceData: ServiceData = {
@@ -56,19 +57,27 @@ export const getServiceData = async (
       price: service.price || 0,
       currency: "PHP",
       duration: undefined,
-      location: service.location,
+      location: {
+        latitude: service.location?.latitude || 0,
+        longitude: service.location?.longitude || 0,
+        address: service.location?.address || "Not specified",
+        city: "Not specified",
+        state: "",
+        country: "",
+        postalCode: "",
+      },
       scheduledDate: undefined,
       completedDate: undefined,
-      createdDate: service.createdAt ? new Date(service.createdAt) : new Date(),
+      createdDate: service.createdAt || new Date(),
       clientId: undefined,
       clientName: undefined,
       providerId: service.providerId,
-      providerName: "Service Provider",
+      providerName: service.providerName || "Service Provider",
       rating: service.rating,
       reviewCount: service.reviewCount,
-      imageUrls: service.imageUrls || [],
-      certificateMedia: service.certificateMedia || [],
-      weeklySchedule: service.weeklySchedule || [],
+      imageUrls: service.images || [],
+      certificateMedia: [],
+      weeklySchedule: [],
       packages: [],
     };
 

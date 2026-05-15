@@ -60,6 +60,25 @@ export const getUserDetailedReviews = async (
 };
 
 /**
+ * Get reviews for a specific service (admin can see all including hidden)
+ */
+export const getServiceReviews = async (
+  serviceId: string,
+  includeHidden: boolean = true,
+): Promise<any[]> => {
+  try {
+    requireAuth();
+    const result = await callFirebaseFunction("getServiceReviews", {
+      data: { serviceId, includeHidden },
+    });
+    return Array.isArray(result) ? result : [];
+  } catch (error) {
+    console.error("Error fetching service reviews", error);
+    return [];
+  }
+};
+
+/**
  * Delete a review
  */
 export const deleteReview = async (reviewId: string): Promise<void> => {

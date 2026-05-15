@@ -1237,10 +1237,10 @@ exports.getProviderReviews = onCall(async (request) => {
  */
 exports.getServiceReviews = onCall(async (request) => {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
+  const context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data || data;
-  const {serviceId, limit = 20, offset = 0} = payload;
+  const {serviceId, limit = 20, offset = 0, includeHidden = false} = payload;
   console.log("Get Service Reviews ", payload);
 
   if (!serviceId) {
@@ -1254,7 +1254,32 @@ exports.getServiceReviews = onCall(async (request) => {
   const limitInt = parseInt(limit) || 20;
   const offsetInt = parseInt(offset) || 0;
 
+  const authInfo = getAuthInfo(context, data);
+  const showAll = includeHidden && authInfo.isAdmin;
+
   try {
+    if (showAll) {
+      const allReviewsSnap = await db
+        .collection("reviews")
+        .where("serviceId", "==", serviceId)
+        .get();
+
+      const allReviews = [];
+      allReviewsSnap.forEach((doc) => {
+        allReviews.push(doc.data());
+      });
+
+      // Sort client-side
+      const sorted = allReviews.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
+      return {success: true, data: paginated};
+    }
+
     const reviewsSnap = await db
       .collection("reviews")
       .where("serviceId", "==", serviceId)
@@ -1272,6 +1297,37 @@ exports.getServiceReviews = onCall(async (request) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getServiceReviews:", error);
+    // If the query fails due to missing index, try fetching all and filtering client-side
+    if (error.code === 8 || error.message?.includes("index")) {
+      console.log("[getServiceReviews] Falling back to client-side filtering due to index issue");
+      try {
+        const allReviewsSnap = await db
+          .collection("reviews")
+          .where("serviceId", "==", serviceId)
+          .get();
+
+        const allReviews = [];
+        allReviewsSnap.forEach((doc) => {
+          const reviewData = doc.data();
+          if (showAll || reviewData.status === "Visible" || !reviewData.status) {
+            allReviews.push(reviewData);
+          }
+        });
+
+        // Sort client-side
+        const sorted = allReviews.sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
+        return {success: true, data: paginated};
+      } catch (fallbackError) {
+        console.error("Error in fallback query:", fallbackError);
+        throw new HttpsError("internal", fallbackError.message);
+      }
+    }
     throw new HttpsError("internal", error.message);
   }
 });

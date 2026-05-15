@@ -46,6 +46,7 @@ export const adminServiceCanister = {
   getRejectedCertificates: certificateServices.getRejectedCertificates,
 
   // Reviews
+  getServiceReviews: feedbackServices.getServiceReviews,
   getUserDetailedReviews: feedbackServices.getUserDetailedReviews,
   deleteReview: feedbackServices.deleteReview,
   restoreReview: feedbackServices.restoreReview,

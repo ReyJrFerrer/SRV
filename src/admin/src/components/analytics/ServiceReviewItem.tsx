@@ -4,7 +4,6 @@ import {
   TrashIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/solid";
-import { useUserImage } from "../../../../frontend/src/hooks/useMediaLoader";
 import { StarRatingDisplay } from "../StarRatingDisplay";
 
 interface ServiceReviewItemProps {
@@ -14,6 +13,7 @@ interface ServiceReviewItemProps {
   isDeleting: boolean;
   onRestore: (reviewId: string) => void;
   onShowDeleteConfirm: (reviewId: string) => void;
+  clientAvatarUrl?: string;
 }
 
 export const ServiceReviewItem: React.FC<ServiceReviewItemProps> = ({
@@ -23,10 +23,8 @@ export const ServiceReviewItem: React.FC<ServiceReviewItemProps> = ({
   isDeleting,
   onRestore,
   onShowDeleteConfirm,
+  clientAvatarUrl,
 }) => {
-  const { userImageUrl: clientImageUrl } = useUserImage(
-    review.clientProfile?.profilePicture?.imageUrl,
-  );
   const isHidden = review.status === "Hidden";
 
   return (
@@ -40,7 +38,7 @@ export const ServiceReviewItem: React.FC<ServiceReviewItemProps> = ({
       <div className="mb-3 flex items-start">
         <div className="relative mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-blue-100 bg-blue-50">
           <img
-            src={clientImageUrl || "/default-client.svg"}
+            src={clientAvatarUrl || "/default-client.svg"}
             alt={review.clientName || "Client"}
             className="h-full w-full object-cover"
           />

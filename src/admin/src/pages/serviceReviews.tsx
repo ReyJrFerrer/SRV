@@ -5,10 +5,9 @@ import {
   EyeSlashIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/solid";
-import { useServiceReviews } from "../../../frontend/src/hooks/reviewManagement";
-import { useServiceManagement } from "../../../frontend/src/hooks/serviceManagement";
-import { useUserImage } from "../../../frontend/src/hooks/useMediaLoader";
 import { adminServiceCanister } from "../services/adminServiceCanister";
+import { serviceCanister } from "../services/serviceCanister";
+import { getProfile } from "../services/identityBridge";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { StarRatingDisplay } from "../components/StarRatingDisplay";
 import { ServiceReviewItem } from "../components/analytics/ServiceReviewItem";
@@ -20,50 +19,65 @@ import {
   handleRestoreReview,
 } from "../utils/reviewUtils";
 
+const formatReviewDate = (dateString: string): string => {
+  if (!dateString) return "Unknown date";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const getRelativeTime = (dateString: string): string => {
+  if (!dateString) return "Unknown time";
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+  if (diffHours > 0)
+    return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  if (diffMinutes > 0)
+    return `${diffMinutes} minute${diffMinutes > 1 ? "s" : ""} ago`;
+  return "Just now";
+};
+
+const getAverageRating = (reviewList: any[]): number => {
+  if (reviewList.length === 0) return 0;
+  const sum = reviewList.reduce((acc, review) => acc + review.rating, 0);
+  return Number((sum / reviewList.length).toFixed(1));
+};
+
+const getRatingDistribution = (reviewList: any[]): Record<number, number> => {
+  const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  reviewList.forEach((review) => {
+    if (review.rating >= 1 && review.rating <= 5) {
+      distribution[review.rating]++;
+    }
+  });
+  return distribution;
+};
+
 const ServiceReviewsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id: serviceId } = useParams<{ id: string }>();
 
-  const { getService } = useServiceManagement();
   const [service, setService] = useState<any>(null);
   const [serviceLoading, setServiceLoading] = useState(true);
-  const [serviceError, setServiceError] = useState<Error | null>(null);
+  const [serviceError, setServiceError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!serviceId) return;
-    setServiceLoading(true);
-    getService(serviceId)
-      .then((s) => {
-        setService(s);
-        setServiceError(null);
-      })
-      .catch((err) => setServiceError(err))
-      .finally(() => setServiceLoading(false));
-  }, [serviceId, getService]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
 
-  const { userImageUrl } = useUserImage(service?.providerAvatar);
-
-  useEffect(() => {
-    if (service) {
-      const providerName = service.providerName || "Service Provider";
-      document.title = `Admin | Reviews for ${service.name} by ${providerName}`;
-    } else {
-      document.title = "Service Reviews | Admin";
-    }
-  }, [service]);
-
-  const reviewHook = useServiceReviews(serviceId as string);
-  const {
-    reviews,
-    loading: reviewsLoading,
-    error: reviewsError,
-    analytics,
-    getAverageRating,
-    getRatingDistribution,
-    formatReviewDate,
-    getRelativeTime,
-    refreshReviews,
-  } = reviewHook;
+  const [reviewerProfiles, setReviewerProfiles] = useState<
+    Record<string, { name: string; imageUrl: string }>
+  >({});
 
   const [sortBy, setSortBy] = useState<
     "newest" | "oldest" | "highest" | "lowest"
@@ -75,6 +89,94 @@ const ServiceReviewsPage: React.FC = () => {
     null,
   );
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!serviceId) return;
+    setServiceLoading(true);
+    serviceCanister
+      .getService(serviceId)
+      .then((s) => {
+        setService(s);
+        setServiceError(null);
+      })
+      .catch((err) => {
+        console.error("Error loading service:", err);
+        setServiceError("Failed to load service");
+      })
+      .finally(() => setServiceLoading(false));
+  }, [serviceId]);
+
+  useEffect(() => {
+    if (!serviceId) return;
+    setReviewsLoading(true);
+    adminServiceCanister
+      .getServiceReviews(serviceId, true)
+      .then((data) => {
+        setReviews(data);
+        setReviewsError(null);
+
+        // Fetch reviewer profiles for each unique clientId
+        const uniqueClientIds = [
+          ...new Set(
+            data
+              .map((r: any) => r.clientId)
+              .filter((id: any): id is string => !!id),
+          ),
+        ];
+
+        if (uniqueClientIds.length > 0) {
+          Promise.all(
+            uniqueClientIds.map(async (clientId) => {
+              try {
+                const profile = await getProfile(clientId);
+                if (profile && profile.success && profile.profile) {
+                  return {
+                    clientId,
+                    name: profile.profile.name || "Unknown User",
+                    imageUrl:
+                      profile.profile.profilePicture?.imageUrl ||
+                      "/default-client.svg",
+                  };
+                }
+                return {
+                  clientId,
+                  name: "Unknown User",
+                  imageUrl: "/default-client.svg",
+                };
+              } catch {
+                return {
+                  clientId,
+                  name: "Unknown User",
+                  imageUrl: "/default-client.svg",
+                };
+              }
+            }),
+          ).then((profiles) => {
+            const profilesMap = profiles.reduce(
+              (acc, { clientId, name, imageUrl }) => {
+                acc[clientId] = { name, imageUrl };
+                return acc;
+              },
+              {} as Record<string, { name: string; imageUrl: string }>,
+            );
+            setReviewerProfiles(profilesMap);
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading reviews:", err);
+        setReviewsError("Failed to load reviews");
+      })
+      .finally(() => setReviewsLoading(false));
+  }, [serviceId]);
+
+  useEffect(() => {
+    if (service) {
+      document.title = `Admin | Reviews for ${service.title || "Service"}`;
+    } else {
+      document.title = "Service Reviews | Admin";
+    }
+  }, [service]);
 
   const sortedAndFilteredReviews = useMemo(() => {
     let filtered = filterReviewsByVisibility(reviews, showHiddenReviews);
@@ -94,14 +196,36 @@ const ServiceReviewsPage: React.FC = () => {
 
   const onDeleteSuccess = async () => {
     setShowDeleteConfirm(null);
-    if (refreshReviews) {
-      await refreshReviews();
+    if (serviceId) {
+      setReviewsLoading(true);
+      try {
+        const data = await adminServiceCanister.getServiceReviews(
+          serviceId,
+          true,
+        );
+        setReviews(data);
+      } catch (err) {
+        console.error("Error refreshing reviews:", err);
+      } finally {
+        setReviewsLoading(false);
+      }
     }
   };
 
   const onRestoreSuccess = async () => {
-    if (refreshReviews) {
-      await refreshReviews();
+    if (serviceId) {
+      setReviewsLoading(true);
+      try {
+        const data = await adminServiceCanister.getServiceReviews(
+          serviceId,
+          true,
+        );
+        setReviews(data);
+      } catch (err) {
+        console.error("Error refreshing reviews:", err);
+      } finally {
+        setReviewsLoading(false);
+      }
     }
   };
 
@@ -140,6 +264,7 @@ const ServiceReviewsPage: React.FC = () => {
         <h1 className="mb-4 text-2xl font-bold text-red-600">
           Error Loading Reviews
         </h1>
+        <p className="mb-6 text-gray-600">{serviceError || reviewsError}</p>
         <button
           onClick={() => navigate(-1)}
           className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
@@ -169,9 +294,6 @@ const ServiceReviewsPage: React.FC = () => {
     );
   }
 
-  const providerName = service.providerName || "Service Provider";
-  const providerAvatar = userImageUrl || "/default-provider.svg";
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
       {/* Header for navigation */}
@@ -196,8 +318,8 @@ const ServiceReviewsPage: React.FC = () => {
         <div className="flex flex-col items-center rounded-2xl bg-white/90 p-6 shadow-xl md:flex-row md:items-center md:space-x-8">
           <div className="relative mb-4 h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-4 border-blue-100 bg-white shadow-lg md:mb-0">
             <img
-              src={providerAvatar}
-              alt={providerName}
+              src={service.providerAvatar || "/default-provider.svg"}
+              alt={service.providerName || "Provider"}
               className="h-full w-full object-cover"
             />
           </div>
@@ -205,7 +327,9 @@ const ServiceReviewsPage: React.FC = () => {
             <h2 className="text-2xl font-bold text-blue-900">
               {service.title}
             </h2>
-            <p className="mb-1 text-base text-blue-700">{service.name}</p>
+            <p className="mb-1 text-base text-blue-700">
+              {service.providerName || "Service Provider"}
+            </p>
             <div className="flex items-center justify-center space-x-2 text-sm text-blue-800 md:justify-start">
               <StarRatingDisplay rating={averageRating} />
               <span className="font-semibold">{averageRating.toFixed(1)}</span>
@@ -247,7 +371,7 @@ const ServiceReviewsPage: React.FC = () => {
               {[5, 4, 3, 2, 1].map((rating) => (
                 <div key={rating} className="mb-2 flex items-center">
                   <span className="w-8 text-sm font-semibold text-blue-800">
-                    {rating}★
+                    {rating}
                   </span>
                   <div className="mx-3 h-2 flex-1 rounded-full bg-blue-100">
                     <div
@@ -280,12 +404,6 @@ const ServiceReviewsPage: React.FC = () => {
                   <span>5-Star Reviews:</span>
                   <span className="font-semibold">
                     {ratingDistribution[5] || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Recent Reviews (7 days):</span>
-                  <span className="font-semibold">
-                    {analytics?.recentReviews || 0}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -378,17 +496,24 @@ const ServiceReviewsPage: React.FC = () => {
         {/* Reviews List */}
         {sortedAndFilteredReviews.length > 0 ? (
           <div className="space-y-6">
-            {sortedAndFilteredReviews.map((review) => (
-              <ServiceReviewItem
-                key={review.id}
-                review={review}
-                formatReviewDate={formatReviewDate}
-                getRelativeTime={getRelativeTime}
-                isDeleting={deletingReviewId === review.id}
-                onRestore={handleRestore}
-                onShowDeleteConfirm={setShowDeleteConfirm}
-              />
-            ))}
+            {sortedAndFilteredReviews.map((review) => {
+              const profile = reviewerProfiles[review.clientId];
+              return (
+                <ServiceReviewItem
+                  key={review.id}
+                  review={{
+                    ...review,
+                    clientName: profile?.name || "Anonymous User",
+                  }}
+                  formatReviewDate={formatReviewDate}
+                  getRelativeTime={getRelativeTime}
+                  isDeleting={deletingReviewId === review.id}
+                  onRestore={handleRestore}
+                  onShowDeleteConfirm={setShowDeleteConfirm}
+                  clientAvatarUrl={profile?.imageUrl}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-2xl border border-blue-100 bg-white/90 py-12 text-center shadow-lg">
