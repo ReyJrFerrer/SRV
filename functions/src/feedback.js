@@ -225,9 +225,7 @@ exports.getMyFeedback = onCall(async (request) => {
 exports.getFeedbackStats = onCall(async (request) => {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
-  // Extract payload
-  const payload = data.data.data || data;
-  console.log("Get Feedback Stats Payload", payload);
+  console.log("Get Feedback Stats Payload", data);
 
   try {
     const feedbackSnap = await db.collection("app_feedback").get();
@@ -257,10 +255,11 @@ exports.getFeedbackStats = onCall(async (request) => {
     const ratingCounts = [0, 0, 0, 0, 0, 0]; // Index 0 unused, 1-5 for ratings
 
     for (const feedback of allFeedback) {
-      totalRating += feedback.rating;
-
-      // Count rating distribution
-      ratingCounts[feedback.rating] += 1;
+      const rating = feedback.rating;
+      if (typeof rating === "number" && rating >= 1 && rating <= 5) {
+        totalRating += rating;
+        ratingCounts[rating] += 1;
+      }
 
       // Count comments
       if (feedback.comment) {
@@ -268,7 +267,7 @@ exports.getFeedbackStats = onCall(async (request) => {
       }
     }
 
-    const averageRating = totalRating / totalFeedback;
+    const averageRating = totalFeedback > 0 ? totalRating / totalFeedback : 0;
 
     // Create rating distribution array
     const distribution = [];
@@ -277,7 +276,11 @@ exports.getFeedbackStats = onCall(async (request) => {
     }
 
     // Sort feedback by creation time (newest first)
-    allFeedback.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    allFeedback.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
     const latestFeedback = allFeedback.length > 0 ? allFeedback[0] : null;
 
     const stats = {

@@ -1,7 +1,6 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "./coreUtils";
 import { callFirebaseFunction, requireAuth } from "./coreUtils";
-import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 import { AdminServiceError, FrontendSystemStats } from "./serviceTypes";
 
 /**
@@ -71,68 +70,22 @@ export const getBookingsData = async (): Promise<{
   try {
     requireAuth();
 
-    const auth = getFirebaseAuth();
-    const user = auth.currentUser;
-    if (!user) {
-      throw new Error("User not authenticated");
+    const result = await callFirebaseFunction("getBookingsData", {});
+
+    if (!result) {
+      return { bookings: [], commissionTransactions: [] };
     }
 
-    const idToken = await user.getIdToken();
-    const functionsInstance = getFirebaseFunctions();
-    const projectId = functionsInstance.app.options.projectId || "srve-7133d";
-    const region = "us-central1";
-
-    const isLocal =
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1";
-    const baseUrl = isLocal
-      ? `http://127.0.0.1:5001/${projectId}/${region}`
-      : `https://${region}-${projectId}.cloudfunctions.net`;
-
-    const url = `${baseUrl}/getBookingsData`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${idToken}`,
-      },
-      body: JSON.stringify({ data: {} }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ error: "Unknown error" }));
-      throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`,
-      );
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      return {
-        bookings: result.bookings || [],
-        commissionTransactions: result.commissionTransactions || [],
-      };
-    } else {
-      throw new Error(
-        result.message || result.error || "Failed to get bookings data",
-      );
-    }
+    return {
+      bookings: result.bookings || [],
+      commissionTransactions: result.commissionTransactions || [],
+    };
   } catch (error: any) {
-    const isNetworkError =
-      error?.code === "ERR_FAILED" ||
-      error?.message?.includes("CORS") ||
-      error?.message === "Failed to fetch" ||
-      error?.name === "TypeError" ||
-      error?.name === "FirebaseError" ||
-      (error?.code && error.code.includes("internal"));
-
-    if (!isNetworkError) {
-      console.error("[getBookingsData] Error getting bookings data:", error);
-    }
-    return { bookings: [], commissionTransactions: [] };
+    console.error("[getBookingsData] Error getting bookings data:", error);
+    throw new AdminServiceError({
+      message: error.message || "Failed to get bookings data",
+      code: "GET_BOOKINGS_DATA_ERROR",
+      details: error,
+    });
   }
 };

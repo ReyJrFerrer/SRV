@@ -1049,65 +1049,19 @@ exports.getPendingCertificateValidations = onCall(async (request) => {
   }
 });
 
-exports.getBookingsData = functions.https.onRequest(async (req, res) => {
-  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS ||
-    "https://srvadmin.web.app,https://srvpinoy.com,http://localhost:5173,http://127.0.0.1:5173";
-  const allowedOrigins = allowedOriginsEnv.split(",").map((origin) => origin.trim());
+exports.getBookingsData = onCall(async (request) => {
+  const {auth: callerAuth} = request;
 
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.set("Access-Control-Allow-Origin", origin);
-  } else if (process.env.FUNCTIONS_EMULATOR === "true") {
-    // In emulator, allow all origins for development
-    res.set("Access-Control-Allow-Origin", "*");
-  } else {
-    // In production, only allow configured origins or deny
-    res.set("Access-Control-Allow-Origin", allowedOrigins[0] || "*");
+  if (!callerAuth) {
+    throw new HttpsError("unauthenticated", "Unauthorized: Authentication required");
   }
 
-  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.set("Access-Control-Max-Age", "3600");
-
-  if (req.method === "OPTIONS") {
-    return res.status(204).send();
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      success: false,
-      error: "Method not allowed",
-    });
+  const isAdmin = callerAuth.token?.isAdmin || false;
+  if (!isAdmin) {
+    throw new HttpsError("permission-denied", "Forbidden: Only ADMIN users can get bookings data");
   }
 
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        success: false,
-        error: "Unauthorized: Missing or invalid authorization header",
-      });
-    }
-
-    const idToken = authHeader.split("Bearer ")[1];
-    let decodedToken;
-    try {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-    } catch (error) {
-      return res.status(401).json({
-        success: false,
-        error: "Unauthorized: Invalid token",
-      });
-    }
-
-    const isAdmin = decodedToken.isAdmin || false;
-    if (!isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: "Forbidden: Only ADMIN users can get bookings data",
-      });
-    }
-
     const bookingsSnapshot = await db.collection("bookings").get();
 
     const bookings = bookingsSnapshot.docs.map((doc) => {
@@ -1142,16 +1096,16 @@ exports.getBookingsData = functions.https.onRequest(async (req, res) => {
       timestamp: new Date(doc.data().timestamp),
     }));
 
-    return res.status(200).json({
+    return {
       success: true,
-      bookings: bookings,
-      commissionTransactions: commissionTransactions,
-    });
+      data: {
+        bookings,
+        commissionTransactions,
+      },
+    };
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message || "Internal server error",
-    });
+    console.error("Error in getBookingsData:", error);
+    throw new HttpsError("internal", error.message);
   }
 });
 

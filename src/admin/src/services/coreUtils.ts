@@ -52,7 +52,17 @@ export const callFirebaseFunction = async (
       throw new Error((result.data as any).message || "Function call failed");
     }
   } catch (error: any) {
-    console.error(`Error calling ${functionName}:`, error);
+    const isNetworkError =
+      error?.code === "ERR_FAILED" ||
+      error?.message?.includes("CORS") ||
+      error?.message === "Failed to fetch" ||
+      error?.name === "TypeError" ||
+      error?.code === "INTERNAL" ||
+      (error?.code && error.code.includes("internal"));
+
+    if (!isNetworkError) {
+      console.error(`Error calling ${functionName}:`, error);
+    }
     throw new AdminServiceError({
       message: error.message || `Failed to call ${functionName}`,
       code: error.code || "FIREBASE_FUNCTION_ERROR",
