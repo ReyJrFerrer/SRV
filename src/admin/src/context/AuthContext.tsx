@@ -430,6 +430,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               );
               setFirebaseUser(result.user);
 
+              // Check if account is allowed BEFORE showing password prompt
+              // This prevents showing password to restricted new accounts
+              const adminCheckResult = await createAdminProfile(
+                result.user.uid,
+                principal,
+                undefined,
+                "",
+              );
+
+              if (!adminCheckResult.success) {
+                setError(adminCheckResult.message || "Access denied");
+                await authClient.logout();
+                await sessionManager.clearSession();
+                setIsAuthenticated(false);
+                setIsLoading(false);
+                return;
+              }
+
+              // Refresh token claims after profile creation
+              await result.user.getIdToken(true);
+
               // Store session for persistence
               await sessionManager.storeSession({
                 principal,
@@ -442,40 +463,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 sessionDuration: sessionDurationMs,
               });
 
-try {
-                  const functions = getFirebaseFunctions();
-                  const isPasswordSetFn = httpsCallable(
-                    functions,
-                    "isAdminPasswordSet",
-                  );
-                  const passwordCheckResult = await isPasswordSetFn();
-                  const passwordData = passwordCheckResult.data as {
-                    success: boolean;
-                    isSet: boolean;
-                  };
+              const functions = getFirebaseFunctions();
+              const isPasswordSetFn = httpsCallable(
+                functions,
+                "isAdminPasswordSet",
+              );
+              const passwordCheckResult = await isPasswordSetFn();
+              const passwordData = passwordCheckResult.data as {
+                success: boolean;
+                isSet: boolean;
+              };
 
-                  if (passwordData.isSet) {
-                    setPendingAuthState({
-                      identity,
-                      firebaseUser: result.user,
-                      principal,
-                    });
-                    setShowPasswordPrompt(true);
-                    setIsLoading(false);
-                    return;
-                  }
+              if (passwordData.isSet) {
+                setPendingAuthState({
+                  identity,
+                  firebaseUser: result.user,
+                  principal,
+                });
+                setShowPasswordPrompt(true);
+                setIsLoading(false);
+                return;
+              }
 
-                  setHasVerifiedPassword(true);
-                  await proceedWithAdminProfileCreation(result.user, principal);
-                  await checkAdminClaim(result.user);
-                } catch (checkError: any) {
-                  setHasVerifiedPassword(true);
-                  await proceedWithAdminProfileCreation(result.user, principal);
-                  await checkAdminClaim(result.user);
-                }
-            } catch (fbError) {
-              if ((fbError as any)?.message) {
-                setError((fbError as any).message);
+              setHasVerifiedPassword(true);
+              await checkAdminClaim(result.user);
+            } catch (fbError: any) {
+              if (fbError?.code === "permission-denied") {
+                setError(fbError?.message || "You are not authorized for admin access.");
+                await authClient.logout();
+                await sessionManager.clearSession();
+                setFirebaseUser(null);
+                setIsAuthenticated(false);
+              } else if (fbError?.message) {
+                setError(fbError.message);
               }
             }
 
