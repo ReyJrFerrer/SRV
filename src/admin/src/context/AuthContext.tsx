@@ -430,35 +430,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 sessionDuration: sessionDurationMs,
               });
 
-              try {
-                const functions = getFirebaseFunctions();
-                const isPasswordSetFn = httpsCallable(
-                  functions,
-                  "isAdminPasswordSet",
-                );
-                const passwordCheckResult = await isPasswordSetFn();
-                const passwordData = passwordCheckResult.data as {
-                  success: boolean;
-                  isSet: boolean;
-                };
+try {
+                  const functions = getFirebaseFunctions();
+                  const isPasswordSetFn = httpsCallable(
+                    functions,
+                    "isAdminPasswordSet",
+                  );
+                  const passwordCheckResult = await isPasswordSetFn();
+                  const passwordData = passwordCheckResult.data as {
+                    success: boolean;
+                    isSet: boolean;
+                  };
 
-                if (passwordData.isSet) {
-                  setPendingAuthState({
-                    identity,
-                    firebaseUser: result.user,
-                    principal,
-                  });
-                  setShowPasswordPrompt(true);
-                  setIsLoading(false);
-                  return;
+                  if (passwordData.isSet) {
+                    setPendingAuthState({
+                      identity,
+                      firebaseUser: result.user,
+                      principal,
+                    });
+                    setShowPasswordPrompt(true);
+                    setIsLoading(false);
+                    return;
+                  }
+
+                  setHasVerifiedPassword(true);
+                  await proceedWithAdminProfileCreation(result.user, principal);
+                  await checkAdminClaim(result.user);
+                } catch (checkError: any) {
+                  setHasVerifiedPassword(true);
+                  await proceedWithAdminProfileCreation(result.user, principal);
+                  await checkAdminClaim(result.user);
                 }
-
-                setHasVerifiedPassword(true);
-                await proceedWithAdminProfileCreation(result.user, principal);
-              } catch (checkError: any) {
-                setHasVerifiedPassword(true);
-                await proceedWithAdminProfileCreation(result.user, principal);
-              }
             } catch (fbError) {
               console.error(
                 "[Admin] Failed to authenticate with Firebase:",
@@ -521,10 +523,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         pendingAuthState.firebaseUser,
         pendingAuthState.principal,
       );
+      await checkAdminClaim(pendingAuthState.firebaseUser);
       setPendingAuthState(null);
     } catch (error: any) {
       setError(error?.message || "Failed to verify password");
       setIsLoading(false);
+    }
+  };
+
+  const checkAdminClaim = async (user: FirebaseUser) => {
+    try {
+      await user.getIdToken(true);
+      const tokenResult = await user.getIdTokenResult();
+      const isAdminUser = tokenResult.claims.isAdmin === true;
+      setHasAdminClaim(isAdminUser);
+    } catch (error) {
+      console.error("[Admin] Error checking admin claim:", error);
     }
   };
 
