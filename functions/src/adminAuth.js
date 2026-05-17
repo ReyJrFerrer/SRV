@@ -43,8 +43,7 @@ exports.createAdminProfile = onCall(async (request) => {
       if (!userExists || !hasAdminRole) {
         throw new HttpsError(
           "permission-denied",
-          `New accounts are not allowed to access the admin panel. 
-            Please contact an administrator.`,
+          `You are not allowed`,
         );
       }
     }

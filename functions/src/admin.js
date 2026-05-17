@@ -290,7 +290,7 @@ exports.isAdminPasswordSet = onCall(async (request) => {
 exports.verifyAdminPassword = onCall(async (request) => {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  const payload = data.data;
+  const payload = data;
   const {password} = payload;
 
   if (!password) {
