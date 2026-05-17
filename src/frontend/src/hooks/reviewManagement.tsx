@@ -645,13 +645,11 @@ export const useReviewManagement = (
           const userReviews =
             await reviewCanisterService.getUserReviews(targetUserId);
 
-          // Enrich with profile data if loading for current user
-          if (!userId || userId === getCurrentUserId()) {
-            const enrichedReviews = await Promise.all(
-              userReviews.map((review) => enrichReviewWithProfileData(review)),
-            );
-            setReviews(enrichedReviews);
-          }
+          // Always enrich with profile data and update state
+          const enrichedReviews = await Promise.all(
+            userReviews.map((review) => enrichReviewWithProfileData(review)),
+          );
+          setReviews(enrichedReviews);
 
           return userReviews;
         } catch (error) {
@@ -679,15 +677,13 @@ export const useReviewManagement = (
         const providerReviews =
           await reviewCanisterService.getProviderReviews(targetProviderId);
 
-        // Enrich with profile data if loading for current user
-        if (!providerId || providerId === getCurrentUserId()) {
-          const enrichedReviews = await Promise.all(
-            providerReviews.map((review) =>
-              enrichReviewWithProfileData(review),
-            ),
-          );
-          setReviews(enrichedReviews);
-        }
+        // Always enrich with profile data and update state
+        const enrichedReviews = await Promise.all(
+          providerReviews.map((review) =>
+            enrichReviewWithProfileData(review),
+          ),
+        );
+        setReviews(enrichedReviews);
 
         return providerReviews;
       } catch (error) {
@@ -1102,7 +1098,7 @@ export const useReviewManagement = (
 // Hook for service review page
 export const useServiceReviews = (serviceId: string | null) => {
   const reviewManagement = useReviewManagement({
-    autoRefresh: true,
+    autoRefresh: false,
     autoLoadUserReviews: false,
   });
 
@@ -1112,18 +1108,33 @@ export const useServiceReviews = (serviceId: string | null) => {
     }
   }, [serviceId, reviewManagement.getServiceReviews]);
 
+  useEffect(() => {
+    if (!serviceId) return;
+    const interval = setInterval(() => {
+      reviewManagement.getServiceReviews(serviceId);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [serviceId, reviewManagement.getServiceReviews]);
+
   return reviewManagement;
 };
 
 // Hook for provider dashboard
 export const useProviderReviews = (providerId?: string) => {
   const reviewManagement = useReviewManagement({
-    autoRefresh: true,
+    autoRefresh: false,
     autoLoadUserReviews: false,
   });
 
   useEffect(() => {
     reviewManagement.getProviderReviews(providerId);
+  }, [providerId, reviewManagement.getProviderReviews]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      reviewManagement.getProviderReviews(providerId);
+    }, 30000);
+    return () => clearInterval(interval);
   }, [providerId, reviewManagement.getProviderReviews]);
 
   return reviewManagement;
@@ -1132,7 +1143,7 @@ export const useProviderReviews = (providerId?: string) => {
 // Hook for booking rating
 export const useBookingRating = (bookingId: string | null) => {
   const reviewManagement = useReviewManagement({
-    autoLoadUserReviews: true,
+    autoLoadUserReviews: false,
   });
   const [canReview, setCanReview] = useState<boolean | null>(null);
 
