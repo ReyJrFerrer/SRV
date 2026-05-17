@@ -248,24 +248,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 }
               },
               (error: any) => {
-                console.error("[Admin] Error listening to lock status:", error);
               },
             );
           } catch (firestoreError: any) {
-            console.error(
-              "[Admin] Error setting up lock status listener:",
-              firestoreError,
-            );
           }
         } catch (error: any) {
           if (
             error?.code === "auth/user-disabled" ||
-            error?.message?.includes("disabled")
+            error?.code === "permission-denied" ||
+            error?.message?.includes("disabled") ||
+            error?.message?.includes("permission")
           ) {
             return;
           }
-          console.error("[Admin] Error checking admin status:", error);
-          setIsAdmin(false);
         }
       } else {
         setHasAdminClaim(false);
@@ -479,30 +474,27 @@ try {
                   await checkAdminClaim(result.user);
                 }
             } catch (fbError) {
-              console.error(
-                "[Admin] Failed to authenticate with Firebase:",
-                fbError,
-              );
+              if ((fbError as any)?.message) {
+                setError((fbError as any).message);
+              }
             }
 
             setIsLoading(false);
           } catch (onSuccessError) {
-            console.error(
-              "[Admin] Error in onSuccess callback:",
-              onSuccessError,
-            );
-            setError("Authentication succeeded but failed to initialize");
+            if ((onSuccessError as any)?.message) {
+              setError((onSuccessError as any).message);
+            } else {
+              setError("Authentication succeeded but failed to initialize");
+            }
             setIsLoading(false);
           }
         },
         onError: (err?: string) => {
-          console.error("[Admin] Login error:", err);
           setError(err || "Login failed");
           setIsLoading(false);
         },
       });
     } catch (e) {
-      console.error("[Admin] Login exception:", e);
       setError(
         e instanceof Error
           ? e.message
@@ -558,7 +550,6 @@ try {
         setHasVerifiedPassword(true);
       }
     } catch (error) {
-      console.error("[Admin] Error checking admin claim:", error);
     }
   };
 
@@ -577,15 +568,12 @@ try {
       if (adminResult.success) {
         await firebaseUser.getIdToken(true);
       } else {
-        console.warn(
-          "[Admin] Admin profile creation failed:",
-          adminResult.message,
-        );
+        setError(adminResult.message || "Failed to create admin profile.");
       }
     } catch (adminError: any) {
       if (adminError?.code === "permission-denied") {
         setError(
-          adminError.message || "You are not authorized for admin access.",
+          adminError?.message || "You are not authorized for admin access.",
         );
         try {
           if (authClient) {
@@ -597,11 +585,10 @@ try {
         } catch (logoutError) {}
         setHasVerifiedPassword(false);
         setHasAdminClaim(false);
+      } else if (adminError?.message) {
+        setError(adminError.message);
       } else {
-        console.warn(
-          "[Admin] Could not auto-create admin profile:",
-          adminError,
-        );
+        setError("Failed to create admin profile. Please try again.");
       }
     } finally {
       setIsLoading(false);

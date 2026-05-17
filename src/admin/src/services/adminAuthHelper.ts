@@ -44,7 +44,6 @@ export async function createAdminProfile(
 
     return data;
   } catch (error) {
-    console.error("Failed to create admin profile:", error);
     throw error;
   }
 }
