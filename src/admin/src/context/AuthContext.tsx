@@ -300,30 +300,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIdentity(identity);
           updateAllAdminActors(identity);
 
-          // Store session for persistence if not already stored
+          const sessionDurationNs = getRecommendedSessionDuration();
+          const sessionDurationMs = sessionDurationNs / (1000 * 1000);
+          const principal = identity.getPrincipal().toString();
           const existingSession = await sessionManager.getSession();
-          if (!existingSession) {
-            const sessionDurationNs = getRecommendedSessionDuration();
-            const sessionDurationMs = sessionDurationNs / (1000 * 1000);
-            const principal = identity.getPrincipal().toString();
-            try {
+
+          try {
+            const result = await signInWithInternetIdentity(
+              principal,
+              sessionDurationMs,
+            );
+            setFirebaseUser(result.user);
+            await checkAdminClaim(result.user);
+            const tokenResult = await result.user.getIdTokenResult();
+            if (tokenResult.claims.isAdmin === true) {
+              setHasVerifiedPassword(true);
+            }
+            await sessionManager.storeSession({
+              principal,
+              firebaseToken: await result.user.getIdToken(),
+              expiresAt: Date.now() + sessionDurationMs,
+              lastRefresh: Date.now(),
+              lastFirebaseRefresh: Date.now(),
+              hasProfile: result.hasProfile,
+              needsProfile: result.needsProfile,
+              sessionDuration: sessionDurationMs,
+            });
+          } catch (e) {
+            if (existingSession) {
               const result = await signInWithInternetIdentity(
-                principal,
+                existingSession.principal,
                 sessionDurationMs,
               );
               setFirebaseUser(result.user);
-              await sessionManager.storeSession({
-                principal,
-                firebaseToken: await result.user.getIdToken(),
-                expiresAt: Date.now() + sessionDurationMs,
-                lastRefresh: Date.now(),
-                lastFirebaseRefresh: Date.now(),
-                hasProfile: result.hasProfile,
-                needsProfile: result.needsProfile,
-                sessionDuration: sessionDurationMs,
-              });
-            } catch (e) {
-              // Silent fail - user is still authenticated via IC
+              await checkAdminClaim(result.user);
+            } else {
+              setError("Failed to restore session");
             }
           }
         } else {
@@ -350,8 +362,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               ]);
               const result = await signInWithTimeout;
               setFirebaseUser(result.user);
+              await checkAdminClaim(result.user);
               setIsAuthenticated(true);
               setIdentity(client.getIdentity());
+              const tokenResult = await result.user.getIdTokenResult();
+              if (tokenResult.claims.isAdmin === true) {
+                setHasVerifiedPassword(true);
+              }
               // Update stored session
               await sessionManager.storeSession({
                 principal: storedSession.principal,
@@ -537,6 +554,9 @@ try {
       const tokenResult = await user.getIdTokenResult();
       const isAdminUser = tokenResult.claims.isAdmin === true;
       setHasAdminClaim(isAdminUser);
+      if (isAdminUser) {
+        setHasVerifiedPassword(true);
+      }
     } catch (error) {
       console.error("[Admin] Error checking admin claim:", error);
     }
