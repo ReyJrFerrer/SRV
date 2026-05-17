@@ -55,6 +55,11 @@ const providerNotificationStore = {
   },
 };
 
+// Global event for cross-instance "mark all as read" communication
+const MARK_ALL_AS_READ_EVENT = "mark-all-notifications-read";
+let lastMarkAllAsReadTime = 0;
+const MARK_ALL_AS_READ_GRACE_MS = 3000;
+
 // Canister Helper Functions for Provider (replacing localStorage)
 const PROVIDER_READ_NOTIFICATIONS_KEY = "providerReadNotificationIds";
 const PROVIDER_PUSH_SENT_NOTIFICATIONS_KEY = "providerPushSentNotificationIds";
@@ -187,6 +192,25 @@ export const useProviderNotificationsWithPush = () => {
     };
   }, []);
 
+  // Listen for global "mark all as read" events from other hook instances
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as
+        | { timestamp: number }
+        | undefined;
+      if (detail?.timestamp) {
+        lastMarkAllAsReadTime = detail.timestamp;
+      }
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      providerNotificationStore.setCount(0);
+      providerNotificationStore.setFilteredCount(0);
+    };
+    window.addEventListener(MARK_ALL_AS_READ_EVENT, handler);
+    return () => {
+      window.removeEventListener(MARK_ALL_AS_READ_EVENT, handler);
+    };
+  }, []);
+
   // Generate provider-specific notifications based on bookings
   const fetchProviderNotifications = useCallback(async () => {
     setLoading(true);
@@ -233,9 +257,16 @@ export const useProviderNotificationsWithPush = () => {
         previousNotificationIdsRef.current = currentNotificationIds;
       }
 
-      setNotifications(allNotifications);
-      const newUnreadCount = allNotifications.filter((n) => !n.read).length;
-      const newFilteredUnreadCount = allNotifications.filter(
+      const now = Date.now();
+      const inGracePeriod =
+        now - lastMarkAllAsReadTime < MARK_ALL_AS_READ_GRACE_MS;
+      const finalNotifications = inGracePeriod
+        ? allNotifications.map((n) => ({ ...n, read: true }))
+        : allNotifications;
+
+      setNotifications(finalNotifications);
+      const newUnreadCount = finalNotifications.filter((n) => !n.read).length;
+      const newFilteredUnreadCount = finalNotifications.filter(
         (n) => !n.read && n.type !== "chat_message",
       ).length;
       providerNotificationStore.setCount(newUnreadCount);
@@ -282,11 +313,18 @@ export const useProviderNotificationsWithPush = () => {
               metadata: notif.metadata,
             }));
 
-          setNotifications(formattedNotifications);
-          const newUnreadCount = formattedNotifications.filter(
+          const now = Date.now();
+          const inGracePeriod =
+            now - lastMarkAllAsReadTime < MARK_ALL_AS_READ_GRACE_MS;
+          const finalNotifications = inGracePeriod
+            ? formattedNotifications.map((n) => ({ ...n, read: true }))
+            : formattedNotifications;
+
+          setNotifications(finalNotifications);
+          const newUnreadCount = finalNotifications.filter(
             (n) => !n.read,
           ).length;
-          const newFilteredUnreadCount = formattedNotifications.filter(
+          const newFilteredUnreadCount = finalNotifications.filter(
             (n) => !n.read && n.type !== "chat_message",
           ).length;
           providerNotificationStore.setCount(newUnreadCount);
@@ -415,6 +453,19 @@ export const useProviderNotificationsWithPush = () => {
 
   // Marks all currently loaded notifications as read
   const markAllAsRead = useCallback(async () => {
+    const timestamp = Date.now();
+    lastMarkAllAsReadTime = timestamp;
+
+    // Optimistic update for this instance
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    providerNotificationStore.setCount(0);
+    providerNotificationStore.setFilteredCount(0);
+
+    // Broadcast to all other hook instances so badges disappear immediately
+    window.dispatchEvent(
+      new CustomEvent(MARK_ALL_AS_READ_EVENT, { detail: { timestamp } }),
+    );
+
     try {
       // Use canister's markAllAsRead method
       await notificationCanisterService.markAllAsRead();
@@ -425,10 +476,6 @@ export const useProviderNotificationsWithPush = () => {
       const newReadIds = Array.from(new Set([...readIds, ...currentIds]));
       await setProviderReadIds(newReadIds);
     }
-
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    providerNotificationStore.setCount(0);
-    providerNotificationStore.setFilteredCount(0);
   }, [notifications]);
 
   // Delete a notification from canister and update local state
