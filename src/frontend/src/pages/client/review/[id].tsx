@@ -71,7 +71,7 @@ export const BookingReviewPage: React.FC = () => {
       // Step 4: Check if booking is completed
       if (booking?.status !== "Completed") {
         // If we are currently validating (fetching fresh data), don't redirect yet
-        if (isValidating) return;
+        if (isValidating || isLoadingBooking) return;
 
         navigate("/client/booking", { replace: true });
         return;
