@@ -176,6 +176,10 @@ export const notificationCanisterService = {
       const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
+          if (snapshot.metadata.fromCache && snapshot.empty) {
+            console.log("Ignoring empty cache snapshot for notifications");
+            return;
+          }
           const notifications = snapshot.docs.map((doc) => {
             const data = doc.data();
             return convertToFrontendNotification({
@@ -189,8 +193,9 @@ export const notificationCanisterService = {
           });
           notifyAll(notifications);
         },
-        () => {
-          notifyAll([]);
+        (error) => {
+          console.error("Firestore onSnapshot error:", error);
+          // Don't silently wipe notifications on error
         },
       );
 
