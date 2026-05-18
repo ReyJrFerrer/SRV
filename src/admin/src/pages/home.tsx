@@ -642,7 +642,7 @@ export const AdminHomePage: React.FC = () => {
 
               {/* Revenue per Day */}
               <div className="rounded-lg border border-gray-100 p-4">
-                <div className="mb-3 flex items-center justify-between">
+                <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h3 className="text-sm font-medium text-gray-800">
                     Revenue & Commission per Day
                   </h3>
