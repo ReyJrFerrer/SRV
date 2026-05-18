@@ -65,6 +65,9 @@ const notificationStore = {
   },
 };
 
+// Global event for cross-instance "mark as read" communication
+const MARK_AS_READ_EVENT = "mark-notification-read";
+
 // Global event for cross-instance "mark all as read" communication
 const MARK_ALL_AS_READ_EVENT = "mark-all-notifications-read";
 let lastMarkAllAsReadTime = 0;
@@ -208,6 +211,34 @@ export const useNotificationsWithPush = () => {
     window.addEventListener(MARK_ALL_AS_READ_EVENT, handler);
     return () => {
       window.removeEventListener(MARK_ALL_AS_READ_EVENT, handler);
+    };
+  }, []);
+
+  // Listen for global "mark as read" events for individual notifications
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { id: string } | undefined;
+      if (detail?.id) {
+        setNotifications((prev) => {
+          const newNotifications = prev.map((n) =>
+            n.id === detail.id ? { ...n, read: true } : n,
+          );
+          const newUnreadCount = newNotifications.filter((n) => !n.read).length;
+          const newFilteredUnreadCount = newNotifications.filter(
+            (n) =>
+              !n.read &&
+              n.type !== "chat_message" &&
+              n.type !== "provider_message",
+          ).length;
+          notificationStore.setCount(newUnreadCount);
+          notificationStore.setFilteredCount(newFilteredUnreadCount);
+          return newNotifications;
+        });
+      }
+    };
+    window.addEventListener(MARK_AS_READ_EVENT, handler);
+    return () => {
+      window.removeEventListener(MARK_AS_READ_EVENT, handler);
     };
   }, []);
 
@@ -356,8 +387,7 @@ export const useNotificationsWithPush = () => {
           (n) =>
             !n.read &&
             n.bookingId &&
-            (!detail?.bookingId ||
-              n.bookingId === detail.bookingId),
+            (!detail?.bookingId || n.bookingId === detail.bookingId),
         )
         .map((n) => n.id);
 
@@ -399,6 +429,11 @@ export const useNotificationsWithPush = () => {
 
   // Marks a single notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
+    // Broadcast immediately for optimistic cross-hook state sync
+    window.dispatchEvent(
+      new CustomEvent(MARK_AS_READ_EVENT, { detail: { id: notificationId } }),
+    );
+
     try {
       // Try to mark as read in canister first
       await notificationCanisterService.markAsRead(notificationId);

@@ -55,6 +55,9 @@ const providerNotificationStore = {
   },
 };
 
+// Global event for cross-instance "mark as read" communication
+const MARK_AS_READ_EVENT = "mark-notification-read";
+
 // Global event for cross-instance "mark all as read" communication
 const MARK_ALL_AS_READ_EVENT = "mark-all-notifications-read";
 let lastMarkAllAsReadTime = 0;
@@ -211,6 +214,31 @@ export const useProviderNotificationsWithPush = () => {
     };
   }, []);
 
+  // Listen for global "mark as read" events for individual notifications
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { id: string } | undefined;
+      if (detail?.id) {
+        setNotifications((prev) => {
+          const newNotifications = prev.map((n) =>
+            n.id === detail.id ? { ...n, read: true } : n,
+          );
+          const newUnreadCount = newNotifications.filter((n) => !n.read).length;
+          const newFilteredUnreadCount = newNotifications.filter(
+            (n) => !n.read && n.type !== "chat_message",
+          ).length;
+          providerNotificationStore.setCount(newUnreadCount);
+          providerNotificationStore.setFilteredCount(newFilteredUnreadCount);
+          return newNotifications;
+        });
+      }
+    };
+    window.addEventListener(MARK_AS_READ_EVENT, handler);
+    return () => {
+      window.removeEventListener(MARK_AS_READ_EVENT, handler);
+    };
+  }, []);
+
   // Generate provider-specific notifications based on bookings
   const fetchProviderNotifications = useCallback(async () => {
     setLoading(true);
@@ -351,11 +379,10 @@ export const useProviderNotificationsWithPush = () => {
           (n) =>
             !n.read &&
             n.bookingId &&
-            (!detail?.bookingId ||
-              n.bookingId === detail.bookingId),
+            (!detail?.bookingId || n.bookingId === detail.bookingId),
         )
         .map((n) => n.id);
-        // Fallback: if we couldn't find a matching notification for the provided bookingId,
+      // Fallback: if we couldn't find a matching notification for the provided bookingId,
       // mark the most recent unread new_booking_request notification so the badge decrements.
       if (targetIds.length === 0) {
         const fallback = notifications.find(
@@ -398,6 +425,11 @@ export const useProviderNotificationsWithPush = () => {
 
   // Marks a single notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
+    // Broadcast immediately for optimistic cross-hook state sync
+    window.dispatchEvent(
+      new CustomEvent(MARK_AS_READ_EVENT, { detail: { id: notificationId } }),
+    );
+
     try {
       // Try to mark as read in canister first
       await notificationCanisterService.markAsRead(notificationId);

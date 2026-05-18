@@ -835,7 +835,7 @@ function createSharedBookingListener(
     q,
     (snapshot: any) => {
       if (snapshot.metadata?.fromCache && snapshot.empty) {
-        console.log("Ignoring empty cache snapshot for bookings");
+        
         return;
       }
       const bookings: Booking[] = [];
@@ -845,10 +845,7 @@ function createSharedBookingListener(
       });
       notifyAll(bookings);
     },
-    (error) => {
-      console.error("Firestore onSnapshot error for bookings:", error);
-      // Don't silently wipe bookings on error
-    },
+    
   );
 
   sharedBookingListeners.set(listenerId, {
