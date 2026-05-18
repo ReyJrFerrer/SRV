@@ -18,11 +18,23 @@ const ReceiptPage: React.FC = () => {
   // Prevent navigating back to completion/active pages once on receipt
   useNoBackNavigation("/provider/bookings");
 
-  // Payment details from query params
-  const serviceTotal = parseFloat(searchParams.get("price") || "0");
-  const amountPaid = parseFloat(searchParams.get("paid") || "0");
-  const changeGiven = parseFloat(searchParams.get("change") || "0");
-  const paymentMethod = searchParams.get("method") || "N/A";
+  const { checkCommissionValidation } = useProviderBookingManagement();
+
+
+  const { booking, isLoading: isLoadingBooking } =
+    useCachedProviderBooking(bookingId);
+
+  const urlPrice = parseFloat(searchParams.get("price") || "0");
+  const urlPaid = parseFloat(searchParams.get("paid") || "0");
+  const urlChange = parseFloat(searchParams.get("change") || "0");
+  const urlMethod = searchParams.get("method") || "N/A";
+
+  const serviceTotal = booking?.price ?? urlPrice;
+  const amountPaid = booking?.amountPaid ?? urlPaid;
+  const changeGiven = urlChange;
+  const paymentMethod = booking?.paymentMethod 
+    ? (booking.paymentMethod === "CashOnHand" ? "Cash" : booking.paymentMethod)
+    : urlMethod;
 
   // Commission validation state
   const [commissionValidation, setCommissionValidation] = useState<{
@@ -30,12 +42,6 @@ const ReceiptPage: React.FC = () => {
   }>({
     estimatedCommission: 0,
   });
-
-  const { checkCommissionValidation } = useProviderBookingManagement();
-
-  // Use cached booking hook - fetches once, shares across all pages
-  const { booking, isLoading: isLoadingBooking } =
-    useCachedProviderBooking(bookingId);
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
@@ -53,11 +59,14 @@ const ReceiptPage: React.FC = () => {
       return;
     }
 
-    if (booking.status !== "Completed") {
+    // If the booking is not completed, but we have payment details in the URL,
+    // it means we just completed it and the local cache might be slightly stale.
+    // Allow it to stay on the page.
+    if (booking.status !== "Completed" && !searchParams.has("paid")) {
       navigate("/provider/bookings", { replace: true });
       return;
     }
-  }, [booking, isLoadingBooking, bookingId, navigate]);
+  }, [booking, isLoadingBooking, bookingId, navigate, searchParams]);
 
   // Helper function to format service time from nanoseconds to minutes
   const formatServiceTime = (serviceTimeNs?: number): string => {
