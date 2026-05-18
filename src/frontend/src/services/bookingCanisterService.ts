@@ -834,6 +834,10 @@ function createSharedBookingListener(
   const unsubscribe = onSnapshot(
     q,
     (snapshot: any) => {
+      if (snapshot.metadata?.fromCache && snapshot.empty) {
+        console.log("Ignoring empty cache snapshot for bookings");
+        return;
+      }
       const bookings: Booking[] = [];
       snapshot.forEach((doc: any) => {
         const data = { id: doc.id, ...doc.data() } as Booking;
@@ -841,8 +845,9 @@ function createSharedBookingListener(
       });
       notifyAll(bookings);
     },
-    () => {
-      notifyAll([]);
+    (error) => {
+      console.error("Firestore onSnapshot error for bookings:", error);
+      // Don't silently wipe bookings on error
     },
   );
 
