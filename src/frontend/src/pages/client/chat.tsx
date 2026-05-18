@@ -308,6 +308,7 @@ const ClientChatPage: React.FC = () => {
   const formatTimestamp = (dateStr?: string | Date) => {
     if (!dateStr) return "";
     const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+    if (isNaN(date.getTime())) return "";
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMinutes = diffMs / (1000 * 60);
@@ -325,6 +326,7 @@ const ClientChatPage: React.FC = () => {
   const formatDateTime = (dateStr?: string | Date) => {
     if (!dateStr) return "";
     const date = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+    if (isNaN(date.getTime())) return "";
     try {
       return date.toLocaleString(undefined, {
         dateStyle: "medium",
