@@ -12,9 +12,11 @@ export default function Index() {
             <Text style={styles.buttonText}>Client</Text>
           </Pressable>
         </Link>
-        <Pressable style={styles.button}>
-          <Text style={styles.buttonText}>Provider</Text>
-        </Pressable>
+        <Link href="/provider/home" asChild>
+          <Pressable style={styles.button}>
+            <Text style={styles.buttonText}>Provider</Text>
+          </Pressable>
+        </Link>
       </View>
     </View>
   );
