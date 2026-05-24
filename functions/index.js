@@ -53,37 +53,8 @@ const {
 
 // Import Service Management functions
 const {
-  createService,
-  getService,
-  archiveService,
-  restoreService,
-  permanentDeleteService,
+  serviceAction,
   processScheduledDeletions,
-  getServicesByProvider,
-  getServicesByCategory,
-  updateServiceStatus,
-  searchServicesByLocation,
-  updateService,
-  deleteService,
-  getAllServices,
-  uploadServiceImages,
-  removeServiceImage,
-  reorderServiceImages,
-  uploadServiceCertificates,
-  removeServiceCertificate,
-  verifyService,
-  getAllCategories,
-  initializeCategories,
-  createServicePackage,
-  getServicePackages,
-  getPackage,
-  updateServicePackage,
-  deleteServicePackage,
-  getCommissionQuote,
-  updateServiceRating,
-  setServiceAvailability,
-  getServiceAvailability,
-  getAvailableTimeSlots,
 } = require("./src/service");
 
 const {
@@ -209,37 +180,8 @@ exports.accountAction = accountAction;
 
 
 // Export Service Management functions
-exports.createService = createService;
-exports.getService = getService;
-exports.archiveService = archiveService;
-exports.restoreService = restoreService;
-exports.permanentDeleteService = permanentDeleteService;
+exports.serviceAction = serviceAction;
 exports.processScheduledDeletions = processScheduledDeletions;
-exports.getServicesByProvider = getServicesByProvider;
-exports.getServicesByCategory = getServicesByCategory;
-exports.updateServiceStatus = updateServiceStatus;
-exports.searchServicesByLocation = searchServicesByLocation;
-exports.updateService = updateService;
-exports.deleteService = deleteService;
-exports.getAllServices = getAllServices;
-exports.uploadServiceImages = uploadServiceImages;
-exports.removeServiceImage = removeServiceImage;
-exports.reorderServiceImages = reorderServiceImages;
-exports.uploadServiceCertificates = uploadServiceCertificates;
-exports.removeServiceCertificate = removeServiceCertificate;
-exports.verifyService = verifyService;
-exports.getAllCategories = getAllCategories;
-exports.initializeCategories = initializeCategories;
-exports.createServicePackage = createServicePackage;
-exports.getServicePackages = getServicePackages;
-exports.getPackage = getPackage;
-exports.updateServicePackage = updateServicePackage;
-exports.deleteServicePackage = deleteServicePackage;
-exports.getCommissionQuote = getCommissionQuote;
-exports.updateServiceRating = updateServiceRating;
-exports.setServiceAvailability = setServiceAvailability;
-exports.getServiceAvailability = getServiceAvailability;
-exports.getAvailableTimeSlots = getAvailableTimeSlots;
 
 // Export Booking Management Functions
 exports.createBooking = createBooking;

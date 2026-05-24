@@ -264,7 +264,7 @@ export const authCanisterService = {
 
       const result: any = await accountActionFn({
         action: "updateUserActiveStatus",
-        payload: {
+        data: {
           isActive: isActive,
         }
       });

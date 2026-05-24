@@ -171,8 +171,10 @@ export const serviceCanisterService = {
     }>,
   ): Promise<Service | null> {
     try {
-      const createServiceFn = httpsCallable(getFunctions(), "createService");
-      const result = await createServiceFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "createService",
+        data: {
         title,
         description,
         categoryId,
@@ -184,6 +186,7 @@ export const serviceCanisterService = {
         maxBookingsPerDay,
         serviceImages,
         serviceCertificates,
+      }
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -226,8 +229,11 @@ export const serviceCanisterService = {
    */
   async getService(serviceId: string): Promise<Service | null> {
     try {
-      const getServiceFn = httpsCallable(getFunctions(), "getService");
-      const result = await getServiceFn({ serviceId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getService",
+        data: { serviceId }
+      });
 
       const data = result.data as { success: boolean; service: any };
       if (!data.success || !data.service) return null;
@@ -273,11 +279,11 @@ export const serviceCanisterService = {
    */
   async getServicesByProvider(providerId: string): Promise<Service[]> {
     try {
-      const getServicesByProviderFn = httpsCallable(
-        getFunctions(),
-        "getServicesByProvider",
-      );
-      const result = await getServicesByProviderFn({ providerId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getServicesByProvider",
+        data: { providerId }
+      });
 
       const data = result.data as { success: boolean; services: Service[] };
       return data.success ? data.services : [];
@@ -316,11 +322,11 @@ export const serviceCanisterService = {
    */
   async getServicesByCategory(categoryId: string): Promise<Service[]> {
     try {
-      const getServicesByCategoryFn = httpsCallable(
-        getFunctions(),
-        "getServicesByCategory",
-      );
-      const result = await getServicesByCategoryFn({ categoryId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getServicesByCategory",
+        data: { categoryId }
+      });
 
       const data = result.data as { success: boolean; services: Service[] };
       return data.success ? data.services : [];
@@ -337,11 +343,11 @@ export const serviceCanisterService = {
     status: ServiceStatus,
   ): Promise<Service | null> {
     try {
-      const updateServiceStatusFn = httpsCallable(
-        getFunctions(),
-        "updateServiceStatus",
-      );
-      const result = await updateServiceStatusFn({ serviceId, status });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "updateServiceStatus",
+        data: { serviceId, status }
+      });
 
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
@@ -359,14 +365,14 @@ export const serviceCanisterService = {
     categoryId?: string,
   ): Promise<Service[]> {
     try {
-      const searchServicesByLocationFn = httpsCallable(
-        getFunctions(),
-        "searchServicesByLocation",
-      );
-      const result = await searchServicesByLocationFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "searchServicesByLocation",
+        data: {
         userLocation: location,
         maxDistance: radiusKm,
         categoryId,
+      }
       });
 
       const data = result.data as { success: boolean; services: Service[] };
@@ -392,8 +398,10 @@ export const serviceCanisterService = {
     maxBookingsPerDay?: number,
   ): Promise<Service | null> {
     try {
-      const updateServiceFn = httpsCallable(getFunctions(), "updateService");
-      const result = await updateServiceFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "updateService",
+        data: {
         serviceId,
         categoryId,
         title,
@@ -404,6 +412,7 @@ export const serviceCanisterService = {
         instantBookingEnabled,
         bookingNoticeHours,
         maxBookingsPerDay,
+      }
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -418,8 +427,11 @@ export const serviceCanisterService = {
    */
   async deleteService(serviceId: string): Promise<string | null> {
     try {
-      const deleteServiceFn = httpsCallable(getFunctions(), "deleteService");
-      const result = await deleteServiceFn({ serviceId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "deleteService",
+        data: { serviceId }
+      });
 
       const data = result.data as { success: boolean; message: string };
       return data.success ? data.message : null;
@@ -433,8 +445,11 @@ export const serviceCanisterService = {
    */
   async archiveService(serviceId: string): Promise<string | null> {
     try {
-      const archiveServiceFn = httpsCallable(getFunctions(), "archiveService");
-      const result = await archiveServiceFn({ serviceId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "archiveService",
+        data: { serviceId }
+      });
 
       const data = result.data as { success: boolean; message: string };
       return data.success ? data.message : null;
@@ -448,8 +463,11 @@ export const serviceCanisterService = {
    */
   async restoreService(serviceId: string): Promise<string | null> {
     try {
-      const restoreServiceFn = httpsCallable(getFunctions(), "restoreService");
-      const result = await restoreServiceFn({ serviceId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "restoreService",
+        data: { serviceId }
+      });
 
       const data = result.data as { success: boolean; message: string };
       return data.success ? data.message : null;
@@ -463,11 +481,11 @@ export const serviceCanisterService = {
    */
   async permanentDeleteService(serviceId: string): Promise<string | null> {
     try {
-      const permanentDeleteServiceFn = httpsCallable(
-        getFunctions(),
-        "permanentDeleteService",
-      );
-      const result = await permanentDeleteServiceFn({ serviceId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "permanentDeleteService",
+        data: { serviceId }
+      });
 
       const data = result.data as { success: boolean; message: string };
       return data.success ? data.message : null;
@@ -554,8 +572,11 @@ export const serviceCanisterService = {
    */
   async getAllServices(): Promise<Service[]> {
     try {
-      const getAllServicesFn = httpsCallable(getFunctions(), "getAllServices");
-      const result = await getAllServicesFn({});
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getAllServices",
+        data: {}
+      });
 
       const data = result.data as { success: boolean; services: Service[] };
       return data.success ? data.services : [];
@@ -576,11 +597,11 @@ export const serviceCanisterService = {
     }>,
   ): Promise<Service | null> {
     try {
-      const uploadServiceImagesFn = httpsCallable(
-        getFunctions(),
-        "uploadServiceImages",
-      );
-      const result = await uploadServiceImagesFn({ serviceId, serviceImages });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "uploadServiceImages",
+        data: { serviceId, serviceImages }
+      });
 
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
@@ -597,11 +618,11 @@ export const serviceCanisterService = {
     imageUrl: string,
   ): Promise<Service | null> {
     try {
-      const removeServiceImageFn = httpsCallable(
-        getFunctions(),
-        "removeServiceImage",
-      );
-      const result = await removeServiceImageFn({ serviceId, imageUrl });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "removeServiceImage",
+        data: { serviceId, imageUrl }
+      });
 
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
@@ -618,13 +639,13 @@ export const serviceCanisterService = {
     orderedImageUrls: string[],
   ): Promise<Service | null> {
     try {
-      const reorderServiceImagesFn = httpsCallable(
-        getFunctions(),
-        "reorderServiceImages",
-      );
-      const result = await reorderServiceImagesFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "reorderServiceImages",
+        data: {
         serviceId,
         orderedImageUrls,
+      }
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -646,13 +667,13 @@ export const serviceCanisterService = {
     }>,
   ): Promise<Service | null> {
     try {
-      const uploadServiceCertificatesFn = httpsCallable(
-        getFunctions(),
-        "uploadServiceCertificates",
-      );
-      const result = await uploadServiceCertificatesFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "uploadServiceCertificates",
+        data: {
         serviceId,
         serviceCertificates,
+      }
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -670,13 +691,13 @@ export const serviceCanisterService = {
     certificateUrl: string,
   ): Promise<Service | null> {
     try {
-      const removeServiceCertificateFn = httpsCallable(
-        getFunctions(),
-        "removeServiceCertificate",
-      );
-      const result = await removeServiceCertificateFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "removeServiceCertificate",
+        data: {
         serviceId,
         certificateUrl,
+      }
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -694,8 +715,11 @@ export const serviceCanisterService = {
     isVerified: boolean,
   ): Promise<Service | null> {
     try {
-      const verifyServiceFn = httpsCallable(getFunctions(), "verifyService");
-      const result = await verifyServiceFn({ serviceId, isVerified });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "verifyService",
+        data: { serviceId, isVerified }
+      });
 
       const data = result.data as { success: boolean; service: Service };
       return data.success ? data.service : null;
@@ -732,11 +756,11 @@ export const serviceCanisterService = {
    */
   async getAllCategories(): Promise<ServiceCategory[]> {
     try {
-      const getAllCategoriesFn = httpsCallable(
-        getFunctions(),
-        "getAllCategories",
-      );
-      const result = await getAllCategoriesFn({});
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getAllCategories",
+        data: {}
+      });
 
       const data = result.data as {
         success: boolean;
@@ -758,15 +782,15 @@ export const serviceCanisterService = {
     price: number,
   ): Promise<ServicePackage | null> {
     try {
-      const createServicePackageFn = httpsCallable(
-        getFunctions(),
-        "createServicePackage",
-      );
-      const result = await createServicePackageFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "createServicePackage",
+        data: {
         serviceId,
         title,
         description,
         price,
+      }
       });
 
       const data = result.data as {
@@ -809,11 +833,11 @@ export const serviceCanisterService = {
    */
   async getServicePackages(serviceId: string): Promise<ServicePackage[]> {
     try {
-      const getServicePackagesFn = httpsCallable(
-        getFunctions(),
-        "getServicePackages",
-      );
-      const result = await getServicePackagesFn({ serviceId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getServicePackages",
+        data: { serviceId }
+      });
 
       const data = result.data as {
         success: boolean;
@@ -830,8 +854,11 @@ export const serviceCanisterService = {
    */
   async getPackage(packageId: string): Promise<ServicePackage | null> {
     try {
-      const getPackageFn = httpsCallable(getFunctions(), "getPackage");
-      const result = await getPackageFn({ packageId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getPackage",
+        data: { packageId }
+      });
 
       const data = result.data as {
         success: boolean;
@@ -853,15 +880,15 @@ export const serviceCanisterService = {
     price?: number,
   ): Promise<ServicePackage | null> {
     try {
-      const updateServicePackageFn = httpsCallable(
-        getFunctions(),
-        "updateServicePackage",
-      );
-      const result = await updateServicePackageFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "updateServicePackage",
+        data: {
         packageId,
         title,
         description,
         price,
+      }
       });
 
       const data = result.data as {
@@ -879,11 +906,11 @@ export const serviceCanisterService = {
    */
   async deleteServicePackage(packageId: string): Promise<string | null> {
     try {
-      const deleteServicePackageFn = httpsCallable(
-        getFunctions(),
-        "deleteServicePackage",
-      );
-      const result = await deleteServicePackageFn({ packageId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "deleteServicePackage",
+        data: { packageId }
+      });
 
       const data = result.data as { success: boolean; message: string };
       return data.success ? data.message : null;
@@ -900,11 +927,11 @@ export const serviceCanisterService = {
     price: number,
   ): Promise<CommissionQuote | null> {
     try {
-      const getCommissionQuoteFn = httpsCallable(
-        getFunctions(),
-        "getCommissionQuote",
-      );
-      const result = await getCommissionQuoteFn({ categoryName, price });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getCommissionQuote",
+        data: { categoryName, price }
+      });
 
       const data = result.data as CommissionQuote & { success: boolean };
       return data.success ? data : null;
@@ -922,14 +949,14 @@ export const serviceCanisterService = {
     newReviewCount: number,
   ): Promise<Service | null> {
     try {
-      const updateServiceRatingFn = httpsCallable(
-        getFunctions(),
-        "updateServiceRating",
-      );
-      const result = await updateServiceRatingFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "updateServiceRating",
+        data: {
         serviceId,
         newRating,
         newReviewCount,
+      }
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -950,16 +977,16 @@ export const serviceCanisterService = {
     maxBookingsPerDay: number,
   ): Promise<ProviderAvailability | null> {
     try {
-      const setServiceAvailabilityFn = httpsCallable(
-        getFunctions(),
-        "setServiceAvailability",
-      );
-      const result = await setServiceAvailabilityFn({
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "setServiceAvailability",
+        data: {
         serviceId,
         weeklySchedule,
         instantBookingEnabled,
         bookingNoticeHours,
         maxBookingsPerDay,
+      }
       });
 
       const data = result.data as {
@@ -979,11 +1006,11 @@ export const serviceCanisterService = {
     serviceId: string,
   ): Promise<ProviderAvailability | null> {
     try {
-      const getServiceAvailabilityFn = httpsCallable(
-        getFunctions(),
-        "getServiceAvailability",
-      );
-      const result = await getServiceAvailabilityFn({ serviceId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getServiceAvailability",
+        data: { serviceId }
+      });
 
       const data = result.data as {
         success: boolean;
@@ -1003,11 +1030,11 @@ export const serviceCanisterService = {
     date: number, // Unix timestamp in milliseconds
   ): Promise<AvailableSlot[]> {
     try {
-      const getAvailableTimeSlotsFn = httpsCallable(
-        getFunctions(),
-        "getAvailableTimeSlots",
-      );
-      const result = await getAvailableTimeSlotsFn({ serviceId, date });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getAvailableTimeSlots",
+        data: { serviceId, date }
+      });
 
       const data = result.data as {
         success: boolean;

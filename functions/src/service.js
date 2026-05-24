@@ -178,7 +178,7 @@ async function deleteImagesFromStorage(mediaItems) {
 /**
  * Create a new service listing
  */
-exports.createService = onCall(async (request) => {
+async function createService_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   console.log("createService called");
@@ -350,12 +350,11 @@ exports.createService = onCall(async (request) => {
     console.error("Error creating service:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get service by ID
  */
-exports.getService = onCall(async (request) => {
+async function getService_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -379,12 +378,11 @@ exports.getService = onCall(async (request) => {
     console.error("Error getting service:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get services by provider
  */
-exports.getServicesByProvider = onCall(async (request) => {
+async function getServicesByProvider_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -412,12 +410,11 @@ exports.getServicesByProvider = onCall(async (request) => {
     console.error("Error getting services by provider:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get services by category
  */
-exports.getServicesByCategory = onCall(async (request) => {
+async function getServicesByCategory_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -453,12 +450,11 @@ exports.getServicesByCategory = onCall(async (request) => {
     console.error("Error getting services by category:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Update service status
  */
-exports.updateServiceStatus = onCall(async (request) => {
+async function updateServiceStatus_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -514,12 +510,11 @@ exports.updateServiceStatus = onCall(async (request) => {
     console.error("Error updating service status:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Search services by location
  */
-exports.searchServicesByLocation = onCall(async (request) => {
+async function searchServicesByLocation_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -561,13 +556,11 @@ exports.searchServicesByLocation = onCall(async (request) => {
     console.error("Error searching services by location:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
-
+}
 /**
  * Update service
  */
-exports.updateService = onCall(async (request) => {
+async function updateService_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -752,12 +745,11 @@ exports.updateService = onCall(async (request) => {
     console.error("Error updating service:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Archive a service (soft delete)
  */
-const archiveService = onCall(async (request) => {
+async function archiveService_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -816,15 +808,14 @@ const archiveService = onCall(async (request) => {
     console.error("Error archiving service:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-exports.archiveService = archiveService;
-exports.deleteService = archiveService; // Backwards compatibility alias
+
 
 /**
  * Restore an archived service
  */
-exports.restoreService = onCall(async (request) => {
+async function restoreService_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -889,12 +880,11 @@ exports.restoreService = onCall(async (request) => {
     console.error("Error restoring service:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Permanently delete a service
  */
-exports.permanentDeleteService = onCall(async (request) => {
+async function permanentDeleteService_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1030,12 +1020,11 @@ exports.permanentDeleteService = onCall(async (request) => {
     console.error("Error deleting service:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get all services
  */
-exports.getAllServices = onCall(async (request) => {
+async function getAllServices_service(request) {
   const _data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   try {
@@ -1054,8 +1043,7 @@ exports.getAllServices = onCall(async (request) => {
     console.error("Error getting all services:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 // ============================================================================
 // SERVICE IMAGE MANAGEMENT FUNCTIONS
 // ============================================================================
@@ -1063,7 +1051,7 @@ exports.getAllServices = onCall(async (request) => {
 /**
  * Upload additional images to existing service
  */
-exports.uploadServiceImages = onCall(async (request) => {
+async function uploadServiceImages_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1136,12 +1124,11 @@ exports.uploadServiceImages = onCall(async (request) => {
     console.error("Error uploading service images:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Remove specific image from service
  */
-exports.removeServiceImage = onCall(async (request) => {
+async function removeServiceImage_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1213,12 +1200,11 @@ exports.removeServiceImage = onCall(async (request) => {
     console.error("Error removing service image:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Reorder service images
  */
-exports.reorderServiceImages = onCall(async (request) => {
+async function reorderServiceImages_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1282,8 +1268,7 @@ exports.reorderServiceImages = onCall(async (request) => {
     console.error("Error reordering service images:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 // ============================================================================
 // SERVICE CERTIFICATE MANAGEMENT FUNCTIONS
 // ============================================================================
@@ -1291,7 +1276,7 @@ exports.reorderServiceImages = onCall(async (request) => {
 /**
  * Upload additional certificates to existing service
  */
-exports.uploadServiceCertificates = onCall(async (request) => {
+async function uploadServiceCertificates_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1364,13 +1349,11 @@ exports.uploadServiceCertificates = onCall(async (request) => {
     console.error("Error uploading service certificates:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
-
+}
 /**
  * Remove specific certificate from service
  */
-exports.removeServiceCertificate = onCall(async (request) => {
+async function removeServiceCertificate_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1444,13 +1427,11 @@ exports.removeServiceCertificate = onCall(async (request) => {
     console.error("Error removing service certificate:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
-
+}
 /**
  * Verify service manually
  */
-exports.verifyService = onCall(async (request) => {
+async function verifyService_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1498,8 +1479,7 @@ exports.verifyService = onCall(async (request) => {
     console.error("Error verifying service:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 // ============================================================================
 // CATEGORY MANAGEMENT FUNCTIONS
 // ============================================================================
@@ -1507,7 +1487,7 @@ exports.verifyService = onCall(async (request) => {
 /**
  * Add a new category
  */
-exports.addCategory = onCall(async (request) => {
+async function addCategory_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1565,12 +1545,11 @@ exports.addCategory = onCall(async (request) => {
     console.error("Error adding category:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get all categories
  */
-exports.getAllCategories = onCall(async (request) => {
+async function getAllCategories_service(request) {
   const _data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   try {
@@ -1589,7 +1568,7 @@ exports.getAllCategories = onCall(async (request) => {
     console.error("Error getting all categories:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 /**
  * Initialize categories directly (for startup initialization)
  * This is a direct function that can be called without Firebase Functions context
@@ -1714,7 +1693,6 @@ async function initializeCategoriesDirectly() {
 }
 
 // Export the direct initialization function
-exports.initializeCategoriesDirectly = initializeCategoriesDirectly;
 
 // ============================================================================
 // SERVICE PACKAGE MANAGEMENT FUNCTIONS
@@ -1723,7 +1701,7 @@ exports.initializeCategoriesDirectly = initializeCategoriesDirectly;
 /**
  * Create a new service package
  */
-exports.createServicePackage = onCall(async (request) => {
+async function createServicePackage_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1811,12 +1789,11 @@ exports.createServicePackage = onCall(async (request) => {
     console.error("Error creating service package:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get all packages for a service
  */
-exports.getServicePackages = onCall(async (request) => {
+async function getServicePackages_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -1851,12 +1828,11 @@ exports.getServicePackages = onCall(async (request) => {
     console.error("Error getting service packages:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get a specific package by ID
  */
-exports.getPackage = onCall(async (request) => {
+async function getPackage_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -1881,12 +1857,11 @@ exports.getPackage = onCall(async (request) => {
     console.error("Error getting package:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Update a service package
  */
-exports.updateServicePackage = onCall(async (request) => {
+async function updateServicePackage_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -1961,12 +1936,11 @@ exports.updateServicePackage = onCall(async (request) => {
     console.error("Error updating service package:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Delete a service package
  */
-exports.deleteServicePackage = onCall(async (request) => {
+async function deleteServicePackage_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -2020,8 +1994,7 @@ exports.deleteServicePackage = onCall(async (request) => {
     console.error("Error deleting service package:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 // ============================================================================
 // COMMISSION FUNCTIONS
 // ============================================================================
@@ -2033,7 +2006,7 @@ exports.deleteServicePackage = onCall(async (request) => {
 /**
  * Update service rating (called by Review system)
  */
-exports.updateServiceRating = onCall(async (request) => {
+async function updateServiceRating_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -2066,8 +2039,7 @@ exports.updateServiceRating = onCall(async (request) => {
     console.error("Error updating service rating:", error);
     throw new HttpsError("internal", error.message);
   }
-});
-
+}
 // ============================================================================
 // AVAILABILITY MANAGEMENT FUNCTIONS
 // ============================================================================
@@ -2075,7 +2047,7 @@ exports.updateServiceRating = onCall(async (request) => {
 /**
  * Set service availability
  */
-exports.setServiceAvailability = onCall(async (request) => {
+async function setServiceAvailability_service(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Get authentication info
@@ -2169,13 +2141,11 @@ exports.setServiceAvailability = onCall(async (request) => {
     console.error("Error setting service availability:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
-
+}
 /**
  * Get service availability
  */
-exports.getServiceAvailability = onCall(async (request) => {
+async function getServiceAvailability_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -2226,9 +2196,7 @@ exports.getServiceAvailability = onCall(async (request) => {
     console.error("Error getting service availability:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
-
+}
 /**
  * Helper function to convert timestamp to day of week
  * @param {number} timestamp - Unix timestamp in milliseconds
@@ -2251,7 +2219,7 @@ function getDayOfWeekFromTimestamp(timestamp) {
 /**
  * Get available time slots for a specific date and service
  */
-exports.getAvailableTimeSlots = onCall(async (request) => {
+async function getAvailableTimeSlots_service(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -2318,9 +2286,7 @@ exports.getAvailableTimeSlots = onCall(async (request) => {
     console.error("Error getting available time slots:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
-
+}
 // ============================================================================
 // INTERNAL HELPER FUNCTIONS (for use by other Cloud Functions)
 // ============================================================================
@@ -2354,8 +2320,7 @@ async function getServiceInternal(serviceId) {
 }
 
 // Export internal functions for use by other modules
-exports.getAllServicesInternal = getAllServicesInternal;
-exports.getServiceInternal = getServiceInternal;
+
 
 /**
  * Scheduled job to permanently delete archived services past their deletion date
@@ -2460,4 +2425,92 @@ exports.processScheduledDeletions = onSchedule("0 0 * * *", async (event) => {
     console.error("Error in processScheduledDeletions:", error);
   }
 });
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
 
+exports.serviceAction = onCall(
+  {
+    memory: "256MiB",
+    concurrency: 80,
+    maxInstances: 50,
+  },
+  async (request) => {
+    const { action } = request.data || {};
+    
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+        case "createService":
+          return await createService_service(request);
+        case "getService":
+          return await getService_service(request);
+        case "getServicesByProvider":
+          return await getServicesByProvider_service(request);
+        case "getServicesByCategory":
+          return await getServicesByCategory_service(request);
+        case "updateServiceStatus":
+          return await updateServiceStatus_service(request);
+        case "searchServicesByLocation":
+          return await searchServicesByLocation_service(request);
+        case "updateService":
+          return await updateService_service(request);
+        case "archiveService":
+          return await archiveService_service(request);
+        case "restoreService":
+          return await restoreService_service(request);
+        case "permanentDeleteService":
+          return await permanentDeleteService_service(request);
+        case "getAllServices":
+          return await getAllServices_service(request);
+        case "uploadServiceImages":
+          return await uploadServiceImages_service(request);
+        case "removeServiceImage":
+          return await removeServiceImage_service(request);
+        case "reorderServiceImages":
+          return await reorderServiceImages_service(request);
+        case "uploadServiceCertificates":
+          return await uploadServiceCertificates_service(request);
+        case "removeServiceCertificate":
+          return await removeServiceCertificate_service(request);
+        case "verifyService":
+          return await verifyService_service(request);
+        case "addCategory":
+          return await addCategory_service(request);
+        case "getAllCategories":
+          return await getAllCategories_service(request);
+        case "createServicePackage":
+          return await createServicePackage_service(request);
+        case "getServicePackages":
+          return await getServicePackages_service(request);
+        case "getPackage":
+          return await getPackage_service(request);
+        case "updateServicePackage":
+          return await updateServicePackage_service(request);
+        case "deleteServicePackage":
+          return await deleteServicePackage_service(request);
+        case "updateServiceRating":
+          return await updateServiceRating_service(request);
+        case "setServiceAvailability":
+          return await setServiceAvailability_service(request);
+        case "getServiceAvailability":
+          return await getServiceAvailability_service(request);
+        case "getAvailableTimeSlots":
+          return await getAvailableTimeSlots_service(request);
+        case "deleteService":
+          return await archiveService_service(request);
+        default:
+          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
+  }
+);
