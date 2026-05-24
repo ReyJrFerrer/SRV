@@ -35,8 +35,8 @@ export async function fetchProvinces(): Promise<string[]> {
   if (provincesPromise) return provincesPromise;
 
   provincesPromise = (async () => {
-    const fn = httpsCallable(getFirebaseFunctions(), "getProvinces");
-    const result = await fn({});
+    const fn = httpsCallable(getFirebaseFunctions(), "phLocationsAction");
+    const result = await fn({ action: "getProvinces", payload: {} });
     const data = (result.data as any).data as string[];
     provincesCache = data;
     provincesPromise = null;
@@ -53,8 +53,8 @@ export async function fetchMunicipalities(province: string): Promise<string[]> {
   const cached = municipalityCache.get(province);
   if (cached) return cached;
 
-  const fn = httpsCallable(getFirebaseFunctions(), "getMunicipalities");
-  const result = await fn({ province });
+  const fn = httpsCallable(getFirebaseFunctions(), "phLocationsAction");
+  const result = await fn({ action: "getMunicipalities", payload: { province } });
   const data = (result.data as any).data as string[];
 
   municipalityCache.set(province, data);
@@ -72,8 +72,8 @@ export async function fetchBarangays(
   const cached = barangayCache.get(key);
   if (cached) return cached;
 
-  const fn = httpsCallable(getFirebaseFunctions(), "getBarangays");
-  const result = await fn({ province, municipality });
+  const fn = httpsCallable(getFirebaseFunctions(), "phLocationsAction");
+  const result = await fn({ action: "getBarangays", payload: { province, municipality } });
   const data = (result.data as any).data as string[];
 
   barangayCache.set(key, data);
@@ -91,9 +91,9 @@ export async function findProvinceByMunicipality(
 
   const fn = httpsCallable(
     getFirebaseFunctions(),
-    "findProvinceByMunicipality",
+    "phLocationsAction",
   );
-  const result = await fn({ municipality: municipalityName });
+  const result = await fn({ action: "findProvinceByMunicipality", payload: { municipality: municipalityName } });
   const data = (result.data as any).data as string | null;
 
   provinceByMuniCache.set(municipalityName, data);

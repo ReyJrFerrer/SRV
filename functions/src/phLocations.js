@@ -1,52 +1,39 @@
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
+/**
+ * PH Locations Cloud Functions
+ *
+ * This module handles all Philippine location data operations
+ * (provinces, municipalities, barangays).
+ * All data is loaded once per instance and served from memory.
+ */
+
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const {
-  getProvinces,
-  getMunicipalities,
-  getBarangays,
-  findProvinceByMunicipality,
+  getProvinces: getProvincesData,
+  getMunicipalities: getMunicipalitiesData,
+  getBarangays: getBarangaysData,
+  findProvinceByMunicipality: findProvinceByMunicipalityData,
 } = require("./phLocationData");
 
-/**
- * Get all province names.
- */
-exports.getProvinces = onCall(async (request) => {
-  try {
-    return {success: true, data: getProvinces()};
-  } catch (error) {
-    console.error("Error in getProvinces:", error);
-    throw new HttpsError("internal", error.message);
-  }
-});
+// ============================================================================
+// SERVICE LAYER FUNCTIONS (INTERNAL)
+// ============================================================================
 
-/**
- * Get municipality names for a given province.
- * @param {string} request.data.province
- */
-exports.getMunicipalities = onCall(async (request) => {
-  const data = request.data.data || request.data;
-  const {province} = data;
+async function getProvincesService() {
+  return getProvincesData();
+}
+
+async function getMunicipalitiesService(data) {
+  const { province } = data;
 
   if (!province) {
     throw new HttpsError("invalid-argument", "Province is required");
   }
 
-  try {
-    const result = getMunicipalities(province);
-    return {success: true, data: result};
-  } catch (error) {
-    console.error("Error in getMunicipalities:", error);
-    throw new HttpsError("internal", error.message);
-  }
-});
+  return getMunicipalitiesData(province);
+}
 
-/**
- * Get barangay names for a given province + municipality.
- * @param {string} request.data.province
- * @param {string} request.data.municipality
- */
-exports.getBarangays = onCall(async (request) => {
-  const data = request.data.data || request.data;
-  const {province, municipality} = data;
+async function getBarangaysService(data) {
+  const { province, municipality } = data;
 
   if (!province || !municipality) {
     throw new HttpsError(
@@ -55,32 +42,55 @@ exports.getBarangays = onCall(async (request) => {
     );
   }
 
-  try {
-    const result = getBarangays(province, municipality);
-    return {success: true, data: result};
-  } catch (error) {
-    console.error("Error in getBarangays:", error);
-    throw new HttpsError("internal", error.message);
-  }
-});
+  return getBarangaysData(province, municipality);
+}
 
-/**
- * Find which province contains a given municipality name.
- * @param {string} request.data.municipality
- */
-exports.findProvinceByMunicipality = onCall(async (request) => {
-  const data = request.data.data || request.data;
-  const {municipality} = data;
+async function findProvinceByMunicipalityService(data) {
+  const { municipality } = data;
 
   if (!municipality) {
     throw new HttpsError("invalid-argument", "Municipality name is required");
   }
 
-  try {
-    const result = findProvinceByMunicipality(municipality);
-    return {success: true, data: result};
-  } catch (error) {
-    console.error("Error in findProvinceByMunicipality:", error);
-    throw new HttpsError("internal", error.message);
+  return findProvinceByMunicipalityData(municipality);
+}
+
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.phLocationsAction = onCall(
+  {
+    memory: "256MiB",
+    concurrency: 80,
+    maxInstances: 50,
+  },
+  async (request) => {
+    const { action, payload } = request.data || {};
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+        case "getProvinces":
+          return { success: true, data: await getProvincesService() };
+        case "getMunicipalities":
+          return { success: true, data: await getMunicipalitiesService(payload) };
+        case "getBarangays":
+          return { success: true, data: await getBarangaysService(payload) };
+        case "findProvinceByMunicipality":
+          return { success: true, data: await findProvinceByMunicipalityService(payload) };
+        default:
+          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
   }
-});
+);

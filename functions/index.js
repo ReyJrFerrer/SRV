@@ -221,12 +221,6 @@ exports.batchAnalyzeReviews = batchAnalyzeReviews;
 
 // Export PH Location Functions
 const {
-  getProvinces,
-  getMunicipalities,
-  getBarangays,
-  findProvinceByMunicipality,
+  phLocationsAction,
 } = require("./src/phLocations");
-exports.getProvinces = getProvinces;
-exports.getMunicipalities = getMunicipalities;
-exports.getBarangays = getBarangays;
-exports.findProvinceByMunicipality = findProvinceByMunicipality;
+exports.phLocationsAction = phLocationsAction;
