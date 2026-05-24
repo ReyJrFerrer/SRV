@@ -93,13 +93,6 @@ const {
   notificationAction,
   cleanupExpiredNotifications,
   cleanupNotificationFrequency,
-  NOTIFICATION_TYPES,
-  USER_TYPES,
-  NOTIFICATION_STATUS,
-  generateNotificationHref,
-  isSpamming,
-  updateNotificationFrequency,
-  sendOneSignalNotification,
 } = require("./src/notification");
 
 // Import Media Management functions
@@ -162,13 +155,6 @@ exports.onMessageCreated = onMessageCreated;
 exports.notificationAction = notificationAction;
 exports.cleanupExpiredNotifications = cleanupExpiredNotifications;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
-exports.NOTIFICATION_TYPES = NOTIFICATION_TYPES;
-exports.USER_TYPES = USER_TYPES;
-exports.NOTIFICATION_STATUS = NOTIFICATION_STATUS;
-exports.generateNotificationHref = generateNotificationHref;
-exports.isSpamming = isSpamming;
-exports.updateNotificationFrequency = updateNotificationFrequency;
-exports.sendOneSignalNotification = sendOneSignalNotification;
 
 // Export Media Management Functions
 exports.uploadMedia = uploadMedia;
