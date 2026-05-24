@@ -1,10 +1,15 @@
-const functions = require("firebase-functions");
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const {onSchedule} = require("firebase-functions/v2/scheduler");
-const {admin, getFirestore} = require("../firebase-admin");
-const {FieldValue} = require("firebase-admin/firestore");
-const {deductReputationForCancellationInternal} = require("./reputation");
-const {
+/**
+ * Booking Management Cloud Functions
+ *
+ * This module handles all booking-related operations
+ * Consolidated into a single entrypoint following the Firebase optimization guidelines
+ */
+
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { admin, getFirestore } = require("../firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
+const { 
   NOTIFICATION_TYPES,
   USER_TYPES,
   NOTIFICATION_STATUS,
@@ -15,29 +20,21 @@ const {
 } = require("./notification");
 const {
   checkUserReputationInternal,
+  deductReputationForCancellationInternal,
 } = require("./reputation");
+
 const db = getFirestore();
 const rtdb = admin.database();
 
 // Constants for notification system
 const NOTIFICATION_EXPIRY_DAYS = 30;
 
-/**
- * Generate a unique report ID
- * @return {string} Unique report ID
- */
 function generateReportId() {
   const timestamp = Date.now();
   const random = Math.floor(Math.random() * 10000);
   return `report_${timestamp}_${random}`;
 }
 
-/**
- * Helper function to safely get user authentication info
- * @param {object} context - Firebase Functions context
- * @param {object} data - Request data
- * @return {object} User authentication info
- */
 function getAuthInfo(context, data) {
   const auth = context.auth || data.auth;
   return {
@@ -47,22 +44,12 @@ function getAuthInfo(context, data) {
   };
 }
 
-/**
- * Generate unique booking ID
- * @return {string} Unique booking ID
- */
 function generateBookingId() {
   const now = Date.now();
   const random = Math.floor(Math.random() * 10000);
   return `${now}-${random}`;
 }
 
-/**
- * Validate status transition
- * @param {string} currentStatus - Current booking status
- * @param {string} newStatus - New booking status
- * @return {boolean} True if valid transition
- */
 function isValidStatusTransition(currentStatus, newStatus) {
   const validTransitions = {
     "Requested": ["Accepted", "Declined", "Cancelled"],
@@ -73,19 +60,9 @@ function isValidStatusTransition(currentStatus, newStatus) {
     "Cancelled": [],
     "Disputed": [],
   };
-
   return validTransitions[currentStatus]?.includes(newStatus) || newStatus === "Disputed";
 }
 
-/**
- * Check for booking conflicts at the requested time
- * @param {string} serviceId - Service ID
- * @param {string} providerId - Provider ID
- * @param {string} requestedDateTime - Requested date/time ISO string (start time)
- * @param {string} scheduledDateTime - Scheduled date/time ISO string (end time)
- * @param {string} excludeBookingId - Booking ID to exclude from conflict check
- * @return {Promise<boolean>} True if conflict exists
- */
 async function checkBookingConflicts(
   serviceId,
   providerId,
@@ -94,14 +71,11 @@ async function checkBookingConflicts(
   excludeBookingId = null,
 ) {
   try {
-    // If scheduledDateTime is not provided, assume 1-hour slot for backward compatibility
     const newBookingStart = new Date(requestedDateTime);
     const newBookingEnd = scheduledDateTime ?
       new Date(scheduledDateTime) :
       new Date(newBookingStart.getTime() + 60 * 60 * 1000);
 
-    // Query for bookings on the same date to check for time range overlaps
-    // We check requestedDate to get bookings on the same day
     const dayStart = new Date(newBookingStart);
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(newBookingStart);
@@ -116,7 +90,6 @@ async function checkBookingConflicts(
 
     const existingBookings = await query.get();
 
-    // Check for time range overlap
     return existingBookings.docs.some((doc) => {
       if (excludeBookingId && doc.id === excludeBookingId) {
         return false;
@@ -126,22 +99,15 @@ async function checkBookingConflicts(
       const existingStart = new Date(booking.requestedDate);
       const existingEnd = new Date(booking.scheduledDate);
 
-      // Two bookings overlap if:
-      // new start < existing end AND new end > existing start
       const hasOverlap = newBookingStart < existingEnd && newBookingEnd > existingStart;
-
       return hasOverlap;
     });
   } catch (error) {
     console.error("Error checking booking conflicts:", error);
-    return false; // Default to no conflict if check fails
+    return false;
   }
 }
-/**
- * Check if service is active based on multiple possible field formats
- * @param {object} service - Service object
- * @return {boolean} True if service is active
- */
+
 function isServiceActive(service) {
   return service.isActive === true ||
     service.active === true ||
@@ -151,16 +117,6 @@ function isServiceActive(service) {
     service.active === "true";
 }
 
-/**
- * Create notification for users with advanced features
- * @param {string} targetUserId - Target user ID
- * @param {string} userType - User type (client/provider)
- * @param {string} notificationType - Notification type
- * @param {string} title - Notification title
- * @param {string} message - Notification message
- * @param {string} bookingId - Related booking ID
- * @param {object} metadata - Additional metadata
- */
 async function createNotification(
   targetUserId,
   userType,
@@ -171,7 +127,6 @@ async function createNotification(
   metadata = null,
 ) {
   try {
-    // Validation
     if (!targetUserId || !userType || !notificationType || !title || !message) {
       console.error("Error creating notification: Required parameters missing");
       return;
@@ -187,28 +142,23 @@ async function createNotification(
       return;
     }
 
-    // Check spam prevention
-    console.log("Checking notification spam prevention...");
     const spamming = await isSpamming(targetUserId, notificationType);
     if (spamming) {
       console.log("Notification spam prevention failed");
       return;
     }
 
-    // Generate notification ID and timestamps
     const now = new Date();
     const expiresAt = new Date(
       now.getTime() + NOTIFICATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
     );
 
-    // Generate href
     const href = generateNotificationHref(
       notificationType,
       userType,
       bookingId,
     );
 
-    // Create notification document
     const notificationRef = db.collection("notifications").doc();
     const notification = {
       id: notificationRef.id,
@@ -227,13 +177,9 @@ async function createNotification(
       expiresAt,
     };
 
-    // Store in Firestore
     await notificationRef.set(notification);
-
-    // Update notification frequency tracking
     await updateNotificationFrequency(targetUserId, notificationType);
 
-    // Send OneSignal push notification asynchronously (don't wait for it)
     sendOneSignalNotification(targetUserId, {
       ...notification,
       createdAt: now,
@@ -242,18 +188,9 @@ async function createNotification(
     });
   } catch (error) {
     console.error("Error creating notification:", error);
-    // Don't throw - notifications are not critical
   }
 }
 
-/**
- * Cancel conflicting bookings when a booking is requested
- * @param {string} acceptedBookingId - The booking ID that was accepted
- * @param {string} providerId - Provider ID
- * @param {string} requestedDate - Requested date/time ISO string (start time)
- * @param {string} scheduledDate - Scheduled date/time ISO string (end time)
- * @param {string} serviceId - Service ID
- */
 async function cancelConflictingBookings(
   acceptedBookingId,
   providerId,
@@ -266,13 +203,11 @@ async function cancelConflictingBookings(
     const acceptedStart = new Date(requestedDate);
     const acceptedEnd = new Date(scheduledDate);
 
-    // Query for bookings on the same date
     const dayStart = new Date(acceptedStart);
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(acceptedStart);
     dayEnd.setHours(23, 59, 59, 999);
 
-    // Find  "Requested" bookings for the service for this provider on the same day
     const conflictingBookingsQuery = await db.collection("bookings")
       .where("providerId", "==", providerId)
       .where("serviceId", "==", serviceId)
@@ -281,11 +216,9 @@ async function cancelConflictingBookings(
       .where("requestedDate", "<=", dayEnd.toISOString())
       .get();
 
-    // Fetch service details once for all notifications
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "this service";
 
-    // Fetch provider details for notification
     const providerDoc = await db.collection("users").doc(providerId).get();
     const providerName = providerDoc.exists ?
       providerDoc.data().name || "The provider" :
@@ -298,33 +231,25 @@ async function cancelConflictingBookings(
     conflictingBookingsQuery.forEach((doc) => {
       const conflictingBooking = doc.data();
 
-      // Don't cancel the booking that was just accepted
       if (conflictingBooking.id === acceptedBookingId) {
         return;
       }
 
-      // Check for time range overlap
       const conflictStart = new Date(conflictingBooking.requestedDate);
       const conflictEnd = new Date(conflictingBooking.scheduledDate);
 
-      // Two bookings overlap if:
-      // accepted start < conflict end AND accepted end > conflict start
       const hasOverlap = acceptedStart < conflictEnd && acceptedEnd > conflictStart;
 
       if (!hasOverlap) {
-        // No overlap, don't cancel this booking
         return;
       }
 
-
-      // Update booking status to Cancelled
       batch.update(doc.ref, {
         status: "Cancelled",
         updatedAt: new Date().toISOString(),
         cancellationReason: "auto_cancelled_not_chosen",
       });
 
-      // Send notification to the client
       const notificationMessage = `Your booking request for "${serviceName}" 
       was not selected by the provider for this time slot and has been automatically cancelled. 
       Please feel free to book another time.`;
@@ -356,17 +281,16 @@ async function cancelConflictingBookings(
     }
   } catch (error) {
     console.error("Error cancelling conflicting bookings:", error);
-    // Don't throw - this is a background operation
   }
 }
 
-/**
- * Create a new booking request
- */
-exports.createBooking = onCall(async (request) => {
+// ============================================================================
+// SERVICE LAYER FUNCTIONS (INTERNAL)
+// ============================================================================
+
+async function createBooking_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
   const {
     serviceId,
@@ -381,34 +305,26 @@ exports.createBooking = onCall(async (request) => {
     amountToPay,
     paymentMethod,
     paymentId,
-    locationDetection = "manual", // Default to manual if not provided
+    locationDetection = "manual",
   } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Validation (mirror Motoko validation logic)
   if (!serviceId || !providerId || !price || !location || !requestedDate ||
     !paymentMethod || !scheduledDate) {
     throw new HttpsError(
       "invalid-argument",
-      `Required parameters missing: serviceId,
-      providerId, price, location, requestedDate, paymentMethod`,
+      `Required parameters missing: serviceId, providerId, price, location, requestedDate, paymentMethod`,
     );
   }
 
   try {
-    // Check client's reputation
     const clientReputation = await checkUserReputationInternal(authInfo.uid);
     console.log("[createBooking] Reputation check result:", clientReputation);
     if (!clientReputation.success || !clientReputation.data) {
-      console.error("[createBooking] Failed to check client reputation:", clientReputation);
       throw new HttpsError(
         "failed-precondition",
         "Unable to verify client reputation. Please try again later.",
@@ -416,7 +332,6 @@ exports.createBooking = onCall(async (request) => {
     }
 
     if (clientReputation.data.trustScore <= 5) {
-      console.error("[createBooking] Client reputation too low:", clientReputation.data.trustScore);
       throw new HttpsError(
         "failed-precondition",
         `Your reputation score (${clientReputation.data.trustScore}) is too ` +
@@ -425,12 +340,8 @@ exports.createBooking = onCall(async (request) => {
       );
     }
 
-    // Check provider's reputation
-    console.log("[createBooking] Checking provider reputation...");
     const providerReputation = await checkUserReputationInternal(providerId);
-    console.log("[createBooking] Reputation check result:", providerReputation);
     if (!providerReputation.success || !providerReputation.data) {
-      console.error("[createBooking] Failed to check provider reputation:", providerReputation);
       throw new HttpsError(
         "failed-precondition",
         "Unable to verify provider reputation. Please try again later.",
@@ -438,8 +349,6 @@ exports.createBooking = onCall(async (request) => {
     }
 
     if (providerReputation.data.trustScore <= 5) {
-      console.error("[createBooking] Provider reputation too low:",
-        providerReputation.data.trustScore);
       throw new HttpsError(
         "failed-precondition",
         "This provider is currently not accepting new bookings due to " +
@@ -447,7 +356,6 @@ exports.createBooking = onCall(async (request) => {
       );
     }
 
-    // Validate service exists and belongs to provider
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
       throw new HttpsError("not-found", "Service not found");
@@ -456,24 +364,19 @@ exports.createBooking = onCall(async (request) => {
     const service = serviceDoc.data();
 
     if (service.providerId !== providerId) {
-      console.error("[createBooking] Service does not belong to the specified provider:",
-        service.providerId, providerId);
       throw new HttpsError(
         "permission-denied",
         "Service does not belong to the specified provider",
       );
     }
 
-    // Check if service is active
     if (!isServiceActive(service)) {
-      console.error("[createBooking] Service is not active:", service.id);
       throw new HttpsError(
         "failed-precondition",
         "Service is not available for booking",
       );
     }
 
-    // If packages are specified, validate they exist and belong to this service
     let finalPrice = price;
     let totalPackagePrice = 0;
 
@@ -481,22 +384,14 @@ exports.createBooking = onCall(async (request) => {
       for (const packageId of servicePackageIds) {
         const packageDoc = await db.collection("service_packages").doc(packageId).get();
         if (!packageDoc.exists) {
-          console.error("[createBooking] Package not found:", packageId);
-          const errorMsg =
-            `Package with ID ${packageId} not found in 'service_packages' collection.`;
-          throw new HttpsError("not-found", errorMsg);
+          throw new HttpsError("not-found", `Package with ID ${packageId} not found in 'service_packages' collection.`);
         }
 
         const packageData = packageDoc.data();
         if (packageData.serviceId !== serviceId) {
-          console.error("[createBooking] Package belongs to wrong service:",
-            packageId, packageData.serviceId, serviceId);
-          const errorMsg =
-            `Package ${packageId} belongs to service ${packageData.serviceId}, 
-           but booking is for service ${serviceId}.`;
           throw new HttpsError(
             "permission-denied",
-            errorMsg,
+            `Package ${packageId} belongs to service ${packageData.serviceId}, but booking is for service ${serviceId}.`,
           );
         }
 
@@ -508,7 +403,6 @@ exports.createBooking = onCall(async (request) => {
       }
     }
 
-    // Check for booking conflicts
     const hasConflict = await checkBookingConflicts(
       serviceId,
       providerId,
@@ -516,18 +410,15 @@ exports.createBooking = onCall(async (request) => {
       scheduledDate,
     );
     if (hasConflict) {
-      console.error("[createBooking] Booking conflict detected:", hasConflict);
-      const errorMsg = "The requested time conflicts with an existing booking.";
       throw new HttpsError(
         "failed-precondition",
-        errorMsg,
+        "The requested time conflicts with an existing booking.",
       );
     }
 
     const bookingId = generateBookingId();
     const now = new Date().toISOString();
 
-    // Normalize attachments (array of strings/URLs), enforce limit of 5
     let normalizedAttachments = [];
     try {
       if (Array.isArray(attachments)) {
@@ -543,7 +434,7 @@ exports.createBooking = onCall(async (request) => {
       id: bookingId,
       clientId: authInfo.uid,
       providerId,
-      providerName: null, // Will be populated by UI
+      providerName: null,
       serviceId,
       servicePackageIds,
       status: "Requested",
@@ -571,18 +462,14 @@ exports.createBooking = onCall(async (request) => {
       updatedAt: now,
     };
 
-    // Use Firestore transaction for atomic booking creation
     await db.runTransaction(async (transaction) => {
       transaction.set(db.collection("bookings").doc(bookingId), newBooking);
     });
 
-    // Fetch client details for notification (service details already fetched)
     const serviceName = service.title || "a service";
-
     const clientDoc = await db.collection("users").doc(authInfo.uid).get();
     const clientName = clientDoc.exists ? clientDoc.data().name || "A client" : "A client";
 
-    // Create notification for the provider about new booking request
     await createNotification(
       providerId,
       USER_TYPES.PROVIDER,
@@ -598,7 +485,7 @@ exports.createBooking = onCall(async (request) => {
       },
     );
 
-    return {success: true, data: newBooking};
+    return { success: true, data: newBooking };
   } catch (error) {
     console.error("Error in createBooking:", error);
     if (error instanceof HttpsError) {
@@ -606,63 +493,42 @@ exports.createBooking = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Accept a booking request (provider only)
- */
-exports.acceptBooking = onCall(async (request) => {
+async function acceptBooking_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId, scheduledDate} = payload;
+  const { bookingId, scheduledDate } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!bookingId || !scheduledDate) {
-    console.error("[acceptBooking] Required parameters missing:", bookingId, scheduledDate);
-    throw new HttpsError(
-      "invalid-argument",
-      "bookingId and scheduledDate are required",
-    );
+    throw new HttpsError("invalid-argument", "bookingId and scheduledDate are required");
   }
 
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      console.error("[acceptBooking] Booking not found:", bookingId);
       throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
 
-    // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[acceptBooking] Not authorized to update this booking:",
-        booking.providerId, authInfo.uid);
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to update this booking",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to update this booking");
     }
 
-    // Validate status transition
     if (!isValidStatusTransition(booking.status, "Accepted")) {
-      console.error("[acceptBooking] Invalid status transition:", booking.status, "to Accepted");
       throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to Accepted`,
       );
     }
 
-    // Check for scheduling conflicts
-    // Use the original requestedDate (start time) and new scheduledDate (end time)
     const hasConflict = await checkBookingConflicts(
       booking.serviceId,
       booking.providerId,
@@ -671,7 +537,6 @@ exports.acceptBooking = onCall(async (request) => {
       bookingId,
     );
     if (hasConflict) {
-      console.warn("[acceptBooking] Scheduling conflict detected:", hasConflict);
       throw new HttpsError(
         "failed-precondition",
         "The scheduled time conflicts with an existing booking",
@@ -685,7 +550,6 @@ exports.acceptBooking = onCall(async (request) => {
       updatedAt: new Date().toISOString(),
     };
 
-    // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "Accepted",
@@ -693,7 +557,7 @@ exports.acceptBooking = onCall(async (request) => {
         updatedAt: new Date().toISOString(),
       });
     });
-    // Cancel any conflicting bookings that weren't chosen
+
     await cancelConflictingBookings(
       bookingId,
       booking.providerId,
@@ -702,15 +566,12 @@ exports.acceptBooking = onCall(async (request) => {
       booking.serviceId,
     );
 
-    // Fetch service and provider details for notification
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
-      "the provider";
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
 
-    // Create notification for the client about booking acceptance
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
@@ -726,7 +587,7 @@ exports.acceptBooking = onCall(async (request) => {
       },
     );
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in acceptBooking:", error);
     if (error instanceof HttpsError) {
@@ -734,55 +595,35 @@ exports.acceptBooking = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Decline a booking request (provider only)
- */
-exports.declineBooking = onCall(async (request) => {
+async function declineBooking_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("[declineBooking] called");
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    console.error("[declineBooking] User not authenticated");
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!bookingId) {
-    console.error("[declineBooking] Required parameters missing:", bookingId);
-    throw new HttpsError(
-      "invalid-argument",
-      "bookingId is required",
-    );
+    throw new HttpsError("invalid-argument", "bookingId is required");
   }
 
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      console.error("[declineBooking] Booking not found:", bookingId);
       throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
 
-    // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[declineBooking] Not authorized to update this booking:",
-        booking.providerId, authInfo.uid);
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to update this booking",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to update this booking");
     }
 
-    // Validate status transition
     if (!isValidStatusTransition(booking.status, "Declined")) {
       throw new HttpsError(
         "failed-precondition",
@@ -796,22 +637,19 @@ exports.declineBooking = onCall(async (request) => {
       updatedAt: new Date().toISOString(),
     };
 
-    // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "Declined",
         updatedAt: new Date().toISOString(),
       });
     });
-    // Fetch service and provider details for notification
+
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
-      "the provider";
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
 
-    // Create notification for the client about booking decline
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
@@ -827,7 +665,7 @@ exports.declineBooking = onCall(async (request) => {
       },
     );
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in declineBooking:", error);
     if (error instanceof HttpsError) {
@@ -835,60 +673,41 @@ exports.declineBooking = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-
-exports.startNavigation = onCall(async (request) => {
+async function startNavigation_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("[startNavigation] called");
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    console.error("[startNavigation] User not authenticated");
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!bookingId) {
-    console.error("[startNavigation] Required parameters missing:", bookingId);
-    throw new HttpsError(
-      "invalid-argument",
-      "bookingId is required",
-    );
+    throw new HttpsError("invalid-argument", "bookingId is required");
   }
+
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      console.error("[startNavigation] Booking not found:", bookingId);
       throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
 
-    // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[startNavigation] Not authorized to update this booking:",
-        booking.providerId, authInfo.uid);
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to update this booking",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to update this booking");
     }
 
-    // Fetch service and provider details for notification
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
-      "the provider";
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
 
-    // Create notification for the client about service start
     const alreadyNotified = booking.navigationStartedNotified === true;
 
     if (!alreadyNotified) {
@@ -907,21 +726,15 @@ exports.startNavigation = onCall(async (request) => {
         },
       );
 
-      // Mark booking so we don't send this notification again in future
       try {
         await db.collection("bookings").doc(bookingId).update({
           navigationStartedNotified: true,
           navigationStartedNotifiedAt: FieldValue.serverTimestamp(),
         });
       } catch (err) {
-        console.warn(
-          "Failed to mark booking as navigationStartedNotified:",
-          bookingId,
-          err,
-        );
+        console.warn("Failed to mark booking as navigationStartedNotified:", bookingId, err);
       }
 
-      // Initialize RTDB location node for real-time tracking
       try {
         await rtdb.ref(`providerLocations/${bookingId}`).set({
           providerId: booking.providerId,
@@ -936,73 +749,48 @@ exports.startNavigation = onCall(async (request) => {
         });
         console.log("[startNavigation] RTDB location node initialized:", bookingId);
       } catch (rtdbErr) {
-        console.warn(
-          "[startNavigation] Failed to initialize RTDB location node:",
-          bookingId,
-          rtdbErr,
-        );
+        console.warn("[startNavigation] Failed to initialize RTDB location node:", bookingId, rtdbErr);
       }
     }
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
-    console.error("Error in startBooking:", error);
+    console.error("Error in startNavigation:", error);
     if (error instanceof HttpsError) {
       throw error;
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Start a booking (mark as in progress) - provider only
- */
-exports.startBooking = onCall(async (request) => {
+async function startBooking_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("[startBooking] called");
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    console.error("[startBooking] User not authenticated");
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!bookingId) {
-    console.error("[startBooking] Required parameters missing:", bookingId);
-    throw new HttpsError(
-      "invalid-argument",
-      "bookingId is required",
-    );
+    throw new HttpsError("invalid-argument", "bookingId is required");
   }
 
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      console.error("[startBooking] Booking not found:", bookingId);
       throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
 
-    // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[startBooking] Not authorized to update this booking:",
-        booking.providerId, authInfo.uid);
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to update this booking",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to update this booking");
     }
 
-    // Validate status transition
     if (!isValidStatusTransition(booking.status, "InProgress")) {
-      console.error("[startBooking] Invalid status transition:", booking.status, "to InProgress");
       throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to InProgress`,
@@ -1016,7 +804,6 @@ exports.startBooking = onCall(async (request) => {
       updatedAt: new Date().toISOString(),
     };
 
-    // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "InProgress",
@@ -1025,15 +812,12 @@ exports.startBooking = onCall(async (request) => {
       });
     });
 
-    // Fetch service and provider details for notification
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
-      "the provider";
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
 
-    // Create notification for the client about service start
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
@@ -1049,9 +833,9 @@ exports.startBooking = onCall(async (request) => {
       },
     );
 
-    // Create service completion reminder notification for the provider
     const clientDoc = await db.collection("users").doc(booking.clientId).get();
     const clientName = clientDoc.exists ? clientDoc.data().name || "your client" : "your client";
+
     await createNotification(
       booking.providerId,
       USER_TYPES.PROVIDER,
@@ -1068,15 +852,13 @@ exports.startBooking = onCall(async (request) => {
       },
     );
 
-    // Cleanup RTDB location node (provider has arrived)
     try {
       await rtdb.ref(`providerLocations/${bookingId}`).remove();
-      console.log("[startBooking] RTDB location node cleaned up:", bookingId);
     } catch (rtdbErr) {
       console.warn("[startBooking] Failed to cleanup RTDB location node:", bookingId, rtdbErr);
     }
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in startBooking:", error);
     if (error instanceof HttpsError) {
@@ -1084,57 +866,36 @@ exports.startBooking = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Complete a booking - provider only
- */
-exports.completeBooking = onCall(async (request) => {
+async function completeBooking_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("[completeBooking] called");
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId, amountPaid} = payload;
+  const { bookingId, amountPaid } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    console.error("[completeBooking] User not authenticated");
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!bookingId) {
-    console.error("[completeBooking] Required parameters missing:", bookingId);
-    throw new HttpsError(
-      "invalid-argument",
-      "bookingId is required",
-    );
+    throw new HttpsError("invalid-argument", "bookingId is required");
   }
 
   try {
     const bookingDoc = await db.collection("bookings").doc(bookingId).get();
     if (!bookingDoc.exists) {
-      console.error("[completeBooking] Booking not found:", bookingId);
       throw new HttpsError("not-found", "Booking not found");
     }
 
     const booking = bookingDoc.data();
 
-    // Validate provider authorization
     if (booking.providerId !== authInfo.uid) {
-      console.error("[completeBooking] Not authorized to update this booking:",
-        booking.providerId, authInfo.uid);
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to update this booking",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to update this booking");
     }
 
-    // Validate status transition
     if (!isValidStatusTransition(booking.status, "Completed")) {
-      console.error("[completeBooking] Invalid status transition:", booking.status, "to Completed");
       throw new HttpsError(
         "failed-precondition",
         `Invalid status transition from ${booking.status} to Completed`,
@@ -1150,25 +911,19 @@ exports.completeBooking = onCall(async (request) => {
       updatedAt: completedDate,
     };
 
-    // Update booking status
     await db.collection("bookings").doc(bookingId).update({
       status: "Completed",
       completedDate,
       amountPaid: amountPaid || booking.amountPaid,
       updatedAt: completedDate,
     });
-    // TODO: Handle digital payment release here
-    // This would integrate with the releaseHeldPayment Cloud Function
 
-    // Fetch service and provider details for notification
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" :
-      "the provider";
+    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
 
-    // Create notification for the client about booking completion
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
@@ -1184,8 +939,6 @@ exports.completeBooking = onCall(async (request) => {
       },
     );
 
-
-    // Create review reminder notification for client
     await createNotification(
       booking.clientId,
       USER_TYPES.CLIENT,
@@ -1202,9 +955,9 @@ exports.completeBooking = onCall(async (request) => {
       },
     );
 
-    // Create review reminder notification for provider
     const clientDoc = await db.collection("users").doc(booking.clientId).get();
     const clientName = clientDoc.exists ? clientDoc.data().name || "the client" : "the client";
+
     await createNotification(
       booking.providerId,
       USER_TYPES.PROVIDER,
@@ -1221,14 +974,13 @@ exports.completeBooking = onCall(async (request) => {
       },
     );
 
-    // Cleanup RTDB location node (if still exists)
     try {
       await rtdb.ref(`providerLocations/${bookingId}`).remove();
     } catch (rtdbErr) {
       // Ignore - node may already be deleted
     }
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in completeBooking:", error);
     if (error instanceof HttpsError) {
@@ -1236,37 +988,25 @@ exports.completeBooking = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Cancel a booking - client or provider
- */
-exports.cancelBooking = onCall(async (request) => {
+async function cancelBooking_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId, cancelReason} = payload;
+  const { bookingId, cancelReason } = payload;
 
   if (!cancelReason || typeof cancelReason !== "string" || cancelReason.trim() === "") {
-    throw new HttpsError(
-      "invalid-argument",
-      "A reason for cancellation is required",
-    );
+    throw new HttpsError("invalid-argument", "A reason for cancellation is required");
   }
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!bookingId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "bookingId is required",
-    );
+    throw new HttpsError("invalid-argument", "bookingId is required");
   }
 
   try {
@@ -1277,15 +1017,10 @@ exports.cancelBooking = onCall(async (request) => {
 
     const booking = bookingDoc.data();
 
-    // Validate user authorization (client or provider can cancel)
     if (booking.clientId !== authInfo.uid && booking.providerId !== authInfo.uid) {
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to update this booking",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to update this booking");
     }
 
-    // Validate status transition
     if (!isValidStatusTransition(booking.status, "Cancelled")) {
       throw new HttpsError(
         "failed-precondition",
@@ -1293,7 +1028,6 @@ exports.cancelBooking = onCall(async (request) => {
       );
     }
 
-    // Deduct reputation for cancelling Accepted or InProgress bookings (both clients and providers)
     const shouldDeductReputation = booking.status === "Accepted" ||
       booking.status === "InProgress" || booking.status === "Requested";
 
@@ -1301,10 +1035,10 @@ exports.cancelBooking = onCall(async (request) => {
       try {
         await deductReputationForCancellationInternal(authInfo.uid);
       } catch (error) {
-        // Don't fail the cancellation if reputation update fails, just log it
+        // Don't fail the cancellation if reputation update fails
       }
     }
-    // Determine the role of the canceller
+
     const cancellerRole = authInfo.uid === booking.clientId ? "Client" : "Provider";
     const updatedBooking = {
       ...booking,
@@ -1315,7 +1049,6 @@ exports.cancelBooking = onCall(async (request) => {
       updatedAt: new Date().toISOString(),
     };
 
-    // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "Cancelled",
@@ -1326,14 +1059,12 @@ exports.cancelBooking = onCall(async (request) => {
       });
     });
 
-    // Fetch service details and user names for notification
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "a service";
 
     const cancellerDoc = await db.collection("users").doc(authInfo.uid).get();
     const cancellerName = cancellerDoc.exists ? cancellerDoc.data().name || "A user" : "A user";
 
-    // Create notification for the other party about booking cancellation
     const targetUserId = authInfo.uid === booking.clientId ? booking.providerId : booking.clientId;
     const targetUserType = authInfo.uid === booking.clientId ?
       USER_TYPES.PROVIDER : USER_TYPES.CLIENT;
@@ -1343,8 +1074,7 @@ exports.cancelBooking = onCall(async (request) => {
       targetUserType,
       NOTIFICATION_TYPES.BOOKING_CANCELLED,
       "Booking Cancelled",
-      `${cancellerName} has cancelled the booking for "${serviceName}" 
-      Reason: ${cancelReason.trim()}`,
+      `${cancellerName} has cancelled the booking for "${serviceName}" Reason: ${cancelReason.trim()}`,
       bookingId,
       {
         serviceId: booking.serviceId,
@@ -1352,17 +1082,14 @@ exports.cancelBooking = onCall(async (request) => {
         cancelledBy: cancellerRole,
         cancelReason: cancelReason.trim(),
         senderName: cancellerName,
-        message: `${cancellerName} has cancelled the booking for "${serviceName} " 
-          Reason: ${cancelReason.trim()}`,
+        message: `${cancellerName} has cancelled the booking for "${serviceName}" Reason: ${cancelReason.trim()}`,
       },
     );
 
-    // Automatically create a ticket with cancellation category
     try {
       const userProfile = cancellerDoc.exists ? cancellerDoc.data() : null;
       const reportId = generateReportId();
 
-      // Create ticket description with structured data
       const ticketDescription = JSON.stringify({
         title: `Booking Cancellation - ${serviceName}`,
         description: `Cancelled Booking.\nCancellation Reason: ${cancelReason.trim()}`,
@@ -1386,20 +1113,18 @@ exports.cancelBooking = onCall(async (request) => {
         createdAt: new Date().toISOString(),
       };
 
-      // Save report to Firestore
       await db.collection("reports").doc(reportId).set(newReport);
     } catch (ticketError) {
-      // Don't fail the cancellation if ticket creation fails - just log it
+      // Don't fail the cancellation if ticket creation fails
     }
 
-    // Cleanup RTDB location node (if exists)
     try {
       await rtdb.ref(`providerLocations/${bookingId}`).remove();
     } catch (rtdbErr) {
       // Ignore - node may not exist
     }
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in cancelBooking:", error);
     if (error instanceof HttpsError) {
@@ -1407,30 +1132,21 @@ exports.cancelBooking = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get booking by ID
- */
-exports.getBooking = onCall(async (request) => {
+async function getBooking_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!bookingId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "bookingId is required",
-    );
+    throw new HttpsError("invalid-argument", "bookingId is required");
   }
 
   try {
@@ -1441,16 +1157,13 @@ exports.getBooking = onCall(async (request) => {
 
     const booking = bookingDoc.data();
 
-    // Validate user authorization (client, provider, or admin can view)
     if (booking.clientId !== authInfo.uid &&
       booking.providerId !== authInfo.uid &&
       !authInfo.isAdmin) {
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to view this booking",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to view this booking");
     }
-    return {success: true, data: booking};
+
+    return { success: true, data: booking };
   } catch (error) {
     console.error("Error in getBooking:", error);
     if (error instanceof HttpsError) {
@@ -1458,32 +1171,22 @@ exports.getBooking = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get bookings for a client
- */
-exports.getClientBookings = onCall(async (request) => {
+async function getClientBookings_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {clientId, limit = 50} = payload;
+  const { clientId, limit = 50 } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // User can only get their own bookings unless they're admin
   const targetClientId = clientId || authInfo.uid;
   if (targetClientId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Not authorized to view these bookings",
-    );
+    throw new HttpsError("permission-denied", "Not authorized to view these bookings");
   }
 
   try {
@@ -1494,37 +1197,27 @@ exports.getClientBookings = onCall(async (request) => {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return {success: true, data: bookings};
+    return { success: true, data: bookings };
   } catch (error) {
     console.error("Error in getClientBookings:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get bookings for a provider
- */
-exports.getProviderBookings = onCall(async (request) => {
+async function getProviderBookings_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {providerId, limit = 50} = payload;
+  const { providerId, limit = 50 } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // User can only get their own bookings unless they're admin
   const targetProviderId = providerId || authInfo.uid;
   if (targetProviderId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Not authorized to view these bookings",
-    );
+    throw new HttpsError("permission-denied", "Not authorized to view these bookings");
   }
 
   try {
@@ -1535,35 +1228,26 @@ exports.getProviderBookings = onCall(async (request) => {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return {success: true, data: bookings};
+    return { success: true, data: bookings };
   } catch (error) {
     console.error("Error in getProviderBookings:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get bookings by status
- */
-exports.getBookingsByStatus = onCall(async (request) => {
+async function getBookingsByStatus_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {status, limit = 50} = payload;
+  const { status, limit = 50 } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Admin access required",
-    );
+    throw new HttpsError("permission-denied", "Admin access required");
   }
 
   if (!status) {
-    throw new HttpsError(
-      "invalid-argument",
-      "status is required",
-    );
+    throw new HttpsError("invalid-argument", "status is required");
   }
 
   try {
@@ -1574,36 +1258,26 @@ exports.getBookingsByStatus = onCall(async (request) => {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return {success: true, data: bookings};
+    return { success: true, data: bookings };
   } catch (error) {
     console.error("Error in getBookingsByStatus:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-
-/**
- * Dispute a booking - client or provider
- */
-exports.disputeBooking = onCall(async (request) => {
+async function disputeBooking_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId} = payload;
+  const { bookingId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!bookingId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "bookingId is required",
-    );
+    throw new HttpsError("invalid-argument", "bookingId is required");
   }
 
   try {
@@ -1614,15 +1288,10 @@ exports.disputeBooking = onCall(async (request) => {
 
     const booking = bookingDoc.data();
 
-    // Validate user authorization (client or provider can dispute)
     if (booking.clientId !== authInfo.uid && booking.providerId !== authInfo.uid) {
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to dispute this booking",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to dispute this booking");
     }
 
-    // Validate status transition - can only dispute completed bookings or in-progress bookings
     if (!isValidStatusTransition(booking.status, "Disputed")) {
       throw new HttpsError(
         "failed-precondition",
@@ -1636,21 +1305,19 @@ exports.disputeBooking = onCall(async (request) => {
       updatedAt: new Date().toISOString(),
     };
 
-    // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         status: "Disputed",
         updatedAt: new Date().toISOString(),
       });
     });
-    // Fetch service details and user names for notification
+
     const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "a service";
 
     const disputerDoc = await db.collection("users").doc(authInfo.uid).get();
     const disputerName = disputerDoc.exists ? disputerDoc.data().name || "A user" : "A user";
 
-    // Create notification for the other party about booking dispute
     const targetUserId = authInfo.uid === booking.clientId ? booking.providerId : booking.clientId;
     const targetUserType = authInfo.uid === booking.clientId ?
       USER_TYPES.PROVIDER : USER_TYPES.CLIENT;
@@ -1662,10 +1329,10 @@ exports.disputeBooking = onCall(async (request) => {
       "Booking Disputed",
       `${disputerName} has disputed the booking for "${serviceName}"`,
       bookingId,
-      {serviceId: booking.serviceId, serviceName, disputedBy: authInfo.uid, disputerName},
+      { serviceId: booking.serviceId, serviceName, disputedBy: authInfo.uid, disputerName },
     );
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in disputeBooking:", error);
     if (error instanceof HttpsError) {
@@ -1673,34 +1340,24 @@ exports.disputeBooking = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Check if service is available for booking at specific date/time
- */
-exports.checkServiceAvailability = onCall(async (request) => {
+async function checkServiceAvailability_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {serviceId, requestedDateTime} = payload;
+  const { serviceId, requestedDateTime } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!serviceId || !requestedDateTime) {
-    throw new HttpsError(
-      "invalid-argument",
-      "serviceId and requestedDateTime are required",
-    );
+    throw new HttpsError("invalid-argument", "serviceId and requestedDateTime are required");
   }
 
   try {
-    // Get service to check if it exists and is active
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
       throw new HttpsError("not-found", "Service not found");
@@ -1708,44 +1365,35 @@ exports.checkServiceAvailability = onCall(async (request) => {
 
     const service = serviceDoc.data();
 
-    // Check if service is active - handle different possible field names/formats
     if (!isServiceActive(service)) {
-      return {success: true, data: {available: false, reason: "Service is not active"}};
+      return { success: true, data: { available: false, reason: "Service is not active" } };
     }
 
-    // Check for booking conflicts
     const hasConflict = await checkBookingConflicts(
       serviceId,
       service.providerId,
       requestedDateTime,
     );
-    console.log(`[checkServiceAvailability] Conflict check result: ${hasConflict}`);
 
     if (hasConflict) {
       return {
         success: true,
-        data: {available: false, reason: "Time slot conflicts with existing booking"},
+        data: { available: false, reason: "Time slot conflicts with existing booking" },
       };
     }
 
-    // Check service availability using its weeklySchedule
-
     if (service.weeklySchedule && service.weeklySchedule.length > 0) {
       const requestedDate = new Date(requestedDateTime);
-
-      // Convert UTC time to Philippine time (UTC+8) since service slots are in local time
-      const philippineOffset = 8 * 60; // 8 hours in minutes
+      const philippineOffset = 8 * 60;
       const localDate = new Date(requestedDate.getTime() + (philippineOffset * 60 * 1000));
-      const dayOfWeek = localDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const dayOfWeek = localDate.getDay();
       const requestedHour = localDate.getHours();
 
-      // Map day of week to day names
       const dayNames = [
         "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
       ];
       const requestedDayName = dayNames[dayOfWeek];
 
-      // Find the schedule for the requested day
       const daySchedule = service.weeklySchedule.find((schedule) =>
         schedule.day === requestedDayName,
       );
@@ -1753,11 +1401,10 @@ exports.checkServiceAvailability = onCall(async (request) => {
       if (!daySchedule || !daySchedule.availability?.isAvailable) {
         return {
           success: true,
-          data: {available: false, reason: `Service not available on ${requestedDayName}`},
+          data: { available: false, reason: `Service not available on ${requestedDayName}` },
         };
       }
 
-      // Check time slots - allow booking at any time within available slots
       if (daySchedule.availability.slots && daySchedule.availability.slots.length > 0) {
         daySchedule.availability.slots.some((slot) => {
           const startHour = parseInt(slot.startTime.split(":")[0]);
@@ -1765,7 +1412,6 @@ exports.checkServiceAvailability = onCall(async (request) => {
           const endHour = parseInt(slot.endTime.split(":")[0]);
           const endMinute = parseInt(slot.endTime.split(":")[1] || "0");
 
-          // Check if requested time is within the slot (no notice period restriction)
           const requestedMinute = localDate.getMinutes();
           const isInSlotRange = (requestedHour > startHour ||
             (requestedHour === startHour && requestedMinute >= startMinute)) &&
@@ -1777,7 +1423,7 @@ exports.checkServiceAvailability = onCall(async (request) => {
       }
     }
 
-    return {success: true, data: {available: true, reason: "Service is available"}};
+    return { success: true, data: { available: true, reason: "Service is available" } };
   } catch (error) {
     console.error("Error in checkServiceAvailability:", error);
     if (error instanceof HttpsError) {
@@ -1785,34 +1431,24 @@ exports.checkServiceAvailability = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get service's available time slots for a specific date
- */
-exports.getServiceAvailableSlots = onCall(async (request) => {
+async function getServiceAvailableSlots_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {serviceId, date} = payload;
+  const { serviceId, date } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!serviceId || !date) {
-    throw new HttpsError(
-      "invalid-argument",
-      "serviceId and date are required",
-    );
+    throw new HttpsError("invalid-argument", "serviceId and date are required");
   }
 
   try {
-    // Get service to check if it exists
     const serviceDoc = await db.collection("services").doc(serviceId).get();
     if (!serviceDoc.exists) {
       throw new HttpsError("not-found", "Service not found");
@@ -1820,14 +1456,12 @@ exports.getServiceAvailableSlots = onCall(async (request) => {
 
     const service = serviceDoc.data();
 
-    // Check if service is active first
     if (!isServiceActive(service)) {
-      return {success: true, data: []};
+      return { success: true, data: [] };
     }
 
-    // Get service availability from weeklySchedule
     if (!service.weeklySchedule || service.weeklySchedule.length === 0) {
-      return {success: true, data: []};
+      return { success: true, data: [] };
     }
 
     const requestedDate = new Date(date);
@@ -1837,17 +1471,15 @@ exports.getServiceAvailableSlots = onCall(async (request) => {
     ];
     const requestedDayName = dayNames[dayOfWeek];
 
-    // Find the schedule for the requested day
     const daySchedule = service.weeklySchedule.find((schedule) =>
       schedule.day === requestedDayName,
     );
 
     if (!daySchedule || !daySchedule.availability?.isAvailable ||
       !daySchedule.availability?.slots) {
-      return {success: true, data: []};
+      return { success: true, data: [] };
     }
 
-    // Get existing bookings for this service on this date
     const startOfDay = new Date(requestedDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(requestedDate);
@@ -1862,39 +1494,29 @@ exports.getServiceAvailableSlots = onCall(async (request) => {
 
     const existingBookings = bookingsQuery.docs.map((doc) => doc.data());
 
-    // Create available slots with conflict information
-
     const availableSlots = daySchedule.availability.slots.map((slot) => {
-      // Parse slot times
       const [slotStartHour, slotStartMinute] = slot.startTime.split(":").map(Number);
       const [slotEndHour, slotEndMinute] = slot.endTime.split(":").map(Number);
 
-      // Create Date objects for slot start and end times
       const slotStartTime = new Date(requestedDate);
       slotStartTime.setHours(slotStartHour, slotStartMinute, 0, 0);
 
       const slotEndTime = new Date(requestedDate);
       slotEndTime.setHours(slotEndHour, slotEndMinute, 0, 0);
 
-      // Check for conflicts with existing bookings using proper time range overlap
       const hasBookingConflict = existingBookings.some((booking) => {
         if (!booking.requestedDate || !booking.scheduledDate) return false;
 
         const bookingStart = new Date(booking.requestedDate);
         const bookingEnd = new Date(booking.scheduledDate);
 
-        // Two time ranges overlap if:
-        // slot start < booking end AND slot end > booking start
         const hasOverlap = slotStartTime < bookingEnd && slotEndTime > bookingStart;
-
         return hasOverlap;
       });
 
-      // Slot is available if no booking conflicts exist
       const isSlotAvailable = !hasBookingConflict;
       const conflictReason = hasBookingConflict ?
-        "Time slot conflicts with existing booking" :
-        null;
+        "Time slot conflicts with existing booking" : null;
 
       return {
         timeSlot: {
@@ -1906,7 +1528,7 @@ exports.getServiceAvailableSlots = onCall(async (request) => {
       };
     });
 
-    return {success: true, data: availableSlots};
+    return { success: true, data: availableSlots };
   } catch (error) {
     console.error("Error in getServiceAvailableSlots:", error);
     if (error instanceof HttpsError) {
@@ -1914,42 +1536,30 @@ exports.getServiceAvailableSlots = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get client analytics (spending, booking patterns)
- */
-exports.getClientAnalytics = onCall(async (request) => {
+async function getClientAnalytics_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {clientId, startDate, endDate} = payload;
+  const { clientId, startDate, endDate } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Security check: only allow clients to view their own analytics or admin
   const targetClientId = clientId || authInfo.uid;
   if (targetClientId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Not authorized to view these analytics",
-    );
+    throw new HttpsError("permission-denied", "Not authorized to view these analytics");
   }
 
   try {
     const now = new Date();
-    // Default to 30 days ago if no start date provided
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const actualStartDate = startDate ? new Date(startDate) : thirtyDaysAgo;
     const actualEndDate = endDate ? new Date(endDate) : now;
 
-    // Get user profile for member since date
     let memberSinceDate = now;
     try {
       const userDoc = await db.collection("users").doc(targetClientId).get();
@@ -1961,7 +1571,6 @@ exports.getClientAnalytics = onCall(async (request) => {
       console.log("Could not get user profile, using default member date");
     }
 
-    // Get all bookings for this client within the date range
     const bookingsQuery = await db.collection("bookings")
       .where("clientId", "==", targetClientId)
       .where("createdAt", ">=", actualStartDate.toISOString())
@@ -1970,19 +1579,14 @@ exports.getClientAnalytics = onCall(async (request) => {
 
     const clientBookings = bookingsQuery.docs.map((doc) => doc.data());
     const totalBookings = clientBookings.length;
-    console.log(`[getClientAnalytics] Found ${totalBookings} total bookings.`);
 
-    // Count completed bookings only
     const completedBookings = clientBookings.filter((booking) => booking.status === "Completed");
     const servicesCompleted = completedBookings.length;
 
-    // Calculate total spending from completed bookings only
     const totalSpent = completedBookings.reduce((sum, booking) => {
       return sum + (booking.amountPaid || booking.price || 0);
     }, 0);
-    console.log(`[getClientAnalytics] Total spent: ${totalSpent}.`);
 
-    // Create a breakdown of package bookings from completed bookings
     const packageCounts = {};
     completedBookings.forEach((booking) => {
       if (booking.servicePackageIds && booking.servicePackageIds.length > 0) {
@@ -2014,46 +1618,30 @@ exports.getClientAnalytics = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get provider analytics (admin function)
- * Returns comprehensive analytics for a provider including earnings, jobs, completion rate
- * Matches the logic from booking.mo getProviderAnalytics
- */
-exports.getProviderAnalytics = onCall(async (request) => {
+async function getProviderAnalytics_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {providerId, startDate, endDate} = payload;
+  const { providerId, startDate, endDate } = payload;
 
-  // Authentication - Admin only
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Only ADMIN users can get provider analytics",
-    );
+    throw new HttpsError("permission-denied", "Only ADMIN users can get provider analytics");
   }
 
   if (!providerId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Provider ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Provider ID is required");
   }
 
   try {
-    // Parse date range
     const now = new Date();
-    const actualStartDate = startDate ? new Date(startDate) : new Date(0); // Beginning of time
-    const actualEndDate = endDate ? new Date(endDate) : now; // Current time
+    const actualStartDate = startDate ? new Date(startDate) : new Date(0);
+    const actualEndDate = endDate ? new Date(endDate) : now;
 
-    // Get all bookings for this provider within the date range
-    let query = db.collection("bookings")
-      .where("providerId", "==", providerId);
+    let query = db.collection("bookings").where("providerId", "==", providerId);
 
-    // Apply date filtering
     if (startDate) {
       query = query.where("createdAt", ">=", actualStartDate.toISOString());
     }
@@ -2064,7 +1652,6 @@ exports.getProviderAnalytics = onCall(async (request) => {
     const providerBookingsSnapshot = await query.get();
     const providerBookings = providerBookingsSnapshot.docs.map((doc) => doc.data());
 
-    // Count total bookings
     const totalJobs = providerBookings.length;
 
     if (totalJobs === 0) {
@@ -2084,19 +1671,16 @@ exports.getProviderAnalytics = onCall(async (request) => {
       };
     }
 
-    // Count completed bookings
     const completedBookings = providerBookings.filter((booking) =>
       booking.status === "Completed",
     );
     const completedJobs = completedBookings.length;
 
-    // Count cancelled bookings (including declined)
     const cancelledBookings = providerBookings.filter((booking) =>
       booking.status === "Cancelled" || booking.status === "Declined",
     );
     const cancelledJobs = cancelledBookings.length;
 
-    // Count accepted bookings (used for completion rate calculation)
     const acceptedBookings = providerBookings.filter((booking) =>
       booking.status === "Accepted" ||
       booking.status === "InProgress" ||
@@ -2104,17 +1688,14 @@ exports.getProviderAnalytics = onCall(async (request) => {
     );
     const acceptedJobs = acceptedBookings.length;
 
-    // Calculate completion rate (completed / accepted * 100)
     const completionRate = acceptedJobs === 0 ?
       0.0 :
       (completedJobs * 100) / acceptedJobs;
 
-    // Calculate total earnings from completed bookings
     const totalEarnings = completedBookings.reduce((sum, booking) => {
       return sum + (booking.price || 0);
     }, 0);
 
-    // Create a breakdown of package bookings from completed bookings
     const packageCounts = {};
     for (const booking of completedBookings) {
       if (booking.servicePackageIds && Array.isArray(booking.servicePackageIds)) {
@@ -2124,10 +1705,8 @@ exports.getProviderAnalytics = onCall(async (request) => {
       }
     }
 
-    // Convert to array of tuples [packageId, count]
     const packageBreakdown = Object.entries(packageCounts);
 
-    // Return the analytics data
     return {
       success: true,
       data: {
@@ -2146,30 +1725,20 @@ exports.getProviderAnalytics = onCall(async (request) => {
     console.error("Error in getProviderAnalytics:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Release held payment when booking is completed
- * This function is called by authorized backend services to release payments
- */
-exports.releasePayment = onCall(async (request) => {
+async function releasePayment_booking(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {bookingId, paymentId, releasedAmount, commissionRetained, payoutId} = payload;
+  const { bookingId, paymentId, releasedAmount, commissionRetained, payoutId } = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Note: In production, this should verify the caller is an authorized backend service
-  // For now, we'll allow admin users or the provider to call this function
   if (!authInfo.isAdmin) {
-    // Additional security check could be implemented here
     console.log("Payment release called by:", authInfo.uid);
   }
 
@@ -2188,7 +1757,6 @@ exports.releasePayment = onCall(async (request) => {
 
     const booking = bookingDoc.data();
 
-    // Validate booking status - can only release payment for Completed bookings
     if (booking.status !== "Completed") {
       throw new HttpsError(
         "failed-precondition",
@@ -2196,7 +1764,6 @@ exports.releasePayment = onCall(async (request) => {
       );
     }
 
-    // Check if payment is already released
     if (booking.paymentReleased) {
       throw new HttpsError(
         "failed-precondition",
@@ -2204,7 +1771,6 @@ exports.releasePayment = onCall(async (request) => {
       );
     }
 
-    // Validate payment method - should only release digital payments
     if (booking.paymentMethod === "CashOnHand") {
       throw new HttpsError(
         "failed-precondition",
@@ -2214,7 +1780,6 @@ exports.releasePayment = onCall(async (request) => {
 
     const releaseDate = new Date().toISOString();
 
-    // Use Firestore transaction for atomic update
     await db.runTransaction(async (transaction) => {
       transaction.update(db.collection("bookings").doc(bookingId), {
         paymentStatus: "RELEASED",
@@ -2226,7 +1791,6 @@ exports.releasePayment = onCall(async (request) => {
         updatedAt: releaseDate,
       });
 
-      // Record payment release in audit trail
       transaction.set(db.collection("paymentAuditTrail").doc(), {
         bookingId,
         paymentId: paymentId || booking.paymentId,
@@ -2238,7 +1802,7 @@ exports.releasePayment = onCall(async (request) => {
         createdAt: releaseDate,
       });
     });
-    // Create notification for the provider about payment release
+
     await createNotification(
       booking.providerId,
       USER_TYPES.PROVIDER,
@@ -2246,7 +1810,7 @@ exports.releasePayment = onCall(async (request) => {
       "Payment Released",
       `Payment for booking ${bookingId} has been released`,
       bookingId,
-      {serviceId: booking.serviceId, releasedAmount, commissionRetained},
+      { serviceId: booking.serviceId, releasedAmount, commissionRetained },
     );
 
     const updatedBooking = {
@@ -2260,7 +1824,7 @@ exports.releasePayment = onCall(async (request) => {
       updatedAt: releaseDate,
     };
 
-    return {success: true, data: updatedBooking};
+    return { success: true, data: updatedBooking };
   } catch (error) {
     console.error("Error in releasePayment:", error);
     if (error instanceof HttpsError) {
@@ -2268,34 +1832,31 @@ exports.releasePayment = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Cancel bookings that have missed their time slot
- * Scheduled function that runs every minute (for debugging)
- */
+// ============================================================================
+// SCHEDULED FUNCTIONS (separate from action router)
+// ============================================================================
+
 exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
   console.log("[cancelMissedBookings] scheduled function running...");
   console.log(`[cancelMissedBookings] Current time: ${new Date().toISOString()}`);
 
   try {
-    const now = new Date(); // Current time
+    const now = new Date();
 
-
-    // Find all "Accepted" bookings whose scheduled date (end time) has passed
     const missedBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Accepted")
       .where("scheduledDate", "<=", now.toISOString())
       .get();
 
-    // Find all "Requested" bookings whose scheduled date (end time) has passed
     const expiredRequestedBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Requested")
       .where("scheduledDate", "<=", now.toISOString())
       .get();
 
     if (missedBookingsQuery.empty && expiredRequestedBookingsQuery.empty) {
-      return {success: true, count: 0};
+      return { success: true, count: 0 };
     }
 
     const batch = db.batch();
@@ -2304,12 +1865,9 @@ exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
     let cancelledAcceptedCount = 0;
     let cancelledRequestedCount = 0;
 
-    // Process each missed booking
     for (const doc of missedBookingsQuery.docs) {
       const booking = doc.data();
 
-
-      // Fetch service details for notification
       let serviceName = "your service";
       try {
         const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
@@ -2320,22 +1878,18 @@ exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
         console.error(`Error fetching service for booking ${booking.id}:`, error);
       }
 
-      // Deduct reputation for provider missing the time slot
       try {
         await deductReputationForCancellationInternal(booking.providerId);
       } catch (error) {
-        // Don't fail the cancellation if reputation update fails, just log it
+        // Don't fail the cancellation if reputation update fails
       }
 
-
-      // Update booking status to Cancelled
       batch.update(doc.ref, {
         status: "Cancelled",
         updatedAt: now.toISOString(),
         cancellationReason: "auto_cancelled_missed_slot",
       });
 
-      // Send notification to the client
       const notificationMessage = `Your booking for "${serviceName}" was automatically 
       cancelled because the provider did not start the service within the scheduled time. 
       Please feel free to book with another provider.`;
@@ -2358,7 +1912,6 @@ exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
         ),
       );
 
-      // Automatically create a ticket with cancellation category for scheduled auto-cancel
       try {
         const reportId = generateReportId();
         const ticketDescription = JSON.stringify({
@@ -2395,12 +1948,9 @@ exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
       cancelledAcceptedCount++;
     }
 
-    // Process each expired "Requested" booking
     for (const doc of expiredRequestedBookingsQuery.docs) {
       const booking = doc.data();
 
-
-      // Fetch service details for notification
       let serviceName = "your service";
       try {
         const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
@@ -2411,14 +1961,12 @@ exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
         console.error(`Error fetching service for booking ${booking.id}:`, error);
       }
 
-      // Update booking status to Cancelled
       batch.update(doc.ref, {
         status: "Cancelled",
         updatedAt: now.toISOString(),
         cancellationReason: "auto_cancelled_request_expired",
       });
 
-      // Send notification to the client
       const notificationMessage = `Your booking request for "${serviceName}" has expired ` +
         `as the provider did not respond in time. 
         Please feel free to book another time or provider.`;
@@ -2427,7 +1975,7 @@ exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
         createNotification(
           booking.clientId,
           USER_TYPES.CLIENT,
-          NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN, // Re-using this type
+          NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN,
           "Booking Request Expired",
           notificationMessage,
           booking.id,
@@ -2466,23 +2014,15 @@ exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
   }
 });
 
-/**
- * Send service reminders for bookings that are due in 30 minutes
- * Scheduled function that runs every 10 minutes
- */
 exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
   console.log("[sendServiceReminders] scheduled function running...");
   console.log(`[sendServiceReminders] Current time: ${new Date().toISOString()}`);
 
   try {
     const now = new Date();
-    // Look for bookings that are 25-35 minutes away (to catch the 30-minute window)
     const reminderWindowStart = new Date(now.getTime() + 25 * 60 * 1000);
     const reminderWindowEnd = new Date(now.getTime() + 35 * 60 * 1000);
 
-
-    // Find all "Accepted" bookings within the 30-minute window that haven't had reminders sent
-    // Using requestedDate (start time) for the 30-minute reminder
     const upcomingBookingsQuery = await db.collection("bookings")
       .where("status", "==", "Accepted")
       .where("requestedDate", ">=", reminderWindowStart.toISOString())
@@ -2490,7 +2030,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       .get();
 
     if (upcomingBookingsQuery.empty) {
-      return {success: true, count: 0};
+      return { success: true, count: 0 };
     }
 
     const batch = db.batch();
@@ -2500,14 +2040,10 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
     for (const doc of upcomingBookingsQuery.docs) {
       const booking = doc.data();
 
-      // Skip if reminder already sent
       if (booking.reminderSent === true) {
         continue;
       }
-      console.log(`   Booking details: requestedDate=${booking.requestedDate}, ` +
-        `scheduledDate=${booking.scheduledDate}`);
 
-      // Get service name for better notification message
       let serviceName = "your service";
       try {
         const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
@@ -2518,17 +2054,14 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
         console.error(`Error fetching service name for ${booking.serviceId}:`, error);
       }
 
-      // Mark booking as reminder sent
       batch.update(doc.ref, {
         reminderSent: true,
         reminderSentAt: now.toISOString(),
       });
 
-      // Calculate exact minutes until booking starts (using requestedDate)
       const startTime = new Date(booking.requestedDate);
       const minutesUntil = Math.round((startTime.getTime() - now.getTime()) / (60 * 1000));
 
-      // Send reminder to the client
       const clientMessage = `Reminder: Your "${serviceName}" booking is scheduled to start ` +
         `in approximately ${minutesUntil} minutes. Please be ready!`;
       notificationPromises.push(
@@ -2550,7 +2083,6 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
         ),
       );
 
-      // Send reminder to the provider
       const providerMessage = `Reminder: You have a "${serviceName}" booking scheduled to ` +
         `start in approximately ${minutesUntil} minutes. Please prepare to start the service!`;
       notificationPromises.push(
@@ -2580,9 +2112,75 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       await Promise.allSettled(notificationPromises);
     }
 
-    return {success: true, count: reminderCount};
+    return { success: true, count: reminderCount };
   } catch (error) {
     console.error("Error sending service reminders:", error);
     throw error;
   }
 });
+
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.bookingAction = onCall(
+  {
+    memory: "256MiB",
+    concurrency: 80,
+    maxInstances: 50,
+  },
+  async (request) => {
+    const { action } = request.data || {};
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+        case "createBooking":
+          return await createBooking_booking(request);
+        case "acceptBooking":
+          return await acceptBooking_booking(request);
+        case "declineBooking":
+          return await declineBooking_booking(request);
+        case "startNavigation":
+          return await startNavigation_booking(request);
+        case "startBooking":
+          return await startBooking_booking(request);
+        case "completeBooking":
+          return await completeBooking_booking(request);
+        case "cancelBooking":
+          return await cancelBooking_booking(request);
+        case "getBooking":
+          return await getBooking_booking(request);
+        case "getClientBookings":
+          return await getClientBookings_booking(request);
+        case "getProviderBookings":
+          return await getProviderBookings_booking(request);
+        case "getBookingsByStatus":
+          return await getBookingsByStatus_booking(request);
+        case "disputeBooking":
+          return await disputeBooking_booking(request);
+        case "checkServiceAvailability":
+          return await checkServiceAvailability_booking(request);
+        case "getServiceAvailableSlots":
+          return await getServiceAvailableSlots_booking(request);
+        case "getClientAnalytics":
+          return await getClientAnalytics_booking(request);
+        case "getProviderAnalytics":
+          return await getProviderAnalytics_booking(request);
+        case "releasePayment":
+          return await releasePayment_booking(request);
+        default:
+          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
+  }
+);

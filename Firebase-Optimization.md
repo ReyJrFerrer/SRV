@@ -245,7 +245,7 @@ exports.adminUserAction = onRequest(
 
       const result = await routeAdminAction({
         action: req.body?.action,
-        payload: req.body,
+        data: req.body,
         db: dbConnection
       });
 

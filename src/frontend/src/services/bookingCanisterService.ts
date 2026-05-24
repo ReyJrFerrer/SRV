@@ -63,7 +63,6 @@ export interface ProviderAvailability {
   bookingNoticeHours: number;
   maxBookingsPerDay: number;
   weeklySchedule: Array<{ day: DayOfWeek; availability: DayAvailability }>;
-  // Note: vacationDates removed to match backend implementation
   createdAt: string;
   updatedAt: string;
 }
@@ -123,26 +122,25 @@ export interface Booking {
   clientId: Principal;
   providerId: Principal;
   serviceId: string;
-  servicePackageId: string[]; // Array of package IDs for multiple package bookings (frontend field name)
-  servicePackageIds?: string[]; // Backend field name (optional for compatibility)
+  servicePackageId: string[];
+  servicePackageIds?: string[];
   status: BookingStatus;
   requestedDate: string;
   scheduledDate: string;
-  startedDate?: string; // When service status changed to InProgress
+  startedDate?: string;
   completedDate?: string;
   price: number;
-  amountPaid?: number; // Total amount paid by client (cash received)
-  serviceTime?: number; // Duration in nanoseconds from started to completed
+  amountPaid?: number;
+  serviceTime?: number;
   location: Location;
   evidence?: Evidence;
   attachments?: string[];
   providerAttachments?: string[];
   notes?: string;
   paymentMethod: PaymentMethod;
-  paymentId?: string; // Reference to external payment (Xendit invoice ID)
+  paymentId?: string;
   createdAt: string;
   updatedAt: string;
-  // Additional UI fields
   serviceName?: string;
   serviceImage?: string;
   providerName?: string;
@@ -153,9 +151,6 @@ export interface Booking {
   serviceSlug?: string;
 }
 
-// Firebase booking data is already in the correct format, no conversion needed
-
-// Helper function to map backend field names to frontend interface
 const mapBookingFields = (booking: any): Booking => ({
   ...booking,
   servicePackageId: booking.servicePackageIds || booking.servicePackageId || [],
@@ -172,7 +167,7 @@ export const bookingCanisterService = {
     price: number,
     location: Location,
     requestedDate: Date,
-    scheduledDate: Date, // End time of the booking slot
+    scheduledDate: Date,
     servicePackageId: string,
     notes?: string,
     amountToPay?: number,
@@ -185,8 +180,8 @@ export const bookingCanisterService = {
       price,
       location,
       requestedDate,
-      scheduledDate, // Pass the end time
-      [servicePackageId], // Convert single package to array
+      scheduledDate,
+      [servicePackageId],
       notes,
       amountToPay,
       paymentMethod,
@@ -203,8 +198,8 @@ export const bookingCanisterService = {
     price: number,
     location: Location,
     requestedDate: Date,
-    scheduledDate: Date, // End time of the booking slot
-    servicePackageIds: string[] = [], // Array of package IDs for multiple package bookings
+    scheduledDate: Date,
+    servicePackageIds: string[] = [],
     notes?: string,
     amountToPay?: number,
     paymentMethod: PaymentMethod = "CashOnHand",
@@ -213,22 +208,25 @@ export const bookingCanisterService = {
     attachments?: string[],
   ): Promise<Booking | null> {
     try {
-      const createBookingFn = httpsCallable(getFunctions(), "createBooking");
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
-      const result = await createBookingFn({
-        serviceId,
-        providerId: providerId.toString(),
-        price,
-        location,
-        requestedDate: requestedDate.toISOString(),
-        scheduledDate: scheduledDate.toISOString(), // Send the end time to backend
-        servicePackageIds,
-        notes,
-        attachments,
-        amountToPay,
-        paymentMethod,
-        paymentId,
-        locationDetection,
+      const result = await bookingActionFn({
+        action: "createBooking",
+        data: {
+          serviceId,
+          providerId: providerId.toString(),
+          price,
+          location,
+          requestedDate: requestedDate.toISOString(),
+          scheduledDate: scheduledDate.toISOString(),
+          servicePackageIds,
+          notes,
+          attachments,
+          amountToPay,
+          paymentMethod,
+          paymentId,
+          locationDetection,
+        },
       });
 
       const responseData = (result.data as { success: boolean; data: Booking })
@@ -244,14 +242,16 @@ export const bookingCanisterService = {
    */
   async getBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const getBookingFn = httpsCallable(getFunctions(), "getBooking");
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
-      const result = await getBookingFn({ bookingId });
+      const result = await bookingActionFn({
+        action: "getBooking",
+        data: { bookingId },
+      });
       const responseData = (
         result.data as { success: boolean; data: Booking | null }
       ).data;
 
-      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       if (responseData) {
         return mapBookingFields(responseData);
       }
@@ -267,24 +267,24 @@ export const bookingCanisterService = {
    */
   async getClientBookings(clientId: string): Promise<Booking[]> {
     try {
-      const getClientBookingsFn = httpsCallable(
+      const bookingActionFn = httpsCallable(
         getFunctions(),
-        "getClientBookings",
+        "bookingAction",
       );
 
-      const result = await getClientBookingsFn({
-        clientId: clientId.toString(),
+      const result = await bookingActionFn({
+        action: "getClientBookings",
+        data: { clientId: clientId.toString() },
       });
       const responseData = (
         result.data as { success: boolean; data: Booking[] }
       ).data;
 
-      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
 
       return mappedBookings;
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
@@ -293,19 +293,19 @@ export const bookingCanisterService = {
    */
   async getProviderBookings(providerId: string): Promise<Booking[]> {
     try {
-      const getProviderBookingsFn = httpsCallable(
+      const bookingActionFn = httpsCallable(
         getFunctions(),
-        "getProviderBookings",
+        "bookingAction",
       );
 
-      const result = await getProviderBookingsFn({
-        providerId: providerId.toString(),
+      const result = await bookingActionFn({
+        action: "getProviderBookings",
+        data: { providerId: providerId.toString() },
       });
       const responseData = (
         result.data as { success: boolean; data: Booking[] }
       ).data;
 
-      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
 
       return mappedBookings;
@@ -319,21 +319,23 @@ export const bookingCanisterService = {
    */
   async getBookingsByStatus(status: BookingStatus): Promise<Booking[]> {
     try {
-      const getBookingsByStatusFn = httpsCallable(
+      const bookingActionFn = httpsCallable(
         getFunctions(),
-        "getBookingsByStatus",
+        "bookingAction",
       );
 
-      const result = await getBookingsByStatusFn({ status });
+      const result = await bookingActionFn({
+        action: "getBookingsByStatus",
+        data: { status },
+      });
       const responseData = (
         result.data as { success: boolean; data: Booking[] }
       ).data;
-      // Map servicePackageIds (from backend) to servicePackageId (frontend interface)
       const mappedBookings = (responseData || []).map(mapBookingFields);
 
       return mappedBookings;
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
@@ -345,11 +347,14 @@ export const bookingCanisterService = {
     scheduledDate: Date,
   ): Promise<Booking | null> {
     try {
-      const acceptBookingFn = httpsCallable(getFunctions(), "acceptBooking");
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
-      const result = await acceptBookingFn({
-        bookingId,
-        scheduledDate: scheduledDate.toISOString(),
+      const result = await bookingActionFn({
+        action: "acceptBooking",
+        data: {
+          bookingId,
+          scheduledDate: scheduledDate.toISOString(),
+        },
       });
 
       const responseData = (result.data as { success: boolean; data: Booking })
@@ -365,9 +370,12 @@ export const bookingCanisterService = {
    */
   async declineBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const declineBookingFn = httpsCallable(getFunctions(), "declineBooking");
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
-      const result = await declineBookingFn({ bookingId });
+      const result = await bookingActionFn({
+        action: "declineBooking",
+        data: { bookingId },
+      });
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
       return mapBookingFields(responseData);
@@ -378,23 +386,24 @@ export const bookingCanisterService = {
 
   /**
    * Cancel a booking
-   * @param bookingId The ID of the booking to cancel
-   * @param cancelReason The reason for cancellation (required)
    */
   async cancelBooking(
     bookingId: string,
     cancelReason: string,
   ): Promise<Booking | null> {
     try {
-      const cancelBookingFn = httpsCallable(getFunctions(), "cancelBooking");
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       if (!cancelReason || cancelReason.trim() === "") {
         throw new Error("A reason for cancellation is required");
       }
 
-      const result = await cancelBookingFn({
-        bookingId,
-        cancelReason: cancelReason.trim(),
+      const result = await bookingActionFn({
+        action: "cancelBooking",
+        data: {
+          bookingId,
+          cancelReason: cancelReason.trim(),
+        },
       });
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
@@ -409,9 +418,12 @@ export const bookingCanisterService = {
    */
   async startBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const startBookingFn = httpsCallable(getFunctions(), "startBooking");
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
-      const result = await startBookingFn({ bookingId });
+      const result = await bookingActionFn({
+        action: "startBooking",
+        data: { bookingId },
+      });
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
       return mapBookingFields(responseData);
@@ -425,12 +437,15 @@ export const bookingCanisterService = {
    */
   async startNavigation(bookingId: string): Promise<Booking | null> {
     try {
-      const startNavigationFn = httpsCallable(
+      const bookingActionFn = httpsCallable(
         getFunctions(),
-        "startNavigation",
+        "bookingAction",
       );
 
-      const result = await startNavigationFn({ bookingId });
+      const result = await bookingActionFn({
+        action: "startNavigation",
+        data: { bookingId },
+      });
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
       return mapBookingFields(responseData);
@@ -447,14 +462,17 @@ export const bookingCanisterService = {
     amountPaid?: number,
   ): Promise<Booking | null> {
     try {
-      const completeBookingFn = httpsCallable(
+      const bookingActionFn = httpsCallable(
         getFunctions(),
-        "completeBooking",
+        "bookingAction",
       );
 
-      const result = await completeBookingFn({
-        bookingId,
-        amountPaid,
+      const result = await bookingActionFn({
+        action: "completeBooking",
+        data: {
+          bookingId,
+          amountPaid,
+        },
       });
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
@@ -469,9 +487,12 @@ export const bookingCanisterService = {
    */
   async disputeBooking(bookingId: string): Promise<Booking | null> {
     try {
-      const disputeBookingFn = httpsCallable(getFunctions(), "disputeBooking");
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
-      const result = await disputeBookingFn({ bookingId });
+      const result = await bookingActionFn({
+        action: "disputeBooking",
+        data: { bookingId },
+      });
       const responseData = (result.data as { success: boolean; data: Booking })
         .data;
       return mapBookingFields(responseData);
@@ -479,8 +500,6 @@ export const bookingCanisterService = {
       throw new Error(`Failed to dispute booking: ${error}`);
     }
   },
-
-  // NEW SERVICE-BASED AVAILABILITY FUNCTIONS (RECOMMENDED)
 
   /**
    * Get service's available time slots for a specific date
@@ -490,14 +509,17 @@ export const bookingCanisterService = {
     date: Date,
   ): Promise<AvailableSlot[] | null> {
     try {
-      const getServiceAvailableSlotsFn = httpsCallable(
+      const bookingActionFn = httpsCallable(
         getFunctions(),
-        "getServiceAvailableSlots",
+        "bookingAction",
       );
 
-      const result = await getServiceAvailableSlotsFn({
-        serviceId,
-        date: date.toISOString(),
+      const result = await bookingActionFn({
+        action: "getServiceAvailableSlots",
+        data: {
+          serviceId,
+          date: date.toISOString(),
+        },
       });
 
       const responseData = (
@@ -518,14 +540,17 @@ export const bookingCanisterService = {
     requestedDateTime: Date,
   ): Promise<boolean | null> {
     try {
-      const checkServiceAvailabilityFn = httpsCallable(
+      const bookingActionFn = httpsCallable(
         getFunctions(),
-        "checkServiceAvailability",
+        "bookingAction",
       );
 
-      const result = await checkServiceAvailabilityFn({
-        serviceId,
-        requestedDateTime: requestedDateTime.toISOString(),
+      const result = await bookingActionFn({
+        action: "checkServiceAvailability",
+        data: {
+          serviceId,
+          requestedDateTime: requestedDateTime.toISOString(),
+        },
       });
 
       const responseData = (
@@ -546,15 +571,18 @@ export const bookingCanisterService = {
     endDate?: Date,
   ): Promise<ClientAnalytics | null> {
     try {
-      const getClientAnalyticsFn = httpsCallable(
+      const bookingActionFn = httpsCallable(
         getFunctions(),
-        "getClientAnalytics",
+        "bookingAction",
       );
 
-      const result = await getClientAnalyticsFn({
-        clientId: clientId.toString(),
-        startDate: startDate?.toISOString(),
-        endDate: endDate?.toISOString(),
+      const result = await bookingActionFn({
+        action: "getClientAnalytics",
+        data: {
+          clientId: clientId.toString(),
+          startDate: startDate?.toISOString(),
+          endDate: endDate?.toISOString(),
+        },
       });
 
       const responseData = (
@@ -568,7 +596,6 @@ export const bookingCanisterService = {
 
   /**
    * Release held payment for a completed booking
-   * This function is called after the Firebase Cloud Function has processed the payment release
    */
   async releasePayment(
     bookingId: string,
@@ -578,14 +605,17 @@ export const bookingCanisterService = {
     payoutId?: string,
   ): Promise<Booking | null> {
     try {
-      const releasePaymentFn = httpsCallable(getFunctions(), "releasePayment");
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
-      const result = await releasePaymentFn({
-        bookingId,
-        paymentId,
-        releasedAmount,
-        commissionRetained,
-        payoutId,
+      const result = await bookingActionFn({
+        action: "releasePayment",
+        data: {
+          bookingId,
+          paymentId,
+          releasedAmount,
+          commissionRetained,
+          payoutId,
+        },
       });
 
       const responseData = (result.data as { success: boolean; data: Booking })
@@ -598,7 +628,6 @@ export const bookingCanisterService = {
 
   /**
    * Update provider service proof images
-   * Merges new attachment URLs into the existing providerAttachments array on the booking document
    */
   async updateProviderAttachments(
     bookingId: string,
@@ -617,32 +646,20 @@ export const bookingCanisterService = {
   },
 
   // Utility functions for working with multiple packages
-  /**
-   * Utility function to check if a booking has a specific package
-   */
   hasPackage(booking: Booking, packageId: string): boolean {
     return booking.servicePackageId.includes(packageId);
   },
 
-  /**
-   * Utility function to get the first package ID (for backwards compatibility)
-   */
   getFirstPackageId(booking: Booking): string | undefined {
     return booking.servicePackageId.length > 0
       ? booking.servicePackageId[0]
       : undefined;
   },
 
-  /**
-   * Utility function to check if a booking has multiple packages
-   */
   hasMultiplePackages(booking: Booking): boolean {
     return booking.servicePackageId.length > 1;
   },
 
-  /**
-   * Utility function to get all package IDs as a formatted string
-   */
   getPackageIdsDisplay(booking: Booking): string {
     if (booking.servicePackageId.length === 0) {
       return "No packages";
@@ -652,12 +669,6 @@ export const bookingCanisterService = {
 
   // ==================== REALTIME SUBSCRIPTION FUNCTIONS ====================
 
-  // Shared listeners cache to prevent Firebase Web SDK 'Unexpected state' crashes
-  // caused by rapid/overlapping exact same queries being initiated.
-
-  /**
-   * Subscribe to all bookings for a client with realtime updates
-   */
   subscribeToClientBookings(
     clientId: string,
     callback: (bookings: Booking[]) => void,
@@ -670,9 +681,6 @@ export const bookingCanisterService = {
     return createSharedBookingListener(listenerId, q, callback);
   },
 
-  /**
-   * Subscribe to all bookings for a provider with realtime updates
-   */
   subscribeToProviderBookings(
     providerId: string,
     callback: (bookings: Booking[]) => void,
@@ -685,9 +693,6 @@ export const bookingCanisterService = {
     return createSharedBookingListener(listenerId, q, callback);
   },
 
-  /**
-   * Subscribe to a single booking with realtime updates
-   */
   subscribeToBooking(
     bookingId: string,
     callback: (booking: Booking | null) => void,
@@ -753,7 +758,6 @@ export const bookingCanisterService = {
       if (l) {
         l.callbacks.delete(callback);
         if (l.callbacks.size === 0) {
-          // Delay actual unsubscription to prevent rapid mount/unmount issues in Firestore
           setTimeout(() => {
             const currentL = sharedBookingListeners.get(listenerId);
             if (currentL && currentL.callbacks.size === 0) {
@@ -766,9 +770,6 @@ export const bookingCanisterService = {
     };
   },
 
-  /**
-   * Subscribe to bookings by status with realtime updates
-   */
   subscribeToBookingsByStatus(
     status: BookingStatus,
     callback: (bookings: Booking[]) => void,
@@ -792,7 +793,6 @@ const sharedBookingListeners = new Map<
   }
 >();
 
-// Helper to create or reuse a listener that expects an array of Bookings
 function createSharedBookingListener(
   listenerId: string,
   q: any,
@@ -810,7 +810,6 @@ function createSharedBookingListener(
       if (l) {
         l.callbacks.delete(callback);
         if (l.callbacks.size === 0) {
-          // Delay actual unsubscription to prevent rapid mount/unmount issues in Firestore
           setTimeout(() => {
             const currentL = sharedBookingListeners.get(listenerId);
             if (currentL && currentL.callbacks.size === 0) {
@@ -835,7 +834,6 @@ function createSharedBookingListener(
     q,
     (snapshot: any) => {
       if (snapshot.metadata?.fromCache && snapshot.empty) {
-        
         return;
       }
       const bookings: Booking[] = [];
@@ -845,7 +843,6 @@ function createSharedBookingListener(
       });
       notifyAll(bookings);
     },
-    
   );
 
   sharedBookingListeners.set(listenerId, {
@@ -870,7 +867,5 @@ function createSharedBookingListener(
     }
   };
 }
-
-// Firebase functions don't require actor management or reset functionality
 
 export default bookingCanisterService;

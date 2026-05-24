@@ -57,24 +57,9 @@ const {
   processScheduledDeletions,
 } = require("./src/service");
 
+// Import Booking Management functions
 const {
-  createBooking,
-  acceptBooking,
-  declineBooking,
-  startBooking,
-  startNavigation,
-  completeBooking,
-  cancelBooking,
-  getBooking,
-  getClientBookings,
-  getProviderBookings,
-  getBookingsByStatus,
-  disputeBooking,
-  getServiceAvailableSlots,
-  checkServiceAvailability,
-  getClientAnalytics,
-  getProviderAnalytics,
-  releasePayment,
+  bookingAction,
   cancelMissedBookings,
   sendServiceReminders,
 } = require("./src/booking");
@@ -184,23 +169,7 @@ exports.serviceAction = serviceAction;
 exports.processScheduledDeletions = processScheduledDeletions;
 
 // Export Booking Management Functions
-exports.createBooking = createBooking;
-exports.acceptBooking = acceptBooking;
-exports.declineBooking = declineBooking;
-exports.startBooking = startBooking;
-exports.startNavigation = startNavigation;
-exports.completeBooking = completeBooking;
-exports.cancelBooking = cancelBooking;
-exports.getBooking = getBooking;
-exports.getClientBookings = getClientBookings;
-exports.getProviderBookings = getProviderBookings;
-exports.getBookingsByStatus = getBookingsByStatus;
-exports.disputeBooking = disputeBooking;
-exports.getServiceAvailableSlots = getServiceAvailableSlots;
-exports.checkServiceAvailability = checkServiceAvailability;
-exports.getClientAnalytics = getClientAnalytics;
-exports.getProviderAnalytics = getProviderAnalytics;
-exports.releasePayment = releasePayment;
+exports.bookingAction = bookingAction;
 
 // Export Scheduled Booking Functions (cron jobs)
 exports.cancelMissedBookings = cancelMissedBookings;
