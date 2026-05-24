@@ -14,9 +14,6 @@ setGlobalOptions({
   memory: "256MiB",
   region: "asia-southeast1",
 });
-// Import Identity Bridge function
-const {signInWithInternetIdentity} = require("./src/auth");
-
 // Import Reputation Bridge functions
 const {
   initializeReputation,
@@ -199,9 +196,6 @@ const {
   getCertificatesByValidationStatus,
 } = require("./src/media");
 
-
-// Export Identity Bridge function
-exports.signInWithInternetIdentity = signInWithInternetIdentity;
 
 // Export Reputation Bridge functions
 exports.initializeReputation = initializeReputation;

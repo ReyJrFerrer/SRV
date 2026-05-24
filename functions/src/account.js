@@ -101,6 +101,74 @@ exports.isPhoneTaken = isPhoneTaken;
 // SERVICE LAYER FUNCTIONS (INTERNAL)
 // ============================================================================
 
+async function getUserProfile(principalText) {
+  const db = getFirestore();
+  const userRef = db.collection("users").doc(principalText);
+  const userDoc = await userRef.get();
+
+  if (!userDoc.exists) {
+    return null;
+  }
+
+  return userDoc.data();
+}
+
+async function signInWithInternetIdentityService(data) {
+  const {principal: principalText, email} = data;
+
+  if (!principalText) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Principal is required",
+    );
+  }
+
+  // Check if user has a Firestore profile (for existing users)
+  const profile = await getUserProfile(principalText);
+  const hasFirestoreProfile = !!profile;
+
+  // Check if account is locked before issuing a token
+  if (profile && profile.locked) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Account has been locked by an administrator.",
+      {suspensionEndDate: profile.suspensionEndDate ?? null},
+    );
+  }
+
+  // Store email in Firestore profile if provided (zkLogin users)
+  if (email) {
+    const db = getFirestore();
+    const userRef = db.collection("users").doc(principalText);
+    if (hasFirestoreProfile) {
+      await userRef.set({email}, {merge: true});
+    } else {
+      // Store email in a pending document so createProfile can pick it up
+      await db.collection("pending_users").doc(principalText).set({email}, {merge: true});
+    }
+  }
+
+  // Create Firebase custom token
+  const customToken = await admin.auth().createCustomToken(principalText, {
+    // Add custom claims here if needed
+    provider: "internet-identity",
+    icPrincipal: principalText,
+    hasProfile: hasFirestoreProfile,
+    ...(email && {email}),
+  });
+
+  return {
+    success: true,
+    customToken,
+    principal: principalText,
+    hasProfile: hasFirestoreProfile,
+    needsProfile: !hasFirestoreProfile,
+    message: hasFirestoreProfile ?
+      "Successfully authenticated with Internet Identity" :
+      "Successfully authenticated. Please complete your profile.",
+  };
+}
+
 async function validatePhoneNumberService(auth, data) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
@@ -459,6 +527,8 @@ exports.accountAction = onCall(
 
     try {
       switch (action) {
+        case "signInWithInternetIdentity":
+          return await signInWithInternetIdentityService(payload);
         case "validatePhoneNumber":
           return await validatePhoneNumberService(auth, payload);
         case "createProfile":

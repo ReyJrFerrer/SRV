@@ -73,13 +73,13 @@ export async function signInWithInternetIdentity(
   try {
     // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
-    const signInFn = httpsCallable<
-      { principal: string; email?: string },
-      IdentityBridgeResponse
-    >(functionsInstance, "signInWithInternetIdentity");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await signInFn({ principal, email });
-    const data = result.data;
+    const result = await accountActionFn({
+      action: "signInWithInternetIdentity",
+      payload: { principal, email }
+    });
+    const data = result.data as IdentityBridgeResponse;
 
     if (!data.success || !data.customToken) {
       throw new Error("Error signing in with Internet Identity");
