@@ -1,8 +1,14 @@
-const functions = require("firebase-functions");
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const {onSchedule} = require("firebase-functions/v2/scheduler");
-const {getFirestore} = require("../firebase-admin");
-const {FieldValue} = require("firebase-admin/firestore");
+/**
+ * Notification Management Cloud Functions
+ *
+ * This module handles all notification-related operations
+ * Consolidated into a single entrypoint following the Firebase optimization guidelines
+ */
+
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { getFirestore } = require("../firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 
 const db = getFirestore();
 
@@ -10,30 +16,15 @@ const db = getFirestore();
 const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "7bd5300e-16ce-4334-8462-93e1a1458579";
 const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "";
 
-// Base URL for building absolute push URLs (used only for push payloads)
+// Base URL for building absolute push URLs
 const APP_BASE_URL = process.env.APP_BASE_URL || "https://srvpinoy.com";
 
-/**
- * Helper function to safely get user authentication info
- * @param {object} context - Firebase Functions context
- * @param {object} data - Request data
- * @return {object} User authentication info
- */
-function getAuthInfo(context, data) {
-  const auth = context.auth || data.auth;
-  return {
-    uid: auth?.uid || null,
-    isAdmin: auth?.token?.isAdmin || false,
-    hasAuth: !!auth,
-  };
-}
-
 // Constants for spam prevention
-const SPAM_PREVENTION_WINDOW = 5 * 60 * 1000; // 5 minutes in milliseconds
+const SPAM_PREVENTION_WINDOW = 5 * 60 * 1000;
 const MAX_NOTIFICATIONS_PER_WINDOW = 10;
 const NOTIFICATION_EXPIRY_DAYS = 30;
 
-// Notification types (matching Motoko enum)
+// Notification types
 const NOTIFICATION_TYPES = {
   BOOKING_ACCEPTED: "booking_accepted",
   BOOKING_DECLINED: "booking_declined",
@@ -78,17 +69,17 @@ const NOTIFICATION_STATUS = {
   PUSH_SENT_AND_READ: "push_sent_and_read",
 };
 
-/**
- * Generate notification href based on type and user type
- * @param {string} notificationType - Type of notification
- * @param {string} userType - Type of user (client/provider)
- * @param {string} entityId - Optional entity ID (booking ID or conversation ID)
- * @return {string} URL path (no hash) for in-app navigation
- */
+function getAuthInfo(context, data) {
+  const auth = context.auth || data.auth;
+  return {
+    uid: auth?.uid || null,
+    isAdmin: auth?.token?.isAdmin || false,
+    hasAuth: !!auth,
+  };
+}
+
 function generateNotificationHref(notificationType, userType, entityId) {
-  // Return "/" to make them clickable to homepage (used for in-app navigation)
-  if (notificationType === NOTIFICATION_TYPES.GENERIC &&
-      (!entityId || entityId === null)) {
+  if (notificationType === NOTIFICATION_TYPES.GENERIC && (!entityId || entityId === null)) {
     return "/";
   }
 
@@ -97,60 +88,29 @@ function generateNotificationHref(notificationType, userType, entityId) {
   const isProvider = userType === USER_TYPES.PROVIDER;
 
   switch (notificationType) {
-  case NOTIFICATION_TYPES.CHAT_MESSAGE:
-    return isProvider ?
-      `/provider/chat/${entityId}` :
-      `/client/chat/${entityId}`;
-
-  case NOTIFICATION_TYPES.REVIEW_REMINDER:
-  case NOTIFICATION_TYPES.REVIEW_REQUEST:
-    return isProvider ?
-      `/provider/rate-client/${entityId}` :
-      `/client/review/${entityId}`;
-
-  case NOTIFICATION_TYPES.PAYMENT_COMPLETED:
-    return `/provider/receipt/${entityId}`;
-
-  case NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER:
-    return isProvider ?
-      `/provider/active-service/${entityId}` :
-      `/client/booking/${entityId}`;
-
-  case NOTIFICATION_TYPES.START_SERVICE:
-    return isProvider ?
-      `/provider/active-service/${entityId}` :
-      `/client/booking/${entityId}`;
-
-  case NOTIFICATION_TYPES.START_NAVIGATION:
-    return isProvider ?
-      `/provider/directions/${entityId}` :
-      `/client/booking/${entityId}`;
-
-
-  case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
-  case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:
-    // Redirect to services page to find new bookings
-    return isProvider ? `/provider/bookings` : `/client/home`;
-
-  case NOTIFICATION_TYPES.SERVICE_REMINDER:
-    // Redirect to active service or booking details
-    return isProvider ?
-      `/provider/booking/${entityId}` :
-      `/client/booking/${entityId}`;
-
-  default:
-    return isProvider ?
-      `/provider/booking/${entityId}` :
-      `/client/booking/${entityId}`;
+    case NOTIFICATION_TYPES.CHAT_MESSAGE:
+      return isProvider ? `/provider/chat/${entityId}` : `/client/chat/${entityId}`;
+    case NOTIFICATION_TYPES.REVIEW_REMINDER:
+    case NOTIFICATION_TYPES.REVIEW_REQUEST:
+      return isProvider ? `/provider/rate-client/${entityId}` : `/client/review/${entityId}`;
+    case NOTIFICATION_TYPES.PAYMENT_COMPLETED:
+      return `/provider/receipt/${entityId}`;
+    case NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER:
+      return isProvider ? `/provider/active-service/${entityId}` : `/client/booking/${entityId}`;
+    case NOTIFICATION_TYPES.START_SERVICE:
+      return isProvider ? `/provider/active-service/${entityId}` : `/client/booking/${entityId}`;
+    case NOTIFICATION_TYPES.START_NAVIGATION:
+      return isProvider ? `/provider/directions/${entityId}` : `/client/booking/${entityId}`;
+    case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
+    case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:
+      return isProvider ? `/provider/bookings` : `/client/home`;
+    case NOTIFICATION_TYPES.SERVICE_REMINDER:
+      return isProvider ? `/provider/booking/${entityId}` : `/client/booking/${entityId}`;
+    default:
+      return isProvider ? `/provider/booking/${entityId}` : `/client/booking/${entityId}`;
   }
 }
 
-/**
- * Check if user is spamming notifications (rate limiting)
- * @param {string} userId - User ID
- * @param {string} notificationType - Notification type
- * @return {Promise<boolean>} True if spamming
- */
 async function isSpamming(userId, notificationType) {
   const spamKey = `${userId}_${notificationType}`;
   const now = Date.now();
@@ -174,12 +134,6 @@ async function isSpamming(userId, notificationType) {
   }
 }
 
-/**
- * Update notification frequency tracking
- * @param {string} userId - User ID
- * @param {string} notificationType - Notification type
- * @return {Promise<void>} Promise that resolves when frequency is updated
- */
 async function updateNotificationFrequency(userId, notificationType) {
   const spamKey = `${userId}_${notificationType}`;
   const now = Date.now();
@@ -211,20 +165,11 @@ async function updateNotificationFrequency(userId, notificationType) {
     });
   } catch (error) {
     console.error("Error updating notification frequency:", error);
-    // Don't throw - this is best-effort tracking
   }
 }
 
-
-/**
- * Send OneSignal push notification
- * @param {string} userId - User ID to send notification to
- * @param {object} notification - Notification data
- * @return {Promise<boolean>} True if sent successfully
- */
 async function sendOneSignalNotification(userId, notification) {
   try {
-    // Get user's OneSignal player IDs from Firestore
     const userDoc = await db.collection("users").doc(userId).get();
 
     if (!userDoc.exists) {
@@ -240,20 +185,14 @@ async function sendOneSignalNotification(userId, notification) {
       return false;
     }
 
-    // Check if we have the REST API key
     if (!ONESIGNAL_REST_API_KEY) {
       console.error("OneSignal: REST API key not configured");
       return false;
     }
 
-    // Prepare notification payload
-    // Normalize href: keep path without hash for in-app navigation (data.href)
-    // and build an absolute URL with a hash for push opens (payload.url)
     let hrefPath = notification.href || "/";
     if (typeof hrefPath === "string") {
-      // strip an existing leading '/#' or '#' if present
       hrefPath = hrefPath.replace(/^\/?#/, "");
-      // ensure leading slash for in-app path
       if (!hrefPath.startsWith("/")) hrefPath = "/" + hrefPath;
     } else {
       hrefPath = "/";
@@ -262,25 +201,22 @@ async function sendOneSignalNotification(userId, notification) {
     const payload = {
       app_id: ONESIGNAL_APP_ID,
       include_player_ids: playerIds,
-      headings: {en: notification.title},
-      contents: {en: notification.message},
+      headings: { en: notification.title },
+      contents: { en: notification.message },
       data: {
         notificationId: notification.id,
         type: notification.notificationType,
         relatedEntityId: notification.relatedEntityId,
         metadata: notification.metadata,
-        href: hrefPath, // in-app path (no hash)
+        href: hrefPath,
       },
     };
 
-    // Add URL if available: use base URL + '/#' + hrefPath so push opens with hash routing
     if (hrefPath) {
-      // Ensure APP_BASE_URL doesn't end with a slash
       const base = APP_BASE_URL.replace(/\/$/, "");
       payload.url = `${base}/#${hrefPath}`;
     }
 
-    // Send notification via OneSignal REST API
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
       headers: {
@@ -299,7 +235,6 @@ async function sendOneSignalNotification(userId, notification) {
 
     console.log(`OneSignal: Notification sent to ${playerIds.length} device(s)`, result);
 
-    // Update notification status to push_sent
     await db.collection("notifications").doc(notification.id).update({
       status: "push_sent",
       updatedAt: FieldValue.serverTimestamp(),
@@ -312,15 +247,13 @@ async function sendOneSignalNotification(userId, notification) {
   }
 }
 
-/**
- * Create a new notification
- * HTTPS Callable Function
- */
-exports.createNotification = onCall(async (request) => {
+// ============================================================================
+// SERVICE LAYER FUNCTIONS (INTERNAL)
+// ============================================================================
+
+async function createNotification_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("createNotification called");
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
   const {
     targetUserId,
@@ -332,78 +265,44 @@ exports.createNotification = onCall(async (request) => {
     metadata,
   } = payload;
 
-  // Authentication (must be authenticated to create notifications)
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Validation (mirror Motoko logic)
   if (!targetUserId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Target user ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Target user ID is required");
   }
 
   if (!userType || !Object.values(USER_TYPES).includes(userType)) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Valid user type is required (client or provider)",
-    );
+    throw new HttpsError("invalid-argument", "Valid user type is required (client or provider)");
   }
 
-  if (
-    !notificationType ||
-    !Object.values(NOTIFICATION_TYPES).includes(notificationType)
-  ) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Valid notification type is required",
-    );
+  if (!notificationType || !Object.values(NOTIFICATION_TYPES).includes(notificationType)) {
+    throw new HttpsError("invalid-argument", "Valid notification type is required");
   }
 
   if (!title || title.length === 0) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Title is required",
-    );
+    throw new HttpsError("invalid-argument", "Title is required");
   }
 
   if (!message || message.length === 0) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Message is required",
-    );
+    throw new HttpsError("invalid-argument", "Message is required");
   }
 
   try {
-    // Check spam prevention
     const spamming = await isSpamming(targetUserId, notificationType);
     if (spamming) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Notification rate limit exceeded",
-      );
+      throw new HttpsError("resource-exhausted", "Notification rate limit exceeded");
     }
 
-    // Generate notification ID and timestamps
     const now = new Date();
     const expiresAt = new Date(
       now.getTime() + NOTIFICATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
     );
 
-    // Generate href
-    const href = generateNotificationHref(
-      notificationType,
-      userType,
-      relatedEntityId,
-    );
+    const href = generateNotificationHref(notificationType, userType, relatedEntityId);
 
-    // Create notification document
     const notificationRef = db.collection("notifications").doc();
     const notification = {
       id: notificationRef.id,
@@ -422,13 +321,9 @@ exports.createNotification = onCall(async (request) => {
       expiresAt,
     };
 
-    // Store in Firestore
     await notificationRef.set(notification);
-
-    // Update notification frequency tracking
     await updateNotificationFrequency(targetUserId, notificationType);
 
-    // Send OneSignal push notification asynchronously (don't wait for it)
     sendOneSignalNotification(targetUserId, {
       ...notification,
       createdAt: now,
@@ -436,44 +331,28 @@ exports.createNotification = onCall(async (request) => {
       console.error("Failed to send OneSignal notification:", error);
     });
 
-    console.log("[createNotification] Function completed successfully");
-    return {success: true, notificationId: notificationRef.id};
+    return { success: true, notificationId: notificationRef.id };
   } catch (error) {
     console.error("Error in createNotification:", error);
-
-    // Re-throw HttpsError
     if (error instanceof HttpsError) {
       throw error;
     }
-
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get notifications for current user
- * HTTPS Callable Function
- */
-exports.getUserNotifications = onCall(async (request) => {
+async function getUserNotifications_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("getUserNotifications called");
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {userId, filter} = payload;
+  const { userId, filter } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Use authenticated user's ID if not provided or if not admin
-  const targetUserId =
-    userId && authInfo.isAdmin ? userId : authInfo.uid;
+  const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
 
   try {
     let query = db
@@ -481,20 +360,16 @@ exports.getUserNotifications = onCall(async (request) => {
       .where("userId", "==", targetUserId)
       .orderBy("createdAt", "desc");
 
-    // Apply filters if provided
     if (filter) {
       if (filter.userType) {
         query = query.where("userType", "==", filter.userType);
       }
-
       if (filter.notificationType) {
         query = query.where("notificationType", "==", filter.notificationType);
       }
-
       if (filter.status) {
         query = query.where("status", "==", filter.status);
       }
-
       if (filter.limit) {
         query = query.limit(filter.limit);
       }
@@ -522,69 +397,44 @@ exports.getUserNotifications = onCall(async (request) => {
       };
     });
 
-    return {success: true, notifications};
+    return { success: true, notifications };
   } catch (error) {
     console.error("Error in getUserNotifications:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Mark notification as read
- * HTTPS Callable Function
- */
-exports.markNotificationAsRead = onCall(async (request) => {
+async function markNotificationAsRead_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("markNotificationAsRead called");
-
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {notificationId} = payload;
+  const { notificationId } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Validation
   if (!notificationId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Notification ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Notification ID is required");
   }
 
   try {
-    console.log(`[markNotificationAsRead] Fetching notification ${notificationId}...`);
     const notificationRef = db.collection("notifications").doc(notificationId);
 
     await db.runTransaction(async (transaction) => {
       const notificationDoc = await transaction.get(notificationRef);
 
       if (!notificationDoc.exists) {
-        throw new HttpsError(
-          "not-found",
-          "Notification not found",
-        );
+        throw new HttpsError("not-found", "Notification not found");
       }
 
       const notification = notificationDoc.data();
 
-      // Verify ownership
       if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-        throw new HttpsError(
-          "permission-denied",
-          "You can only mark your own notifications as read",
-        );
+        throw new HttpsError("permission-denied", "You can only mark your own notifications as read");
       }
 
-      // Update status based on current state
       let newStatus = NOTIFICATION_STATUS.READ;
       if (notification.status === NOTIFICATION_STATUS.PUSH_SENT) {
         newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
@@ -596,50 +446,29 @@ exports.markNotificationAsRead = onCall(async (request) => {
       });
     });
 
-    console.log("[markNotificationAsRead] Function finished successfully.");
-    return {success: true};
+    return { success: true };
   } catch (error) {
     console.error("Error in markNotificationAsRead:", error);
-
-    // Re-throw HttpsError
     if (error instanceof HttpsError) {
       throw error;
     }
-
     throw new HttpsError("internal", error.message);
   }
-},
-);
+}
 
-/**
- * Mark notification as push sent
- * HTTPS Callable Function
- */
-exports.markNotificationAsPushSent = onCall(async (request) => {
+async function markNotificationAsPushSent_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("markNotificationAsPushSent called");
-
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {notificationId} = payload;
+  const { notificationId } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Validation
   if (!notificationId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Notification ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Notification ID is required");
   }
 
   try {
@@ -649,23 +478,15 @@ exports.markNotificationAsPushSent = onCall(async (request) => {
       const notificationDoc = await transaction.get(notificationRef);
 
       if (!notificationDoc.exists) {
-        throw new HttpsError(
-          "not-found",
-          "Notification not found",
-        );
+        throw new HttpsError("not-found", "Notification not found");
       }
 
       const notification = notificationDoc.data();
 
-      // Verify ownership
       if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-        throw new HttpsError(
-          "permission-denied",
-          "You can only update your own notifications",
-        );
+        throw new HttpsError("permission-denied", "You can only update your own notifications");
       }
 
-      // Update status based on current state
       let newStatus = NOTIFICATION_STATUS.PUSH_SENT;
       if (notification.status === NOTIFICATION_STATUS.READ) {
         newStatus = NOTIFICATION_STATUS.PUSH_SENT_AND_READ;
@@ -677,45 +498,27 @@ exports.markNotificationAsPushSent = onCall(async (request) => {
       });
     });
 
-    console.log("[markNotificationAsPushSent] Function finished successfully.");
-    return {success: true};
+    return { success: true };
   } catch (error) {
     console.error("Error in markNotificationAsPushSent:", error);
-
-    // Re-throw HttpsError
     if (error instanceof HttpsError) {
       throw error;
     }
-
     throw new HttpsError("internal", error.message);
   }
-},
-);
+}
 
-/**
- * Get notifications eligible for push (not yet sent)
- * HTTPS Callable Function
- */
-exports.getNotificationsForPush = onCall(async (request) => {
+async function getNotificationsForPush_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("getNotificationsForPush called");
-
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {userId} = payload;
+  const { userId } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Use authenticated user's ID if not provided or if not admin
   const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
 
   try {
@@ -747,44 +550,26 @@ exports.getNotificationsForPush = onCall(async (request) => {
       };
     });
 
-    return {success: true, notifications};
+    return { success: true, notifications };
   } catch (error) {
     console.error("Error in getNotificationsForPush:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
+}
 
-/**
- * Store OneSignal Player ID for user
- * HTTPS Callable Function
- */
-exports.storeOneSignalPlayerId = onCall(async (request) => {
+async function storeOneSignalPlayerId_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("storeOneSignalPlayerId called");
-
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {playerId} = payload;
+  const { playerId } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-
   if (!authInfo.hasAuth) {
-    console.log("storeOneSignalPlayerId: User not authenticated");
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Validation
   if (!playerId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Player ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Player ID is required");
   }
 
   try {
@@ -792,120 +577,86 @@ exports.storeOneSignalPlayerId = onCall(async (request) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      // User document doesn't exist, create it with the player ID
       await userRef.set({
         oneSignalPlayerIds: [playerId],
         oneSignalUpdatedAt: FieldValue.serverTimestamp(),
-      }, {merge: true});
+      }, { merge: true });
     } else {
-      // User document exists, add player ID to array if not already present
       const existingPlayerIds = userDoc.data().oneSignalPlayerIds || [];
 
       if (existingPlayerIds.includes(playerId)) {
-        return {success: true, message: "Player ID already registered"};
+        return { success: true, message: "Player ID already registered" };
       }
 
-      // Add new player ID to array
       await userRef.update({
         oneSignalPlayerIds: FieldValue.arrayUnion(playerId),
         oneSignalUpdatedAt: FieldValue.serverTimestamp(),
       });
     }
 
-    console.log("[storeOneSignalPlayerId] Function completed successfully");
-    return {success: true};
+    return { success: true };
   } catch (error) {
     console.error("Error in storeOneSignalPlayerId:", error);
-
-    // Handle specific Firestore errors
     if (error.code === "not-found") {
       try {
         await db.collection("users").doc(authInfo.uid).set({
           oneSignalPlayerIds: [playerId],
           oneSignalUpdatedAt: FieldValue.serverTimestamp(),
-        }, {merge: true});
-        return {success: true};
+        }, { merge: true });
+        return { success: true };
       } catch (createError) {
         console.error("Error creating user document:", createError);
         throw new HttpsError("internal", createError.message);
       }
     }
-
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Remove OneSignal Player ID for user
- * HTTPS Callable Function
- */
-exports.removeOneSignalPlayerId = onCall(async (request) => {
+async function removeOneSignalPlayerId_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("removeOneSignalPlayerId called");
-
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {playerId} = payload;
+  const { playerId } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   try {
     const userRef = db.collection("users").doc(authInfo.uid);
 
     if (playerId) {
-      // Remove specific player ID
       await userRef.update({
         oneSignalPlayerIds: FieldValue.arrayRemove(playerId),
         oneSignalUpdatedAt: FieldValue.serverTimestamp(),
       });
     } else {
-      // Remove all player IDs
       await userRef.update({
         oneSignalPlayerIds: [],
         oneSignalUpdatedAt: FieldValue.serverTimestamp(),
       });
     }
 
-    console.log("[removeOneSignalPlayerId] Function completed successfully");
-    return {success: true};
+    return { success: true };
   } catch (error) {
     console.error("Error in removeOneSignalPlayerId:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Get notification statistics
- * HTTPS Callable Function
- */
-exports.getNotificationStats = onCall(async (request) => {
+async function getNotificationStats_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("getNotificationStats called");
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {userId} = payload;
+  const { userId } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Use authenticated user's ID if not provided or if not admin
   const targetUserId = userId && authInfo.isAdmin ? userId : authInfo.uid;
 
   try {
@@ -924,49 +675,40 @@ exports.getNotificationStats = onCall(async (request) => {
       total++;
 
       switch (data.status) {
-      case NOTIFICATION_STATUS.UNREAD:
-        unread++;
-        break;
-      case NOTIFICATION_STATUS.READ:
-        read++;
-        break;
-      case NOTIFICATION_STATUS.PUSH_SENT:
-        pushSent++;
-        unread++; // Push sent but not read counts as unread
-        break;
-      case NOTIFICATION_STATUS.PUSH_SENT_AND_READ:
-        pushSent++;
-        read++;
-        break;
+        case NOTIFICATION_STATUS.UNREAD:
+          unread++;
+          break;
+        case NOTIFICATION_STATUS.READ:
+          read++;
+          break;
+        case NOTIFICATION_STATUS.PUSH_SENT:
+          pushSent++;
+          unread++;
+          break;
+        case NOTIFICATION_STATUS.PUSH_SENT_AND_READ:
+          pushSent++;
+          read++;
+          break;
       }
     });
 
     return {
       success: true,
-      stats: {total, unread, pushSent, read},
+      stats: { total, unread, pushSent, read },
     };
   } catch (error) {
     console.error("Error in getNotificationStats:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Mark all notifications as read
- * HTTPS Callable Function
- */
-exports.markAllNotificationsAsRead = onCall(async (request) => {
+async function markAllNotificationsAsRead_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("markAllNotificationsAsRead called");
-  // Authentication
-  const authInfo = getAuthInfo(context, data);
+  const context = { auth: request.auth, rawRequest: request };
 
+  const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   try {
@@ -985,9 +727,9 @@ exports.markAllNotificationsAsRead = onCall(async (request) => {
     snapshot.forEach((doc) => {
       const data = doc.data();
       const newStatus =
-          data.status === NOTIFICATION_STATUS.PUSH_SENT ?
-            NOTIFICATION_STATUS.PUSH_SENT_AND_READ :
-            NOTIFICATION_STATUS.READ;
+        data.status === NOTIFICATION_STATUS.PUSH_SENT ?
+          NOTIFICATION_STATUS.PUSH_SENT_AND_READ :
+          NOTIFICATION_STATUS.READ;
 
       batch.update(doc.ref, {
         status: newStatus,
@@ -997,82 +739,50 @@ exports.markAllNotificationsAsRead = onCall(async (request) => {
     });
 
     await batch.commit();
-    return {success: true, count};
+    return { success: true, count };
   } catch (error) {
     console.error("Error in markAllNotificationsAsRead:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
+}
 
-/**
- * Check if user can receive notification (rate limiting check)
- * HTTPS Callable Function
- */
-exports.canReceiveNotification = onCall(async (request) => {
+async function canReceiveNotification_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  console.log("canReceiveNotification called");
-
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {userId, notificationType} = payload;
+  const { userId, notificationType } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Validation
   if (!userId || !notificationType) {
-    throw new HttpsError(
-      "invalid-argument",
-      "User ID and notification type are required",
-    );
+    throw new HttpsError("invalid-argument", "User ID and notification type are required");
   }
 
   try {
     const canReceive = !(await isSpamming(userId, notificationType));
-    return {success: true, canReceive};
+    return { success: true, canReceive };
   } catch (error) {
     console.error("Error in canReceiveNotification:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
+}
 
-/**
- * Delete a notification
- * HTTPS Callable Function
- */
-exports.deleteNotification = onCall(async (request) => {
+async function deleteNotification_notification(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  // Extract payload from data.data
+  const context = { auth: request.auth, rawRequest: request };
   const payload = data.data || data;
-  const {notificationId} = payload;
+  const { notificationId } = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
-
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Validation
   if (!notificationId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Notification ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Notification ID is required");
   }
 
   try {
@@ -1085,34 +795,25 @@ exports.deleteNotification = onCall(async (request) => {
 
     const notification = notificationDoc.data();
 
-    // Security: Only allow user to delete their own notifications or admin
     if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new HttpsError(
-        "permission-denied",
-        "Not authorized to delete this notification",
-      );
+      throw new HttpsError("permission-denied", "Not authorized to delete this notification");
     }
 
-    // Delete the notification
     await notificationRef.delete();
-
-    return {success: true};
+    return { success: true };
   } catch (error) {
     console.error("Error in deleteNotification:", error);
-
-    // Re-throw HttpsError
     if (error instanceof HttpsError) {
       throw error;
     }
-
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-/**
- * Cleanup expired notifications (scheduled function)
- * Runs daily at midnight UTC
- */
+// ============================================================================
+// SCHEDULED FUNCTIONS (separate from action router)
+// ============================================================================
+
 exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => {
   console.log("[cleanupExpiredNotifications] scheduled function running...");
   try {
@@ -1131,18 +832,13 @@ exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => 
     });
 
     await batch.commit();
-
-    return {success: true, count};
+    return { success: true, count };
   } catch (error) {
     console.error("Error cleaning up expired notifications:", error);
     throw error;
   }
 });
 
-/**
- * Cleanup old notification frequency entries (scheduled function)
- * Runs every 6 hours
- */
 exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) => {
   console.log("[cleanupNotificationFrequency] scheduled function running...");
   try {
@@ -1170,13 +866,66 @@ exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) 
     });
 
     await batch.commit();
-
-    return {success: true, count};
+    return { success: true, count };
   } catch (error) {
     console.error("Error cleaning up notification frequency:", error);
     throw error;
   }
 });
+
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.notificationAction = onCall(
+  {
+    memory: "256MiB",
+    concurrency: 80,
+    maxInstances: 50,
+  },
+  async (request) => {
+    const { action } = request.data || {};
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+        case "createNotification":
+          return await createNotification_notification(request);
+        case "getUserNotifications":
+          return await getUserNotifications_notification(request);
+        case "markNotificationAsRead":
+          return await markNotificationAsRead_notification(request);
+        case "markNotificationAsPushSent":
+          return await markNotificationAsPushSent_notification(request);
+        case "getNotificationsForPush":
+          return await getNotificationsForPush_notification(request);
+        case "storeOneSignalPlayerId":
+          return await storeOneSignalPlayerId_notification(request);
+        case "removeOneSignalPlayerId":
+          return await removeOneSignalPlayerId_notification(request);
+        case "getNotificationStats":
+          return await getNotificationStats_notification(request);
+        case "markAllNotificationsAsRead":
+          return await markAllNotificationsAsRead_notification(request);
+        case "canReceiveNotification":
+          return await canReceiveNotification_notification(request);
+        case "deleteNotification":
+          return await deleteNotification_notification(request);
+        default:
+          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
+  }
+);
 
 // Export helper functions and constants for use in other modules
 exports.NOTIFICATION_TYPES = NOTIFICATION_TYPES;

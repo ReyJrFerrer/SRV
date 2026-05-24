@@ -104,20 +104,16 @@ const {
 
 // Import Notification Management functions
 const {
-  createNotification,
-  getUserNotifications,
-  markNotificationAsRead,
-  markNotificationAsPushSent,
-  getNotificationsForPush,
-  storeFCMToken,
-  removeFCMToken,
-  getNotificationStats,
-  markAllNotificationsAsRead,
-  canReceiveNotification,
-  deleteNotification,
+  notificationAction,
+  cleanupExpiredNotifications,
   cleanupNotificationFrequency,
-  storeOneSignalPlayerId,
-  removeOneSignalPlayerId,
+  NOTIFICATION_TYPES,
+  USER_TYPES,
+  NOTIFICATION_STATUS,
+  generateNotificationHref,
+  isSpamming,
+  updateNotificationFrequency,
+  sendOneSignalNotification,
 } = require("./src/notification");
 
 // Import Media Management functions
@@ -189,20 +185,16 @@ exports.getRecentReports = getRecentReports;
 exports.onMessageCreated = onMessageCreated;
 
 // Export Notification Management Functions
-exports.createNotification = createNotification;
-exports.getUserNotifications = getUserNotifications;
-exports.markNotificationAsRead = markNotificationAsRead;
-exports.markNotificationAsPushSent = markNotificationAsPushSent;
-exports.getNotificationsForPush = getNotificationsForPush;
-exports.storeFCMToken = storeFCMToken;
-exports.removeFCMToken = removeFCMToken;
-exports.getNotificationStats = getNotificationStats;
-exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
-exports.canReceiveNotification = canReceiveNotification;
-exports.deleteNotification = deleteNotification;
+exports.notificationAction = notificationAction;
+exports.cleanupExpiredNotifications = cleanupExpiredNotifications;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
-exports.storeOneSignalPlayerId = storeOneSignalPlayerId;
-exports.removeOneSignalPlayerId = removeOneSignalPlayerId;
+exports.NOTIFICATION_TYPES = NOTIFICATION_TYPES;
+exports.USER_TYPES = USER_TYPES;
+exports.NOTIFICATION_STATUS = NOTIFICATION_STATUS;
+exports.generateNotificationHref = generateNotificationHref;
+exports.isSpamming = isSpamming;
+exports.updateNotificationFrequency = updateNotificationFrequency;
+exports.sendOneSignalNotification = sendOneSignalNotification;
 
 // Export Media Management Functions
 exports.uploadMedia = uploadMedia;
