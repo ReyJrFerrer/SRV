@@ -2,14 +2,8 @@ import { httpsCallable } from "firebase/functions";
 import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 
 const auth = getFirebaseAuth();
-const functions = getFirebaseFunctions();
+const getFunctions = () => getFirebaseFunctions();
 
-// Helper function to create Firebase callable functions
-const createCallableFunction = (functionName: string) => {
-  return httpsCallable(functions, functionName);
-};
-
-// Helper function to check authentication
 const checkAuth = (requireAuth: boolean = true) => {
   if (requireAuth && !auth.currentUser) {
     throw new Error(
@@ -18,7 +12,6 @@ const checkAuth = (requireAuth: boolean = true) => {
   }
 };
 
-// Service data interfaces
 export interface ServiceData {
   id: string;
   title: string;
@@ -26,6 +19,10 @@ export interface ServiceData {
   category: {
     id: string;
     name: string;
+    slug?: string;
+    description?: string;
+    imageUrl?: string;
+    parentId?: string;
   };
   status: string;
   type: string;
@@ -36,6 +33,10 @@ export interface ServiceData {
     latitude: number;
     longitude: number;
     address: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postalCode?: string;
   };
   providerId: string;
   providerName: string;
@@ -52,128 +53,149 @@ export interface CategoryData {
   id: string;
   name: string;
   description?: string;
-  icon?: string;
+  slug?: string;
+  imageUrl?: string;
+  parentId?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Main service object
 export const serviceCanister = {
   async getAllServices(): Promise<ServiceData[]> {
     try {
       checkAuth();
 
-      const getAllServices = createCallableFunction("getAllServices");
-      const result = await getAllServices({});
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getAllServices",
+        data: {},
+      });
 
-      if ((result.data as any).success) {
-        return (result.data as any).services.map((service: any) => ({
-          ...service,
-          rating: service.averageRating ?? service.rating ?? 0,
-          createdAt: service.createdAt
-            ? new Date(service.createdAt)
-            : new Date(),
-          updatedAt: service.updatedAt
-            ? new Date(service.updatedAt)
-            : new Date(),
-        }));
-      } else {
-        throw new Error("Failed to fetch services");
-      }
+      const data = result.data as { success: boolean; services: any[] };
+      if (!data.success) throw new Error("Failed to fetch services");
+
+      return data.services.map((service: any) => ({
+        ...service,
+        rating: service.averageRating ?? service.rating ?? 0,
+        createdAt: service.createdAt ? new Date(service.createdAt) : new Date(),
+        updatedAt: service.updatedAt ? new Date(service.updatedAt) : new Date(),
+      }));
     } catch (error) {
       console.error("Error fetching services:", error);
       throw error;
     }
   },
 
-  /**
-   * Get all categories
-   */
   async getAllCategories(): Promise<CategoryData[]> {
     try {
       checkAuth();
 
-      const getAllCategories = createCallableFunction("getAllCategories");
-      const result = await getAllCategories({});
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getAllCategories",
+        data: {},
+      });
 
-      if ((result.data as any).success) {
-        return (result.data as any).categories.map((category: any) => ({
-          ...category,
-          createdAt: category.createdAt
-            ? new Date(category.createdAt)
-            : new Date(),
-          updatedAt: category.updatedAt
-            ? new Date(category.updatedAt)
-            : new Date(),
-        }));
-      } else {
-        throw new Error("Failed to fetch categories");
-      }
+      const data = result.data as { success: boolean; categories: any[] };
+      if (!data.success) throw new Error("Failed to fetch categories");
+
+      return data.categories.map((category: any) => ({
+        ...category,
+        createdAt: category.createdAt
+          ? new Date(category.createdAt)
+          : new Date(),
+        updatedAt: category.updatedAt
+          ? new Date(category.updatedAt)
+          : new Date(),
+      }));
     } catch (error) {
       console.error("Error fetching categories:", error);
       throw error;
     }
   },
 
-  /**
-   * Get services by category
-   */
   async getServicesByCategory(categoryId: string): Promise<ServiceData[]> {
     try {
       checkAuth();
 
-      const getServicesByCategory = createCallableFunction(
-        "getServicesByCategory",
-      );
-      const result = await getServicesByCategory({ categoryId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getServicesByCategory",
+        data: { categoryId },
+      });
 
-      if ((result.data as any).success) {
-        return (result.data as any).services.map((service: any) => ({
-          ...service,
-          createdAt: service.createdAt
-            ? new Date(service.createdAt)
-            : new Date(),
-          updatedAt: service.updatedAt
-            ? new Date(service.updatedAt)
-            : new Date(),
-        }));
-      } else {
-        throw new Error("Failed to fetch services by category");
-      }
+      const data = result.data as { success: boolean; services: any[] };
+      if (!data.success) throw new Error("Failed to fetch services by category");
+
+      return data.services.map((service: any) => ({
+        ...service,
+        createdAt: service.createdAt
+          ? new Date(service.createdAt)
+          : new Date(),
+        updatedAt: service.updatedAt
+          ? new Date(service.updatedAt)
+          : new Date(),
+      }));
     } catch (error) {
       console.error("Error fetching services by category:", error);
       throw error;
     }
   },
 
-  /**
-   * Get service by ID
-   */
   async getService(serviceId: string): Promise<ServiceData | null> {
     try {
       checkAuth();
 
-      const getService = createCallableFunction("getService");
-      const result = await getService({ serviceId });
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "getService",
+        data: { serviceId },
+      });
 
-      if ((result.data as any).success && (result.data as any).service) {
-        const rawService = (result.data as any).service;
-        return {
-          ...rawService,
-          rating: rawService.averageRating ?? rawService.rating ?? 0,
-          createdAt: rawService.createdAt
-            ? new Date(rawService.createdAt)
-            : new Date(),
-          updatedAt: rawService.updatedAt
-            ? new Date(rawService.updatedAt)
-            : new Date(),
-        };
-      } else {
-        return null;
-      }
+      const data = result.data as { success: boolean; service: any };
+      if (!data.success || !data.service) return null;
+
+      const raw = data.service;
+      return {
+        ...raw,
+        rating: raw.averageRating ?? raw.rating ?? 0,
+        createdAt: raw.createdAt ? new Date(raw.createdAt) : new Date(),
+        updatedAt: raw.updatedAt ? new Date(raw.updatedAt) : new Date(),
+      };
     } catch (error) {
       console.error("Error fetching service:", error);
+      throw error;
+    }
+  },
+
+  async verifyService(
+    serviceId: string,
+    isVerified: boolean,
+  ): Promise<ServiceData | null> {
+    try {
+      checkAuth();
+
+      const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+      const result = await serviceActionFn({
+        action: "verifyService",
+        data: { serviceId, isVerified },
+      });
+
+      const data = result.data as { success: boolean; service: any };
+      if (!data.success) return null;
+
+      return {
+        ...data.service,
+        createdAt: data.service.createdAt
+          ? new Date(data.service.createdAt)
+          : new Date(),
+        updatedAt: data.service.updatedAt
+          ? new Date(data.service.updatedAt)
+          : new Date(),
+      };
+    } catch (error) {
+      console.error("Error verifying service:", error);
       throw error;
     }
   },

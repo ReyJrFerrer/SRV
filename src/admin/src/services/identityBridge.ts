@@ -14,13 +14,9 @@ import {
   initializeFirebase,
 } from "./firebaseApp";
 
-// Cached instances
 let auth: Auth | null = null;
 let functions: Functions | null = null;
 
-/**
- * Ensure Firebase is initialized and return auth instance
- */
 function ensureAuth(): Auth {
   if (!auth) {
     initializeFirebase();
@@ -29,9 +25,6 @@ function ensureAuth(): Auth {
   return auth;
 }
 
-/**
- * Ensure Firebase is initialized and return functions instance
- */
 function ensureFunctions(): Functions {
   if (!functions) {
     initializeFirebase();
@@ -54,41 +47,34 @@ interface SignInResult {
   hasProfile: boolean;
   needsProfile: boolean;
   message: string;
+  customToken: string;
 }
 
-/**
- * Exchange Internet Identity Principal for Firebase Auth
- * @param principal - The Internet Identity Principal as string
- * @returns SignInResult with Firebase User and profile status
- */
 export async function signInWithInternetIdentity(
   principal: string,
-  sessionDurationMs?: number,
+  sessionDuration: number = 7 * 24 * 60 * 60 * 1000,
+  email?: string,
 ): Promise<SignInResult> {
   try {
-    // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
-    const signInFn = httpsCallable<
-      { principal: string; sessionDurationMs?: number },
-      IdentityBridgeResponse
-    >(functionsInstance, "signInWithInternetIdentity");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await signInFn({ principal, sessionDurationMs });
-    const data = result.data;
+    const result = await accountActionFn({
+      action: "signInWithInternetIdentity",
+      payload: { principal, email },
+    });
+    const data = result.data as IdentityBridgeResponse;
 
     if (!data.success || !data.customToken) {
-      throw new Error("Invalid response from Identity Bridge");
+      throw new Error("Error signing in with Internet Identity");
     }
 
-    // Sign in to Firebase with the custom token
     const authInstance = ensureAuth();
     const userCredential = await signInWithCustomToken(
       authInstance,
       data.customToken,
     );
 
-    // CRITICAL: Wait for onAuthStateChanged to fire
-    // This ensures the auth state is fully propagated before we return
     await new Promise<void>((resolve) => {
       const unsubscribe = authInstance.onAuthStateChanged((user) => {
         if (user && user.uid === userCredential.user.uid) {
@@ -96,8 +82,6 @@ export async function signInWithInternetIdentity(
           resolve();
         }
       });
-
-      // Failsafe timeout in case the listener doesn't fire
       setTimeout(() => {
         unsubscribe();
         resolve();
@@ -109,172 +93,160 @@ export async function signInWithInternetIdentity(
       hasProfile: data.hasProfile,
       needsProfile: data.needsProfile,
       message: data.message,
+      customToken: data.customToken,
     };
   } catch (error) {
-    console.error("[Admin] Error in signInWithInternetIdentity:", error);
     throw error;
   }
 }
 
-/**
- * Call Firebase Cloud Function for creating a profile
- * @param name - User's name
- * @param phone - User's phone number
- * @param role - User's initial role (Client, ServiceProvider, or Admin)
- * @returns Profile data
- */
 export async function createProfile(
   name: string,
   phone: string,
   role: "Client" | "ServiceProvider" | "Admin",
+  email?: string,
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const createProfileFn = httpsCallable(functionsInstance, "createProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await createProfileFn({
-      name,
-      phone,
-      role,
+    const result = await accountActionFn({
+      action: "createProfile",
+      payload: {
+        name,
+        phone,
+        role,
+        email,
+      },
     });
 
     return result.data;
   } catch (error) {
-    console.error("[Admin] Error creating profile:", error);
     throw error;
   }
 }
 
-/**
- * Call Firebase Cloud Function for getting a profile
- * @param userId - Optional user ID, defaults to current user
- * @returns Profile data
- */
+export async function validatePhone(phone: string): Promise<any> {
+  try {
+    const functionsInstance = ensureFunctions();
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
+
+    const result = await accountActionFn({
+      action: "validatePhoneNumber",
+      payload: {
+        phone,
+      },
+    });
+
+    return result.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function getProfile(userId?: string): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const getProfileFn = httpsCallable(functionsInstance, "getProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await getProfileFn({
-      userId,
+    const result = await accountActionFn({
+      action: "getProfile",
+      payload: {
+        userId,
+      },
     });
 
     return result.data;
-  } catch (error) {
-    console.error("[Admin] Error getting profile:", error);
-    throw error;
-  }
+  } catch (error) {}
 }
 
-/**
- * Call Firebase Cloud Function for updating a profile
- * @param name - Optional new name
- * @param phone - Optional new phone number
- * @returns Updated profile data
- */
 export async function updateProfile(
   name?: string,
   phone?: string,
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const updateProfileFn = httpsCallable(functionsInstance, "updateProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await updateProfileFn({
-      name,
-      phone,
+    const result = await accountActionFn({
+      action: "updateProfile",
+      payload: {
+        name,
+        phone,
+      },
     });
 
     return result.data;
   } catch (error) {
-    console.error("[Admin] Error updating profile:", error);
     throw error;
   }
 }
 
-/**
- * Call Firebase Cloud Function for switching user role
- * @returns Updated profile data
- */
 export async function switchUserRole(): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const switchRoleFn = httpsCallable(functionsInstance, "switchUserRole");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await switchRoleFn({});
-
-    return result.data;
-  } catch (error) {
-    console.error("[Admin] Error switching role:", error);
-    throw error;
-  }
-}
-
-/**
- * Call Firebase Cloud Function for getting all service providers
- * @returns List of service providers
- */
-export async function getAllServiceProviders(): Promise<any> {
-  try {
-    const functionsInstance = ensureFunctions();
-    const getProvidersFn = httpsCallable(
-      functionsInstance,
-      "getAllServiceProviders",
-    );
-
-    const result = await getProvidersFn({});
-
-    return result.data;
-  } catch (error) {
-    console.error("[Admin] Error getting service providers:", error);
-    throw error;
-  }
-}
-
-/**
- * Upload profile picture
- */
-export async function uploadProfilePicture(
-  fileName: string,
-  contentType: string,
-  fileData: string, // base64 encoded
-): Promise<any> {
-  try {
-    const functionsInstance = ensureFunctions();
-    const uploadPictureFn = httpsCallable(
-      functionsInstance,
-      "uploadProfilePicture",
-    );
-
-    const result = await uploadPictureFn({
-      fileName,
-      contentType,
-      fileData,
+    const result = await accountActionFn({
+      action: "switchUserRole",
     });
 
     return result.data;
   } catch (error) {
-    console.error("[Admin] Error uploading profile picture:", error);
     throw error;
   }
 }
 
-/**
- * Remove profile picture
- */
-export async function removeProfilePicture(): Promise<any> {
+export async function getAllServiceProviders(): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const removePictureFn = httpsCallable(
-      functionsInstance,
-      "removeProfilePicture",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await removePictureFn({});
+    const result = await accountActionFn({
+      action: "getAllServiceProviders",
+    });
 
     return result.data;
   } catch (error) {
-    console.error("[Admin] Error removing profile picture:", error);
+    throw error;
+  }
+}
+
+export async function uploadProfilePicture(
+  fileName: string,
+  contentType: string,
+  fileData: string,
+): Promise<any> {
+  try {
+    const functionsInstance = ensureFunctions();
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
+
+    const result = await accountActionFn({
+      action: "uploadProfilePicture",
+      payload: {
+        fileName,
+        contentType,
+        fileData,
+      },
+    });
+
+    return result.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function removeProfilePicture(): Promise<any> {
+  try {
+    const functionsInstance = ensureFunctions();
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
+
+    const result = await accountActionFn({
+      action: "removeProfilePicture",
+    });
+
+    return result.data;
+  } catch (error) {
     throw error;
   }
 }

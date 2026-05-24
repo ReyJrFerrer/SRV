@@ -1,43 +1,65 @@
-import { callFirebaseFunction, requireAuth } from "./coreUtils";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseAuth, getFirebaseFunctions } from "./firebaseApp";
 import { AdminServiceError, ServiceData } from "./serviceTypes";
 import { serviceCanister } from "./serviceCanister";
 
-/**
- * Delete a service
- */
+const auth = getFirebaseAuth();
+const getFunctions = () => getFirebaseFunctions();
+
+const requireAuth = () => {
+  if (!auth.currentUser) {
+    throw new AdminServiceError({
+      message: "Authentication required: Please log in as an admin to perform this action",
+      code: "AUTH_REQUIRED",
+    } as AdminServiceError);
+  }
+};
+
 export const deleteService = async (serviceId: string): Promise<void> => {
   try {
     requireAuth();
 
-    await callFirebaseFunction("deleteService", { serviceId });
+    const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+    const result = await serviceActionFn({
+      action: "archiveService",
+      data: { serviceId },
+    });
+
+    const data = result.data as { success: boolean; message?: string };
+    if (!data.success) {
+      throw new AdminServiceError({
+        message: data.message || "Failed to delete service",
+        code: "DELETE_SERVICE_ERROR",
+      } as AdminServiceError);
+    }
   } catch (error) {
     if (error instanceof AdminServiceError) throw error;
     throw new AdminServiceError({
       message: `Failed to delete service: ${error}`,
       code: "DELETE_SERVICE_ERROR",
       details: error,
-    });
+    } as AdminServiceError);
   }
 };
 
-/**
- * Get service packages for a specific service
- */
 export const getServicePackages = async (serviceId: string): Promise<any[]> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getServicePackages", {
-      serviceId,
+    const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
+    const result = await serviceActionFn({
+      action: "getServicePackages",
+      data: { serviceId },
     });
-    return result || [];
+
+    const data = result.data as { success: boolean; packages?: any[] };
+    return data.success ? data.packages || [] : [];
   } catch (error) {
     console.error("Error getting service packages", error);
     return [];
   }
 };
 
-// Get service data from Firebase
 export const getServiceData = async (
   serviceId: string,
 ): Promise<ServiceData | null> => {
@@ -81,7 +103,6 @@ export const getServiceData = async (
       packages: [],
     };
 
-    // Get service packages
     try {
       const packages = await getServicePackages(serviceId);
       serviceData.packages = packages.map((pkg: any) => ({
@@ -103,9 +124,6 @@ export const getServiceData = async (
   }
 };
 
-/**
- * Get all services and bookings for a specific user
- */
 export const getUserServicesAndBookings = async (
   userId: string,
 ): Promise<{
@@ -116,14 +134,23 @@ export const getUserServicesAndBookings = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getUserServicesAndBookings", {
-      userId,
+    const adminActionFn = httpsCallable(getFunctions(), "adminUserAction");
+    const result = await adminActionFn({
+      action: "getUserServicesAndBookings",
+      data: { userId },
     });
 
+    const data = result.data as {
+      success: boolean;
+      services?: any[];
+      clientBookings?: any[];
+      providerBookings?: any[];
+    };
+
     return {
-      offeredServices: result.services || [],
-      clientBookings: result.clientBookings || [],
-      providerBookings: result.providerBookings || [],
+      offeredServices: data.services || [],
+      clientBookings: data.clientBookings || [],
+      providerBookings: data.providerBookings || [],
     };
   } catch (error) {
     console.error("Error getting user services and bookings:", error);
@@ -135,17 +162,18 @@ export const getUserServicesAndBookings = async (
   }
 };
 
-/**
- * Get service count for a specific user
- */
 export const getUserServiceCount = async (userId: string): Promise<number> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getUserServiceCount", {
-      userId,
+    const adminActionFn = httpsCallable(getFunctions(), "adminUserAction");
+    const result = await adminActionFn({
+      action: "getUserServiceCount",
+      data: { userId },
     });
-    return typeof result === "number" ? result : Number(result || 0);
+
+    const data = result.data as { success: boolean; count?: number };
+    return typeof data.count === "number" ? data.count : Number(data.count || 0);
   } catch (error) {
     console.error("Error getting user service count:", error);
     return 0;
