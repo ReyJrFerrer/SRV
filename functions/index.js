@@ -77,25 +77,7 @@ const {
 
 // Import Review Management functions
 const {
-  submitReview,
-  getReview,
-  getBookingReviews,
-  getUserReviews,
-  updateReview,
-  deleteReview,
-  restoreReview,
-  bulkUpdateReviewStatus,
-  calculateProviderRating,
-  calculateServiceRating,
-  calculateUserAverageRating,
-  getAllReviews,
-  getReviewStatistics,
-  flagReview,
-  getProviderReviews,
-  getServiceReviews,
-  submitProviderReview,
-  getClientProviderReviews,
-  getProviderReviewsByProvider,
+  reviewAction,
 } = require("./src/review");
 
 // Import Feedback Management functions
@@ -185,25 +167,7 @@ exports.getWalletDetails = getWalletDetails;
 exports.getAllWallets = getAllWallets;
 
 // Export Review Management Functions
-exports.submitReview = submitReview;
-exports.getReview = getReview;
-exports.getBookingReviews = getBookingReviews;
-exports.getUserReviews = getUserReviews;
-exports.updateReview = updateReview;
-exports.deleteReview = deleteReview;
-exports.restoreReview = restoreReview;
-exports.bulkUpdateReviewStatus = bulkUpdateReviewStatus;
-exports.calculateProviderRating = calculateProviderRating;
-exports.calculateServiceRating = calculateServiceRating;
-exports.calculateUserAverageRating = calculateUserAverageRating;
-exports.getAllReviews = getAllReviews;
-exports.getReviewStatistics = getReviewStatistics;
-exports.flagReview = flagReview;
-exports.getProviderReviews = getProviderReviews;
-exports.getServiceReviews = getServiceReviews;
-exports.submitProviderReview = submitProviderReview;
-exports.getClientProviderReviews = getClientProviderReviews;
-exports.getProviderReviewsByProvider = getProviderReviewsByProvider;
+exports.reviewAction = reviewAction;
 
 
 // Export Feedback Management Functions
