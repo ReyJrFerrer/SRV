@@ -2,7 +2,6 @@
  * SRV Payment Integration Cloud Functions
  *
  * This file exports all the cloud functions for the SRV payment system
- * including Xendit integration for digital payments and wallet top-ups.
  */
 
 const {setGlobalOptions} = require("firebase-functions/v2");
@@ -16,10 +15,7 @@ setGlobalOptions({
 });
 // Import Reputation Bridge functions
 const {
-  initializeReputation,
-  updateUserReputation: updateUserReputationBridge,
-  updateProviderReputation,
-  processReviewForReputation,
+  reputationAction,
 } = require("./src/reputation");
 
 // Import Admin Management functions
@@ -64,16 +60,6 @@ const {
   sendServiceReminders,
 } = require("./src/booking");
 
-// Import Wallet Management functions
-const {
-  getBalance,
-  creditBalance,
-  debitBalance,
-  transferFunds,
-  getTransactionHistory,
-  getWalletDetails,
-  getAllWallets,
-} = require("./src/wallet");
 
 // Import Review Management functions
 const {
@@ -132,10 +118,7 @@ const {
 
 
 // Export Reputation Bridge functions
-exports.initializeReputation = initializeReputation;
-exports.updateUserReputationBridge = updateUserReputationBridge;
-exports.updateProviderReputation = updateProviderReputation;
-exports.processReviewForReputation = processReviewForReputation;
+exports.reputationAction = reputationAction;
 
 
 // Export Account Management functions
@@ -152,15 +135,6 @@ exports.bookingAction = bookingAction;
 // Export Scheduled Booking Functions (cron jobs)
 exports.cancelMissedBookings = cancelMissedBookings;
 exports.sendServiceReminders = sendServiceReminders;
-
-// Export Wallet Management Functions
-exports.getBalance = getBalance;
-exports.creditBalance = creditBalance;
-exports.debitBalance = debitBalance;
-exports.transferFunds = transferFunds;
-exports.getTransactionHistory = getTransactionHistory;
-exports.getWalletDetails = getWalletDetails;
-exports.getAllWallets = getAllWallets;
 
 // Export Review Management Functions
 exports.reviewAction = reviewAction;

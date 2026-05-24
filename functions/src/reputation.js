@@ -5,9 +5,8 @@
  * based math utility instead of the Internet Computer reputation canister.
  */
 
-const functions = require("firebase-functions");
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const {admin, getFirestore} = require("../firebase-admin");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { admin, getFirestore } = require("../firebase-admin");
 
 const {
   BASE_SCORE,
@@ -17,7 +16,6 @@ const {
   determineTrustLevel,
 } = require("./utils/reputationMath");
 
-// Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
   if (process.env.FUNCTIONS_EMULATOR) {
     admin.initializeApp({
@@ -31,10 +29,6 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 
-/**
- * Fetch user data from Firestore
- * @param {string} userId - The user ID
- */
 async function fetchUserData(userId) {
   try {
     const userRef = db.collection("users").doc(userId);
@@ -47,14 +41,12 @@ async function fetchUserData(userId) {
     const userData = userDoc.data();
     const accountAgeMs = new Date(userData.createdAt || new Date().toISOString()).getTime();
 
-    // Get completed bookings count
     const bookingsSnapshot = await db.collection("bookings")
       .where("clientId", "==", userId)
       .where("status", "==", "Completed")
       .get();
     const completedBookings = bookingsSnapshot.size;
 
-    // Get average rating from reviews given by this user
     const reviewsSnapshot = await db.collection("reviews")
       .where("clientId", "==", userId)
       .get();
@@ -72,17 +64,13 @@ async function fetchUserData(userId) {
 
     const averageRating = ratingCount > 0 ? totalRating / ratingCount : null;
 
-    return {completedBookings, averageRating, accountAgeMs};
+    return { completedBookings, averageRating, accountAgeMs };
   } catch (error) {
     console.error("Error fetching user data:", error);
     throw error;
   }
 }
 
-/**
- * Fetch provider data from Firestore
- * @param {string} providerId - The provider ID
- */
 async function fetchProviderData(providerId) {
   try {
     const userRef = db.collection("users").doc(providerId);
@@ -118,25 +106,20 @@ async function fetchProviderData(providerId) {
 
     const averageRating = ratingCount > 0 ? totalRating / ratingCount : null;
 
-    return {completedBookings, averageRating, accountAgeMs};
+    return { completedBookings, averageRating, accountAgeMs };
   } catch (error) {
     console.error("Error fetching provider data:", error);
     throw error;
   }
 }
 
-/**
- * Write reputation and its history subcollection entry
- * @param {string} userId - The user ID
- * @param {Object} reputationData - The reputation data
- */
 async function writeReputationAndHistory(userId, reputationData) {
   const timestamp = Date.now();
   const repRef = db.collection("reputations").doc(userId);
   await repRef.set({
     ...reputationData,
     lastUpdated: timestamp,
-  }, {merge: true});
+  }, { merge: true });
 
   const historyRef = repRef.collection("history").doc(timestamp.toString());
   await historyRef.set({
@@ -145,10 +128,6 @@ async function writeReputationAndHistory(userId, reputationData) {
   });
 }
 
-/**
- * Internal function to initialize reputation
- * @param {string} userId - The user ID
- */
 async function initializeReputationInternal(userId) {
   if (!userId) throw new Error("User ID is required");
 
@@ -157,7 +136,7 @@ async function initializeReputationInternal(userId) {
     const doc = await repRef.get();
 
     if (doc.exists) {
-      return {success: true, data: doc.data(), message: "Reputation already exists"};
+      return { success: true, data: doc.data(), message: "Reputation already exists" };
     }
 
     const defaultRep = {
@@ -171,32 +150,13 @@ async function initializeReputationInternal(userId) {
 
     await writeReputationAndHistory(userId, defaultRep);
 
-    return {success: true, data: defaultRep, message: "Reputation initialized successfully"};
+    return { success: true, data: defaultRep, message: "Reputation initialized successfully" };
   } catch (error) {
     console.error("Error initializing reputation:", error);
     throw error;
   }
 }
 
-exports.initializeReputation = onCall(async (request) => {
-  const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  const payload = data.data || data;
-  const {userId} = payload;
-  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
-
-  try {
-    return await initializeReputationInternal(userId);
-  } catch (error) {
-    throw new HttpsError("internal", error.message);
-  }
-});
-exports.initializeReputationInternal = initializeReputationInternal;
-
-/**
- * Internal function to update user reputation
- * @param {string} userId - The user ID
- */
 async function updateUserReputationInternal(userId) {
   if (!userId) throw new Error("User ID is required");
   try {
@@ -228,31 +188,13 @@ async function updateUserReputationInternal(userId) {
 
     await writeReputationAndHistory(userId, updatedScore);
 
-    return {success: true, data: updatedScore, message: "User reputation updated successfully"};
+    return { success: true, data: updatedScore, message: "User reputation updated successfully" };
   } catch (error) {
     console.error("Error updating user reputation:", error);
     throw error;
   }
 }
 
-exports.updateUserReputation = onCall(async (request) => {
-  const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  const payload = data.data || data;
-  const {userId} = payload;
-  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
-  try {
-    return await updateUserReputationInternal(userId);
-  } catch (error) {
-    throw new HttpsError("internal", error.message);
-  }
-});
-exports.updateUserReputationInternal = updateUserReputationInternal;
-
-/**
- * Internal function to update provider reputation
- * @param {string} providerId - The provider ID
- */
 async function updateProviderReputationInternal(providerId) {
   if (!providerId) throw new Error("Provider ID is required");
   try {
@@ -284,55 +226,13 @@ async function updateProviderReputationInternal(providerId) {
 
     await writeReputationAndHistory(providerId, updatedScore);
 
-    return {success: true, data: updatedScore, message: "Provider reputation updated successfully"};
+    return { success: true, data: updatedScore, message: "Provider reputation updated successfully" };
   } catch (error) {
     console.error("Error updating provider reputation:", error);
     throw error;
   }
 }
 
-exports.updateProviderReputation = onCall(async (request) => {
-  const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  const payload = data.data || data;
-  const {providerId} = payload;
-  if (!providerId) {
-    throw new HttpsError("invalid-argument", "Provider ID is required");
-  }
-  try {
-    return await updateProviderReputationInternal(providerId);
-  } catch (error) {
-    throw new HttpsError("internal", error.message);
-  }
-});
-exports.updateProviderReputationInternal = updateProviderReputationInternal;
-
-/**
- * Internal function to process review for reputation
- * @param {Object} review - The review object
- */
-async function processReviewForReputationInternal(review) {
-  if (!review || !review.id) throw new Error("Review object with ID is required");
-
-  try {
-    // Check if AI analysis indicates review bombing
-    await applyAIAnalysisFlags(review);
-
-    // Update both reputations whenever a review is processed
-    await updateUserReputationInternal(review.clientId);
-    await updateProviderReputationInternal(review.providerId);
-
-    return {success: true, data: {status: "Visible"}};
-  } catch (error) {
-    console.error("Error in processReviewForReputationInternal:", error);
-    throw error;
-  }
-}
-
-/**
- * Apply detection flags based on AI analysis results
- * @param {Object} review - The review object with AI analysis
- */
 async function applyAIAnalysisFlags(review) {
   if (!review.aiAnalysis?.analyzed) {
     return;
@@ -340,7 +240,6 @@ async function applyAIAnalysisFlags(review) {
 
   const aiAnalysis = review.aiAnalysis;
 
-  // Check if AI analysis indicates review bombing patterns
   if (!aiAnalysis.isSuspicious || aiAnalysis.confidence < 0.7) {
     return;
   }
@@ -348,7 +247,6 @@ async function applyAIAnalysisFlags(review) {
   const patterns = aiAnalysis.patterns || [];
   const threatLevel = aiAnalysis.threatLevel;
 
-  // Determine if this warrants a ReviewBomb flag
   const reviewBombPatterns = [
     "template_language",
     "coordinated_pattern",
@@ -362,7 +260,6 @@ async function applyAIAnalysisFlags(review) {
     return;
   }
 
-  // Check if user already has ReviewBomb flag
   const repRef = db.collection("reputations").doc(review.clientId);
   const doc = await repRef.get();
 
@@ -371,12 +268,10 @@ async function applyAIAnalysisFlags(review) {
     existingFlags = doc.data().detectionFlags;
   }
 
-  // Don't add duplicate flags
   if (existingFlags.includes("ReviewBomb")) {
     return;
   }
 
-  // Add ReviewBomb flag
   const updatedFlags = [...existingFlags, "ReviewBomb"];
 
   await repRef.update({
@@ -384,30 +279,24 @@ async function applyAIAnalysisFlags(review) {
     lastUpdated: Date.now(),
   });
 
-  const msg = `[applyAIAnalysisFlags] Added ReviewBomb flag to user ${review.clientId}`;
-  console.log(`${msg} based on AI analysis`);
+  console.log(`[applyAIAnalysisFlags] Added ReviewBomb flag to user ${review.clientId} based on AI analysis`);
 }
 
-exports.processReviewForReputation = onCall(async (request) => {
-  const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  const payload = data.data || data;
-  const {review} = payload;
-  if (!review || !review.id) {
-    throw new HttpsError("invalid-argument", "Review object is required");
-  }
-  try {
-    return await processReviewForReputationInternal(review);
-  } catch (error) {
-    throw new HttpsError("internal", error.message);
-  }
-});
-exports.processReviewForReputationInternal = processReviewForReputationInternal;
+async function processReviewForReputationInternal(review) {
+  if (!review || !review.id) throw new Error("Review object with ID is required");
 
-/**
- * Deduct reputation points for a user who cancelled a booking
- * @param {string} userId - The user ID
- */
+  try {
+    await applyAIAnalysisFlags(review);
+    await updateUserReputationInternal(review.clientId);
+    await updateProviderReputationInternal(review.providerId);
+
+    return { success: true, data: { status: "Visible" } };
+  } catch (error) {
+    console.error("Error in processReviewForReputationInternal:", error);
+    throw error;
+  }
+}
+
 async function deductReputationForCancellationInternal(userId) {
   try {
     const repRef = db.collection("reputations").doc(userId);
@@ -448,26 +337,6 @@ async function deductReputationForCancellationInternal(userId) {
   }
 }
 
-exports.deductReputationForCancellation = onCall(async (request) => {
-  const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  const payload = data.data || data;
-  const {userId} = payload;
-  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
-  try {
-    const result = await deductReputationForCancellationInternal(userId);
-    return {success: true, data: result};
-  } catch (error) {
-    throw new HttpsError("internal", "Failed to deduct reputation points", error);
-  }
-});
-exports.deductReputationForCancellationInternal = deductReputationForCancellationInternal;
-
-/**
- * Deduct reputation for a user who submitted a suspicious review (AI-flagged)
- * Adds a ReviewBomb detection flag and recalculates trust score
- * @param {string} userId - The reviewer's user ID
- */
 async function deductReputationForSuspiciousReviewInternal(userId) {
   try {
     const repRef = db.collection("reputations").doc(userId);
@@ -475,16 +344,15 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
 
     if (!doc.exists) {
       console.log(`[deductReputationForSuspiciousReview] No reputation found for ${userId}`);
-      return {success: false, error: "No reputation found"};
+      return { success: false, error: "No reputation found" };
     }
 
     const data = doc.data();
     const existingFlags = data.detectionFlags || [];
 
     if (existingFlags.includes("ReviewBomb")) {
-      console.log(`[deductReputationForSuspiciousReview] 
-        User ${userId} already has ReviewBomb flag`);
-      return {success: true, data, message: "Already flagged"};
+      console.log(`[deductReputationForSuspiciousReview] User ${userId} already has ReviewBomb flag`);
+      return { success: true, data, message: "Already flagged" };
     }
 
     const updatedFlags = [...existingFlags, "ReviewBomb"];
@@ -508,25 +376,18 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
     await writeReputationAndHistory(userId, updatedScore);
 
     console.log(
-      `[deductReputationForSuspiciousReview] Added ReviewBomb flag to ${userId}. ` +
-      `Trust score: ${data.trustScore} -> ${newTrustScore}`,
+      `[deductReputationForSuspiciousReview] Added ReviewBomb flag to ${userId}. Trust score: ${data.trustScore} -> ${newTrustScore}`,
     );
 
-    return {success: true, data: updatedScore};
+    return { success: true, data: updatedScore };
   } catch (error) {
     console.error("[deductReputationForSuspiciousReview] Error:", error);
     throw error;
   }
 }
-exports.deductReputationForSuspiciousReviewInternal = deductReputationForSuspiciousReviewInternal;
 
-/**
- * Internal function to check the user reputation
- * @param {string} userId - The user ID
- */
 async function checkUserReputationInternal(userId) {
   try {
-    // If not exists, initialize it implicitly
     const repRef = db.collection("reputations").doc(userId);
     const doc = await repRef.get();
 
@@ -541,7 +402,6 @@ async function checkUserReputationInternal(userId) {
         },
       };
     } else {
-      // Return default if not exists
       return {
         success: true,
         data: {
@@ -564,13 +424,7 @@ async function checkUserReputationInternal(userId) {
     };
   }
 }
-exports.checkUserReputationInternal = checkUserReputationInternal;
 
-/**
- * Internal function to set a specific reputation score (admin override)
- * @param {string} userId - The user ID
- * @param {number} reputationScore - The reputation score to set
- */
 async function updateReputationInternal(userId, reputationScore) {
   if (!userId) throw new Error("User ID is required");
   if (reputationScore === undefined || reputationScore === null) {
@@ -603,28 +457,118 @@ async function updateReputationInternal(userId, reputationScore) {
 
     await writeReputationAndHistory(userId, updatedScore);
 
-    return {success: true, data: updatedScore, message: "Reputation updated successfully"};
+    return { success: true, data: updatedScore, message: "Reputation updated successfully" };
   } catch (error) {
     console.error("Error updating reputation:", error);
     throw error;
   }
 }
 
-exports.updateReputation = onCall(async (request) => {
+// ============================================================================
+// SERVICE LAYER FUNCTIONS (INTERNAL)
+// ============================================================================
+
+async function initializeReputation_reputation(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const {userId, reputationScore} = payload;
+  const { userId } = payload;
+
+  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
+
+  try {
+    return await initializeReputationInternal(userId);
+  } catch (error) {
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+async function updateUserReputation_reputation(request) {
+  const data = request.data;
+  const payload = data.data || data;
+  const { userId } = payload;
+
+  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
+
+  try {
+    return await updateUserReputationInternal(userId);
+  } catch (error) {
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+async function updateProviderReputation_reputation(request) {
+  const data = request.data;
+  const payload = data.data || data;
+  const { providerId } = payload;
+
+  if (!providerId) {
+    throw new HttpsError("invalid-argument", "Provider ID is required");
+  }
+
+  try {
+    return await updateProviderReputationInternal(providerId);
+  } catch (error) {
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+async function processReviewForReputation_reputation(request) {
+  const data = request.data;
+  const payload = data.data || data;
+  const { review } = payload;
+
+  if (!review || !review.id) {
+    throw new HttpsError("invalid-argument", "Review object is required");
+  }
+
+  try {
+    return await processReviewForReputationInternal(review);
+  } catch (error) {
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+async function deductReputationForCancellation_reputation(request) {
+  const data = request.data;
+  const payload = data.data || data;
+  const { userId } = payload;
+
+  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
+
+  try {
+    const result = await deductReputationForCancellationInternal(userId);
+    return { success: true, data: result };
+  } catch (error) {
+    throw new HttpsError("internal", "Failed to deduct reputation points", error);
+  }
+}
+
+async function deductReputationForSuspiciousReview_reputation(request) {
+  const data = request.data;
+  const payload = data.data || data;
+  const { userId } = payload;
+
+  if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
+
+  try {
+    return await deductReputationForSuspiciousReviewInternal(userId);
+  } catch (error) {
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+async function updateReputation_reputation(request) {
+  const data = request.data;
+  const context = { auth: request.auth, rawRequest: request };
+  const payload = data.data || data;
+  const { userId, reputationScore } = payload;
 
   const authInfo = (context.auth && context.auth.token) ?
-    {uid: context.auth.uid, isAdmin: context.auth.token.isAdmin || false, hasAuth: true} :
-    {uid: null, isAdmin: false, hasAuth: !!context.auth};
+    { uid: context.auth.uid, isAdmin: context.auth.token.isAdmin || false, hasAuth: true } :
+    { uid: null, isAdmin: false, hasAuth: !!context.auth };
 
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Only ADMIN users can update reputation",
-    );
+    throw new HttpsError("permission-denied", "Only ADMIN users can update reputation");
   }
 
   if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
@@ -637,5 +581,60 @@ exports.updateReputation = onCall(async (request) => {
   } catch (error) {
     throw new HttpsError("internal", error.message);
   }
-});
+}
+
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.reputationAction = onCall(
+  {
+    memory: "256MiB",
+    concurrency: 80,
+    maxInstances: 50,
+  },
+  async (request) => {
+    const { action } = request.data || {};
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+        case "initializeReputation":
+          return await initializeReputation_reputation(request);
+        case "updateUserReputation":
+          return await updateUserReputation_reputation(request);
+        case "updateProviderReputation":
+          return await updateProviderReputation_reputation(request);
+        case "processReviewForReputation":
+          return await processReviewForReputation_reputation(request);
+        case "deductReputationForCancellation":
+          return await deductReputationForCancellation_reputation(request);
+        case "deductReputationForSuspiciousReview":
+          return await deductReputationForSuspiciousReview_reputation(request);
+        case "updateReputation":
+          return await updateReputation_reputation(request);
+        default:
+          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
+  }
+);
+
+// Export internal functions for use by other modules
+exports.initializeReputationInternal = initializeReputationInternal;
+exports.updateUserReputationInternal = updateUserReputationInternal;
+exports.updateProviderReputationInternal = updateProviderReputationInternal;
+exports.processReviewForReputationInternal = processReviewForReputationInternal;
+exports.deductReputationForCancellationInternal = deductReputationForCancellationInternal;
+exports.deductReputationForSuspiciousReviewInternal = deductReputationForSuspiciousReviewInternal;
+exports.checkUserReputationInternal = checkUserReputationInternal;
 exports.updateReputationInternal = updateReputationInternal;
