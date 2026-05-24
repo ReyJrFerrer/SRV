@@ -51,16 +51,7 @@ const {
 
 // Import Account Management functions
 const {
-  createProfile,
-  getProfile,
-  updateProfile,
-  switchUserRole,
-  getAllServiceProviders,
-  getAllUsers,
-  uploadProfilePicture,
-  removeProfilePicture,
-  updateUserActiveStatus,
-  validatePhoneNumber,
+  accountAction
 } = require("./src/account");
 
 // Import Service Management functions
@@ -220,16 +211,7 @@ exports.processReviewForReputation = processReviewForReputation;
 
 
 // Export Account Management functions
-exports.createProfile = createProfile;
-exports.getProfile = getProfile;
-exports.updateProfile = updateProfile;
-exports.switchUserRole = switchUserRole;
-exports.getAllServiceProviders = getAllServiceProviders;
-exports.getAllUsers = getAllUsers;
-exports.uploadProfilePicture = uploadProfilePicture;
-exports.removeProfilePicture = removeProfilePicture;
-exports.updateUserActiveStatus = updateUserActiveStatus;
-exports.validatePhoneNumber = validatePhoneNumber;
+exports.accountAction = accountAction;
 
 
 // Export Service Management functions

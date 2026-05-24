@@ -151,13 +151,16 @@ export async function createProfile(
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const createProfileFn = httpsCallable(functionsInstance, "createProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await createProfileFn({
-      name,
-      phone,
-      role,
-      email,
+    const result = await accountActionFn({
+      action: "createProfile",
+      payload: {
+        name,
+        phone,
+        role,
+        email,
+      }
     });
 
     return result.data;
@@ -173,13 +176,13 @@ export async function createProfile(
 export async function validatePhone(phone: string): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const validatePhoneFn = httpsCallable(
-      functionsInstance,
-      "validatePhoneNumber",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await validatePhoneFn({
-      phone,
+    const result = await accountActionFn({
+      action: "validatePhoneNumber",
+      payload: {
+        phone,
+      }
     });
 
     return result.data;
@@ -196,10 +199,13 @@ export async function validatePhone(phone: string): Promise<any> {
 export async function getProfile(userId?: string): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const getProfileFn = httpsCallable(functionsInstance, "getProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await getProfileFn({
-      userId,
+    const result = await accountActionFn({
+      action: "getProfile",
+      payload: {
+        userId,
+      }
     });
 
     return result.data;
@@ -218,11 +224,14 @@ export async function updateProfile(
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const updateProfileFn = httpsCallable(functionsInstance, "updateProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await updateProfileFn({
-      name,
-      phone,
+    const result = await accountActionFn({
+      action: "updateProfile",
+      payload: {
+        name,
+        phone,
+      }
     });
 
     return result.data;
@@ -238,9 +247,11 @@ export async function updateProfile(
 export async function switchUserRole(): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const switchRoleFn = httpsCallable(functionsInstance, "switchUserRole");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await switchRoleFn({});
+    const result = await accountActionFn({
+      action: "switchUserRole"
+    });
 
     return result.data;
   } catch (error) {
@@ -255,12 +266,11 @@ export async function switchUserRole(): Promise<any> {
 export async function getAllServiceProviders(): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const getProvidersFn = httpsCallable(
-      functionsInstance,
-      "getAllServiceProviders",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await getProvidersFn({});
+    const result = await accountActionFn({
+      action: "getAllServiceProviders"
+    });
 
     return result.data;
   } catch (error) {
@@ -278,15 +288,15 @@ export async function uploadProfilePicture(
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const uploadPictureFn = httpsCallable(
-      functionsInstance,
-      "uploadProfilePicture",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await uploadPictureFn({
-      fileName,
-      contentType,
-      fileData,
+    const result = await accountActionFn({
+      action: "uploadProfilePicture",
+      payload: {
+        fileName,
+        contentType,
+        fileData,
+      }
     });
 
     return result.data;
@@ -301,12 +311,11 @@ export async function uploadProfilePicture(
 export async function removeProfilePicture(): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const removePictureFn = httpsCallable(
-      functionsInstance,
-      "removeProfilePicture",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await removePictureFn({});
+    const result = await accountActionFn({
+      action: "removeProfilePicture"
+    });
 
     return result.data;
   } catch (error) {
