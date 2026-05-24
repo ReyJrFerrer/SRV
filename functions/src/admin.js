@@ -1113,7 +1113,7 @@ exports.getBookingsData = onCall(async (request) => {
  * Auto-reactivate user accounts when suspension period expires
  * Scheduled function that runs every hour to check for expired suspensions
  */
-exports.autoReactivateSuspendedAccounts = onSchedule("0 * * * *", async (_event) => {
+exports.autoReactivateSuspendedAccounts = onSchedule("0 0 * * *", async (_event) => {
   try {
     const now = new Date();
 

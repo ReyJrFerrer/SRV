@@ -2360,7 +2360,7 @@ exports.getServiceInternal = getServiceInternal;
 /**
  * Scheduled job to permanently delete archived services past their deletion date
  */
-exports.processScheduledDeletions = onSchedule("every day 00:00", async (event) => {
+exports.processScheduledDeletions = onSchedule("0 0 * * *", async (event) => {
   const now = new Date().toISOString();
 
   try {

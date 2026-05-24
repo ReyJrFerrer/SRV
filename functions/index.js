@@ -9,7 +9,11 @@ const {setGlobalOptions} = require("firebase-functions/v2");
 const {admin} = require("./firebase-admin");
 
 // Set global options for all functions
-setGlobalOptions({maxInstances: 50, concurrency: 80, region: "asia-southeast1"});
+setGlobalOptions({
+  maxInstances: 1,
+  memory: "256MiB",
+  region: "asia-southeast1",
+});
 // Import Identity Bridge function
 const {signInWithInternetIdentity} = require("./src/auth");
 
@@ -44,12 +48,6 @@ const {
   updateUserPhoneNumber,
 } = require("./src/admin");
 
-// Import Commission functions
-const {
-  calculateCommission,
-  getCategoryTier,
-  getCommissionBreakdown,
-} = require("./src/commission");
 
 // Import Account Management functions
 const {
@@ -220,10 +218,6 @@ exports.updateUserReputationBridge = updateUserReputationBridge;
 exports.updateProviderReputation = updateProviderReputation;
 exports.processReviewForReputation = processReviewForReputation;
 
-// Export Commission functions
-exports.calculateCommission = calculateCommission;
-exports.getCategoryTier = getCategoryTier;
-exports.getCommissionBreakdown = getCommissionBreakdown;
 
 // Export Account Management functions
 exports.createProfile = createProfile;

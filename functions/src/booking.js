@@ -2274,7 +2274,7 @@ exports.releasePayment = onCall(async (request) => {
  * Cancel bookings that have missed their time slot
  * Scheduled function that runs every minute (for debugging)
  */
-exports.cancelMissedBookings = onSchedule("* * * * *", async (_event) => {
+exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
   console.log("[cancelMissedBookings] scheduled function running...");
   console.log(`[cancelMissedBookings] Current time: ${new Date().toISOString()}`);
 
