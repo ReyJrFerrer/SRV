@@ -1,4 +1,3 @@
-const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {admin, getFirestore} = require("../firebase-admin");
@@ -27,6 +26,7 @@ const SETTINGS_KEY = "system_settings";
 
 /**
  * Get user role
+ * @param {Object} request
  */
 async function getUserRoleService(request) {
   const data = request.data;
@@ -58,6 +58,7 @@ async function getUserRoleService(request) {
 
 /**
  * List all user roles
+ * @param {Object} request
  */
 async function listUserRolesService(request) {
   const data = request.data;
@@ -83,10 +84,10 @@ async function listUserRolesService(request) {
 
 /**
  * Check if user has specific role
+ * @param {Object} request
  */
 async function hasRoleService(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userId, role} = payload;
 
@@ -107,6 +108,7 @@ async function hasRoleService(request) {
 
 /**
  * Update system settings
+ * @param {Object} request
  */
 async function setSettingsService(request) {
   const data = request.data;
@@ -147,6 +149,7 @@ async function setSettingsService(request) {
 
 /**
  * Get current system settings
+ * @param {Object} request
  */
 async function getSettingsService(request) {
   const data = request.data;
@@ -187,6 +190,7 @@ async function getSettingsService(request) {
 
 /**
  * Change admin access password
+ * @param {Object} request
  */
 async function changeAdminPasswordService(request) {
   const data = request.data;
@@ -267,10 +271,9 @@ async function changeAdminPasswordService(request) {
 
 /**
  * Check if admin password is set
+ * @param {Object} _request
  */
-async function isAdminPasswordSetService(request) {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
+async function isAdminPasswordSetService(_request) {
   try {
     const settingsDoc = await db.collection("systemSettings").doc(SETTINGS_KEY).get();
     const settings = settingsDoc.exists ? settingsDoc.data() : {};
@@ -287,10 +290,10 @@ async function isAdminPasswordSetService(request) {
 
 /**
  * Verify admin password
+ * @param {Object} request
  */
 async function verifyAdminPasswordService(request) {
   const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
   const payload = data;
   const {password} = payload;
 
@@ -324,6 +327,7 @@ async function verifyAdminPasswordService(request) {
 
 /**
  * Get system statistics
+ * @param {Object} request
  */
 async function getSystemStatsService(request) {
   const data = request.data;
@@ -416,6 +420,7 @@ async function getSystemStatsService(request) {
 
 /**
  * Get all users
+ * @param {Object} request
  */
 async function getAllUsersService(request) {
   const data = request.data;
@@ -455,6 +460,7 @@ async function getAllUsersService(request) {
 
 /**
  * Get all user lock statuses from users collection
+ * @param {Object} request
  */
 async function getAllUserLockStatusesService(request) {
   const data = request.data;
@@ -486,6 +492,7 @@ async function getAllUserLockStatusesService(request) {
 
 /**
  * Get user services and bookings combined
+ * @param {Object} request
  */
 async function getUserServicesAndBookingsService(request) {
   const data = request.data;
@@ -537,6 +544,7 @@ async function getUserServicesAndBookingsService(request) {
 
 /**
  * Get user service count
+ * @param {Object} request
  */
 async function getUserServiceCountService(request) {
   const data = request.data;
@@ -566,10 +574,10 @@ async function getUserServiceCountService(request) {
 
 /**
  * Lock or unlock user account with optional time-based suspension
- * @param {Object} data - Request data
- * @param {string} data.userId - User ID to lock/unlock
- * @param {boolean} data.locked - Whether to lock the account
- * @param {number|null} data.suspensionDurationDays
+ * @param {Object} request
+ * @param {string} request.data.userId - User ID to lock/unlock
+ * @param {boolean} request.data.locked - Whether to lock the account
+ * @param {number|null} request.data.suspensionDurationDays
  * Duration in days (7, 30, custom number, or null for indefinite)
  */
 async function lockUserAccountService(request) {
@@ -632,6 +640,7 @@ async function lockUserAccountService(request) {
 
 /**
  * Update user reputation score
+ * @param {Object} request
  */
 async function updateUserReputationService(request) {
   const data = request.data;
@@ -658,6 +667,10 @@ async function updateUserReputationService(request) {
   }
 }
 
+/**
+ * Update user phone number
+ * @param {Object} request
+ */
 async function updateUserPhoneNumberService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -673,10 +686,7 @@ async function updateUserPhoneNumberService(request) {
   }
 
   if (!userId || typeof userId !== "string") {
-    throw new HttpsError(
-      "invalid-argument",
-      "User ID is required",
-    );
+    throw new HttpsError("invalid-argument", "User ID is required");
   }
 
   const normalizedPhone = typeof phone === "string" ? phone.replace(/\D/g, "") : "";
@@ -713,6 +723,7 @@ async function updateUserPhoneNumberService(request) {
 
 /**
  * Update certificate validation status
+ * @param {Object} request
  */
 async function updateCertificateValidationStatusService(request) {
   const data = request.data;
@@ -826,6 +837,7 @@ async function updateCertificateValidationStatusService(request) {
 /**
  * Get validated certificates
  * Returns certificates with their service information
+ * @param {Object} request
  */
 async function getValidatedCertificatesService(request) {
   const data = request.data;
@@ -889,6 +901,7 @@ async function getValidatedCertificatesService(request) {
 /**
  * Get rejected certificates
  * Returns certificates with their service information
+ * @param {Object} request
  */
 async function getRejectedCertificatesService(request) {
   const data = request.data;
@@ -951,6 +964,7 @@ async function getRejectedCertificatesService(request) {
 
 /**
  * Get all services with certificates for validation
+ * @param {Object} request
  */
 async function getServicesWithCertificatesService(request) {
   const data = request.data;
@@ -1021,6 +1035,7 @@ async function getServicesWithCertificatesService(request) {
 
 /**
  * Get pending certificate validations
+ * @param {Object} request
  */
 async function getPendingCertificateValidationsService(request) {
   const data = request.data;
@@ -1050,6 +1065,10 @@ async function getPendingCertificateValidationsService(request) {
   }
 }
 
+/**
+ * Get bookings data
+ * @param {Object} request
+ */
 async function getBookingsDataService(request) {
   const {auth: callerAuth} = request;
 
@@ -1167,6 +1186,7 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 0 * * *", async (_event)
 
 /**
  * Auto-create admin profile and assign role for development
+ * @param {Object} request
  */
 async function createAdminProfileService(request) {
   const data = request.data;
@@ -1336,16 +1356,20 @@ exports.adminUserAction = onCall(
       case "getSystemStats": return await getSystemStatsService(innerRequest);
       case "getAllUsers": return await getAllUsersService(innerRequest);
       case "getAllUserLockStatuses": return await getAllUserLockStatusesService(innerRequest);
-      case "getUserServicesAndBookings": return await getUserServicesAndBookingsService(innerRequest);
+      case "getUserServicesAndBookings":
+        return await getUserServicesAndBookingsService(innerRequest);
       case "getUserServiceCount": return await getUserServiceCountService(innerRequest);
       case "lockUserAccount": return await lockUserAccountService(innerRequest);
       case "updateUserReputation": return await updateUserReputationService(innerRequest);
       case "updateUserPhoneNumber": return await updateUserPhoneNumberService(innerRequest);
-      case "updateCertificateValidationStatus": return await updateCertificateValidationStatusService(innerRequest);
+      case "updateCertificateValidationStatus":
+        return await updateCertificateValidationStatusService(innerRequest);
       case "getValidatedCertificates": return await getValidatedCertificatesService(innerRequest);
       case "getRejectedCertificates": return await getRejectedCertificatesService(innerRequest);
-      case "getServicesWithCertificates": return await getServicesWithCertificatesService(innerRequest);
-      case "getPendingCertificateValidations": return await getPendingCertificateValidationsService(innerRequest);
+      case "getServicesWithCertificates":
+        return await getServicesWithCertificatesService(innerRequest);
+      case "getPendingCertificateValidations":
+        return await getPendingCertificateValidationsService(innerRequest);
       case "getBookingsData": return await getBookingsDataService(innerRequest);
       case "createAdminProfile": return await createAdminProfileService(innerRequest);
       default:
