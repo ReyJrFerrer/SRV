@@ -16,7 +16,6 @@ export default function ClientLayout() {
           <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
           <Stack.Screen name="search-results" options={{ title: "Search Results" }} />
           <Stack.Screen name="booking" options={{ title: "My Bookings" }} />
-          <Stack.Screen name="booking/index" options={{ title: "My Bookings" }} />
           <Stack.Screen name="booking/confirmation" options={{ title: "Booking Confirmation" }} />
           <Stack.Screen name="booking/payment-pending" options={{ title: "Payment Pending" }} />
           <Stack.Screen name="book/[id]" options={{ title: "Book Service" }} />

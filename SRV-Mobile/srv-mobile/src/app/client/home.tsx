@@ -1,4 +1,5 @@
 import { Text, ScrollView, StyleSheet } from "react-native";
+import ClientHeader from "@/components/client/header";
 
 export default function ClientHome() {
   return (
@@ -7,7 +8,8 @@ export default function ClientHome() {
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.content}
     >
-      <Text>Client Home</Text>
+      <ClientHeader />
+      <Text style={styles.bodyText}>Client Home</Text>
     </ScrollView>
   );
 }
@@ -18,7 +20,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  bodyText: {
+    fontSize: 16,
+    color: "#374151",
+    textAlign: "center",
+    paddingVertical: 32,
   },
 });

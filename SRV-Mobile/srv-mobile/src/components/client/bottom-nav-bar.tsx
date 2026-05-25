@@ -1,21 +1,21 @@
 import { View, Pressable, Text, StyleSheet } from "react-native";
 import { Link, usePathname, type Href } from "expo-router";
-import { SymbolView, type SFSymbol } from "expo-symbols";
+import { SymbolView } from "expo-symbols";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface NavItem {
   to: Href;
   path: string;
   label: string;
-  icon: SFSymbol;
+  icon: { ios: string; android: string; web: string };
 }
 
 const navItems: NavItem[] = [
-  { to: "/client/home" as Href, path: "/client/home", label: "Home", icon: "house.fill" as SFSymbol },
-  { to: "/client/booking" as Href, path: "/client/booking", label: "Booking", icon: "calendar" as SFSymbol },
-  { to: "/client/chat" as Href, path: "/client/chat", label: "Chat", icon: "message.fill" as SFSymbol },
-  { to: "/client/notifications" as Href, path: "/client/notifications", label: "Notifications", icon: "bell.fill" as SFSymbol },
-  { to: "/client/profile" as Href, path: "/client/profile", label: "Profile", icon: "person.circle.fill" as SFSymbol },
+  { to: "/client/home" as Href, path: "/client/home", label: "Home", icon: { ios: "house.fill", android: "home", web: "home" } },
+  { to: "/client/booking" as Href, path: "/client/booking", label: "Booking", icon: { ios: "calendar", android: "calendar_month", web: "calendar_month" } },
+  { to: "/client/chat" as Href, path: "/client/chat", label: "Chat", icon: { ios: "message.fill", android: "chat", web: "chat" } },
+  { to: "/client/notifications" as Href, path: "/client/notifications", label: "Notifications", icon: { ios: "bell.fill", android: "notifications", web: "notifications" } },
+  { to: "/client/profile" as Href, path: "/client/profile", label: "Profile", icon: { ios: "person.circle.fill", android: "person", web: "person" } },
 ];
 
 export default function BottomNavBar() {
