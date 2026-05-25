@@ -1,4 +1,3 @@
-const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {getFirestore} = require("../firebase-admin");
@@ -178,6 +177,7 @@ async function deleteImagesFromStorage(mediaItems) {
 
 /**
  * Create a new service listing
+ * @param {Object} request
  */
 async function createService_service(request) {
   const data = request.data;
@@ -354,10 +354,10 @@ async function createService_service(request) {
 }
 /**
  * Get service by ID
+ * @param {Object} request
  */
 async function getService_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId} = payload;
 
@@ -382,10 +382,10 @@ async function getService_service(request) {
 }
 /**
  * Get services by provider
+ * @param {Object} request
  */
 async function getServicesByProvider_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {providerId} = payload;
 
@@ -414,10 +414,10 @@ async function getServicesByProvider_service(request) {
 }
 /**
  * Get services by category
+ * @param {Object} request
  */
 async function getServicesByCategory_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {categoryId} = payload;
 
@@ -454,6 +454,7 @@ async function getServicesByCategory_service(request) {
 }
 /**
  * Update service status
+ * @param {Object} request
  */
 async function updateServiceStatus_service(request) {
   const data = request.data;
@@ -514,10 +515,10 @@ async function updateServiceStatus_service(request) {
 }
 /**
  * Search services by location
+ * @param {Object} request
  */
 async function searchServicesByLocation_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {userLocation, maxDistance, categoryId} = payload;
 
@@ -560,6 +561,7 @@ async function searchServicesByLocation_service(request) {
 }
 /**
  * Update service
+ * @param {Object} request
  */
 async function updateService_service(request) {
   const data = request.data;
@@ -749,6 +751,7 @@ async function updateService_service(request) {
 }
 /**
  * Archive a service (soft delete)
+ * @param {Object} request
  */
 async function archiveService_service(request) {
   const data = request.data;
@@ -814,6 +817,7 @@ async function archiveService_service(request) {
 
 /**
  * Restore an archived service
+ * @param {Object} request
  */
 async function restoreService_service(request) {
   const data = request.data;
@@ -883,6 +887,7 @@ async function restoreService_service(request) {
 }
 /**
  * Permanently delete a service
+ * @param {Object} request
  */
 async function permanentDeleteService_service(request) {
   const data = request.data;
@@ -1023,10 +1028,9 @@ async function permanentDeleteService_service(request) {
 }
 /**
  * Get all services
+ * @param {Object} _request
  */
-async function getAllServices_service(request) {
-  const _data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
+async function getAllServices_service(_request) {
   try {
     const servicesSnapshot = await db.collection("services").get();
 
@@ -1050,6 +1054,7 @@ async function getAllServices_service(request) {
 
 /**
  * Upload additional images to existing service
+ * @param {Object} request
  */
 async function uploadServiceImages_service(request) {
   const data = request.data;
@@ -1127,6 +1132,7 @@ async function uploadServiceImages_service(request) {
 }
 /**
  * Remove specific image from service
+ * @param {Object} request
  */
 async function removeServiceImage_service(request) {
   const data = request.data;
@@ -1203,6 +1209,7 @@ async function removeServiceImage_service(request) {
 }
 /**
  * Reorder service images
+ * @param {Object} request
  */
 async function reorderServiceImages_service(request) {
   const data = request.data;
@@ -1275,6 +1282,7 @@ async function reorderServiceImages_service(request) {
 
 /**
  * Upload additional certificates to existing service
+ * @param {Object} request
  */
 async function uploadServiceCertificates_service(request) {
   const data = request.data;
@@ -1352,6 +1360,7 @@ async function uploadServiceCertificates_service(request) {
 }
 /**
  * Remove specific certificate from service
+ * @param {Object} request
  */
 async function removeServiceCertificate_service(request) {
   const data = request.data;
@@ -1430,6 +1439,7 @@ async function removeServiceCertificate_service(request) {
 }
 /**
  * Verify service manually
+ * @param {Object} request
  */
 async function verifyService_service(request) {
   const data = request.data;
@@ -1486,6 +1496,7 @@ async function verifyService_service(request) {
 
 /**
  * Add a new category
+ * @param {Object} request
  */
 async function addCategory_service(request) {
   const data = request.data;
@@ -1548,10 +1559,9 @@ async function addCategory_service(request) {
 }
 /**
  * Get all categories
+ * @param {Object} _request
  */
-async function getAllCategories_service(request) {
-  const _data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
+async function getAllCategories_service(_request) {
   try {
     // Defensively initialize categories if missing
     await initializeCategoriesDirectly();
@@ -1700,6 +1710,7 @@ async function initializeCategoriesDirectly() {
 
 /**
  * Create a new service package
+ * @param {Object} request
  */
 async function createServicePackage_service(request) {
   const data = request.data;
@@ -1792,10 +1803,10 @@ async function createServicePackage_service(request) {
 }
 /**
  * Get all packages for a service
+ * @param {Object} request
  */
 async function getServicePackages_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId} = payload;
 
@@ -1831,10 +1842,10 @@ async function getServicePackages_service(request) {
 }
 /**
  * Get a specific package by ID
+ * @param {Object} request
  */
 async function getPackage_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {packageId} = payload;
 
@@ -1860,6 +1871,7 @@ async function getPackage_service(request) {
 }
 /**
  * Update a service package
+ * @param {Object} request
  */
 async function updateServicePackage_service(request) {
   const data = request.data;
@@ -1939,6 +1951,7 @@ async function updateServicePackage_service(request) {
 }
 /**
  * Delete a service package
+ * @param {Object} request
  */
 async function deleteServicePackage_service(request) {
   const data = request.data;
@@ -2005,10 +2018,10 @@ async function deleteServicePackage_service(request) {
 
 /**
  * Update service rating (called by Review system)
+ * @param {Object} request
  */
 async function updateServiceRating_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId, newRating, newReviewCount} = payload;
 
@@ -2046,6 +2059,7 @@ async function updateServiceRating_service(request) {
 
 /**
  * Set service availability
+ * @param {Object} request
  */
 async function setServiceAvailability_service(request) {
   const data = request.data;
@@ -2144,10 +2158,10 @@ async function setServiceAvailability_service(request) {
 }
 /**
  * Get service availability
+ * @param {Object} request
  */
 async function getServiceAvailability_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId} = payload;
 
@@ -2218,10 +2232,10 @@ function getDayOfWeekFromTimestamp(timestamp) {
 
 /**
  * Get available time slots for a specific date and service
+ * @param {Object} request
  */
 async function getAvailableTimeSlots_service(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {serviceId, date} = payload;
 
@@ -2305,28 +2319,13 @@ async function getAllServicesInternal() {
   return services;
 }
 
-/**
- * Internal function to get service by ID
- *
- * For use by other Cloud Functions (e.g., admin.js)
- * @param {string} serviceId - Service ID
- * @return {Promise<object|null>} Service object or null if not found
- */
-async function getServiceInternal(serviceId) {
-  const serviceDoc = await db.collection("services").doc(serviceId).get();
-  if (!serviceDoc.exists) {
-    return null;
-  }
-  return {id: serviceDoc.id, ...serviceDoc.data()};
-}
-
 // Export internal functions for use by other modules
 
 
 /**
  * Scheduled job to permanently delete archived services past their deletion date
  */
-exports.processScheduledDeletions = onSchedule("0 0 * * *", async (event) => {
+exports.processScheduledDeletions = onSchedule("0 0 * * *", async (_event) => {
   const now = new Date().toISOString();
 
   try {

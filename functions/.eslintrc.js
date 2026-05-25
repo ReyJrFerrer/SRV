@@ -58,6 +58,12 @@ module.exports = {
         "no-unused-expressions": "off", // Allow chai expressions
       },
     },
+    {
+      files: ["src/service.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_service"]}],
+      },
+    },
   ],
   globals: {
     // Firebase Functions globals
