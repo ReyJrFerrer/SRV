@@ -32,6 +32,7 @@ module.exports = {
       "error",
       {
         requireReturn: false, // Don't require @return for all functions
+        requireReturnDescription: false, // Don't require return descriptions
         requireParamDescription: false, // Don't require param descriptions
       },
     ],
@@ -80,6 +81,12 @@ module.exports = {
       files: ["src/booking.js"],
       rules: {
         "camelcase": ["error", {allow: ["_booking"]}],
+      },
+    },
+    {
+      files: ["src/notification.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_notification", "app_id", "include_player_ids"]}],
       },
     },
   ],

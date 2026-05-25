@@ -1,4 +1,3 @@
-const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {admin, getFirestore} = require("../firebase-admin");
 
@@ -256,7 +255,6 @@ exports.uploadMedia = onCall(async (request) => {
  */
 exports.getMediaItem = onCall(async (request) => {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   console.log("Media ID", data.data);
   const {mediaId} = data.data || data;
 
@@ -292,7 +290,6 @@ exports.getMediaItem = onCall(async (request) => {
  */
 exports.getFileData = onCall(async (request) => {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   const {mediaId} = data;
 
   if (!mediaId) {

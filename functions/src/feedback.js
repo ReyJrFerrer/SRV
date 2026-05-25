@@ -1,4 +1,3 @@
-const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {getFirestore} = require("../firebase-admin");
 
@@ -75,6 +74,7 @@ function validateDescription(description) {
 
 /**
  * Submit feedback
+ * @param {Object} request The callable request
  */
 async function submitFeedbackService(request) {
   const data = request.data;
@@ -146,6 +146,7 @@ async function submitFeedbackService(request) {
 }
 /**
  * Get all feedback (admin function)
+ * @param {Object} request The callable request
  */
 async function getAllFeedbackService(request) {
   const data = request.data;
@@ -180,6 +181,7 @@ async function getAllFeedbackService(request) {
 }
 /**
  * Get feedback by user
+ * @param {Object} request The callable request
  */
 async function getMyFeedbackService(request) {
   const data = request.data;
@@ -215,10 +217,10 @@ async function getMyFeedbackService(request) {
 }
 /**
  * Get feedback statistics
+ * @param {Object} request The callable request
  */
 async function getFeedbackStatsService(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   console.log("Get Feedback Stats Payload", data);
 
   try {
@@ -292,10 +294,10 @@ async function getFeedbackStatsService(request) {
 }
 /**
  * Get feedback by ID
+ * @param {Object} request The callable request
  */
 async function getFeedbackByIdService(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data || data;
   const {feedbackId} = payload;
@@ -326,10 +328,10 @@ async function getFeedbackByIdService(request) {
 }
 /**
  * Get recent feedback (limited number)
+ * @param {Object} request The callable request
  */
 async function getRecentFeedbackService(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data || data;
   const {limit} = payload;
@@ -363,6 +365,7 @@ async function getRecentFeedbackService(request) {
 
 /**
  * Submit report
+ * @param {Object} request The callable request
  */
 async function submitReportService(request) {
   const data = request.data;
@@ -495,6 +498,7 @@ async function submitReportService(request) {
 /**
  * Get all reports (admin function)
  * Mirrors the Motoko getAllReports function
+ * @param {Object} request The callable request
  */
 async function getAllReportsService(request) {
   const data = request.data;
@@ -525,6 +529,7 @@ async function getAllReportsService(request) {
 }
 /**
  * Get reports by user
+ * @param {Object} request The callable request
  */
 async function getMyReportsService(request) {
   const data = request.data;
@@ -560,6 +565,7 @@ async function getMyReportsService(request) {
 }
 /**
  * Update report status (admin function)
+ * @param {Object} request The callable request
  */
 async function updateReportStatusService(request) {
   const data = request.data;
@@ -619,10 +625,10 @@ async function updateReportStatusService(request) {
 }
 /**
  * Get report statistics
+ * @param {Object} request The callable request
  */
 async function getReportStatsService(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data || data;
   console.log("Get Report Stats Payload", payload);
@@ -662,10 +668,10 @@ async function getReportStatsService(request) {
 }
 /**
  * Get report by ID
+ * @param {Object} request The callable request
  */
 async function getReportByIdService(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data || data;
   const {reportId} = payload;
@@ -696,10 +702,10 @@ async function getReportByIdService(request) {
 }
 /**
  * Get recent reports (limited number)
+ * @param {Object} request The callable request
  */
 async function getRecentReportsService(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
   const payload = data.data || data;
   const {limit} = payload;

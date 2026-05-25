@@ -69,6 +69,12 @@ const NOTIFICATION_STATUS = {
   PUSH_SENT_AND_READ: "push_sent_and_read",
 };
 
+/**
+ * Get authentication info from context and data
+ * @param {Object} context The callable context
+ * @param {Object} data The request data
+ * @return {Object} Authentication info
+ */
 function getAuthInfo(context, data) {
   const auth = context.auth || data.auth;
   return {
@@ -78,6 +84,13 @@ function getAuthInfo(context, data) {
   };
 }
 
+/**
+ * Generate an href for a notification based on type and user type
+ * @param {string} notificationType The type of notification
+ * @param {string} userType The user type (client or provider)
+ * @param {string} entityId The related entity ID
+ * @return {string} The generated href path
+ */
 function generateNotificationHref(notificationType, userType, entityId) {
   if (notificationType === NOTIFICATION_TYPES.GENERIC && (!entityId || entityId === null)) {
     return "/";
@@ -111,6 +124,12 @@ function generateNotificationHref(notificationType, userType, entityId) {
   }
 }
 
+/**
+ * Check if a user is spamming notifications
+ * @param {string} userId The user ID
+ * @param {string} notificationType The notification type
+ * @return {Promise<boolean>} Whether the user is spamming
+ */
 async function isSpamming(userId, notificationType) {
   const spamKey = `${userId}_${notificationType}`;
   const now = Date.now();
@@ -134,6 +153,12 @@ async function isSpamming(userId, notificationType) {
   }
 }
 
+/**
+ * Update the notification frequency tracker for a user
+ * @param {string} userId The user ID
+ * @param {string} notificationType The notification type
+ * @return {Promise<void>}
+ */
 async function updateNotificationFrequency(userId, notificationType) {
   const spamKey = `${userId}_${notificationType}`;
   const now = Date.now();
@@ -168,6 +193,12 @@ async function updateNotificationFrequency(userId, notificationType) {
   }
 }
 
+/**
+ * Send a push notification via OneSignal
+ * @param {string} userId The target user ID
+ * @param {Object} notification The notification data
+ * @return {Promise<void>}
+ */
 async function sendOneSignalNotification(userId, notification) {
   try {
     const userDoc = await db.collection("users").doc(userId).get();
@@ -251,6 +282,11 @@ async function sendOneSignalNotification(userId, notification) {
 // SERVICE LAYER FUNCTIONS (INTERNAL)
 // ============================================================================
 
+/**
+ * Create a new notification
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function createNotification_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -341,6 +377,11 @@ async function createNotification_notification(request) {
   }
 }
 
+/**
+ * Get notifications for a user
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function getUserNotifications_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -404,6 +445,11 @@ async function getUserNotifications_notification(request) {
   }
 }
 
+/**
+ * Mark a notification as read
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function markNotificationAsRead_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -432,7 +478,10 @@ async function markNotificationAsRead_notification(request) {
       const notification = notificationDoc.data();
 
       if (notification.userId !== authInfo.uid && !authInfo.isAdmin) {
-        throw new HttpsError("permission-denied", "You can only mark your own notifications as read");
+        throw new HttpsError(
+          "permission-denied",
+          "You can only mark your own notifications as read",
+        );
       }
 
       let newStatus = NOTIFICATION_STATUS.READ;
@@ -456,6 +505,11 @@ async function markNotificationAsRead_notification(request) {
   }
 }
 
+/**
+ * Mark a notification as push sent
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function markNotificationAsPushSent_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -508,6 +562,11 @@ async function markNotificationAsPushSent_notification(request) {
   }
 }
 
+/**
+ * Get notifications that need to be pushed
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function getNotificationsForPush_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -557,6 +616,11 @@ async function getNotificationsForPush_notification(request) {
   }
 }
 
+/**
+ * Store a OneSignal player ID for a user
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function storeOneSignalPlayerId_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -613,6 +677,11 @@ async function storeOneSignalPlayerId_notification(request) {
   }
 }
 
+/**
+ * Remove a OneSignal player ID for a user
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function removeOneSignalPlayerId_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -646,6 +715,11 @@ async function removeOneSignalPlayerId_notification(request) {
   }
 }
 
+/**
+ * Get notification statistics for a user
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function getNotificationStats_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -702,6 +776,11 @@ async function getNotificationStats_notification(request) {
   }
 }
 
+/**
+ * Mark all notifications as read for a user
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function markAllNotificationsAsRead_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -746,6 +825,11 @@ async function markAllNotificationsAsRead_notification(request) {
   }
 }
 
+/**
+ * Check if a user can receive a notification type
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function canReceiveNotification_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -770,6 +854,11 @@ async function canReceiveNotification_notification(request) {
   }
 }
 
+/**
+ * Delete a notification
+ * @param {Object} request The callable request
+ * @return {Promise<Object>}
+ */
 async function deleteNotification_notification(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
