@@ -29,6 +29,11 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 
+/**
+ * Fetch user data for reputation calculation
+ * @param {string} userId
+ * @return {Promise<Object>} Result object
+ */
 async function fetchUserData(userId) {
   try {
     const userRef = db.collection("users").doc(userId);
@@ -71,6 +76,11 @@ async function fetchUserData(userId) {
   }
 }
 
+/**
+ * Fetch provider data for reputation calculation
+ * @param {string} providerId
+ * @return {Promise<Object>} Result object
+ */
 async function fetchProviderData(providerId) {
   try {
     const userRef = db.collection("users").doc(providerId);
@@ -113,6 +123,12 @@ async function fetchProviderData(providerId) {
   }
 }
 
+/**
+ * Write reputation data and history
+ * @param {string} userId
+ * @param {Object} reputationData
+ * @return {Promise<void>} Promise on completion
+ */
 async function writeReputationAndHistory(userId, reputationData) {
   const timestamp = Date.now();
   const repRef = db.collection("reputations").doc(userId);
@@ -128,6 +144,11 @@ async function writeReputationAndHistory(userId, reputationData) {
   });
 }
 
+/**
+ * Initialize reputation for a new user
+ * @param {string} userId
+ * @return {Promise<Object>} Result object
+ */
 async function initializeReputationInternal(userId) {
   if (!userId) throw new Error("User ID is required");
 
@@ -157,6 +178,11 @@ async function initializeReputationInternal(userId) {
   }
 }
 
+/**
+ * Update user reputation score
+ * @param {string} userId
+ * @return {Promise<Object>} Result object
+ */
 async function updateUserReputationInternal(userId) {
   if (!userId) throw new Error("User ID is required");
   try {
@@ -195,6 +221,11 @@ async function updateUserReputationInternal(userId) {
   }
 }
 
+/**
+ * Update provider reputation score
+ * @param {string} providerId
+ * @return {Promise<Object>} Result object
+ */
 async function updateProviderReputationInternal(providerId) {
   if (!providerId) throw new Error("Provider ID is required");
   try {
@@ -233,6 +264,11 @@ async function updateProviderReputationInternal(providerId) {
   }
 }
 
+/**
+ * Apply AI analysis flags to detect review bombing
+ * @param {Object} review
+ * @return {Promise<void>} Promise on completion
+ */
 async function applyAIAnalysisFlags(review) {
   if (!review.aiAnalysis?.analyzed) {
     return;
@@ -279,9 +315,16 @@ async function applyAIAnalysisFlags(review) {
     lastUpdated: Date.now(),
   });
 
-  console.log(`[applyAIAnalysisFlags] Added ReviewBomb flag to user ${review.clientId} based on AI analysis`);
+  console.log(
+    `[applyAIAnalysisFlags] Added ReviewBomb flag to user ${review.clientId} based on AI analysis`,
+  );
 }
 
+/**
+ * Process a review through the reputation pipeline
+ * @param {Object} review
+ * @return {Promise<Object>} Result object
+ */
 async function processReviewForReputationInternal(review) {
   if (!review || !review.id) throw new Error("Review object with ID is required");
 
@@ -297,6 +340,11 @@ async function processReviewForReputationInternal(review) {
   }
 }
 
+/**
+ * Deduct reputation points for booking cancellation
+ * @param {string} userId
+ * @return {Promise<Object>} Result object
+ */
 async function deductReputationForCancellationInternal(userId) {
   try {
     const repRef = db.collection("reputations").doc(userId);
@@ -337,6 +385,11 @@ async function deductReputationForCancellationInternal(userId) {
   }
 }
 
+/**
+ * Deduct reputation for suspicious review activity
+ * @param {string} userId
+ * @return {Promise<Object>} Result object
+ */
 async function deductReputationForSuspiciousReviewInternal(userId) {
   try {
     const repRef = db.collection("reputations").doc(userId);
@@ -351,7 +404,9 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
     const existingFlags = data.detectionFlags || [];
 
     if (existingFlags.includes("ReviewBomb")) {
-      console.log(`[deductReputationForSuspiciousReview] User ${userId} already has ReviewBomb flag`);
+      console.log(
+        `[deductReputationForSuspiciousReview] User ${userId} already has ReviewBomb flag`,
+      );
       return {success: true, data, message: "Already flagged"};
     }
 
@@ -376,7 +431,8 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
     await writeReputationAndHistory(userId, updatedScore);
 
     console.log(
-      `[deductReputationForSuspiciousReview] Added ReviewBomb flag to ${userId}. Trust score: ${data.trustScore} -> ${newTrustScore}`,
+      `[deductReputationForSuspiciousReview] Added ReviewBomb flag to ${userId}.` +
+      ` Trust score: ${data.trustScore} -> ${newTrustScore}`,
     );
 
     return {success: true, data: updatedScore};
@@ -386,6 +442,11 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
   }
 }
 
+/**
+ * Check user reputation data
+ * @param {string} userId
+ * @return {Promise<Object>} Result object
+ */
 async function checkUserReputationInternal(userId) {
   try {
     const repRef = db.collection("reputations").doc(userId);
@@ -425,6 +486,12 @@ async function checkUserReputationInternal(userId) {
   }
 }
 
+/**
+ * Update reputation with a specific score (admin)
+ * @param {string} userId
+ * @param {number} reputationScore
+ * @return {Promise<Object>} Result object
+ */
 async function updateReputationInternal(userId, reputationScore) {
   if (!userId) throw new Error("User ID is required");
   if (reputationScore === undefined || reputationScore === null) {
@@ -468,6 +535,11 @@ async function updateReputationInternal(userId, reputationScore) {
 // SERVICE LAYER FUNCTIONS (INTERNAL)
 // ============================================================================
 
+/**
+ * Initialize reputation for a user
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function initializeReputation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -482,6 +554,11 @@ async function initializeReputation_reputation(request) {
   }
 }
 
+/**
+ * Update user reputation
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function updateUserReputation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -496,6 +573,11 @@ async function updateUserReputation_reputation(request) {
   }
 }
 
+/**
+ * Update provider reputation
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function updateProviderReputation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -512,6 +594,11 @@ async function updateProviderReputation_reputation(request) {
   }
 }
 
+/**
+ * Process a review through reputation pipeline
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function processReviewForReputation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -528,6 +615,11 @@ async function processReviewForReputation_reputation(request) {
   }
 }
 
+/**
+ * Deduct reputation for booking cancellation
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function deductReputationForCancellation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -543,6 +635,11 @@ async function deductReputationForCancellation_reputation(request) {
   }
 }
 
+/**
+ * Deduct reputation for suspicious review
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function deductReputationForSuspiciousReview_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -557,6 +654,11 @@ async function deductReputationForSuspiciousReview_reputation(request) {
   }
 }
 
+/**
+ * Update reputation score (admin only)
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function updateReputation_reputation(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
