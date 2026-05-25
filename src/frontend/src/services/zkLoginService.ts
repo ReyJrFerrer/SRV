@@ -117,7 +117,7 @@ export async function generateEphemeralKeyPair(): Promise<{
     network: NETWORK,
   });
 
-  const { systemState } = await suiClient.core.getCurrentSystemState();
+const { systemState } = await suiClient.core.getCurrentSystemState();
   const maxEpoch = Number(systemState.epoch) + 2;
 
   const ephemeralKeyPair = new Ed25519Keypair();
@@ -192,6 +192,7 @@ export function buildGoogleOAuthUrl(nonce: string): string {
     redirect_uri: redirectUri,
     scope: "openid email profile",
     nonce,
+    prompt: "select_account",
   });
 
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
