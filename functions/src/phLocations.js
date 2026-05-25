@@ -6,7 +6,7 @@
  * All data is loaded once per instance and served from memory.
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {
   getProvinces: getProvincesData,
   getMunicipalities: getMunicipalitiesData,
@@ -23,7 +23,7 @@ async function getProvincesService() {
 }
 
 async function getMunicipalitiesService(data) {
-  const { province } = data;
+  const {province} = data;
 
   if (!province) {
     throw new HttpsError("invalid-argument", "Province is required");
@@ -33,7 +33,7 @@ async function getMunicipalitiesService(data) {
 }
 
 async function getBarangaysService(data) {
-  const { province, municipality } = data;
+  const {province, municipality} = data;
 
   if (!province || !municipality) {
     throw new HttpsError(
@@ -46,7 +46,7 @@ async function getBarangaysService(data) {
 }
 
 async function findProvinceByMunicipalityService(data) {
-  const { municipality } = data;
+  const {municipality} = data;
 
   if (!municipality) {
     throw new HttpsError("invalid-argument", "Municipality name is required");
@@ -66,7 +66,7 @@ exports.phLocationsAction = onCall(
     maxInstances: 50,
   },
   async (request) => {
-    const { action, payload } = request.data || {};
+    const {action, payload} = request.data || {};
 
     if (!action) {
       throw new HttpsError("invalid-argument", "An action must be specified.");
@@ -74,16 +74,16 @@ exports.phLocationsAction = onCall(
 
     try {
       switch (action) {
-        case "getProvinces":
-          return { success: true, data: await getProvincesService() };
-        case "getMunicipalities":
-          return { success: true, data: await getMunicipalitiesService(payload) };
-        case "getBarangays":
-          return { success: true, data: await getBarangaysService(payload) };
-        case "findProvinceByMunicipality":
-          return { success: true, data: await findProvinceByMunicipalityService(payload) };
-        default:
-          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      case "getProvinces":
+        return {success: true, data: await getProvincesService()};
+      case "getMunicipalities":
+        return {success: true, data: await getMunicipalitiesService(payload)};
+      case "getBarangays":
+        return {success: true, data: await getBarangaysService(payload)};
+      case "findProvinceByMunicipality":
+        return {success: true, data: await findProvinceByMunicipalityService(payload)};
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error executing action [${action}]:`, error);
@@ -92,5 +92,5 @@ exports.phLocationsAction = onCall(
       }
       throw new HttpsError("internal", "Internal Server Error");
     }
-  }
+  },
 );

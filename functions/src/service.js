@@ -811,7 +811,6 @@ async function archiveService_service(request) {
 }
 
 
-
 /**
  * Restore an archived service
  */
@@ -2436,74 +2435,74 @@ exports.serviceAction = onCall(
     maxInstances: 50,
   },
   async (request) => {
-    const { action } = request.data || {};
-    
+    const {action} = request.data || {};
+
     if (!action) {
       throw new HttpsError("invalid-argument", "An action must be specified.");
     }
 
     try {
       switch (action) {
-        case "createService":
-          return await createService_service(request);
-        case "getService":
-          return await getService_service(request);
-        case "getServicesByProvider":
-          return await getServicesByProvider_service(request);
-        case "getServicesByCategory":
-          return await getServicesByCategory_service(request);
-        case "updateServiceStatus":
-          return await updateServiceStatus_service(request);
-        case "searchServicesByLocation":
-          return await searchServicesByLocation_service(request);
-        case "updateService":
-          return await updateService_service(request);
-        case "archiveService":
-          return await archiveService_service(request);
-        case "restoreService":
-          return await restoreService_service(request);
-        case "permanentDeleteService":
-          return await permanentDeleteService_service(request);
-        case "getAllServices":
-          return await getAllServices_service(request);
-        case "uploadServiceImages":
-          return await uploadServiceImages_service(request);
-        case "removeServiceImage":
-          return await removeServiceImage_service(request);
-        case "reorderServiceImages":
-          return await reorderServiceImages_service(request);
-        case "uploadServiceCertificates":
-          return await uploadServiceCertificates_service(request);
-        case "removeServiceCertificate":
-          return await removeServiceCertificate_service(request);
-        case "verifyService":
-          return await verifyService_service(request);
-        case "addCategory":
-          return await addCategory_service(request);
-        case "getAllCategories":
-          return await getAllCategories_service(request);
-        case "createServicePackage":
-          return await createServicePackage_service(request);
-        case "getServicePackages":
-          return await getServicePackages_service(request);
-        case "getPackage":
-          return await getPackage_service(request);
-        case "updateServicePackage":
-          return await updateServicePackage_service(request);
-        case "deleteServicePackage":
-          return await deleteServicePackage_service(request);
-        case "updateServiceRating":
-          return await updateServiceRating_service(request);
-        case "setServiceAvailability":
-          return await setServiceAvailability_service(request);
-        case "getServiceAvailability":
-          return await getServiceAvailability_service(request);
-        case "getAvailableTimeSlots":
-          return await getAvailableTimeSlots_service(request);
-        case "deleteService":
-          return await archiveService_service(request);
-        default:
-          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      case "createService":
+        return await createService_service(request);
+      case "getService":
+        return await getService_service(request);
+      case "getServicesByProvider":
+        return await getServicesByProvider_service(request);
+      case "getServicesByCategory":
+        return await getServicesByCategory_service(request);
+      case "updateServiceStatus":
+        return await updateServiceStatus_service(request);
+      case "searchServicesByLocation":
+        return await searchServicesByLocation_service(request);
+      case "updateService":
+        return await updateService_service(request);
+      case "archiveService":
+        return await archiveService_service(request);
+      case "restoreService":
+        return await restoreService_service(request);
+      case "permanentDeleteService":
+        return await permanentDeleteService_service(request);
+      case "getAllServices":
+        return await getAllServices_service(request);
+      case "uploadServiceImages":
+        return await uploadServiceImages_service(request);
+      case "removeServiceImage":
+        return await removeServiceImage_service(request);
+      case "reorderServiceImages":
+        return await reorderServiceImages_service(request);
+      case "uploadServiceCertificates":
+        return await uploadServiceCertificates_service(request);
+      case "removeServiceCertificate":
+        return await removeServiceCertificate_service(request);
+      case "verifyService":
+        return await verifyService_service(request);
+      case "addCategory":
+        return await addCategory_service(request);
+      case "getAllCategories":
+        return await getAllCategories_service(request);
+      case "createServicePackage":
+        return await createServicePackage_service(request);
+      case "getServicePackages":
+        return await getServicePackages_service(request);
+      case "getPackage":
+        return await getPackage_service(request);
+      case "updateServicePackage":
+        return await updateServicePackage_service(request);
+      case "deleteServicePackage":
+        return await deleteServicePackage_service(request);
+      case "updateServiceRating":
+        return await updateServiceRating_service(request);
+      case "setServiceAvailability":
+        return await setServiceAvailability_service(request);
+      case "getServiceAvailability":
+        return await getServiceAvailability_service(request);
+      case "getAvailableTimeSlots":
+        return await getAvailableTimeSlots_service(request);
+      case "deleteService":
+        return await archiveService_service(request);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error executing action [${action}]:`, error);
@@ -2512,5 +2511,5 @@ exports.serviceAction = onCall(
       }
       throw new HttpsError("internal", "Internal Server Error");
     }
-  }
+  },
 );

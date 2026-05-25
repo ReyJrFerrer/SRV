@@ -5,8 +5,8 @@
  * Consolidated into a single entrypoint following the Firebase optimization guidelines
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { getFirestore } = require("../firebase-admin");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {getFirestore} = require("../firebase-admin");
 
 const {
   processReviewForReputationInternal,
@@ -60,9 +60,9 @@ function calculateQualityScore(review) {
 
 async function submitReview_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId, rating, comment = "" } = payload;
+  const {bookingId, rating, comment = ""} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -143,7 +143,7 @@ async function submitReview_review(request) {
         createdAt: now,
         updatedAt: now,
         status: "Visible",
-        qualityScore: calculateQualityScore({ rating, comment }),
+        qualityScore: calculateQualityScore({rating, comment}),
       };
 
       const reviewRef = db.collection("reviews").doc(reviewId);
@@ -163,7 +163,7 @@ async function submitReview_review(request) {
         });
       }
 
-      return { success: true, data: newReview };
+      return {success: true, data: newReview};
     });
 
     await processReviewForReputationInternal(result.data, true);
@@ -180,7 +180,7 @@ async function submitReview_review(request) {
 async function getReview_review(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { reviewId } = payload;
+  const {reviewId} = payload;
 
   if (!reviewId) {
     throw new HttpsError("invalid-argument", "Review ID is required");
@@ -199,7 +199,7 @@ async function getReview_review(request) {
       throw new HttpsError("permission-denied", "Review has been hidden");
     }
 
-    return { success: true, data: review };
+    return {success: true, data: review};
   } catch (error) {
     console.error("Error in getReview:", error);
     if (error instanceof HttpsError) {
@@ -212,7 +212,7 @@ async function getReview_review(request) {
 async function getBookingReviews_review(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { bookingId } = payload;
+  const {bookingId} = payload;
 
   if (!bookingId) {
     throw new HttpsError("invalid-argument", "Booking ID is required");
@@ -230,7 +230,7 @@ async function getBookingReviews_review(request) {
       reviews.push(doc.data());
     });
 
-    return { success: true, data: reviews };
+    return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getBookingReviews:", error);
     throw new HttpsError("internal", error.message);
@@ -239,9 +239,9 @@ async function getBookingReviews_review(request) {
 
 async function getUserReviews_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { userId, includeHidden = false } = payload;
+  const {userId, includeHidden = false} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -269,7 +269,7 @@ async function getUserReviews_review(request) {
         return bTime - aTime;
       });
 
-      return { success: true, data: sorted };
+      return {success: true, data: sorted};
     }
 
     const query = db
@@ -284,7 +284,7 @@ async function getUserReviews_review(request) {
       reviews.push(doc.data());
     });
 
-    return { success: true, data: reviews };
+    return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getUserReviews:", error);
     if (error.code === 8 || error.message?.includes("index")) {
@@ -309,7 +309,7 @@ async function getUserReviews_review(request) {
           return bTime - aTime;
         });
 
-        return { success: true, data: sorted };
+        return {success: true, data: sorted};
       } catch (fallbackError) {
         console.error("Error in fallback query:", fallbackError);
         throw new HttpsError("internal", fallbackError.message);
@@ -321,9 +321,9 @@ async function getUserReviews_review(request) {
 
 async function updateReview_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { reviewId, rating, comment = "" } = payload;
+  const {reviewId, rating, comment = ""} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -378,7 +378,7 @@ async function updateReview_review(request) {
         rating: rating,
         comment: comment,
         updatedAt: now,
-        qualityScore: calculateQualityScore({ rating, comment }),
+        qualityScore: calculateQualityScore({rating, comment}),
       };
 
       transaction.update(reviewRef, updatedReview);
@@ -398,7 +398,7 @@ async function updateReview_review(request) {
         });
       }
 
-      return { success: true, data: updatedReview };
+      return {success: true, data: updatedReview};
     });
   } catch (error) {
     console.error("Error in updateReview:", error);
@@ -411,9 +411,9 @@ async function updateReview_review(request) {
 
 async function deleteReview_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { reviewId } = payload;
+  const {reviewId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -496,7 +496,7 @@ async function deleteReview_review(request) {
         });
       }
 
-      return { success: true, message: "Review hidden successfully" };
+      return {success: true, message: "Review hidden successfully"};
     });
   } catch (error) {
     console.error("Error in deleteReview:", error);
@@ -509,9 +509,9 @@ async function deleteReview_review(request) {
 
 async function restoreReview_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { reviewId } = payload;
+  const {reviewId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -582,7 +582,7 @@ async function restoreReview_review(request) {
         });
       }
 
-      return { success: true, message: "Review restored successfully" };
+      return {success: true, message: "Review restored successfully"};
     });
   } catch (error) {
     console.error("Error in restoreReview:", error);
@@ -595,9 +595,9 @@ async function restoreReview_review(request) {
 
 async function bulkUpdateReviewStatus_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { reviewIds, status } = payload;
+  const {reviewIds, status} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -624,20 +624,20 @@ async function bulkUpdateReviewStatus_review(request) {
       const reviewPromises = batchIds.map(async (id) => {
         const reviewDoc = await db.collection("reviews").doc(id).get();
         if (reviewDoc.exists) {
-          return { id, doc: reviewDoc, collection: "reviews" };
+          return {id, doc: reviewDoc, collection: "reviews"};
         }
         const providerReviewDoc = await db.collection("providerReviews").doc(id).get();
         if (providerReviewDoc.exists) {
-          return { id, doc: providerReviewDoc, collection: "providerReviews" };
+          return {id, doc: providerReviewDoc, collection: "providerReviews"};
         }
-        return { id, doc: null, collection: null };
+        return {id, doc: null, collection: null};
       });
 
       const reviewDocs = await Promise.all(reviewPromises);
 
-      for (const { id: rId, doc: reviewDoc, collection: collectionName } of reviewDocs) {
+      for (const {id: rId, doc: reviewDoc, collection: collectionName} of reviewDocs) {
         if (!reviewDoc || !collectionName) {
-          errors.push({ reviewId: rId, error: "Review not found" });
+          errors.push({reviewId: rId, error: "Review not found"});
           continue;
         }
 
@@ -669,7 +669,7 @@ async function bulkUpdateReviewStatus_review(request) {
 async function calculateProviderRating_review(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { providerId } = payload;
+  const {providerId} = payload;
 
   if (!providerId) {
     throw new HttpsError("invalid-argument", "Provider ID is required");
@@ -717,7 +717,7 @@ async function calculateProviderRating_review(request) {
 async function calculateServiceRating_review(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { serviceId } = payload;
+  const {serviceId} = payload;
 
   if (!serviceId) {
     throw new HttpsError("invalid-argument", "Service ID is required");
@@ -764,9 +764,9 @@ async function calculateServiceRating_review(request) {
 
 async function calculateUserAverageRating_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -822,9 +822,9 @@ async function calculateUserAverageRating_review(request) {
 
 async function getAllReviews_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { limit = 50, offset = 0, status = null } = payload;
+  const {limit = 50, offset = 0, status = null} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -850,7 +850,7 @@ async function getAllReviews_review(request) {
       reviews.push(doc.data());
     });
 
-    return { success: true, data: reviews };
+    return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getAllReviews:", error);
     throw new HttpsError("internal", error.message);
@@ -859,7 +859,7 @@ async function getAllReviews_review(request) {
 
 async function getReviewStatistics_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -882,7 +882,7 @@ async function getReviewStatistics_review(request) {
       deletedReviews: deletedSnap.size,
     };
 
-    return { success: true, data: statistics };
+    return {success: true, data: statistics};
   } catch (error) {
     console.error("Error in getReviewStatistics:", error);
     throw new HttpsError("internal", error.message);
@@ -891,9 +891,9 @@ async function getReviewStatistics_review(request) {
 
 async function flagReview_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { reviewId, reason } = payload;
+  const {reviewId, reason} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -927,7 +927,7 @@ async function flagReview_review(request) {
 
       transaction.update(reviewRef, updatedReview);
 
-      return { success: true, message: "Review flagged successfully" };
+      return {success: true, message: "Review flagged successfully"};
     });
   } catch (error) {
     console.error("Error in flagReview:", error);
@@ -941,10 +941,10 @@ async function flagReview_review(request) {
 async function getProviderReviews_review(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { providerId, limit = 20, offset = 0 } = payload;
+  const {providerId, limit = 20, offset = 0} = payload;
 
   if (!providerId) {
-    return { success: true, data: [] };
+    return {success: true, data: []};
   }
 
   const limitInt = parseInt(limit) || 20;
@@ -965,7 +965,7 @@ async function getProviderReviews_review(request) {
       reviews.push(doc.data());
     });
 
-    return { success: true, data: reviews };
+    return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getProviderReviews:", error);
     throw new HttpsError("internal", error.message);
@@ -974,9 +974,9 @@ async function getProviderReviews_review(request) {
 
 async function getServiceReviews_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { serviceId, limit = 20, offset = 0, includeHidden = false } = payload;
+  const {serviceId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!serviceId) {
     throw new HttpsError("invalid-argument", "Service ID is required");
@@ -1007,7 +1007,7 @@ async function getServiceReviews_review(request) {
       });
 
       const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
-      return { success: true, data: paginated };
+      return {success: true, data: paginated};
     }
 
     const reviewsSnap = await db
@@ -1024,7 +1024,7 @@ async function getServiceReviews_review(request) {
       reviews.push(doc.data());
     });
 
-    return { success: true, data: reviews };
+    return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getServiceReviews:", error);
     if (error.code === 8 || error.message?.includes("index")) {
@@ -1050,7 +1050,7 @@ async function getServiceReviews_review(request) {
         });
 
         const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
-        return { success: true, data: paginated };
+        return {success: true, data: paginated};
       } catch (fallbackError) {
         console.error("Error in fallback query:", fallbackError);
         throw new HttpsError("internal", fallbackError.message);
@@ -1062,9 +1062,9 @@ async function getServiceReviews_review(request) {
 
 async function submitProviderReview_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId, rating, comment = "" } = payload;
+  const {bookingId, rating, comment = ""} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1136,7 +1136,7 @@ async function submitProviderReview_review(request) {
 
       const reviewId = generateId();
       const now = new Date().toISOString();
-      const qualityScore = calculateQualityScore({ rating, comment });
+      const qualityScore = calculateQualityScore({rating, comment});
 
       const providerReview = {
         id: reviewId,
@@ -1182,9 +1182,9 @@ async function submitProviderReview_review(request) {
 
 async function getClientProviderReviews_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { clientId, limit = 20, offset = 0, includeHidden = false } = payload;
+  const {clientId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!clientId) {
     throw new HttpsError("invalid-argument", "Client ID is required");
@@ -1216,7 +1216,7 @@ async function getClientProviderReviews_review(request) {
       reviews.push(doc.data());
     });
 
-    return { success: true, data: reviews };
+    return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getClientProviderReviews:", error);
     if (error.code === 8 || error.message?.includes("index")) {
@@ -1242,7 +1242,7 @@ async function getClientProviderReviews_review(request) {
         });
 
         const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
-        return { success: true, data: paginated };
+        return {success: true, data: paginated};
       } catch (fallbackError) {
         console.error("Error in fallback query:", fallbackError);
         throw new HttpsError("internal", fallbackError.message);
@@ -1254,9 +1254,9 @@ async function getClientProviderReviews_review(request) {
 
 async function getProviderReviewsByProvider_review(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { providerId, limit = 20, offset = 0, includeHidden = false } = payload;
+  const {providerId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!providerId) {
     throw new HttpsError("invalid-argument", "Provider ID is required");
@@ -1289,7 +1289,7 @@ async function getProviderReviewsByProvider_review(request) {
       reviews.push(doc.data());
     });
 
-    return { success: true, data: reviews };
+    return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getProviderReviewsByProvider:", error);
     if (error.code === 8 || error.message?.includes("index")) {
@@ -1315,7 +1315,7 @@ async function getProviderReviewsByProvider_review(request) {
         });
 
         const paginated = sorted.slice(offsetInt, offsetInt + limitInt);
-        return { success: true, data: paginated };
+        return {success: true, data: paginated};
       } catch (fallbackError) {
         console.error("Error in fallback query:", fallbackError);
         throw new HttpsError("internal", fallbackError.message);
@@ -1336,7 +1336,7 @@ exports.reviewAction = onCall(
     maxInstances: 50,
   },
   async (request) => {
-    const { action } = request.data || {};
+    const {action} = request.data || {};
 
     if (!action) {
       throw new HttpsError("invalid-argument", "An action must be specified.");
@@ -1344,46 +1344,46 @@ exports.reviewAction = onCall(
 
     try {
       switch (action) {
-        case "submitReview":
-          return await submitReview_review(request);
-        case "getReview":
-          return await getReview_review(request);
-        case "getBookingReviews":
-          return await getBookingReviews_review(request);
-        case "getUserReviews":
-          return await getUserReviews_review(request);
-        case "updateReview":
-          return await updateReview_review(request);
-        case "deleteReview":
-          return await deleteReview_review(request);
-        case "restoreReview":
-          return await restoreReview_review(request);
-        case "bulkUpdateReviewStatus":
-          return await bulkUpdateReviewStatus_review(request);
-        case "calculateProviderRating":
-          return await calculateProviderRating_review(request);
-        case "calculateServiceRating":
-          return await calculateServiceRating_review(request);
-        case "calculateUserAverageRating":
-          return await calculateUserAverageRating_review(request);
-        case "getAllReviews":
-          return await getAllReviews_review(request);
-        case "getReviewStatistics":
-          return await getReviewStatistics_review(request);
-        case "flagReview":
-          return await flagReview_review(request);
-        case "getProviderReviews":
-          return await getProviderReviews_review(request);
-        case "getServiceReviews":
-          return await getServiceReviews_review(request);
-        case "submitProviderReview":
-          return await submitProviderReview_review(request);
-        case "getClientProviderReviews":
-          return await getClientProviderReviews_review(request);
-        case "getProviderReviewsByProvider":
-          return await getProviderReviewsByProvider_review(request);
-        default:
-          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      case "submitReview":
+        return await submitReview_review(request);
+      case "getReview":
+        return await getReview_review(request);
+      case "getBookingReviews":
+        return await getBookingReviews_review(request);
+      case "getUserReviews":
+        return await getUserReviews_review(request);
+      case "updateReview":
+        return await updateReview_review(request);
+      case "deleteReview":
+        return await deleteReview_review(request);
+      case "restoreReview":
+        return await restoreReview_review(request);
+      case "bulkUpdateReviewStatus":
+        return await bulkUpdateReviewStatus_review(request);
+      case "calculateProviderRating":
+        return await calculateProviderRating_review(request);
+      case "calculateServiceRating":
+        return await calculateServiceRating_review(request);
+      case "calculateUserAverageRating":
+        return await calculateUserAverageRating_review(request);
+      case "getAllReviews":
+        return await getAllReviews_review(request);
+      case "getReviewStatistics":
+        return await getReviewStatistics_review(request);
+      case "flagReview":
+        return await flagReview_review(request);
+      case "getProviderReviews":
+        return await getProviderReviews_review(request);
+      case "getServiceReviews":
+        return await getServiceReviews_review(request);
+      case "submitProviderReview":
+        return await submitProviderReview_review(request);
+      case "getClientProviderReviews":
+        return await getClientProviderReviews_review(request);
+      case "getProviderReviewsByProvider":
+        return await getProviderReviewsByProvider_review(request);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error executing action [${action}]:`, error);
@@ -1392,5 +1392,5 @@ exports.reviewAction = onCall(
       }
       throw new HttpsError("internal", "Internal Server Error");
     }
-  }
+  },
 );

@@ -126,16 +126,13 @@ export const serviceCanister = {
       });
 
       const data = result.data as { success: boolean; services: any[] };
-      if (!data.success) throw new Error("Failed to fetch services by category");
+      if (!data.success)
+        throw new Error("Failed to fetch services by category");
 
       return data.services.map((service: any) => ({
         ...service,
-        createdAt: service.createdAt
-          ? new Date(service.createdAt)
-          : new Date(),
-        updatedAt: service.updatedAt
-          ? new Date(service.updatedAt)
-          : new Date(),
+        createdAt: service.createdAt ? new Date(service.createdAt) : new Date(),
+        updatedAt: service.updatedAt ? new Date(service.updatedAt) : new Date(),
       }));
     } catch (error) {
       console.error("Error fetching services by category:", error);

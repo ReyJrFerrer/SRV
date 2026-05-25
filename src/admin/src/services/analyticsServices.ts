@@ -10,7 +10,10 @@ export const getSystemStats = async (): Promise<FrontendSystemStats> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getSystemStats", {});
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getSystemStats",
+      data: {},
+    });
 
     return {
       totalCommissionRules: result.totalCommissionRules,
@@ -41,8 +44,8 @@ export const getAllUsers = async (): Promise<any[]> => {
     requireAuth();
 
     // Call Firebase function directly
-    const callable = httpsCallable(functions, "getAllUsers");
-    const result = await callable({ data: {} });
+    const callable = httpsCallable(functions, "adminUserAction");
+    const result = await callable({ action: "getAllUsers", data: {} });
 
     if ((result.data as any).success) {
       const users = (result.data as any).users || [];
@@ -70,7 +73,10 @@ export const getBookingsData = async (): Promise<{
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getBookingsData", {});
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getBookingsData",
+      data: {},
+    });
 
     if (!result) {
       return { bookings: [], commissionTransactions: [] };

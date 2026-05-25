@@ -15,7 +15,10 @@ export const getUserRole = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getUserRole", { userId });
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getUserRole",
+      data: { userId },
+    });
 
     if (!result) return null;
 
@@ -56,7 +59,10 @@ export const listUserRoles = async (): Promise<
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("listUserRoles", {});
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "listUserRoles",
+      data: {},
+    });
 
     if (!result || !Array.isArray(result)) return [];
 
@@ -84,9 +90,12 @@ export const hasAdminRole = async (userId: string): Promise<boolean> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("hasRole", {
-      userId,
-      role: "ADMIN",
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "hasRole",
+      data: {
+        userId,
+        role: "ADMIN",
+      },
     });
     return result === true;
   } catch (error) {
@@ -108,14 +117,17 @@ export const lockUserAccount = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("lockUserAccount", {
-      userId,
-      locked,
-      suspensionDurationDays: locked
-        ? suspensionDurationDays !== undefined
-          ? suspensionDurationDays
-          : null
-        : undefined,
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "lockUserAccount",
+      data: {
+        userId,
+        locked,
+        suspensionDurationDays: locked
+          ? suspensionDurationDays !== undefined
+            ? suspensionDurationDays
+            : null
+          : undefined,
+      },
     });
     return result || "User account updated successfully";
   } catch (error) {
@@ -137,8 +149,11 @@ export const getAllUserLockStatuses = async (): Promise<
   try {
     requireAuth();
 
-    const callable = httpsCallable(functions, "getAllUserLockStatuses");
-    const result = await callable({ data: {} });
+    const callable = httpsCallable(functions, "adminUserAction");
+    const result = await callable({
+      action: "getAllUserLockStatuses",
+      data: {},
+    });
 
     if ((result.data as any).success) {
       return (result.data as any).lockStatuses || {};
@@ -167,9 +182,12 @@ export const updateUserReputation = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("updateUserReputation", {
-      userId,
-      reputationScore,
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "updateUserReputation",
+      data: {
+        userId,
+        reputationScore,
+      },
     });
     return result || "User reputation updated successfully";
   } catch (error) {
@@ -188,9 +206,12 @@ export const updateUserPhoneNumber = async (
 ): Promise<string> => {
   try {
     requireAuth();
-    const result = await callFirebaseFunction("updateUserPhoneNumber", {
-      userId,
-      phone,
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "updateUserPhoneNumber",
+      data: {
+        userId,
+        phone,
+      },
     });
     return result || "User phone number updated successfully";
   } catch (error) {

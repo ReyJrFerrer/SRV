@@ -9,7 +9,8 @@ const getFunctions = () => getFirebaseFunctions();
 const requireAuth = () => {
   if (!auth.currentUser) {
     throw new AdminServiceError({
-      message: "Authentication required: Please log in as an admin to perform this action",
+      message:
+        "Authentication required: Please log in as an admin to perform this action",
       code: "AUTH_REQUIRED",
     } as AdminServiceError);
   }
@@ -173,7 +174,9 @@ export const getUserServiceCount = async (userId: string): Promise<number> => {
     });
 
     const data = result.data as { success: boolean; count?: number };
-    return typeof data.count === "number" ? data.count : Number(data.count || 0);
+    return typeof data.count === "number"
+      ? data.count
+      : Number(data.count || 0);
   } catch (error) {
     console.error("Error getting user service count:", error);
     return 0;

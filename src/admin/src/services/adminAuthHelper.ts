@@ -31,13 +31,16 @@ export async function createAdminProfile(
   phone?: string,
 ): Promise<CreateAdminProfileResult> {
   try {
-    const createAdminFn = httpsCallable(functions, "createAdminProfile");
+    const adminActionFn = httpsCallable(functions, "adminUserAction");
 
-    const result = await createAdminFn({
-      uid,
-      principal,
-      name,
-      phone,
+    const result = await adminActionFn({
+      action: "createAdminProfile",
+      payload: {
+        uid,
+        principal,
+        name,
+        phone,
+      }
     });
 
     const data = result.data as CreateAdminProfileResult;

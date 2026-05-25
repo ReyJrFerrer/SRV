@@ -4,6 +4,7 @@ const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {admin, getFirestore} = require("../firebase-admin");
 const {isPhoneTaken} = require("./account");
 const bcrypt = require("bcryptjs");
+const {FieldValue} = require("firebase-admin/firestore");
 
 const db = getFirestore();
 
@@ -27,7 +28,7 @@ const SETTINGS_KEY = "system_settings";
 /**
  * Get user role
  */
-exports.getUserRole = onCall(async (request) => {
+async function getUserRoleService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -53,12 +54,12 @@ exports.getUserRole = onCall(async (request) => {
     console.error("Error in getUserRole:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * List all user roles
  */
-exports.listUserRoles = onCall(async (request) => {
+async function listUserRolesService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -78,12 +79,12 @@ exports.listUserRoles = onCall(async (request) => {
     console.error("Error in listUserRoles:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Check if user has specific role
  */
-exports.hasRole = onCall(async (request) => {
+async function hasRoleService(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -102,12 +103,12 @@ exports.hasRole = onCall(async (request) => {
     console.error("Error in hasRole:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Update system settings
  */
-exports.setSettings = onCall(async (request) => {
+async function setSettingsService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -142,12 +143,12 @@ exports.setSettings = onCall(async (request) => {
     console.error("Error in setSettings:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get current system settings
  */
-exports.getSettings = onCall(async (request) => {
+async function getSettingsService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -182,12 +183,12 @@ exports.getSettings = onCall(async (request) => {
     console.error("Error in getSettings:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Change admin access password
  */
-exports.changeAdminPassword = onCall(async (request) => {
+async function changeAdminPasswordService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -262,12 +263,12 @@ exports.changeAdminPassword = onCall(async (request) => {
     console.error("Error in changeAdminPassword:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Check if admin password is set
  */
-exports.isAdminPasswordSet = onCall(async (request) => {
+async function isAdminPasswordSetService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   try {
@@ -282,12 +283,12 @@ exports.isAdminPasswordSet = onCall(async (request) => {
     console.error("Error in isAdminPasswordSet:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Verify admin password
  */
-exports.verifyAdminPassword = onCall(async (request) => {
+async function verifyAdminPasswordService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data;
@@ -319,12 +320,12 @@ exports.verifyAdminPassword = onCall(async (request) => {
     console.error("Error in verifyAdminPassword:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get system statistics
  */
-exports.getSystemStats = onCall(async (request) => {
+async function getSystemStatsService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -411,12 +412,12 @@ exports.getSystemStats = onCall(async (request) => {
     console.error("Error in getSystemStats:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get all users
  */
-exports.getAllUsers = onCall(async (request) => {
+async function getAllUsersService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -450,12 +451,12 @@ exports.getAllUsers = onCall(async (request) => {
     console.error("Error in getAllUsers:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get all user lock statuses from users collection
  */
-exports.getAllUserLockStatuses = onCall(async (request) => {
+async function getAllUserLockStatusesService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -481,12 +482,12 @@ exports.getAllUserLockStatuses = onCall(async (request) => {
     console.error("Error in getAllUserLockStatuses:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get user services and bookings combined
  */
-exports.getUserServicesAndBookings = onCall(async (request) => {
+async function getUserServicesAndBookingsService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -532,12 +533,12 @@ exports.getUserServicesAndBookings = onCall(async (request) => {
     console.error("Error in getUserServicesAndBookings:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get user service count
  */
-exports.getUserServiceCount = onCall(async (request) => {
+async function getUserServiceCountService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -561,7 +562,7 @@ exports.getUserServiceCount = onCall(async (request) => {
     console.error("Error in getUserServiceCount:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Lock or unlock user account with optional time-based suspension
@@ -571,7 +572,7 @@ exports.getUserServiceCount = onCall(async (request) => {
  * @param {number|null} data.suspensionDurationDays
  * Duration in days (7, 30, custom number, or null for indefinite)
  */
-exports.lockUserAccount = onCall(async (request) => {
+async function lockUserAccountService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -627,12 +628,12 @@ exports.lockUserAccount = onCall(async (request) => {
     console.error("Error in lockUserAccount:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Update user reputation score
  */
-exports.updateUserReputation = onCall(async (request) => {
+async function updateUserReputationService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -655,9 +656,9 @@ exports.updateUserReputation = onCall(async (request) => {
     console.error("Error in updateUserReputation:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-exports.updateUserPhoneNumber = onCall(async (request) => {
+async function updateUserPhoneNumberService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -708,12 +709,12 @@ exports.updateUserPhoneNumber = onCall(async (request) => {
     console.error("Error in updateUserPhoneNumber:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Update certificate validation status
  */
-exports.updateCertificateValidationStatus = onCall(async (request) => {
+async function updateCertificateValidationStatusService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
@@ -820,13 +821,13 @@ exports.updateCertificateValidationStatus = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get validated certificates
  * Returns certificates with their service information
  */
-exports.getValidatedCertificates = onCall(async (request) => {
+async function getValidatedCertificatesService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -883,13 +884,13 @@ exports.getValidatedCertificates = onCall(async (request) => {
     console.error("Error in getValidatedCertificates:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get rejected certificates
  * Returns certificates with their service information
  */
-exports.getRejectedCertificates = onCall(async (request) => {
+async function getRejectedCertificatesService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -946,12 +947,12 @@ exports.getRejectedCertificates = onCall(async (request) => {
     console.error("Error in getRejectedCertificates:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get all services with certificates for validation
  */
-exports.getServicesWithCertificates = onCall(async (request) => {
+async function getServicesWithCertificatesService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -1016,12 +1017,12 @@ exports.getServicesWithCertificates = onCall(async (request) => {
     console.error("Error in getServicesWithCertificates:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get pending certificate validations
  */
-exports.getPendingCertificateValidations = onCall(async (request) => {
+async function getPendingCertificateValidationsService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -1047,9 +1048,9 @@ exports.getPendingCertificateValidations = onCall(async (request) => {
     console.error("Error in getPendingCertificateValidations:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
-exports.getBookingsData = onCall(async (request) => {
+async function getBookingsDataService(request) {
   const {auth: callerAuth} = request;
 
   if (!callerAuth) {
@@ -1107,7 +1108,7 @@ exports.getBookingsData = onCall(async (request) => {
     console.error("Error in getBookingsData:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Auto-reactivate user accounts when suspension period expires
@@ -1163,3 +1164,199 @@ exports.autoReactivateSuspendedAccounts = onSchedule("0 0 * * *", async (_event)
   }
 });
 
+
+/**
+ * Auto-create admin profile and assign role for development
+ */
+async function createAdminProfileService(request) {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+
+  const {principal, phone, uid: providedUid} = payload;
+
+  // Get UID from context if authenticated, otherwise use provided UID
+  let uid;
+
+  if (context.auth) {
+    uid = context.auth.uid;
+  } else if (providedUid) {
+    uid = providedUid;
+  } else {
+    throw new HttpsError(
+      "invalid-argument",
+      "Either authenticate or provide UID",
+    );
+  }
+
+  try {
+    const settingsDoc = await db.collection("systemSettings").doc("system_settings").get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+    if (settings.restrictNewAdminLogins === true) {
+      const userDoc = await db.collection("users").doc(uid).get();
+      const userRoleDoc = await db.collection("userRoles").doc(uid).get();
+
+      const userExists = userDoc.exists;
+      const hasAdminRole = userRoleDoc.exists && userRoleDoc.data()?.role === "ADMIN";
+
+      if (!userExists || !hasAdminRole) {
+        throw new HttpsError(
+          "permission-denied",
+          `You are not allowed`,
+        );
+      }
+    }
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+  }
+
+  try {
+    const adminRolesSnapshot = await db.collection("userRoles")
+      .where("role", "==", "ADMIN")
+      .get();
+
+    const adminCount = adminRolesSnapshot.size;
+    const adminNumber = String(adminCount).padStart(2, "0");
+    const adminName = `admin${adminNumber}`;
+
+    // Check if profile already exists
+    const profileRef = db.collection("users").doc(uid);
+    const profileDoc = await profileRef.get();
+
+    if (!profileDoc.exists) {
+      // Create new admin profile
+      const newProfile = {
+        uid: uid,
+        principal: principal || uid,
+        name: adminName, // Always use generated sequential admin name
+        phone: phone || "",
+        role: "Admin",
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        isAdmin: true,
+      };
+
+      await profileRef.set(newProfile);
+    } else {
+      const existingData = profileDoc.data();
+      if (existingData.isAdmin || existingData.name === "Admin User") {
+        if (!existingData.name.match(/^admin\d{2}$/)) {
+          const existingRole = await db.collection("userRoles").doc(uid).get();
+
+          if (existingRole.exists) {
+            const allAdminRoles = await db.collection("userRoles")
+              .where("role", "==", "ADMIN")
+              .orderBy("assignedAt", "asc")
+              .get();
+
+            // Find this user's index in the ordered list
+            let adminIndex = 0;
+            for (let i = 0; i < allAdminRoles.docs.length; i++) {
+              if (allAdminRoles.docs[i].id === uid) {
+                adminIndex = i;
+                break;
+              }
+            }
+
+            const adminNumber = String(adminIndex).padStart(2, "0");
+            const correctAdminName = `admin${adminNumber}`;
+
+            await profileRef.update({
+              name: correctAdminName,
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+          } else {
+            await profileRef.update({
+              name: adminName,
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+          }
+        }
+      }
+    }
+
+    const roleAssignment = {
+      userId: uid,
+      role: "ADMIN",
+      scope: null,
+      assignedBy: uid, // Self-assigned for initial setup
+      assignedAt: FieldValue.serverTimestamp(),
+    };
+
+    await db.collection("userRoles").doc(uid).set(roleAssignment);
+
+    // Set custom claims for Firebase Auth
+    await admin.auth().setCustomUserClaims(uid, {isAdmin: true});
+
+    return {
+      success: true,
+      message: "Admin profile created and role assigned successfully",
+      uid: uid,
+      needsSignOut: false,
+    };
+  } catch (error) {
+    console.error("Error in createAdminProfile:", error);
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+exports.adminUserAction = onCall(
+  {
+    enforceAppCheck: false,
+    maxInstances: 50,
+  },
+  async (request) => {
+    const {action, payload} = request.data || {};
+    const auth = request.auth;
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "Action is required");
+    }
+
+    // Mock request object for internal services
+    const innerRequest = {
+      auth,
+      data: payload,
+      rawRequest: request,
+    };
+
+    try {
+      switch (action) {
+      case "getUserRole": return await getUserRoleService(innerRequest);
+      case "listUserRoles": return await listUserRolesService(innerRequest);
+      case "hasRole": return await hasRoleService(innerRequest);
+      case "setSettings": return await setSettingsService(innerRequest);
+      case "getSettings": return await getSettingsService(innerRequest);
+      case "changeAdminPassword": return await changeAdminPasswordService(innerRequest);
+      case "isAdminPasswordSet": return await isAdminPasswordSetService(innerRequest);
+      case "verifyAdminPassword": return await verifyAdminPasswordService(innerRequest);
+      case "getSystemStats": return await getSystemStatsService(innerRequest);
+      case "getAllUsers": return await getAllUsersService(innerRequest);
+      case "getAllUserLockStatuses": return await getAllUserLockStatusesService(innerRequest);
+      case "getUserServicesAndBookings": return await getUserServicesAndBookingsService(innerRequest);
+      case "getUserServiceCount": return await getUserServiceCountService(innerRequest);
+      case "lockUserAccount": return await lockUserAccountService(innerRequest);
+      case "updateUserReputation": return await updateUserReputationService(innerRequest);
+      case "updateUserPhoneNumber": return await updateUserPhoneNumberService(innerRequest);
+      case "updateCertificateValidationStatus": return await updateCertificateValidationStatusService(innerRequest);
+      case "getValidatedCertificates": return await getValidatedCertificatesService(innerRequest);
+      case "getRejectedCertificates": return await getRejectedCertificatesService(innerRequest);
+      case "getServicesWithCertificates": return await getServicesWithCertificatesService(innerRequest);
+      case "getPendingCertificateValidations": return await getPendingCertificateValidationsService(innerRequest);
+      case "getBookingsData": return await getBookingsDataService(innerRequest);
+      case "createAdminProfile": return await createAdminProfileService(innerRequest);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", error.message);
+    }
+  },
+);

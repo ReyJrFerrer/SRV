@@ -5,10 +5,10 @@
  * Consolidated into a single entrypoint following the Firebase optimization guidelines
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { getFirestore } = require("../firebase-admin");
-const { FieldValue } = require("firebase-admin/firestore");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
+const {getFirestore} = require("../firebase-admin");
+const {FieldValue} = require("firebase-admin/firestore");
 
 const db = getFirestore();
 
@@ -88,26 +88,26 @@ function generateNotificationHref(notificationType, userType, entityId) {
   const isProvider = userType === USER_TYPES.PROVIDER;
 
   switch (notificationType) {
-    case NOTIFICATION_TYPES.CHAT_MESSAGE:
-      return isProvider ? `/provider/chat/${entityId}` : `/client/chat/${entityId}`;
-    case NOTIFICATION_TYPES.REVIEW_REMINDER:
-    case NOTIFICATION_TYPES.REVIEW_REQUEST:
-      return isProvider ? `/provider/rate-client/${entityId}` : `/client/review/${entityId}`;
-    case NOTIFICATION_TYPES.PAYMENT_COMPLETED:
-      return `/provider/receipt/${entityId}`;
-    case NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER:
-      return isProvider ? `/provider/active-service/${entityId}` : `/client/booking/${entityId}`;
-    case NOTIFICATION_TYPES.START_SERVICE:
-      return isProvider ? `/provider/active-service/${entityId}` : `/client/booking/${entityId}`;
-    case NOTIFICATION_TYPES.START_NAVIGATION:
-      return isProvider ? `/provider/directions/${entityId}` : `/client/booking/${entityId}`;
-    case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
-    case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:
-      return isProvider ? `/provider/bookings` : `/client/home`;
-    case NOTIFICATION_TYPES.SERVICE_REMINDER:
-      return isProvider ? `/provider/booking/${entityId}` : `/client/booking/${entityId}`;
-    default:
-      return isProvider ? `/provider/booking/${entityId}` : `/client/booking/${entityId}`;
+  case NOTIFICATION_TYPES.CHAT_MESSAGE:
+    return isProvider ? `/provider/chat/${entityId}` : `/client/chat/${entityId}`;
+  case NOTIFICATION_TYPES.REVIEW_REMINDER:
+  case NOTIFICATION_TYPES.REVIEW_REQUEST:
+    return isProvider ? `/provider/rate-client/${entityId}` : `/client/review/${entityId}`;
+  case NOTIFICATION_TYPES.PAYMENT_COMPLETED:
+    return `/provider/receipt/${entityId}`;
+  case NOTIFICATION_TYPES.SERVICE_COMPLETION_REMINDER:
+    return isProvider ? `/provider/active-service/${entityId}` : `/client/booking/${entityId}`;
+  case NOTIFICATION_TYPES.START_SERVICE:
+    return isProvider ? `/provider/active-service/${entityId}` : `/client/booking/${entityId}`;
+  case NOTIFICATION_TYPES.START_NAVIGATION:
+    return isProvider ? `/provider/directions/${entityId}` : `/client/booking/${entityId}`;
+  case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN:
+  case NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT:
+    return isProvider ? `/provider/bookings` : `/client/home`;
+  case NOTIFICATION_TYPES.SERVICE_REMINDER:
+    return isProvider ? `/provider/booking/${entityId}` : `/client/booking/${entityId}`;
+  default:
+    return isProvider ? `/provider/booking/${entityId}` : `/client/booking/${entityId}`;
   }
 }
 
@@ -201,8 +201,8 @@ async function sendOneSignalNotification(userId, notification) {
     const payload = {
       app_id: ONESIGNAL_APP_ID,
       include_player_ids: playerIds,
-      headings: { en: notification.title },
-      contents: { en: notification.message },
+      headings: {en: notification.title},
+      contents: {en: notification.message},
       data: {
         notificationId: notification.id,
         type: notification.notificationType,
@@ -253,7 +253,7 @@ async function sendOneSignalNotification(userId, notification) {
 
 async function createNotification_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {
     targetUserId,
@@ -331,7 +331,7 @@ async function createNotification_notification(request) {
       console.error("Failed to send OneSignal notification:", error);
     });
 
-    return { success: true, notificationId: notificationRef.id };
+    return {success: true, notificationId: notificationRef.id};
   } catch (error) {
     console.error("Error in createNotification:", error);
     if (error instanceof HttpsError) {
@@ -343,9 +343,9 @@ async function createNotification_notification(request) {
 
 async function getUserNotifications_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { userId, filter } = payload;
+  const {userId, filter} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -397,7 +397,7 @@ async function getUserNotifications_notification(request) {
       };
     });
 
-    return { success: true, notifications };
+    return {success: true, notifications};
   } catch (error) {
     console.error("Error in getUserNotifications:", error);
     throw new HttpsError("internal", error.message);
@@ -406,9 +406,9 @@ async function getUserNotifications_notification(request) {
 
 async function markNotificationAsRead_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { notificationId } = payload;
+  const {notificationId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -446,7 +446,7 @@ async function markNotificationAsRead_notification(request) {
       });
     });
 
-    return { success: true };
+    return {success: true};
   } catch (error) {
     console.error("Error in markNotificationAsRead:", error);
     if (error instanceof HttpsError) {
@@ -458,9 +458,9 @@ async function markNotificationAsRead_notification(request) {
 
 async function markNotificationAsPushSent_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { notificationId } = payload;
+  const {notificationId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -498,7 +498,7 @@ async function markNotificationAsPushSent_notification(request) {
       });
     });
 
-    return { success: true };
+    return {success: true};
   } catch (error) {
     console.error("Error in markNotificationAsPushSent:", error);
     if (error instanceof HttpsError) {
@@ -510,9 +510,9 @@ async function markNotificationAsPushSent_notification(request) {
 
 async function getNotificationsForPush_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -550,7 +550,7 @@ async function getNotificationsForPush_notification(request) {
       };
     });
 
-    return { success: true, notifications };
+    return {success: true, notifications};
   } catch (error) {
     console.error("Error in getNotificationsForPush:", error);
     throw new HttpsError("internal", error.message);
@@ -559,9 +559,9 @@ async function getNotificationsForPush_notification(request) {
 
 async function storeOneSignalPlayerId_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { playerId } = payload;
+  const {playerId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -580,12 +580,12 @@ async function storeOneSignalPlayerId_notification(request) {
       await userRef.set({
         oneSignalPlayerIds: [playerId],
         oneSignalUpdatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
+      }, {merge: true});
     } else {
       const existingPlayerIds = userDoc.data().oneSignalPlayerIds || [];
 
       if (existingPlayerIds.includes(playerId)) {
-        return { success: true, message: "Player ID already registered" };
+        return {success: true, message: "Player ID already registered"};
       }
 
       await userRef.update({
@@ -594,7 +594,7 @@ async function storeOneSignalPlayerId_notification(request) {
       });
     }
 
-    return { success: true };
+    return {success: true};
   } catch (error) {
     console.error("Error in storeOneSignalPlayerId:", error);
     if (error.code === "not-found") {
@@ -602,8 +602,8 @@ async function storeOneSignalPlayerId_notification(request) {
         await db.collection("users").doc(authInfo.uid).set({
           oneSignalPlayerIds: [playerId],
           oneSignalUpdatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-        return { success: true };
+        }, {merge: true});
+        return {success: true};
       } catch (createError) {
         console.error("Error creating user document:", createError);
         throw new HttpsError("internal", createError.message);
@@ -615,9 +615,9 @@ async function storeOneSignalPlayerId_notification(request) {
 
 async function removeOneSignalPlayerId_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { playerId } = payload;
+  const {playerId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -639,7 +639,7 @@ async function removeOneSignalPlayerId_notification(request) {
       });
     }
 
-    return { success: true };
+    return {success: true};
   } catch (error) {
     console.error("Error in removeOneSignalPlayerId:", error);
     throw new HttpsError("internal", error.message);
@@ -648,9 +648,9 @@ async function removeOneSignalPlayerId_notification(request) {
 
 async function getNotificationStats_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -675,26 +675,26 @@ async function getNotificationStats_notification(request) {
       total++;
 
       switch (data.status) {
-        case NOTIFICATION_STATUS.UNREAD:
-          unread++;
-          break;
-        case NOTIFICATION_STATUS.READ:
-          read++;
-          break;
-        case NOTIFICATION_STATUS.PUSH_SENT:
-          pushSent++;
-          unread++;
-          break;
-        case NOTIFICATION_STATUS.PUSH_SENT_AND_READ:
-          pushSent++;
-          read++;
-          break;
+      case NOTIFICATION_STATUS.UNREAD:
+        unread++;
+        break;
+      case NOTIFICATION_STATUS.READ:
+        read++;
+        break;
+      case NOTIFICATION_STATUS.PUSH_SENT:
+        pushSent++;
+        unread++;
+        break;
+      case NOTIFICATION_STATUS.PUSH_SENT_AND_READ:
+        pushSent++;
+        read++;
+        break;
       }
     });
 
     return {
       success: true,
-      stats: { total, unread, pushSent, read },
+      stats: {total, unread, pushSent, read},
     };
   } catch (error) {
     console.error("Error in getNotificationStats:", error);
@@ -704,7 +704,7 @@ async function getNotificationStats_notification(request) {
 
 async function markAllNotificationsAsRead_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -739,7 +739,7 @@ async function markAllNotificationsAsRead_notification(request) {
     });
 
     await batch.commit();
-    return { success: true, count };
+    return {success: true, count};
   } catch (error) {
     console.error("Error in markAllNotificationsAsRead:", error);
     throw new HttpsError("internal", error.message);
@@ -748,9 +748,9 @@ async function markAllNotificationsAsRead_notification(request) {
 
 async function canReceiveNotification_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { userId, notificationType } = payload;
+  const {userId, notificationType} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -763,7 +763,7 @@ async function canReceiveNotification_notification(request) {
 
   try {
     const canReceive = !(await isSpamming(userId, notificationType));
-    return { success: true, canReceive };
+    return {success: true, canReceive};
   } catch (error) {
     console.error("Error in canReceiveNotification:", error);
     throw new HttpsError("internal", error.message);
@@ -772,9 +772,9 @@ async function canReceiveNotification_notification(request) {
 
 async function deleteNotification_notification(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { notificationId } = payload;
+  const {notificationId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -800,7 +800,7 @@ async function deleteNotification_notification(request) {
     }
 
     await notificationRef.delete();
-    return { success: true };
+    return {success: true};
   } catch (error) {
     console.error("Error in deleteNotification:", error);
     if (error instanceof HttpsError) {
@@ -832,7 +832,7 @@ exports.cleanupExpiredNotifications = onSchedule("0 0 * * *", async (_event) => 
     });
 
     await batch.commit();
-    return { success: true, count };
+    return {success: true, count};
   } catch (error) {
     console.error("Error cleaning up expired notifications:", error);
     throw error;
@@ -866,7 +866,7 @@ exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) 
     });
 
     await batch.commit();
-    return { success: true, count };
+    return {success: true, count};
   } catch (error) {
     console.error("Error cleaning up notification frequency:", error);
     throw error;
@@ -884,7 +884,7 @@ exports.notificationAction = onCall(
     maxInstances: 50,
   },
   async (request) => {
-    const { action } = request.data || {};
+    const {action} = request.data || {};
 
     if (!action) {
       throw new HttpsError("invalid-argument", "An action must be specified.");
@@ -892,30 +892,30 @@ exports.notificationAction = onCall(
 
     try {
       switch (action) {
-        case "createNotification":
-          return await createNotification_notification(request);
-        case "getUserNotifications":
-          return await getUserNotifications_notification(request);
-        case "markNotificationAsRead":
-          return await markNotificationAsRead_notification(request);
-        case "markNotificationAsPushSent":
-          return await markNotificationAsPushSent_notification(request);
-        case "getNotificationsForPush":
-          return await getNotificationsForPush_notification(request);
-        case "storeOneSignalPlayerId":
-          return await storeOneSignalPlayerId_notification(request);
-        case "removeOneSignalPlayerId":
-          return await removeOneSignalPlayerId_notification(request);
-        case "getNotificationStats":
-          return await getNotificationStats_notification(request);
-        case "markAllNotificationsAsRead":
-          return await markAllNotificationsAsRead_notification(request);
-        case "canReceiveNotification":
-          return await canReceiveNotification_notification(request);
-        case "deleteNotification":
-          return await deleteNotification_notification(request);
-        default:
-          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      case "createNotification":
+        return await createNotification_notification(request);
+      case "getUserNotifications":
+        return await getUserNotifications_notification(request);
+      case "markNotificationAsRead":
+        return await markNotificationAsRead_notification(request);
+      case "markNotificationAsPushSent":
+        return await markNotificationAsPushSent_notification(request);
+      case "getNotificationsForPush":
+        return await getNotificationsForPush_notification(request);
+      case "storeOneSignalPlayerId":
+        return await storeOneSignalPlayerId_notification(request);
+      case "removeOneSignalPlayerId":
+        return await removeOneSignalPlayerId_notification(request);
+      case "getNotificationStats":
+        return await getNotificationStats_notification(request);
+      case "markAllNotificationsAsRead":
+        return await markAllNotificationsAsRead_notification(request);
+      case "canReceiveNotification":
+        return await canReceiveNotification_notification(request);
+      case "deleteNotification":
+        return await deleteNotification_notification(request);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error executing action [${action}]:`, error);
@@ -924,7 +924,7 @@ exports.notificationAction = onCall(
       }
       throw new HttpsError("internal", "Internal Server Error");
     }
-  }
+  },
 );
 
 // Export helper functions and constants for use in other modules

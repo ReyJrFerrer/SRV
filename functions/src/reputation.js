@@ -5,8 +5,8 @@
  * based math utility instead of the Internet Computer reputation canister.
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { admin, getFirestore } = require("../firebase-admin");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {admin, getFirestore} = require("../firebase-admin");
 
 const {
   BASE_SCORE,
@@ -64,7 +64,7 @@ async function fetchUserData(userId) {
 
     const averageRating = ratingCount > 0 ? totalRating / ratingCount : null;
 
-    return { completedBookings, averageRating, accountAgeMs };
+    return {completedBookings, averageRating, accountAgeMs};
   } catch (error) {
     console.error("Error fetching user data:", error);
     throw error;
@@ -106,7 +106,7 @@ async function fetchProviderData(providerId) {
 
     const averageRating = ratingCount > 0 ? totalRating / ratingCount : null;
 
-    return { completedBookings, averageRating, accountAgeMs };
+    return {completedBookings, averageRating, accountAgeMs};
   } catch (error) {
     console.error("Error fetching provider data:", error);
     throw error;
@@ -119,7 +119,7 @@ async function writeReputationAndHistory(userId, reputationData) {
   await repRef.set({
     ...reputationData,
     lastUpdated: timestamp,
-  }, { merge: true });
+  }, {merge: true});
 
   const historyRef = repRef.collection("history").doc(timestamp.toString());
   await historyRef.set({
@@ -136,7 +136,7 @@ async function initializeReputationInternal(userId) {
     const doc = await repRef.get();
 
     if (doc.exists) {
-      return { success: true, data: doc.data(), message: "Reputation already exists" };
+      return {success: true, data: doc.data(), message: "Reputation already exists"};
     }
 
     const defaultRep = {
@@ -150,7 +150,7 @@ async function initializeReputationInternal(userId) {
 
     await writeReputationAndHistory(userId, defaultRep);
 
-    return { success: true, data: defaultRep, message: "Reputation initialized successfully" };
+    return {success: true, data: defaultRep, message: "Reputation initialized successfully"};
   } catch (error) {
     console.error("Error initializing reputation:", error);
     throw error;
@@ -188,7 +188,7 @@ async function updateUserReputationInternal(userId) {
 
     await writeReputationAndHistory(userId, updatedScore);
 
-    return { success: true, data: updatedScore, message: "User reputation updated successfully" };
+    return {success: true, data: updatedScore, message: "User reputation updated successfully"};
   } catch (error) {
     console.error("Error updating user reputation:", error);
     throw error;
@@ -226,7 +226,7 @@ async function updateProviderReputationInternal(providerId) {
 
     await writeReputationAndHistory(providerId, updatedScore);
 
-    return { success: true, data: updatedScore, message: "Provider reputation updated successfully" };
+    return {success: true, data: updatedScore, message: "Provider reputation updated successfully"};
   } catch (error) {
     console.error("Error updating provider reputation:", error);
     throw error;
@@ -290,7 +290,7 @@ async function processReviewForReputationInternal(review) {
     await updateUserReputationInternal(review.clientId);
     await updateProviderReputationInternal(review.providerId);
 
-    return { success: true, data: { status: "Visible" } };
+    return {success: true, data: {status: "Visible"}};
   } catch (error) {
     console.error("Error in processReviewForReputationInternal:", error);
     throw error;
@@ -344,7 +344,7 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
 
     if (!doc.exists) {
       console.log(`[deductReputationForSuspiciousReview] No reputation found for ${userId}`);
-      return { success: false, error: "No reputation found" };
+      return {success: false, error: "No reputation found"};
     }
 
     const data = doc.data();
@@ -352,7 +352,7 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
 
     if (existingFlags.includes("ReviewBomb")) {
       console.log(`[deductReputationForSuspiciousReview] User ${userId} already has ReviewBomb flag`);
-      return { success: true, data, message: "Already flagged" };
+      return {success: true, data, message: "Already flagged"};
     }
 
     const updatedFlags = [...existingFlags, "ReviewBomb"];
@@ -379,7 +379,7 @@ async function deductReputationForSuspiciousReviewInternal(userId) {
       `[deductReputationForSuspiciousReview] Added ReviewBomb flag to ${userId}. Trust score: ${data.trustScore} -> ${newTrustScore}`,
     );
 
-    return { success: true, data: updatedScore };
+    return {success: true, data: updatedScore};
   } catch (error) {
     console.error("[deductReputationForSuspiciousReview] Error:", error);
     throw error;
@@ -457,7 +457,7 @@ async function updateReputationInternal(userId, reputationScore) {
 
     await writeReputationAndHistory(userId, updatedScore);
 
-    return { success: true, data: updatedScore, message: "Reputation updated successfully" };
+    return {success: true, data: updatedScore, message: "Reputation updated successfully"};
   } catch (error) {
     console.error("Error updating reputation:", error);
     throw error;
@@ -471,7 +471,7 @@ async function updateReputationInternal(userId, reputationScore) {
 async function initializeReputation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
 
@@ -485,7 +485,7 @@ async function initializeReputation_reputation(request) {
 async function updateUserReputation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
 
@@ -499,7 +499,7 @@ async function updateUserReputation_reputation(request) {
 async function updateProviderReputation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { providerId } = payload;
+  const {providerId} = payload;
 
   if (!providerId) {
     throw new HttpsError("invalid-argument", "Provider ID is required");
@@ -515,7 +515,7 @@ async function updateProviderReputation_reputation(request) {
 async function processReviewForReputation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { review } = payload;
+  const {review} = payload;
 
   if (!review || !review.id) {
     throw new HttpsError("invalid-argument", "Review object is required");
@@ -531,13 +531,13 @@ async function processReviewForReputation_reputation(request) {
 async function deductReputationForCancellation_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
 
   try {
     const result = await deductReputationForCancellationInternal(userId);
-    return { success: true, data: result };
+    return {success: true, data: result};
   } catch (error) {
     throw new HttpsError("internal", "Failed to deduct reputation points", error);
   }
@@ -546,7 +546,7 @@ async function deductReputationForCancellation_reputation(request) {
 async function deductReputationForSuspiciousReview_reputation(request) {
   const data = request.data;
   const payload = data.data || data;
-  const { userId } = payload;
+  const {userId} = payload;
 
   if (!userId) throw new HttpsError("invalid-argument", "User ID is required");
 
@@ -559,13 +559,13 @@ async function deductReputationForSuspiciousReview_reputation(request) {
 
 async function updateReputation_reputation(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { userId, reputationScore } = payload;
+  const {userId, reputationScore} = payload;
 
   const authInfo = (context.auth && context.auth.token) ?
-    { uid: context.auth.uid, isAdmin: context.auth.token.isAdmin || false, hasAuth: true } :
-    { uid: null, isAdmin: false, hasAuth: !!context.auth };
+    {uid: context.auth.uid, isAdmin: context.auth.token.isAdmin || false, hasAuth: true} :
+    {uid: null, isAdmin: false, hasAuth: !!context.auth};
 
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new HttpsError("permission-denied", "Only ADMIN users can update reputation");
@@ -594,7 +594,7 @@ exports.reputationAction = onCall(
     maxInstances: 50,
   },
   async (request) => {
-    const { action } = request.data || {};
+    const {action} = request.data || {};
 
     if (!action) {
       throw new HttpsError("invalid-argument", "An action must be specified.");
@@ -602,22 +602,22 @@ exports.reputationAction = onCall(
 
     try {
       switch (action) {
-        case "initializeReputation":
-          return await initializeReputation_reputation(request);
-        case "updateUserReputation":
-          return await updateUserReputation_reputation(request);
-        case "updateProviderReputation":
-          return await updateProviderReputation_reputation(request);
-        case "processReviewForReputation":
-          return await processReviewForReputation_reputation(request);
-        case "deductReputationForCancellation":
-          return await deductReputationForCancellation_reputation(request);
-        case "deductReputationForSuspiciousReview":
-          return await deductReputationForSuspiciousReview_reputation(request);
-        case "updateReputation":
-          return await updateReputation_reputation(request);
-        default:
-          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      case "initializeReputation":
+        return await initializeReputation_reputation(request);
+      case "updateUserReputation":
+        return await updateUserReputation_reputation(request);
+      case "updateProviderReputation":
+        return await updateProviderReputation_reputation(request);
+      case "processReviewForReputation":
+        return await processReviewForReputation_reputation(request);
+      case "deductReputationForCancellation":
+        return await deductReputationForCancellation_reputation(request);
+      case "deductReputationForSuspiciousReview":
+        return await deductReputationForSuspiciousReview_reputation(request);
+      case "updateReputation":
+        return await updateReputation_reputation(request);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error executing action [${action}]:`, error);
@@ -626,7 +626,7 @@ exports.reputationAction = onCall(
       }
       throw new HttpsError("internal", "Internal Server Error");
     }
-  }
+  },
 );
 
 // Export internal functions for use by other modules

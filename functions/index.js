@@ -20,31 +20,14 @@ const {
 
 // Import Admin Management functions
 const {
-  getUserRole,
-  listUserRoles,
-  hasRole,
-  setSettings,
-  getSettings,
-  getSystemStats,
-  getUserServicesAndBookings,
-  getUserServiceCount,
-  getAllUserLockStatuses,
-  lockUserAccount,
-  updateUserReputation,
-  getValidatedCertificates,
-  getRejectedCertificates,
-  getServicesWithCertificates,
-  getPendingCertificateValidations,
-  updateCertificateValidationStatus,
+  adminUserAction,
   autoReactivateSuspendedAccounts,
-  getBookingsData,
-  updateUserPhoneNumber,
 } = require("./src/admin");
 
 
 // Import Account Management functions
 const {
-  accountAction
+  accountAction,
 } = require("./src/account");
 
 // Import Service Management functions
@@ -169,41 +152,11 @@ exports.validateMediaItems = validateMediaItems;
 exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
 
 // Export Admin Management Functions
-exports.getUserRole = getUserRole;
-exports.listUserRoles = listUserRoles;
-exports.hasRole = hasRole;
-exports.setSettings = setSettings;
-exports.getSettings = getSettings;
-exports.getSystemStats = getSystemStats;
-exports.getUserServicesAndBookings = getUserServicesAndBookings;
-exports.getUserServiceCount = getUserServiceCount;
-exports.getAllUserLockStatuses = getAllUserLockStatuses;
-exports.lockUserAccount = lockUserAccount;
-exports.updateUserReputation = updateUserReputation;
-exports.updateUserPhoneNumber = updateUserPhoneNumber;
-exports.getValidatedCertificates = getValidatedCertificates;
-exports.getRejectedCertificates = getRejectedCertificates;
-exports.getServicesWithCertificates = getServicesWithCertificates;
-exports.getPendingCertificateValidations = getPendingCertificateValidations;
-exports.updateCertificateValidationStatus = updateCertificateValidationStatus;
-exports.getBookingsData = getBookingsData;
+exports.adminUserAction = adminUserAction;
 
 // Export Scheduled Admin Functions
 exports.autoReactivateSuspendedAccounts = autoReactivateSuspendedAccounts;
 
-// Export Admin Authentication Helper
-const {createAdminProfile} = require("./src/adminAuth");
-exports.createAdminProfile = createAdminProfile;
-
-// Export Admin Password Functions
-const {
-  changeAdminPassword,
-  verifyAdminPassword,
-  isAdminPasswordSet,
-} = require("./src/admin");
-exports.changeAdminPassword = changeAdminPassword;
-exports.verifyAdminPassword = verifyAdminPassword;
-exports.isAdminPasswordSet = isAdminPasswordSet;
 
 // Export Contact Form Handler
 const {sendContactEmail} = require("./sendContactEmail");

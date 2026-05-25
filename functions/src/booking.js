@@ -5,11 +5,11 @@
  * Consolidated into a single entrypoint following the Firebase optimization guidelines
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { admin, getFirestore } = require("../firebase-admin");
-const { FieldValue } = require("firebase-admin/firestore");
-const { 
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
+const {admin, getFirestore} = require("../firebase-admin");
+const {FieldValue} = require("firebase-admin/firestore");
+const {
   NOTIFICATION_TYPES,
   USER_TYPES,
   NOTIFICATION_STATUS,
@@ -290,7 +290,7 @@ async function cancelConflictingBookings(
 
 async function createBooking_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {
     serviceId,
@@ -485,7 +485,7 @@ async function createBooking_booking(request) {
       },
     );
 
-    return { success: true, data: newBooking };
+    return {success: true, data: newBooking};
   } catch (error) {
     console.error("Error in createBooking:", error);
     if (error instanceof HttpsError) {
@@ -497,9 +497,9 @@ async function createBooking_booking(request) {
 
 async function acceptBooking_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId, scheduledDate } = payload;
+  const {bookingId, scheduledDate} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -587,7 +587,7 @@ async function acceptBooking_booking(request) {
       },
     );
 
-    return { success: true, data: updatedBooking };
+    return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in acceptBooking:", error);
     if (error instanceof HttpsError) {
@@ -599,9 +599,9 @@ async function acceptBooking_booking(request) {
 
 async function declineBooking_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId } = payload;
+  const {bookingId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -665,7 +665,7 @@ async function declineBooking_booking(request) {
       },
     );
 
-    return { success: true, data: updatedBooking };
+    return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in declineBooking:", error);
     if (error instanceof HttpsError) {
@@ -677,9 +677,9 @@ async function declineBooking_booking(request) {
 
 async function startNavigation_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId } = payload;
+  const {bookingId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -753,7 +753,7 @@ async function startNavigation_booking(request) {
       }
     }
 
-    return { success: true };
+    return {success: true};
   } catch (error) {
     console.error("Error in startNavigation:", error);
     if (error instanceof HttpsError) {
@@ -765,9 +765,9 @@ async function startNavigation_booking(request) {
 
 async function startBooking_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId } = payload;
+  const {bookingId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -858,7 +858,7 @@ async function startBooking_booking(request) {
       console.warn("[startBooking] Failed to cleanup RTDB location node:", bookingId, rtdbErr);
     }
 
-    return { success: true, data: updatedBooking };
+    return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in startBooking:", error);
     if (error instanceof HttpsError) {
@@ -870,9 +870,9 @@ async function startBooking_booking(request) {
 
 async function completeBooking_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId, amountPaid } = payload;
+  const {bookingId, amountPaid} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -980,7 +980,7 @@ async function completeBooking_booking(request) {
       // Ignore - node may already be deleted
     }
 
-    return { success: true, data: updatedBooking };
+    return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in completeBooking:", error);
     if (error instanceof HttpsError) {
@@ -992,9 +992,9 @@ async function completeBooking_booking(request) {
 
 async function cancelBooking_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId, cancelReason } = payload;
+  const {bookingId, cancelReason} = payload;
 
   if (!cancelReason || typeof cancelReason !== "string" || cancelReason.trim() === "") {
     throw new HttpsError("invalid-argument", "A reason for cancellation is required");
@@ -1124,7 +1124,7 @@ async function cancelBooking_booking(request) {
       // Ignore - node may not exist
     }
 
-    return { success: true, data: updatedBooking };
+    return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in cancelBooking:", error);
     if (error instanceof HttpsError) {
@@ -1136,9 +1136,9 @@ async function cancelBooking_booking(request) {
 
 async function getBooking_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId } = payload;
+  const {bookingId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1163,7 +1163,7 @@ async function getBooking_booking(request) {
       throw new HttpsError("permission-denied", "Not authorized to view this booking");
     }
 
-    return { success: true, data: booking };
+    return {success: true, data: booking};
   } catch (error) {
     console.error("Error in getBooking:", error);
     if (error instanceof HttpsError) {
@@ -1175,9 +1175,9 @@ async function getBooking_booking(request) {
 
 async function getClientBookings_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { clientId, limit = 50 } = payload;
+  const {clientId, limit = 50} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1197,7 +1197,7 @@ async function getClientBookings_booking(request) {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return { success: true, data: bookings };
+    return {success: true, data: bookings};
   } catch (error) {
     console.error("Error in getClientBookings:", error);
     throw new HttpsError("internal", error.message);
@@ -1206,9 +1206,9 @@ async function getClientBookings_booking(request) {
 
 async function getProviderBookings_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { providerId, limit = 50 } = payload;
+  const {providerId, limit = 50} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1228,7 +1228,7 @@ async function getProviderBookings_booking(request) {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return { success: true, data: bookings };
+    return {success: true, data: bookings};
   } catch (error) {
     console.error("Error in getProviderBookings:", error);
     throw new HttpsError("internal", error.message);
@@ -1237,9 +1237,9 @@ async function getProviderBookings_booking(request) {
 
 async function getBookingsByStatus_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { status, limit = 50 } = payload;
+  const {status, limit = 50} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -1258,7 +1258,7 @@ async function getBookingsByStatus_booking(request) {
       .get();
 
     const bookings = bookingsQuery.docs.map((doc) => doc.data());
-    return { success: true, data: bookings };
+    return {success: true, data: bookings};
   } catch (error) {
     console.error("Error in getBookingsByStatus:", error);
     throw new HttpsError("internal", error.message);
@@ -1267,9 +1267,9 @@ async function getBookingsByStatus_booking(request) {
 
 async function disputeBooking_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId } = payload;
+  const {bookingId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1329,10 +1329,10 @@ async function disputeBooking_booking(request) {
       "Booking Disputed",
       `${disputerName} has disputed the booking for "${serviceName}"`,
       bookingId,
-      { serviceId: booking.serviceId, serviceName, disputedBy: authInfo.uid, disputerName },
+      {serviceId: booking.serviceId, serviceName, disputedBy: authInfo.uid, disputerName},
     );
 
-    return { success: true, data: updatedBooking };
+    return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in disputeBooking:", error);
     if (error instanceof HttpsError) {
@@ -1344,9 +1344,9 @@ async function disputeBooking_booking(request) {
 
 async function checkServiceAvailability_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { serviceId, requestedDateTime } = payload;
+  const {serviceId, requestedDateTime} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1366,7 +1366,7 @@ async function checkServiceAvailability_booking(request) {
     const service = serviceDoc.data();
 
     if (!isServiceActive(service)) {
-      return { success: true, data: { available: false, reason: "Service is not active" } };
+      return {success: true, data: {available: false, reason: "Service is not active"}};
     }
 
     const hasConflict = await checkBookingConflicts(
@@ -1378,7 +1378,7 @@ async function checkServiceAvailability_booking(request) {
     if (hasConflict) {
       return {
         success: true,
-        data: { available: false, reason: "Time slot conflicts with existing booking" },
+        data: {available: false, reason: "Time slot conflicts with existing booking"},
       };
     }
 
@@ -1401,7 +1401,7 @@ async function checkServiceAvailability_booking(request) {
       if (!daySchedule || !daySchedule.availability?.isAvailable) {
         return {
           success: true,
-          data: { available: false, reason: `Service not available on ${requestedDayName}` },
+          data: {available: false, reason: `Service not available on ${requestedDayName}`},
         };
       }
 
@@ -1423,7 +1423,7 @@ async function checkServiceAvailability_booking(request) {
       }
     }
 
-    return { success: true, data: { available: true, reason: "Service is available" } };
+    return {success: true, data: {available: true, reason: "Service is available"}};
   } catch (error) {
     console.error("Error in checkServiceAvailability:", error);
     if (error instanceof HttpsError) {
@@ -1435,9 +1435,9 @@ async function checkServiceAvailability_booking(request) {
 
 async function getServiceAvailableSlots_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { serviceId, date } = payload;
+  const {serviceId, date} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1457,11 +1457,11 @@ async function getServiceAvailableSlots_booking(request) {
     const service = serviceDoc.data();
 
     if (!isServiceActive(service)) {
-      return { success: true, data: [] };
+      return {success: true, data: []};
     }
 
     if (!service.weeklySchedule || service.weeklySchedule.length === 0) {
-      return { success: true, data: [] };
+      return {success: true, data: []};
     }
 
     const requestedDate = new Date(date);
@@ -1477,7 +1477,7 @@ async function getServiceAvailableSlots_booking(request) {
 
     if (!daySchedule || !daySchedule.availability?.isAvailable ||
       !daySchedule.availability?.slots) {
-      return { success: true, data: [] };
+      return {success: true, data: []};
     }
 
     const startOfDay = new Date(requestedDate);
@@ -1528,7 +1528,7 @@ async function getServiceAvailableSlots_booking(request) {
       };
     });
 
-    return { success: true, data: availableSlots };
+    return {success: true, data: availableSlots};
   } catch (error) {
     console.error("Error in getServiceAvailableSlots:", error);
     if (error instanceof HttpsError) {
@@ -1540,9 +1540,9 @@ async function getServiceAvailableSlots_booking(request) {
 
 async function getClientAnalytics_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { clientId, startDate, endDate } = payload;
+  const {clientId, startDate, endDate} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1622,9 +1622,9 @@ async function getClientAnalytics_booking(request) {
 
 async function getProviderAnalytics_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { providerId, startDate, endDate } = payload;
+  const {providerId, startDate, endDate} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
@@ -1729,9 +1729,9 @@ async function getProviderAnalytics_booking(request) {
 
 async function releasePayment_booking(request) {
   const data = request.data;
-  const context = { auth: request.auth, rawRequest: request };
+  const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const { bookingId, paymentId, releasedAmount, commissionRetained, payoutId } = payload;
+  const {bookingId, paymentId, releasedAmount, commissionRetained, payoutId} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
@@ -1810,7 +1810,7 @@ async function releasePayment_booking(request) {
       "Payment Released",
       `Payment for booking ${bookingId} has been released`,
       bookingId,
-      { serviceId: booking.serviceId, releasedAmount, commissionRetained },
+      {serviceId: booking.serviceId, releasedAmount, commissionRetained},
     );
 
     const updatedBooking = {
@@ -1824,7 +1824,7 @@ async function releasePayment_booking(request) {
       updatedAt: releaseDate,
     };
 
-    return { success: true, data: updatedBooking };
+    return {success: true, data: updatedBooking};
   } catch (error) {
     console.error("Error in releasePayment:", error);
     if (error instanceof HttpsError) {
@@ -1856,7 +1856,7 @@ exports.cancelMissedBookings = onSchedule("0 0 * * *", async (_event) => {
       .get();
 
     if (missedBookingsQuery.empty && expiredRequestedBookingsQuery.empty) {
-      return { success: true, count: 0 };
+      return {success: true, count: 0};
     }
 
     const batch = db.batch();
@@ -2030,7 +2030,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       .get();
 
     if (upcomingBookingsQuery.empty) {
-      return { success: true, count: 0 };
+      return {success: true, count: 0};
     }
 
     const batch = db.batch();
@@ -2112,7 +2112,7 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
       await Promise.allSettled(notificationPromises);
     }
 
-    return { success: true, count: reminderCount };
+    return {success: true, count: reminderCount};
   } catch (error) {
     console.error("Error sending service reminders:", error);
     throw error;
@@ -2130,7 +2130,7 @@ exports.bookingAction = onCall(
     maxInstances: 50,
   },
   async (request) => {
-    const { action } = request.data || {};
+    const {action} = request.data || {};
 
     if (!action) {
       throw new HttpsError("invalid-argument", "An action must be specified.");
@@ -2138,42 +2138,42 @@ exports.bookingAction = onCall(
 
     try {
       switch (action) {
-        case "createBooking":
-          return await createBooking_booking(request);
-        case "acceptBooking":
-          return await acceptBooking_booking(request);
-        case "declineBooking":
-          return await declineBooking_booking(request);
-        case "startNavigation":
-          return await startNavigation_booking(request);
-        case "startBooking":
-          return await startBooking_booking(request);
-        case "completeBooking":
-          return await completeBooking_booking(request);
-        case "cancelBooking":
-          return await cancelBooking_booking(request);
-        case "getBooking":
-          return await getBooking_booking(request);
-        case "getClientBookings":
-          return await getClientBookings_booking(request);
-        case "getProviderBookings":
-          return await getProviderBookings_booking(request);
-        case "getBookingsByStatus":
-          return await getBookingsByStatus_booking(request);
-        case "disputeBooking":
-          return await disputeBooking_booking(request);
-        case "checkServiceAvailability":
-          return await checkServiceAvailability_booking(request);
-        case "getServiceAvailableSlots":
-          return await getServiceAvailableSlots_booking(request);
-        case "getClientAnalytics":
-          return await getClientAnalytics_booking(request);
-        case "getProviderAnalytics":
-          return await getProviderAnalytics_booking(request);
-        case "releasePayment":
-          return await releasePayment_booking(request);
-        default:
-          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      case "createBooking":
+        return await createBooking_booking(request);
+      case "acceptBooking":
+        return await acceptBooking_booking(request);
+      case "declineBooking":
+        return await declineBooking_booking(request);
+      case "startNavigation":
+        return await startNavigation_booking(request);
+      case "startBooking":
+        return await startBooking_booking(request);
+      case "completeBooking":
+        return await completeBooking_booking(request);
+      case "cancelBooking":
+        return await cancelBooking_booking(request);
+      case "getBooking":
+        return await getBooking_booking(request);
+      case "getClientBookings":
+        return await getClientBookings_booking(request);
+      case "getProviderBookings":
+        return await getProviderBookings_booking(request);
+      case "getBookingsByStatus":
+        return await getBookingsByStatus_booking(request);
+      case "disputeBooking":
+        return await disputeBooking_booking(request);
+      case "checkServiceAvailability":
+        return await checkServiceAvailability_booking(request);
+      case "getServiceAvailableSlots":
+        return await getServiceAvailableSlots_booking(request);
+      case "getClientAnalytics":
+        return await getClientAnalytics_booking(request);
+      case "getProviderAnalytics":
+        return await getProviderAnalytics_booking(request);
+      case "releasePayment":
+        return await releasePayment_booking(request);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error executing action [${action}]:`, error);
@@ -2182,5 +2182,5 @@ exports.bookingAction = onCall(
       }
       throw new HttpsError("internal", "Internal Server Error");
     }
-  }
+  },
 );
