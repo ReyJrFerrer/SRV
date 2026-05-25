@@ -101,7 +101,8 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
 /**
  * Upload a media file to Cloud Storage and store metadata in Firestore
  */
-exports.uploadMedia = onCall(async (request) => {
+async function uploadMedia_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const {fileName, contentType, mediaType, fileData} = data;
@@ -247,13 +248,14 @@ exports.uploadMedia = onCall(async (request) => {
     console.error("Error uploading media:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get a media item by ID
  * Mirrors getMediaItem function from media.mo canister
  */
-exports.getMediaItem = onCall(async (request) => {
+async function getMediaItem_media(request) {
+
   const data = request.data;
   console.log("Media ID", data.data);
   const {mediaId} = data.data || data;
@@ -281,14 +283,15 @@ exports.getMediaItem = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get file data (URL) for a media item
  * Note: In Cloud Storage, we return the public URL instead of raw data
  * Mirrors getFileData function from media.mo canister
  */
-exports.getFileData = onCall(async (request) => {
+async function getFileData_media(request) {
+
   const data = request.data;
   const {mediaId} = data;
 
@@ -315,13 +318,14 @@ exports.getFileData = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get media items by owner
  * Mirrors getMediaByOwner function from media.mo canister
  */
-exports.getMediaByOwner = onCall(async (request) => {
+async function getMediaByOwner_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const {ownerId} = data;
@@ -359,13 +363,14 @@ exports.getMediaByOwner = onCall(async (request) => {
     console.error("Error getting media by owner:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get media items by type and owner
  * Mirrors getMediaByTypeAndOwner function from media.mo canister
  */
-exports.getMediaByTypeAndOwner = onCall(async (request) => {
+async function getMediaByTypeAndOwner_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const {ownerId, mediaType} = data;
@@ -404,14 +409,14 @@ exports.getMediaByTypeAndOwner = onCall(async (request) => {
     console.error("Error getting media by type and owner:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
+}
 
 /**
  * Delete a media item
  * Mirrors deleteMedia function from media.mo canister
  */
-exports.deleteMedia = onCall(async (request) => {
+async function deleteMedia_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const {mediaId} = data;
@@ -474,13 +479,14 @@ exports.deleteMedia = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Update media metadata
  * Mirrors updateMediaMetadata function from media.mo canister
  */
-exports.updateMediaMetadata = onCall(async (request) => {
+async function updateMediaMetadata_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const {mediaId, fileName} = data;
@@ -544,13 +550,14 @@ exports.updateMediaMetadata = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get storage statistics
  * Mirrors getStorageStats function from media.mo canister
  */
-exports.getStorageStats = onCall(async (request) => {
+async function getStorageStats_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const authInfo = getAuthInfo(context, data);
@@ -593,13 +600,14 @@ exports.getStorageStats = onCall(async (request) => {
     console.error("Error getting storage stats:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Validate media items (used by remittance canister)
  * Mirrors validateMediaItems function from media.mo canister
  */
-exports.validateMediaItems = onCall(async (request) => {
+async function validateMediaItems_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const {mediaIds} = data;
@@ -655,13 +663,14 @@ exports.validateMediaItems = onCall(async (request) => {
     console.error("Error validating media items:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Update certificate validation status
  * Mirrors updateCertificateValidationStatus function from media.mo canister
  */
-exports.updateCertificateValidationStatus = onCall(async (request) => {
+async function updateCertificateValidationStatus_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const {mediaId, newStatus} = data;
@@ -721,14 +730,14 @@ exports.updateCertificateValidationStatus = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-},
-);
+}
 
 /**
  * Get certificates by validation status
  * Mirrors getCertificatesByValidationStatus function from media.mo canister
  */
-exports.getCertificatesByValidationStatus = onCall(async (request) => {
+async function getCertificatesByValidationStatus_media(request) {
+
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const {status} = data;
@@ -761,8 +770,7 @@ exports.getCertificatesByValidationStatus = onCall(async (request) => {
     console.error("Error getting certificates by validation status:", error);
     throw new HttpsError("internal", error.message);
   }
-},
-);
+}
 
 // ============================================================================
 // INTERNAL HELPER FUNCTIONS (for use by other Cloud Functions)
@@ -1001,6 +1009,59 @@ async function updateCertificateValidationStatusInternal(mediaId, newStatus) {
 
   return updatedMedia;
 }
+
+
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.mediaAction = onCall(
+  {
+    memory: "256MiB",
+  },
+  async (request) => {
+    const {action} = request.data || {};
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+      case "uploadMedia":
+        return await uploadMedia_media(request);
+      case "getMediaItem":
+        return await getMediaItem_media(request);
+      case "getFileData":
+        return await getFileData_media(request);
+      case "getMediaByOwner":
+        return await getMediaByOwner_media(request);
+      case "getMediaByTypeAndOwner":
+        return await getMediaByTypeAndOwner_media(request);
+      case "deleteMedia":
+        return await deleteMedia_media(request);
+      case "updateMediaMetadata":
+        return await updateMediaMetadata_media(request);
+      case "getStorageStats":
+        return await getStorageStats_media(request);
+      case "validateMediaItems":
+        return await validateMediaItems_media(request);
+      case "updateCertificateValidationStatus":
+        return await updateCertificateValidationStatus_media(request);
+      case "getCertificatesByValidationStatus":
+        return await getCertificatesByValidationStatus_media(request);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
+  },
+);
 
 // Export internal functions for use by other modules
 exports.uploadMediaInternal = uploadMediaInternal;

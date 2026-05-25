@@ -123,12 +123,12 @@ export const getImageDataUrl = async (
     }
 
     // Get file URL from Cloud Function
-    const getFileDataFn = httpsCallable<
-      { mediaId: string },
+    const mediaActionFn = httpsCallable<
+      { action: string; mediaId: string },
       { success: boolean; data: string }
-    >(functions, "getFileData");
+    >(functions, "mediaAction");
 
-    const result = await getFileDataFn({ mediaId });
+    const result = await mediaActionFn({ action: "getFileData", mediaId });
 
     if (!result.data.success) {
       return opts.fallbackImageUrl;
@@ -871,15 +871,16 @@ export const uploadReportAttachments = async (
     }
 
     const opts = { ...DEFAULT_OPTIONS, ...options };
-    const uploadMediaFn = httpsCallable<
+    const mediaActionFn = httpsCallable<
       {
+        action: string;
         fileName: string;
         contentType: string;
         mediaType: string;
         fileData: string;
       },
       { success: boolean; data: { url: string } }
-    >(functions, "uploadMedia");
+    >(functions, "mediaAction");
 
     const uploadedUrls: string[] = [];
 
@@ -920,7 +921,8 @@ export const uploadReportAttachments = async (
       const base64Data = uint8ArrayToBase64(fileData);
 
       // Upload via media canister (Cloud Function) - use original filename
-      const result = await uploadMediaFn({
+      const result = await mediaActionFn({
+        action: "uploadMedia",
         fileName: originalFileName,
         contentType: originalContentType,
         mediaType: "ReportAttachment",
@@ -1083,12 +1085,12 @@ export const mediaService = {
       }
 
       // Get media item from Cloud Function
-      const getMediaItemFn = httpsCallable<
-        { mediaId: string },
+      const mediaActionFn = httpsCallable<
+        { action: string; mediaId: string },
         { success: boolean; data: any }
-      >(functions, "getMediaItem");
+      >(functions, "mediaAction");
 
-      const result = await getMediaItemFn({ mediaId });
+      const result = await mediaActionFn({ action: "getMediaItem", mediaId });
 
       if (result.data.success) {
         const mediaItem = result.data.data;
@@ -1147,15 +1149,16 @@ export const uploadProblemProofMedia = async (
 
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const allowedTypes = options.allowedTypes || PROOF_MEDIA_ALLOWED_TYPES;
-  const uploadMediaFn = httpsCallable<
+  const mediaActionFn = httpsCallable<
     {
+      action: string;
       fileName: string;
       contentType: string;
       mediaType: string;
       fileData: string;
     },
     { success: boolean; data: { url: string } }
-  >(functions, "uploadMedia");
+  >(functions, "mediaAction");
 
   const urls: string[] = [];
 
@@ -1196,7 +1199,8 @@ export const uploadProblemProofMedia = async (
     const data = await fileToUint8Array(toUpload);
     const base64 = uint8ArrayToBase64(data);
 
-    const result = await uploadMediaFn({
+    const result = await mediaActionFn({
+      action: "uploadMedia",
       fileName: file.name,
       contentType: file.type,
       mediaType: "ProblemProof",
