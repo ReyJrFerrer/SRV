@@ -376,14 +376,14 @@ export const getUserBookings = async (
   try {
     requireAuth();
 
-    // Get bookings from Firebase (both client and provider bookings)
-    const [clientBookingsResult, providerBookingsResult] = await Promise.all([
-      callFirebaseFunction("getClientBookings", { clientId: userId }),
-      callFirebaseFunction("getProviderBookings", { providerId: userId }),
-    ]);
+    // Get bookings from Firebase via adminUserAction (both client and provider bookings)
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getUserServicesAndBookings",
+      payload: { userId },
+    });
 
-    const clientBookings = clientBookingsResult || [];
-    const providerBookings = providerBookingsResult || [];
+    const clientBookings = result.clientBookings || [];
+    const providerBookings = result.providerBookings || [];
 
     // Combine both arrays
     const allBookings = [...clientBookings, ...providerBookings];
