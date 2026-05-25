@@ -51,19 +51,7 @@ const {
 
 // Import Feedback Management functions
 const {
-  submitFeedback,
-  getAllFeedback,
-  getMyFeedback,
-  getFeedbackStats,
-  getFeedbackById,
-  getRecentFeedback,
-  submitReport,
-  getAllReports,
-  getMyReports,
-  updateReportStatus,
-  getReportStats,
-  getReportById,
-  getRecentReports,
+  feedbackAction,
 } = require("./src/feedback");
 
 // Import Chat Management functions
@@ -117,19 +105,7 @@ exports.reviewAction = reviewAction;
 
 
 // Export Feedback Management Functions
-exports.submitFeedback = submitFeedback;
-exports.getAllFeedback = getAllFeedback;
-exports.getMyFeedback = getMyFeedback;
-exports.getFeedbackStats = getFeedbackStats;
-exports.getFeedbackById = getFeedbackById;
-exports.getRecentFeedback = getRecentFeedback;
-exports.submitReport = submitReport;
-exports.getAllReports = getAllReports;
-exports.getMyReports = getMyReports;
-exports.updateReportStatus = updateReportStatus;
-exports.getReportStats = getReportStats;
-exports.getReportById = getReportById;
-exports.getRecentReports = getRecentReports;
+exports.feedbackAction = feedbackAction;
 
 // Export Chat Management Functions
 exports.onMessageCreated = onMessageCreated;

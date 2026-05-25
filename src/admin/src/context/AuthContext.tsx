@@ -23,8 +23,7 @@ import {
   getRecommendedSessionDuration,
 } from "../utils/sessionPersistence";
 
-import { httpsCallable } from "firebase/functions";
-import { getFirebaseFunctions } from "../services/firebaseApp";
+import { callFirebaseFunction } from "../services/coreUtils";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -463,13 +462,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 sessionDuration: sessionDurationMs,
               });
 
-              const functions = getFirebaseFunctions();
-              const isPasswordSetFn = httpsCallable(
-                functions,
-                "isAdminPasswordSet",
+              const passwordCheckResult = await callFirebaseFunction(
+                "adminUserAction",
+                { action: "isAdminPasswordSet", payload: {} },
               );
-              const passwordCheckResult = await isPasswordSetFn();
-              const passwordData = passwordCheckResult.data as {
+              const passwordData = passwordCheckResult as {
                 success: boolean;
                 isSet: boolean;
               };
@@ -531,10 +528,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const functions = getFirebaseFunctions();
-      const verifyPasswordFn = httpsCallable(functions, "verifyAdminPassword");
-      const verifyResult = await verifyPasswordFn({ password });
-      const verifyData = verifyResult.data as {
+      const verifyResult = await callFirebaseFunction("adminUserAction", {
+        action: "verifyAdminPassword",
+        payload: { password },
+      });
+      const verifyData = verifyResult as {
         success: boolean;
         verified: boolean;
         message: string;

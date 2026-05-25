@@ -11,6 +11,7 @@ const {
   deleteMediaInternal,
 } = require("./media");
 
+
 /**
  * Helper function to safely get user authentication info
  * @param {object} context - Firebase Functions context
@@ -2306,6 +2307,7 @@ async function getAllServicesInternal() {
 
 /**
  * Internal function to get service by ID
+ * 
  * For use by other Cloud Functions (e.g., admin.js)
  * @param {string} serviceId - Service ID
  * @return {Promise<object|null>} Service object or null if not found
@@ -2513,3 +2515,5 @@ exports.serviceAction = onCall(
     }
   },
 );
+
+exports.getAllServicesInternal = getAllServicesInternal;

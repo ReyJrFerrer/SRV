@@ -17,7 +17,7 @@ export const getUserRole = async (
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "getUserRole",
-      data: { userId },
+      payload: { userId },
     });
 
     if (!result) return null;
@@ -61,7 +61,7 @@ export const listUserRoles = async (): Promise<
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "listUserRoles",
-      data: {},
+      payload: {},
     });
 
     if (!result || !Array.isArray(result)) return [];
@@ -92,7 +92,7 @@ export const hasAdminRole = async (userId: string): Promise<boolean> => {
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "hasRole",
-      data: {
+      payload: {
         userId,
         role: "ADMIN",
       },
@@ -119,7 +119,7 @@ export const lockUserAccount = async (
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "lockUserAccount",
-      data: {
+      payload: {
         userId,
         locked,
         suspensionDurationDays: locked
@@ -152,7 +152,7 @@ export const getAllUserLockStatuses = async (): Promise<
     const callable = httpsCallable(functions, "adminUserAction");
     const result = await callable({
       action: "getAllUserLockStatuses",
-      data: {},
+      payload: {},
     });
 
     if ((result.data as any).success) {
@@ -184,7 +184,7 @@ export const updateUserReputation = async (
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "updateUserReputation",
-      data: {
+      payload: {
         userId,
         reputationScore,
       },
@@ -208,7 +208,7 @@ export const updateUserPhoneNumber = async (
     requireAuth();
     const result = await callFirebaseFunction("adminUserAction", {
       action: "updateUserPhoneNumber",
-      data: {
+      payload: {
         userId,
         phone,
       },

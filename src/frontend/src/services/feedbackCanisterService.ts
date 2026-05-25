@@ -1,11 +1,15 @@
-// Feedback Service (Firebase Cloud Functions)
+/**
+ * Feedback Firebase Service
+ *
+ * This service provides functions to interact with feedback-related Firebase Cloud Functions.
+ * It replaces the previous canister-based service with Firebase Firestore and Cloud Functions.
+ */
+
 import { httpsCallable } from "firebase/functions";
-import { initializeFirebase } from "./firebaseApp";
+import { getFirebaseFunctions } from "./firebaseApp";
 
-// Initialize Firebase
-const { functions } = initializeFirebase();
-
-// Firebase authentication will be handled automatically by httpsCallable functions
+// Get Firebase functions instance using proper helper
+const getFunctions = () => getFirebaseFunctions();
 
 // Frontend-compatible interfaces
 export interface AppFeedback {
@@ -42,28 +46,23 @@ export interface ReportStats {
   latestReport?: AppReport;
 }
 
-// Firebase feedback data is already in the correct format, no conversion needed
-
-// Feedback Service Functions
+// Feedback Firebase Service Functions
 export const feedbackCanisterService = {
   /**
    * Submit feedback
    */
-  async submitFeedback(rating: number, comment?: string): Promise<AppFeedback> {
+  async submitFeedback(rating: number, comment?: string): Promise<AppFeedback | null> {
     try {
-      const submitFeedbackFn = httpsCallable(functions, "submitFeedback");
-
-      const result = await submitFeedbackFn({
-        data: { rating, comment },
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "submitFeedback",
+        payload: { rating, comment },
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: AppFeedback;
-      };
-      return responseData.data;
+      const data = result.data as { success: boolean; data: AppFeedback };
+      return data.success ? data.data : null;
     } catch (error) {
-      throw new Error(`Failed to submit feedback: ${error}`);
+      throw error;
     }
   },
 
@@ -72,19 +71,16 @@ export const feedbackCanisterService = {
    */
   async getAllFeedback(): Promise<AppFeedback[]> {
     try {
-      const getAllFeedbackFn = httpsCallable(functions, "getAllFeedback");
-
-      const result = await getAllFeedbackFn({
-        data: {},
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getAllFeedback",
+        payload: {},
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: AppFeedback[];
-      };
-      return responseData.data || [];
+      const data = result.data as { success: boolean; data: AppFeedback[] };
+      return data.success ? data.data : [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
@@ -93,61 +89,52 @@ export const feedbackCanisterService = {
    */
   async getMyFeedback(): Promise<AppFeedback[]> {
     try {
-      const getMyFeedbackFn = httpsCallable(functions, "getMyFeedback");
-
-      const result = await getMyFeedbackFn({
-        data: {},
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getMyFeedback",
+        payload: {},
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: AppFeedback[];
-      };
-      return responseData.data || [];
+      const data = result.data as { success: boolean; data: AppFeedback[] };
+      return data.success ? data.data : [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
   /**
    * Get feedback statistics
    */
-  async getFeedbackStats(): Promise<FeedbackStats> {
+  async getFeedbackStats(): Promise<FeedbackStats | null> {
     try {
-      const getFeedbackStatsFn = httpsCallable(functions, "getFeedbackStats");
-
-      const result = await getFeedbackStatsFn({
-        data: {},
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getFeedbackStats",
+        payload: {},
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: FeedbackStats;
-      };
-      return responseData.data;
+      const data = result.data as { success: boolean; data: FeedbackStats };
+      return data.success ? data.data : null;
     } catch (error) {
-      throw new Error(`Failed to get feedback stats: ${error}`);
+      return null;
     }
   },
 
   /**
    * Get feedback by ID
    */
-  async getFeedbackById(feedbackId: string): Promise<AppFeedback> {
+  async getFeedbackById(feedbackId: string): Promise<AppFeedback | null> {
     try {
-      const getFeedbackByIdFn = httpsCallable(functions, "getFeedbackById");
-
-      const result = await getFeedbackByIdFn({
-        data: { feedbackId },
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getFeedbackById",
+        payload: { feedbackId },
       });
-      const responseData = result.data as {
-        success: boolean;
-        data: AppFeedback;
-      };
 
-      return responseData.data;
+      const data = result.data as { success: boolean; data: AppFeedback };
+      return data.success ? data.data : null;
     } catch (error) {
-      throw new Error(`Failed to get feedback by ID: ${error}`);
+      return null;
     }
   },
 
@@ -156,19 +143,16 @@ export const feedbackCanisterService = {
    */
   async getRecentFeedback(limit: number): Promise<AppFeedback[]> {
     try {
-      const getRecentFeedbackFn = httpsCallable(functions, "getRecentFeedback");
-
-      const result = await getRecentFeedbackFn({
-        data: { limit },
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getRecentFeedback",
+        payload: { limit },
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: AppFeedback[];
-      };
-      return responseData.data || [];
+      const data = result.data as { success: boolean; data: AppFeedback[] };
+      return data.success ? data.data : [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
@@ -180,19 +164,18 @@ export const feedbackCanisterService = {
   async submitReport(
     description: string,
     attachments: string[] = [],
-  ): Promise<AppReport> {
+  ): Promise<AppReport | null> {
     try {
-      const submitReportFn = httpsCallable(functions, "submitReport");
-
-      // Send the description and attachments - backend will handle JSON parsing if needed
-      const result = await submitReportFn({
-        data: { description, attachments },
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "submitReport",
+        payload: { description, attachments },
       });
 
-      const responseData = result.data as { success: boolean; data: AppReport };
-      return responseData.data;
+      const data = result.data as { success: boolean; data: AppReport };
+      return data.success ? data.data : null;
     } catch (error) {
-      throw new Error(`Failed to submit report: ${error}`);
+      throw error;
     }
   },
 
@@ -201,19 +184,16 @@ export const feedbackCanisterService = {
    */
   async getAllReports(): Promise<AppReport[]> {
     try {
-      const getAllReportsFn = httpsCallable(functions, "getAllReports");
-
-      const result = await getAllReportsFn({
-        data: { data: {} },
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getAllReports",
+        payload: {},
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: AppReport[];
-      };
-      return responseData.data || [];
+      const data = result.data as { success: boolean; data: AppReport[] };
+      return data.success ? data.data : [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
@@ -222,20 +202,16 @@ export const feedbackCanisterService = {
    */
   async getMyReports(): Promise<AppReport[]> {
     try {
-      const getMyReportsFn = httpsCallable(functions, "getMyReports");
-
-      const result = await getMyReportsFn({
-        data: {},
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getMyReports",
+        payload: {},
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: AppReport[];
-      };
-
-      return responseData.data || [];
+      const data = result.data as { success: boolean; data: AppReport[] };
+      return data.success ? data.data : [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
@@ -245,63 +221,54 @@ export const feedbackCanisterService = {
   async updateReportStatus(
     reportId: string,
     newStatus: string,
-  ): Promise<AppReport> {
+  ): Promise<AppReport | null> {
     try {
-      const updateReportStatusFn = httpsCallable(
-        functions,
-        "updateReportStatus",
-      );
-
-      const result = await updateReportStatusFn({
-        data: { reportId, newStatus },
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "updateReportStatus",
+        payload: { reportId, newStatus },
       });
 
-      const responseData = result.data as { success: boolean; data: AppReport };
-
-      return responseData.data;
+      const data = result.data as { success: boolean; data: AppReport };
+      return data.success ? data.data : null;
     } catch (error) {
-      throw new Error(`Failed to update report status: ${error}`);
+      throw error;
     }
   },
 
   /**
    * Get report statistics
    */
-  async getReportStats(): Promise<ReportStats> {
+  async getReportStats(): Promise<ReportStats | null> {
     try {
-      const getReportStatsFn = httpsCallable(functions, "getReportStats");
-
-      const result = await getReportStatsFn({
-        data: {},
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getReportStats",
+        payload: {},
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: ReportStats;
-      };
-
-      return responseData.data;
+      const data = result.data as { success: boolean; data: ReportStats };
+      return data.success ? data.data : null;
     } catch (error) {
-      throw new Error(`Failed to get report stats: ${error}`);
+      return null;
     }
   },
 
   /**
    * Get report by ID
    */
-  async getReportById(reportId: string): Promise<AppReport> {
+  async getReportById(reportId: string): Promise<AppReport | null> {
     try {
-      const getReportByIdFn = httpsCallable(functions, "getReportById");
-
-      const result = await getReportByIdFn({
-        data: { data: { reportId } },
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getReportById",
+        payload: { reportId },
       });
 
-      const responseData = result.data as { success: boolean; data: AppReport };
-
-      return responseData.data;
+      const data = result.data as { success: boolean; data: AppReport };
+      return data.success ? data.data : null;
     } catch (error) {
-      throw new Error(`Failed to get report by ID: ${error}`);
+      return null;
     }
   },
 
@@ -310,19 +277,16 @@ export const feedbackCanisterService = {
    */
   async getRecentReports(limit: number): Promise<AppReport[]> {
     try {
-      const getRecentReportsFn = httpsCallable(functions, "getRecentReports");
-
-      const result = await getRecentReportsFn({
-        data: { limit },
+      const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
+      const result = await feedbackActionFn({
+        action: "getRecentReports",
+        payload: { limit },
       });
 
-      const responseData = result.data as {
-        success: boolean;
-        data: AppReport[];
-      };
-      return responseData.data || [];
+      const data = result.data as { success: boolean; data: AppReport[] };
+      return data.success ? data.data : [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
@@ -336,7 +300,6 @@ export const feedbackCanisterService = {
         if (a.rating !== b.rating) {
           return b.rating - a.rating;
         }
-        // If ratings are equal, sort by creation date (newest first)
         return (
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -344,11 +307,9 @@ export const feedbackCanisterService = {
 
       return sortedFeedback.slice(0, limit);
     } catch (error) {
-      return []; // Return empty array on error
+      return [];
     }
   },
 };
-
-// Firebase functions don't require actor management or reset functionality
 
 export default feedbackCanisterService;

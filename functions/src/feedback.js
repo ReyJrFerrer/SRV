@@ -76,11 +76,11 @@ function validateDescription(description) {
 /**
  * Submit feedback
  */
-exports.submitFeedback = onCall(async (request) => {
+async function submitFeedbackService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {rating, comment = null} = payload;
   console.log("Submit Feedback Payload", payload);
 
@@ -142,18 +142,16 @@ exports.submitFeedback = onCall(async (request) => {
       throw error;
     }
     console.error("Error in submitFeedback:", error);
-    throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get all feedback (admin function)
  */
-exports.getAllFeedback = onCall(async (request) => {
+async function getAllFeedbackService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   console.log("Get All Feedback Payload", payload);
 
   // Authentication - admin only
@@ -178,18 +176,17 @@ exports.getAllFeedback = onCall(async (request) => {
     return {success: true, data: feedbackArray};
   } catch (error) {
     console.error("Error in getAllFeedback:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
-
+}
 /**
  * Get feedback by user
  */
-exports.getMyFeedback = onCall(async (request) => {
+async function getMyFeedbackService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   console.log("Get My Feedback Payload", payload);
 
   // Authentication
@@ -215,14 +212,13 @@ exports.getMyFeedback = onCall(async (request) => {
     return {success: true, data: userFeedback};
   } catch (error) {
     console.error("Error in getMyFeedback:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
-
+}
 /**
  * Get feedback statistics
  */
-exports.getFeedbackStats = onCall(async (request) => {
+async function getFeedbackStatsService(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   console.log("Get Feedback Stats Payload", data);
@@ -294,18 +290,17 @@ exports.getFeedbackStats = onCall(async (request) => {
     return {success: true, data: stats};
   } catch (error) {
     console.error("Error in getFeedbackStats:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
-
+}
 /**
  * Get feedback by ID
  */
-exports.getFeedbackById = onCall(async (request) => {
+async function getFeedbackByIdService(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {feedbackId} = payload;
   console.log("Get Feedback By ID Payload", payload);
 
@@ -330,18 +325,17 @@ exports.getFeedbackById = onCall(async (request) => {
       throw error;
     }
     console.error("Error in getFeedbackById:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
-
+}
 /**
  * Get recent feedback (limited number)
  */
-exports.getRecentFeedback = onCall(async (request) => {
+async function getRecentFeedbackService(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {limit} = payload;
   console.log("Get Recent Feedback Payload", payload);
 
@@ -367,21 +361,21 @@ exports.getRecentFeedback = onCall(async (request) => {
     return {success: true, data: recentFeedback};
   } catch (error) {
     console.error("Error in getRecentFeedback:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
-
+}
 // ========== REPORT FUNCTIONS ==========
 
 /**
  * Submit report
  */
-exports.submitReport = onCall(async (request) => {
+async function submitReportService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {description, attachments = []} = payload;
+  
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -501,15 +495,14 @@ exports.submitReport = onCall(async (request) => {
       throw error;
     }
     console.error("Error in submitReport:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
-
+}
 /**
  * Get all reports (admin function)
  * Mirrors the Motoko getAllReports function
  */
-exports.getAllReports = onCall(async (request) => {
+async function getAllReportsService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Authentication - admin only
@@ -534,18 +527,17 @@ exports.getAllReports = onCall(async (request) => {
     return {success: true, data: reportsArray};
   } catch (error) {
     console.error("Error in getAllReports:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
-
+}
 /**
  * Get reports by user
  */
-exports.getMyReports = onCall(async (request) => {
+async function getMyReportsService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   console.log("Get My Reports Payload", payload);
 
   // Authentication
@@ -571,18 +563,16 @@ exports.getMyReports = onCall(async (request) => {
     return {success: true, data: userReports};
   } catch (error) {
     console.error("Error in getMyReports:", error);
-    throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Update report status (admin function)
  */
-exports.updateReportStatus = onCall(async (request) => {
+async function updateReportStatusService(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {reportId, newStatus} = payload;
   console.log("Update Report Status Payload", payload);
 
@@ -632,18 +622,16 @@ exports.updateReportStatus = onCall(async (request) => {
       throw error;
     }
     console.error("Error in updateReportStatus:", error);
-    throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get report statistics
  */
-exports.getReportStats = onCall(async (request) => {
+async function getReportStatsService(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   console.log("Get Report Stats Payload", payload);
 
   try {
@@ -677,18 +665,16 @@ exports.getReportStats = onCall(async (request) => {
     return {success: true, data: stats};
   } catch (error) {
     console.error("Error in getReportStats:", error);
-    throw new HttpsError("internal", error.message);
   }
-});
-
+}
 /**
  * Get report by ID
  */
-exports.getReportById = onCall(async (request) => {
+async function getReportByIdService(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {reportId} = payload;
   console.log("Get Report By ID Payload", payload);
 
@@ -713,18 +699,17 @@ exports.getReportById = onCall(async (request) => {
       throw error;
     }
     console.error("Error in getReportById:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
-
+}
 /**
  * Get recent reports (limited number)
  */
-exports.getRecentReports = onCall(async (request) => {
+async function getRecentReportsService(request) {
   const data = request.data;
   const _context = {auth: request.auth, rawRequest: request};
   // Extract payload
-  const payload = data.data.data || data;
+  const payload = data.data || data;
   const {limit} = payload;
   console.log("Get Recent Reports Payload", payload);
 
@@ -750,6 +735,69 @@ exports.getRecentReports = onCall(async (request) => {
     return {success: true, data: recentReports};
   } catch (error) {
     console.error("Error in getRecentReports:", error);
-    throw new HttpsError("internal", error.message);
+    
   }
-});
+}
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.feedbackAction = onCall(
+  {
+    memory: "256MiB",
+    concurrency: 80,
+    maxInstances: 50,
+  },
+  async (request) => {
+    const { action, payload } = request.data || {};
+    
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    // Mock the inner request object to match legacy structure
+    const innerRequest = {
+      data: payload || {},
+      auth: request.auth,
+      rawRequest: request
+    };
+
+    try {
+      switch (action) {
+        case "submitFeedback":
+          return await submitFeedbackService(innerRequest);
+        case "getAllFeedback":
+          return await getAllFeedbackService(innerRequest);
+        case "getMyFeedback":
+          return await getMyFeedbackService(innerRequest);
+        case "getFeedbackStats":
+          return await getFeedbackStatsService(innerRequest);
+        case "getFeedbackById":
+          return await getFeedbackByIdService(innerRequest);
+        case "getRecentFeedback":
+          return await getRecentFeedbackService(innerRequest);
+        case "submitReport":
+          return await submitReportService(innerRequest);
+        case "getAllReports":
+          return await getAllReportsService(innerRequest);
+        case "getMyReports":
+          return await getMyReportsService(innerRequest);
+        case "updateReportStatus":
+          return await updateReportStatusService(innerRequest);
+        case "getReportStats":
+          return await getReportStatsService(innerRequest);
+        case "getReportById":
+          return await getReportByIdService(innerRequest);
+        case "getRecentReports":
+          return await getRecentReportsService(innerRequest);
+        default:
+          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+    }
+  } 
+);
