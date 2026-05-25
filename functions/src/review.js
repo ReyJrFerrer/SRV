@@ -20,6 +20,12 @@ const MAX_COMMENT_LENGTH = 500;
 const MIN_RATING = 1;
 const MAX_RATING = 5;
 
+/**
+ * Get authentication info from context
+ * @param {Object} context
+ * @param {Object} data
+ * @return {Object} Auth info with uid, isAdmin, hasAuth
+ */
 function getAuthInfo(context, data) {
   const auth = context.auth || data.auth;
   return {
@@ -29,16 +35,30 @@ function getAuthInfo(context, data) {
   };
 }
 
+/**
+ * Generate a unique ID
+ * @return {string} Generated ID
+ */
 function generateId() {
   const now = Date.now();
   const random = Math.floor(Math.random() * 10000);
   return `${now}-${random}`;
 }
 
+/**
+ * Check if rating is within valid range
+ * @param {number} rating
+ * @return {boolean} Whether rating is valid
+ */
 function isValidRating(rating) {
   return rating >= MIN_RATING && rating <= MAX_RATING;
 }
 
+/**
+ * Check if review is within the allowed window
+ * @param {string} completedAt
+ * @return {boolean} Whether within review window
+ */
 function isWithinReviewWindow(completedAt) {
   const completedTime = new Date(completedAt).getTime();
   const now = Date.now();
@@ -46,6 +66,11 @@ function isWithinReviewWindow(completedAt) {
   return (now - completedTime) <= windowInMs;
 }
 
+/**
+ * Calculate quality score for a review
+ * @param {Object} review
+ * @return {number} Quality score
+ */
 function calculateQualityScore(review) {
   const commentLength = review.comment.length;
   const maxLength = MAX_COMMENT_LENGTH;
@@ -58,6 +83,11 @@ function calculateQualityScore(review) {
 // SERVICE LAYER FUNCTIONS (INTERNAL)
 // ============================================================================
 
+/**
+ * Submit a review for a completed booking
+ * @param {Object} request
+ * @return {Promise<Object>} Result object Result object
+ */
 async function submitReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -123,10 +153,9 @@ async function submitReview_review(request) {
       }
 
       if (!isWithinReviewWindow(booking.completedDate)) {
-        throw new HttpsError(
-          "deadline-exceeded",
-          `Review window has expired. Reviews must be submitted within ${REVIEW_WINDOW_DAYS} days of service completion`,
-        );
+        const msg = `Review window has expired. Reviews must be submitted within ` +
+          `${REVIEW_WINDOW_DAYS} days of service completion`;
+        throw new HttpsError("deadline-exceeded", msg);
       }
 
       const reviewId = generateId();
@@ -177,6 +206,11 @@ async function submitReview_review(request) {
   }
 }
 
+/**
+ * Get a review by ID
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getReview_review(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -209,6 +243,11 @@ async function getReview_review(request) {
   }
 }
 
+/**
+ * Get all reviews for a booking
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getBookingReviews_review(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -237,6 +276,11 @@ async function getBookingReviews_review(request) {
   }
 }
 
+/**
+ * Get reviews by a user
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getUserReviews_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -319,6 +363,11 @@ async function getUserReviews_review(request) {
   }
 }
 
+/**
+ * Update an existing review
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function updateReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -409,6 +458,11 @@ async function updateReview_review(request) {
   }
 }
 
+/**
+ * Delete (hide) a review
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function deleteReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -507,6 +561,11 @@ async function deleteReview_review(request) {
   }
 }
 
+/**
+ * Restore a hidden review
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function restoreReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -593,6 +652,11 @@ async function restoreReview_review(request) {
   }
 }
 
+/**
+ * Bulk update review statuses
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function bulkUpdateReviewStatus_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -666,6 +730,11 @@ async function bulkUpdateReviewStatus_review(request) {
   }
 }
 
+/**
+ * Calculate average rating for a provider
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function calculateProviderRating_review(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -714,6 +783,11 @@ async function calculateProviderRating_review(request) {
   }
 }
 
+/**
+ * Calculate average rating for a service
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function calculateServiceRating_review(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -762,6 +836,11 @@ async function calculateServiceRating_review(request) {
   }
 }
 
+/**
+ * Calculate average rating for a user
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function calculateUserAverageRating_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -820,6 +899,11 @@ async function calculateUserAverageRating_review(request) {
   }
 }
 
+/**
+ * Get all reviews (admin only)
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getAllReviews_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -857,6 +941,11 @@ async function getAllReviews_review(request) {
   }
 }
 
+/**
+ * Get review statistics
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getReviewStatistics_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -889,6 +978,11 @@ async function getReviewStatistics_review(request) {
   }
 }
 
+/**
+ * Flag a review for moderation
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function flagReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -938,6 +1032,11 @@ async function flagReview_review(request) {
   }
 }
 
+/**
+ * Get reviews for a provider
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getProviderReviews_review(request) {
   const data = request.data;
   const payload = data.data || data;
@@ -972,6 +1071,11 @@ async function getProviderReviews_review(request) {
   }
 }
 
+/**
+ * Get reviews for a service
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getServiceReviews_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1060,6 +1164,11 @@ async function getServiceReviews_review(request) {
   }
 }
 
+/**
+ * Submit a provider review for a client
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function submitProviderReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1115,10 +1224,9 @@ async function submitProviderReview_review(request) {
       }
 
       if (!isWithinReviewWindow(booking.completedDate)) {
-        throw new HttpsError(
-          "deadline-exceeded",
-          `Review window has expired. Reviews must be submitted within ${REVIEW_WINDOW_DAYS} days of service completion`,
-        );
+        const msg = `Review window has expired. Reviews must be submitted within ` +
+          `${REVIEW_WINDOW_DAYS} days of service completion`;
+        throw new HttpsError("deadline-exceeded", msg);
       }
 
       const existingReviewsSnap = await db
@@ -1180,6 +1288,11 @@ async function submitProviderReview_review(request) {
   }
 }
 
+/**
+ * Get provider reviews for a client
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getClientProviderReviews_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1252,6 +1365,11 @@ async function getClientProviderReviews_review(request) {
   }
 }
 
+/**
+ * Get provider reviews by provider ID
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
 async function getProviderReviewsByProvider_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};

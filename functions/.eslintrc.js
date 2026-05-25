@@ -64,6 +64,12 @@ module.exports = {
         "camelcase": ["error", {allow: ["_service"]}],
       },
     },
+    {
+      files: ["src/review.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_review"]}],
+      },
+    },
   ],
   globals: {
     // Firebase Functions globals
