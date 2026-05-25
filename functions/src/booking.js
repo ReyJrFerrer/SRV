@@ -29,12 +29,22 @@ const rtdb = admin.database();
 // Constants for notification system
 const NOTIFICATION_EXPIRY_DAYS = 30;
 
+/**
+ * Generates a unique report ID
+ * @return {string} A unique report identifier
+ */
 function generateReportId() {
   const timestamp = Date.now();
   const random = Math.floor(Math.random() * 10000);
   return `report_${timestamp}_${random}`;
 }
 
+/**
+ * Extracts authentication info from context or data
+ * @param {Object} context The call context
+ * @param {Object} data The request data
+ * @return {Object} Auth info with uid, isAdmin, hasAuth
+ */
 function getAuthInfo(context, data) {
   const auth = context.auth || data.auth;
   return {
@@ -44,12 +54,22 @@ function getAuthInfo(context, data) {
   };
 }
 
+/**
+ * Generates a unique booking ID
+ * @return {string} A unique booking identifier
+ */
 function generateBookingId() {
   const now = Date.now();
   const random = Math.floor(Math.random() * 10000);
   return `${now}-${random}`;
 }
 
+/**
+ * Checks if a booking status transition is valid
+ * @param {string} currentStatus The current booking status
+ * @param {string} newStatus The desired new status
+ * @return {boolean} Whether the transition is allowed
+ */
 function isValidStatusTransition(currentStatus, newStatus) {
   const validTransitions = {
     "Requested": ["Accepted", "Declined", "Cancelled"],
@@ -63,6 +83,15 @@ function isValidStatusTransition(currentStatus, newStatus) {
   return validTransitions[currentStatus]?.includes(newStatus) || newStatus === "Disputed";
 }
 
+/**
+ * Checks if a booking conflicts with existing bookings
+ * @param {string} serviceId The service ID
+ * @param {string} providerId The provider ID
+ * @param {string} requestedDateTime The requested start time
+ * @param {string|null} scheduledDateTime The scheduled end time
+ * @param {string|null} excludeBookingId Booking ID to exclude from check
+ * @return {Promise<boolean>} Whether a conflict exists
+ */
 async function checkBookingConflicts(
   serviceId,
   providerId,
@@ -108,6 +137,11 @@ async function checkBookingConflicts(
   }
 }
 
+/**
+ * Checks if a service is currently active/available
+ * @param {Object} service The service data
+ * @return {boolean} Whether the service is active
+ */
 function isServiceActive(service) {
   return service.isActive === true ||
     service.active === true ||
@@ -117,6 +151,17 @@ function isServiceActive(service) {
     service.active === "true";
 }
 
+/**
+ * Creates a notification for a user
+ * @param {string} targetUserId The target user ID
+ * @param {string} userType The user type (client/provider)
+ * @param {string} notificationType The notification type
+ * @param {string} title The notification title
+ * @param {string} message The notification message
+ * @param {string} bookingId The related booking ID
+ * @param {Object|null} metadata Additional metadata
+ * @return {Promise<void>} Resolves when notification is created
+ */
 async function createNotification(
   targetUserId,
   userType,
@@ -191,6 +236,15 @@ async function createNotification(
   }
 }
 
+/**
+ * Cancels bookings that conflict with an accepted booking
+ * @param {string} acceptedBookingId The accepted booking ID
+ * @param {string} providerId The provider ID
+ * @param {string} requestedDate The requested date
+ * @param {string} scheduledDate The scheduled date
+ * @param {string} serviceId The service ID
+ * @return {Promise<void>} Resolves when conflicts are cancelled
+ */
 async function cancelConflictingBookings(
   acceptedBookingId,
   providerId,
@@ -288,6 +342,11 @@ async function cancelConflictingBookings(
 // SERVICE LAYER FUNCTIONS (INTERNAL)
 // ============================================================================
 
+/**
+ * Creates a new booking
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The created booking data
+ */
 async function createBooking_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -317,7 +376,8 @@ async function createBooking_booking(request) {
     !paymentMethod || !scheduledDate) {
     throw new HttpsError(
       "invalid-argument",
-      `Required parameters missing: serviceId, providerId, price, location, requestedDate, paymentMethod`,
+      `Required parameters missing: serviceId, providerId, ` +
+        `price, location, requestedDate, paymentMethod`,
     );
   }
 
@@ -384,14 +444,20 @@ async function createBooking_booking(request) {
       for (const packageId of servicePackageIds) {
         const packageDoc = await db.collection("service_packages").doc(packageId).get();
         if (!packageDoc.exists) {
-          throw new HttpsError("not-found", `Package with ID ${packageId} not found in 'service_packages' collection.`);
+          throw new HttpsError(
+            "not-found",
+            `Package with ID ${packageId} not found ` +
+          `in 'service_packages' collection.`,
+          );
         }
 
         const packageData = packageDoc.data();
         if (packageData.serviceId !== serviceId) {
           throw new HttpsError(
             "permission-denied",
-            `Package ${packageId} belongs to service ${packageData.serviceId}, but booking is for service ${serviceId}.`,
+            `Package ${packageId} belongs to ` +
+            `service ${packageData.serviceId}, ` +
+            `but booking is for service ${serviceId}.`,
           );
         }
 
@@ -495,6 +561,11 @@ async function createBooking_booking(request) {
   }
 }
 
+/**
+ * Accepts a booking request
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The updated booking data
+ */
 async function acceptBooking_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -570,7 +641,9 @@ async function acceptBooking_booking(request) {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
+    const providerName = providerDoc.exists ?
+      providerDoc.data().name || "the provider" :
+      "the provider";
 
     await createNotification(
       booking.clientId,
@@ -597,6 +670,11 @@ async function acceptBooking_booking(request) {
   }
 }
 
+/**
+ * Declines a booking request
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The updated booking data
+ */
 async function declineBooking_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -648,7 +726,9 @@ async function declineBooking_booking(request) {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
+    const providerName = providerDoc.exists ?
+      providerDoc.data().name || "the provider" :
+      "the provider";
 
     await createNotification(
       booking.clientId,
@@ -675,6 +755,11 @@ async function declineBooking_booking(request) {
   }
 }
 
+/**
+ * Starts navigation tracking for a booking
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} Success status
+ */
 async function startNavigation_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -706,7 +791,9 @@ async function startNavigation_booking(request) {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
+    const providerName = providerDoc.exists ?
+      providerDoc.data().name || "the provider" :
+      "the provider";
 
     const alreadyNotified = booking.navigationStartedNotified === true;
 
@@ -749,7 +836,10 @@ async function startNavigation_booking(request) {
         });
         console.log("[startNavigation] RTDB location node initialized:", bookingId);
       } catch (rtdbErr) {
-        console.warn("[startNavigation] Failed to initialize RTDB location node:", bookingId, rtdbErr);
+        console.warn(
+          "[startNavigation] Failed to init RTDB location:",
+          bookingId, rtdbErr,
+        );
       }
     }
 
@@ -763,6 +853,11 @@ async function startNavigation_booking(request) {
   }
 }
 
+/**
+ * Starts a booking (transitions to InProgress)
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The updated booking data
+ */
 async function startBooking_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -816,7 +911,9 @@ async function startBooking_booking(request) {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
+    const providerName = providerDoc.exists ?
+      providerDoc.data().name || "the provider" :
+      "the provider";
 
     await createNotification(
       booking.clientId,
@@ -868,6 +965,11 @@ async function startBooking_booking(request) {
   }
 }
 
+/**
+ * Completes a booking
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The updated booking data
+ */
 async function completeBooking_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -922,7 +1024,9 @@ async function completeBooking_booking(request) {
     const serviceName = serviceDoc.exists ? serviceDoc.data().title : "your service";
 
     const providerDoc = await db.collection("users").doc(booking.providerId).get();
-    const providerName = providerDoc.exists ? providerDoc.data().name || "the provider" : "the provider";
+    const providerName = providerDoc.exists ?
+      providerDoc.data().name || "the provider" :
+      "the provider";
 
     await createNotification(
       booking.clientId,
@@ -990,6 +1094,11 @@ async function completeBooking_booking(request) {
   }
 }
 
+/**
+ * Cancels a booking
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The updated booking data
+ */
 async function cancelBooking_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1074,7 +1183,8 @@ async function cancelBooking_booking(request) {
       targetUserType,
       NOTIFICATION_TYPES.BOOKING_CANCELLED,
       "Booking Cancelled",
-      `${cancellerName} has cancelled the booking for "${serviceName}" Reason: ${cancelReason.trim()}`,
+      `${cancellerName} cancelled the booking ` +
+      `for "${serviceName}". Reason: ${cancelReason.trim()}`,
       bookingId,
       {
         serviceId: booking.serviceId,
@@ -1082,7 +1192,9 @@ async function cancelBooking_booking(request) {
         cancelledBy: cancellerRole,
         cancelReason: cancelReason.trim(),
         senderName: cancellerName,
-        message: `${cancellerName} has cancelled the booking for "${serviceName}" Reason: ${cancelReason.trim()}`,
+        message: `${cancellerName} cancelled the ` +
+          `booking for "${serviceName}". ` +
+          `Reason: ${cancelReason.trim()}`,
       },
     );
 
@@ -1134,6 +1246,11 @@ async function cancelBooking_booking(request) {
   }
 }
 
+/**
+ * Gets a single booking by ID
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The booking data
+ */
 async function getBooking_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1173,6 +1290,11 @@ async function getBooking_booking(request) {
   }
 }
 
+/**
+ * Gets bookings for a client
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} List of client bookings
+ */
 async function getClientBookings_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1204,6 +1326,11 @@ async function getClientBookings_booking(request) {
   }
 }
 
+/**
+ * Gets bookings for a provider
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} List of provider bookings
+ */
 async function getProviderBookings_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1235,6 +1362,11 @@ async function getProviderBookings_booking(request) {
   }
 }
 
+/**
+ * Gets bookings filtered by status (admin only)
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} List of bookings with the given status
+ */
 async function getBookingsByStatus_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1265,6 +1397,11 @@ async function getBookingsByStatus_booking(request) {
   }
 }
 
+/**
+ * Disputes a booking
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The updated booking data
+ */
 async function disputeBooking_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1342,6 +1479,11 @@ async function disputeBooking_booking(request) {
   }
 }
 
+/**
+ * Checks if a service is available at a given time
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} Availability status
+ */
 async function checkServiceAvailability_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1433,6 +1575,11 @@ async function checkServiceAvailability_booking(request) {
   }
 }
 
+/**
+ * Gets available time slots for a service on a given date
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} Available time slots
+ */
 async function getServiceAvailableSlots_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1538,6 +1685,11 @@ async function getServiceAvailableSlots_booking(request) {
   }
 }
 
+/**
+ * Gets analytics for a client
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} Client analytics data
+ */
 async function getClientAnalytics_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1620,6 +1772,11 @@ async function getClientAnalytics_booking(request) {
   }
 }
 
+/**
+ * Gets analytics for a provider (admin only)
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} Provider analytics data
+ */
 async function getProviderAnalytics_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
@@ -1727,6 +1884,11 @@ async function getProviderAnalytics_booking(request) {
   }
 }
 
+/**
+ * Releases payment for a completed booking
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} The updated booking data
+ */
 async function releasePayment_booking(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};

@@ -76,6 +76,12 @@ module.exports = {
         "camelcase": ["error", {allow: ["_reputation"]}],
       },
     },
+    {
+      files: ["src/booking.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_booking"]}],
+      },
+    },
   ],
   globals: {
     // Firebase Functions globals
