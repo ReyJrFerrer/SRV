@@ -2307,7 +2307,7 @@ async function getAllServicesInternal() {
 
 /**
  * Internal function to get service by ID
- * 
+ *
  * For use by other Cloud Functions (e.g., admin.js)
  * @param {string} serviceId - Service ID
  * @return {Promise<object|null>} Service object or null if not found

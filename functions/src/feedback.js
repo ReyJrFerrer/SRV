@@ -176,7 +176,6 @@ async function getAllFeedbackService(request) {
     return {success: true, data: feedbackArray};
   } catch (error) {
     console.error("Error in getAllFeedback:", error);
-    
   }
 }
 /**
@@ -212,7 +211,6 @@ async function getMyFeedbackService(request) {
     return {success: true, data: userFeedback};
   } catch (error) {
     console.error("Error in getMyFeedback:", error);
-    
   }
 }
 /**
@@ -290,7 +288,6 @@ async function getFeedbackStatsService(request) {
     return {success: true, data: stats};
   } catch (error) {
     console.error("Error in getFeedbackStats:", error);
-    
   }
 }
 /**
@@ -325,7 +322,6 @@ async function getFeedbackByIdService(request) {
       throw error;
     }
     console.error("Error in getFeedbackById:", error);
-    
   }
 }
 /**
@@ -361,7 +357,6 @@ async function getRecentFeedbackService(request) {
     return {success: true, data: recentFeedback};
   } catch (error) {
     console.error("Error in getRecentFeedback:", error);
-    
   }
 }
 // ========== REPORT FUNCTIONS ==========
@@ -375,7 +370,7 @@ async function submitReportService(request) {
   // Extract payload
   const payload = data.data || data;
   const {description, attachments = []} = payload;
-  
+
 
   // Authentication
   const authInfo = getAuthInfo(context, data);
@@ -495,7 +490,6 @@ async function submitReportService(request) {
       throw error;
     }
     console.error("Error in submitReport:", error);
-    
   }
 }
 /**
@@ -527,7 +521,6 @@ async function getAllReportsService(request) {
     return {success: true, data: reportsArray};
   } catch (error) {
     console.error("Error in getAllReports:", error);
-    
   }
 }
 /**
@@ -699,7 +692,6 @@ async function getReportByIdService(request) {
       throw error;
     }
     console.error("Error in getReportById:", error);
-    
   }
 }
 /**
@@ -735,7 +727,6 @@ async function getRecentReportsService(request) {
     return {success: true, data: recentReports};
   } catch (error) {
     console.error("Error in getRecentReports:", error);
-    
   }
 }
 // ============================================================================
@@ -749,8 +740,8 @@ exports.feedbackAction = onCall(
     maxInstances: 50,
   },
   async (request) => {
-    const { action, payload } = request.data || {};
-    
+    const {action, payload} = request.data || {};
+
     if (!action) {
       throw new HttpsError("invalid-argument", "An action must be specified.");
     }
@@ -759,39 +750,39 @@ exports.feedbackAction = onCall(
     const innerRequest = {
       data: payload || {},
       auth: request.auth,
-      rawRequest: request
+      rawRequest: request,
     };
 
     try {
       switch (action) {
-        case "submitFeedback":
-          return await submitFeedbackService(innerRequest);
-        case "getAllFeedback":
-          return await getAllFeedbackService(innerRequest);
-        case "getMyFeedback":
-          return await getMyFeedbackService(innerRequest);
-        case "getFeedbackStats":
-          return await getFeedbackStatsService(innerRequest);
-        case "getFeedbackById":
-          return await getFeedbackByIdService(innerRequest);
-        case "getRecentFeedback":
-          return await getRecentFeedbackService(innerRequest);
-        case "submitReport":
-          return await submitReportService(innerRequest);
-        case "getAllReports":
-          return await getAllReportsService(innerRequest);
-        case "getMyReports":
-          return await getMyReportsService(innerRequest);
-        case "updateReportStatus":
-          return await updateReportStatusService(innerRequest);
-        case "getReportStats":
-          return await getReportStatsService(innerRequest);
-        case "getReportById":
-          return await getReportByIdService(innerRequest);
-        case "getRecentReports":
-          return await getRecentReportsService(innerRequest);
-        default:
-          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      case "submitFeedback":
+        return await submitFeedbackService(innerRequest);
+      case "getAllFeedback":
+        return await getAllFeedbackService(innerRequest);
+      case "getMyFeedback":
+        return await getMyFeedbackService(innerRequest);
+      case "getFeedbackStats":
+        return await getFeedbackStatsService(innerRequest);
+      case "getFeedbackById":
+        return await getFeedbackByIdService(innerRequest);
+      case "getRecentFeedback":
+        return await getRecentFeedbackService(innerRequest);
+      case "submitReport":
+        return await submitReportService(innerRequest);
+      case "getAllReports":
+        return await getAllReportsService(innerRequest);
+      case "getMyReports":
+        return await getMyReportsService(innerRequest);
+      case "updateReportStatus":
+        return await updateReportStatusService(innerRequest);
+      case "getReportStats":
+        return await getReportStatsService(innerRequest);
+      case "getReportById":
+        return await getReportByIdService(innerRequest);
+      case "getRecentReports":
+        return await getRecentReportsService(innerRequest);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error executing action [${action}]:`, error);
@@ -799,5 +790,5 @@ exports.feedbackAction = onCall(
         throw error;
       }
     }
-  } 
+  },
 );

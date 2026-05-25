@@ -5,8 +5,8 @@
  *  All profile data is stored in Firestore.
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { admin, getFirestore } = require("../firebase-admin");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {admin, getFirestore} = require("../firebase-admin");
 
 // Import media upload functions for consistent media handling
 const {
@@ -101,6 +101,11 @@ exports.isPhoneTaken = isPhoneTaken;
 // SERVICE LAYER FUNCTIONS (INTERNAL)
 // ============================================================================
 
+/**
+ * Get user profile from Firestore
+ * @param {string} principalText
+ * @return {Promise<Object|null>} The user profile data or null
+ */
 async function getUserProfile(principalText) {
   const db = getFirestore();
   const userRef = db.collection("users").doc(principalText);
@@ -113,6 +118,11 @@ async function getUserProfile(principalText) {
   return userDoc.data();
 }
 
+/**
+ * Sign in with Internet Identity
+ * @param {Object} data
+ * @return {Promise<Object>} Authentication result with custom token
+ */
 async function signInWithInternetIdentityService(data) {
   const {principal: principalText, email} = data;
 
@@ -169,11 +179,17 @@ async function signInWithInternetIdentityService(data) {
   };
 }
 
+/**
+ * Validate phone number availability
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} Whether phone is available
+ */
 async function validatePhoneNumberService(auth, data) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
   }
-  const { phone } = data;
+  const {phone} = data;
 
   if (!validatePhone(phone)) {
     throw new HttpsError("invalid-argument", "Invalid phone format");
@@ -182,19 +198,27 @@ async function validatePhoneNumberService(auth, data) {
   if (await isPhoneTaken(phone)) {
     throw new HttpsError("already-exists", "Phone number is already registered");
   }
-  return { success: true, message: "Phone number is available" };
+  return {success: true, message: "Phone number is available"};
 }
 
+/**
+ * Create a new user profile
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} The created profile
+ */
 async function createProfileService(auth, data) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated to create a profile");
   }
 
   const principalId = auth.uid;
-  const { name, phone, role, email } = data;
+  const {name, phone, role, email} = data;
 
   if (!validateName(name)) {
-    throw new HttpsError("invalid-argument", `Invalid name length. Must be between ${MIN_NAME_LENGTH} and ${MAX_NAME_LENGTH} characters`);
+    const msg = `Invalid name length. Must be between ${MIN_NAME_LENGTH}` +
+      ` and ${MAX_NAME_LENGTH} characters`;
+    throw new HttpsError("invalid-argument", msg);
   }
 
   if (!validatePhone(phone)) {
@@ -245,7 +269,7 @@ async function createProfileService(auth, data) {
     biography: null,
     isActive: true,
     totalEarnings: 0,
-    ...(userEmail && { email: userEmail }),
+    ...(userEmail && {email: userEmail}),
   };
 
   await userRef.set(newProfile);
@@ -256,15 +280,21 @@ async function createProfileService(auth, data) {
     // Ignore errors when deleting pending_users doc
   }
 
-  return { success: true, profile: newProfile };
+  return {success: true, profile: newProfile};
 }
 
+/**
+ * Get a user profile
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} The user profile
+ */
 async function getProfileService(auth, data) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  const { userId } = data;
+  const {userId} = data;
   const targetUserId = userId || auth.uid;
 
   const db = getFirestore();
@@ -275,19 +305,27 @@ async function getProfileService(auth, data) {
     throw new HttpsError("not-found", "Profile not found");
   }
 
-  return { success: true, profile: userDoc.data() };
+  return {success: true, profile: userDoc.data()};
 }
 
+/**
+ * Update user profile
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} The updated profile
+ */
 async function updateProfileService(auth, data) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated to update profile");
   }
 
   const principalId = auth.uid;
-  const { name } = data;
+  const {name} = data;
 
   if (name !== undefined && !validateName(name)) {
-    throw new HttpsError("invalid-argument", `Invalid name length. Must be between ${MIN_NAME_LENGTH} and ${MAX_NAME_LENGTH} characters`);
+    const msg = `Invalid name length. Must be between ${MIN_NAME_LENGTH}` +
+      ` and ${MAX_NAME_LENGTH} characters`;
+    throw new HttpsError("invalid-argument", msg);
   }
 
   const db = getFirestore();
@@ -298,7 +336,7 @@ async function updateProfileService(auth, data) {
     throw new HttpsError("not-found", "Profile not found");
   }
 
-  const updateData = { updatedAt: new Date().toISOString() };
+  const updateData = {updatedAt: new Date().toISOString()};
   if (name !== undefined) {
     updateData.name = name;
   }
@@ -306,9 +344,14 @@ async function updateProfileService(auth, data) {
   await userRef.update(updateData);
   const updatedDoc = await userRef.get();
 
-  return { success: true, profile: updatedDoc.data() };
+  return {success: true, profile: updatedDoc.data()};
 }
 
+/**
+ * Switch user role between Client and ServiceProvider
+ * @param {Object} auth
+ * @return {Promise<Object>} The updated profile with new role
+ */
 async function switchUserRoleService(auth) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated to switch role");
@@ -337,9 +380,14 @@ async function switchUserRoleService(auth) {
   });
 
   const updatedDoc = await userRef.get();
-  return { success: true, profile: updatedDoc.data() };
+  return {success: true, profile: updatedDoc.data()};
 }
 
+/**
+ * Get all active service providers
+ * @param {Object} auth
+ * @return {Promise<Object>} List of active service providers
+ */
 async function getAllServiceProvidersService(auth) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
@@ -356,9 +404,14 @@ async function getAllServiceProvidersService(auth) {
     providers.push(doc.data());
   });
 
-  return { success: true, providers: providers };
+  return {success: true, providers: providers};
 }
 
+/**
+ * Get all users
+ * @param {Object} auth
+ * @return {Promise<Object>} List of all users
+ */
 async function getAllUsersService(auth) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
@@ -372,16 +425,22 @@ async function getAllUsersService(auth) {
     users.push(doc.data());
   });
 
-  return { success: true, users: users };
+  return {success: true, users: users};
 }
 
+/**
+ * Upload a profile picture
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} The updated profile with new picture
+ */
 async function uploadProfilePictureService(auth, data) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated to upload profile picture");
   }
 
   const principalId = auth.uid;
-  const { fileName, contentType, fileData } = data;
+  const {fileName, contentType, fileData} = data;
 
   if (!fileName || !contentType || !fileData) {
     throw new HttpsError("invalid-argument", "File name, content type, and file data are required");
@@ -424,13 +483,18 @@ async function uploadProfilePictureService(auth, data) {
     });
 
     const updatedDoc = await userRef.get();
-    return { success: true, profile: updatedDoc.data() };
+    return {success: true, profile: updatedDoc.data()};
   } catch (error) {
     console.error("Error uploading profile picture:", error);
     throw new HttpsError("internal", error.message);
   }
 }
 
+/**
+ * Remove profile picture
+ * @param {Object} auth
+ * @return {Promise<Object>} The updated profile without picture
+ */
 async function removeProfilePictureService(auth) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated to remove profile picture");
@@ -461,20 +525,26 @@ async function removeProfilePictureService(auth) {
     });
 
     const updatedDoc = await userRef.get();
-    return { success: true, profile: updatedDoc.data() };
+    return {success: true, profile: updatedDoc.data()};
   } catch (error) {
     console.error("Error removing profile picture:", error);
     throw new HttpsError("internal", error.message);
   }
 }
 
+/**
+ * Update user active status
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} Success message with updated status
+ */
 async function updateUserActiveStatusService(auth, data) {
   if (!auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated to update active status");
   }
 
   const principalId = auth.uid;
-  const { isActive } = data;
+  const {isActive} = data;
 
   if (typeof isActive !== "boolean") {
     throw new HttpsError("invalid-argument", "isActive must be a boolean value");
@@ -497,7 +567,7 @@ async function updateUserActiveStatusService(auth, data) {
       updatedAt: now,
     });
 
-    return { success: true, message: `User active status updated to ${isActive}` };
+    return {success: true, message: `User active status updated to ${isActive}`};
   } catch (error) {
     console.error("Error updating user active status:", error);
     if (error instanceof HttpsError) {
@@ -518,7 +588,7 @@ exports.accountAction = onCall(
     maxInstances: 50,
   },
   async (request) => {
-    const { action, payload } = request.data || {};
+    const {action, payload} = request.data || {};
     const auth = request.auth;
 
     if (!action) {
@@ -527,30 +597,30 @@ exports.accountAction = onCall(
 
     try {
       switch (action) {
-        case "signInWithInternetIdentity":
-          return await signInWithInternetIdentityService(payload);
-        case "validatePhoneNumber":
-          return await validatePhoneNumberService(auth, payload);
-        case "createProfile":
-          return await createProfileService(auth, payload);
-        case "getProfile":
-          return await getProfileService(auth, payload);
-        case "updateProfile":
-          return await updateProfileService(auth, payload);
-        case "switchUserRole":
-          return await switchUserRoleService(auth);
-        case "getAllServiceProviders":
-          return await getAllServiceProvidersService(auth);
-        case "getAllUsers":
-          return await getAllUsersService(auth);
-        case "uploadProfilePicture":
-          return await uploadProfilePictureService(auth, payload);
-        case "removeProfilePicture":
-          return await removeProfilePictureService(auth);
-        case "updateUserActiveStatus":
-          return await updateUserActiveStatusService(auth, payload);
-        default:
-          throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      case "signInWithInternetIdentity":
+        return await signInWithInternetIdentityService(payload);
+      case "validatePhoneNumber":
+        return await validatePhoneNumberService(auth, payload);
+      case "createProfile":
+        return await createProfileService(auth, payload);
+      case "getProfile":
+        return await getProfileService(auth, payload);
+      case "updateProfile":
+        return await updateProfileService(auth, payload);
+      case "switchUserRole":
+        return await switchUserRoleService(auth);
+      case "getAllServiceProviders":
+        return await getAllServiceProvidersService(auth);
+      case "getAllUsers":
+        return await getAllUsersService(auth);
+      case "uploadProfilePicture":
+        return await uploadProfilePictureService(auth, payload);
+      case "removeProfilePicture":
+        return await removeProfilePictureService(auth);
+      case "updateUserActiveStatus":
+        return await updateUserActiveStatusService(auth, payload);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
     } catch (error) {
       console.error(`Error executing action [${action}]:`, error);
@@ -559,5 +629,5 @@ exports.accountAction = onCall(
       }
       throw new HttpsError("internal", "Internal Server Error");
     }
-  }
+  },
 );
