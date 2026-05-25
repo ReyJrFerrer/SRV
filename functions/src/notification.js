@@ -969,8 +969,6 @@ exports.cleanupNotificationFrequency = onSchedule("0 */6 * * *", async (_event) 
 exports.notificationAction = onCall(
   {
     memory: "256MiB",
-    concurrency: 80,
-    maxInstances: 50,
   },
   async (request) => {
     const {action} = request.data || {};

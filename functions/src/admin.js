@@ -1326,7 +1326,6 @@ async function createAdminProfileService(request) {
 exports.adminUserAction = onCall(
   {
     enforceAppCheck: false,
-    maxInstances: 50,
   },
   async (request) => {
     const {action, payload} = request.data || {};

@@ -742,8 +742,6 @@ async function getRecentReportsService(request) {
 exports.feedbackAction = onCall(
   {
     memory: "256MiB",
-    concurrency: 80,
-    maxInstances: 50,
   },
   async (request) => {
     const {action, payload} = request.data || {};

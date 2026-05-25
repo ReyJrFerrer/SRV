@@ -67,16 +67,7 @@ const {
 
 // Import Media Management functions
 const {
-  uploadMedia,
-  getMediaItem,
-  getFileData,
-  getMediaByOwner,
-  getMediaByTypeAndOwner,
-  deleteMedia,
-  updateMediaMetadata,
-  getStorageStats,
-  validateMediaItems,
-  getCertificatesByValidationStatus,
+  mediaAction,
 } = require("./src/media");
 
 
@@ -115,16 +106,7 @@ exports.cleanupExpiredNotifications = cleanupExpiredNotifications;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
 
 // Export Media Management Functions
-exports.uploadMedia = uploadMedia;
-exports.getMediaItem = getMediaItem;
-exports.getFileData = getFileData;
-exports.getMediaByOwner = getMediaByOwner;
-exports.getMediaByTypeAndOwner = getMediaByTypeAndOwner;
-exports.deleteMedia = deleteMedia;
-exports.updateMediaMetadata = updateMediaMetadata;
-exports.getStorageStats = getStorageStats;
-exports.validateMediaItems = validateMediaItems;
-exports.getCertificatesByValidationStatus = getCertificatesByValidationStatus;
+exports.mediaAction = mediaAction;
 
 // Export Admin Management Functions
 exports.adminUserAction = adminUserAction;
@@ -140,12 +122,10 @@ exports.sendContactEmail = sendContactEmail;
 // Export Review Analysis Functions (Gemini AI)
 const {
   analyzeNewReview,
-  queueReviewAnalysis,
-  batchAnalyzeReviews,
+  reviewAnalysisAction,
 } = require("./src/queueReviewAnalysis");
 exports.analyzeNewReview = analyzeNewReview;
-exports.queueReviewAnalysis = queueReviewAnalysis;
-exports.batchAnalyzeReviews = batchAnalyzeReviews;
+exports.reviewAnalysisAction = reviewAnalysisAction;
 
 // Export PH Location Functions
 const {

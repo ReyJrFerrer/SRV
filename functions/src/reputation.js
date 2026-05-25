@@ -692,8 +692,6 @@ async function updateReputation_reputation(request) {
 exports.reputationAction = onCall(
   {
     memory: "256MiB",
-    concurrency: 80,
-    maxInstances: 50,
   },
   async (request) => {
     const {action} = request.data || {};

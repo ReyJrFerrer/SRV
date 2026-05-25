@@ -1,4 +1,3 @@
-const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {getFirestore} = require("../firebase-admin");
@@ -258,8 +257,9 @@ exports.analyzeNewReview = onDocumentCreated(
 
 /**
  * Manually queue a review for AI analysis
+ * @param {object} request - The request object
  */
-async function queueReviewAnalysis_fn(request) {
+async function queueReviewAnalysisHandler(request) {
   const {reviewId} = request.data;
 
   if (!reviewId) {
@@ -279,12 +279,13 @@ async function queueReviewAnalysis_fn(request) {
     reviewId,
     cached: result.cached || false,
   };
-};
+}
 
 /**
  * Batch analyze multiple reviews (admin only)
+ * @param {object} request - The request object
  */
-async function batchAnalyzeReviews_fn(request) {
+async function batchAnalyzeReviewsHandler(request) {
   const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth?.token || {};
 
@@ -336,7 +337,7 @@ async function batchAnalyzeReviews_fn(request) {
     results,
     allErrors: errors,
   };
-};
+}
 
 
 // ============================================================================
@@ -346,9 +347,6 @@ async function batchAnalyzeReviews_fn(request) {
 exports.reviewAnalysisAction = onCall(
   {
     memory: "256MiB",
-    concurrency: 80,
-    maxInstances: 50,
-    region: "asia-southeast1"
   },
   async (request) => {
     const {action} = request.data || {};
@@ -360,9 +358,9 @@ exports.reviewAnalysisAction = onCall(
     try {
       switch (action) {
       case "queueReviewAnalysis":
-        return await queueReviewAnalysis_fn(request);
+        return await queueReviewAnalysisHandler(request);
       case "batchAnalyzeReviews":
-        return await batchAnalyzeReviews_fn(request);
+        return await batchAnalyzeReviewsHandler(request);
       default:
         throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
@@ -373,5 +371,5 @@ exports.reviewAnalysisAction = onCall(
       }
       throw new HttpsError("internal", "Internal Server Error");
     }
-  }
+  },
 );

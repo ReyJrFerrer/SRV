@@ -584,8 +584,6 @@ async function updateUserActiveStatusService(auth, data) {
 exports.accountAction = onCall(
   {
     memory: "256MiB",
-    concurrency: 80,
-    maxInstances: 50,
   },
   async (request) => {
     const {action, payload} = request.data || {};

@@ -1450,8 +1450,6 @@ async function getProviderReviewsByProvider_review(request) {
 exports.reviewAction = onCall(
   {
     memory: "256MiB",
-    concurrency: 80,
-    maxInstances: 50,
   },
   async (request) => {
     const {action} = request.data || {};

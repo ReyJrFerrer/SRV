@@ -2288,8 +2288,6 @@ exports.sendServiceReminders = onSchedule("*/10 * * * *", async (_event) => {
 exports.bookingAction = onCall(
   {
     memory: "256MiB",
-    concurrency: 80,
-    maxInstances: 50,
   },
   async (request) => {
     const {action} = request.data || {};

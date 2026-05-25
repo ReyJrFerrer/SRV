@@ -2432,8 +2432,6 @@ exports.processScheduledDeletions = onSchedule("0 0 * * *", async (_event) => {
 exports.serviceAction = onCall(
   {
     memory: "256MiB",
-    concurrency: 80,
-    maxInstances: 50,
   },
   async (request) => {
     const {action} = request.data || {};
