@@ -24,8 +24,13 @@ import {
   type Period,
 } from "../utils/homeUtils";
 import { getFeedbackStats } from "../services/adminServiceCanister";
-import { callFirebaseFunction } from "../services/coreUtils";
-import { FrontendSystemSettings } from "../services/serviceTypes";
+import {
+  getSettings,
+  setSettings as updateAdminSettings,
+  isAdminPasswordSet,
+  changeAdminPassword,
+  type FrontendSystemSettings,
+} from "../services/adminServiceCanister";
 import { useAuth } from "../context/AuthContext";
 
 export const AdminHomePage: React.FC = () => {
@@ -162,21 +167,13 @@ export const AdminHomePage: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const settingsData = await callFirebaseFunction("adminUserAction", { action: "getSettings", payload: {} }) as FrontendSystemSettings;
+      const settingsData = await getSettings();
       if (settingsData) {
-        if (settingsData.updatedAt) {
-          settingsData.updatedAt = new Date(settingsData.updatedAt as any);
-        }
         setSettings(settingsData);
       }
 
-      const passwordData = await callFirebaseFunction("adminUserAction", { action: "isAdminPasswordSet", payload: {} }) as any;
-      if (passwordData && typeof passwordData.isSet === 'boolean') {
-        setIsPasswordSet(passwordData.isSet);
-      } else if (passwordData === true || passwordData === false) {
-         // in case we change the backend to return the boolean directly in data
-        setIsPasswordSet(passwordData);
-      }
+      const isSet = await isAdminPasswordSet();
+      setIsPasswordSet(isSet);
     } catch (error) {}
   };
 
@@ -185,12 +182,9 @@ export const AdminHomePage: React.FC = () => {
 
     setUpdatingSettings(true);
     try {
-      await callFirebaseFunction("adminUserAction", {
-        action: "setSettings",
-        payload: {
+      await updateAdminSettings({
         ...settings,
         restrictNewAdminLogins: enabled,
-        }
       });
       setSettings({ ...settings, restrictNewAdminLogins: enabled });
     } catch (error) {
@@ -228,14 +222,11 @@ export const AdminHomePage: React.FC = () => {
 
     setChangingPassword(true);
     try {
-      await callFirebaseFunction("adminUserAction", {
-        action: "changeAdminPassword",
-        payload: {
-        oldPassword: isPasswordSet ? passwordForm.oldPassword : undefined,
-        newPassword: passwordForm.newPassword,
-        confirmPassword: passwordForm.confirmPassword,
-        }
-      });
+      await changeAdminPassword(
+        isPasswordSet ? passwordForm.oldPassword : undefined,
+        passwordForm.newPassword,
+        passwordForm.confirmPassword,
+      );
       setShowPasswordModal(false);
       setPasswordForm({
         oldPassword: "",
