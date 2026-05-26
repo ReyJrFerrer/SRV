@@ -81,9 +81,14 @@ export const AdminHomePage: React.FC = () => {
   const [isPasswordSet, setIsPasswordSet] = useState(false);
   const { logout } = useAuth();
 
-  // Calculate active service providers count from users with ServiceProvider role
-  const activeServiceProvidersCount = useMemo(() => {
-    return countActiveServiceProviders(users || []);
+  // Calculate active service providers count from users with existing services
+  const [activeServiceProvidersCount, setActiveServiceProvidersCount] =
+    useState(0);
+
+  useEffect(() => {
+    countActiveServiceProviders(users || []).then(
+      setActiveServiceProvidersCount,
+    );
   }, [users]);
 
   // Calculate booking counts from system stats

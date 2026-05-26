@@ -363,6 +363,10 @@ export const getUserBookings = async (
     serviceName: string;
     providerId: string;
     providerName: string;
+    clientId?: string;
+    clientName?: string;
+    packageName?: string;
+    servicePackageIds?: string[];
     status: string;
     price: number;
     createdAt: string;
@@ -370,7 +374,7 @@ export const getUserBookings = async (
     completedAt?: string;
     rating?: number;
     review?: string;
-    location?: string;
+    location?: string | any;
   }>
 > => {
   try {

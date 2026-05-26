@@ -1,16 +1,38 @@
-// Count active service providers from users
-export const countActiveServiceProviders = (users: any[]): number => {
-  if (!users) return 0;
-  return (
-    users.filter((user: any) => {
-      if (typeof user.activeRole === "string") {
-        return user.activeRole === "ServiceProvider";
-      } else if (user.activeRole && typeof user.activeRole === "object") {
-        return "ServiceProvider" in user.activeRole;
+import { adminServiceCanister } from "../services/adminServiceCanister";
+
+const serviceProviderCache = new Map<
+  string,
+  { hasServices: boolean; timestamp: number }
+>();
+const SP_CACHE_TTL = 5 * 60 * 1000;
+
+export const countActiveServiceProviders = async (
+  users: any[],
+): Promise<number> => {
+  if (!users || users.length === 0) return 0;
+
+  const results = await Promise.all(
+    users.map(async (user: any) => {
+      const userId = user.id?.toString() || user.uid?.toString();
+      if (!userId) return false;
+
+      const cached = serviceProviderCache.get(userId);
+      if (cached && Date.now() - cached.timestamp < SP_CACHE_TTL) {
+        return cached.hasServices;
       }
-      return false;
-    }).length || 0
+
+      const serviceCount =
+        await adminServiceCanister.getUserServiceCount(userId);
+      const hasServices = serviceCount > 0;
+      serviceProviderCache.set(userId, {
+        hasServices,
+        timestamp: Date.now(),
+      });
+      return hasServices;
+    }),
   );
+
+  return results.filter(Boolean).length;
 };
 
 // Calculate settled bookings count
