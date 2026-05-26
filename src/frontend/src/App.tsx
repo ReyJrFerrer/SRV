@@ -22,10 +22,8 @@ const LandingPage = () => {
     isAuthenticated,
     firebaseUser,
     login,
-    loginWithGoogle,
     isLoading,
     profileStatus,
-    isExplicitLogin,
   } = useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
@@ -36,65 +34,54 @@ const LandingPage = () => {
       if (isAuthenticated && firebaseUser) {
         setIsCheckingProfile(true);
 
+        const justLoggedIn =
+          sessionStorage.getItem("just_logged_in") === "1" || false;
+
         try {
-          // Only navigate to create-profile if login button was explicitly clicked
-          if (profileStatus && profileStatus.needsProfile && isExplicitLogin) {
-            sessionStorage.removeItem("isExplicitLogin");
+          if (profileStatus?.needsProfile && justLoggedIn) {
+            sessionStorage.removeItem("just_logged_in");
             navigate("/create-profile");
             setIsCheckingProfile(false);
             return;
           }
+
           const profile = await authCanisterService.getMyProfile();
 
-          // Check if account is suspended
           if (profile && profile.locked) {
-            // Check sessionStorage flag - if user has already seen modal, don't show again
             const hasShownSuspension = sessionStorage.getItem(
               "hasShownSuspensionModal",
             );
             location.pathname === "/";
 
-            // If user has already seen the modal, never show it again (especially on landing page)
             if (hasShownSuspension === "true") {
               setIsCheckingProfile(false);
               return;
             }
 
-            // Only show modal if we haven't shown it yet
             setShowSuspensionModal(true);
             sessionStorage.setItem("hasShownSuspensionModal", "true");
             setIsCheckingProfile(false);
             return;
           }
 
-          // Reset the flag if account is not suspended
           sessionStorage.removeItem("hasShownSuspensionModal");
 
-          // If profile exists, redirect based on role
           if (profile && profile.name && profile.phone) {
-            sessionStorage.removeItem("isExplicitLogin");
+            sessionStorage.removeItem("just_logged_in");
             if (profile.activeRole === "Client") {
               navigate("/client/home");
             } else if (profile.activeRole === "ServiceProvider") {
               navigate("/provider/home");
             } else {
-              // Profile exists but no valid role - only go to create profile on explicit login
-              if (isExplicitLogin) {
-                navigate("/create-profile");
-              } else {
-                navigate("/");
-              }
+              navigate("/");
             }
-          } else if (isExplicitLogin) {
-            // Only navigate to create-profile if this was an explicit login
-            sessionStorage.removeItem("isExplicitLogin");
+          } else if (justLoggedIn) {
+            sessionStorage.removeItem("just_logged_in");
             navigate("/create-profile");
           } else {
-            // Automatic login with no profile - go to landing page
             navigate("/");
           }
         } catch (err) {
-          // On profile fetch failure, go to landing page (not create-profile)
           if (location.pathname !== "/") {
             navigate("/");
           }
@@ -104,7 +91,6 @@ const LandingPage = () => {
       } else if (isAuthenticated && !firebaseUser) {
         setIsCheckingProfile(true);
       } else {
-        // Not authenticated - done checking
         setIsCheckingProfile(false);
       }
     };
@@ -113,7 +99,6 @@ const LandingPage = () => {
     isAuthenticated,
     firebaseUser,
     profileStatus,
-    isExplicitLogin,
     navigate,
     location.pathname,
   ]);
@@ -143,8 +128,7 @@ const LandingPage = () => {
     <main className="bg-gray-50">
       {currentView === "main" && (
         <MainPage
-          onLoginClick={loginWithGoogle}
-          onLoginWithII={login}
+          onLoginClick={login}
           isLoginLoading={isLoading}
           onNavigateToAbout={handleNavigateToAbout}
           onNavigateToContact={handleNavigateToContact}

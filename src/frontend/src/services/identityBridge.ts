@@ -1,9 +1,9 @@
 /**
  * Identity Bridge Service
  *
- * This service handles the integration between Internet Identity and Firebase Auth.
- * It communicates with the Identity Bridge Cloud Function to exchange IC principals
- * for Firebase custom tokens.
+ * Bridges external auth providers (Google OAuth / zkLogin) to Firebase Auth
+ * via a Cloud Function that issues custom Firebase tokens for any stable
+ * user identifier (IC principal, Sui address, etc.).
  */
 
 import { signInWithCustomToken, User, Auth } from "firebase/auth";
@@ -59,17 +59,16 @@ interface SignInResult {
 }
 
 /**
- * Exchange Internet Identity Principal for Firebase Auth
- * @param principal - The Internet Identity Principal as string
+ * Exchange a user identifier for a Firebase Auth session.
+ * @param principal - Stable user identifier (e.g. Sui address for zkLogin)
  * @param sessionDuration - Session duration in milliseconds
- * @param email - Optional email from OAuth provider (zkLogin only)
+ * @param email - Optional email from OAuth provider
  * @returns SignInResult with Firebase User and profile status
  */
-export async function signInWithInternetIdentity(
+export async function exchangeForFirebaseToken(
   principal: string,
-  sessionDuration: number = 7 * 24 * 60 * 60 * 1000, // Default 7 days in ms
+  sessionDuration: number = 7 * 24 * 60 * 60 * 1000,
   email?: string,
-  loginMethod?: "ii" | "zklogin",
 ): Promise<SignInResult> {
   try {
     // Call the Identity Bridge Cloud Function using Firebase SDK
@@ -77,13 +76,13 @@ export async function signInWithInternetIdentity(
     const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
     const result = await accountActionFn({
-      action: "signInWithInternetIdentity",
+      action: "exchangeForFirebaseToken",
       payload: { principal, email }
     });
     const data = result.data as IdentityBridgeResponse;
 
     if (!data.success || !data.customToken) {
-      throw new Error("Error signing in with Internet Identity");
+      throw new Error("Error exchanging identity for Firebase token");
     }
 
     // Sign in to Firebase with the custom token
@@ -121,7 +120,6 @@ export async function signInWithInternetIdentity(
       needsProfile: data.needsProfile,
       sessionDuration,
       email,
-      loginMethod,
       createdAt: Date.now(),
     };
     await sessionManager.storeSession(sessionData);

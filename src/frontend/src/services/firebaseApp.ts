@@ -230,15 +230,3 @@ export function getFirebaseDatabase(): Database {
 export function isFirebaseInitialized(): boolean {
   return getApps().length > 0;
 }
-
-/**
- * Clear any legacy session storage
- * @deprecated Use SessionManager instead
- */
-export function clearICCustomToken(): void {
-  try {
-    // Clear old token storage keys for backward compatibility
-    localStorage.removeItem("ic_custom_token");
-    localStorage.removeItem("ic_custom_token_timestamp");
-  } catch (error) {}
-}

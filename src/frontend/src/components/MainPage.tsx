@@ -13,7 +13,6 @@ import "./shared/styles.css";
 
 interface MainPageProps {
   onLoginClick: () => void;
-  onLoginWithII?: () => void;
   isLoginLoading: boolean;
   onNavigateToAbout: () => void;
   onNavigateToContact: () => void;
@@ -21,7 +20,6 @@ interface MainPageProps {
 
 export default function MainPage({
   onLoginClick,
-  // onLoginWithII,
   isLoginLoading,
   onNavigateToAbout,
   onNavigateToContact,
@@ -452,15 +450,6 @@ export default function MainPage({
                   </>
                 )}
               </button>
-              {/* {onLoginWithII && (
-                <button
-                  onClick={onLoginWithII}
-                  disabled={isLoginLoading}
-                  className="text-sm font-medium text-blue-600 underline-offset-2 transition-colors hover:text-blue-800 hover:underline"
-                >
-                  or sign in with Internet Identity
-                </button>
-              )} */}
             </div>
           </div>
         </div>

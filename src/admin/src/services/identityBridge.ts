@@ -60,7 +60,7 @@ export async function signInWithInternetIdentity(
     const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
     const result = await accountActionFn({
-      action: "signInWithInternetIdentity",
+      action: "exchangeForFirebaseToken",
       payload: { principal, email },
     });
     const data = result.data as IdentityBridgeResponse;

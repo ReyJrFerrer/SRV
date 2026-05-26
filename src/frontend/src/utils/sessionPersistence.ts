@@ -9,16 +9,14 @@
 export interface SessionData {
   principal: string;
   firebaseToken: string;
-  expiresAt: number; // IC session expiry timestamp (ms)
-  lastRefresh: number; // Last token refresh timestamp (ms)
-  lastFirebaseRefresh: number; // Last Firebase token refresh timestamp (ms)
+  expiresAt: number;
+  lastRefresh: number;
+  lastFirebaseRefresh: number;
   hasProfile: boolean;
   needsProfile: boolean;
-  sessionDuration: number; // Original session duration in ms
-  loginMethod?: "ii" | "zklogin"; // Auth method used for this session
-  zkLoginAddress?: string; // zkLogin Sui address (when loginMethod is "zklogin")
-  email?: string; // Email from OAuth provider (zkLogin only)
-  createdAt?: number; // Timestamp when session was first stored (ms)
+  sessionDuration: number;
+  email?: string;
+  createdAt?: number;
 }
 
 export class SessionManager {

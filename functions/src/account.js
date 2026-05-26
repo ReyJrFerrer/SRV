@@ -595,7 +595,7 @@ exports.accountAction = onCall(
 
     try {
       switch (action) {
-      case "signInWithInternetIdentity":
+      case "exchangeForFirebaseToken":
         return await signInWithInternetIdentityService(payload);
       case "validatePhoneNumber":
         return await validatePhoneNumberService(auth, payload);
