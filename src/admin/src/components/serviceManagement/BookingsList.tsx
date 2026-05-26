@@ -7,6 +7,9 @@ interface Booking {
   serviceName: string;
   providerId: string;
   providerName: string;
+  clientId?: string;
+  clientName?: string;
+  packageName?: string;
   status: any;
   price: number;
   createdAt: string;
@@ -133,9 +136,18 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                       </span>
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center text-sm text-gray-500">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
                     <p className="truncate">Provider: {booking.providerName}</p>
-                    <span className="mx-2">•</span>
+                    <span className="hidden sm:inline">•</span>
+                    <p className="truncate">Client: {booking.clientName || "Unknown"}</p>
+                    {booking.packageName && (
+                      <>
+                        <span className="hidden sm:inline">•</span>
+                        <p className="truncate">Package: {booking.packageName}</p>
+                      </>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center text-sm text-gray-500">
                     <p>₱{booking.price.toLocaleString()}</p>
                     <span className="mx-2">•</span>
                     <p>Created: {formatDate(booking.createdAt)}</p>

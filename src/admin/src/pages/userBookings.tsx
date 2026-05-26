@@ -22,6 +22,9 @@ interface Booking {
   serviceName: string;
   providerId: string;
   providerName: string;
+  clientId?: string;
+  clientName?: string;
+  packageName?: string;
   status: any;
   price: number;
   createdAt: string;
@@ -72,10 +75,13 @@ export const UserBookingsPage: React.FC = () => {
   }, [fetchUserAndBookings]);
 
   const filteredBookings = bookings.filter((booking) => {
+    const term = searchTerm.toLowerCase();
     const matchesSearch =
       searchTerm === "" ||
-      booking.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.providerName.toLowerCase().includes(searchTerm.toLowerCase());
+      booking.serviceName.toLowerCase().includes(term) ||
+      booking.providerName.toLowerCase().includes(term) ||
+      (booking.clientName?.toLowerCase() || "").includes(term) ||
+      (booking.packageName?.toLowerCase() || "").includes(term);
 
     return matchesSearch && matchesStatusFilter(booking.status, statusFilter);
   });
