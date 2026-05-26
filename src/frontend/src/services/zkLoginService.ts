@@ -282,6 +282,16 @@ export async function completeZkLoginFromCallback(): Promise<ZkLoginSession> {
     throw new Error("No id_token found in callback URL.");
   }
 
+  // Immediately strip the id_token from the URL so the app is not
+  // re-detected as a callback on reloads or re-renders.
+  if (typeof history !== "undefined" && history.replaceState) {
+    history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
+  }
+
   const decodedJwt = decodeJwtPayload(jwt);
   const userSalt = await deriveUserSalt(decodedJwt.sub, decodedJwt.iss);
   const address = deriveZkLoginAddress(jwt, userSalt);

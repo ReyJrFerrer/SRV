@@ -162,7 +162,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (principal) {
               const sessionDuration =
                 getRecommendedSessionDuration() / (1000 * 1000);
-              await signInWithInternetIdentity(principal, sessionDuration, storedSession?.email);
+              await signInWithInternetIdentity(principal, sessionDuration, storedSession?.email, storedSession?.loginMethod);
               await sessionManager.updateLastRefresh();
             }
           }
@@ -199,7 +199,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
         const sessionDuration = getRecommendedSessionDuration() / (1000 * 1000);
-        await signInWithInternetIdentity(principal, sessionDuration, storedSession?.email);
+        await signInWithInternetIdentity(principal, sessionDuration, storedSession?.email, storedSession?.loginMethod);
         await sessionManager.updateLastRefresh();
       } catch (error) {
         // Retry in 60 seconds — Cloud Function doesn't verify IC delegation,
@@ -284,7 +284,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setFirebaseUser(null);
             return;
           }
-          const result = await signInWithInternetIdentity(principal, undefined, storedSession?.email);
+          const result = await signInWithInternetIdentity(principal, undefined, storedSession?.email, storedSession?.loginMethod);
           setFirebaseUser(result.user);
         } catch (error) {
           // Only null out if refresh genuinely failed
@@ -366,6 +366,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        // Restore isExplicitLogin early so it's available even if we return
+        // for a zkLogin callback or failed restoration.
+        if (sessionStorage.getItem("isExplicitLogin") === "true") {
+          setIsExplicitLogin(true);
+        }
+
         // Check if we're returning from a zkLogin OAuth callback.
         // If so, skip II initialization — the callback page will call
         // completeZkLogin() to finalize the auth flow.
@@ -386,10 +392,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIdentity(identity);
           setLoginMethod("ii");
           updateAllActors(identity);
-          // Restore isExplicitLogin if it was persisted before a reload/redirect
-          if (sessionStorage.getItem("isExplicitLogin") === "true") {
-            setIsExplicitLogin(true);
-          }
         } else {
           // IC delegation expired — try to restore from stored session.
           // The principal is permanent and the Cloud Function doesn't verify
@@ -405,6 +407,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   storedSession.principal,
                   sessionDuration,
                   storedSession.email,
+                  storedSession.loginMethod,
                 ),
                 new Promise<never>((_, reject) =>
                   setTimeout(
@@ -428,13 +431,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 hasProfile: result.hasProfile,
                 needsProfile: result.needsProfile,
               });
-              // Restore isExplicitLogin if it was persisted before a reload/redirect
-              if (sessionStorage.getItem("isExplicitLogin") === "true") {
-                setIsExplicitLogin(true);
-              }
             } catch {
               await sessionManager.clearSession();
               updateAllActors(null);
+              // Prevent stale explicit-login flag from forcing a create-profile
+              // redirect when the user is actually unauthenticated.
+              sessionStorage.removeItem("isExplicitLogin");
+              setIsExplicitLogin(false);
             }
           } else {
             updateAllActors(null);
@@ -448,9 +451,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
+  /**
+   * Clean up stale auth state before starting a fresh login flow.
+   * In volatile dev environments (localhost/HMR) old session data, Firebase
+   * tokens, and flags frequently survive across reloads and interfere with
+   * the next authentication attempt.
+   */
+  const clearAuthStorage = async () => {
+    try {
+      await sessionManager.clearSession();
+    } catch {}
+    try {
+      const auth = getFirebaseAuth();
+      await firebaseSignOut(auth);
+    } catch {}
+    try {
+      sessionStorage.removeItem("isExplicitLogin");
+    } catch {}
+    try {
+      sessionStorage.removeItem("post_login_location_prompt_shown");
+    } catch {}
+    try {
+      clearEphemeralData();
+    } catch {}
+  };
+
   // Login: authenticates with Internet Identity, bridges to Firebase, updates online status
   const login = async () => {
     if (!authClient) return;
+
+    // Ensure no stale session data from a previous (failed) attempt interferes
+    await clearAuthStorage();
 
     setIsLoading(true);
     setError(null);
@@ -484,13 +515,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const result = await signInWithInternetIdentity(
               principal,
               sessionDurationMs,
+              undefined,
+              "ii",
             );
-            // Tag session with login method
-            const session = await sessionManager.getSession();
-            if (session) {
-              session.loginMethod = "ii";
-              await sessionManager.storeSession(session);
-            }
             setFirebaseUser(result.user);
             // Store profile status from backend response (avoids race condition with Firestore)
             setProfileStatus({
@@ -520,6 +547,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Login with Google via zkLogin: generates ephemeral keys, redirects to Google OAuth
   const loginWithGoogle = async () => {
+    // Ensure no stale session data from a previous (failed) attempt interferes
+    await clearAuthStorage();
+
     setIsLoading(true);
     setError(null);
     setIsExplicitLogin(true);
@@ -556,17 +586,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         session.address,
         sessionDurationMs,
         session.email,
+        "zklogin",
       );
-
-      // Tag session with login method and email
-      const storedSession = await sessionManager.getSession();
-      if (storedSession) {
-        storedSession.loginMethod = "zklogin";
-        if (session.email) {
-          storedSession.email = session.email;
-        }
-        await sessionManager.storeSession(storedSession);
-      }
 
       setFirebaseUser(result.user);
       setIsAuthenticated(true);

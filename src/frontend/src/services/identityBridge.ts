@@ -69,6 +69,7 @@ export async function signInWithInternetIdentity(
   principal: string,
   sessionDuration: number = 7 * 24 * 60 * 60 * 1000, // Default 7 days in ms
   email?: string,
+  loginMethod?: "ii" | "zklogin",
 ): Promise<SignInResult> {
   try {
     // Call the Identity Bridge Cloud Function using Firebase SDK
@@ -120,6 +121,8 @@ export async function signInWithInternetIdentity(
       needsProfile: data.needsProfile,
       sessionDuration,
       email,
+      loginMethod,
+      createdAt: Date.now(),
     };
     await sessionManager.storeSession(sessionData);
 
