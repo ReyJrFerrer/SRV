@@ -1,9 +1,9 @@
 /**
  * Identity Bridge Service
  *
- * This service handles the integration between Internet Identity and Firebase Auth.
- * It communicates with the Identity Bridge Cloud Function to exchange IC principals
- * for Firebase custom tokens.
+ * Bridges external auth providers (Google OAuth / zkLogin) to Firebase Auth
+ * via a Cloud Function that issues custom Firebase tokens for any stable
+ * user identifier (IC principal, Sui address, etc.).
  */
 
 import { signInWithCustomToken, User, Auth } from "firebase/auth";
@@ -59,30 +59,30 @@ interface SignInResult {
 }
 
 /**
- * Exchange Internet Identity Principal for Firebase Auth
- * @param principal - The Internet Identity Principal as string
+ * Exchange a user identifier for a Firebase Auth session.
+ * @param principal - Stable user identifier (e.g. Sui address for zkLogin)
  * @param sessionDuration - Session duration in milliseconds
- * @param email - Optional email from OAuth provider (zkLogin only)
+ * @param email - Optional email from OAuth provider
  * @returns SignInResult with Firebase User and profile status
  */
-export async function signInWithInternetIdentity(
+export async function exchangeForFirebaseToken(
   principal: string,
-  sessionDuration: number = 7 * 24 * 60 * 60 * 1000, // Default 7 days in ms
+  sessionDuration: number = 7 * 24 * 60 * 60 * 1000,
   email?: string,
 ): Promise<SignInResult> {
   try {
     // Call the Identity Bridge Cloud Function using Firebase SDK
     const functionsInstance = ensureFunctions();
-    const signInFn = httpsCallable<
-      { principal: string; email?: string },
-      IdentityBridgeResponse
-    >(functionsInstance, "signInWithInternetIdentity");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await signInFn({ principal, email });
-    const data = result.data;
+    const result = await accountActionFn({
+      action: "exchangeForFirebaseToken",
+      payload: { principal, email }
+    });
+    const data = result.data as IdentityBridgeResponse;
 
     if (!data.success || !data.customToken) {
-      throw new Error("Error signing in with Internet Identity");
+      throw new Error("Error exchanging identity for Firebase token");
     }
 
     // Sign in to Firebase with the custom token
@@ -120,6 +120,7 @@ export async function signInWithInternetIdentity(
       needsProfile: data.needsProfile,
       sessionDuration,
       email,
+      createdAt: Date.now(),
     };
     await sessionManager.storeSession(sessionData);
 
@@ -151,13 +152,16 @@ export async function createProfile(
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const createProfileFn = httpsCallable(functionsInstance, "createProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await createProfileFn({
-      name,
-      phone,
-      role,
-      email,
+    const result = await accountActionFn({
+      action: "createProfile",
+      payload: {
+        name,
+        phone,
+        role,
+        email,
+      }
     });
 
     return result.data;
@@ -173,13 +177,13 @@ export async function createProfile(
 export async function validatePhone(phone: string): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const validatePhoneFn = httpsCallable(
-      functionsInstance,
-      "validatePhoneNumber",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await validatePhoneFn({
-      phone,
+    const result = await accountActionFn({
+      action: "validatePhoneNumber",
+      payload: {
+        phone,
+      }
     });
 
     return result.data;
@@ -196,10 +200,13 @@ export async function validatePhone(phone: string): Promise<any> {
 export async function getProfile(userId?: string): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const getProfileFn = httpsCallable(functionsInstance, "getProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await getProfileFn({
-      userId,
+    const result = await accountActionFn({
+      action: "getProfile",
+      payload: {
+        userId,
+      }
     });
 
     return result.data;
@@ -218,11 +225,14 @@ export async function updateProfile(
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const updateProfileFn = httpsCallable(functionsInstance, "updateProfile");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await updateProfileFn({
-      name,
-      phone,
+    const result = await accountActionFn({
+      action: "updateProfile",
+      payload: {
+        name,
+        phone,
+      }
     });
 
     return result.data;
@@ -238,9 +248,11 @@ export async function updateProfile(
 export async function switchUserRole(): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const switchRoleFn = httpsCallable(functionsInstance, "switchUserRole");
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await switchRoleFn({});
+    const result = await accountActionFn({
+      action: "switchUserRole"
+    });
 
     return result.data;
   } catch (error) {
@@ -255,12 +267,11 @@ export async function switchUserRole(): Promise<any> {
 export async function getAllServiceProviders(): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const getProvidersFn = httpsCallable(
-      functionsInstance,
-      "getAllServiceProviders",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await getProvidersFn({});
+    const result = await accountActionFn({
+      action: "getAllServiceProviders"
+    });
 
     return result.data;
   } catch (error) {
@@ -278,15 +289,15 @@ export async function uploadProfilePicture(
 ): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const uploadPictureFn = httpsCallable(
-      functionsInstance,
-      "uploadProfilePicture",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await uploadPictureFn({
-      fileName,
-      contentType,
-      fileData,
+    const result = await accountActionFn({
+      action: "uploadProfilePicture",
+      payload: {
+        fileName,
+        contentType,
+        fileData,
+      }
     });
 
     return result.data;
@@ -301,12 +312,11 @@ export async function uploadProfilePicture(
 export async function removeProfilePicture(): Promise<any> {
   try {
     const functionsInstance = ensureFunctions();
-    const removePictureFn = httpsCallable(
-      functionsInstance,
-      "removeProfilePicture",
-    );
+    const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
-    const result = await removePictureFn({});
+    const result = await accountActionFn({
+      action: "removeProfilePicture"
+    });
 
     return result.data;
   } catch (error) {

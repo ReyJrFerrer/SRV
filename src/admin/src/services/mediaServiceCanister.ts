@@ -74,8 +74,8 @@ export const getMediaItem = async (
   mediaId: string,
 ): Promise<FrontendMediaItem | null> => {
   try {
-    const getMediaItemFn = httpsCallable(functions, "getMediaItem");
-    const result = await getMediaItemFn({ mediaId });
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "getMediaItem", mediaId });
 
     const response = result.data as {
       success: boolean;
@@ -105,8 +105,8 @@ export const getMediaItem = async (
  */
 export const getFileData = async (mediaId: string): Promise<Uint8Array> => {
   try {
-    const getFileDataFn = httpsCallable(functions, "getFileData");
-    const result = await getFileDataFn({ mediaId });
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "getFileData", mediaId });
 
     const data = result.data as { success: boolean; fileData: number[] };
     if (data.success && data.fileData) {
@@ -220,8 +220,8 @@ export const getMediaByOwner = async (
   ownerId: string,
 ): Promise<FrontendMediaItem[]> => {
   try {
-    const getMediaByOwnerFn = httpsCallable(functions, "getMediaByOwner");
-    const result = await getMediaByOwnerFn({ ownerId });
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "getMediaByOwner", ownerId });
 
     const data = result.data as {
       success: boolean;
@@ -254,11 +254,8 @@ export const getMediaByTypeAndOwner = async (
   mediaType: MediaType,
 ): Promise<FrontendMediaItem[]> => {
   try {
-    const getMediaByTypeAndOwnerFn = httpsCallable(
-      functions,
-      "getMediaByTypeAndOwner",
-    );
-    const result = await getMediaByTypeAndOwnerFn({ ownerId, mediaType });
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "getMediaByTypeAndOwner", ownerId, mediaType });
 
     const data = result.data as {
       success: boolean;
@@ -289,8 +286,8 @@ export const validateMediaItems = async (
   mediaIds: string[],
 ): Promise<FrontendMediaValidationSummary[]> => {
   try {
-    const validateMediaItemsFn = httpsCallable(functions, "validateMediaItems");
-    const result = await validateMediaItemsFn({ mediaIds });
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "validateMediaItems", mediaIds });
 
     const data = result.data as {
       success: boolean;
@@ -329,13 +326,11 @@ export const uploadMedia = async (
   fileData: Uint8Array,
 ): Promise<FrontendMediaItem> => {
   try {
-    const uploadMediaFn = httpsCallable(functions, "uploadMedia");
-    const result = await uploadMediaFn({
-      fileName,
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "uploadMedia", fileName,
       contentType,
       mediaType,
-      fileData: Array.from(fileData),
-    });
+      fileData: Array.from(fileData), });
 
     const data = result.data as {
       success: boolean;
@@ -369,14 +364,9 @@ export const updateMediaMetadata = async (
   newFileName?: string,
 ): Promise<FrontendMediaItem> => {
   try {
-    const updateMediaMetadataFn = httpsCallable(
-      functions,
-      "updateMediaMetadata",
-    );
-    const result = await updateMediaMetadataFn({
-      mediaId,
-      newFileName: newFileName || null,
-    });
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "updateMediaMetadata", mediaId,
+      newFileName: newFileName || null, });
 
     const data = result.data as {
       success: boolean;
@@ -406,8 +396,8 @@ export const updateMediaMetadata = async (
  */
 export const deleteMedia = async (mediaId: string): Promise<string> => {
   try {
-    const deleteMediaFn = httpsCallable(functions, "deleteMedia");
-    const result = await deleteMediaFn({ mediaId });
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "deleteMedia", mediaId });
 
     const data = result.data as { success: boolean; message: string };
     return data.success ? data.message : "Failed to delete media";
@@ -426,8 +416,8 @@ export const deleteMedia = async (mediaId: string): Promise<string> => {
  */
 export const getStorageStats = async (): Promise<FrontendMediaStorageStats> => {
   try {
-    const getStorageStatsFn = httpsCallable(functions, "getStorageStats");
-    const result = await getStorageStatsFn({});
+    const mediaActionFn = httpsCallable(functions, "mediaAction");
+    const result = await mediaActionFn({ action: "getStorageStats" });
 
     const data = result.data as {
       success: boolean;

@@ -138,7 +138,7 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getAllReports", {});
+    const result = await callFirebaseFunction("feedbackAction", { action: "getAllReports", payload: {} });
 
     if (!result || !Array.isArray(result)) return [];
 
@@ -169,7 +169,7 @@ export const getFeedbackStats = async (): Promise<{
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getFeedbackStats", {});
+    const result = await callFirebaseFunction("feedbackAction", { action: "getFeedbackStats", payload: {} });
 
     if (!result) {
       return {
@@ -205,7 +205,7 @@ export const getAllFeedback = async (): Promise<any[]> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getAllFeedback", {});
+    const result = await callFirebaseFunction("feedbackAction", { action: "getAllFeedback", payload: {} });
 
     if (!result || !Array.isArray(result)) return [];
 
@@ -235,12 +235,7 @@ export const updateReportStatus = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("updateReportStatus", {
-      data: {
-        reportId,
-        newStatus: newStatus,
-      },
-    });
+    const result = await callFirebaseFunction("feedbackAction", { action: "updateReportStatus", payload: { reportId, newStatus } });
 
     if (result) {
       if (userId && ticketTitle && oldStatus) {

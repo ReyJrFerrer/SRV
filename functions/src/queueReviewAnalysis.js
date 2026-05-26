@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {getFirestore} = require("../firebase-admin");
 const {
@@ -257,12 +257,13 @@ exports.analyzeNewReview = onDocumentCreated(
 
 /**
  * Manually queue a review for AI analysis
+ * @param {object} request - The request object
  */
-exports.queueReviewAnalysis = functions.https.onCall(async (request) => {
+async function queueReviewAnalysisHandler(request) {
   const {reviewId} = request.data;
 
   if (!reviewId) {
-    throw new functions.https.HttpsError("invalid-argument", "Review ID is required");
+    throw new HttpsError("invalid-argument", "Review ID is required");
   }
 
   console.log(`[queueReviewAnalysis] Manually queued analysis for review: ${reviewId}`);
@@ -270,7 +271,7 @@ exports.queueReviewAnalysis = functions.https.onCall(async (request) => {
   const result = await processReviewAnalysisWithRetry(reviewId);
 
   if (!result.success) {
-    throw new functions.https.HttpsError("internal", `Analysis failed: ${result.error}`);
+    throw new HttpsError("internal", `Analysis failed: ${result.error}`);
   }
 
   return {
@@ -278,23 +279,24 @@ exports.queueReviewAnalysis = functions.https.onCall(async (request) => {
     reviewId,
     cached: result.cached || false,
   };
-});
+}
 
 /**
  * Batch analyze multiple reviews (admin only)
+ * @param {object} request - The request object
  */
-exports.batchAnalyzeReviews = functions.https.onCall(async (request) => {
+async function batchAnalyzeReviewsHandler(request) {
   const context = {auth: request.auth, rawRequest: request};
   const auth = context.auth?.token || {};
 
   if (!auth.isAdmin) {
-    throw new functions.https.HttpsError("permission-denied", "Admin access required");
+    throw new HttpsError("permission-denied", "Admin access required");
   }
 
   const {reviewIds, force = false} = request.data?.data || request.data || {};
 
   if (!reviewIds || !Array.isArray(reviewIds)) {
-    throw new functions.https.HttpsError("invalid-argument", "Review IDs array is required");
+    throw new HttpsError("invalid-argument", "Review IDs array is required");
   }
 
   console.log(`[batchAnalyzeReviews] Starting batch analysis for ${reviewIds.length} reviews`);
@@ -335,4 +337,39 @@ exports.batchAnalyzeReviews = functions.https.onCall(async (request) => {
     results,
     allErrors: errors,
   };
-});
+}
+
+
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.reviewAnalysisAction = onCall(
+  {
+    memory: "256MiB",
+  },
+  async (request) => {
+    const {action} = request.data || {};
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+      case "queueReviewAnalysis":
+        return await queueReviewAnalysisHandler(request);
+      case "batchAnalyzeReviews":
+        return await batchAnalyzeReviewsHandler(request);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
+  },
+);

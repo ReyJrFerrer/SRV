@@ -18,7 +18,7 @@ export default function CreateProfilePage() {
   const [showTerms, setShowTerms] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, firebaseUser, login, email } = useAuth();
+  const { isAuthenticated, firebaseUser, email } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -115,26 +115,6 @@ export default function CreateProfilePage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Handler for our custom re-authentication button
-  const handleReAuth = async () => {
-    try {
-      setIsLoading(true);
-      setError("");
-      await login();
-      // On success, clear the error and hide the re-auth prompt
-      setReauthRequired(false);
-      setError(null);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to connect. Please try again.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -412,25 +392,15 @@ export default function CreateProfilePage() {
                 {reauthRequired ? (
                   <div className="space-y-4 pt-4 text-center">
                     <p className="font-medium text-slate-700">
-                      Please re-authenticate to continue.
+                      Your session has expired. Please sign in again to continue.
                     </p>
                     <button
                       type="button"
-                      onClick={handleReAuth}
-                      disabled={isLoading}
-                      className={`mx-auto mt-2 flex w-full max-w-xs transform items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-blue-600 hover:shadow-xl ${isLoading ? "cursor-not-allowed opacity-70" : ""}`}
+                      onClick={() => navigate("/")}
+                      className="mx-auto mt-2 flex w-full max-w-xs transform items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-blue-600 hover:shadow-xl"
                     >
-                      {isLoading ? (
-                        <>
-                          <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
-                          <span>Connecting...</span>
-                        </>
-                      ) : (
-                        <>
-                          <FingerPrintIcon className="mr-2 h-6 w-6" />
-                          Login Again with Internet Identity
-                        </>
-                      )}
+                      <FingerPrintIcon className="mr-2 h-6 w-6" />
+                      Sign In Again
                     </button>
                   </div>
                 ) : (

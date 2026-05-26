@@ -24,9 +24,13 @@ import {
   type Period,
 } from "../utils/homeUtils";
 import { getFeedbackStats } from "../services/adminServiceCanister";
-import { httpsCallable } from "firebase/functions";
-import { getFirebaseFunctions } from "../services/firebaseApp";
-import { FrontendSystemSettings } from "../services/serviceTypes";
+import {
+  getSettings,
+  setSettings as updateAdminSettings,
+  isAdminPasswordSet,
+  changeAdminPassword,
+  type FrontendSystemSettings,
+} from "../services/adminServiceCanister";
 import { useAuth } from "../context/AuthContext";
 
 export const AdminHomePage: React.FC = () => {
@@ -163,30 +167,13 @@ export const AdminHomePage: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const functions = getFirebaseFunctions();
-      const getSettingsFn = httpsCallable(functions, "getSettings");
-      const result = await getSettingsFn();
-      const data = result.data as {
-        success: boolean;
-        data: FrontendSystemSettings;
-      };
-      if (data.success) {
-        const settingsData = data.data;
-        if (settingsData.updatedAt) {
-          settingsData.updatedAt = new Date(settingsData.updatedAt as any);
-        }
+      const settingsData = await getSettings();
+      if (settingsData) {
         setSettings(settingsData);
       }
 
-      const isPasswordSetFn = httpsCallable(functions, "isAdminPasswordSet");
-      const passwordCheckResult = await isPasswordSetFn();
-      const passwordData = passwordCheckResult.data as {
-        success: boolean;
-        isSet: boolean;
-      };
-      if (passwordData.success) {
-        setIsPasswordSet(passwordData.isSet);
-      }
+      const isSet = await isAdminPasswordSet();
+      setIsPasswordSet(isSet);
     } catch (error) {}
   };
 
@@ -195,9 +182,7 @@ export const AdminHomePage: React.FC = () => {
 
     setUpdatingSettings(true);
     try {
-      const functions = getFirebaseFunctions();
-      const updateSettingsFn = httpsCallable(functions, "setSettings");
-      await updateSettingsFn({
+      await updateAdminSettings({
         ...settings,
         restrictNewAdminLogins: enabled,
       });
@@ -237,13 +222,11 @@ export const AdminHomePage: React.FC = () => {
 
     setChangingPassword(true);
     try {
-      const functions = getFirebaseFunctions();
-      const changePasswordFn = httpsCallable(functions, "changeAdminPassword");
-      await changePasswordFn({
-        oldPassword: isPasswordSet ? passwordForm.oldPassword : undefined,
-        newPassword: passwordForm.newPassword,
-        confirmPassword: passwordForm.confirmPassword,
-      });
+      await changeAdminPassword(
+        isPasswordSet ? passwordForm.oldPassword : undefined,
+        passwordForm.newPassword,
+        passwordForm.confirmPassword,
+      );
       setShowPasswordModal(false);
       setPasswordForm({
         oldPassword: "",

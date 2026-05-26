@@ -9,15 +9,14 @@
 export interface SessionData {
   principal: string;
   firebaseToken: string;
-  expiresAt: number; // IC session expiry timestamp (ms)
-  lastRefresh: number; // Last token refresh timestamp (ms)
-  lastFirebaseRefresh: number; // Last Firebase token refresh timestamp (ms)
+  expiresAt: number;
+  lastRefresh: number;
+  lastFirebaseRefresh: number;
   hasProfile: boolean;
   needsProfile: boolean;
-  sessionDuration: number; // Original session duration in ms
-  loginMethod?: "ii" | "zklogin"; // Auth method used for this session
-  zkLoginAddress?: string; // zkLogin Sui address (when loginMethod is "zklogin")
-  email?: string; // Email from OAuth provider (zkLogin only)
+  sessionDuration: number;
+  email?: string;
+  createdAt?: number;
 }
 
 export class SessionManager {
@@ -26,10 +25,31 @@ export class SessionManager {
   private static CURRENT_SESSION_KEY = "current";
   private static REFRESH_THRESHOLD = 0.8; // Refresh at 80% of lifetime
   private static FIREBASE_TOKEN_REFRESH = 50 * 60 * 1000; // Refresh Firebase token every 50 minutes (tokens expire at ~60 min)
+  private static MAX_SESSION_AGE = 30 * 24 * 60 * 60 * 1000; // Reject sessions older than 30 days
 
   private db: IDBDatabase | null = null;
   private refreshTimer: number | null = null;
   private isInitialized = false;
+
+  /**
+   * Validate that a session object has the required fields and is not
+   * unreasonably old. Rejecting stale/corrupted data prevents the app from
+   * trying to restore a broken session and ending up in an unauthenticated
+   * landing-page state.
+   */
+  private validateSession(data: any): data is SessionData {
+    if (!data || typeof data !== "object") return false;
+    if (!data.principal || typeof data.principal !== "string") return false;
+    if (!data.firebaseToken || typeof data.firebaseToken !== "string") return false;
+    if (typeof data.expiresAt !== "number") return false;
+    if (typeof data.sessionDuration !== "number") return false;
+
+    // Sanity-check: session must have been created within the last 30 days.
+    const createdAt = data.createdAt || data.lastRefresh || data.expiresAt - data.sessionDuration;
+    if (Date.now() - createdAt > SessionManager.MAX_SESSION_AGE) return false;
+
+    return true;
+  }
 
   /**
    * Initialize IndexedDB
@@ -131,11 +151,17 @@ export class SessionManager {
       } catch (error) {}
     }
 
-    // Return session even if expired — the refresh system needs the data
-    // to re-mint Firebase tokens via the Cloud Function (which doesn't
-    // verify IC delegation). The session will be extended on next refresh.
-    if (sessionData) {
+    // Validate the retrieved session — stale or corrupted data from a
+    // previous failed login attempt must not be returned.
+    if (sessionData && this.validateSession(sessionData)) {
       return sessionData;
+    }
+
+    // If validation failed, purge the bad data so it doesn't keep coming back
+    if (sessionData) {
+      try {
+        await this.clearSession();
+      } catch {}
     }
 
     return null;

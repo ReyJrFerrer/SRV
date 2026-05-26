@@ -23,8 +23,10 @@ import {
   getRecommendedSessionDuration,
 } from "../utils/sessionPersistence";
 
-import { httpsCallable } from "firebase/functions";
-import { getFirebaseFunctions } from "../services/firebaseApp";
+import {
+  isAdminPasswordSet,
+  verifyAdminPassword,
+} from "../services/adminSettingsService";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -463,18 +465,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 sessionDuration: sessionDurationMs,
               });
 
-              const functions = getFirebaseFunctions();
-              const isPasswordSetFn = httpsCallable(
-                functions,
-                "isAdminPasswordSet",
-              );
-              const passwordCheckResult = await isPasswordSetFn();
-              const passwordData = passwordCheckResult.data as {
-                success: boolean;
-                isSet: boolean;
-              };
+              const isPasswordSet = await isAdminPasswordSet();
 
-              if (passwordData.isSet) {
+              if (isPasswordSet) {
                 setPendingAuthState({
                   identity,
                   firebaseUser: result.user,
@@ -531,16 +524,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const functions = getFirebaseFunctions();
-      const verifyPasswordFn = httpsCallable(functions, "verifyAdminPassword");
-      const verifyResult = await verifyPasswordFn({ password });
-      const verifyData = verifyResult.data as {
-        success: boolean;
-        verified: boolean;
-        message: string;
-      };
+      const isVerified = await verifyAdminPassword(password);
 
-      if (!verifyData.verified) {
+      if (!isVerified) {
         setError("Incorrect password. Please try again.");
         setIsLoading(false);
         return;

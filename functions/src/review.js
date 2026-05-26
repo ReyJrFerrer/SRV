@@ -1,4 +1,10 @@
-const functions = require("firebase-functions");
+/**
+ * Review Management Cloud Functions
+ *
+ * This module handles all review-related operations
+ * Consolidated into a single entrypoint following the Firebase optimization guidelines
+ */
+
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {getFirestore} = require("../firebase-admin");
 
@@ -8,11 +14,17 @@ const {
 
 const db = getFirestore();
 
+// Constants
+const REVIEW_WINDOW_DAYS = 30;
+const MAX_COMMENT_LENGTH = 500;
+const MIN_RATING = 1;
+const MAX_RATING = 5;
+
 /**
- * Helper function to safely get user authentication info
- * @param {object} context - Firebase Functions context
- * @param {object} data - Request data
- * @return {object} User authentication info
+ * Get authentication info from context
+ * @param {Object} context
+ * @param {Object} data
+ * @return {Object} Auth info with uid, isAdmin, hasAuth
  */
 function getAuthInfo(context, data) {
   const auth = context.auth || data.auth;
@@ -23,15 +35,9 @@ function getAuthInfo(context, data) {
   };
 }
 
-// Constants
-const REVIEW_WINDOW_DAYS = 30;
-const MAX_COMMENT_LENGTH = 500;
-const MIN_RATING = 1;
-const MAX_RATING = 5;
-
 /**
- * Generate a unique review ID
- * @return {string} Unique review ID
+ * Generate a unique ID
+ * @return {string} Generated ID
  */
 function generateId() {
   const now = Date.now();
@@ -40,18 +46,18 @@ function generateId() {
 }
 
 /**
- * Validate rating is within acceptable range
- * @param {number} rating - Rating to validate
- * @return {boolean} True if rating is valid
+ * Check if rating is within valid range
+ * @param {number} rating
+ * @return {boolean} Whether rating is valid
  */
 function isValidRating(rating) {
   return rating >= MIN_RATING && rating <= MAX_RATING;
 }
 
 /**
- * Check if completed booking is within review window
- * @param {string} completedAt - ISO timestamp of completion
- * @return {boolean} True if within review window
+ * Check if review is within the allowed window
+ * @param {string} completedAt
+ * @return {boolean} Whether within review window
  */
 function isWithinReviewWindow(completedAt) {
   const completedTime = new Date(completedAt).getTime();
@@ -62,8 +68,8 @@ function isWithinReviewWindow(completedAt) {
 
 /**
  * Calculate quality score for a review
- * @param {object} review - Review object
- * @return {number} Quality score between 0 and 1
+ * @param {Object} review
+ * @return {number} Quality score
  */
 function calculateQualityScore(review) {
   const commentLength = review.comment.length;
@@ -73,32 +79,28 @@ function calculateQualityScore(review) {
   return (lengthScore + ratingScore) / 2.0;
 }
 
+// ============================================================================
+// SERVICE LAYER FUNCTIONS (INTERNAL)
+// ============================================================================
+
 /**
- * Submit a review for a booking
+ * Submit a review for a completed booking
+ * @param {Object} request
+ * @return {Promise<Object>} Result object Result object
  */
-exports.submitReview = onCall(async (request) => {
+async function submitReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {bookingId, rating, comment = ""} = payload;
-  console.log("Submit Review Payload", payload);
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Input validation
   if (!bookingId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Booking ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Booking ID is required");
   }
 
   if (!isValidRating(rating)) {
@@ -117,22 +119,15 @@ exports.submitReview = onCall(async (request) => {
 
   try {
     const result = await db.runTransaction(async (transaction) => {
-      // ===== ALL READ OPERATIONS FIRST =====
-
-      // Check if booking exists and user is the client
       const bookingRef = db.collection("bookings").doc(bookingId);
       const bookingSnap = await transaction.get(bookingRef);
 
       if (!bookingSnap.exists) {
-        throw new HttpsError(
-          "not-found",
-          "Booking not found",
-        );
+        throw new HttpsError("not-found", "Booking not found");
       }
 
       const booking = bookingSnap.data();
 
-      // Check if review already exists
       const existingReviewsSnap = await db
         .collection("reviews")
         .where("bookingId", "==", bookingId)
@@ -140,27 +135,16 @@ exports.submitReview = onCall(async (request) => {
         .get();
 
       if (!existingReviewsSnap.empty) {
-        throw new HttpsError(
-          "already-exists",
-          "Review already exists for this booking",
-        );
+        throw new HttpsError("already-exists", "Review already exists for this booking");
       }
 
-      // Read service data for rating statistics update
       const serviceRef = db.collection("services").doc(booking.serviceId);
       const serviceSnap = await transaction.get(serviceRef);
 
-      // ===== VALIDATION CHECKS =====
-
-      // Verify user is the client of this booking
       if (booking.clientId !== authInfo.uid) {
-        throw new HttpsError(
-          "permission-denied",
-          "Not authorized to review this booking",
-        );
+        throw new HttpsError("permission-denied", "Not authorized to review this booking");
       }
 
-      // Check if booking is completed
       if (booking.status !== "Completed" || !booking.completedDate) {
         throw new HttpsError(
           "failed-precondition",
@@ -168,18 +152,12 @@ exports.submitReview = onCall(async (request) => {
         );
       }
 
-      // Check if within review window
       if (!isWithinReviewWindow(booking.completedDate)) {
-        throw new HttpsError(
-          "deadline-exceeded",
-          `Review window has expired. Reviews must be submitted within 
-          ${REVIEW_WINDOW_DAYS} days of service completion`,
-        );
+        const msg = `Review window has expired. Reviews must be submitted within ` +
+          `${REVIEW_WINDOW_DAYS} days of service completion`;
+        throw new HttpsError("deadline-exceeded", msg);
       }
 
-      // ===== ALL WRITE OPERATIONS AFTER =====
-
-      // Create new review
       const reviewId = generateId();
       const now = new Date().toISOString();
 
@@ -194,17 +172,11 @@ exports.submitReview = onCall(async (request) => {
         createdAt: now,
         updatedAt: now,
         status: "Visible",
-        qualityScore: calculateQualityScore({
-          rating,
-          comment,
-        }),
+        qualityScore: calculateQualityScore({rating, comment}),
       };
 
-      // Save review to Firestore
       const reviewRef = db.collection("reviews").doc(reviewId);
       transaction.set(reviewRef, newReview);
-
-      // Update service rating statistics
 
       if (serviceSnap.exists) {
         const service = serviceSnap.data();
@@ -223,10 +195,7 @@ exports.submitReview = onCall(async (request) => {
       return {success: true, data: newReview};
     });
 
-    // Process review for reputation (AI content analysis is handled by Firestore trigger)
-    // This is done outside the transaction to avoid long-running operations
     await processReviewForReputationInternal(result.data, true);
-
     return result;
   } catch (error) {
     console.error("Error in submitReview:", error);
@@ -235,43 +204,33 @@ exports.submitReview = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Get review by ID
+ * Get a review by ID
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getReview = onCall(async (request) => {
+async function getReview_review(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {reviewId} = payload;
-  console.log("Get Review Payload", payload);
 
   if (!reviewId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Review ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Review ID is required");
   }
 
   try {
     const reviewSnap = await db.collection("reviews").doc(reviewId).get();
 
     if (!reviewSnap.exists) {
-      throw new HttpsError(
-        "not-found",
-        "Review not found",
-      );
+      throw new HttpsError("not-found", "Review not found");
     }
 
     const review = reviewSnap.data();
 
     if (review.status === "Hidden") {
-      throw new HttpsError(
-        "permission-denied",
-        "Review has been hidden",
-      );
+      throw new HttpsError("permission-denied", "Review has been hidden");
     }
 
     return {success: true, data: review};
@@ -282,24 +241,20 @@ exports.getReview = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Get reviews for a booking
+ * Get all reviews for a booking
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getBookingReviews = onCall(async (request) => {
+async function getBookingReviews_review(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {bookingId} = payload;
-  console.log("Get booking Review Payload", payload);
 
   if (!bookingId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Booking ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Booking ID is required");
   }
 
   try {
@@ -319,29 +274,24 @@ exports.getBookingReviews = onCall(async (request) => {
     console.error("Error in getBookingReviews:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get reviews by a user
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getUserReviews = onCall(async (request) => {
+async function getUserReviews_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {userId, includeHidden = false} = payload;
-  console.log("Get User Review Payload", payload);
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Use authenticated user's ID if no userId provided
   const targetUserId = userId || authInfo.uid;
   const showAll = includeHidden && authInfo.isAdmin;
 
@@ -357,7 +307,6 @@ exports.getUserReviews = onCall(async (request) => {
         allReviews.push(doc.data());
       });
 
-      // Sort client-side
       const sorted = allReviews.sort((a, b) => {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -367,15 +316,12 @@ exports.getUserReviews = onCall(async (request) => {
       return {success: true, data: sorted};
     }
 
-    // Normal query for visible reviews only (has proper index)
     const query = db
       .collection("reviews")
       .where("clientId", "==", targetUserId)
       .where("status", "==", "Visible");
 
-    const reviewsSnap = await query
-      .orderBy("createdAt", "desc")
-      .get();
+    const reviewsSnap = await query.orderBy("createdAt", "desc").get();
 
     const reviews = [];
     reviewsSnap.forEach((doc) => {
@@ -385,7 +331,6 @@ exports.getUserReviews = onCall(async (request) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getUserReviews:", error);
-    // If the query fails due to missing index, try fetching all and filtering client-side
     if (error.code === 8 || error.message?.includes("index")) {
       console.log("[getUserReviews] Falling back to client-side filtering due to index issue");
       try {
@@ -402,7 +347,6 @@ exports.getUserReviews = onCall(async (request) => {
           }
         });
 
-        // Sort client-side
         const sorted = allReviews.sort((a, b) => {
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -417,34 +361,26 @@ exports.getUserReviews = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Update a review
+ * Update an existing review
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.updateReview = onCall(async (request) => {
+async function updateReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {reviewId, rating, comment = ""} = payload;
-  console.log("Update Review Payload", payload);
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Input validation
   if (!reviewId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Review ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Review ID is required");
   }
 
   if (!isValidRating(rating)) {
@@ -463,32 +399,19 @@ exports.updateReview = onCall(async (request) => {
 
   try {
     return await db.runTransaction(async (transaction) => {
-      // ===== ALL READ OPERATIONS FIRST =====
-
       const reviewRef = db.collection("reviews").doc(reviewId);
       const reviewSnap = await transaction.get(reviewRef);
 
       if (!reviewSnap.exists) {
-        throw new HttpsError(
-          "not-found",
-          "Review not found",
-        );
+        throw new HttpsError("not-found", "Review not found");
       }
 
       const existingReview = reviewSnap.data();
-
-      // Read service data if we might need to update rating
       const serviceRef = db.collection("services").doc(existingReview.serviceId);
       const serviceSnap = await transaction.get(serviceRef);
 
-      // ===== VALIDATION CHECKS =====
-
-      // Verify user owns this review
       if (existingReview.clientId !== authInfo.uid) {
-        throw new HttpsError(
-          "permission-denied",
-          "Not authorized to update this review",
-        );
+        throw new HttpsError("permission-denied", "Not authorized to update this review");
       }
 
       if (existingReview.status !== "Visible") {
@@ -498,29 +421,22 @@ exports.updateReview = onCall(async (request) => {
         );
       }
 
-      // ===== ALL WRITE OPERATIONS AFTER =====
-
       const now = new Date().toISOString();
       const updatedReview = {
         ...existingReview,
         rating: rating,
         comment: comment,
         updatedAt: now,
-        qualityScore: calculateQualityScore({
-          rating,
-          comment,
-        }),
+        qualityScore: calculateQualityScore({rating, comment}),
       };
 
       transaction.update(reviewRef, updatedReview);
 
-      // Update service rating if rating changed
       if (existingReview.rating !== rating && serviceSnap.exists) {
         const service = serviceSnap.data();
         const currentRating = service.averageRating || 0;
         const reviewCount = service.reviewCount || 1;
 
-        // Recalculate average by removing old rating and adding new rating
         const oldTotal = currentRating * reviewCount;
         const newTotal = oldTotal - existingReview.rating + rating;
         const newAverageRating = newTotal / reviewCount;
@@ -540,33 +456,26 @@ exports.updateReview = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Delete (hide) a review
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.deleteReview = onCall(async (request) => {
+async function deleteReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {reviewId} = payload;
-  console.log("Delete Review Payload", payload);
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   if (!reviewId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Review ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Review ID is required");
   }
 
   try {
@@ -583,10 +492,7 @@ exports.deleteReview = onCall(async (request) => {
       reviewCollection = "providerReviews";
       existingReview = providerReviewDoc.data();
     } else {
-      throw new HttpsError(
-        "not-found",
-        "Review not found",
-      );
+      throw new HttpsError("not-found", "Review not found");
     }
 
     return await db.runTransaction(async (transaction) => {
@@ -594,10 +500,7 @@ exports.deleteReview = onCall(async (request) => {
       const reviewSnap = await transaction.get(reviewRef);
 
       if (!reviewSnap.exists) {
-        throw new HttpsError(
-          "not-found",
-          "Review not found",
-        );
+        throw new HttpsError("not-found", "Review not found");
       }
 
       let serviceRef = null;
@@ -611,17 +514,11 @@ exports.deleteReview = onCall(async (request) => {
         existingReview.providerId === authInfo.uid;
 
       if (!isOwner && !authInfo.isAdmin) {
-        throw new HttpsError(
-          "permission-denied",
-          "Not authorized to delete this review",
-        );
+        throw new HttpsError("permission-denied", "Not authorized to delete this review");
       }
 
       if (existingReview.status === "Hidden") {
-        throw new HttpsError(
-          "already-exists",
-          "Review is already hidden",
-        );
+        throw new HttpsError("already-exists", "Review is already hidden");
       }
 
       const now = new Date().toISOString();
@@ -662,33 +559,26 @@ exports.deleteReview = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Restore (unhide) a review
+ * Restore a hidden review
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.restoreReview = onCall(async (request) => {
+async function restoreReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {reviewId} = payload;
-  console.log("Restore Review Payload", payload);
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Admin access required",
-    );
+    throw new HttpsError("permission-denied", "Admin access required");
   }
 
   if (!reviewId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Review ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Review ID is required");
   }
 
   try {
@@ -705,16 +595,12 @@ exports.restoreReview = onCall(async (request) => {
       reviewCollection = "providerReviews";
       existingReview = providerReviewDoc.data();
     } else {
-      throw new HttpsError(
-        "not-found",
-        "Review not found",
-      );
+      throw new HttpsError("not-found", "Review not found");
     }
 
     return await db.runTransaction(async (transaction) => {
       const reviewRef = db.collection(reviewCollection).doc(reviewId);
 
-      // Read service data for rating statistics update (only for regular reviews)
       let serviceRef = null;
       let serviceSnap = null;
       if (reviewCollection === "reviews" && existingReview.serviceId) {
@@ -723,10 +609,7 @@ exports.restoreReview = onCall(async (request) => {
       }
 
       if (existingReview.status !== "Hidden") {
-        throw new HttpsError(
-          "failed-precondition",
-          "Review is not hidden",
-        );
+        throw new HttpsError("failed-precondition", "Review is not hidden");
       }
 
       const now = new Date().toISOString();
@@ -738,7 +621,6 @@ exports.restoreReview = onCall(async (request) => {
 
       transaction.update(reviewRef, updatedReview);
 
-      // Update service rating statistics
       if (reviewCollection === "reviews" && serviceSnap && serviceSnap.exists) {
         const service = serviceSnap.data();
         const currentRating = service.averageRating || 0;
@@ -768,40 +650,30 @@ exports.restoreReview = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Bulk update review status
+ * Bulk update review statuses
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.bulkUpdateReviewStatus = onCall(async (request) => {
+async function bulkUpdateReviewStatus_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {reviewIds, status} = payload;
-  console.log("Bulk Update Review Status Payload", payload);
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Admin access required",
-    );
+    throw new HttpsError("permission-denied", "Admin access required");
   }
 
   if (!reviewIds || !Array.isArray(reviewIds) || reviewIds.length === 0) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Review IDs array is required",
-    );
+    throw new HttpsError("invalid-argument", "Review IDs array is required");
   }
 
   if (status !== "Visible" && status !== "Hidden") {
-    throw new HttpsError(
-      "invalid-argument",
-      "Status must be 'Visible' or 'Hidden'",
-    );
+    throw new HttpsError("invalid-argument", "Status must be 'Visible' or 'Hidden'");
   }
 
   try {
@@ -813,7 +685,6 @@ exports.bulkUpdateReviewStatus = onCall(async (request) => {
       const batch = db.batch();
       const batchIds = reviewIds.slice(i, i + batchSize);
 
-      // Get all reviews from both collections
       const reviewPromises = batchIds.map(async (id) => {
         const reviewDoc = await db.collection("reviews").doc(id).get();
         if (reviewDoc.exists) {
@@ -828,20 +699,19 @@ exports.bulkUpdateReviewStatus = onCall(async (request) => {
 
       const reviewDocs = await Promise.all(reviewPromises);
 
-      // Update each review
-      for (const {id: reviewId, doc: reviewDoc, collection: collectionName} of reviewDocs) {
+      for (const {id: rId, doc: reviewDoc, collection: collectionName} of reviewDocs) {
         if (!reviewDoc || !collectionName) {
-          errors.push({reviewId, error: "Review not found"});
+          errors.push({reviewId: rId, error: "Review not found"});
           continue;
         }
 
-        const reviewRef = db.collection(collectionName).doc(reviewId);
+        const reviewRef = db.collection(collectionName).doc(rId);
         batch.update(reviewRef, {
           status: status,
           updatedAt: new Date().toISOString(),
         });
 
-        updated.push(reviewId);
+        updated.push(rId);
       }
       await batch.commit();
     }
@@ -858,23 +728,20 @@ exports.bulkUpdateReviewStatus = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Calculate average rating for a provider
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.calculateProviderRating = onCall(async (request) => {
+async function calculateProviderRating_review(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {providerId} = payload;
 
   if (!providerId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Provider ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Provider ID is required");
   }
 
   try {
@@ -885,10 +752,7 @@ exports.calculateProviderRating = onCall(async (request) => {
       .get();
 
     if (reviewsSnap.empty) {
-      throw new HttpsError(
-        "not-found",
-        "No reviews found for this provider",
-      );
+      throw new HttpsError("not-found", "No reviews found for this provider");
     }
 
     let totalRating = 0;
@@ -917,23 +781,20 @@ exports.calculateProviderRating = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Calculate average rating for a service
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.calculateServiceRating = onCall(async (request) => {
+async function calculateServiceRating_review(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {serviceId} = payload;
 
   if (!serviceId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Service ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Service ID is required");
   }
 
   try {
@@ -944,10 +805,7 @@ exports.calculateServiceRating = onCall(async (request) => {
       .get();
 
     if (reviewsSnap.empty) {
-      throw new HttpsError(
-        "not-found",
-        "No reviews found for this service",
-      );
+      throw new HttpsError("not-found", "No reviews found for this service");
     }
 
     let totalRating = 0;
@@ -976,28 +834,24 @@ exports.calculateServiceRating = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Calculate user average rating (reviews given by user)
+ * Calculate average rating for a user
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.calculateUserAverageRating = onCall(async (request) => {
+async function calculateUserAverageRating_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {userId} = payload;
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Use authenticated user's ID if no userId provided, or validate admin access
   const targetUserId = userId || authInfo.uid;
   if (userId && userId !== authInfo.uid && !authInfo.isAdmin) {
     throw new HttpsError(
@@ -1014,10 +868,7 @@ exports.calculateUserAverageRating = onCall(async (request) => {
       .get();
 
     if (reviewsSnap.empty) {
-      throw new HttpsError(
-        "not-found",
-        "No reviews found for this user",
-      );
+      throw new HttpsError("not-found", "No reviews found for this user");
     }
 
     let totalRating = 0;
@@ -1046,27 +897,24 @@ exports.calculateUserAverageRating = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Get all reviews
+ * Get all reviews (admin only)
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getAllReviews = onCall(async (request) => {
+async function getAllReviews_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Admin access required",
-    );
-  }
-
-  // Extract payload for pagination
   const payload = data.data || data;
   const {limit = 50, offset = 0, status = null} = payload;
 
-  // Convert limit and offset to integers
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError("permission-denied", "Admin access required");
+  }
+
   const limitInt = parseInt(limit) || 50;
   const offsetInt = parseInt(offset) || 0;
 
@@ -1091,24 +939,23 @@ exports.getAllReviews = onCall(async (request) => {
     console.error("Error in getAllReviews:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Get review statistics
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getReviewStatistics = onCall(async (request) => {
+async function getReviewStatistics_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
+
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "permission-denied",
-      "Admin access required",
-    );
+    throw new HttpsError("permission-denied", "Admin access required");
   }
 
   try {
-    // Get counts for each status
     const [visibleSnap, hiddenSnap, flaggedSnap, deletedSnap] = await Promise.all([
       db.collection("reviews").where("status", "==", "Visible").get(),
       db.collection("reviews").where("status", "==", "Hidden").get(),
@@ -1129,30 +976,26 @@ exports.getReviewStatistics = onCall(async (request) => {
     console.error("Error in getReviewStatistics:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Flag a review for moderation
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.flagReview = onCall(async (request) => {
+async function flagReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
   const {reviewId, reason} = payload;
-  const authInfo = getAuthInfo(context, data);
 
+  const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Admin access required",
-    );
+    throw new HttpsError("permission-denied", "Admin access required");
   }
 
   if (!reviewId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Review ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Review ID is required");
   }
 
   try {
@@ -1161,10 +1004,7 @@ exports.flagReview = onCall(async (request) => {
       const reviewSnap = await transaction.get(reviewRef);
 
       if (!reviewSnap.exists) {
-        throw new HttpsError(
-          "not-found",
-          "Review not found",
-        );
+        throw new HttpsError("not-found", "Review not found");
       }
 
       const review = reviewSnap.data();
@@ -1190,15 +1030,15 @@ exports.flagReview = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Get reviews for a specific provider
+ * Get reviews for a provider
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getProviderReviews = onCall(async (request) => {
+async function getProviderReviews_review(request) {
   const data = request.data;
-  const _context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {providerId, limit = 20, offset = 0} = payload;
 
@@ -1206,7 +1046,6 @@ exports.getProviderReviews = onCall(async (request) => {
     return {success: true, data: []};
   }
 
-  // Convert limit and offset to integers
   const limitInt = parseInt(limit) || 20;
   const offsetInt = parseInt(offset) || 0;
 
@@ -1230,27 +1069,23 @@ exports.getProviderReviews = onCall(async (request) => {
     console.error("Error in getProviderReviews:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Get reviews for a service with pagination
+ * Get reviews for a service
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getServiceReviews = onCall(async (request) => {
+async function getServiceReviews_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {serviceId, limit = 20, offset = 0, includeHidden = false} = payload;
-  console.log("Get Service Reviews ", payload);
 
   if (!serviceId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Service ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Service ID is required");
   }
 
-  // Convert limit and offset to integers
   const limitInt = parseInt(limit) || 20;
   const offsetInt = parseInt(offset) || 0;
 
@@ -1269,7 +1104,6 @@ exports.getServiceReviews = onCall(async (request) => {
         allReviews.push(doc.data());
       });
 
-      // Sort client-side
       const sorted = allReviews.sort((a, b) => {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -1297,7 +1131,6 @@ exports.getServiceReviews = onCall(async (request) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getServiceReviews:", error);
-    // If the query fails due to missing index, try fetching all and filtering client-side
     if (error.code === 8 || error.message?.includes("index")) {
       console.log("[getServiceReviews] Falling back to client-side filtering due to index issue");
       try {
@@ -1314,7 +1147,6 @@ exports.getServiceReviews = onCall(async (request) => {
           }
         });
 
-        // Sort client-side
         const sorted = allReviews.sort((a, b) => {
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -1330,35 +1162,26 @@ exports.getServiceReviews = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Submit a provider review for a client
- * This allows providers to rate clients after service completion
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.submitProviderReview = onCall(async (request) => {
+async function submitProviderReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {bookingId, rating, comment = ""} = payload;
-  console.log("Submit Provider Review Payload", payload);
 
-  // Authentication
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Input validation
   if (!bookingId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Booking ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Booking ID is required");
   }
 
   if (!isValidRating(rating)) {
@@ -1377,20 +1200,15 @@ exports.submitProviderReview = onCall(async (request) => {
 
   try {
     const result = await db.runTransaction(async (transaction) => {
-      // Get the booking
       const bookingRef = db.collection("bookings").doc(bookingId);
       const bookingSnap = await transaction.get(bookingRef);
 
       if (!bookingSnap.exists) {
-        throw new HttpsError(
-          "not-found",
-          "Booking not found",
-        );
+        throw new HttpsError("not-found", "Booking not found");
       }
 
       const booking = bookingSnap.data();
 
-      // Verify the authenticated user is the provider
       if (booking.providerId !== authInfo.uid) {
         throw new HttpsError(
           "permission-denied",
@@ -1398,7 +1216,6 @@ exports.submitProviderReview = onCall(async (request) => {
         );
       }
 
-      // Verify booking is completed
       if (booking.status !== "Completed") {
         throw new HttpsError(
           "failed-precondition",
@@ -1406,16 +1223,12 @@ exports.submitProviderReview = onCall(async (request) => {
         );
       }
 
-      // Check if within review window
       if (!isWithinReviewWindow(booking.completedDate)) {
-        throw new HttpsError(
-          "deadline-exceeded",
-          `Review window has expired. Reviews must be submitted within 
-          ${REVIEW_WINDOW_DAYS} days of service completion`,
-        );
+        const msg = `Review window has expired. Reviews must be submitted within ` +
+          `${REVIEW_WINDOW_DAYS} days of service completion`;
+        throw new HttpsError("deadline-exceeded", msg);
       }
 
-      // Check if provider already reviewed this client for this booking
       const existingReviewsSnap = await db
         .collection("providerReviews")
         .where("bookingId", "==", bookingId)
@@ -1429,7 +1242,6 @@ exports.submitProviderReview = onCall(async (request) => {
         );
       }
 
-      // Create the provider review
       const reviewId = generateId();
       const now = new Date().toISOString();
       const qualityScore = calculateQualityScore({rating, comment});
@@ -1437,8 +1249,8 @@ exports.submitProviderReview = onCall(async (request) => {
       const providerReview = {
         id: reviewId,
         bookingId: bookingId,
-        clientId: booking.clientId, // Client being reviewed
-        providerId: authInfo.uid, // Provider doing the review
+        clientId: booking.clientId,
+        providerId: authInfo.uid,
         serviceId: booking.serviceId,
         rating: rating,
         comment: comment,
@@ -1446,14 +1258,12 @@ exports.submitProviderReview = onCall(async (request) => {
         updatedAt: now,
         status: "Visible",
         qualityScore: qualityScore,
-        reviewType: "ProviderToClient", // Distinguish from client-to-provider reviews
+        reviewType: "ProviderToClient",
       };
 
-      // Save to providerReviews collection
       const reviewRef = db.collection("providerReviews").doc(reviewId);
       transaction.set(reviewRef, providerReview);
 
-      // Update booking to mark that provider has reviewed
       transaction.update(bookingRef, {
         providerReviewSubmitted: true,
         updatedAt: now,
@@ -1466,7 +1276,6 @@ exports.submitProviderReview = onCall(async (request) => {
       };
     });
 
-    // Process review for client reputation with AI sentiment analysis
     await processReviewForReputationInternal(result.data, true);
 
     return result;
@@ -1477,27 +1286,23 @@ exports.submitProviderReview = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Get provider reviews for a specific client
- * Shows what providers have said about a client
+ * Get provider reviews for a client
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getClientProviderReviews = onCall(async (request) => {
+async function getClientProviderReviews_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {clientId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!clientId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Client ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Client ID is required");
   }
 
-  // Convert limit and offset to integers
   const limitInt = parseInt(limit) || 20;
   const offsetInt = parseInt(offset) || 0;
 
@@ -1509,7 +1314,6 @@ exports.getClientProviderReviews = onCall(async (request) => {
       .collection("providerReviews")
       .where("clientId", "==", clientId);
 
-    // Only filter by status if not showing all
     if (!showAll) {
       query = query.where("status", "==", "Visible");
     }
@@ -1528,7 +1332,6 @@ exports.getClientProviderReviews = onCall(async (request) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getClientProviderReviews:", error);
-    // If the query fails due to missing index, try fetching all and filtering client-side
     if (error.code === 8 || error.message?.includes("index")) {
       console.log("[getClientProviderReviews] Falling back to client-side filtering");
       try {
@@ -1545,7 +1348,6 @@ exports.getClientProviderReviews = onCall(async (request) => {
           }
         });
 
-        // Sort and paginate client-side
         const sorted = allReviews.sort((a, b) => {
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -1561,42 +1363,34 @@ exports.getClientProviderReviews = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Get reviews given by a provider (reviews they wrote about clients)
- * Shows what a provider has said about clients
+ * Get provider reviews by provider ID
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
  */
-exports.getProviderReviewsByProvider = onCall(async (request) => {
+async function getProviderReviewsByProvider_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
-  // Extract payload
   const payload = data.data || data;
   const {providerId, limit = 20, offset = 0, includeHidden = false} = payload;
 
   if (!providerId) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Provider ID is required",
-    );
+    throw new HttpsError("invalid-argument", "Provider ID is required");
   }
 
-  // Convert limit and offset to integers
   const limitInt = parseInt(limit) || 20;
   const offsetInt = parseInt(offset) || 0;
 
   const authInfo = getAuthInfo(context, data);
   const showAll = includeHidden && authInfo.isAdmin;
 
-  console.log("[getProviderReviewsByProvider] includeHidden:",
-    includeHidden, "isAdmin:", authInfo.isAdmin, "showAll:", showAll);
-
   try {
     let query = db
       .collection("providerReviews")
       .where("providerId", "==", providerId);
 
-    // Only filter by status if not showing all
     if (!showAll) {
       query = query.where("status", "==", "Visible");
     }
@@ -1616,7 +1410,6 @@ exports.getProviderReviewsByProvider = onCall(async (request) => {
     return {success: true, data: reviews};
   } catch (error) {
     console.error("Error in getProviderReviewsByProvider:", error);
-    // If the query fails due to missing index, try fetching all and filtering client-side
     if (error.code === 8 || error.message?.includes("index")) {
       console.log("[getProviderReviewsByProvider] Falling back to client-side filtering");
       try {
@@ -1633,7 +1426,6 @@ exports.getProviderReviewsByProvider = onCall(async (request) => {
           }
         });
 
-        // Sort and paginate client-side
         const sorted = allReviews.sort((a, b) => {
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -1649,4 +1441,72 @@ exports.getProviderReviewsByProvider = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
+
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.reviewAction = onCall(
+  {
+    memory: "256MiB",
+  },
+  async (request) => {
+    const {action} = request.data || {};
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+      case "submitReview":
+        return await submitReview_review(request);
+      case "getReview":
+        return await getReview_review(request);
+      case "getBookingReviews":
+        return await getBookingReviews_review(request);
+      case "getUserReviews":
+        return await getUserReviews_review(request);
+      case "updateReview":
+        return await updateReview_review(request);
+      case "deleteReview":
+        return await deleteReview_review(request);
+      case "restoreReview":
+        return await restoreReview_review(request);
+      case "bulkUpdateReviewStatus":
+        return await bulkUpdateReviewStatus_review(request);
+      case "calculateProviderRating":
+        return await calculateProviderRating_review(request);
+      case "calculateServiceRating":
+        return await calculateServiceRating_review(request);
+      case "calculateUserAverageRating":
+        return await calculateUserAverageRating_review(request);
+      case "getAllReviews":
+        return await getAllReviews_review(request);
+      case "getReviewStatistics":
+        return await getReviewStatistics_review(request);
+      case "flagReview":
+        return await flagReview_review(request);
+      case "getProviderReviews":
+        return await getProviderReviews_review(request);
+      case "getServiceReviews":
+        return await getServiceReviews_review(request);
+      case "submitProviderReview":
+        return await submitProviderReview_review(request);
+      case "getClientProviderReviews":
+        return await getClientProviderReviews_review(request);
+      case "getProviderReviewsByProvider":
+        return await getProviderReviewsByProvider_review(request);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
+  },
+);

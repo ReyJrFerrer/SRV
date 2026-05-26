@@ -6,10 +6,10 @@ export const getServicesWithCertificates = async (): Promise<any[]> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction(
-      "getServicesWithCertificates",
-      {},
-    );
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getServicesWithCertificates",
+      data: {},
+    });
 
     return result || [];
   } catch (error) {
@@ -23,10 +23,10 @@ export const getPendingCertificateValidations = async (): Promise<any[]> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction(
-      "getPendingCertificateValidations",
-      {},
-    );
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getPendingCertificateValidations",
+      data: {},
+    });
 
     return result || [];
   } catch (error) {
@@ -52,16 +52,16 @@ export const updateCertificateValidationStatus = async (
       } as AdminServiceError);
     }
 
-    const payload = {
+    const data = {
       certificateId: certificateId.trim(),
       status,
       reason: reason || undefined,
     };
 
-    const result = await callFirebaseFunction(
-      "updateCertificateValidationStatus",
-      payload,
-    );
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "updateCertificateValidationStatus",
+      data: data,
+    });
     return result || `Certificate ${status.toLowerCase()} successfully`;
   } catch (error) {
     console.error("Error updating certificate validation status", error);
@@ -77,7 +77,10 @@ export const getValidatedCertificates = async (): Promise<any[]> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getValidatedCertificates", {});
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getValidatedCertificates",
+      data: {},
+    });
     return result || [];
   } catch (error) {
     console.error("Error fetching validated certificates", error);
@@ -90,7 +93,10 @@ export const getRejectedCertificates = async (): Promise<any[]> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getRejectedCertificates", {});
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getRejectedCertificates",
+      data: {},
+    });
     return result || [];
   } catch (error) {
     console.error("Error fetching rejected certificates", error);

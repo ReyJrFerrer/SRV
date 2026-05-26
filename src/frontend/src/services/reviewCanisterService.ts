@@ -2,12 +2,8 @@
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseFunctions } from "./firebaseApp";
 
-// Get Firebase Functions instance using proper helper
 const getFunctions = () => getFirebaseFunctions();
 
-// Firebase authentication will be handled automatically by httpsCallable functions
-
-// Frontend-compatible Review interface
 export interface Review {
   id: string;
   bookingId: string;
@@ -16,13 +12,12 @@ export interface Review {
   serviceId: string;
   rating: number;
   comment: string;
-  createdAt: string; // ISO string from Firebase
-  updatedAt: string; // ISO string from Firebase
+  createdAt: string;
+  updatedAt: string;
   status: "Visible" | "Hidden" | "Flagged" | "Deleted";
   qualityScore?: number;
 }
 
-// Statistics interface
 export interface ReviewStatistics {
   totalReviews: number;
   activeReviews: number;
@@ -31,43 +26,37 @@ export interface ReviewStatistics {
   deletedReviews: number;
 }
 
-// Provider rating response interface
 export interface ProviderRatingResponse {
   averageRating: number;
   reviewCount: number;
   providerId: string;
 }
 
-// Service rating response interface
 export interface ServiceRatingResponse {
   averageRating: number;
   reviewCount: number;
   serviceId: string;
 }
 
-// User rating response interface
 export interface UserRatingResponse {
   averageRating: number;
   reviewCount: number;
   userId: string;
 }
 
-// Firebase review data is already in the correct format, no conversion needed
-
-// Review Service Functions
 export const reviewCanisterService = {
-  /**
-   * Submit a review for a booking
-   */
   async submitReview(
     bookingId: string,
     rating: number,
     comment: string,
   ): Promise<Review> {
     try {
-      const submitReviewFn = httpsCallable(getFunctions(), "submitReview");
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await submitReviewFn({ bookingId, rating, comment });
+      const result = await reviewActionFn({
+        action: "submitReview",
+        data: { bookingId, rating, comment },
+      });
 
       const responseData = result.data as { success: boolean; data: Review };
       return responseData.data;
@@ -76,34 +65,30 @@ export const reviewCanisterService = {
     }
   },
 
-  /**
-   * Get review by ID
-   */
   async getReview(reviewId: string): Promise<Review> {
     try {
-      const getReviewFn = httpsCallable(getFunctions(), "getReview");
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await getReviewFn({ reviewId });
+      const result = await reviewActionFn({
+        action: "getReview",
+        data: { reviewId },
+      });
 
       const responseData = result.data as { success: boolean; data: Review };
-
       return responseData.data;
     } catch (error) {
       throw new Error(`Failed to get review: ${error}`);
     }
   },
 
-  /**
-   * Get reviews for a booking
-   */
   async getBookingReviews(bookingId: string): Promise<Review[]> {
     try {
-      const getBookingReviewsFn = httpsCallable(
-        getFunctions(),
-        "getBookingReviews",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await getBookingReviewsFn({ bookingId });
+      const result = await reviewActionFn({
+        action: "getBookingReviews",
+        data: { bookingId },
+      });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
@@ -112,34 +97,34 @@ export const reviewCanisterService = {
     }
   },
 
-  /**
-   * Get reviews by a user
-   */
   async getUserReviews(userId?: string): Promise<Review[]> {
     try {
-      const getUserReviewsFn = httpsCallable(getFunctions(), "getUserReviews");
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await getUserReviewsFn({ userId });
+      const result = await reviewActionFn({
+        action: "getUserReviews",
+        data: { userId },
+      });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
-  /**
-   * Update a review
-   */
   async updateReview(
     reviewId: string,
     rating: number,
     comment: string,
   ): Promise<Review> {
     try {
-      const updateReviewFn = httpsCallable(getFunctions(), "updateReview");
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await updateReviewFn({ reviewId, rating, comment });
+      const result = await reviewActionFn({
+        action: "updateReview",
+        data: { reviewId, rating, comment },
+      });
       const responseData = result.data as { success: boolean; data: Review };
       return responseData.data;
     } catch (error) {
@@ -147,33 +132,60 @@ export const reviewCanisterService = {
     }
   },
 
-  /**
-   * Delete a review (actually hides it)
-   */
   async deleteReview(reviewId: string): Promise<void> {
     try {
-      const deleteReviewFn = httpsCallable(getFunctions(), "deleteReview");
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await deleteReviewFn({ reviewId });
-      result.data as { success: boolean; message: string };
+      await reviewActionFn({
+        action: "deleteReview",
+        data: { reviewId },
+      });
     } catch (error) {
       throw new Error(`Failed to delete review: ${error}`);
     }
   },
 
-  /**
-   * Calculate average rating for a provider
-   */
+  async restoreReview(reviewId: string): Promise<void> {
+    try {
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
+
+      await reviewActionFn({
+        action: "restoreReview",
+        data: { reviewId },
+      });
+    } catch (error) {
+      throw new Error(`Failed to restore review: ${error}`);
+    }
+  },
+
+  async bulkUpdateReviewStatus(
+    reviewIds: string[],
+    status: "Visible" | "Hidden",
+  ): Promise<{ success: boolean; updated: string[]; errors: { reviewId: string; error: string }[] }> {
+    try {
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
+
+      const result = await reviewActionFn({
+        action: "bulkUpdateReviewStatus",
+        data: { reviewIds, status },
+      });
+
+      return result.data as { success: boolean; updated: string[]; errors: { reviewId: string; error: string }[] };
+    } catch (error) {
+      throw new Error(`Failed to bulk update review status: ${error}`);
+    }
+  },
+
   async calculateProviderRating(
     providerId: string,
   ): Promise<ProviderRatingResponse> {
     try {
-      const calculateProviderRatingFn = httpsCallable(
-        getFunctions(),
-        "calculateProviderRating",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await calculateProviderRatingFn({ providerId });
+      const result = await reviewActionFn({
+        action: "calculateProviderRating",
+        data: { providerId },
+      });
 
       const responseData = result.data as {
         success: boolean;
@@ -181,38 +193,24 @@ export const reviewCanisterService = {
       };
       return responseData.data;
     } catch (error) {
-      // Check if the error is "No reviews found" and return default values
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("No reviews found")) {
-        return {
-          averageRating: 0,
-          reviewCount: 0,
-          providerId,
-        };
+        return { averageRating: 0, reviewCount: 0, providerId };
       }
-      // Return default values for other errors too
-      return {
-        averageRating: 0,
-        reviewCount: 0,
-        providerId,
-      };
+      return { averageRating: 0, reviewCount: 0, providerId };
     }
   },
 
-  /**
-   * Calculate average rating for a service
-   */
   async calculateServiceRating(
     serviceId: string,
   ): Promise<ServiceRatingResponse> {
     try {
-      const calculateServiceRatingFn = httpsCallable(
-        getFunctions(),
-        "calculateServiceRating",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await calculateServiceRatingFn({ serviceId });
+      const result = await reviewActionFn({
+        action: "calculateServiceRating",
+        data: { serviceId },
+      });
 
       const responseData = result.data as {
         success: boolean;
@@ -220,38 +218,24 @@ export const reviewCanisterService = {
       };
       return responseData.data;
     } catch (error) {
-      // Check if the error is "No reviews found" and return default values
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("No reviews found")) {
-        return {
-          averageRating: 0,
-          reviewCount: 0,
-          serviceId,
-        };
+        return { averageRating: 0, reviewCount: 0, serviceId };
       }
-      // Return default values for other errors too
-      return {
-        averageRating: 0,
-        reviewCount: 0,
-        serviceId,
-      };
+      return { averageRating: 0, reviewCount: 0, serviceId };
     }
   },
 
-  /**
-   * Calculate user average rating
-   */
   async calculateUserAverageRating(
     userId?: string,
   ): Promise<UserRatingResponse> {
     try {
-      const calculateUserAverageRatingFn = httpsCallable(
-        getFunctions(),
-        "calculateUserAverageRating",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await calculateUserAverageRatingFn({ userId });
+      const result = await reviewActionFn({
+        action: "calculateUserAverageRating",
+        data: { userId },
+      });
 
       const responseData = result.data as {
         success: boolean;
@@ -259,56 +243,42 @@ export const reviewCanisterService = {
       };
       return responseData.data;
     } catch (error) {
-      // Check if the error is "No reviews found" and return default values
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("No reviews found")) {
-        return {
-          averageRating: 0,
-          reviewCount: 0,
-          userId: userId || "",
-        };
+        return { averageRating: 0, reviewCount: 0, userId: userId || "" };
       }
-      // Return default values for other errors too
-      return {
-        averageRating: 0,
-        reviewCount: 0,
-        userId: userId || "",
-      };
+      return { averageRating: 0, reviewCount: 0, userId: userId || "" };
     }
   },
 
-  /**
-   * Get all reviews (admin function)
-   */
   async getAllReviews(
     limit?: number,
     offset?: number,
     status?: string,
   ): Promise<Review[]> {
     try {
-      const getAllReviewsFn = httpsCallable(getFunctions(), "getAllReviews");
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await getAllReviewsFn({ limit, offset, status });
+      const result = await reviewActionFn({
+        action: "getAllReviews",
+        data: { limit, offset, status },
+      });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
-  /**
-   * Get review statistics (admin function)
-   */
   async getReviewStatistics(): Promise<ReviewStatistics> {
     try {
-      const getReviewStatisticsFn = httpsCallable(
-        getFunctions(),
-        "getReviewStatistics",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await getReviewStatisticsFn({});
+      const result = await reviewActionFn({
+        action: "getReviewStatistics",
+        data: {},
+      });
       const responseData = result.data as {
         success: boolean;
         data: ReviewStatistics;
@@ -319,99 +289,82 @@ export const reviewCanisterService = {
     }
   },
 
-  /**
-   * Flag a review for moderation (admin function)
-   */
   async flagReview(reviewId: string, reason?: string): Promise<void> {
     try {
-      const flagReviewFn = httpsCallable(getFunctions(), "flagReview");
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await flagReviewFn({ reviewId, reason });
-
-      result.data as { success: boolean; message: string };
+      await reviewActionFn({
+        action: "flagReview",
+        data: { reviewId, reason },
+      });
     } catch (error) {
       throw new Error(`Failed to flag review: ${error}`);
     }
   },
 
-  /**
-   * Get reviews for a specific provider
-   */
   async getProviderReviews(
     providerId: string,
     limit?: number,
     offset?: number,
   ): Promise<Review[]> {
     try {
-      const getProviderReviewsFn = httpsCallable(
-        getFunctions(),
-        "getProviderReviews",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await getProviderReviewsFn({ providerId, limit, offset });
+      const result = await reviewActionFn({
+        action: "getProviderReviews",
+        data: { providerId, limit, offset },
+      });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
-  /**
-   * Get reviews for a specific service
-   */
   async getServiceReviews(
     serviceId: string,
     limit?: number,
     offset?: number,
+    includeHidden?: boolean,
   ): Promise<Review[]> {
     try {
-      const getServiceReviewsFn = httpsCallable(
-        getFunctions(),
-        "getServiceReviews",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await getServiceReviewsFn({ serviceId, limit, offset });
+      const result = await reviewActionFn({
+        action: "getServiceReviews",
+        data: { serviceId, limit, offset, includeHidden },
+      });
 
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
     }
   },
 
-  /**
-   * Check if user can review a booking
-   */
   async canUserReviewBooking(
     bookingId: string,
     userId: string,
   ): Promise<boolean> {
     try {
-      // Get existing reviews for this booking by this user
       const bookingReviews = await this.getBookingReviews(bookingId);
       const userReview = bookingReviews.find(
         (review) => review.clientId === userId,
       );
-
-      // User can review if they haven't already reviewed this booking
       return !userReview;
     } catch (error) {
       return false;
     }
   },
 
-  /**
-   * Get recent reviews
-   */
   async getRecentReviews(limit: number = 10): Promise<Review[]> {
     try {
-      const allReviews = await this.getAllReviews(limit * 2); // Get more to filter visible ones
+      const allReviews = await this.getAllReviews(limit * 2);
       const visibleReviews = allReviews.filter(
         (review) => review.status === "Visible",
       );
 
-      // Sort by creation date (most recent first)
       visibleReviews.sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -419,26 +372,21 @@ export const reviewCanisterService = {
 
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      return []; // Return empty array on error
+      return [];
     }
   },
 
-  /**
-   * Get top rated reviews
-   */
   async getTopRatedReviews(limit: number = 10): Promise<Review[]> {
     try {
-      const allReviews = await this.getAllReviews(limit * 2); // Get more to filter visible ones
+      const allReviews = await this.getAllReviews(limit * 2);
       const visibleReviews = allReviews.filter(
         (review) => review.status === "Visible",
       );
 
-      // Sort by rating (highest first) and then by quality score
       visibleReviews.sort((a, b) => {
         if (a.rating !== b.rating) {
           return b.rating - a.rating;
         }
-        // If ratings are equal, sort by quality score
         const scoreA = a.qualityScore || 0;
         const scoreB = b.qualityScore || 0;
         return scoreB - scoreA;
@@ -446,42 +394,21 @@ export const reviewCanisterService = {
 
       return visibleReviews.slice(0, limit);
     } catch (error) {
-      return []; // Return empty array on error
+      return [];
     }
   },
 
-  /**
-   * Initialize static reviews manually (admin function)
-   * This is a placeholder for compatibility - Firebase doesn't need static initialization
-   */
-  async initializeStaticReviewsManually(): Promise<string> {
-    try {
-      // Firebase doesn't need static initialization like Motoko canisters
-      return "Firebase reviews are dynamically managed, no static initialization needed";
-    } catch (error) {
-      throw new Error(`Failed to initialize static reviews: ${error}`);
-    }
-  },
-
-  /**
-   * Submit a provider review for a client
-   * This allows providers to rate clients after service completion
-   */
   async submitProviderReview(
     bookingId: string,
     rating: number,
     comment: string,
   ): Promise<Review> {
     try {
-      const submitProviderReviewFn = httpsCallable(
-        getFunctions(),
-        "submitProviderReview",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await submitProviderReviewFn({
-        bookingId,
-        rating,
-        comment,
+      const result = await reviewActionFn({
+        action: "submitProviderReview",
+        data: { bookingId, rating, comment },
       });
 
       const responseData = result.data as { success: boolean; data: Review };
@@ -491,34 +418,45 @@ export const reviewCanisterService = {
     }
   },
 
-  /**
-   * Get provider reviews for a specific client
-   * Shows what providers have said about a client
-   */
   async getClientProviderReviews(
     clientId: string,
     limit?: number,
     offset?: number,
+    includeHidden?: boolean,
   ): Promise<Review[]> {
     try {
-      const getClientProviderReviewsFn = httpsCallable(
-        getFunctions(),
-        "getClientProviderReviews",
-      );
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
-      const result = await getClientProviderReviewsFn({
-        clientId,
-        limit,
-        offset,
+      const result = await reviewActionFn({
+        action: "getClientProviderReviews",
+        data: { clientId, limit, offset, includeHidden },
       });
       const responseData = result.data as { success: boolean; data: Review[] };
       return responseData.data || [];
     } catch (error) {
-      return []; // Return empty array on error to prevent .map() issues
+      return [];
+    }
+  },
+
+  async getProviderReviewsByProvider(
+    providerId: string,
+    limit?: number,
+    offset?: number,
+    includeHidden?: boolean,
+  ): Promise<Review[]> {
+    try {
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
+
+      const result = await reviewActionFn({
+        action: "getProviderReviewsByProvider",
+        data: { providerId, limit, offset, includeHidden },
+      });
+      const responseData = result.data as { success: boolean; data: Review[] };
+      return responseData.data || [];
+    } catch (error) {
+      return [];
     }
   },
 };
-
-// Firebase functions don't require actor management or reset functionality
 
 export default reviewCanisterService;

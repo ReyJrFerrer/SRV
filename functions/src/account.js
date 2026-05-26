@@ -5,7 +5,6 @@
  *  All profile data is stored in Firestore.
  */
 
-const functions = require("firebase-functions");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {admin, getFirestore} = require("../firebase-admin");
 
@@ -97,103 +96,149 @@ async function isPhoneTaken(phone, excludePrincipal = null) {
 }
 
 exports.isPhoneTaken = isPhoneTaken;
-/**
- * Validates phone number if it exists
- * HTTPS onCall Cloud Function
- */
-exports.validatePhoneNumber = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-  // Check authentication
-  if (!auth) {
-    console.error("No authentication context found!");
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated to create a profile",
-    );
-  }
-  const {phone} = data.data || data;
 
-  if (!validatePhone(phone)) {
+// ============================================================================
+// SERVICE LAYER FUNCTIONS (INTERNAL)
+// ============================================================================
+
+/**
+ * Get user profile from Firestore
+ * @param {string} principalText
+ * @return {Promise<Object|null>} The user profile data or null
+ */
+async function getUserProfile(principalText) {
+  const db = getFirestore();
+  const userRef = db.collection("users").doc(principalText);
+  const userDoc = await userRef.get();
+
+  if (!userDoc.exists) {
+    return null;
+  }
+
+  return userDoc.data();
+}
+
+/**
+ * Sign in with Internet Identity
+ * @param {Object} data
+ * @return {Promise<Object>} Authentication result with custom token
+ */
+async function signInWithInternetIdentityService(data) {
+  const {principal: principalText, email} = data;
+
+  if (!principalText) {
     throw new HttpsError(
       "invalid-argument",
-      "Invalid phone format",
+      "Principal is required",
     );
   }
 
-  // Check if phone is already taken
-  if (await isPhoneTaken(phone)) {
+  // Check if user has a Firestore profile (for existing users)
+  const profile = await getUserProfile(principalText);
+  const hasFirestoreProfile = !!profile;
+
+  // Check if account is locked before issuing a token
+  if (profile && profile.locked) {
     throw new HttpsError(
-      "already-exists",
-      "Phone number is already registered",
+      "failed-precondition",
+      "Account has been locked by an administrator.",
+      {suspensionEndDate: profile.suspensionEndDate ?? null},
     );
   }
+
+  // Store email in Firestore profile if provided (zkLogin users)
+  if (email) {
+    const db = getFirestore();
+    const userRef = db.collection("users").doc(principalText);
+    if (hasFirestoreProfile) {
+      await userRef.set({email}, {merge: true});
+    } else {
+      // Store email in a pending document so createProfile can pick it up
+      await db.collection("pending_users").doc(principalText).set({email}, {merge: true});
+    }
+  }
+
+  // Create Firebase custom token
+  const customToken = await admin.auth().createCustomToken(principalText, {
+    // Add custom claims here if needed
+    provider: "internet-identity",
+    icPrincipal: principalText,
+    hasProfile: hasFirestoreProfile,
+    ...(email && {email}),
+  });
+
   return {
     success: true,
-    message: "Phone number is available",
+    customToken,
+    principal: principalText,
+    hasProfile: hasFirestoreProfile,
+    needsProfile: !hasFirestoreProfile,
+    message: hasFirestoreProfile ?
+      "Successfully authenticated with Internet Identity" :
+      "Successfully authenticated. Please complete your profile.",
   };
-});
+}
+
+/**
+ * Validate phone number availability
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} Whether phone is available
+ */
+async function validatePhoneNumberService(auth, data) {
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+  const {phone} = data;
+
+  if (!validatePhone(phone)) {
+    throw new HttpsError("invalid-argument", "Invalid phone format");
+  }
+
+  if (await isPhoneTaken(phone)) {
+    throw new HttpsError("already-exists", "Phone number is already registered");
+  }
+  return {success: true, message: "Phone number is available"};
+}
+
 /**
  * Create a new user profile
- * HTTPS onCall Cloud Function
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} The created profile
  */
-exports.createProfile = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-
-  // Check authentication
+async function createProfileService(auth, data) {
   if (!auth) {
-    console.error("No authentication context found!");
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated to create a profile",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated to create a profile");
   }
 
   const principalId = auth.uid;
-  const {name, phone, role, email} = data.data || data;
+  const {name, phone, role, email} = data;
 
-  // Validate inputs
   if (!validateName(name)) {
-    throw new HttpsError(
-      "invalid-argument",
-      `Invalid name length. Must be between ${MIN_NAME_LENGTH} and ${MAX_NAME_LENGTH} characters`,
-    );
+    const msg = `Invalid name length. Must be between ${MIN_NAME_LENGTH}` +
+      ` and ${MAX_NAME_LENGTH} characters`;
+    throw new HttpsError("invalid-argument", msg);
   }
 
   if (!validatePhone(phone)) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Invalid phone format",
-    );
+    throw new HttpsError("invalid-argument", "Invalid phone format");
   }
 
-  // Check if phone is already taken
   if (await isPhoneTaken(phone)) {
-    throw new HttpsError(
-      "already-exists",
-      "Phone number is already registered",
-    );
+    throw new HttpsError("already-exists", "Phone number is already registered");
   }
 
-  // Check if profile already exists
   const db = getFirestore();
   const userRef = db.collection("users").doc(principalId);
   const userDoc = await userRef.get();
 
   if (userDoc.exists) {
-    throw new HttpsError(
-      "already-exists",
-      "Profile already exists",
-    );
+    throw new HttpsError("already-exists", "Profile already exists");
   }
 
-  // Create new profile
   const now = new Date().toISOString();
 
-  // Resolve email: prefer request param, fall back to pending_users doc
   let userEmail = email || null;
   if (!userEmail) {
     try {
@@ -206,20 +251,18 @@ exports.createProfile = onCall(async (request) => {
     }
   }
 
-  // Initialize reputation score. But if it fails, creation will push through.
   try {
     await initializeReputationInternal(principalId, now);
   } catch (error) {
     console.error(`Reputation initialization failed for user: ${principalId}`, error);
   }
 
-
   const newProfile = {
     id: principalId,
     name: name,
     phone: phone,
-    activeRole: role || "Client", // activeRole tracks user's preferred mode/UI
-    role: "ServiceProvider", // Everyone is a ServiceProvider by default
+    activeRole: role || "Client",
+    role: "ServiceProvider",
     createdAt: now,
     updatedAt: now,
     profilePicture: null,
@@ -231,39 +274,27 @@ exports.createProfile = onCall(async (request) => {
 
   await userRef.set(newProfile);
 
-  // Clean up pending_users doc if it exists
   try {
     await db.collection("pending_users").doc(principalId).delete();
   } catch (err) {
     // Ignore errors when deleting pending_users doc
   }
 
-
-  return {
-    success: true,
-    profile: newProfile,
-  };
-});
+  return {success: true, profile: newProfile};
+}
 
 /**
- * Get user profile by ID
- * HTTPS onCall Cloud Function
+ * Get a user profile
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} The user profile
  */
-exports.getProfile = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-  const actualData = data.data || data;
-
-  // Check authentication
+async function getProfileService(auth, data) {
   if (!auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  const {userId} = actualData;
+  const {userId} = data;
   const targetUserId = userId || auth.uid;
 
   const db = getFirestore();
@@ -271,94 +302,59 @@ exports.getProfile = onCall(async (request) => {
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) {
-    throw new HttpsError(
-      "not-found",
-      "Profile not found",
-    );
+    throw new HttpsError("not-found", "Profile not found");
   }
 
-  return {
-    success: true,
-    profile: userDoc.data(),
-  };
-});
+  return {success: true, profile: userDoc.data()};
+}
 
 /**
  * Update user profile
- * HTTPS onCall Cloud Function
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} The updated profile
  */
-exports.updateProfile = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-  const actualData = data.data || data;
-
-  // Check authentication
+async function updateProfileService(auth, data) {
   if (!auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated to update profile",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated to update profile");
   }
 
   const principalId = auth.uid;
-  const {name} = actualData;
+  const {name} = data;
 
-  // Validate inputs if provided
   if (name !== undefined && !validateName(name)) {
-    throw new HttpsError(
-      "invalid-argument",
-      `Invalid name length. Must be between ${MIN_NAME_LENGTH} and ${MAX_NAME_LENGTH} characters`,
-    );
+    const msg = `Invalid name length. Must be between ${MIN_NAME_LENGTH}` +
+      ` and ${MAX_NAME_LENGTH} characters`;
+    throw new HttpsError("invalid-argument", msg);
   }
 
-  // Get existing profile
   const db = getFirestore();
   const userRef = db.collection("users").doc(principalId);
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) {
-    throw new HttpsError(
-      "not-found",
-      "Profile not found",
-    );
+    throw new HttpsError("not-found", "Profile not found");
   }
 
-  // Update profile
-  const updateData = {
-    updatedAt: new Date().toISOString(),
-  };
-
+  const updateData = {updatedAt: new Date().toISOString()};
   if (name !== undefined) {
     updateData.name = name;
   }
 
   await userRef.update(updateData);
-
-  // Get updated profile
   const updatedDoc = await userRef.get();
 
-  return {
-    success: true,
-    profile: updatedDoc.data(),
-  };
-});
+  return {success: true, profile: updatedDoc.data()};
+}
 
 /**
- * Switch user active role between Client and ServiceProvider
- * HTTPS onCall Cloud Function
+ * Switch user role between Client and ServiceProvider
+ * @param {Object} auth
+ * @return {Promise<Object>} The updated profile with new role
  */
-exports.switchUserRole = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-
-  // Check authentication
+async function switchUserRoleService(auth) {
   if (!auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated to switch role",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated to switch role");
   }
 
   const principalId = auth.uid;
@@ -367,20 +363,13 @@ exports.switchUserRole = onCall(async (request) => {
   const userDoc = await userRef.get();
 
   if (!userDoc.exists) {
-    throw new HttpsError(
-      "not-found",
-      "Profile not found",
-    );
+    throw new HttpsError("not-found", "Profile not found");
   }
 
   const profile = userDoc.data();
 
-  // Don't allow switching if user is Admin
   if (profile.role === "Admin" || profile.activeRole === "Admin") {
-    throw new HttpsError(
-      "invalid-argument",
-      "Admin role cannot be switched",
-    );
+    throw new HttpsError("invalid-argument", "Admin role cannot be switched");
   }
 
   const newActiveRole = profile.activeRole === "Client" ? "ServiceProvider" : "Client";
@@ -390,30 +379,18 @@ exports.switchUserRole = onCall(async (request) => {
     updatedAt: new Date().toISOString(),
   });
 
-  // Get updated profile
   const updatedDoc = await userRef.get();
-
-  return {
-    success: true,
-    profile: updatedDoc.data(),
-  };
-});
+  return {success: true, profile: updatedDoc.data()};
+}
 
 /**
- * Get all service providers
- * HTTPS onCall Cloud Function
+ * Get all active service providers
+ * @param {Object} auth
+ * @return {Promise<Object>} List of active service providers
  */
-exports.getAllServiceProviders = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-
-  // Check authentication
+async function getAllServiceProvidersService(auth) {
   if (!auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
   const db = getFirestore();
@@ -427,29 +404,18 @@ exports.getAllServiceProviders = onCall(async (request) => {
     providers.push(doc.data());
   });
 
-  return {
-    success: true,
-    providers: providers,
-  };
-});
+  return {success: true, providers: providers};
+}
 
 /**
- * Get all users (admin function)
- * HTTPS onCall Cloud Function
+ * Get all users
+ * @param {Object} auth
+ * @return {Promise<Object>} List of all users
  */
-exports.getAllUsers = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-
-  // Check authentication
+async function getAllUsersService(auth) {
   if (!auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated");
   }
-
 
   const db = getFirestore();
   const usersSnapshot = await db.collection("users").get();
@@ -459,43 +425,25 @@ exports.getAllUsers = onCall(async (request) => {
     users.push(doc.data());
   });
 
-  return {
-    success: true,
-    users: users,
-  };
-});
-
-// ============================================================================
-// PROFILE PICTURE MANAGEMENT FUNCTIONS
-// ============================================================================
+  return {success: true, users: users};
+}
 
 /**
- * Upload profile picture
- * HTTP onCall Cloud Function
+ * Upload a profile picture
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} The updated profile with new picture
  */
-exports.uploadProfilePicture = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-
-  // Check authentication
+async function uploadProfilePictureService(auth, data) {
   if (!auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated to upload profile picture",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated to upload profile picture");
   }
 
   const principalId = auth.uid;
-  const payload = data.data || data;
-  const {fileName, contentType, fileData} = payload;
+  const {fileName, contentType, fileData} = data;
 
-  // Validate inputs
   if (!fileName || !contentType || !fileData) {
-    throw new HttpsError(
-      "invalid-argument",
-      "File name, content type, and file data are required",
-    );
+    throw new HttpsError("invalid-argument", "File name, content type, and file data are required");
   }
 
   try {
@@ -504,25 +452,19 @@ exports.uploadProfilePicture = onCall(async (request) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      throw new HttpsError(
-        "not-found",
-        "Profile not found",
-      );
+      throw new HttpsError("not-found", "Profile not found");
     }
 
     const profile = userDoc.data();
 
-    // Delete old profile picture if it exists
     if (profile.profilePicture && profile.profilePicture.mediaId) {
       try {
         await deleteMediaInternal(profile.profilePicture.mediaId);
       } catch (error) {
         console.error("Error deleting old profile picture:", error);
-        // Continue with upload even if deletion fails
       }
     }
 
-    // Upload new profile picture using media.js
     const mediaItem = await uploadMediaInternal({
       fileName,
       contentType,
@@ -531,7 +473,6 @@ exports.uploadProfilePicture = onCall(async (request) => {
       ownerId: principalId,
     });
 
-    // Update profile with new profile picture
     await userRef.update({
       profilePicture: {
         mediaId: mediaItem.id,
@@ -541,34 +482,22 @@ exports.uploadProfilePicture = onCall(async (request) => {
       updatedAt: new Date().toISOString(),
     });
 
-    // Get updated profile
     const updatedDoc = await userRef.get();
-
-    return {
-      success: true,
-      profile: updatedDoc.data(),
-    };
+    return {success: true, profile: updatedDoc.data()};
   } catch (error) {
     console.error("Error uploading profile picture:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
  * Remove profile picture
- * HTTPS onCall Cloud Function
+ * @param {Object} auth
+ * @return {Promise<Object>} The updated profile without picture
  */
-exports.removeProfilePicture = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-
-  // Check authentication
+async function removeProfilePictureService(auth) {
   if (!auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated to remove profile picture",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated to remove profile picture");
   }
 
   const principalId = auth.uid;
@@ -579,71 +508,46 @@ exports.removeProfilePicture = onCall(async (request) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      throw new HttpsError(
-        "not-found",
-        "Profile not found",
-      );
+      throw new HttpsError("not-found", "Profile not found");
     }
 
     const profile = userDoc.data();
 
-    // Check if profile picture exists
     if (!profile.profilePicture || !profile.profilePicture.mediaId) {
-      throw new HttpsError(
-        "not-found",
-        "No profile picture to remove",
-      );
+      throw new HttpsError("not-found", "No profile picture to remove");
     }
 
-    // Delete profile picture media
     await deleteMediaInternal(profile.profilePicture.mediaId);
 
-    // Update profile to remove profile picture
     await userRef.update({
       profilePicture: null,
       updatedAt: new Date().toISOString(),
     });
 
-    // Get updated profile
     const updatedDoc = await userRef.get();
-
-    return {
-      success: true,
-      profile: updatedDoc.data(),
-    };
+    return {success: true, profile: updatedDoc.data()};
   } catch (error) {
     console.error("Error removing profile picture:", error);
     throw new HttpsError("internal", error.message);
   }
-});
+}
 
 /**
- * Update user active status and last activity timestamp
- * HTTPS onCall Cloud Function
+ * Update user active status
+ * @param {Object} auth
+ * @param {Object} data
+ * @return {Promise<Object>} Success message with updated status
  */
-exports.updateUserActiveStatus = onCall(async (request) => {
-  const data = request.data;
-  const context = {auth: request.auth, rawRequest: request};
-  const auth = context.auth || data.auth;
-  const actualData = data.data || data;
-
-  // Check authentication
+async function updateUserActiveStatusService(auth, data) {
   if (!auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "User must be authenticated to update active status",
-    );
+    throw new HttpsError("unauthenticated", "User must be authenticated to update active status");
   }
 
   const principalId = auth.uid;
-  const {isActive} = actualData;
+  const {isActive} = data;
 
-  // Validate input
   if (typeof isActive !== "boolean") {
-    throw new HttpsError(
-      "invalid-argument",
-      "isActive must be a boolean value",
-    );
+    throw new HttpsError("invalid-argument", "isActive must be a boolean value");
   }
 
   try {
@@ -652,25 +556,18 @@ exports.updateUserActiveStatus = onCall(async (request) => {
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-      throw new HttpsError(
-        "not-found",
-        "Profile not found",
-      );
+      throw new HttpsError("not-found", "Profile not found");
     }
 
     const now = new Date().toISOString();
 
-    // Update user's active status and last activity timestamp
     await userRef.update({
       isActive: isActive,
       lastActivity: now,
       updatedAt: now,
     });
 
-    return {
-      success: true,
-      message: `User active status updated to ${isActive}`,
-    };
+    return {success: true, message: `User active status updated to ${isActive}`};
   } catch (error) {
     console.error("Error updating user active status:", error);
     if (error instanceof HttpsError) {
@@ -678,4 +575,57 @@ exports.updateUserActiveStatus = onCall(async (request) => {
     }
     throw new HttpsError("internal", error.message);
   }
-});
+}
+
+// ============================================================================
+// TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
+// ============================================================================
+
+exports.accountAction = onCall(
+  {
+    memory: "256MiB",
+  },
+  async (request) => {
+    const {action, payload} = request.data || {};
+    const auth = request.auth;
+
+    if (!action) {
+      throw new HttpsError("invalid-argument", "An action must be specified.");
+    }
+
+    try {
+      switch (action) {
+      case "exchangeForFirebaseToken":
+        return await signInWithInternetIdentityService(payload);
+      case "validatePhoneNumber":
+        return await validatePhoneNumberService(auth, payload);
+      case "createProfile":
+        return await createProfileService(auth, payload);
+      case "getProfile":
+        return await getProfileService(auth, payload);
+      case "updateProfile":
+        return await updateProfileService(auth, payload);
+      case "switchUserRole":
+        return await switchUserRoleService(auth);
+      case "getAllServiceProviders":
+        return await getAllServiceProvidersService(auth);
+      case "getAllUsers":
+        return await getAllUsersService(auth);
+      case "uploadProfilePicture":
+        return await uploadProfilePictureService(auth, payload);
+      case "removeProfilePicture":
+        return await removeProfilePictureService(auth);
+      case "updateUserActiveStatus":
+        return await updateUserActiveStatusService(auth, payload);
+      default:
+        throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`Error executing action [${action}]:`, error);
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      throw new HttpsError("internal", "Internal Server Error");
+    }
+  },
+);

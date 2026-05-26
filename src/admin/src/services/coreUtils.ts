@@ -47,7 +47,12 @@ export const callFirebaseFunction = async (
     const result = await callable(payload);
 
     if ((result.data as any).success) {
-      return (result.data as any).data || (result.data as any).message;
+      const resultData = (result.data as any).data;
+      if (resultData !== undefined) {
+        return resultData;
+      }
+      const { success, ...rest } = result.data as any;
+      return Object.keys(rest).length > 0 ? rest : (result.data as any).message;
     } else {
       throw new Error((result.data as any).message || "Function call failed");
     }

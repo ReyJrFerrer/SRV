@@ -260,13 +260,13 @@ export const authCanisterService = {
   async updateUserActiveStatus(isActive: boolean): Promise<void> {
     try {
       const functions = getFirebaseFunctions();
-      const updateActiveStatusFn = httpsCallable(
-        functions,
-        "updateUserActiveStatus",
-      );
+      const accountActionFn = httpsCallable(functions, "accountAction");
 
-      const result: any = await updateActiveStatusFn({
-        isActive: isActive,
+      const result: any = await accountActionFn({
+        action: "updateUserActiveStatus",
+        data: {
+          isActive: isActive,
+        }
       });
 
       if (!result.data?.success) {

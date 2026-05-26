@@ -125,13 +125,13 @@ export const useReputation = () => {
             await reputationService.initializeMyReputation(userId);
 
           const formattedReputation: ReputationScore = {
-            userId: initialReputation.userId?.toString() || userId,
-            trustScore: Number(initialReputation.trustScore),
+            userId,
+            trustScore: Number(initialReputation.data?.trustScore ?? 50),
             trustLevel: "New",
             completedBookings: 0,
             averageRating: undefined,
             detectionFlags: [],
-            lastUpdated: Number(initialReputation.lastUpdated),
+            lastUpdated: Date.now(),
           };
 
           setReputation(formattedReputation);

@@ -1,52 +1,33 @@
-import { callFirebaseFunction, requireAuth } from "./coreUtils";
-import { AdminServiceError, ServiceData } from "./serviceTypes";
+import { callFirebaseFunction } from "./coreUtils";
+import { ServiceData } from "./serviceTypes";
 import { serviceCanister } from "./serviceCanister";
 
-/**
- * Delete a service
- */
 export const deleteService = async (serviceId: string): Promise<void> => {
-  try {
-    requireAuth();
-
-    await callFirebaseFunction("deleteService", { serviceId });
-  } catch (error) {
-    if (error instanceof AdminServiceError) throw error;
-    throw new AdminServiceError({
-      message: `Failed to delete service: ${error}`,
-      code: "DELETE_SERVICE_ERROR",
-      details: error,
-    });
-  }
+  await callFirebaseFunction("serviceAction", {
+    action: "archiveService",
+    data: { serviceId },
+  });
 };
 
-/**
- * Get service packages for a specific service
- */
 export const getServicePackages = async (serviceId: string): Promise<any[]> => {
   try {
-    requireAuth();
-
-    const result = await callFirebaseFunction("getServicePackages", {
-      serviceId,
+    const result = await callFirebaseFunction("serviceAction", {
+      action: "getServicePackages",
+      data: { serviceId },
     });
-    return result || [];
-  } catch (error) {
-    console.error("Error getting service packages", error);
+    return (result as { packages?: any[] }).packages || [];
+  } catch {
     return [];
   }
 };
 
-// Get service data from Firebase
 export const getServiceData = async (
   serviceId: string,
 ): Promise<ServiceData | null> => {
   try {
-    requireAuth();
-
     const service = await serviceCanister.getService(serviceId);
-
     if (!service) return null;
+
     const serviceData: ServiceData = {
       id: service.id,
       title: service.title,
@@ -81,7 +62,6 @@ export const getServiceData = async (
       packages: [],
     };
 
-    // Get service packages
     try {
       const packages = await getServicePackages(serviceId);
       serviceData.packages = packages.map((pkg: any) => ({
@@ -91,21 +71,16 @@ export const getServiceData = async (
         price: pkg.price || 0,
         duration: pkg.duration,
       }));
-    } catch (packageError) {
-      console.error("Error fetching service packages", packageError);
+    } catch {
       serviceData.packages = [];
     }
 
     return serviceData;
-  } catch (error) {
-    console.error("Error fetching service data", error);
+  } catch {
     return null;
   }
 };
 
-/**
- * Get all services and bookings for a specific user
- */
 export const getUserServicesAndBookings = async (
   userId: string,
 ): Promise<{
@@ -114,19 +89,21 @@ export const getUserServicesAndBookings = async (
   providerBookings: any[];
 }> => {
   try {
-    requireAuth();
-
-    const result = await callFirebaseFunction("getUserServicesAndBookings", {
-      userId,
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getUserServicesAndBookings",
+      payload: { userId },
     });
-
-    return {
-      offeredServices: result.services || [],
-      clientBookings: result.clientBookings || [],
-      providerBookings: result.providerBookings || [],
+    const data = result as {
+      services?: any[];
+      clientBookings?: any[];
+      providerBookings?: any[];
     };
-  } catch (error) {
-    console.error("Error getting user services and bookings:", error);
+    return {
+      offeredServices: data.services || [],
+      clientBookings: data.clientBookings || [],
+      providerBookings: data.providerBookings || [],
+    };
+  } catch {
     return {
       offeredServices: [],
       clientBookings: [],
@@ -135,19 +112,14 @@ export const getUserServicesAndBookings = async (
   }
 };
 
-/**
- * Get service count for a specific user
- */
 export const getUserServiceCount = async (userId: string): Promise<number> => {
   try {
-    requireAuth();
-
-    const result = await callFirebaseFunction("getUserServiceCount", {
-      userId,
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getUserServiceCount",
+      payload: { userId },
     });
     return typeof result === "number" ? result : Number(result || 0);
-  } catch (error) {
-    console.error("Error getting user service count:", error);
+  } catch {
     return 0;
   }
 };

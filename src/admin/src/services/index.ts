@@ -5,6 +5,7 @@ import * as analyticsServices from "./analyticsServices";
 import * as certificateServices from "./certificateServices";
 import * as feedbackServices from "./feedbackServices";
 import * as chatServices from "./chatServices";
+import * as adminSettingsService from "./adminSettingsService";
 
 // Main service object that combines all services
 export const adminServiceCanister = {
@@ -55,6 +56,13 @@ export const adminServiceCanister = {
   // Conversations
   getUserConversations: chatServices.getUserConversations,
   getConversationMessages: chatServices.getConversationMessages,
+
+  // Settings & Password
+  getSettings: adminSettingsService.getSettings,
+  setSettings: adminSettingsService.setSettings,
+  isAdminPasswordSet: adminSettingsService.isAdminPasswordSet,
+  verifyAdminPassword: adminSettingsService.verifyAdminPassword,
+  changeAdminPassword: adminSettingsService.changeAdminPassword,
 };
 
 // Export individual functions for direct use
@@ -87,6 +95,16 @@ export {
 
 // Export notification function
 export { sendTicketCommentNotificationToUser } from "./notificationServices";
+
+// Export settings & password functions
+export {
+  getSettings,
+  setSettings,
+  isAdminPasswordSet,
+  verifyAdminPassword,
+  changeAdminPassword,
+} from "./adminSettingsService";
+export type { FrontendSystemSettings } from "./adminSettingsService";
 
 // Export core utilities
 export { updateAdminActor } from "./coreUtils";

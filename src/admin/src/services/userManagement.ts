@@ -15,7 +15,10 @@ export const getUserRole = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getUserRole", { userId });
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getUserRole",
+      payload: { userId },
+    });
 
     if (!result) return null;
 
@@ -56,7 +59,10 @@ export const listUserRoles = async (): Promise<
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("listUserRoles", {});
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "listUserRoles",
+      payload: {},
+    });
 
     if (!result || !Array.isArray(result)) return [];
 
@@ -84,9 +90,12 @@ export const hasAdminRole = async (userId: string): Promise<boolean> => {
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("hasRole", {
-      userId,
-      role: "ADMIN",
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "hasRole",
+      payload: {
+        userId,
+        role: "ADMIN",
+      },
     });
     return result === true;
   } catch (error) {
@@ -108,14 +117,17 @@ export const lockUserAccount = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("lockUserAccount", {
-      userId,
-      locked,
-      suspensionDurationDays: locked
-        ? suspensionDurationDays !== undefined
-          ? suspensionDurationDays
-          : null
-        : undefined,
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "lockUserAccount",
+      payload: {
+        userId,
+        locked,
+        suspensionDurationDays: locked
+          ? suspensionDurationDays !== undefined
+            ? suspensionDurationDays
+            : null
+          : undefined,
+      },
     });
     return result || "User account updated successfully";
   } catch (error) {
@@ -137,8 +149,11 @@ export const getAllUserLockStatuses = async (): Promise<
   try {
     requireAuth();
 
-    const callable = httpsCallable(functions, "getAllUserLockStatuses");
-    const result = await callable({ data: {} });
+    const callable = httpsCallable(functions, "adminUserAction");
+    const result = await callable({
+      action: "getAllUserLockStatuses",
+      payload: {},
+    });
 
     if ((result.data as any).success) {
       return (result.data as any).lockStatuses || {};
@@ -167,9 +182,12 @@ export const updateUserReputation = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("updateUserReputation", {
-      userId,
-      reputationScore,
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "updateUserReputation",
+      payload: {
+        userId,
+        reputationScore,
+      },
     });
     return result || "User reputation updated successfully";
   } catch (error) {
@@ -188,9 +206,12 @@ export const updateUserPhoneNumber = async (
 ): Promise<string> => {
   try {
     requireAuth();
-    const result = await callFirebaseFunction("updateUserPhoneNumber", {
-      userId,
-      phone,
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "updateUserPhoneNumber",
+      payload: {
+        userId,
+        phone,
+      },
     });
     return result || "User phone number updated successfully";
   } catch (error) {
@@ -355,14 +376,14 @@ export const getUserBookings = async (
   try {
     requireAuth();
 
-    // Get bookings from Firebase (both client and provider bookings)
-    const [clientBookingsResult, providerBookingsResult] = await Promise.all([
-      callFirebaseFunction("getClientBookings", { clientId: userId }),
-      callFirebaseFunction("getProviderBookings", { providerId: userId }),
-    ]);
+    // Get bookings from Firebase via adminUserAction (both client and provider bookings)
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "getUserServicesAndBookings",
+      payload: { userId },
+    });
 
-    const clientBookings = clientBookingsResult || [];
-    const providerBookings = providerBookingsResult || [];
+    const clientBookings = result.clientBookings || [];
+    const providerBookings = result.providerBookings || [];
 
     // Combine both arrays
     const allBookings = [...clientBookings, ...providerBookings];

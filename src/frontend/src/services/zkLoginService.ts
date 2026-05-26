@@ -117,7 +117,7 @@ export async function generateEphemeralKeyPair(): Promise<{
     network: NETWORK,
   });
 
-  const { systemState } = await suiClient.core.getCurrentSystemState();
+const { systemState } = await suiClient.core.getCurrentSystemState();
   const maxEpoch = Number(systemState.epoch) + 2;
 
   const ephemeralKeyPair = new Ed25519Keypair();
@@ -192,6 +192,7 @@ export function buildGoogleOAuthUrl(nonce: string): string {
     redirect_uri: redirectUri,
     scope: "openid email profile",
     nonce,
+    prompt: "select_account",
   });
 
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
@@ -279,6 +280,16 @@ export async function completeZkLoginFromCallback(): Promise<ZkLoginSession> {
   const jwt = parseJwtFromCallbackUrl();
   if (!jwt) {
     throw new Error("No id_token found in callback URL.");
+  }
+
+  // Immediately strip the id_token from the URL so the app is not
+  // re-detected as a callback on reloads or re-renders.
+  if (typeof history !== "undefined" && history.replaceState) {
+    history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
   }
 
   const decodedJwt = decodeJwtPayload(jwt);

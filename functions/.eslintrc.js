@@ -32,6 +32,7 @@ module.exports = {
       "error",
       {
         requireReturn: false, // Don't require @return for all functions
+        requireReturnDescription: false, // Don't require return descriptions
         requireParamDescription: false, // Don't require param descriptions
       },
     ],
@@ -56,6 +57,36 @@ module.exports = {
       },
       rules: {
         "no-unused-expressions": "off", // Allow chai expressions
+      },
+    },
+    {
+      files: ["src/service.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_service"]}],
+      },
+    },
+    {
+      files: ["src/review.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_review"]}],
+      },
+    },
+    {
+      files: ["src/reputation.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_reputation"]}],
+      },
+    },
+    {
+      files: ["src/booking.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_booking"]}],
+      },
+    },
+    {
+      files: ["src/notification.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_notification", "app_id", "include_player_ids"]}],
       },
     },
   ],

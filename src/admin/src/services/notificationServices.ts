@@ -29,9 +29,7 @@ const getTicketReportData = async (
   };
 
   try {
-    const result = await callFirebaseFunction("getReportById", {
-      data: { reportId: ticketId },
-    });
+    const result = await callFirebaseFunction("feedbackAction", { action: "getReportById", payload: { reportId: ticketId } });
 
     if (!result) {
       return defaultData;

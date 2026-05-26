@@ -13,11 +13,9 @@ import {
 } from "firebase/firestore";
 import { getFirebaseFunctions, getFirebaseApp } from "./firebaseApp";
 
-// Initialize Firebase services
 const functions = getFirebaseFunctions();
 const db = getFirestore(getFirebaseApp());
 
-// Frontend-compatible interfaces
 export interface FrontendNotification {
   id: string;
   message: string;
@@ -50,12 +48,7 @@ export interface NotificationFilter {
   offset?: number;
 }
 
-/**
- * Convert Firestore notification to frontend format
- */
-const convertToFrontendNotification = (
-  notificationData: any,
-): FrontendNotification => {
+const convertToFrontendNotification = (notificationData: any): FrontendNotification => {
   return {
     id: notificationData.id,
     message: notificationData.message,
@@ -65,7 +58,7 @@ const convertToFrontendNotification = (
     read:
       notificationData.status === "read" ||
       notificationData.status === "push_sent_and_read",
-    href: notificationData.href, // Will be null for non-clickable notifications
+    href: notificationData.href,
     userType: notificationData.userType as "client" | "provider",
     providerName: notificationData.metadata?.senderName,
     clientName: notificationData.metadata?.senderName,
@@ -74,9 +67,6 @@ const convertToFrontendNotification = (
   };
 };
 
-/**
- * Debounce helper function
- */
 function debounce<T extends (...args: any[]) => void>(
   func: T,
   wait: number,
@@ -90,7 +80,6 @@ function debounce<T extends (...args: any[]) => void>(
   };
 }
 
-// Shared listeners to prevent Firebase Web SDK 'Unexpected state' crashes
 const sharedNotificationListeners = new Map<
   string,
   {
@@ -100,11 +89,7 @@ const sharedNotificationListeners = new Map<
   }
 >();
 
-// Notification Service Functions using Firebase
 export const notificationCanisterService = {
-  /**
-   * Get notifications for current user with real-time listener
-   */
   subscribeToUserNotifications(
     userId: string,
     callback: (notifications: FrontendNotification[]) => void,
@@ -138,7 +123,6 @@ export const notificationCanisterService = {
         };
       }
 
-      // Debounce the notification to all callbacks to prevent rapid re-renders
       const notifyAll = debounce((notifications: FrontendNotification[]) => {
         const currentListener = sharedNotificationListeners.get(listenerId);
         if (currentListener) {
@@ -153,16 +137,12 @@ export const notificationCanisterService = {
         orderBy("createdAt", "desc"),
       );
 
-      // Apply filters
       if (filter) {
         if (filter.userType) {
           q = query(q, where("userType", "==", filter.userType));
         }
         if (filter.notificationType) {
-          q = query(
-            q,
-            where("notificationType", "==", filter.notificationType),
-          );
+          q = query(q, where("notificationType", "==", filter.notificationType));
         }
         if (filter.status) {
           q = query(q, where("status", "==", filter.status));
@@ -172,12 +152,10 @@ export const notificationCanisterService = {
         }
       }
 
-      // Set up real-time listener
       const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
           if (snapshot.metadata.fromCache && snapshot.empty) {
-            
             return;
           }
           const notifications = snapshot.docs.map((doc) => {
@@ -208,7 +186,6 @@ export const notificationCanisterService = {
         if (l) {
           l.callbacks.delete(callback);
           if (l.callbacks.size === 0) {
-            // Delay unsubscription to prevent Firestore 'Unexpected state' on rapid mount/unmount
             setTimeout(() => {
               const currentL = sharedNotificationListeners.get(listenerId);
               if (currentL && currentL.callbacks.size === 0) {
@@ -224,22 +201,16 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Get notifications for current user (one-time fetch)
-   */
   async getUserNotifications(
     userId?: string,
     filter?: NotificationFilter,
   ): Promise<FrontendNotification[]> {
     try {
-      const getUserNotificationsFunc = httpsCallable(
-        functions,
-        "getUserNotifications",
-      );
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await getUserNotificationsFunc({
-        userId,
-        filter,
+      const result = await notificationActionFn({
+        action: "getUserNotifications",
+        data: { userId, filter },
       });
 
       const response = result.data as any;
@@ -254,15 +225,13 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Mark notification as read
-   */
   async markAsRead(notificationId: string): Promise<void> {
     try {
-      const markAsReadFunc = httpsCallable(functions, "markNotificationAsRead");
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await markAsReadFunc({
-        notificationId,
+      const result = await notificationActionFn({
+        action: "markNotificationAsRead",
+        data: { notificationId },
       });
 
       const response = result.data as any;
@@ -275,18 +244,13 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Mark notification as push sent
-   */
   async markAsPushSent(notificationId: string): Promise<void> {
     try {
-      const markAsPushSentFunc = httpsCallable(
-        functions,
-        "markNotificationAsPushSent",
-      );
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await markAsPushSentFunc({
-        notificationId,
+      const result = await notificationActionFn({
+        action: "markNotificationAsPushSent",
+        data: { notificationId },
       });
 
       const response = result.data as any;
@@ -299,20 +263,15 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Get notifications eligible for push
-   */
   async getNotificationsForPush(
     userId?: string,
   ): Promise<FrontendNotification[]> {
     try {
-      const getForPushFunc = httpsCallable(
-        functions,
-        "getNotificationsForPush",
-      );
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await getForPushFunc({
-        userId,
+      const result = await notificationActionFn({
+        action: "getNotificationsForPush",
+        data: { userId },
       });
 
       const response = result.data as any;
@@ -327,15 +286,13 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Get notification statistics
-   */
   async getNotificationStats(userId?: string): Promise<NotificationStats> {
     try {
-      const getStatsFunc = httpsCallable(functions, "getNotificationStats");
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await getStatsFunc({
-        userId,
+      const result = await notificationActionFn({
+        action: "getNotificationStats",
+        data: { userId },
       });
 
       const response = result.data as any;
@@ -350,17 +307,14 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Mark all notifications as read
-   */
   async markAllAsRead(): Promise<number> {
     try {
-      const markAllAsReadFunc = httpsCallable(
-        functions,
-        "markAllNotificationsAsRead",
-      );
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await markAllAsReadFunc({});
+      const result = await notificationActionFn({
+        action: "markAllNotificationsAsRead",
+        data: {},
+      });
 
       const response = result.data as any;
 
@@ -374,18 +328,13 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Delete a notification
-   */
   async deleteNotification(notificationId: string): Promise<void> {
     try {
-      const deleteNotificationFunc = httpsCallable(
-        functions,
-        "deleteNotification",
-      );
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await deleteNotificationFunc({
-        notificationId,
+      const result = await notificationActionFn({
+        action: "deleteNotification",
+        data: { notificationId },
       });
 
       const response = result.data as any;
@@ -398,19 +347,16 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Check if user can receive notifications (rate limiting check)
-   */
   async canReceiveNotification(
     userId: string,
     notificationType: string,
   ): Promise<boolean> {
     try {
-      const canReceiveFunc = httpsCallable(functions, "canReceiveNotification");
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await canReceiveFunc({
-        userId,
-        notificationType,
+      const result = await notificationActionFn({
+        action: "canReceiveNotification",
+        data: { userId, notificationType },
       });
 
       const response = result.data as any;
@@ -421,9 +367,6 @@ export const notificationCanisterService = {
     }
   },
 
-  /**
-   * Create a notification
-   */
   async createNotification(
     targetUserId: string,
     userType: "client" | "provider",
@@ -434,7 +377,6 @@ export const notificationCanisterService = {
     metadata?: any,
   ): Promise<string> {
     try {
-      // First check if we can receive notifications to avoid rate limiting
       const canReceive = await this.canReceiveNotification(
         targetUserId,
         notificationType,
@@ -444,19 +386,19 @@ export const notificationCanisterService = {
         throw new Error("Notification rate limit exceeded");
       }
 
-      const createNotificationFunc = httpsCallable(
-        functions,
-        "createNotification",
-      );
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
 
-      const result = await createNotificationFunc({
-        targetUserId,
-        userType,
-        notificationType,
-        title,
-        message,
-        relatedEntityId,
-        metadata,
+      const result = await notificationActionFn({
+        action: "createNotification",
+        data: {
+          targetUserId,
+          userType,
+          notificationType,
+          title,
+          message,
+          relatedEntityId,
+          metadata,
+        },
       });
 
       const response = result.data as any;
@@ -467,12 +409,37 @@ export const notificationCanisterService = {
 
       throw new Error("Failed to create notification");
     } catch (error) {
-      // Don't rethrow rate limit errors as they're expected
       if (error instanceof Error && error.message.includes("rate limit")) {
         return "rate-limited";
       }
 
       throw new Error(`Failed to create notification: ${error}`);
+    }
+  },
+
+  async storeOneSignalPlayerId(playerId: string): Promise<void> {
+    try {
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
+
+      await notificationActionFn({
+        action: "storeOneSignalPlayerId",
+        data: { playerId },
+      });
+    } catch (error) {
+      throw new Error(`Failed to store player ID: ${error}`);
+    }
+  },
+
+  async removeOneSignalPlayerId(playerId?: string): Promise<void> {
+    try {
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
+
+      await notificationActionFn({
+        action: "removeOneSignalPlayerId",
+        data: { playerId },
+      });
+    } catch (error) {
+      throw new Error(`Failed to remove player ID: ${error}`);
     }
   },
 };

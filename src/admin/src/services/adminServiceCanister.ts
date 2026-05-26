@@ -24,3 +24,11 @@ export {
   updateAdminActor,
 } from "./index";
 export * from "./serviceTypes";
+export {
+  getSettings,
+  setSettings,
+  isAdminPasswordSet,
+  verifyAdminPassword,
+  changeAdminPassword,
+} from "./adminSettingsService";
+export type { FrontendSystemSettings } from "./adminSettingsService";
