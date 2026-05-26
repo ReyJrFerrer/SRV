@@ -2,6 +2,8 @@ import {
   ShieldCheckIcon,
   UsersIcon,
   GlobeAltIcon,
+  SparklesIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { useState, useEffect } from "react";
 import { SiteHeader } from "./layout/SiteHeader";
@@ -25,6 +27,27 @@ export default function MainPage({
   onNavigateToContact,
 }: MainPageProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [repScore, setRepScore] = useState(50);
+  const [celebrating, setCelebrating] = useState(false);
+  const handleRepClick = () => {
+    if (celebrating) return;
+    if (repScore >= 100) { setRepScore(50); return; }
+    const next = repScore + 1;
+    setRepScore(next);
+    if (next === 100) {
+      setCelebrating(true);
+      setTimeout(() => {
+        setCelebrating(false);
+        setRepScore(50);
+      }, 1600);
+    }
+  };
+  const getScoreColor = (s: number): string => {
+    if (s > 80) return '#10b981';
+    if (s > 50) return '#0ea5e9';
+    if (s > 20) return '#f59e0b';
+    return '#f43f5e';
+  };
 
   const handleLoginClick = () => {
     onLoginClick();
@@ -304,6 +327,33 @@ export default function MainPage({
   }, []);
 
   // =================== END RESTORED / NEW EFFECTS =====================
+
+  // AI Reputation points reveal
+  useEffect(() => {
+    const points = Array.from(
+      document.querySelectorAll<HTMLElement>(".ai-rep-point"),
+    );
+    if (!points.length) return;
+    points.forEach((p, i) => {
+      p.classList.add("ai-rep-init");
+      p.style.setProperty("--ai-rep-delay", `${i * 140}ms`);
+    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).classList.add("ai-rep-in");
+            observer.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    points.forEach((p) => observer.observe(p));
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   // (Removed community modal; CTA will open waitlist directly)
 
@@ -730,6 +780,97 @@ export default function MainPage({
               <button className="gallery-control prev-btn">◀</button>
               <div className="gallery-indicators"></div>
               <button className="gallery-control next-btn">▶</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI-Powered Trust & Reputation */}
+      <section className="ai-reputation-section">
+        <div className="container">
+          <div className="ai-reputation-header">
+            <h2 className="ai-reputation-title">
+              AI-Powered Trust & Reputation
+            </h2>
+            <p className="ai-reputation-description">
+              Every booking builds trust. Our AI engine analyzes reviews,
+              detects suspicious patterns, and powers a reputation system you
+              can rely on.
+            </p>
+          </div>
+
+          <div className="ai-reputation-split">
+            <div className="rep-circle-wrapper">
+              <div className="rep-circle-container" onClick={handleRepClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleRepClick(); }}>
+                <div className={`rep-circle-ring ${celebrating ? 'rep-circle-celebrating' : ''}`}>
+                  <div className="rep-circle-fill" style={{ background: `conic-gradient(${getScoreColor(repScore)} 0deg ${repScore * 3.6}deg, #e5e7eb ${repScore * 3.6}deg 360deg)` }}></div>
+                  <div className="rep-circle-inner">
+                    <div className="rep-circle-score" style={{ color: getScoreColor(repScore) }}>{repScore}</div>
+                    <div className="rep-circle-label" style={{ color: getScoreColor(repScore) }}>Trust Score</div>
+                  </div>
+                  {celebrating && (
+                    <div className="rep-circle-burst">
+                      <span className="burst-star s1">★</span>
+                      <span className="burst-star s2">★</span>
+                      <span className="burst-star s3">★</span>
+                      <span className="burst-star s4">★</span>
+                      <span className="burst-star s5">★</span>
+                      <span className="burst-star s6">★</span>
+                      <span className="burst-message">PERFECT!</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="rep-circle-hint">{celebrating ? 'Amazing! 🎉' : 'Click for a Surprise'}</div>
+            </div>
+
+            <div className="ai-reputation-content">
+              <div className="ai-rep-point">
+                <div className="ai-rep-point-icon">
+                  <SparklesIcon />
+                </div>
+                <div className="ai-rep-point-text">
+                  <h3 className="ai-rep-point-title">
+                    AI Review Intelligence
+                  </h3>
+                  <p className="ai-rep-point-description">
+                    Automated analysis detects suspicious language patterns and
+                    rating anomalies, keeping fake reviews out and reputation
+                    scores authentic.
+                  </p>
+                </div>
+              </div>
+
+              <div className="ai-rep-point">
+                <div className="ai-rep-point-icon">
+                  <ChartBarIcon />
+                </div>
+                <div className="ai-rep-point-text">
+                  <h3 className="ai-rep-point-title">
+                    Dynamic Scoring Engine
+                  </h3>
+                  <p className="ai-rep-point-description">
+                    Always see the full picture with reputation scores updated in real-time from completed
+                    bookings, verified ratings, and AI-validated review data,
+                  </p>
+                </div>
+              </div>
+
+              <div className="ai-rep-point">
+                <div className="ai-rep-point-icon">
+                  <ShieldCheckIcon />
+                </div>
+                <div className="ai-rep-point-text">
+                  <h3 className="ai-rep-point-title">
+                    Trust Assurance
+                  </h3>
+                  <p className="ai-rep-point-description">
+                    Fairness monitoring and anomaly flagging ensure the system
+                    rewards genuine service excellence while protecting the
+                    community from bad actors.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
