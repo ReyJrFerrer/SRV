@@ -517,7 +517,7 @@ export default function MainPage({
               <h3 className="feature-title">Discover</h3>
               <div className="feature-image max-w-3/4">
                 <img
-                  src="/images/srv characters (SVG)/girl.svg"
+                  src="/images/srv characters (SVG)/Sir V. Discover.png"
                   alt="Service Discovery"
                   className="feature-icon"
                 />
@@ -532,7 +532,7 @@ export default function MainPage({
               <h3 className="feature-title">Compare</h3>
               <div className="feature-image max-w-3/4">
                 <img
-                  src="/images/srv characters (SVG)/tutor.svg"
+                  src="/images/srv characters (SVG)/Sir V. Compare.png"
                   alt="Detailed Provider Profiles"
                   className="feature-icon"
                 />
@@ -546,7 +546,7 @@ export default function MainPage({
               <h3 className="feature-title">Book</h3>
               <div className="feature-image max-w-3/4">
                 <img
-                  src="/images/srv characters (SVG)/tech guy.svg"
+                  src="/images/srv characters (SVG)/Sir V. Book.png"
                   alt="Seamless Booking System"
                   className="feature-icon"
                 />
@@ -561,7 +561,7 @@ export default function MainPage({
               <h3 className="feature-title">Get it Done</h3>
               <div className="feature-image max-w-3/4">
                 <img
-                  src="/images/srv characters (SVG)/plumber.svg"
+                  src="/images/srv characters (SVG)/Sir V. GID.png"
                   alt="Authentic Ratings & Reviews"
                   className="feature-icon"
                 />
@@ -851,7 +851,7 @@ export default function MainPage({
                   </h3>
                   <p className="ai-rep-point-description">
                     Always see the full picture with reputation scores updated in real-time from completed
-                    bookings, verified ratings, and AI-validated review data,
+                    bookings, verified ratings, and AI-validated review data.
                   </p>
                 </div>
               </div>
