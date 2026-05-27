@@ -45,9 +45,14 @@ const UserReviewsPage: React.FC = () => {
   );
   const [showHiddenOnly, setShowHiddenOnly] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [reviewerProfiles, setReviewerProfiles] = useState<
+  const [profileMap, setProfileMap] = useState<
     Record<string, { name: string; profilePicture?: { imageUrl: string } }>
   >({});
+  const [userName, setUserName] = useState<string>("");
+  const [serviceNameMap, setServiceNameMap] = useState<Record<string, string>>(
+    {},
+  );
+  const [bookingMap, setBookingMap] = useState<Record<string, any>>({});
 
   useEffect(() => {
     document.title = "User Reviews | Admin";
@@ -62,64 +67,126 @@ const UserReviewsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      // Fetch user profile for title
+      try {
+        const userProfile = await getProfile(userId);
+        if (userProfile && userProfile.success && userProfile.profile) {
+          setUserName(userProfile.profile.name || userId);
+        } else {
+          setUserName(userId);
+        }
+      } catch {
+        setUserName(userId);
+      }
+
       const { receivedReviews, givenAsClientReviews, givenAsProviderReviews } =
         await adminServiceCanister.getUserDetailedReviews(userId);
 
-      setReceivedReviews(receivedReviews || []);
-      setGivenAsClientReviews(givenAsClientReviews || []);
-      setGivenAsProviderReviews(givenAsProviderReviews || []);
+      const received = receivedReviews || [];
+      const givenClient = givenAsClientReviews || [];
+      const givenProvider = givenAsProviderReviews || [];
 
-      // Fetch reviewer profiles for received reviews
-      if (receivedReviews && receivedReviews.length > 0) {
-        const uniqueReviewerIds = [
-          ...new Set(
-            receivedReviews
-              .map((r) => (r.providerId === userId ? r.clientId : r.providerId))
-              .filter((id): id is string => !!id),
-          ),
-        ];
+      setReceivedReviews(received);
+      setGivenAsClientReviews(givenClient);
+      setGivenAsProviderReviews(givenProvider);
 
-        const profilePromises = uniqueReviewerIds.map(async (reviewerId) => {
+      // Enrich: fetch service names
+      const allReviews = [...received, ...givenClient, ...givenProvider];
+      const serviceIds = [
+        ...new Set(allReviews.map((r) => r.serviceId).filter(Boolean)),
+      ];
+      if (serviceIds.length > 0) {
+        const serviceResults = await Promise.allSettled(
+          serviceIds.map(async (sid) => {
+            try {
+              const data = await adminServiceCanister.getServiceData(sid);
+              return { id: sid, name: data?.title || "Unknown Service" };
+            } catch {
+              return { id: sid, name: "Unknown Service" };
+            }
+          }),
+        );
+        const svcMap: Record<string, string> = {};
+        serviceResults.forEach((r) => {
+          if (r.status === "fulfilled") {
+            svcMap[r.value.id] = r.value.name;
+          }
+        });
+        setServiceNameMap(svcMap);
+      } else {
+        setServiceNameMap({});
+      }
+
+      // Enrich: fetch booking details
+      const bookingIds = [
+        ...new Set(allReviews.map((r) => r.bookingId).filter(Boolean)),
+      ];
+      if (bookingIds.length > 0) {
+        try {
+          const bookings = await adminServiceCanister.getUserBookings(userId);
+          const bMap: Record<string, any> = {};
+          bookings.forEach((b) => {
+            if (bookingIds.includes(b.id)) {
+              bMap[b.id] = b;
+            }
+          });
+          setBookingMap(bMap);
+        } catch {
+          setBookingMap({});
+        }
+      } else {
+        setBookingMap({});
+      }
+
+      // Enrich: collect all unique user IDs for profile fetching
+      const allProfileIds = new Set<string>();
+
+      received.forEach((r) => {
+        const reviewerId = r.providerId === userId ? r.clientId : r.providerId;
+        if (reviewerId) allProfileIds.add(reviewerId);
+      });
+      givenClient.forEach((r) => {
+        if (r.providerId) allProfileIds.add(r.providerId);
+      });
+      givenProvider.forEach((r) => {
+        if (r.clientId) allProfileIds.add(r.clientId);
+      });
+
+      if (allProfileIds.size > 0) {
+        const profilePromises = [...allProfileIds].map(async (profileId) => {
           try {
-            const profile = await getProfile(reviewerId);
+            const profile = await getProfile(profileId);
             if (profile && profile.success && profile.profile) {
               return {
-                reviewerId,
+                id: profileId,
                 name: profile.profile.name || "Unknown User",
                 profilePicture: profile.profile.profilePicture,
               };
             }
             return {
-              reviewerId,
+              id: profileId,
               name: "Unknown User",
               profilePicture: undefined,
             };
-          } catch (error) {
-            console.error(`Error fetching profile for ${reviewerId}:`, error);
+          } catch {
             return {
-              reviewerId,
+              id: profileId,
               name: "Unknown User",
               profilePicture: undefined,
             };
           }
         });
-
         const profiles = await Promise.all(profilePromises);
-        const profilesMap = profiles.reduce(
-          (acc, { reviewerId, name, profilePicture }) => {
-            if (reviewerId) {
-              acc[reviewerId] = { name, profilePicture };
-            }
-            return acc;
-          },
-          {} as Record<
-            string,
-            { name: string; profilePicture?: { imageUrl: string } }
-          >,
-        );
-        setReviewerProfiles(profilesMap);
+        const pMap: Record<
+          string,
+          { name: string; profilePicture?: { imageUrl: string } }
+        > = {};
+        profiles.forEach((p) => {
+          pMap[p.id] = { name: p.name, profilePicture: p.profilePicture };
+        });
+        setProfileMap(pMap);
       } else {
-        setReviewerProfiles({});
+        setProfileMap({});
       }
     } catch (e) {
       console.error("Error loading reviews:", e);
@@ -282,7 +349,7 @@ const UserReviewsPage: React.FC = () => {
             <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
           </button>
           <h1 className="ml-3 text-lg font-semibold text-slate-800">
-            My Reviews
+            {userName ? `${userName}'s Reviews` : "User Reviews"}
           </h1>
         </div>
       </header>
@@ -409,10 +476,31 @@ const UserReviewsPage: React.FC = () => {
                       new Date(a.createdAt).getTime(),
                   )
                   .map((rev) => {
-                    const reviewerInfo =
-                      activeTab === "received" && rev.providerId
-                        ? reviewerProfiles[rev.providerId]
+                    const isReceived = activeTab === "received";
+                    const isGivenClient = activeTab === "given-client";
+                    const isGivenProvider = activeTab === "given-provider";
+
+                    const reviewerProviderId = isReceived
+                      ? rev.providerId === userId
+                        ? rev.clientId
+                        : rev.providerId
+                      : undefined;
+                    const reviewerInfo = reviewerProviderId
+                      ? profileMap[reviewerProviderId]
+                      : undefined;
+
+                    const counterpartyId = isGivenClient
+                      ? rev.providerId
+                      : isGivenProvider
+                        ? rev.clientId
                         : undefined;
+                    const counterpartyName = counterpartyId
+                      ? profileMap[counterpartyId]?.name || "Unknown User"
+                      : undefined;
+
+                    const revServiceName = serviceNameMap[rev.serviceId ?? ""];
+                    const bookingDetail = bookingMap[rev.bookingId ?? ""];
+
                     return (
                       <ReviewItem
                         key={rev.id}
@@ -425,6 +513,11 @@ const UserReviewsPage: React.FC = () => {
                         onShowDeleteConfirm={setShowDeleteConfirm}
                         activeTab={activeTab}
                         reviewerInfo={reviewerInfo}
+                        counterpartyName={counterpartyName}
+                        serviceName={revServiceName}
+                        bookingStatus={bookingDetail?.status}
+                        bookingDate={bookingDetail?.scheduledDate}
+                        bookingPrice={bookingDetail?.price}
                       />
                     );
                   })}

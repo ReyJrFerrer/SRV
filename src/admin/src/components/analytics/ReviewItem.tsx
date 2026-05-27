@@ -23,6 +23,11 @@ interface ReviewItemProps {
   onShowDeleteConfirm: (reviewId: string) => void;
   activeTab?: "received" | "given-client" | "given-provider";
   reviewerInfo?: ReviewerInfo;
+  counterpartyName?: string;
+  serviceName?: string;
+  bookingStatus?: string;
+  bookingDate?: string;
+  bookingPrice?: number;
 }
 
 export const ReviewItem: React.FC<ReviewItemProps> = ({
@@ -35,6 +40,11 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
   onShowDeleteConfirm,
   activeTab,
   reviewerInfo,
+  counterpartyName,
+  serviceName,
+  bookingStatus,
+  bookingDate,
+  bookingPrice,
 }) => {
   const isHidden = review.status === "Hidden";
   const showReviewerInfo = activeTab === "received" && reviewerInfo;
@@ -112,6 +122,33 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
           )}
         </div>
       </div>
+      {(counterpartyName || serviceName) && (
+        <div className="ml-10 mt-2 space-y-0.5">
+          {counterpartyName && (
+            <p className="text-xs text-gray-500">for {counterpartyName}</p>
+          )}
+          {serviceName && (
+            <p className="text-sm text-gray-600">
+              on{" "}
+              <span className="font-medium text-gray-800">{serviceName}</span>
+              <span className="text-xs text-gray-400">
+                {" · "}
+                {[
+                  bookingStatus,
+                  bookingDate
+                    ? new Date(bookingDate).toLocaleDateString()
+                    : null,
+                  bookingPrice != null && bookingPrice > 0
+                    ? `₱${bookingPrice.toLocaleString()}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
       {review.comment && (
         <p className="mt-2 text-sm text-gray-700">{review.comment}</p>
       )}
