@@ -18,15 +18,18 @@ export const getUserDetailedReviews = async (
     // Get all review types in parallel
     const [receivedResult, givenAsClientResult, givenAsProviderResult] =
       await Promise.allSettled([
-        callFirebaseFunction("getClientProviderReviews", {
+        callFirebaseFunction("reviewAction", {
+          action: "getClientProviderReviews",
           data: { clientId: userId, includeHidden: true },
         }),
 
-        callFirebaseFunction("getUserReviews", {
+        callFirebaseFunction("reviewAction", {
+          action: "getUserReviews",
           data: { userId: userId, includeHidden: true },
         }),
 
-        callFirebaseFunction("getProviderReviewsByProvider", {
+        callFirebaseFunction("reviewAction", {
+          action: "getProviderReviewsByProvider",
           data: { providerId: userId, includeHidden: true },
         }),
       ]);
@@ -68,7 +71,8 @@ export const getServiceReviews = async (
 ): Promise<any[]> => {
   try {
     requireAuth();
-    const result = await callFirebaseFunction("getServiceReviews", {
+    const result = await callFirebaseFunction("reviewAction", {
+      action: "getServiceReviews",
       data: { serviceId, includeHidden },
     });
     return Array.isArray(result) ? result : [];
@@ -84,7 +88,8 @@ export const getServiceReviews = async (
 export const deleteReview = async (reviewId: string): Promise<void> => {
   try {
     requireAuth();
-    await callFirebaseFunction("deleteReview", {
+    await callFirebaseFunction("reviewAction", {
+      action: "deleteReview",
       data: { reviewId },
     });
   } catch (error) {
@@ -99,7 +104,8 @@ export const deleteReview = async (reviewId: string): Promise<void> => {
 export const restoreReview = async (reviewId: string): Promise<void> => {
   try {
     requireAuth();
-    await callFirebaseFunction("restoreReview", {
+    await callFirebaseFunction("reviewAction", {
+      action: "restoreReview",
       data: { reviewId },
     });
   } catch (error) {
@@ -120,7 +126,8 @@ export const bulkUpdateReviewStatus = async (
 }> => {
   try {
     requireAuth();
-    const result = await callFirebaseFunction("bulkUpdateReviewStatus", {
+    const result = await callFirebaseFunction("reviewAction", {
+      action: "bulkUpdateReviewStatus",
       data: { reviewIds, status },
     });
     return {

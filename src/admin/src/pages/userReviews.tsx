@@ -71,33 +71,33 @@ const UserReviewsPage: React.FC = () => {
 
       // Fetch reviewer profiles for received reviews
       if (receivedReviews && receivedReviews.length > 0) {
-        const uniqueProviderIds = [
+        const uniqueReviewerIds = [
           ...new Set(
             receivedReviews
-              .map((r) => r.providerId)
+              .map((r) => (r.providerId === userId ? r.clientId : r.providerId))
               .filter((id): id is string => !!id),
           ),
         ];
 
-        const profilePromises = uniqueProviderIds.map(async (providerId) => {
+        const profilePromises = uniqueReviewerIds.map(async (reviewerId) => {
           try {
-            const profile = await getProfile(providerId);
+            const profile = await getProfile(reviewerId);
             if (profile && profile.success && profile.profile) {
               return {
-                providerId,
+                reviewerId,
                 name: profile.profile.name || "Unknown User",
                 profilePicture: profile.profile.profilePicture,
               };
             }
             return {
-              providerId,
+              reviewerId,
               name: "Unknown User",
               profilePicture: undefined,
             };
           } catch (error) {
-            console.error(`Error fetching profile for ${providerId}:`, error);
+            console.error(`Error fetching profile for ${reviewerId}:`, error);
             return {
-              providerId,
+              reviewerId,
               name: "Unknown User",
               profilePicture: undefined,
             };
@@ -106,8 +106,10 @@ const UserReviewsPage: React.FC = () => {
 
         const profiles = await Promise.all(profilePromises);
         const profilesMap = profiles.reduce(
-          (acc, { providerId, name, profilePicture }) => {
-            acc[providerId] = { name, profilePicture };
+          (acc, { reviewerId, name, profilePicture }) => {
+            if (reviewerId) {
+              acc[reviewerId] = { name, profilePicture };
+            }
             return acc;
           },
           {} as Record<

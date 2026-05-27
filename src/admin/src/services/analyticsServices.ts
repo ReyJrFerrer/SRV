@@ -12,7 +12,7 @@ export const getSystemStats = async (): Promise<FrontendSystemStats> => {
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "getSystemStats",
-      data: {},
+      payload: {},
     });
 
     return {
@@ -45,7 +45,7 @@ export const getAllUsers = async (): Promise<any[]> => {
 
     // Call Firebase function directly
     const callable = httpsCallable(functions, "adminUserAction");
-    const result = await callable({ action: "getAllUsers", data: {} });
+    const result = await callable({ action: "getAllUsers", payload: {} });
 
     if ((result.data as any).success) {
       const users = (result.data as any).users || [];
@@ -75,7 +75,7 @@ export const getBookingsData = async (): Promise<{
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "getBookingsData",
-      data: {},
+      payload: {},
     });
 
     if (!result) {

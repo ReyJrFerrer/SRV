@@ -239,10 +239,9 @@ export const getUserAnalytics = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getProviderAnalytics", {
-      providerId: userId,
-      startDate: null,
-      endDate: null,
+    const result = await callFirebaseFunction("bookingAction", {
+      action: "getProviderAnalytics",
+      data: { providerId: userId, startDate: null, endDate: null },
     });
 
     return {
@@ -276,8 +275,8 @@ export const getUserReviews = async (
   try {
     requireAuth();
     const [clientReviews, providerReviews] = await Promise.allSettled([
-      callFirebaseFunction("getUserReviews", { userId }),
-      callFirebaseFunction("getProviderReviews", { providerId: userId }),
+      callFirebaseFunction("reviewAction", { action: "getUserReviews", data: { userId } }),
+      callFirebaseFunction("reviewAction", { action: "getProviderReviews", data: { providerId: userId } }),
     ]);
 
     const allReviews = extractFulfilledArrayResults([
