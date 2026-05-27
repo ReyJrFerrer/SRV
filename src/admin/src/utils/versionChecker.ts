@@ -99,7 +99,7 @@ function showUpdateNotification(): void {
   const notification = document.createElement("div");
   notification.id = "app-update-notification";
   notification.innerHTML = `
-    <div style="
+    <div class="app-update-popup" style="
       position: fixed;
       top: 20px;
       left: 50%;
@@ -115,6 +115,8 @@ function showUpdateNotification(): void {
       gap: 16px;
       font-family: system-ui, -apple-system, sans-serif;
       animation: slideDown 0.3s ease-out;
+      width: max-content;
+      max-width: 90vw;
     ">
       <div>
         <strong>New Version Available!</strong>
@@ -122,29 +124,31 @@ function showUpdateNotification(): void {
           Please reload to get the latest updates.
         </p>
       </div>
-      <button id="reload-app-btn" style="
-        background: white;
-        color: #2563eb;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        white-space: nowrap;
-      ">
-        Reload Now
-      </button>
-      <button id="dismiss-update-btn" style="
-        background: transparent;
-        color: white;
-        border: 1px solid rgba(255,255,255,0.3);
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        white-space: nowrap;
-      ">
-        Later
-      </button>
+      <div class="app-update-actions" style="display: flex; gap: 8px;">
+        <button id="reload-app-btn" style="
+          background: white;
+          color: #2563eb;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+        ">
+          Reload Now
+        </button>
+        <button id="dismiss-update-btn" style="
+          background: transparent;
+          color: white;
+          border: 1px solid rgba(255,255,255,0.3);
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          white-space: nowrap;
+        ">
+          Later
+        </button>
+      </div>
     </div>
     <style>
       @keyframes slideDown {
@@ -155,6 +159,13 @@ function showUpdateNotification(): void {
         to {
           transform: translateX(-50%) translateY(0);
           opacity: 1;
+        }
+      }
+      @media (max-width: 480px) {
+        .app-update-popup {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 12px !important;
         }
       }
     </style>

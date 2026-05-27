@@ -381,7 +381,7 @@ export const AdminHomePage: React.FC = () => {
                   </p>
                 </div>
               )}
-              <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-6">
+              <div className="mt-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 pt-6">
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-gray-900">
                     Admin Access Password
@@ -586,7 +586,7 @@ export const AdminHomePage: React.FC = () => {
             <div className="grid grid-cols-1 gap-6 p-6">
               {/* Line: Bookings per Day */}
               <div className="rounded-lg border border-gray-100 p-4">
-                <div className="mb-3 flex items-center justify-between">
+                <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h3 className="text-sm font-medium text-gray-800">
                     Bookings per Day
                   </h3>
@@ -630,7 +630,7 @@ export const AdminHomePage: React.FC = () => {
 
               {/* Revenue per Day */}
               <div className="rounded-lg border border-gray-100 p-4">
-                <div className="mb-3 flex items-center justify-between">
+                <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h3 className="text-sm font-medium text-gray-800">
                     Revenue & Commission per Day
                   </h3>

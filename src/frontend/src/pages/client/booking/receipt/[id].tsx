@@ -56,6 +56,8 @@ const ReceiptPage: React.FC = () => {
 
   // Redirect if booking doesn't exist or wrong status
   useEffect(() => {
+    if (bookingLoading) return;
+
     if (!id) {
       navigate("/client/booking", { replace: true });
       return;
