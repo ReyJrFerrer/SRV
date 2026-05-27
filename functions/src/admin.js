@@ -9,6 +9,11 @@ const db = getFirestore();
 
 const MAX_BATCH_SIZE = 450;
 
+/**
+ * Commits Firestore operations in batches of MAX_BATCH_SIZE.
+ * @param {Array} operations
+ * @return {Promise<void>}
+ */
 async function commitBatchInChunks(operations) {
   for (let i = 0; i < operations.length; i += MAX_BATCH_SIZE) {
     const batch = db.batch();
@@ -22,6 +27,11 @@ async function commitBatchInChunks(operations) {
   }
 }
 
+/**
+ * Extracts the storage path from a Firebase Storage URL.
+ * @param {string} urlStr
+ * @return {string|null}
+ */
 function extractStoragePath(urlStr) {
   try {
     const parsed = new URL(urlStr);
@@ -1598,7 +1608,9 @@ async function deleteUserAccountService(request) {
 
     return {
       success: true,
-      message: `User account deleted successfully. Canceled ${canceledCount} active bookings, archived ${archivedCount} services.`,
+      message:
+        `User account deleted successfully. Canceled ${canceledCount} active bookings, ` +
+        `archived ${archivedCount} services.`,
     };
   } catch (error) {
     if (error instanceof HttpsError) {
@@ -1900,7 +1912,8 @@ async function permanentDeleteUserService(request) {
     console.error("Error in permanentDeleteUser:", error);
     throw new HttpsError(
       "internal",
-      `Permanent deletion failed for user ${userId}. Some data may have been partially removed; a retry may succeed. Error: ${error.message}`,
+      `Permanent deletion failed for user ${userId}. Some data may have been partially ` +
+        `removed; a retry may succeed. Error: ${error.message}`,
     );
   }
 }
