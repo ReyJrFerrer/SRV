@@ -7,6 +7,38 @@ const {FieldValue} = require("firebase-admin/firestore");
 
 const db = getFirestore();
 
+const MAX_BATCH_SIZE = 450;
+
+async function commitBatchInChunks(operations) {
+  for (let i = 0; i < operations.length; i += MAX_BATCH_SIZE) {
+    const batch = db.batch();
+    const chunk = operations.slice(i, i + MAX_BATCH_SIZE);
+    for (const op of chunk) {
+      if (op.type === "update") batch.update(op.ref, op.data);
+      else if (op.type === "delete") batch.delete(op.ref);
+      else if (op.type === "set") batch.set(op.ref, op.data);
+    }
+    await batch.commit();
+  }
+}
+
+function extractStoragePath(urlStr) {
+  try {
+    const parsed = new URL(urlStr);
+    const path = decodeURIComponent(parsed.pathname.substring(1));
+    if (path.startsWith("v0/b/")) {
+      const parts = path.split("/");
+      const oIndex = parts.indexOf("o");
+      if (oIndex >= 0 && oIndex < parts.length - 1) {
+        return parts.slice(oIndex + 1).join("/");
+      }
+    }
+    return path;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Helper function to safely get user authentication info
  * @param {object} context - Firebase Functions context
@@ -1372,10 +1404,22 @@ async function restoreUserAccountService(request) {
 
     const now = new Date().toISOString();
     const restoredName = userData.previousName || "Restored User";
+    const restoredPhone = userData.previousPhone || "";
+    const restoredEmail = userData.previousEmail || "";
+    const restoredProfilePicture = userData.previousProfilePicture || null;
+    const restoredBiography = userData.previousBiography || "";
 
     await db.collection("users").doc(userId).update({
       name: restoredName,
       previousName: null,
+      phone: restoredPhone,
+      email: restoredEmail,
+      previousPhone: null,
+      previousEmail: null,
+      profilePicture: restoredProfilePicture,
+      previousProfilePicture: null,
+      biography: restoredBiography,
+      previousBiography: null,
       deletedAt: null,
       deletedBy: null,
       locked: false,
@@ -1389,6 +1433,10 @@ async function restoreUserAccountService(request) {
       await admin.auth().updateUser(userId, {disabled: false});
     } catch (authError) {
       console.error(`Failed to enable auth for user ${userId}:`, authError.message);
+      throw new HttpsError(
+        "internal",
+        `User data restored but failed to re-enable auth account: ${authError.message}`,
+      );
     }
 
     return {success: true, message: "User account restored successfully"};
@@ -1440,20 +1488,31 @@ async function deleteUserAccountService(request) {
 
     const userData = userDoc.data();
     if (userData.deletedAt) {
-      return {success: true, message: "User account is already deleted"};
+      throw new HttpsError(
+        "already-exists",
+        "User account is already deleted",
+      );
     }
 
     const now = new Date().toISOString();
     const deletedName = "Deleted User";
     const previousName = userData.name || "Unknown";
+    const previousPhone = userData.phone || "";
+    const previousEmail = userData.email || "";
+    const previousProfilePicture = userData.profilePicture || null;
+    const previousBiography = userData.biography || "";
 
     await db.collection("users").doc(userId).update({
       name: deletedName,
       previousName: previousName,
       phone: "",
       email: "",
+      previousPhone: previousPhone,
+      previousEmail: previousEmail,
       profilePicture: null,
+      previousProfilePicture: previousProfilePicture,
       biography: "",
+      previousBiography: previousBiography,
       totalEarnings: 0,
       lastActivity: null,
       isActive: false,
@@ -1495,15 +1554,18 @@ async function deleteUserAccountService(request) {
         bookingUpdates[doc.id] = doc;
       });
 
-      for (const doc of Object.values(bookingUpdates)) {
-        await doc.ref.update({
+      const cancelOps = Object.values(bookingUpdates).map((doc) => ({
+        type: "update",
+        ref: doc.ref,
+        data: {
           status: "Cancelled",
           cancelledBy: "System",
           cancelledAt: now,
           cancelReason: "User account deleted",
           updatedAt: now,
-        });
-      }
+        },
+      }));
+      await commitBatchInChunks(cancelOps);
     }
 
     const servicesSnapshot = await db.collection("services")
@@ -1513,16 +1575,19 @@ async function deleteUserAccountService(request) {
 
     let archivedCount = 0;
     if (!servicesSnapshot.empty) {
-      const batch = db.batch();
-      servicesSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, {
-          status: "Archived",
-          archivedAt: now,
-          updatedAt: now,
-        });
+      const ops = servicesSnapshot.docs.map((doc) => {
         archivedCount++;
+        return {
+          type: "update",
+          ref: doc.ref,
+          data: {
+            status: "Archived",
+            archivedAt: now,
+            updatedAt: now,
+          },
+        };
       });
-      await batch.commit();
+      await commitBatchInChunks(ops);
     }
 
     try {
@@ -1609,14 +1674,22 @@ async function permanentDeleteUserService(request) {
 
     const uniqueBookings = new Map();
     bookingsToCancel.forEach((doc) => uniqueBookings.set(doc.id, doc));
-    for (const doc of uniqueBookings.values()) {
-      await doc.ref.update({
-        status: "Cancelled",
-        cancelledBy: "System",
-        cancelledAt: now,
-        cancelReason: "User account permanently deleted",
-        updatedAt: now,
+    if (uniqueBookings.size > 0) {
+      const cancelOps = [];
+      uniqueBookings.forEach((doc) => {
+        cancelOps.push({
+          type: "update",
+          ref: doc.ref,
+          data: {
+            status: "Cancelled",
+            cancelledBy: "System",
+            cancelledAt: now,
+            cancelReason: "User account permanently deleted",
+            updatedAt: now,
+          },
+        });
       });
+      await commitBatchInChunks(cancelOps);
     }
 
     const servicesSnapshot = await db.collection("services")
@@ -1624,30 +1697,32 @@ async function permanentDeleteUserService(request) {
       .where("status", "==", "Available")
       .get();
     if (!servicesSnapshot.empty) {
-      const batch = db.batch();
-      servicesSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, {
+      const ops = servicesSnapshot.docs.map((doc) => ({
+        type: "update",
+        ref: doc.ref,
+        data: {
           status: "Archived",
           archivedAt: now,
           updatedAt: now,
-        });
-      });
-      await batch.commit();
+        },
+      }));
+      await commitBatchInChunks(ops);
     }
 
     const allServicesSnapshot = await db.collection("services")
       .where("providerId", "==", userId)
       .get();
     if (!allServicesSnapshot.empty) {
-      const batch = db.batch();
-      allServicesSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, {
+      const ops = allServicesSnapshot.docs.map((doc) => ({
+        type: "update",
+        ref: doc.ref,
+        data: {
           providerId: "",
           providerName: deletedName,
           updatedAt: now,
-        });
-      });
-      await batch.commit();
+        },
+      }));
+      await commitBatchInChunks(ops);
     }
 
     for (const field of ["clientId", "providerId"]) {
@@ -1655,13 +1730,12 @@ async function permanentDeleteUserService(request) {
         .where(field, "==", userId)
         .get();
       if (!snapshot.empty) {
-        const batch = db.batch();
-        snapshot.docs.forEach((doc) => {
+        const ops = snapshot.docs.map((doc) => {
           const update = {updatedAt: now};
           update[field] = "";
-          batch.update(doc.ref, update);
+          return {type: "update", ref: doc.ref, data: update};
         });
-        await batch.commit();
+        await commitBatchInChunks(ops);
       }
     }
 
@@ -1670,13 +1744,12 @@ async function permanentDeleteUserService(request) {
         .where(field, "==", userId)
         .get();
       if (!snapshot.empty) {
-        const batch = db.batch();
-        snapshot.docs.forEach((doc) => {
+        const ops = snapshot.docs.map((doc) => {
           const update = {};
           update[field] = "";
-          batch.update(doc.ref, update);
+          return {type: "update", ref: doc.ref, data: update};
         });
-        await batch.commit();
+        await commitBatchInChunks(ops);
       }
     }
 
@@ -1685,13 +1758,12 @@ async function permanentDeleteUserService(request) {
         .where(field, "==", userId)
         .get();
       if (!snapshot.empty) {
-        const batch = db.batch();
-        snapshot.docs.forEach((doc) => {
+        const ops = snapshot.docs.map((doc) => {
           const update = {};
           update[field] = "";
-          batch.update(doc.ref, update);
+          return {type: "update", ref: doc.ref, data: update};
         });
-        await batch.commit();
+        await commitBatchInChunks(ops);
       }
     }
 
@@ -1700,11 +1772,11 @@ async function permanentDeleteUserService(request) {
         .where(field, "==", userId)
         .get();
       if (!snapshot.empty) {
-        const batch = db.batch();
-        snapshot.docs.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-        await batch.commit();
+        const ops = snapshot.docs.map((doc) => ({
+          type: "delete",
+          ref: doc.ref,
+        }));
+        await commitBatchInChunks(ops);
       }
     }
 
@@ -1718,23 +1790,28 @@ async function permanentDeleteUserService(request) {
     if (messagesToDelete.length > 0) {
       const uniqueMessages = new Map();
       messagesToDelete.forEach((doc) => uniqueMessages.set(doc.id, doc));
-      const batch = db.batch();
-      uniqueMessages.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
+      const ops = [];
+      uniqueMessages.forEach((doc) => {
+        ops.push({type: "delete", ref: doc.ref});
+      });
+      await commitBatchInChunks(ops);
     }
 
     const notificationsSnapshot = await db.collection("notifications")
       .where("userId", "==", userId)
       .get();
     if (!notificationsSnapshot.empty) {
-      const batch = db.batch();
-      notificationsSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
+      const ops = notificationsSnapshot.docs.map((doc) => ({
+        type: "delete",
+        ref: doc.ref,
+      }));
+      await commitBatchInChunks(ops);
     }
 
     const mediaSnapshot = await db.collection("media")
       .where("ownerId", "==", userId)
       .get();
+    const mediaDocsToDelete = [];
     const bucket = admin.storage().bucket();
     for (const doc of mediaSnapshot.docs) {
       const mediaData = doc.data();
@@ -1751,10 +1828,7 @@ async function permanentDeleteUserService(request) {
       }
       if (mediaData.thumbnailUrl) {
         try {
-          const thumbnailPath = mediaData.thumbnailUrl.replace(
-            /https?:\/\/[^/]+\/[^?]+/,
-            (m) => m.split("/").slice(3).join("/").split("?")[0],
-          );
+          const thumbnailPath = extractStoragePath(mediaData.thumbnailUrl);
           if (thumbnailPath && thumbnailPath !== filePath) {
             await bucket.file(thumbnailPath).delete();
           }
@@ -1765,35 +1839,40 @@ async function permanentDeleteUserService(request) {
           );
         }
       }
-      await doc.ref.delete();
+      mediaDocsToDelete.push({type: "delete", ref: doc.ref});
+    }
+    if (mediaDocsToDelete.length > 0) {
+      await commitBatchInChunks(mediaDocsToDelete);
     }
 
     const reportsSnapshot = await db.collection("reports")
       .where("userId", "==", userId)
       .get();
     if (!reportsSnapshot.empty) {
-      const batch = db.batch();
-      reportsSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, {
+      const ops = reportsSnapshot.docs.map((doc) => ({
+        type: "update",
+        ref: doc.ref,
+        data: {
           userId: "",
           userName: deletedName,
-        });
-      });
-      await batch.commit();
+        },
+      }));
+      await commitBatchInChunks(ops);
     }
 
     const feedbackSnapshot = await db.collection("app_feedback")
       .where("userId", "==", userId)
       .get();
     if (!feedbackSnapshot.empty) {
-      const batch = db.batch();
-      feedbackSnapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, {
+      const ops = feedbackSnapshot.docs.map((doc) => ({
+        type: "update",
+        ref: doc.ref,
+        data: {
           userId: "",
           userName: deletedName,
-        });
-      });
-      await batch.commit();
+        },
+      }));
+      await commitBatchInChunks(ops);
     }
 
     try {
@@ -1819,7 +1898,10 @@ async function permanentDeleteUserService(request) {
       throw error;
     }
     console.error("Error in permanentDeleteUser:", error);
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError(
+      "internal",
+      `Permanent deletion failed for user ${userId}. Some data may have been partially removed; a retry may succeed. Error: ${error.message}`,
+    );
   }
 }
 

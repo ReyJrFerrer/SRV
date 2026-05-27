@@ -221,9 +221,7 @@ export const restoreUserAccount = async (userId: string): Promise<string> => {
 /**
  * Permanently delete a user account (hard delete, irreversible)
  */
-export const permanentDeleteUser = async (
-  userId: string,
-): Promise<string> => {
+export const permanentDeleteUser = async (userId: string): Promise<string> => {
   try {
     requireAuth();
 
@@ -346,8 +344,14 @@ export const getUserReviews = async (
   try {
     requireAuth();
     const [clientReviews, providerReviews] = await Promise.allSettled([
-      callFirebaseFunction("reviewAction", { action: "getUserReviews", data: { userId } }),
-      callFirebaseFunction("reviewAction", { action: "getProviderReviews", data: { providerId: userId } }),
+      callFirebaseFunction("reviewAction", {
+        action: "getUserReviews",
+        data: { userId },
+      }),
+      callFirebaseFunction("reviewAction", {
+        action: "getProviderReviews",
+        data: { providerId: userId },
+      }),
     ]);
 
     const allReviews = extractFulfilledArrayResults([

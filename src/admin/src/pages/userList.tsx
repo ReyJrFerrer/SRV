@@ -164,7 +164,8 @@ export const UserListPage: React.FC = () => {
       const matchesSearch =
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.phone.includes(searchTerm) ||
-        (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
+        (user.email &&
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()));
       return matchesSearch;
     });
 

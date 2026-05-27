@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAdmin } from "../hooks/useAdmin";
 import ProviderStats from "../components/userManagement/ProviderStats";
@@ -68,7 +68,9 @@ export const UserDetailsPage: React.FC = () => {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false);
-  const [permanentDeleteConfirmOpen, setPermanentDeleteConfirmOpen] = useState(false);
+  const [permanentDeleteConfirmOpen, setPermanentDeleteConfirmOpen] =
+    useState(false);
+  const navigate = useNavigate();
 
   const handleUpdateCommission = (newAmount: number) => {
     // Update local balance when refreshed from ProviderStats
@@ -230,8 +232,7 @@ export const UserDetailsPage: React.FC = () => {
       await adminServiceCanister.deleteUserAccount(user.id);
       toast.success("User account deleted successfully");
       setDeleteConfirmOpen(false);
-      // Navigate back to user list
-      window.location.href = "/#/users";
+      navigate("/users");
     } catch (error) {
       console.error("Failed to delete user account:", error);
       toast.error("Failed to delete user account. Please try again.");
@@ -274,7 +275,7 @@ export const UserDetailsPage: React.FC = () => {
       await adminServiceCanister.permanentDeleteUser(user.id);
       toast.success("User account permanently deleted");
       setPermanentDeleteConfirmOpen(false);
-      window.location.href = "/#/users";
+      navigate("/users");
     } catch (error) {
       console.error("Failed to permanently delete user:", error);
       toast.error("Failed to permanently delete user. Please try again.");
@@ -480,7 +481,7 @@ export const UserDetailsPage: React.FC = () => {
       <ConfirmModal
         isOpen={deleteConfirmOpen}
         title="Delete User Account"
-        message={`Are you sure you want to permanently delete the account of ${user.name}? This will anonymize their profile to "Deleted User", cancel all active bookings, archive their services, and disable their login. This action cannot be undone.`}
+        message={`Are you sure you want to delete the account of ${user.name}? This is a soft delete — it will anonymize their profile to "Deleted User", cancel all active bookings, archive their services, and disable their login. The account can be restored later.`}
         confirmText="Delete Account"
         confirmColor="bg-red-600 hover:bg-red-700"
         isLoading={actionLoading.delete}

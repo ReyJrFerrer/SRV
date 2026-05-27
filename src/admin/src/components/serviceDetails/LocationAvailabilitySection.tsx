@@ -66,11 +66,13 @@ const LocationAvailabilitySection: React.FC<Props> = ({
   useEffect(() => {
     if (editedState) {
       let cancelled = false;
-      import("../../../../frontend/src/data/phLocations").then(({ fetchMunicipalities }) => {
-        fetchMunicipalities(editedState).then((data) => {
-          if (!cancelled) setCityOptions(data);
-        });
-      });
+      import("../../../../frontend/src/data/phLocations").then(
+        ({ fetchMunicipalities }) => {
+          fetchMunicipalities(editedState).then((data) => {
+            if (!cancelled) setCityOptions(data);
+          });
+        },
+      );
       return () => {
         cancelled = true;
       };
@@ -82,11 +84,13 @@ const LocationAvailabilitySection: React.FC<Props> = ({
   // Initialize city options when entering edit mode
   useEffect(() => {
     if (editLocationAvailability && editedState) {
-      import("../../../../frontend/src/data/phLocations").then(({ fetchMunicipalities }) => {
-        fetchMunicipalities(editedState).then((data) => {
-          setCityOptions(data);
-        });
-      });
+      import("../../../../frontend/src/data/phLocations").then(
+        ({ fetchMunicipalities }) => {
+          fetchMunicipalities(editedState).then((data) => {
+            setCityOptions(data);
+          });
+        },
+      );
     }
   }, [editLocationAvailability, editedState]);
 
@@ -250,11 +254,11 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                           {entry.day}
                         </span>
                       </div>
-                      <div className="flex flex-col lg:flex-row lg:flex-wrap gap-2 pt-1">
+                      <div className="flex flex-col gap-2 pt-1 lg:flex-row lg:flex-wrap">
                         {entry.availability.slots.map(
                           (slot: any, idx: number) => (
                             <React.Fragment key={idx}>
-                              <div className="flex lg:hidden items-center gap-2.5 text-[13.5px] text-gray-600">
+                              <div className="flex items-center gap-2.5 text-[13.5px] text-gray-600 lg:hidden">
                                 <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-400"></div>
                                 <span className="font-medium tracking-wide">
                                   {formatTime(slot.startTime)} -{" "}
@@ -262,7 +266,7 @@ const LocationAvailabilitySection: React.FC<Props> = ({
                                 </span>
                               </div>
 
-                              <span className="hidden lg:inline-flex items-center whitespace-nowrap rounded-md bg-gray-50 border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100">
+                              <span className="hidden items-center whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 lg:inline-flex">
                                 {formatTime(slot.startTime)} -{" "}
                                 {formatTime(slot.endTime)}
                               </span>

@@ -144,16 +144,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (error) {
         // Retry in 60 seconds
         setTimeout(() => {
-          window.dispatchEvent(
-            new CustomEvent("admin-session-refresh-needed"),
-          );
+          window.dispatchEvent(new CustomEvent("admin-session-refresh-needed"));
         }, 60000);
       } finally {
         setIsRefreshingSession(false);
       }
     };
 
-    window.addEventListener("admin-session-refresh-needed", handleSessionRefresh);
+    window.addEventListener(
+      "admin-session-refresh-needed",
+      handleSessionRefresh,
+    );
     return () => {
       window.removeEventListener(
         "admin-session-refresh-needed",
@@ -249,11 +250,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   }
                 }
               },
-              (error: any) => {
-              },
+              (error: any) => {},
             );
-          } catch (firestoreError: any) {
-          }
+          } catch (firestoreError: any) {}
         } catch (error: any) {
           if (
             error?.code === "auth/user-disabled" ||
@@ -482,7 +481,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               await checkAdminClaim(result.user);
             } catch (fbError: any) {
               if (fbError?.code === "permission-denied") {
-                setError(fbError?.message || "You are not authorized for admin access.");
+                setError(
+                  fbError?.message ||
+                    "You are not authorized for admin access.",
+                );
                 await authClient.logout();
                 await sessionManager.clearSession();
                 setFirebaseUser(null);
@@ -555,8 +557,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (isAdminUser) {
         setHasVerifiedPassword(true);
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const proceedWithAdminProfileCreation = async (

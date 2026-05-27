@@ -346,7 +346,11 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
                               <CheckIcon className="h-full w-full" />
                             )
                           }
-                          label={restoringAccount ? "Restoring..." : "Restore Account"}
+                          label={
+                            restoringAccount
+                              ? "Restoring..."
+                              : "Restore Account"
+                          }
                           variant="green"
                           size="md"
                           disabled={restoringAccount}
@@ -362,7 +366,11 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
                               <TrashIcon className="h-full w-full" />
                             )
                           }
-                          label={permanentlyDeleting ? "Deleting..." : "Permanently Delete"}
+                          label={
+                            permanentlyDeleting
+                              ? "Deleting..."
+                              : "Permanently Delete"
+                          }
                           variant="red"
                           size="md"
                           disabled={permanentlyDeleting}
@@ -388,7 +396,9 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
                               <TrashIcon className="h-full w-full" />
                             )
                           }
-                          label={deletingAccount ? "Deleting..." : "Delete Account"}
+                          label={
+                            deletingAccount ? "Deleting..." : "Delete Account"
+                          }
                           variant="red"
                           size="md"
                           disabled={deletingAccount}

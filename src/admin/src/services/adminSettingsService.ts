@@ -11,10 +11,10 @@ export const getSettings = async (): Promise<FrontendSystemSettings> => {
   try {
     requireAuth();
 
-    const settingsData = await callFirebaseFunction("adminUserAction", {
+    const settingsData = (await callFirebaseFunction("adminUserAction", {
       action: "getSettings",
       payload: {},
-    }) as FrontendSystemSettings;
+    })) as FrontendSystemSettings;
 
     if (settingsData && settingsData.updatedAt) {
       settingsData.updatedAt = new Date(settingsData.updatedAt as any);
@@ -57,10 +57,10 @@ export const isAdminPasswordSet = async (): Promise<boolean> => {
   try {
     requireAuth();
 
-    const passwordData = await callFirebaseFunction("adminUserAction", {
+    const passwordData = (await callFirebaseFunction("adminUserAction", {
       action: "isAdminPasswordSet",
       payload: {},
-    }) as any;
+    })) as any;
 
     if (passwordData && typeof passwordData.isSet === "boolean") {
       return passwordData.isSet;
@@ -85,10 +85,10 @@ export const verifyAdminPassword = async (
   try {
     requireAuth();
 
-    const verifyResult = await callFirebaseFunction("adminUserAction", {
+    const verifyResult = (await callFirebaseFunction("adminUserAction", {
       action: "verifyAdminPassword",
       payload: { password },
-    }) as {
+    })) as {
       success: boolean;
       verified: boolean;
       message: string;

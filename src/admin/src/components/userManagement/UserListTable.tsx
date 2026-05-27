@@ -215,15 +215,16 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                           <div className="text-sm font-semibold text-gray-900">
                             {user.name}
                           </div>
-                          {!showOnlyAdmins && (user.servicesCount && user.servicesCount > 0 ? (
-                            <span className="inline-flex items-center rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                              Service Provider
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                              Client
-                            </span>
-                          ))}
+                          {!showOnlyAdmins &&
+                            (user.servicesCount && user.servicesCount > 0 ? (
+                              <span className="inline-flex items-center rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                                Service Provider
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                                Client
+                              </span>
+                            ))}
                           {user.isLocked && (
                             <span className="inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
                               <LockClosedIcon className="mr-1 h-3 w-3" />
@@ -246,7 +247,9 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                         <div>{user.phone}</div>
                         {user.email && (
-                          <div className="text-xs text-gray-500">{user.email}</div>
+                          <div className="text-xs text-gray-500">
+                            {user.email}
+                          </div>
                         )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">

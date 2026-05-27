@@ -1,13 +1,14 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../services/coreUtils";
-import { getServiceData, getServicePackages } from "../services/serviceManagement";
+import {
+  getServiceData,
+  getServicePackages,
+} from "../services/serviceManagement";
 
 const profileNameCache = new Map<string, { name: string; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
-const getCachedProfileName = async (
-  userId: string,
-): Promise<string | null> => {
+const getCachedProfileName = async (userId: string): Promise<string | null> => {
   const cached = profileNameCache.get(userId);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.name;

@@ -16,7 +16,10 @@ import {
   processServiceCategoryData,
 } from "../utils/analyticsUtils";
 import { adminServiceCanister } from "../services/adminServiceCanister";
-import { countActiveServiceProviders, getUsersWithServices } from "../utils/homeUtils";
+import {
+  countActiveServiceProviders,
+  getUsersWithServices,
+} from "../utils/homeUtils";
 
 export const AnalyticsPage: React.FC = () => {
   const {
@@ -105,8 +108,8 @@ export const AnalyticsPage: React.FC = () => {
   const loadProviderAnalytics = async (_providerId: string) => {};
 
   const serviceProvidersWithServices = useMemo(() => {
-    return (users || []).filter(
-      (u) => userIdsWithServices.has(u.id.toString()),
+    return (users || []).filter((u) =>
+      userIdsWithServices.has(u.id.toString()),
     );
   }, [users, userIdsWithServices]);
 
@@ -124,9 +127,8 @@ export const AnalyticsPage: React.FC = () => {
   }, [selectedProviderId, serviceProvidersWithServices]);
 
   const nonAdminUserCount = useMemo(() => {
-    return (users || []).filter(
-      (u) => !adminUserIds.has(u.id.toString()),
-    ).length;
+    return (users || []).filter((u) => !adminUserIds.has(u.id.toString()))
+      .length;
   }, [users, adminUserIds]);
 
   const totalProviders = activeProviderCount;
@@ -285,11 +287,7 @@ export const AnalyticsPage: React.FC = () => {
 
         <ServiceProviderRecords
           providers={filteredServiceProviderData}
-          loading={
-            loading.bookings ||
-            loading.serviceProviders ||
-            !systemStats
-          }
+          loading={loading.bookings || loading.serviceProviders || !systemStats}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           sortBy={sortBy}

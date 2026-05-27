@@ -1037,7 +1037,7 @@ async function getAllServices_service(_request) {
     const services = [];
     servicesSnapshot.forEach((doc) => {
       const data = doc.data();
-      if (data.serviceDeleted !== true) {
+      if (data.serviceDeleted !== true && data.status !== "Archived") {
         services.push({id: doc.id, ...data});
       }
     });

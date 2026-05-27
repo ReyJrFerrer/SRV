@@ -229,6 +229,8 @@ export const processServiceCategoryData = (
 
   if (services && Array.isArray(services)) {
     services.forEach((service: any) => {
+      if (service.status === "Archived" || service.serviceDeleted === true)
+        return;
       const categoryId = service.category?.id || service.category || "Unknown";
       const categoryName = categoryNameMap[categoryId] || categoryId;
       categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
