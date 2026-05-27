@@ -49,7 +49,8 @@ const getTicketReportData = async (
       // Determine user type based on source
       if (
         parsedData.source === "provider_report" ||
-        parsedData.source === "provider_cancellation"
+        parsedData.source === "provider_cancellation" ||
+        parsedData.source === "review_flag"
       ) {
         data.userType = "provider";
       } else if (
