@@ -44,6 +44,28 @@ export interface UserRatingResponse {
   userId: string;
 }
 
+export interface ReviewFlagReport {
+  id: string;
+  reviewId: string;
+  flaggedBy: string;
+  reason: string;
+  status: "open" | "resolved" | "dismissed";
+  createdAt: string;
+  reviewData: {
+    rating: number;
+    comment: string;
+    clientName: string;
+    serviceName: string;
+    serviceId: string;
+  };
+}
+
+export interface ReviewFlagReportData {
+  reviewId: string;
+  reason: string;
+  reviewData: ReviewFlagReport["reviewData"];
+}
+
 export const reviewCanisterService = {
   async submitReview(
     bookingId: string,
@@ -299,6 +321,89 @@ export const reviewCanisterService = {
       });
     } catch (error) {
       throw new Error(`Failed to flag review: ${error}`);
+    }
+  },
+
+  async flagReviewForAdmin(
+    data: ReviewFlagReportData,
+  ): Promise<ReviewFlagReport> {
+    try {
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
+
+      const result = await reviewActionFn({
+        action: "flagReviewForAdmin",
+        data,
+      });
+
+      const responseData = result.data as {
+        success: boolean;
+        data: ReviewFlagReport;
+      };
+      return responseData.data;
+    } catch (error) {
+      throw new Error(`Failed to flag review for admin: ${error}`);
+    }
+  },
+
+  async getReviewFlagReports(): Promise<ReviewFlagReport[]> {
+    try {
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
+
+      const result = await reviewActionFn({
+        action: "getReviewFlagReports",
+        data: {},
+      });
+
+      const responseData = result.data as {
+        success: boolean;
+        data: ReviewFlagReport[];
+      };
+      return responseData.data || [];
+    } catch (error) {
+      return [];
+    }
+  },
+
+  async getMyReviewFlagReports(): Promise<ReviewFlagReport[]> {
+    try {
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
+
+      const result = await reviewActionFn({
+        action: "getMyReviewFlagReports",
+        data: {},
+      });
+
+      const responseData = result.data as {
+        success: boolean;
+        data: ReviewFlagReport[];
+      };
+      return responseData.data || [];
+    } catch (error) {
+      return [];
+    }
+  },
+
+  async updateReviewFlagReportStatus(
+    reportId: string,
+    status: "open" | "resolved" | "dismissed",
+  ): Promise<ReviewFlagReport> {
+    try {
+      const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
+
+      const result = await reviewActionFn({
+        action: "updateReviewFlagReportStatus",
+        data: { reportId, status },
+      });
+
+      const responseData = result.data as {
+        success: boolean;
+        data: ReviewFlagReport;
+      };
+      return responseData.data;
+    } catch (error) {
+      throw new Error(
+        `Failed to update review flag report status: ${error}`,
+      );
     }
   },
 
