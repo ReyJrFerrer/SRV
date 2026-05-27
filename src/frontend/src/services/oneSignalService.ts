@@ -416,12 +416,14 @@ class OneSignalService {
     }
 
     try {
-      // Import Firebase functions
       const { getFunctions, httpsCallable } =
         await import("firebase/functions");
       const functions = getFunctions();
-      const storePlayerId = httpsCallable(functions, "storeOneSignalPlayerId");
-      const result = await storePlayerId({ playerId });
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
+      const result = await notificationActionFn({
+        action: "storeOneSignalPlayerId",
+        data: { playerId },
+      });
       const data = result.data as { success: boolean };
       return data.success;
     } catch (error) {
@@ -429,9 +431,6 @@ class OneSignalService {
     }
   }
 
-  /**
-   * Unregister player ID from backend
-   */
   private async unregisterPlayerId(): Promise<boolean> {
     try {
       const playerId = this.currentPlayerId;
@@ -440,15 +439,14 @@ class OneSignalService {
         return true;
       }
 
-      // Import Firebase functions
       const { getFunctions, httpsCallable } =
         await import("firebase/functions");
       const functions = getFunctions();
-      const removePlayerId = httpsCallable(
-        functions,
-        "removeOneSignalPlayerId",
-      );
-      const result = await removePlayerId({ playerId });
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
+      const result = await notificationActionFn({
+        action: "removeOneSignalPlayerId",
+        data: { playerId },
+      });
       const data = result.data as { success: boolean };
       return data.success;
     } catch (error) {
