@@ -595,6 +595,16 @@ async function lockUserAccountService(request) {
   }
 
   try {
+    if (!locked) {
+      const userDoc = await db.collection("users").doc(userId).get();
+      if (userDoc.exists && userDoc.data().deletedAt) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Cannot unlock a deleted account. Use restore to reactivate it.",
+        );
+      }
+    }
+
     const updateData = {
       locked: locked,
       updatedAt: new Date().toISOString(),
@@ -1323,6 +1333,496 @@ async function createAdminProfileService(request) {
   }
 }
 
+/**
+ * Restore a soft-deleted user account
+ * @param {Object} request
+ */
+async function restoreUserAccountService(request) {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only ADMIN users can restore user accounts",
+    );
+  }
+
+  if (!userId || typeof userId !== "string") {
+    throw new HttpsError("invalid-argument", "User ID is required");
+  }
+
+  try {
+    const userDoc = await db.collection("users").doc(userId).get();
+
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+
+    const userData = userDoc.data();
+    if (!userData.deletedAt) {
+      throw new HttpsError(
+        "failed-precondition",
+        "This account has not been deleted",
+      );
+    }
+
+    const now = new Date().toISOString();
+    const restoredName = userData.previousName || "Restored User";
+
+    await db.collection("users").doc(userId).update({
+      name: restoredName,
+      previousName: null,
+      deletedAt: null,
+      deletedBy: null,
+      locked: false,
+      suspensionEndDate: null,
+      isActive: true,
+      updatedAt: now,
+      updatedBy: authInfo.uid,
+    });
+
+    try {
+      await admin.auth().updateUser(userId, {disabled: false});
+    } catch (authError) {
+      console.error(`Failed to enable auth for user ${userId}:`, authError.message);
+    }
+
+    return {success: true, message: "User account restored successfully"};
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    console.error("Error in restoreUserAccount:", error);
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+/**
+ * Delete user account (soft delete)
+ * Anonymizes profile, disables auth, cancels active bookings, archives services
+ * @param {Object} request
+ */
+async function deleteUserAccountService(request) {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only ADMIN users can delete user accounts",
+    );
+  }
+
+  if (!userId || typeof userId !== "string") {
+    throw new HttpsError("invalid-argument", "User ID is required");
+  }
+
+  if (userId === authInfo.uid) {
+    throw new HttpsError(
+      "invalid-argument",
+      "You cannot delete your own account",
+    );
+  }
+
+  try {
+    const userDoc = await db.collection("users").doc(userId).get();
+
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+
+    const userData = userDoc.data();
+    if (userData.deletedAt) {
+      return {success: true, message: "User account is already deleted"};
+    }
+
+    const now = new Date().toISOString();
+    const deletedName = "Deleted User";
+    const previousName = userData.name || "Unknown";
+
+    await db.collection("users").doc(userId).update({
+      name: deletedName,
+      previousName: previousName,
+      phone: "",
+      email: "",
+      profilePicture: null,
+      biography: "",
+      totalEarnings: 0,
+      lastActivity: null,
+      isActive: false,
+      locked: true,
+      suspensionEndDate: null,
+      deletedAt: now,
+      deletedBy: authInfo.uid,
+      updatedAt: now,
+      updatedBy: authInfo.uid,
+    });
+
+    try {
+      await admin.auth().updateUser(userId, {disabled: true});
+    } catch (authError) {
+      console.error(`Failed to disable auth for user ${userId}:`, authError.message);
+    }
+
+    const activeStatuses = ["Requested", "Accepted", "InProgress"];
+    const bookingsToCancel = [];
+
+    for (const status of activeStatuses) {
+      const clientSnapshot = await db.collection("bookings")
+        .where("clientId", "==", userId)
+        .where("status", "==", status)
+        .get();
+      clientSnapshot.forEach((doc) => bookingsToCancel.push(doc));
+
+      const providerSnapshot = await db.collection("bookings")
+        .where("providerId", "==", userId)
+        .where("status", "==", status)
+        .get();
+      providerSnapshot.forEach((doc) => bookingsToCancel.push(doc));
+    }
+
+    const canceledCount = bookingsToCancel.length;
+    if (canceledCount > 0) {
+      const bookingUpdates = {};
+      bookingsToCancel.forEach((doc) => {
+        bookingUpdates[doc.id] = doc;
+      });
+
+      for (const doc of Object.values(bookingUpdates)) {
+        await doc.ref.update({
+          status: "Cancelled",
+          cancelledBy: "System",
+          cancelledAt: now,
+          cancelReason: "User account deleted",
+          updatedAt: now,
+        });
+      }
+    }
+
+    const servicesSnapshot = await db.collection("services")
+      .where("providerId", "==", userId)
+      .where("status", "==", "Available")
+      .get();
+
+    let archivedCount = 0;
+    if (!servicesSnapshot.empty) {
+      const batch = db.batch();
+      servicesSnapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, {
+          status: "Archived",
+          archivedAt: now,
+          updatedAt: now,
+        });
+        archivedCount++;
+      });
+      await batch.commit();
+    }
+
+    try {
+      await db.collection("userRoles").doc(userId).delete();
+    } catch (roleError) {
+      console.error(`Failed to delete user role for ${userId}:`, roleError.message);
+    }
+
+    return {
+      success: true,
+      message: `User account deleted successfully. Canceled ${canceledCount} active bookings, archived ${archivedCount} services.`,
+    };
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    console.error("Error in deleteUserAccount:", error);
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+/**
+ * Permanently delete a user account (hard delete)
+ * Irreversible: clears all user references, deletes from Auth and Firestore
+ * @param {Object} request
+ */
+async function permanentDeleteUserService(request) {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {userId} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only ADMIN users can permanently delete user accounts",
+    );
+  }
+
+  if (!userId || typeof userId !== "string") {
+    throw new HttpsError("invalid-argument", "User ID is required");
+  }
+
+  if (userId === authInfo.uid) {
+    throw new HttpsError(
+      "invalid-argument",
+      "You cannot delete your own account",
+    );
+  }
+
+  try {
+    const userDoc = await db.collection("users").doc(userId).get();
+
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+
+    const userData = userDoc.data();
+    if (!userData.deletedAt) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Account must be soft-deleted first before permanent deletion",
+      );
+    }
+
+    const now = new Date().toISOString();
+    const deletedName = "Deleted User";
+
+    const activeStatuses = ["Requested", "Accepted", "InProgress"];
+    const bookingsToCancel = [];
+    for (const status of activeStatuses) {
+      const clientSnapshot = await db.collection("bookings")
+        .where("clientId", "==", userId)
+        .where("status", "==", status)
+        .get();
+      clientSnapshot.forEach((doc) => bookingsToCancel.push(doc));
+      const providerSnapshot = await db.collection("bookings")
+        .where("providerId", "==", userId)
+        .where("status", "==", status)
+        .get();
+      providerSnapshot.forEach((doc) => bookingsToCancel.push(doc));
+    }
+
+    const uniqueBookings = new Map();
+    bookingsToCancel.forEach((doc) => uniqueBookings.set(doc.id, doc));
+    for (const doc of uniqueBookings.values()) {
+      await doc.ref.update({
+        status: "Cancelled",
+        cancelledBy: "System",
+        cancelledAt: now,
+        cancelReason: "User account permanently deleted",
+        updatedAt: now,
+      });
+    }
+
+    const servicesSnapshot = await db.collection("services")
+      .where("providerId", "==", userId)
+      .where("status", "==", "Available")
+      .get();
+    if (!servicesSnapshot.empty) {
+      const batch = db.batch();
+      servicesSnapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, {
+          status: "Archived",
+          archivedAt: now,
+          updatedAt: now,
+        });
+      });
+      await batch.commit();
+    }
+
+    const allServicesSnapshot = await db.collection("services")
+      .where("providerId", "==", userId)
+      .get();
+    if (!allServicesSnapshot.empty) {
+      const batch = db.batch();
+      allServicesSnapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, {
+          providerId: "",
+          providerName: deletedName,
+          updatedAt: now,
+        });
+      });
+      await batch.commit();
+    }
+
+    for (const field of ["clientId", "providerId"]) {
+      const snapshot = await db.collection("bookings")
+        .where(field, "==", userId)
+        .get();
+      if (!snapshot.empty) {
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+          const update = {updatedAt: now};
+          update[field] = "";
+          batch.update(doc.ref, update);
+        });
+        await batch.commit();
+      }
+    }
+
+    for (const field of ["clientId", "providerId"]) {
+      const snapshot = await db.collection("reviews")
+        .where(field, "==", userId)
+        .get();
+      if (!snapshot.empty) {
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+          const update = {};
+          update[field] = "";
+          batch.update(doc.ref, update);
+        });
+        await batch.commit();
+      }
+    }
+
+    for (const field of ["clientId", "providerId"]) {
+      const snapshot = await db.collection("providerReviews")
+        .where(field, "==", userId)
+        .get();
+      if (!snapshot.empty) {
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+          const update = {};
+          update[field] = "";
+          batch.update(doc.ref, update);
+        });
+        await batch.commit();
+      }
+    }
+
+    for (const field of ["clientId", "providerId"]) {
+      const snapshot = await db.collection("conversations")
+        .where(field, "==", userId)
+        .get();
+      if (!snapshot.empty) {
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+      }
+    }
+
+    const messagesToDelete = [];
+    for (const field of ["senderId", "receiverId"]) {
+      const snapshot = await db.collection("messages")
+        .where(field, "==", userId)
+        .get();
+      snapshot.forEach((doc) => messagesToDelete.push(doc));
+    }
+    if (messagesToDelete.length > 0) {
+      const uniqueMessages = new Map();
+      messagesToDelete.forEach((doc) => uniqueMessages.set(doc.id, doc));
+      const batch = db.batch();
+      uniqueMessages.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    }
+
+    const notificationsSnapshot = await db.collection("notifications")
+      .where("userId", "==", userId)
+      .get();
+    if (!notificationsSnapshot.empty) {
+      const batch = db.batch();
+      notificationsSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    }
+
+    const mediaSnapshot = await db.collection("media")
+      .where("ownerId", "==", userId)
+      .get();
+    const bucket = admin.storage().bucket();
+    for (const doc of mediaSnapshot.docs) {
+      const mediaData = doc.data();
+      const filePath = mediaData.filePath;
+      if (filePath) {
+        try {
+          await bucket.file(filePath).delete();
+        } catch (storageError) {
+          console.error(
+            `Failed to delete storage file ${filePath}:`,
+            storageError.message,
+          );
+        }
+      }
+      if (mediaData.thumbnailUrl) {
+        try {
+          const thumbnailPath = mediaData.thumbnailUrl.replace(
+            /https?:\/\/[^/]+\/[^?]+/,
+            (m) => m.split("/").slice(3).join("/").split("?")[0],
+          );
+          if (thumbnailPath && thumbnailPath !== filePath) {
+            await bucket.file(thumbnailPath).delete();
+          }
+        } catch (thumbError) {
+          console.error(
+            `Failed to delete thumbnail:`,
+            thumbError.message,
+          );
+        }
+      }
+      await doc.ref.delete();
+    }
+
+    const reportsSnapshot = await db.collection("reports")
+      .where("userId", "==", userId)
+      .get();
+    if (!reportsSnapshot.empty) {
+      const batch = db.batch();
+      reportsSnapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, {
+          userId: "",
+          userName: deletedName,
+        });
+      });
+      await batch.commit();
+    }
+
+    const feedbackSnapshot = await db.collection("app_feedback")
+      .where("userId", "==", userId)
+      .get();
+    if (!feedbackSnapshot.empty) {
+      const batch = db.batch();
+      feedbackSnapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, {
+          userId: "",
+          userName: deletedName,
+        });
+      });
+      await batch.commit();
+    }
+
+    try {
+      await db.collection("userRoles").doc(userId).delete();
+    } catch (roleError) {
+      console.error(`Failed to delete user role:`, roleError.message);
+    }
+
+    try {
+      await admin.auth().deleteUser(userId);
+    } catch (authError) {
+      console.error(`Failed to delete auth user:`, authError.message);
+    }
+
+    await db.collection("users").doc(userId).delete();
+
+    return {
+      success: true,
+      message: "User account permanently deleted",
+    };
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    console.error("Error in permanentDeleteUser:", error);
+    throw new HttpsError("internal", error.message);
+  }
+}
+
 exports.adminUserAction = onCall(
   {
     enforceAppCheck: false,
@@ -1371,6 +1871,9 @@ exports.adminUserAction = onCall(
         return await getPendingCertificateValidationsService(innerRequest);
       case "getBookingsData": return await getBookingsDataService(innerRequest);
       case "createAdminProfile": return await createAdminProfileService(innerRequest);
+      case "deleteUserAccount": return await deleteUserAccountService(innerRequest);
+      case "restoreUserAccount": return await restoreUserAccountService(innerRequest);
+      case "permanentDeleteUser": return await permanentDeleteUserService(innerRequest);
       default:
         throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }

@@ -10,6 +10,7 @@ import {
   LockClosedIcon,
   Squares2X2Icon,
   StarIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 
 interface UserDetailsHeaderProps {
@@ -25,6 +26,7 @@ interface UserDetailsHeaderProps {
     createdAt: Date;
     lastActivity: Date;
     servicesCount?: number;
+    deletedAt?: Date;
   };
   fromTicket: boolean;
   ticketId: string | null;
@@ -32,6 +34,12 @@ interface UserDetailsHeaderProps {
   onLockClick: () => void;
   onActivateClick: () => void;
   lockingAccount?: boolean;
+  onDeleteClick?: () => void;
+  deletingAccount?: boolean;
+  onRestoreClick?: () => void;
+  restoringAccount?: boolean;
+  onPermanentDeleteClick?: () => void;
+  permanentlyDeleting?: boolean;
 }
 
 // SVG Icon Components have been replaced with @heroicons/react counterparts
@@ -77,7 +85,7 @@ interface ActionButtonProps {
   onClick?: () => void;
   icon: React.ReactNode;
   label: string;
-  variant?: "default" | "gray" | "yellow" | "green";
+  variant?: "default" | "gray" | "yellow" | "green" | "red";
   size?: "sm" | "md";
   disabled?: boolean;
 }
@@ -102,6 +110,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       "border-yellow-300 bg-yellow-50 hover:bg-yellow-100 focus:ring-yellow-500",
     green:
       "border-green-300 bg-green-50 hover:bg-green-100 focus:ring-green-500",
+    red: "border-red-300 bg-red-50 hover:bg-red-100 focus:ring-red-500",
   };
 
   const textColorClasses = {
@@ -109,6 +118,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
     gray: "text-gray-700",
     yellow: "text-yellow-700",
     green: "text-green-700",
+    red: "text-red-700",
   };
 
   const baseClasses = `inline-flex items-center justify-center rounded-md border shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${sizeClasses} ${variantClasses[variant]} ${textColorClasses[variant]} ${disabled ? "disabled:cursor-not-allowed disabled:opacity-50" : ""}`;
@@ -189,6 +199,12 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
   onLockClick,
   onActivateClick,
   lockingAccount = false,
+  onDeleteClick,
+  deletingAccount = false,
+  onRestoreClick,
+  restoringAccount = false,
+  onPermanentDeleteClick,
+  permanentlyDeleting = false,
 }) => {
   const navigate = useNavigate();
 
@@ -318,13 +334,68 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
                   {actionButtons.map((button, index) => (
                     <ActionButton key={index} size="md" {...button} />
                   ))}
-                  <LockButton
-                    isLocked={user.isLocked}
-                    onLockClick={onLockClick}
-                    onActivateClick={onActivateClick}
-                    lockingAccount={lockingAccount}
-                    size="md"
-                  />
+                  {user.deletedAt ? (
+                    <>
+                      {onRestoreClick && (
+                        <ActionButton
+                          onClick={onRestoreClick}
+                          icon={
+                            restoringAccount ? (
+                              <ArrowPathIcon className="h-full w-full animate-spin" />
+                            ) : (
+                              <CheckIcon className="h-full w-full" />
+                            )
+                          }
+                          label={restoringAccount ? "Restoring..." : "Restore Account"}
+                          variant="green"
+                          size="md"
+                          disabled={restoringAccount}
+                        />
+                      )}
+                      {onPermanentDeleteClick && (
+                        <ActionButton
+                          onClick={onPermanentDeleteClick}
+                          icon={
+                            permanentlyDeleting ? (
+                              <ArrowPathIcon className="h-full w-full animate-spin" />
+                            ) : (
+                              <TrashIcon className="h-full w-full" />
+                            )
+                          }
+                          label={permanentlyDeleting ? "Deleting..." : "Permanently Delete"}
+                          variant="red"
+                          size="md"
+                          disabled={permanentlyDeleting}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <LockButton
+                        isLocked={user.isLocked}
+                        onLockClick={onLockClick}
+                        onActivateClick={onActivateClick}
+                        lockingAccount={lockingAccount}
+                        size="md"
+                      />
+                      {onDeleteClick && (
+                        <ActionButton
+                          onClick={onDeleteClick}
+                          icon={
+                            deletingAccount ? (
+                              <ArrowPathIcon className="h-full w-full animate-spin" />
+                            ) : (
+                              <TrashIcon className="h-full w-full" />
+                            )
+                          }
+                          label={deletingAccount ? "Deleting..." : "Delete Account"}
+                          variant="red"
+                          size="md"
+                          disabled={deletingAccount}
+                        />
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -334,13 +405,68 @@ export const UserDetailsHeader: React.FC<UserDetailsHeaderProps> = ({
             {actionButtons.map((button, index) => (
               <ActionButton key={index} size="sm" {...button} />
             ))}
-            <LockButton
-              isLocked={user.isLocked}
-              onLockClick={onLockClick}
-              onActivateClick={onActivateClick}
-              lockingAccount={lockingAccount}
-              size="sm"
-            />
+            {user.deletedAt ? (
+              <>
+                {onRestoreClick && (
+                  <ActionButton
+                    onClick={onRestoreClick}
+                    icon={
+                      restoringAccount ? (
+                        <ArrowPathIcon className="h-full w-full animate-spin" />
+                      ) : (
+                        <CheckIcon className="h-full w-full" />
+                      )
+                    }
+                    label={restoringAccount ? "Restoring..." : "Restore"}
+                    variant="green"
+                    size="sm"
+                    disabled={restoringAccount}
+                  />
+                )}
+                {onPermanentDeleteClick && (
+                  <ActionButton
+                    onClick={onPermanentDeleteClick}
+                    icon={
+                      permanentlyDeleting ? (
+                        <ArrowPathIcon className="h-full w-full animate-spin" />
+                      ) : (
+                        <TrashIcon className="h-full w-full" />
+                      )
+                    }
+                    label={permanentlyDeleting ? "Deleting..." : "Delete"}
+                    variant="red"
+                    size="sm"
+                    disabled={permanentlyDeleting}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <LockButton
+                  isLocked={user.isLocked}
+                  onLockClick={onLockClick}
+                  onActivateClick={onActivateClick}
+                  lockingAccount={lockingAccount}
+                  size="sm"
+                />
+                {onDeleteClick && (
+                  <ActionButton
+                    onClick={onDeleteClick}
+                    icon={
+                      deletingAccount ? (
+                        <ArrowPathIcon className="h-full w-full animate-spin" />
+                      ) : (
+                        <TrashIcon className="h-full w-full" />
+                      )
+                    }
+                    label={deletingAccount ? "Deleting..." : "Delete"}
+                    variant="red"
+                    size="sm"
+                    disabled={deletingAccount}
+                  />
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

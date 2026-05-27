@@ -34,6 +34,7 @@ export interface UserData {
   isLocked: boolean;
   walletBalance: number;
   servicesCount: number;
+  deletedAt?: Date;
 }
 
 const extractUserData = (
@@ -78,6 +79,7 @@ const extractUserData = (
     isLocked: lockStatus,
     walletBalance: walletBalanceData || 0,
     servicesCount: servicesDataResult.offeredServices.length,
+    deletedAt: profile.deletedAt ? new Date(profile.deletedAt) : undefined,
   };
 };
 
@@ -113,6 +115,7 @@ const getDefaultUserData = (
     isLocked: lockStatus,
     walletBalance: 0,
     servicesCount: 0,
+    deletedAt: profile.deletedAt ? new Date(profile.deletedAt) : undefined,
   };
 };
 
