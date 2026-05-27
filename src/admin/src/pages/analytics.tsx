@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { httpsCallable } from "firebase/functions";
 import { useAdmin } from "../hooks/useAdmin";
 import {
   AnalyticsHeader,
@@ -9,24 +8,21 @@ import {
   ServiceProviderRecords,
   ProviderDetailsModal,
 } from "../components";
-import { getFirebaseFunctions } from "../services/firebaseApp";
 import {
   formatCurrency,
-  filterUsers,
-  countProviders,
-  countClients,
   calculateOnlineUsers,
   processServiceProviderPerformance,
   filterAndSortProviders,
   processServiceCategoryData,
 } from "../utils/analyticsUtils";
+import { adminServiceCanister } from "../services/adminServiceCanister";
+import { countActiveServiceProviders, getUsersWithServices } from "../utils/homeUtils";
 
 export const AnalyticsPage: React.FC = () => {
   const {
     systemStats,
     users,
     bookings,
-    serviceProviders,
     commissionTransactions,
     services,
     serviceCategories,
@@ -44,17 +40,17 @@ export const AnalyticsPage: React.FC = () => {
   const [showMobileBar, setShowMobileBar] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<
-    "name" | "totalRevenue" | "totalCommission" | "completedBookings"
-  >("totalRevenue");
+    "name" | "totalCommission" | "completedBookings"
+  >("totalCommission");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [userFilter, setUserFilter] = useState<"all" | "online" | "dormant">(
     "all",
   );
-  const [walletBalances, setWalletBalances] = useState<Record<string, number>>(
-    {},
+  const [activeProviderCount, setActiveProviderCount] = useState(0);
+  const [userIdsWithServices, setUserIdsWithServices] = useState<Set<string>>(
+    new Set(),
   );
-  const [walletProviderIds, setWalletProviderIds] = useState<string[]>([]);
-  const [loadingWalletBalances, setLoadingWalletBalances] = useState(false);
+  const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadData = async () => {
@@ -63,19 +59,6 @@ export const AnalyticsPage: React.FC = () => {
     };
     loadData();
   }, [refreshAll, refreshSystemStats]);
-
-  useEffect(() => {
-    if (selectedProviderId) {
-      const provider = serviceProviders.find(
-        (p) => p.id === selectedProviderId,
-      );
-      if (provider) {
-        setSelectedProvider(provider);
-        setShowProviderDetails(true);
-        loadProviderAnalytics(provider.id);
-      }
-    }
-  }, [selectedProviderId, serviceProviders]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -87,60 +70,67 @@ export const AnalyticsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    setLoadingWalletBalances(true);
-
-    const fetchWalletProviders = async () => {
+    const fetchAdminIds = async () => {
       try {
-        const functions = getFirebaseFunctions();
-        const getAllWalletsFn = httpsCallable(functions, "getAllWallets");
-        const result = await getAllWalletsFn({});
-        const responseData = result.data as {
-          success: boolean;
-          wallets: Record<string, { balance: number }>;
-        };
-
-        if (cancelled) return;
-
-        const balancesMap: Record<string, number> = {};
-        const ids: string[] = [];
-
-        Object.entries(responseData.wallets).forEach(([userId, wallet]) => {
-          balancesMap[userId] = wallet.balance || 0;
-          ids.push(userId);
-        });
-
-        setWalletBalances(balancesMap);
-        setWalletProviderIds(ids);
+        const userRoles = await adminServiceCanister.listUserRoles();
+        const adminIds = new Set<string>(
+          userRoles.map((role) => role.userId).filter(Boolean),
+        );
+        setAdminUserIds(adminIds);
       } catch (error) {
-        console.error("Error fetching wallet providers:", error);
-      } finally {
-        if (!cancelled) {
-          setLoadingWalletBalances(false);
-        }
+        console.error("Failed to fetch admin user IDs:", error);
+        setAdminUserIds(new Set());
       }
     };
+    fetchAdminIds();
+  }, [users]);
 
-    fetchWalletProviders();
-
-    return () => {
-      cancelled = true;
+  useEffect(() => {
+    const fetchProviderData = async () => {
+      const nonAdminUsers = (users || []).filter(
+        (u) => !adminUserIds.has(u.id.toString()),
+      );
+      const [count, idsWithServices] = await Promise.all([
+        countActiveServiceProviders(nonAdminUsers),
+        getUsersWithServices(nonAdminUsers),
+      ]);
+      setActiveProviderCount(count);
+      setUserIdsWithServices(idsWithServices);
     };
-  }, []);
+    if (adminUserIds.size > 0) {
+      fetchProviderData();
+    }
+  }, [users, adminUserIds]);
 
   const loadProviderAnalytics = async (_providerId: string) => {};
 
-  const filteredUsers = useMemo(() => {
-    return filterUsers(users || [], userFilter);
-  }, [users, userFilter]);
+  const serviceProvidersWithServices = useMemo(() => {
+    return (users || []).filter(
+      (u) => userIdsWithServices.has(u.id.toString()),
+    );
+  }, [users, userIdsWithServices]);
 
-  const totalProviders = useMemo(() => {
-    return countProviders(filteredUsers);
-  }, [filteredUsers]);
+  useEffect(() => {
+    if (selectedProviderId) {
+      const provider = serviceProvidersWithServices.find(
+        (p) => p.id.toString() === selectedProviderId,
+      );
+      if (provider) {
+        setSelectedProvider(provider);
+        setShowProviderDetails(true);
+        loadProviderAnalytics(provider.id.toString());
+      }
+    }
+  }, [selectedProviderId, serviceProvidersWithServices]);
 
-  const totalClients = useMemo(() => {
-    return countClients(filteredUsers);
-  }, [filteredUsers]);
+  const nonAdminUserCount = useMemo(() => {
+    return (users || []).filter(
+      (u) => !adminUserIds.has(u.id.toString()),
+    ).length;
+  }, [users, adminUserIds]);
+
+  const totalProviders = activeProviderCount;
+  const totalClients = nonAdminUserCount - activeProviderCount;
 
   const onlineUsers = useMemo(() => {
     return calculateOnlineUsers(users || []);
@@ -160,21 +150,17 @@ export const AnalyticsPage: React.FC = () => {
   const serviceProviderPerformanceData = useMemo(() => {
     return processServiceProviderPerformance(
       bookings || [],
-      serviceProviders || [],
+      serviceProvidersWithServices,
       commissionTransactions || [],
       users || [],
       systemStats,
-      walletBalances,
-      walletProviderIds,
     );
   }, [
     bookings,
-    serviceProviders,
+    serviceProvidersWithServices,
     commissionTransactions,
     users,
     systemStats,
-    walletBalances,
-    walletProviderIds,
   ]);
 
   const filteredServiceProviderData = useMemo(() => {
@@ -195,9 +181,7 @@ export const AnalyticsPage: React.FC = () => {
       <AnalyticsHeader showMobileBar={showMobileBar} />
       <main className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 sm:pb-8 lg:px-8">
         <SystemOverviewStats
-          totalRevenue={systemStats?.totalRevenue || 0}
           totalCommission={systemStats?.totalCommission || 0}
-          totalTopups={systemStats?.totalTopups || 0}
           onlineUsers={onlineUsers}
           loading={loading.systemStats}
           formatCurrency={formatCurrency}
@@ -304,8 +288,7 @@ export const AnalyticsPage: React.FC = () => {
           loading={
             loading.bookings ||
             loading.serviceProviders ||
-            !systemStats ||
-            loadingWalletBalances
+            !systemStats
           }
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}

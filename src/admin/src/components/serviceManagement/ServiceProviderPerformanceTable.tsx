@@ -1,16 +1,14 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { ProfileImage } from "../../../../frontend/src/components/common/ProfileImage";
 
 interface ServiceProviderPerformanceData {
   id: string;
   name: string;
   phone: string;
-  totalRevenue: number;
   totalCommission: number;
   completedBookings: number;
   totalBookings: number;
-  walletBalance: number;
   profilePicture?: {
     imageUrl: string;
     thumbnailUrl: string;
@@ -32,16 +30,16 @@ const ServiceProviderPerformanceTable: React.FC<
   onRefresh: _onRefresh,
   showRefresh: _showRefresh = false,
 }) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const formatCurrency = (amount: number) => {
     return `₱${amount.toFixed(2)}`;
   };
 
   const handleRowClick = (providerId: string) => {
-    navigate(`/user/${providerId}/wallet`, {
-      state: { from: "analytics" },
-    });
+    // navigate(`/user/${providerId}/wallet`, {
+    //   state: { from: "analytics" },
+    // });
   };
 
   if (loading) {
@@ -75,16 +73,10 @@ const ServiceProviderPerformanceTable: React.FC<
                 Service Provider
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Total Revenue
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Total Commission
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Completed Bookings
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Wallet Balance
               </th>
             </tr>
           </thead>
@@ -92,7 +84,7 @@ const ServiceProviderPerformanceTable: React.FC<
             {providers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={3}
                   className="px-6 py-12 text-center text-sm text-gray-500"
                 >
                   No service providers found
@@ -129,16 +121,10 @@ const ServiceProviderPerformanceTable: React.FC<
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                    {formatCurrency(provider.totalRevenue)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {formatCurrency(provider.totalCommission)}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {provider.completedBookings}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                    {formatCurrency(provider.walletBalance)}
                   </td>
                 </tr>
               ))

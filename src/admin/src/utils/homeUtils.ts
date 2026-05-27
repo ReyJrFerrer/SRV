@@ -35,6 +35,38 @@ export const countActiveServiceProviders = async (
   return results.filter(Boolean).length;
 };
 
+export const getUsersWithServices = async (
+  users: any[],
+): Promise<Set<string>> => {
+  const userIdsWithServices = new Set<string>();
+
+  if (!users || users.length === 0) return userIdsWithServices;
+
+  await Promise.all(
+    users.map(async (user: any) => {
+      const userId = user.id?.toString() || user.uid?.toString();
+      if (!userId) return;
+
+      const cached = serviceProviderCache.get(userId);
+      if (cached && Date.now() - cached.timestamp < SP_CACHE_TTL) {
+        if (cached.hasServices) userIdsWithServices.add(userId);
+        return;
+      }
+
+      const serviceCount =
+        await adminServiceCanister.getUserServiceCount(userId);
+      const hasServices = serviceCount > 0;
+      serviceProviderCache.set(userId, {
+        hasServices,
+        timestamp: Date.now(),
+      });
+      if (hasServices) userIdsWithServices.add(userId);
+    }),
+  );
+
+  return userIdsWithServices;
+};
+
 // Calculate settled bookings count
 export const calculateSettledBookings = (
   bookings: any[],
