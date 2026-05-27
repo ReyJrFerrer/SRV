@@ -337,7 +337,10 @@ async function createNotification_notification(request) {
       now.getTime() + NOTIFICATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
     );
 
-    const href = generateNotificationHref(notificationType, userType, relatedEntityId);
+    let href = generateNotificationHref(notificationType, userType, relatedEntityId);
+    if (metadata && metadata.customHref) {
+      href = metadata.customHref;
+    }
 
     const notificationRef = db.collection("notifications").doc();
     const notification = {

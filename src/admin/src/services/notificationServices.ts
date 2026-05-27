@@ -15,6 +15,9 @@ interface TicketReportData {
   userType: "client" | "provider";
   relatedProviderId?: string;
   relatedClientId?: string;
+  bookingId?: string;
+  serviceId?: string;
+  source?: string;
 }
 
 /**
@@ -65,6 +68,10 @@ const getTicketReportData = async (
         data.relatedProviderId = parsedData.providerId;
         data.relatedClientId = parsedData.clientId;
       }
+
+      data.bookingId = parsedData.bookingId;
+      data.serviceId = parsedData.serviceId;
+      data.source = parsedData.source;
 
       return data;
     } catch (e) {
@@ -195,16 +202,30 @@ export const sendTicketCommentNotification = async (
       ? `An internal comment has been added to your ticket "${ticketTitle}".`
       : `A new comment has been added to your ticket "${ticketTitle}": "${commentText.substring(0, 100)}${commentText.length > 100 ? "..." : ""}"`;
 
-    // Fetch the report to check if it's related to a booking and determine user type
+    // Fetch the report to determine user type and navigation target
     const reportData = await getTicketReportData(ticketId);
-    const { userType, relatedProviderId, relatedClientId } = reportData;
+    const { userType, relatedProviderId, relatedClientId, bookingId, serviceId, source } = reportData;
 
-    const metadata = {
+    // Build navigation target
+    let relatedEntityId: string | undefined;
+    let customHref: string | undefined;
+
+    if (bookingId) {
+      relatedEntityId = bookingId;
+    } else if (source === "review_flag" && serviceId) {
+      relatedEntityId = serviceId;
+      customHref = `/provider/service-details/reviews/${serviceId}`;
+    }
+
+    const metadata: Record<string, any> = {
       ticketId,
       ticketTitle,
       commentText,
       isInternal,
     };
+    if (customHref) {
+      metadata.customHref = customHref;
+    }
 
     // Send notification to the ticket submitter
     await notificationCanisterService.createNotification(
@@ -213,7 +234,7 @@ export const sendTicketCommentNotification = async (
       "generic",
       title,
       message,
-      undefined, // No related entity ID to prevent navigation
+      relatedEntityId,
       metadata,
     );
 
