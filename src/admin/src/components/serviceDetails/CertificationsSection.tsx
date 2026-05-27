@@ -70,7 +70,7 @@ const CertificationsSection: React.FC<Props> = ({
         >
           <button
             onClick={hasActiveBookings ? undefined : onToggleEdit}
-            className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${hasActiveBookings ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`rounded-full p-2 transition-colors hover:bg-gray-100 ${hasActiveBookings ? "cursor-not-allowed opacity-50" : ""}`}
             aria-label="Edit certifications"
             disabled={hasActiveBookings}
           >

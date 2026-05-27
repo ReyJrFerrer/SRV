@@ -173,6 +173,75 @@ export const getAllUserLockStatuses = async (): Promise<
 };
 
 /**
+ * Delete user account (soft delete)
+ */
+export const deleteUserAccount = async (userId: string): Promise<string> => {
+  try {
+    requireAuth();
+
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "deleteUserAccount",
+      payload: { userId },
+    });
+
+    return result?.message || "User account deleted successfully";
+  } catch (error) {
+    if (error instanceof AdminServiceError) throw error;
+    throw new AdminServiceError({
+      message: `Failed to delete user account: ${error}`,
+      code: "DELETE_USER_ACCOUNT_ERROR",
+      details: error,
+    });
+  }
+};
+
+/**
+ * Restore a soft-deleted user account
+ */
+export const restoreUserAccount = async (userId: string): Promise<string> => {
+  try {
+    requireAuth();
+
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "restoreUserAccount",
+      payload: { userId },
+    });
+
+    return result?.message || "User account restored successfully";
+  } catch (error) {
+    if (error instanceof AdminServiceError) throw error;
+    throw new AdminServiceError({
+      message: `Failed to restore user account: ${error}`,
+      code: "RESTORE_USER_ACCOUNT_ERROR",
+      details: error,
+    });
+  }
+};
+
+/**
+ * Permanently delete a user account (hard delete, irreversible)
+ */
+export const permanentDeleteUser = async (userId: string): Promise<string> => {
+  try {
+    requireAuth();
+
+    const result = await callFirebaseFunction("adminUserAction", {
+      action: "permanentDeleteUser",
+      payload: { userId },
+    });
+
+    return result?.message || "User account permanently deleted";
+  } catch (error) {
+    if (error instanceof AdminServiceError) throw error;
+    throw new AdminServiceError({
+      message: `Failed to permanently delete user account: ${error}`,
+      code: "PERMANENT_DELETE_USER_ERROR",
+      details: error,
+    });
+  }
+};
+
+/**
  * Update user reputation score
  */
 export const updateUserReputation = async (
@@ -239,10 +308,9 @@ export const getUserAnalytics = async (
   try {
     requireAuth();
 
-    const result = await callFirebaseFunction("getProviderAnalytics", {
-      providerId: userId,
-      startDate: null,
-      endDate: null,
+    const result = await callFirebaseFunction("bookingAction", {
+      action: "getProviderAnalytics",
+      data: { providerId: userId, startDate: null, endDate: null },
     });
 
     return {
@@ -276,8 +344,14 @@ export const getUserReviews = async (
   try {
     requireAuth();
     const [clientReviews, providerReviews] = await Promise.allSettled([
-      callFirebaseFunction("getUserReviews", { userId }),
-      callFirebaseFunction("getProviderReviews", { providerId: userId }),
+      callFirebaseFunction("reviewAction", {
+        action: "getUserReviews",
+        data: { userId },
+      }),
+      callFirebaseFunction("reviewAction", {
+        action: "getProviderReviews",
+        data: { providerId: userId },
+      }),
     ]);
 
     const allReviews = extractFulfilledArrayResults([

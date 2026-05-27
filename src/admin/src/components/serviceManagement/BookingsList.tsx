@@ -139,11 +139,15 @@ export const BookingsList: React.FC<BookingsListProps> = ({
                   <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
                     <p className="truncate">Provider: {booking.providerName}</p>
                     <span className="hidden sm:inline">•</span>
-                    <p className="truncate">Client: {booking.clientName || "Unknown"}</p>
+                    <p className="truncate">
+                      Client: {booking.clientName || "Unknown"}
+                    </p>
                     {booking.packageName && (
                       <>
                         <span className="hidden sm:inline">•</span>
-                        <p className="truncate">Package: {booking.packageName}</p>
+                        <p className="truncate">
+                          Package: {booking.packageName}
+                        </p>
                       </>
                     )}
                   </div>

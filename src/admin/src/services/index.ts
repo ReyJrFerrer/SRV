@@ -17,6 +17,9 @@ export const adminServiceCanister = {
 
   // User Management Functions
   lockUserAccount: userManagement.lockUserAccount,
+  deleteUserAccount: userManagement.deleteUserAccount,
+  restoreUserAccount: userManagement.restoreUserAccount,
+  permanentDeleteUser: userManagement.permanentDeleteUser,
   getAllUserLockStatuses: userManagement.getAllUserLockStatuses,
   updateUserReputation: userManagement.updateUserReputation,
   updateUserPhoneNumber: userManagement.updateUserPhoneNumber,
@@ -77,6 +80,9 @@ export const {
   getUserServicesAndBookings,
   getUserServiceCount,
   lockUserAccount,
+  deleteUserAccount,
+  restoreUserAccount,
+  permanentDeleteUser,
   getAllUserLockStatuses,
   updateUserReputation,
   updateUserPhoneNumber,

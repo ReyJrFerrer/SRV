@@ -1,42 +1,85 @@
 # SRV Agent Context
 
-This repository contains a decentralized service marketplace built on the Internet Computer Protocol (ICP) and Firebase.
+Monorepo: two npm workspaces (`src/frontend`, `src/admin`), Firebase Cloud Functions at `functions/`, ICP canisters at `src/backend/`, mobile app at `SRV-Mobile/srv-mobile/` (NOT in workspaces).
 
-## Mobile App Recreation (Primary Goal)
-Our **main task** is to recreate the mobile app designs from the web frontend (`src/frontend/`) into the new React Native Expo app at `SRV-Mobile/srv-mobile/`.
+## Key Commands (run from repo root unless noted)
 
-### Directory Boundaries & Tooling
-- **Frontend App**: `src/frontend/`
-  - **Framework**: React + Vite + TailwindCSS v4.
-  - **Package Manager**: npm (`package-lock.json`).
-  - **Purpose**: This is the **source of truth** for the designs you need to recreate.
+| Action                  | Command                                                                 |
+| ----------------------- | ----------------------------------------------------------------------- |
+| Frontend dev            | `cd src/frontend && npm run start` (port 5173, proxy `/api` → `:4943`)  |
+| Frontend build          | `cd src/frontend && npm run build` (tsc → vite → generate version.json) |
+| Frontend test           | `npm run test:frontend` (Vitest)                                        |
+| Lint (whole repo)       | `npm run lint` (prettier --check)                                       |
+| Format                  | `npm run format` (prettier --write)                                     |
+| Mobile dev              | `cd SRV-Mobile/srv-mobile && bun run start`                             |
+| Kill Firebase emulators | `npm run emulators:kill`                                                |
+| All tests               | `npm test` (backend + frontend)                                         |
+| Backend tests           | `npm run test:backend` (Vitest, config at `tests/vitest.config.ts`)     |
+| Bundle analysis         | `npm run analyze` (from frontend)                                       |
+| Generate iOS icons      | `npm run generate:icons` (from frontend; needs `sharp`)                 |
 
-- **Mobile App**: `SRV-Mobile/srv-mobile/` 
-  - **Framework**: React Native with Expo SDK 56 + Expo Router.
-  - **Package Manager**: Bun (`bun.lock`). 
-  - **Path Aliases**: `@/*` points to `./src/*`.
-  - **Styling**: Currently uses standard `StyleSheet.create` and themed components from `@/components/`.
-  - **Important**: *Expo SDK 56 has significantly changed. Always refer to the exact versioned docs at `https://docs.expo.dev/versions/v56.0.0/` before writing any routing or native code.*
+## Frontend (`src/frontend/`)
 
-### Workflows
-1. **Running the Mobile App**:
-   The root `package.json` workspaces do NOT include the mobile app. Work directly inside the mobile directory:
-   ```bash
-   cd SRV-Mobile/srv-mobile
-   bun install
-   bun run start  # or expo start
-   ```
+- **Stack**: React 19, Vite 6, Tailwind CSS v4, React Router v7 (HashRouter), TanStack Query
+- **TypeScript**: strict mode, `noUnusedLocals: true`, `noUnusedParameters: true`
+- **Testing**: Vitest with jsdom, config in `vite.config.ts` under `test` key
+- **Routing**: HashRouter — routes are `/#/client/home`, `/#/provider/services`, etc.
+- **PWA**: See `src/frontend/PWA-ARCHITECTURE.md`
+- **Google Maps**: Required (`VITE_GOOGLE_MAPS_API_KEY`); wraps both client and provider routes
+- **Alias**: `import ... from "declarations"` → `../declarations` (ICP canister types)
 
-2. **Viewing Original Designs**: 
-   To view the original UI that needs to be recreated, run the frontend:
-   ```bash
-   cd src/frontend
-   npm install
-   npm run start
-   ```
-   Inspect the React implementations and Tailwind classes in `src/frontend/src/` to translate them to React Native components.
+### Build detail
 
-### Implementation Guidelines
-- **Translation**: `src/frontend/` uses Tailwind v4. You must accurately translate web-based Tailwind classes into React Native `StyleSheet` styling. Look for and reuse theme constants in `SRV-Mobile/srv-mobile/src/constants/theme.ts`.
-- **Project Setup**: Rely on `SRV-Mobile/srv-mobile/app.json` for Expo configuration. Do not look for or create standard React Native config files (`babel.config.js` or `metro.config.js`) unless absolutely necessary.
-- **Strict TypeScript**: Both projects use strict TypeScript. Ensure you maintain type safety when migrating models, contexts, and props from the web to the mobile app.
+`npm run build` → `tsc` (type-check) → `vite build` → `node scripts/generate-version.js` (writes `dist/version.json` for cache busting).
+
+### Env vars
+
+Required on `process.env` (from `../../.env`): `CANISTER_*` and `DFX_*` are auto-exposed by `vite-plugin-environment`. Frontend Vite env vars needed:
+
+```
+VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID,
+VITE_FIREBASE_MESSAGING_SENDER_ID, VITE_FIREBASE_APP_ID, VITE_FIREBASE_STORAGE_BUCKET,
+VITE_FIREBASE_VAPID_KEY, VITE_GOOGLE_MAPS_API_KEY, VITE_MAP_ID, VITE_MOCK_VAPID_KEY,
+VITE_FIREBASE_DATABASE_URL
+```
+
+## Admin (`src/admin/`)
+
+Also React/Vite. Separate workspace with its own `package.json` and build. Deployed separately.
+
+## Mobile App (`SRV-Mobile/srv-mobile/`)
+
+- **Not** part of npm workspaces. Use `bun` directly.
+- React Native + Expo SDK 56 + Expo Router.
+- `@/*` → `./src/*`
+- CLAUDE.md at `SRV-Mobile/srv-mobile/CLAUDE.md` (just `@AGENTS.md`)
+- Refer to versioned Expo docs: `https://docs.expo.dev/versions/v56.0.0/`
+
+### Known issues
+
+- **No frontend test files exist** — `src/frontend/` has no `.test.*` or `.spec.*` files; the referenced `frontend-test-setup.ts` in `vite.config.ts` does not exist either
+
+## Backend
+
+- **ICP canisters** (Motoko) at `src/backend/function/`, built with `mops`
+- **Firebase Functions** at `functions/` (Node.js, separate `npm install`)
+- **Canister config**: `dfx.json` (reputation, auth, internet_identity)
+- **Declarations** auto-generated at `src/declarations/`
+
+## CI & Quality
+
+- **Husky** pre-commit hooks (`npm run prepare`)
+- **Prettier** with `prettier-plugin-tailwindcss` — run `npm run format` before committing
+- No ESLint — linting is purely Prettier-based
+
+## Conventions
+
+| Context            | Convention                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| Component patterns | Named function exports (not `export default function`) where possible                     |
+| Services           | Singleton classes with `getInstance()` or module-level singleton                          |
+| State              | Zustand stores in `src/frontend/src/store/`, React Context in `src/frontend/src/context/` |
+| Canister calls     | Through service classes in `src/frontend/src/services/`                                   |
+| File naming        | kebab-case for files, PascalCase for components, camelCase for utils/services             |
+| Icons              | `@heroicons/react` (outline style imported as `.../24/outline`)                           |
+| Push notifications | OneSignal v16 via `react-onesignal` (NOT raw FCM unless firebase-messaging-sw.js)         |

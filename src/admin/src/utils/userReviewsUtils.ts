@@ -6,6 +6,7 @@ export interface Review {
   providerId?: string;
   clientId?: string;
   bookingId?: string;
+  serviceId?: string;
   clientName?: string;
   providerName?: string;
   status?: "Visible" | "Hidden" | "Flagged" | "Deleted";

@@ -11,10 +11,8 @@ interface ServiceProviderData {
   name: string;
   phone: string;
   totalRevenue: number;
-  totalCommission: number;
   completedBookings: number;
   totalBookings: number;
-  walletBalance: number;
 }
 
 interface ServiceProviderRecordsProps {
@@ -22,9 +20,9 @@ interface ServiceProviderRecordsProps {
   loading: boolean;
   searchTerm: string;
   onSearchChange: (term: string) => void;
-  sortBy: "name" | "totalRevenue" | "totalCommission" | "completedBookings";
+  sortBy: "name" | "totalRevenue" | "completedBookings";
   onSortByChange: (
-    sortBy: "name" | "totalRevenue" | "totalCommission" | "completedBookings",
+    sortBy: "name" | "totalRevenue" | "completedBookings",
   ) => void;
   sortOrder: "asc" | "desc";
   onSortOrderChange: () => void;
@@ -44,9 +42,7 @@ export const ServiceProviderRecords: React.FC<ServiceProviderRecordsProps> = ({
 }) => {
   return (
     <div className="mt-8">
-      {/* Search and Filter Controls */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Search Bar */}
         <div className="flex-1">
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -62,7 +58,6 @@ export const ServiceProviderRecords: React.FC<ServiceProviderRecordsProps> = ({
           </div>
         </div>
 
-        {/* Sort Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           <label className="sr-only" htmlFor="sortBy">
             Sort by
@@ -70,19 +65,17 @@ export const ServiceProviderRecords: React.FC<ServiceProviderRecordsProps> = ({
           <select
             id="sortBy"
             value={sortBy}
-            onChange={(e) =>
-              onSortByChange(
-                e.target.value as
-                  | "name"
-                  | "totalRevenue"
-                  | "totalCommission"
-                  | "completedBookings",
-              )
-            }
-            className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:w-48"
-          >
-            <option value="totalRevenue">Total Revenue</option>
-            <option value="totalCommission">Total Commission</option>
+              onChange={(e) =>
+                onSortByChange(
+                  e.target.value as
+                    | "name"
+                    | "totalRevenue"
+                    | "completedBookings",
+                )
+              }
+              className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:w-48"
+            >
+              <option value="totalRevenue">Total Revenue</option>
             <option value="completedBookings">Completed Bookings</option>
             <option value="name">Name</option>
           </select>
@@ -102,7 +95,6 @@ export const ServiceProviderRecords: React.FC<ServiceProviderRecordsProps> = ({
         </div>
       </div>
 
-      {/* Service Provider Records Table */}
       <ServiceProviderPerformanceTable
         providers={providers}
         loading={loading}

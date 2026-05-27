@@ -255,7 +255,11 @@ export const getMediaByTypeAndOwner = async (
 ): Promise<FrontendMediaItem[]> => {
   try {
     const mediaActionFn = httpsCallable(functions, "mediaAction");
-    const result = await mediaActionFn({ action: "getMediaByTypeAndOwner", ownerId, mediaType });
+    const result = await mediaActionFn({
+      action: "getMediaByTypeAndOwner",
+      ownerId,
+      mediaType,
+    });
 
     const data = result.data as {
       success: boolean;
@@ -287,7 +291,10 @@ export const validateMediaItems = async (
 ): Promise<FrontendMediaValidationSummary[]> => {
   try {
     const mediaActionFn = httpsCallable(functions, "mediaAction");
-    const result = await mediaActionFn({ action: "validateMediaItems", mediaIds });
+    const result = await mediaActionFn({
+      action: "validateMediaItems",
+      mediaIds,
+    });
 
     const data = result.data as {
       success: boolean;
@@ -327,10 +334,13 @@ export const uploadMedia = async (
 ): Promise<FrontendMediaItem> => {
   try {
     const mediaActionFn = httpsCallable(functions, "mediaAction");
-    const result = await mediaActionFn({ action: "uploadMedia", fileName,
+    const result = await mediaActionFn({
+      action: "uploadMedia",
+      fileName,
       contentType,
       mediaType,
-      fileData: Array.from(fileData), });
+      fileData: Array.from(fileData),
+    });
 
     const data = result.data as {
       success: boolean;
@@ -365,8 +375,11 @@ export const updateMediaMetadata = async (
 ): Promise<FrontendMediaItem> => {
   try {
     const mediaActionFn = httpsCallable(functions, "mediaAction");
-    const result = await mediaActionFn({ action: "updateMediaMetadata", mediaId,
-      newFileName: newFileName || null, });
+    const result = await mediaActionFn({
+      action: "updateMediaMetadata",
+      mediaId,
+      newFileName: newFileName || null,
+    });
 
     const data = result.data as {
       success: boolean;

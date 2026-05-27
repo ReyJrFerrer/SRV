@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAdmin } from "../hooks/useAdmin";
 import ProviderStats from "../components/userManagement/ProviderStats";
 import { adminServiceCanister } from "../services/adminServiceCanister";
+import { ConfirmModal } from "../components/ConfirmModal";
 import {
   UserDetailsHeader,
   UserInformationCard,
@@ -59,9 +60,17 @@ export const UserDetailsPage: React.FC = () => {
     reputation: false,
     account: false,
     phone: false,
+    delete: false,
+    restore: false,
+    permanentDelete: false,
   });
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false);
+  const [permanentDeleteConfirmOpen, setPermanentDeleteConfirmOpen] =
+    useState(false);
+  const navigate = useNavigate();
 
   const handleUpdateCommission = (newAmount: number) => {
     // Update local balance when refreshed from ProviderStats
@@ -211,6 +220,70 @@ export const UserDetailsPage: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (!user) return;
+
+    setActionLoading((prev) => ({ ...prev, delete: true }));
+    try {
+      await adminServiceCanister.deleteUserAccount(user.id);
+      toast.success("User account deleted successfully");
+      setDeleteConfirmOpen(false);
+      navigate("/users");
+    } catch (error) {
+      console.error("Failed to delete user account:", error);
+      toast.error("Failed to delete user account. Please try again.");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, delete: false }));
+    }
+  };
+
+  const handleRestoreClick = () => {
+    setRestoreConfirmOpen(true);
+  };
+
+  const confirmRestoreAccount = async () => {
+    if (!user) return;
+
+    setActionLoading((prev) => ({ ...prev, restore: true }));
+    try {
+      await adminServiceCanister.restoreUserAccount(user.id);
+      toast.success("User account restored successfully");
+      setRestoreConfirmOpen(false);
+      await refreshUsers();
+      await loadUser();
+    } catch (error) {
+      console.error("Failed to restore user account:", error);
+      toast.error("Failed to restore user account. Please try again.");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, restore: false }));
+    }
+  };
+
+  const handlePermanentDeleteClick = () => {
+    setPermanentDeleteConfirmOpen(true);
+  };
+
+  const confirmPermanentDelete = async () => {
+    if (!user) return;
+
+    setActionLoading((prev) => ({ ...prev, permanentDelete: true }));
+    try {
+      await adminServiceCanister.permanentDeleteUser(user.id);
+      toast.success("User account permanently deleted");
+      setPermanentDeleteConfirmOpen(false);
+      navigate("/users");
+    } catch (error) {
+      console.error("Failed to permanently delete user:", error);
+      toast.error("Failed to permanently delete user. Please try again.");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, permanentDelete: false }));
+    }
+  };
+
   // Load user data function
   const loadUser = useCallback(async () => {
     if (!id) {
@@ -326,6 +399,12 @@ export const UserDetailsPage: React.FC = () => {
         onLockClick={handleLockConfirmation}
         onActivateClick={handleActivateAccount}
         lockingAccount={actionLoading.account}
+        onDeleteClick={handleDeleteClick}
+        deletingAccount={actionLoading.delete}
+        onRestoreClick={handleRestoreClick}
+        restoringAccount={actionLoading.restore}
+        onPermanentDeleteClick={handlePermanentDeleteClick}
+        permanentlyDeleting={actionLoading.permanentDelete}
       />
 
       {/* Main Content */}
@@ -398,6 +477,36 @@ export const UserDetailsPage: React.FC = () => {
         onCustomDaysChange={(customDays) =>
           setSuspension((prev) => ({ ...prev, customDays }))
         }
+      />
+      <ConfirmModal
+        isOpen={deleteConfirmOpen}
+        title="Delete User Account"
+        message={`Are you sure you want to delete the account of ${user.name}? This is a soft delete — it will anonymize their profile to "Deleted User", cancel all active bookings, archive their services, and disable their login. The account can be restored later.`}
+        confirmText="Delete Account"
+        confirmColor="bg-red-600 hover:bg-red-700"
+        isLoading={actionLoading.delete}
+        onConfirm={confirmDeleteAccount}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
+      <ConfirmModal
+        isOpen={restoreConfirmOpen}
+        title="Restore User Account"
+        message={`Restore the account of ${user.name}? This will reactivate their profile and re-enable login. Previously cancelled bookings and archived services will remain as-is.`}
+        confirmText="Restore Account"
+        confirmColor="bg-green-600 hover:bg-green-700"
+        isLoading={actionLoading.restore}
+        onConfirm={confirmRestoreAccount}
+        onCancel={() => setRestoreConfirmOpen(false)}
+      />
+      <ConfirmModal
+        isOpen={permanentDeleteConfirmOpen}
+        title="Permanently Delete User"
+        message={`This will IRREVERSIBLY delete the account of ${user.name}. All user data, services, bookings, reviews, messages, notifications, media files, and the Firebase Auth account will be permanently removed. The user's ID will be cleared from all related records. This action CANNOT be undone.`}
+        confirmText="Permanently Delete"
+        confirmColor="bg-red-700 hover:bg-red-800"
+        isLoading={actionLoading.permanentDelete}
+        onConfirm={confirmPermanentDelete}
+        onCancel={() => setPermanentDeleteConfirmOpen(false)}
       />
       {modals.editPhone && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

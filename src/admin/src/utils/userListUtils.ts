@@ -18,6 +18,7 @@ export interface UserData {
   // Online/offline status
   isActive?: boolean;
   lastActivity?: string | Date;
+  deletedAt?: Date;
 }
 
 // Convert Profile to UserData format
@@ -117,6 +118,7 @@ export const convertProfileToUserData = async (
     servicesCount: servicesCount,
     isActive: isActive,
     lastActivity: lastActivity,
+    deletedAt: profile.deletedAt ? new Date(profile.deletedAt) : undefined,
   };
 };
 

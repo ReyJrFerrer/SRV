@@ -22,11 +22,13 @@ export interface ServiceData {
   price: number;
   currency: string;
   duration?: number;
-  location?: string | {
-    address?: string;
-    city?: string;
-    state?: string;
-  };
+  location?:
+    | string
+    | {
+        address?: string;
+        city?: string;
+        state?: string;
+      };
   scheduledDate?: Date;
   completedDate?: Date;
   createdDate: Date;
@@ -201,7 +203,7 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
                   </div>
                   <div>
                     <span className="font-medium">Price:</span>{" "}
-                    {formatCurrency(service.price , service.currency)}
+                    {formatCurrency(service.price, service.currency)}
                   </div>
                   {service.duration && (
                     <div>
@@ -214,7 +216,11 @@ export const UserServicesList: React.FC<UserServicesListProps> = ({
                       <span className="font-medium">Location:</span>{" "}
                       {typeof service.location === "string"
                         ? service.location
-                        : [service.location.city, service.location.state].filter(Boolean).join(", ") || service.location.address || "N/A"}
+                        : [service.location.city, service.location.state]
+                            .filter(Boolean)
+                            .join(", ") ||
+                          service.location.address ||
+                          "N/A"}
                     </div>
                   )}
                   {service.scheduledDate && (

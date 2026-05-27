@@ -77,10 +77,8 @@ const ServiceDetailsPage: React.FC = () => {
   };
 
   // Load service images using the useServiceImages hook
-  const {
-    images: serviceImages,
-    isLoading: isLoadingServiceImages,
-  } = useServiceImages(service?.id, service?.imageUrls || []);
+  const { images: serviceImages, isLoading: isLoadingServiceImages } =
+    useServiceImages(service?.id, service?.imageUrls || []);
 
   // Load service certificates using the provider's useServiceCertificates hook
   const {
@@ -119,7 +117,8 @@ const ServiceDetailsPage: React.FC = () => {
           setService(processedServiceData as Service);
 
           try {
-            const servicePackages = await serviceCanisterService.getServicePackages(serviceId);
+            const servicePackages =
+              await serviceCanisterService.getServicePackages(serviceId);
             setPackages(servicePackages || []);
           } catch (packageError) {
             console.error("Error loading packages:", packageError);
@@ -253,27 +252,29 @@ const ServiceDetailsPage: React.FC = () => {
                           </div>
 
                           {/* Time Slots List Bones */}
-                          <div className="flex flex-col lg:flex-row lg:flex-wrap gap-2.5 lg:gap-2 pt-1">
+                          <div className="flex flex-col gap-2.5 pt-1 lg:flex-row lg:flex-wrap lg:gap-2">
                             {/* Slot 1 Bone */}
                             <React.Fragment>
                               {/* Mobile/Tablet */}
-                              <div className="flex lg:hidden items-center gap-2.5">
+                              <div className="flex items-center gap-2.5 lg:hidden">
                                 <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-200"></div>
                                 <div className="h-4 w-32 rounded bg-gray-100"></div>
                               </div>
                               {/* Laptop/Desktop */}
-                              <div className="hidden lg:block h-[30px] w-[130px] rounded-md bg-gray-100 border border-gray-200"></div>
+                              <div className="hidden h-[30px] w-[130px] rounded-md border border-gray-200 bg-gray-100 lg:block"></div>
                             </React.Fragment>
 
                             {/* Slot 2 Bone */}
-                            <div className={index === 1 ? "hidden" : "contents"}>
+                            <div
+                              className={index === 1 ? "hidden" : "contents"}
+                            >
                               {/* Mobile/Tablet */}
-                              <div className="flex lg:hidden items-center gap-2.5">
+                              <div className="flex items-center gap-2.5 lg:hidden">
                                 <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-200"></div>
                                 <div className="h-4 w-28 rounded bg-gray-100"></div>
                               </div>
                               {/* Laptop/Desktop */}
-                              <div className="hidden lg:block h-[30px] w-[110px] rounded-md bg-gray-100 border border-gray-200"></div>
+                              <div className="hidden h-[30px] w-[110px] rounded-md border border-gray-200 bg-gray-100 lg:block"></div>
                             </div>
                           </div>
                         </div>
@@ -469,7 +470,7 @@ const ServiceDetailsPage: React.FC = () => {
         onConfirm={handleDeleteService}
       />
 
-           <ServiceDetailsHeader onBackClick={handleBackClick} />
+      <ServiceDetailsHeader onBackClick={handleBackClick} />
 
       {/* Main Content */}
       <main className="mx-auto min-h-[calc(100vh-5rem)] max-w-full space-y-10 px-4 py-8 sm:px-8">
@@ -501,7 +502,7 @@ const ServiceDetailsPage: React.FC = () => {
         )}
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* Left: Location & Packages */}
           <div className="flex flex-col gap-8">
             <LockableSection locked={false}>

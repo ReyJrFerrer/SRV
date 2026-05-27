@@ -145,21 +145,18 @@ export const useAdmin = (): UseAdminReturn => {
         try {
           const lockStatuses =
             await adminServiceCanister.getAllUserLockStatuses();
-          setUserLockStatus((prevStatus) => {
-            const newStatus = { ...prevStatus, ...lockStatuses };
-            try {
-              localStorage.setItem(
-                "adminUserLockStatus",
-                JSON.stringify(newStatus),
-              );
-            } catch (error) {
-              console.error(
-                "Failed to save lock statuses to localStorage:",
-                error,
-              );
-            }
-            return newStatus;
-          });
+          setUserLockStatus(lockStatuses);
+          try {
+            localStorage.setItem(
+              "adminUserLockStatus",
+              JSON.stringify(lockStatuses),
+            );
+          } catch (error) {
+            console.error(
+              "Failed to save lock statuses to localStorage:",
+              error,
+            );
+          }
         } catch (error) {
           console.warn(
             "Failed to fetch user lock statuses, continuing with cached data:",
@@ -241,7 +238,7 @@ export const useAdmin = (): UseAdminReturn => {
 
   const getUserLockStatus = useCallback(
     (userId: string): boolean => {
-      return userLockStatus[userId] || false;
+      return userLockStatus[userId] === true;
     },
     [userLockStatus],
   );

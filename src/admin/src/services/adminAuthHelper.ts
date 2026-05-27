@@ -40,7 +40,7 @@ export async function createAdminProfile(
         principal,
         name,
         phone,
-      }
+      },
     });
 
     const data = result.data as CreateAdminProfileResult;

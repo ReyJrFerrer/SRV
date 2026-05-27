@@ -11,6 +11,7 @@
  */
 
 import OneSignal from "react-onesignal";
+import { getFirebaseFunctions } from "./firebaseApp";
 
 interface PlayerIdMetadata {
   playerId: string;
@@ -98,6 +99,7 @@ class OneSignalService {
           if (playerId) {
             this.currentPlayerId = playerId;
             this.savePlayerIdMetadata(playerId, true);
+            this.registerPlayerId(playerId);
           }
         } catch (idError) {}
       }
@@ -196,9 +198,10 @@ class OneSignalService {
       if (alreadySubscribed) {
         const existingPlayerId = OneSignal.User.onesignalId;
         if (existingPlayerId) {
-          this.currentPlayerId = existingPlayerId;
-          this.savePlayerIdMetadata(existingPlayerId, true);
-          return existingPlayerId;
+        this.currentPlayerId = existingPlayerId;
+        this.savePlayerIdMetadata(existingPlayerId, true);
+        this.registerPlayerId(existingPlayerId);
+        return existingPlayerId;
         }
       }
 
@@ -416,22 +419,21 @@ class OneSignalService {
     }
 
     try {
-      // Import Firebase functions
-      const { getFunctions, httpsCallable } =
-        await import("firebase/functions");
-      const functions = getFunctions();
-      const storePlayerId = httpsCallable(functions, "storeOneSignalPlayerId");
-      const result = await storePlayerId({ playerId });
+      const { httpsCallable } = await import("firebase/functions");
+      const functions = getFirebaseFunctions();
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
+      const result = await notificationActionFn({
+        action: "storeOneSignalPlayerId",
+        data: { playerId },
+      });
       const data = result.data as { success: boolean };
       return data.success;
     } catch (error) {
+      console.error("Failed to register OneSignal player ID:", error);
       return false;
     }
   }
 
-  /**
-   * Unregister player ID from backend
-   */
   private async unregisterPlayerId(): Promise<boolean> {
     try {
       const playerId = this.currentPlayerId;
@@ -440,18 +442,17 @@ class OneSignalService {
         return true;
       }
 
-      // Import Firebase functions
-      const { getFunctions, httpsCallable } =
-        await import("firebase/functions");
-      const functions = getFunctions();
-      const removePlayerId = httpsCallable(
-        functions,
-        "removeOneSignalPlayerId",
-      );
-      const result = await removePlayerId({ playerId });
+      const { httpsCallable } = await import("firebase/functions");
+      const functions = getFirebaseFunctions();
+      const notificationActionFn = httpsCallable(functions, "notificationAction");
+      const result = await notificationActionFn({
+        action: "removeOneSignalPlayerId",
+        data: { playerId },
+      });
       const data = result.data as { success: boolean };
       return data.success;
     } catch (error) {
+      console.error("Failed to unregister OneSignal player ID:", error);
       return false;
     }
   }

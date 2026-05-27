@@ -45,8 +45,8 @@ const ActionButtons: React.FC<Props> = ({
             disabled={isDeleting || hasActiveBookings}
             className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-all sm:w-auto ${
               isDeleting || hasActiveBookings
-                ? "cursor-not-allowed text-red-300"
-                : "text-red-500 hover:bg-red-50 hover:text-red-700"
+                ? "cursor-not-allowed text-red-300 bg-red-100 hover:bg-red-200"
+              : "text-white bg-red-500 hover:bg-red-600 "
             }`}
           >
             <TrashIcon className="h-5 w-5" />
@@ -63,8 +63,8 @@ const ActionButtons: React.FC<Props> = ({
             disabled={!onRestore || isRestoring}
             className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-8 text-sm font-semibold shadow-sm transition-all sm:w-auto ${
               !onRestore || isRestoring
-                ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                : "bg-gray-900 text-white hover:bg-gray-800"
+                ? "cursor-not-allowed bg-green-100 text-green-200"
+                : "bg-green-500 text-white hover:bg-green-600"
             }`}
           >
             <ArrowUturnLeftIcon className="h-5 w-5" />
@@ -87,8 +87,8 @@ const ActionButtons: React.FC<Props> = ({
           disabled={isDeleting || hasActiveBookings}
           className={`flex h-12 w-full items-center justify-center bg-red-500 text-white gap-2 shadow-sm rounded-xl px-4 text-sm font-medium transition-all sm:w-auto ${
             isDeleting || hasActiveBookings
-              ? "cursor-not-allowed text-red-300"
-              : "text-red-500 hover:bg-red-700 "
+              ? "cursor-not-allowed text-red-300 bg-red-100 hover:bg-red-200"
+              : "text-red-500 bg-red-500 hover:bg-red-700 "
           }`}
         >
           <TrashIcon className="h-5 w-5" />

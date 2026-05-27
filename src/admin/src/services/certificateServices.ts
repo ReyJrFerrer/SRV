@@ -8,7 +8,7 @@ export const getServicesWithCertificates = async (): Promise<any[]> => {
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "getServicesWithCertificates",
-      data: {},
+      payload: {},
     });
 
     return result || [];
@@ -25,7 +25,7 @@ export const getPendingCertificateValidations = async (): Promise<any[]> => {
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "getPendingCertificateValidations",
-      data: {},
+      payload: {},
     });
 
     return result || [];
@@ -60,7 +60,7 @@ export const updateCertificateValidationStatus = async (
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "updateCertificateValidationStatus",
-      data: data,
+      payload: data,
     });
     return result || `Certificate ${status.toLowerCase()} successfully`;
   } catch (error) {
@@ -79,7 +79,7 @@ export const getValidatedCertificates = async (): Promise<any[]> => {
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "getValidatedCertificates",
-      data: {},
+      payload: {},
     });
     return result || [];
   } catch (error) {
@@ -95,7 +95,7 @@ export const getRejectedCertificates = async (): Promise<any[]> => {
 
     const result = await callFirebaseFunction("adminUserAction", {
       action: "getRejectedCertificates",
-      data: {},
+      payload: {},
     });
     return result || [];
   } catch (error) {

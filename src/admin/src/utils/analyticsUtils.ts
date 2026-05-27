@@ -6,7 +6,6 @@ import {
   processCommissionTransactions,
 } from "./analyticsProviderUtils";
 
-// Helper function to check if user is online
 export const isUserOnline = (user: any): boolean => {
   if (user.isActive !== undefined) {
     return user.isActive;
@@ -36,7 +35,6 @@ export const isUserOnline = (user: any): boolean => {
   return false;
 };
 
-// Helper function to check if user is dormant
 export const isUserDormant = (user: any): boolean => {
   if (user.lastActivity) {
     const lastActivityDate =
@@ -57,13 +55,12 @@ export const isUserDormant = (user: any): boolean => {
     const now = new Date();
     const daysSinceUpdate =
       (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24);
-    return daysSinceUpdate >= 30; // At least 30 days
+    return daysSinceUpdate >= 30;
   }
 
   return true;
 };
 
-// Format currency for display
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
@@ -71,7 +68,6 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-// Check if user has a provider role
 export const isProvider = (user: any): boolean => {
   if (!user.activeRole) return false;
 
@@ -84,7 +80,6 @@ export const isProvider = (user: any): boolean => {
   return false;
 };
 
-// Check if user has a client role
 export const isClient = (user: any): boolean => {
   if (!user.activeRole) return false;
 
@@ -95,7 +90,6 @@ export const isClient = (user: any): boolean => {
   return false;
 };
 
-// Filter users based on filter type
 export const filterUsers = (
   users: any[],
   filter: "all" | "online" | "dormant",
@@ -112,19 +106,6 @@ export const filterUsers = (
   });
 };
 
-// Count providers from filtered users
-export const countProviders = (users: any[]): number => {
-  if (!users) return 0;
-  return users.filter(isProvider).length;
-};
-
-// Count clients from filtered users
-export const countClients = (users: any[]): number => {
-  if (!users) return 0;
-  return users.filter(isClient).length;
-};
-
-// Count online users count
 export const calculateOnlineUsers = (users: any[]): number => {
   if (!users) return 0;
   return users.filter(
@@ -132,7 +113,6 @@ export const calculateOnlineUsers = (users: any[]): number => {
   ).length;
 };
 
-// Process service provider performance data
 export interface ServiceProviderPerformanceData {
   id: string;
   name: string;
@@ -141,37 +121,11 @@ export interface ServiceProviderPerformanceData {
   totalCommission: number;
   completedBookings: number;
   totalBookings: number;
-  walletBalance: number;
   profilePicture?: {
     imageUrl: string;
     thumbnailUrl: string;
   };
 }
-
-const getProvidersFromUsers = (users: any[]): any[] => {
-  if (!users || users.length === 0) return [];
-
-  const serviceProviderUsers = users.filter((user) => {
-    if (typeof user.activeRole === "string") {
-      return user.activeRole === "ServiceProvider";
-    }
-    return false;
-  });
-
-  return serviceProviderUsers.map((user) => ({
-    id: user.id.toString(),
-    name: user.name,
-    phone: user.phone,
-    totalEarnings: 0,
-    pendingCommission: 0,
-    settledCommission: 0,
-    lastActivity: user.updatedAt
-      ? user.updatedAt instanceof Date
-        ? user.updatedAt
-        : new Date(user.updatedAt)
-      : new Date(),
-  }));
-};
 
 export const processServiceProviderPerformance = (
   bookings: any[],
@@ -179,40 +133,26 @@ export const processServiceProviderPerformance = (
   commissionTransactions: any[],
   users: any[],
   systemStats: any,
-  walletBalances: Record<string, number>,
-  walletProviderIds: string[] = [],
 ): ServiceProviderPerformanceData[] => {
-  if (!systemStats) return [];
-
-  if (!users) return [];
+  if (!systemStats || !users) return [];
 
   const providerIds =
-    walletProviderIds.length > 0
-      ? new Set(walletProviderIds)
-      : bookings && bookings.length > 0
-        ? extractProviderIdsFromBookings(bookings)
-        : new Set<string>();
+    bookings && bookings.length > 0
+      ? extractProviderIdsFromBookings(bookings)
+      : new Set<string>();
+
+  let providersToShow = serviceProviders;
+
+  if (!providersToShow || providersToShow.length === 0) return [];
 
   if (providerIds.size === 0) {
-    let providersToShow = serviceProviders;
-    if (!providersToShow || providersToShow.length === 0) {
-      providersToShow = getProvidersFromUsers(users);
-    }
-
-    if (!providersToShow || providersToShow.length === 0) return [];
-
-    return createFallbackProviderData(
-      providersToShow,
-      systemStats,
-      walletBalances,
-    );
+    return createFallbackProviderData(providersToShow);
   }
 
   const performanceMap = buildProviderPerformanceMap(
     providerIds,
     users,
     serviceProviders,
-    walletBalances,
   );
 
   if (bookings && bookings.length > 0) {
@@ -228,15 +168,13 @@ export const processServiceProviderPerformance = (
 
 const getSortValue = (
   provider: ServiceProviderPerformanceData,
-  sortBy: "name" | "totalRevenue" | "totalCommission" | "completedBookings",
+  sortBy: "name" | "totalRevenue" | "completedBookings",
 ): any => {
   switch (sortBy) {
     case "name":
       return provider.name.toLowerCase();
     case "totalRevenue":
       return provider.totalRevenue;
-    case "totalCommission":
-      return provider.totalCommission;
     case "completedBookings":
       return provider.completedBookings;
     default:
@@ -247,7 +185,7 @@ const getSortValue = (
 export const filterAndSortProviders = (
   providers: ServiceProviderPerformanceData[],
   searchTerm: string,
-  sortBy: "name" | "totalRevenue" | "totalCommission" | "completedBookings",
+  sortBy: "name" | "totalRevenue" | "completedBookings",
   sortOrder: "asc" | "desc",
 ): ServiceProviderPerformanceData[] => {
   let filtered = providers;
@@ -271,7 +209,6 @@ export const filterAndSortProviders = (
   });
 };
 
-// Process service category data for pie chart
 export interface ServiceCategoryData {
   name: string;
   value: number;
@@ -284,7 +221,6 @@ export const processServiceCategoryData = (
 ): ServiceCategoryData[] => {
   const categoryCounts: Record<string, number> = {};
 
-  // Map category IDs to names
   const categoryNameMap: Record<string, string> = {};
   if (serviceCategories && Array.isArray(serviceCategories)) {
     serviceCategories.forEach((category: any) => {
@@ -292,9 +228,10 @@ export const processServiceCategoryData = (
     });
   }
 
-  // Count services by category
   if (services && Array.isArray(services)) {
     services.forEach((service: any) => {
+      if (service.status === "Archived" || service.serviceDeleted === true)
+        return;
       const categoryId = service.category?.id || service.category || "Unknown";
       const categoryName = categoryNameMap[categoryId] || categoryId;
       categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;

@@ -14,6 +14,7 @@ export interface Profile {
   profilePicture: [] | [ProfileImage];
   activeRole: UserRole;
   email?: string;
+  deletedAt?: string;
 }
 export interface ProfileImage {
   thumbnailUrl: string;

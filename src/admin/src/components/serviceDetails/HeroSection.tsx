@@ -1,7 +1,7 @@
 import React from "react";
 import { PencilIcon, TagIcon } from "@heroicons/react/24/solid";
 import Tooltip from "../../../../frontend/src/components/common/Tooltip";
-import ViewReviewsButton from "../../../../frontend/src/components/common/ViewReviewsButton";
+import ViewReviewsButton from "../ViewReviewsButton";
 
 interface Props {
   onBack: () => void;
