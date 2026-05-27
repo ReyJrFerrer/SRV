@@ -117,6 +117,7 @@ export interface ServiceProviderPerformanceData {
   id: string;
   name: string;
   phone: string;
+  totalRevenue: number;
   totalCommission: number;
   completedBookings: number;
   totalBookings: number;
@@ -162,29 +163,29 @@ export const processServiceProviderPerformance = (
   const values = Array.from(
     performanceMap.values(),
   ) as ServiceProviderPerformanceData[];
-  return values.sort((a, b) => b.totalCommission - a.totalCommission);
+  return values.sort((a, b) => b.totalRevenue - a.totalRevenue);
 };
 
 const getSortValue = (
   provider: ServiceProviderPerformanceData,
-  sortBy: "name" | "totalCommission" | "completedBookings",
+  sortBy: "name" | "totalRevenue" | "completedBookings",
 ): any => {
   switch (sortBy) {
     case "name":
       return provider.name.toLowerCase();
-    case "totalCommission":
-      return provider.totalCommission;
+    case "totalRevenue":
+      return provider.totalRevenue;
     case "completedBookings":
       return provider.completedBookings;
     default:
-      return provider.totalCommission;
+      return provider.totalRevenue;
   }
 };
 
 export const filterAndSortProviders = (
   providers: ServiceProviderPerformanceData[],
   searchTerm: string,
-  sortBy: "name" | "totalCommission" | "completedBookings",
+  sortBy: "name" | "totalRevenue" | "completedBookings",
   sortOrder: "asc" | "desc",
 ): ServiceProviderPerformanceData[] => {
   let filtered = providers;

@@ -2,14 +2,14 @@ import React from "react";
 import { BanknotesIcon, UserIcon } from "@heroicons/react/24/outline";
 
 interface SystemOverviewStatsProps {
-  totalCommission: number;
+  totalRevenue: number;
   onlineUsers: number;
   loading: boolean;
   formatCurrency: (amount: number) => string;
 }
 
 export const SystemOverviewStats: React.FC<SystemOverviewStatsProps> = ({
-  totalCommission,
+  totalRevenue,
   onlineUsers,
   loading,
   formatCurrency,
@@ -25,10 +25,10 @@ export const SystemOverviewStats: React.FC<SystemOverviewStatsProps> = ({
             <div className="ml-5 w-0 flex-1">
               <dl>
                 <dt className="truncate text-sm font-medium text-gray-500">
-                  Total Commission
+                  Total Revenue
                 </dt>
                 <dd className="text-lg font-medium text-gray-900">
-                  {loading ? "..." : formatCurrency(totalCommission)}
+                  {loading ? "..." : formatCurrency(totalRevenue)}
                 </dd>
               </dl>
             </div>

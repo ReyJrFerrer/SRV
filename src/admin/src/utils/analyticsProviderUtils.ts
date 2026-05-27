@@ -25,8 +25,9 @@ export const extractProviderIdsFromBookings = (
 ): Set<string> => {
   const providerIds = new Set<string>();
   bookings.forEach((booking) => {
-    if (booking.serviceProviderId) {
-      providerIds.add(booking.serviceProviderId);
+    const pid = booking.serviceProviderId || booking.providerId;
+    if (pid) {
+      providerIds.add(pid);
     }
   });
   return providerIds;
@@ -48,6 +49,7 @@ export const buildProviderPerformanceMap = (
       id: providerId,
       name: user.name,
       phone: user.phone,
+      totalRevenue: 0,
       totalCommission: 0,
       completedBookings: 0,
       totalBookings: 0,
@@ -62,6 +64,7 @@ export const buildProviderPerformanceMap = (
           id: provider.id,
           name: provider.name,
           phone: provider.phone,
+          totalRevenue: 0,
           totalCommission: 0,
           completedBookings: 0,
           totalBookings: 0,
@@ -93,6 +96,7 @@ export const processBookingsForPerformance = (
 
       if (booking.status === "Completed" || booking.status === "Settled") {
         performance.completedBookings++;
+        performance.totalRevenue += booking.price || 0;
       }
     }
   });

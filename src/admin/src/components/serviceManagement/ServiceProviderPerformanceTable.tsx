@@ -6,7 +6,7 @@ interface ServiceProviderPerformanceData {
   id: string;
   name: string;
   phone: string;
-  totalCommission: number;
+  totalRevenue: number;
   completedBookings: number;
   totalBookings: number;
   profilePicture?: {
@@ -73,7 +73,7 @@ const ServiceProviderPerformanceTable: React.FC<
                 Service Provider
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
-                Total Commission
+                Total Revenue
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-blue-700">
                 Completed Bookings
@@ -121,7 +121,7 @@ const ServiceProviderPerformanceTable: React.FC<
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                    {formatCurrency(provider.totalCommission)}
+                    {formatCurrency(provider.totalRevenue)}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                     {provider.completedBookings}

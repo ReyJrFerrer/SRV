@@ -43,8 +43,8 @@ export const AnalyticsPage: React.FC = () => {
   const [showMobileBar, setShowMobileBar] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<
-    "name" | "totalCommission" | "completedBookings"
-  >("totalCommission");
+    "name" | "totalRevenue" | "completedBookings"
+  >("totalRevenue");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [userFilter, setUserFilter] = useState<"all" | "online" | "dormant">(
     "all",
@@ -183,7 +183,7 @@ export const AnalyticsPage: React.FC = () => {
       <AnalyticsHeader showMobileBar={showMobileBar} />
       <main className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 sm:pb-8 lg:px-8">
         <SystemOverviewStats
-          totalCommission={systemStats?.totalCommission || 0}
+          totalRevenue={systemStats?.totalRevenue || 0}
           onlineUsers={onlineUsers}
           loading={loading.systemStats}
           formatCurrency={formatCurrency}
