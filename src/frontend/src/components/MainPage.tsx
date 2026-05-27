@@ -11,6 +11,7 @@ import { SiteFooter } from "./layout/SiteFooter";
 import { MobileSiteHeader } from "./layout/MobileSiteHeader";
 import "./shared/animations.css";
 import { CommunityCTASection } from "./layout/CommunityCTASection";
+import ReputationCircle from "./common/ReputationCircle";
 import "./shared/styles.css";
 
 interface MainPageProps {
@@ -41,12 +42,6 @@ export default function MainPage({
         setRepScore(50);
       }, 1600);
     }
-  };
-  const getScoreColor = (s: number): string => {
-    if (s > 80) return '#10b981';
-    if (s > 50) return '#0ea5e9';
-    if (s > 20) return '#f59e0b';
-    return '#f43f5e';
   };
 
   const handleLoginClick = () => {
@@ -800,29 +795,11 @@ export default function MainPage({
           </div>
 
           <div className="ai-reputation-split">
-            <div className="rep-circle-wrapper">
-              <div className="rep-circle-container" onClick={handleRepClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleRepClick(); }}>
-                <div className={`rep-circle-ring ${celebrating ? 'rep-circle-celebrating' : ''}`}>
-                  <div className="rep-circle-fill" style={{ background: `conic-gradient(${getScoreColor(repScore)} 0deg ${repScore * 3.6}deg, #e5e7eb ${repScore * 3.6}deg 360deg)` }}></div>
-                  <div className="rep-circle-inner">
-                    <div className="rep-circle-score" style={{ color: getScoreColor(repScore) }}>{repScore}</div>
-                    <div className="rep-circle-label" style={{ color: getScoreColor(repScore) }}>Trust Score</div>
-                  </div>
-                  {celebrating && (
-                    <div className="rep-circle-burst">
-                      <span className="burst-star s1">★</span>
-                      <span className="burst-star s2">★</span>
-                      <span className="burst-star s3">★</span>
-                      <span className="burst-star s4">★</span>
-                      <span className="burst-star s5">★</span>
-                      <span className="burst-star s6">★</span>
-                      <span className="burst-message">PERFECT!</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="rep-circle-hint">{celebrating ? 'Amazing! 🎉' : 'Click for a Surprise'}</div>
-            </div>
+            <ReputationCircle
+              score={repScore}
+              onClick={handleRepClick}
+              celebrating={celebrating}
+            />
 
             <div className="ai-reputation-content">
               <div className="ai-rep-point">
