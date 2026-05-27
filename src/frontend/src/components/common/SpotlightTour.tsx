@@ -499,12 +499,14 @@ export default function SpotlightTour({
 
     const PROVIDER_STEPS: CustomStep[] = [
       {
-        target: '[data-tour="provider-nav"]',
+        target: isDesktopLayout
+          ? ".tour-provider-nav-desktop"
+          : '[data-tour="provider-nav"]',
         headline: "Welcome to SRV Provider!",
         content:
           "Your central hub to grow your business, manage your services, and connect with new clients.",
         image: "/images/srv characters (SVG)/tutor.svg",
-        placement: "center",
+        placement: isDesktopLayout ? "right-start" : "center",
         disableBeacon: true,
         disableScroll: true,
       } as CustomStep,
