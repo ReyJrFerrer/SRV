@@ -783,26 +783,44 @@ export default function MainPage({
       {/* AI-Powered Trust & Reputation */}
       <section className="ai-reputation-section">
         <div className="container">
-          <div className="ai-reputation-header">
-            <h2 className="ai-reputation-title">
-              AI-Powered Trust & Reputation
-            </h2>
-            <p className="ai-reputation-description">
-              Every booking builds trust. Our AI engine analyzes reviews,
-              detects suspicious patterns, and powers a reputation system you
-              can rely on.
-            </p>
-          </div>
+          <div className="ai-reputation-layout">
+            <div className="ai-reputation-intro">
+              <div className="ai-reputation-header">
+                <p className="ai-reputation-kicker">Trust engine</p>
+                <h2 className="ai-reputation-title">
+                  AI-Powered Trust & Reputation
+                </h2>
+                <p className="ai-reputation-description">
+                  Every booking builds trust. Our AI engine analyzes reviews,
+                  detects suspicious patterns, and powers a reputation system
+                  you can rely on.
+                </p>
+              </div>
 
-          <div className="ai-reputation-split">
-            <ReputationCircle
-              score={repScore}
-              onClick={handleRepClick}
-              celebrating={celebrating}
-            />
+              <div className="ai-reputation-visual-card">
+                <div className="ai-reputation-visual-shell">
+                  <div className="ai-reputation-visual-orbit"></div>
+                  <ReputationCircle
+                    score={repScore}
+                    onClick={handleRepClick}
+                    celebrating={celebrating}
+                  />
+                </div>
+                <div className="ai-reputation-visual-caption">
+                  <span className="ai-reputation-visual-label">
+                    Interactive trust score
+                  </span>
+                  <p>
+                    Click the circle to see how reputation grows as verified
+                    bookings and AI review checks build confidence.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <div className="ai-reputation-content">
-              <div className="ai-rep-point">
+              <div className="ai-rep-point ai-rep-point-large">
+                <div className="ai-rep-point-index">01</div>
                 <div className="ai-rep-point-icon">
                   <SparklesIcon />
                 </div>
@@ -818,7 +836,8 @@ export default function MainPage({
                 </div>
               </div>
 
-              <div className="ai-rep-point">
+              <div className="ai-rep-point ai-rep-point-large">
+                <div className="ai-rep-point-index">02</div>
                 <div className="ai-rep-point-icon">
                   <ChartBarIcon />
                 </div>
@@ -827,20 +846,20 @@ export default function MainPage({
                     Dynamic Scoring Engine
                   </h3>
                   <p className="ai-rep-point-description">
-                    Always see the full picture with reputation scores updated in real-time from completed
-                    bookings, verified ratings, and AI-validated review data.
+                    Always see the full picture with reputation scores updated
+                    in real-time from completed bookings, verified ratings, and
+                    AI-validated review data.
                   </p>
                 </div>
               </div>
 
-              <div className="ai-rep-point">
+              <div className="ai-rep-point ai-rep-point-large">
+                <div className="ai-rep-point-index">03</div>
                 <div className="ai-rep-point-icon">
                   <ShieldCheckIcon />
                 </div>
                 <div className="ai-rep-point-text">
-                  <h3 className="ai-rep-point-title">
-                    Trust Assurance
-                  </h3>
+                  <h3 className="ai-rep-point-title">Trust Assurance</h3>
                   <p className="ai-rep-point-description">
                     Fairness monitoring and anomaly flagging ensure the system
                     rewards genuine service excellence while protecting the

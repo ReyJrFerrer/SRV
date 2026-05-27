@@ -3477,43 +3477,214 @@ body.menu-open {
 
 /* AI-Powered Trust & Reputation Section */
 .ai-reputation-section {
-  padding-bottom: 5rem;
-  background-color: #ffffff;
+  padding: 6rem 0 5rem;
+  background:
+    radial-gradient(circle at top left, rgba(226, 232, 240, 0.7), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(248, 250, 252, 0.95), transparent 28%),
+    linear-gradient(180deg, #fbfcfe 0%, #eef2f8 100%);
 }
 
 .ai-reputation-header {
-  text-align: center;
-  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.75rem;
+  margin-bottom: 0;
+}
+
+.ai-reputation-kicker {
+  margin: 0;
+  color: #f59e0b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .ai-reputation-title {
-  font-size: 1.875rem;
+  font-size: clamp(2.2rem, 3vw, 3.4rem);
   font-weight: bold;
-  color: #1e293b;
-  margin-bottom: 1rem;
+  line-height: 1.04;
+  color: #111827;
+  margin: 0;
   font-family: "rubik";
 }
 
 .ai-reputation-description {
-  color: #4b5563;
-  max-width: 48rem;
-  margin: 0 auto;
+  color: #475569;
+  max-width: 34rem;
+  margin: 0;
   font-size: 1.125rem;
   line-height: 1.6;
 }
 
-/* Split layout: visual left, content right */
-.ai-reputation-split {
-  display: flex;
-  align-items: center;
-  gap: 4rem;
-  max-width: 1100px;
+.ai-reputation-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
+  gap: 2.5rem;
+  align-items: start;
+  max-width: 1180px;
   margin: 0 auto;
 }
 
-/* Left: Interactive Reputation Circle */
+.ai-reputation-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ai-reputation-visual-card {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 2rem;
+  padding: 1.5rem 1.5rem 1.25rem;
+  box-shadow:
+    0 24px 70px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.ai-reputation-visual-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  overflow: hidden;
+}
+
+.ai-reputation-visual-shell::before {
+  content: "";
+  position: absolute;
+  inset: 12% 18%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.18), transparent 70%);
+  filter: blur(6px);
+}
+
+.ai-reputation-visual-orbit {
+  position: absolute;
+  width: min(100%, 22rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+.ai-reputation-visual-shell > .rep-circle-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.ai-reputation-visual-caption {
+  margin-top: 1rem;
+  padding: 0 0.25rem 0.1rem;
+}
+
+.ai-reputation-visual-label {
+  display: inline-flex;
+  margin-bottom: 0.45rem;
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ai-reputation-visual-caption p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.ai-reputation-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  padding-top: 3.3rem;
+}
+
+.ai-rep-point {
+  display: grid;
+  grid-template-columns: minmax(3.5rem, auto) auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  padding: 1.35rem 0;
+}
+
+.ai-rep-point + .ai-rep-point {
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.ai-rep-point-index {
+  font-size: clamp(3rem, 5vw, 4.5rem);
+  line-height: 0.8;
+  font-weight: 800;
+  letter-spacing: -0.08em;
+  color: rgba(245, 158, 11, 0.2);
+  font-family: "rubik";
+  user-select: none;
+}
+
+.ai-rep-point-icon {
+  flex-shrink: 0;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1rem;
+  background: rgba(254, 243, 199, 0.95);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(253, 224, 71, 0.45);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  transition: all 0.3s ease;
+}
+
+.ai-rep-point-icon svg {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.ai-rep-point:hover .ai-rep-point-icon {
+  background: #fef08a;
+  color: #ca8a04;
+  transform: translateY(-2px);
+}
+
+.ai-rep-point-text {
+  flex: 1;
+  padding-top: 0.1rem;
+}
+
+.ai-rep-point-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.55rem;
+  font-family: "rubik";
+}
+
+.ai-rep-point-description {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #475569;
+  max-width: 38rem;
+}
+
+.ai-rep-point.ai-rep-point-large.ai-rep-init {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.ai-rep-point.ai-rep-point-large.ai-rep-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .rep-circle-wrapper {
-  flex: 0 0 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3648,69 +3819,28 @@ body.menu-open {
   animation: msg-pop 3s ease-out forwards;
 }
 
+@media (min-width: 1024px) {
+  .ai-reputation-layout {
+    align-items: stretch;
+  }
+
+  .ai-reputation-intro,
+  .ai-reputation-content {
+    height: 100%;
+  }
+
+  .ai-reputation-content {
+    justify-content: space-between;
+    padding-top: 0;
+  }
+}
+
 @keyframes msg-pop {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
   20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
   40% { transform: translate(-50%, -50%) scale(1); }
   70% { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-}
-
-/* Right: Content Points */
-.ai-reputation-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
-}
-
-.ai-rep-point {
-  display: flex;
-  gap: 1.25rem;
-  align-items: flex-start;
-}
-
-.ai-rep-point-icon {
-  flex-shrink: 0;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background: #fef3c7;
-  color: #d97706;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.ai-rep-point-icon svg {
-  width: 1.4rem;
-  height: 1.4rem;
-}
-
-.ai-rep-point:hover .ai-rep-point-icon {
-  background: #f59e0b;
-  color: white;
-  transform: scale(1.08);
-}
-
-.ai-rep-point-text {
-  flex: 1;
-  padding-top: 0.35rem;
-}
-
-.ai-rep-point-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.35rem;
-  font-family: "rubik";
-}
-
-.ai-rep-point-description {
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: #4b5563;
 }
 
 /* Scroll animation for AI Reputation points */
@@ -3729,13 +3859,25 @@ body.menu-open {
 }
 
 @media (max-width: 900px) {
-  .ai-reputation-split {
-    flex-direction: column;
-    gap: 2.5rem;
+  .ai-reputation-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
 
-  .rep-circle-wrapper {
-    flex: none;
+  .ai-reputation-content {
+    padding-top: 0;
+  }
+
+  .ai-rep-point {
+    grid-template-columns: 3rem auto 1fr;
+  }
+
+  .ai-rep-point-index {
+    font-size: 2.6rem;
+  }
+
+  .ai-reputation-visual-shell {
+    min-height: 280px;
   }
 
   .rep-circle-ring {
@@ -3750,5 +3892,80 @@ body.menu-open {
 
   .rep-circle-score {
     font-size: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .ai-reputation-section {
+    padding: 4.5rem 0 4rem;
+  }
+
+  .ai-reputation-visual-card {
+    padding: 1rem;
+    border-radius: 1.5rem;
+  }
+
+  .ai-reputation-visual-shell {
+    min-height: 250px;
+  }
+
+  .ai-rep-point {
+    grid-template-columns: 2.6rem auto 1fr;
+    gap: 0.85rem;
+  }
+
+  .ai-rep-point-index {
+    font-size: 2.2rem;
+  }
+
+  .ai-rep-point-title {
+    font-size: 1.2rem;
+  }
+
+  .ai-rep-point-description {
+    font-size: 0.95rem;
+  }
+
+  .ai-reputation-title {
+    font-size: clamp(1.9rem, 8vw, 2.6rem);
+  }
+
+  .rep-circle-ring {
+    width: 134px;
+    height: 134px;
+  }
+
+  .rep-circle-inner {
+    width: 92px;
+    height: 92px;
+  }
+
+  .rep-circle-score {
+    font-size: 1.8rem;
+  }
+
+  .rep-circle-hint {
+    font-size: 0.72rem;
+  }
+
+  .ai-reputation-visual-caption p {
+    font-size: 0.92rem;
+  }
+
+  .ai-reputation-description {
+    font-size: 1rem;
+  }
+
+  .ai-reputation-header {
+    gap: 0.6rem;
+  }
+
+  .ai-reputation-visual-label {
+    font-size: 0.78rem;
+  }
+
+  .ai-reputation-content {
+    flex-direction: column;
+    gap: 0;
   }
 }
