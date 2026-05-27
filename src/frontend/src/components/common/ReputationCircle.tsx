@@ -87,9 +87,6 @@ export default function ReputationCircle({
           )}
         </div>
       </div>
-      <div className="rep-circle-hint mt-4 select-none text-sm font-medium text-slate-400 text-center">
-        {celebrating ? 'Amazing! 🎉' : 'Click for a Surprise'}
-      </div>
     </div>
   );
 }
