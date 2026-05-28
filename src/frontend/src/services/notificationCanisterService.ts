@@ -9,12 +9,14 @@ import {
   Unsubscribe,
   Timestamp,
   limit as firestoreLimit,
-  getFirestore,
 } from "firebase/firestore";
-import { getFirebaseFunctions, getFirebaseApp } from "./firebaseApp";
+import {
+  getFirebaseFunctions,
+  getFirebaseFirestore,
+} from "./firebaseApp";
 
 const functions = getFirebaseFunctions();
-const db = getFirestore(getFirebaseApp());
+const db = getFirebaseFirestore();
 
 export interface FrontendNotification {
   id: string;
