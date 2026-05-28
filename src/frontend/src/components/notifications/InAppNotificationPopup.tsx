@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { InAppNotificationItem } from "../../context/InAppNotificationContext";
 import {
@@ -9,7 +9,6 @@ import {
   EnvelopeOpenIcon,
   ServerStackIcon,
   UserIcon,
-  CurrencyDollarIcon,
   ClockIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/solid";
@@ -23,148 +22,129 @@ interface InAppNotificationPopupProps {
 
 interface NotificationStyle {
   icon: React.ReactNode;
-  gradientFrom: string;
   iconBg: string;
+  accentColor: string;
 }
 
 function getNotificationStyle(type: string): NotificationStyle {
   switch (type) {
-    // Client notification types
     case "booking_accepted":
       return {
         icon: <CheckCircleIcon className="h-5 w-5 text-green-600" />,
-        gradientFrom: "from-green-500",
         iconBg: "bg-green-100",
+        accentColor: "#22c55e",
       };
     case "booking_declined":
     case "booking_cancelled":
       return {
         icon: <XCircleIcon className="h-5 w-5 text-red-600" />,
-        gradientFrom: "from-red-500",
         iconBg: "bg-red-100",
+        accentColor: "#ef4444",
       };
     case "booking_completed":
       return {
         icon: <CheckCircleIcon className="h-5 w-5 text-blue-600" />,
-        gradientFrom: "from-blue-500",
         iconBg: "bg-blue-100",
+        accentColor: "#3b82f6",
       };
     case "payment_received":
+    case "payment_completed":
       return {
         icon: <CheckCircleIcon className="h-5 w-5 text-green-700" />,
-        gradientFrom: "from-green-600",
         iconBg: "bg-green-200",
+        accentColor: "#16a34a",
       };
     case "payment_failed":
+    case "payment_issue":
       return {
         icon: <XCircleIcon className="h-5 w-5 text-red-700" />,
-        gradientFrom: "from-red-600",
         iconBg: "bg-red-200",
+        accentColor: "#dc2626",
       };
     case "provider_message":
       return {
         icon: <EnvelopeOpenIcon className="h-5 w-5 text-purple-600" />,
-        gradientFrom: "from-purple-500",
         iconBg: "bg-purple-100",
+        accentColor: "#a855f7",
       };
     case "system_announcement":
       return {
         icon: <ServerStackIcon className="h-5 w-5 text-gray-700" />,
-        gradientFrom: "from-gray-500",
         iconBg: "bg-gray-200",
+        accentColor: "#6b7280",
       };
     case "service_rescheduled":
+    case "booking_rescheduled":
       return {
         icon: <ClockIcon className="h-5 w-5 text-yellow-700" />,
-        gradientFrom: "from-yellow-500",
         iconBg: "bg-yellow-200",
+        accentColor: "#eab308",
       };
     case "service_reminder":
       return {
         icon: <StarIcon className="h-5 w-5 text-blue-500" />,
-        gradientFrom: "from-blue-500",
         iconBg: "bg-blue-100",
+        accentColor: "#3b82f6",
       };
     case "promo_offer":
       return {
         icon: <StarIcon className="h-5 w-5 text-pink-500" />,
-        gradientFrom: "from-pink-500",
         iconBg: "bg-pink-100",
+        accentColor: "#ec4899",
       };
     case "provider_on_the_way":
       return {
         icon: <BellAlertIcon className="h-5 w-5 text-teal-600" />,
-        gradientFrom: "from-teal-500",
         iconBg: "bg-teal-100",
+        accentColor: "#14b8a6",
       };
     case "review_reminder":
       return {
         icon: <StarIcon className="h-5 w-5 text-yellow-500" />,
-        gradientFrom: "from-yellow-500",
         iconBg: "bg-yellow-100",
+        accentColor: "#eab308",
       };
-
-    // Provider notification types
     case "new_booking_request":
       return {
         icon: <UserIcon className="h-5 w-5 text-blue-600" />,
-        gradientFrom: "from-blue-500",
         iconBg: "bg-blue-100",
+        accentColor: "#3b82f6",
       };
     case "booking_confirmation":
       return {
         icon: <CheckCircleIcon className="h-5 w-5 text-green-600" />,
-        gradientFrom: "from-green-500",
         iconBg: "bg-green-100",
-      };
-    case "payment_completed":
-      return {
-        icon: <CurrencyDollarIcon className="h-5 w-5 text-green-700" />,
-        gradientFrom: "from-green-600",
-        iconBg: "bg-green-200",
+        accentColor: "#22c55e",
       };
     case "service_completion_reminder":
       return {
         icon: <ClockIcon className="h-5 w-5 text-orange-600" />,
-        gradientFrom: "from-orange-500",
         iconBg: "bg-orange-100",
+        accentColor: "#f97316",
       };
     case "review_request":
       return {
         icon: <StarIcon className="h-5 w-5 text-purple-600" />,
-        gradientFrom: "from-purple-500",
         iconBg: "bg-purple-100",
+        accentColor: "#a855f7",
       };
     case "chat_message":
       return {
         icon: <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-600" />,
-        gradientFrom: "from-blue-500",
         iconBg: "bg-blue-100",
-      };
-    case "booking_rescheduled":
-      return {
-        icon: <ClockIcon className="h-5 w-5 text-yellow-600" />,
-        gradientFrom: "from-yellow-500",
-        iconBg: "bg-yellow-100",
+        accentColor: "#3b82f6",
       };
     case "client_no_show":
       return {
         icon: <UserIcon className="h-5 w-5 text-red-500" />,
-        gradientFrom: "from-red-500",
         iconBg: "bg-red-100",
+        accentColor: "#ef4444",
       };
-    case "payment_issue":
-      return {
-        icon: <CurrencyDollarIcon className="h-5 w-5 text-red-700" />,
-        gradientFrom: "from-red-600",
-        iconBg: "bg-red-200",
-      };
-
     default:
       return {
         icon: <BellAlertIcon className="h-5 w-5 text-blue-600" />,
-        gradientFrom: "from-blue-500",
         iconBg: "bg-blue-100",
+        accentColor: "#3b82f6",
       };
   }
 }
@@ -196,7 +176,7 @@ const InAppNotificationPopup: React.FC<InAppNotificationPopupProps> = ({
 
   return (
     <div
-      className={`notification-item pointer-events-auto absolute left-1/2 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 sm:w-full sm:max-w-md`}
+      className="notification-item pointer-events-auto absolute left-1/2 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 sm:w-full sm:max-w-md"
       style={{ top: `${topOffset}px` }}
       role="alert"
       aria-live="polite"
@@ -204,10 +184,22 @@ const InAppNotificationPopup: React.FC<InAppNotificationPopupProps> = ({
       <div
         className={`${
           notification.exiting ? "notification-exit" : "notification-enter"
-        } cursor-pointer overflow-hidden rounded-2xl border border-white/30 bg-white/70 shadow-2xl shadow-black/10 backdrop-blur-xl`}
+        } relative cursor-pointer overflow-hidden rounded-2xl border border-white/40 bg-white/60 shadow-[0_10px_40px_-6px_rgba(0,0,0,0.25)] backdrop-blur-xl`}
         onClick={handleClick}
       >
-        <div className="flex items-start gap-3 p-4">
+        {/* Background timer gradient — fills the card and shrinks over time */}
+        {!notification.exiting && (
+          <div
+            className="notification-timer absolute inset-y-0 left-0 pointer-events-none"
+            style={{
+              background: `linear-gradient(to right, ${style.accentColor}18, ${style.accentColor}08 60%, transparent)`,
+              animationDuration: `${notification.duration ?? 10000}ms`,
+            }}
+          />
+        )}
+
+        {/* Content sits above the background */}
+        <div className="relative z-10 flex items-start gap-3 p-4">
           {/* Icon */}
           <span
             className={`inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${style.iconBg}`}
@@ -220,7 +212,7 @@ const InAppNotificationPopup: React.FC<InAppNotificationPopupProps> = ({
             <h4 className="text-sm font-semibold text-gray-900">
               {notification.title}
             </h4>
-            <p className="mt-0.5 line-clamp-2 text-sm leading-relaxed text-gray-600">
+            <p className="mt-0.5 line-clamp-2 text-sm leading-relaxed text-gray-700">
               {notification.message}
             </p>
           </div>
@@ -228,24 +220,12 @@ const InAppNotificationPopup: React.FC<InAppNotificationPopupProps> = ({
           {/* Close button */}
           <button
             onClick={handleClose}
-            className="flex-shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-white/50 hover:text-gray-600"
+            className="flex-shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-white/60 hover:text-gray-600"
             aria-label="Dismiss notification"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
-
-        {/* Gradient timer bar */}
-        {!notification.exiting && (
-          <div className="h-1 w-full bg-gray-200/50">
-            <div
-              className={`notification-timer h-full bg-gradient-to-r ${style.gradientFrom} to-transparent`}
-              style={{
-                animationDuration: `${notification.duration ?? 5000}ms`,
-              }}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
