@@ -197,9 +197,6 @@
   animation: notification-slide-up 200ms ease-in both;
 }
 
-.notification-timer {
-  animation: notification-shrink 5s linear forwards;
-}
 
 .notification-item {
   transition: top 300ms cubic-bezier(0.16, 1, 0.3, 1);
