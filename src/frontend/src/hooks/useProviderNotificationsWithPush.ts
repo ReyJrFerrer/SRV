@@ -263,6 +263,7 @@ export const useProviderNotificationsWithPush = () => {
           href: notif.href,
           clientName: notif.clientName,
           bookingId: notif.bookingId,
+          title: notif.title,
           amount: notif.metadata?.amount || undefined,
           metadata: notif.metadata,
         }));
@@ -337,6 +338,7 @@ export const useProviderNotificationsWithPush = () => {
               href: notif.href,
               clientName: notif.clientName,
               bookingId: notif.bookingId,
+              title: notif.title,
               amount: notif.metadata?.amount || undefined,
               metadata: notif.metadata,
             }));
