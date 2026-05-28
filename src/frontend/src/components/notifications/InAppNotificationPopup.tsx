@@ -192,9 +192,9 @@ const InAppNotificationPopup: React.FC<InAppNotificationPopupProps> = ({
           <div
             className="notification-timer absolute inset-y-0 left-0 pointer-events-none"
             style={{
-              background: `linear-gradient(to right, ${style.accentColor}18, ${style.accentColor}08 60%, transparent)`,
+              background: `linear-gradient(to right, ${style.accentColor}60, ${style.accentColor}30 60%, transparent)`,
               animationDuration: `${notification.duration ?? 10000}ms`,
-            }}
+            }}    
           />
         )}
 
