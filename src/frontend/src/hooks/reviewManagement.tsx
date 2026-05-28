@@ -679,9 +679,7 @@ export const useReviewManagement = (
 
         // Always enrich with profile data and update state
         const enrichedReviews = await Promise.all(
-          providerReviews.map((review) =>
-            enrichReviewWithProfileData(review),
-          ),
+          providerReviews.map((review) => enrichReviewWithProfileData(review)),
         );
         setReviews(enrichedReviews);
 

@@ -51,7 +51,10 @@ export const feedbackCanisterService = {
   /**
    * Submit feedback
    */
-  async submitFeedback(rating: number, comment?: string): Promise<AppFeedback | null> {
+  async submitFeedback(
+    rating: number,
+    comment?: string,
+  ): Promise<AppFeedback | null> {
     try {
       const feedbackActionFn = httpsCallable(getFunctions(), "feedbackAction");
       const result = await feedbackActionFn({

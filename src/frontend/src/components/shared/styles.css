@@ -3595,9 +3595,15 @@ body.menu-open {
 }
 
 @keyframes ring-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.12); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .rep-circle-burst {
@@ -3616,12 +3622,30 @@ body.menu-open {
   animation: star-burst 1.2s ease-out forwards;
 }
 
-.burst-star.s1 { --angle: 0deg; animation-delay: 0s; }
-.burst-star.s2 { --angle: 60deg; animation-delay: 0.05s; }
-.burst-star.s3 { --angle: 120deg; animation-delay: 0.1s; }
-.burst-star.s4 { --angle: 180deg; animation-delay: 0.15s; }
-.burst-star.s5 { --angle: 240deg; animation-delay: 0.2s; }
-.burst-star.s6 { --angle: 300deg; animation-delay: 0.25s; }
+.burst-star.s1 {
+  --angle: 0deg;
+  animation-delay: 0s;
+}
+.burst-star.s2 {
+  --angle: 60deg;
+  animation-delay: 0.05s;
+}
+.burst-star.s3 {
+  --angle: 120deg;
+  animation-delay: 0.1s;
+}
+.burst-star.s4 {
+  --angle: 180deg;
+  animation-delay: 0.15s;
+}
+.burst-star.s5 {
+  --angle: 240deg;
+  animation-delay: 0.2s;
+}
+.burst-star.s6 {
+  --angle: 300deg;
+  animation-delay: 0.25s;
+}
 
 @keyframes star-burst {
   0% {
@@ -3649,11 +3673,24 @@ body.menu-open {
 }
 
 @keyframes msg-pop {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
-  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-  40% { transform: translate(-50%, -50%) scale(1); }
-  70% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
 }
 
 /* Right: Content Points */

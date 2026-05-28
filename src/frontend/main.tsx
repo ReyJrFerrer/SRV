@@ -18,6 +18,7 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 // Context
 import { AuthProvider } from "./src/context/AuthContext";
 import { BookingCacheProvider } from "./src/context/BookingCacheContext";
+import { InAppNotificationProvider } from "./src/context/InAppNotificationContext";
 import OneSignal from "react-onesignal";
 import oneSignalService from "./src/services/oneSignalService";
 import { initVersionChecker } from "./src/utils/versionChecker";
@@ -209,8 +210,7 @@ initVersionChecker();
 // Initialize OneSignal via NPM package (bundled, immune to ad blockers)
 OneSignal.init({
   appId: "7bd5300e-16ce-4334-8462-93e1a1458579",
-  safari_web_id:
-    "web.onesignal.auto.0d6d1ede-d24a-45d0-ba73-2f88839c0735",
+  safari_web_id: "web.onesignal.auto.0d6d1ede-d24a-45d0-ba73-2f88839c0735",
   allowLocalhostAsSecureOrigin: true,
   notifyButton: {
     enable: false,
@@ -229,13 +229,16 @@ OneSignal.init({
       "dialog.main.button.subscribe": "Subscribe",
       "dialog.main.button.unsubscribe": "Unsubscribe",
       "dialog.blocked.title": "Unblock Notifications",
-      "dialog.blocked.message": "Follow these instructions to allow notifications:",
+      "dialog.blocked.message":
+        "Follow these instructions to allow notifications:",
     },
   },
   serviceWorkerPath: "OneSignalSDKWorker.js",
-}).then(() => {
-  oneSignalService.setupAfterInit();
-}).catch(() => {});
+})
+  .then(() => {
+    oneSignalService.setupAfterInit();
+  })
+  .catch(() => {});
 
 const NotificationsPageSP = lazy(
   () => import("./src/pages/provider/notifications"),
@@ -435,192 +438,212 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     {isZkLoginCallback() ? (
       <ZkLoginCallbackWrapper />
     ) : (
-    <ErrorBoundary>
-      <HashRouterFix />
-      <QueryClientProvider client={queryClient}>
-        <HashRouter>
-          <ScrollToTop />
-          <AuthProvider>
-            <BookingCacheProvider>
-              <Suspense fallback={null}>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<App />} />
-                  <Route
-                    path="/create-profile"
-                    element={
-                      <CreateProfileGuard>
-                        <CreateProfile />
-                      </CreateProfileGuard>
-                    }
-                  />
+      <ErrorBoundary>
+        <HashRouterFix />
+        <QueryClientProvider client={queryClient}>
+          <HashRouter>
+            <ScrollToTop />
+            <AuthProvider>
+              <BookingCacheProvider>
+                <InAppNotificationProvider>
+                  <Suspense fallback={null}>
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<App />} />
+                      <Route
+                        path="/create-profile"
+                        element={
+                          <CreateProfileGuard>
+                            <CreateProfile />
+                          </CreateProfileGuard>
+                        }
+                      />
 
-                  <Route
-                    path="/client"
-                    element={
-                      <MapsProviderWrapper>
-                        <ClientLayout />
-                      </MapsProviderWrapper>
-                    }
-                  >
-                    <Route index element={<ClientRedirect />} />
-                    <Route path="home" element={<ClientHome />} />
-                    <Route path="chat" element={<ClientChat />} />
-                    <Route path="settings" element={<SettingsPageC />} />
-                    <Route path="profile" element={<ClientProfilePage />} />
-                    <Route path="ratings" element={<ClientRatingsPage />} />
-                    <Route path="search-results" element={<SearchResults />} />
-                    <Route path="terms" element={<TermsAndConditionsPage />} />
-                    <Route path="report" element={<ReportIssuePage />} />
-                    <Route path="help" element={<HelpSupportPage />} />
-                    <Route
-                      path="notifications"
-                      element={<NotificationsPage />}
-                    />
+                      <Route
+                        path="/client"
+                        element={
+                          <MapsProviderWrapper>
+                            <ClientLayout />
+                          </MapsProviderWrapper>
+                        }
+                      >
+                        <Route index element={<ClientRedirect />} />
+                        <Route path="home" element={<ClientHome />} />
+                        <Route path="chat" element={<ClientChat />} />
+                        <Route path="settings" element={<SettingsPageC />} />
+                        <Route path="profile" element={<ClientProfilePage />} />
+                        <Route path="ratings" element={<ClientRatingsPage />} />
+                        <Route
+                          path="search-results"
+                          element={<SearchResults />}
+                        />
+                        <Route
+                          path="terms"
+                          element={<TermsAndConditionsPage />}
+                        />
+                        <Route path="report" element={<ReportIssuePage />} />
+                        <Route path="help" element={<HelpSupportPage />} />
+                        <Route
+                          path="notifications"
+                          element={<NotificationsPage />}
+                        />
 
-                    {/* Service Routes */}
-                    <Route
-                      path="service/view-all"
-                      element={<ClientServiceViewAll />}
-                    />
-                    <Route
-                      path="service/:id"
-                      element={<ClientServiceDetails />}
-                    />
-                    <Route
-                      path="service/reviews/:id"
-                      element={<ClientServiceReviews />}
-                    />
+                        {/* Service Routes */}
+                        <Route
+                          path="service/view-all"
+                          element={<ClientServiceViewAll />}
+                        />
+                        <Route
+                          path="service/:id"
+                          element={<ClientServiceDetails />}
+                        />
+                        <Route
+                          path="service/reviews/:id"
+                          element={<ClientServiceReviews />}
+                        />
 
-                    {/* Booking Routes */}
-                    <Route path="booking" element={<ClientBookingIndex />} />
-                    <Route
-                      path="booking/:id"
-                      element={<ClientBookingDetails />}
-                    />
-                    <Route
-                      path="booking/confirmation"
-                      element={<ClientBookingConfirmation />}
-                    />
-                    <Route
-                      path="booking/payment-pending"
-                      element={<ClientPaymentPending />}
-                    />
-                    <Route
-                      path="booking/receipt/:id"
-                      element={<ReceiptPage />}
-                    />
-                    <Route path="book/:id" element={<ClientBookService />} />
+                        {/* Booking Routes */}
+                        <Route
+                          path="booking"
+                          element={<ClientBookingIndex />}
+                        />
+                        <Route
+                          path="booking/:id"
+                          element={<ClientBookingDetails />}
+                        />
+                        <Route
+                          path="booking/confirmation"
+                          element={<ClientBookingConfirmation />}
+                        />
+                        <Route
+                          path="booking/payment-pending"
+                          element={<ClientPaymentPending />}
+                        />
+                        <Route
+                          path="booking/receipt/:id"
+                          element={<ReceiptPage />}
+                        />
+                        <Route
+                          path="book/:id"
+                          element={<ClientBookService />}
+                        />
 
-                    {/* Category & Review Routes */}
-                    <Route
-                      path="categories/:slug"
-                      element={<ClientCategory />}
-                    />
-                    <Route path="review/:id" element={<ClientReview />} />
+                        {/* Category & Review Routes */}
+                        <Route
+                          path="categories/:slug"
+                          element={<ClientCategory />}
+                        />
+                        <Route path="review/:id" element={<ClientReview />} />
 
-                    {/* Tracking Route */}
-                    <Route
-                      path="tracking/:bookingId"
-                      element={<ClientTrackingPage />}
-                    />
-                  </Route>
+                        {/* Tracking Route */}
+                        <Route
+                          path="tracking/:bookingId"
+                          element={<ClientTrackingPage />}
+                        />
+                      </Route>
 
-                  {/* Provider Routes with Nested Layout */}
-                  <Route
-                    path="/provider"
-                    element={
-                      <MapsProviderWrapper>
-                        <ProviderLayout />
-                      </MapsProviderWrapper>
-                    }
-                  >
-                    <Route index element={<ProviderRedirect />} />
-                    <Route path="home" element={<ProviderHome />} />
-                    <Route path="bookings" element={<ProviderBookings />} />
-                    <Route path="chat" element={<ProviderChat />} />
-                    <Route path="settings" element={<SettingsPageSP />} />
-                    <Route path="profile" element={<ProviderProfilePage />} />
-                    <Route
-                      path="notifications"
-                      element={<NotificationsPageSP />}
-                    />
-                    <Route path="wallet" element={<WalletPage />} />
-                    <Route
-                      path="payout-settings"
-                      element={<PayoutSettingsPage />}
-                    />
+                      {/* Provider Routes with Nested Layout */}
+                      <Route
+                        path="/provider"
+                        element={
+                          <MapsProviderWrapper>
+                            <ProviderLayout />
+                          </MapsProviderWrapper>
+                        }
+                      >
+                        <Route index element={<ProviderRedirect />} />
+                        <Route path="home" element={<ProviderHome />} />
+                        <Route path="bookings" element={<ProviderBookings />} />
+                        <Route path="chat" element={<ProviderChat />} />
+                        <Route path="settings" element={<SettingsPageSP />} />
+                        <Route
+                          path="profile"
+                          element={<ProviderProfilePage />}
+                        />
+                        <Route
+                          path="notifications"
+                          element={<NotificationsPageSP />}
+                        />
+                        <Route path="wallet" element={<WalletPage />} />
+                        <Route
+                          path="payout-settings"
+                          element={<PayoutSettingsPage />}
+                        />
 
-                    {/* Service Management Routes */}
-                    <Route path="services" element={<ProviderServices />} />
-                    <Route
-                      path="services/add"
-                      element={<ProviderAddService />}
-                    />
+                        {/* Service Management Routes */}
+                        <Route path="services" element={<ProviderServices />} />
+                        <Route
+                          path="services/add"
+                          element={<ProviderAddService />}
+                        />
 
-                    {/* Service Details Routes */}
-                    <Route
-                      path="service-details/:id"
-                      element={<ProviderServiceDetails />}
-                    />
-                    <Route
-                      path="service-details/reviews/:id"
-                      element={<ProviderServiceReviews />}
-                    />
+                        {/* Service Details Routes */}
+                        <Route
+                          path="service-details/:id"
+                          element={<ProviderServiceDetails />}
+                        />
+                        <Route
+                          path="service-details/reviews/:id"
+                          element={<ProviderServiceReviews />}
+                        />
 
-                    {/* Booking Management Routes */}
-                    <Route
-                      path="booking/:id"
-                      element={<ProviderBookingDetails />}
-                    />
-                    <Route
-                      path="active-service/:bookingId"
-                      element={<ProviderActiveService />}
-                    />
-                    <Route
-                      path="directions/:bookingId"
-                      element={<ProviderDirectionsPage />}
-                    />
-                    <Route
-                      path="complete-service/:bookingId"
-                      element={<ProviderCompleteService />}
-                    />
-                    <Route
-                      path="receipt/:bookingId"
-                      element={<ProviderReceipt />}
-                    />
+                        {/* Booking Management Routes */}
+                        <Route
+                          path="booking/:id"
+                          element={<ProviderBookingDetails />}
+                        />
+                        <Route
+                          path="active-service/:bookingId"
+                          element={<ProviderActiveService />}
+                        />
+                        <Route
+                          path="directions/:bookingId"
+                          element={<ProviderDirectionsPage />}
+                        />
+                        <Route
+                          path="complete-service/:bookingId"
+                          element={<ProviderCompleteService />}
+                        />
+                        <Route
+                          path="receipt/:bookingId"
+                          element={<ProviderReceipt />}
+                        />
 
-                    {/* Rate Client after receipt */}
-                    <Route
-                      path="rate-client/:bookingId"
-                      element={<ProviderRateClientPage />}
-                    />
+                        {/* Rate Client after receipt */}
+                        <Route
+                          path="rate-client/:bookingId"
+                          element={<ProviderRateClientPage />}
+                        />
 
-                    {/* Review Routes */}
-                    <Route path="review/:id" element={<ProviderReview />} />
+                        {/* Review Routes */}
+                        <Route path="review/:id" element={<ProviderReview />} />
 
-                    {/* Provider Info Pages */}
-                    <Route
-                      path="terms"
-                      element={<ProviderTermsAndConditionsPage />}
-                    />
-                    <Route
-                      path="report"
-                      element={<ProviderReportIssuePage />}
-                    />
-                    <Route path="help" element={<ProviderHelpSupportPage />} />
-                  </Route>
+                        {/* Provider Info Pages */}
+                        <Route
+                          path="terms"
+                          element={<ProviderTermsAndConditionsPage />}
+                        />
+                        <Route
+                          path="report"
+                          element={<ProviderReportIssuePage />}
+                        />
+                        <Route
+                          path="help"
+                          element={<ProviderHelpSupportPage />}
+                        />
+                      </Route>
 
-                  {/* Catch-all route for 404 - Must be last */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-              {/* <GlobalChatDock /> */}
-            </BookingCacheProvider>
-          </AuthProvider>
-        </HashRouter>
-      </QueryClientProvider>
-    </ErrorBoundary>
+                      {/* Catch-all route for 404 - Must be last */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                  {/* <GlobalChatDock /> */}
+                </InAppNotificationProvider>
+              </BookingCacheProvider>
+            </AuthProvider>
+          </HashRouter>
+        </QueryClientProvider>
+      </ErrorBoundary>
     )}
   </React.StrictMode>,
 );

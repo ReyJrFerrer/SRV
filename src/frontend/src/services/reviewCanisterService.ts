@@ -161,7 +161,11 @@ export const reviewCanisterService = {
   async bulkUpdateReviewStatus(
     reviewIds: string[],
     status: "Visible" | "Hidden",
-  ): Promise<{ success: boolean; updated: string[]; errors: { reviewId: string; error: string }[] }> {
+  ): Promise<{
+    success: boolean;
+    updated: string[];
+    errors: { reviewId: string; error: string }[];
+  }> {
     try {
       const reviewActionFn = httpsCallable(getFunctions(), "reviewAction");
 
@@ -170,7 +174,11 @@ export const reviewCanisterService = {
         data: { reviewIds, status },
       });
 
-      return result.data as { success: boolean; updated: string[]; errors: { reviewId: string; error: string }[] };
+      return result.data as {
+        success: boolean;
+        updated: string[];
+        errors: { reviewId: string; error: string }[];
+      };
     } catch (error) {
       throw new Error(`Failed to bulk update review status: ${error}`);
     }
@@ -193,7 +201,8 @@ export const reviewCanisterService = {
       };
       return responseData.data;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("No reviews found")) {
         return { averageRating: 0, reviewCount: 0, providerId };
       }
@@ -218,7 +227,8 @@ export const reviewCanisterService = {
       };
       return responseData.data;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("No reviews found")) {
         return { averageRating: 0, reviewCount: 0, serviceId };
       }
@@ -243,7 +253,8 @@ export const reviewCanisterService = {
       };
       return responseData.data;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("No reviews found")) {
         return { averageRating: 0, reviewCount: 0, userId: userId || "" };
       }

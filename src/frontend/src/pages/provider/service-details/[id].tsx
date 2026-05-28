@@ -1118,27 +1118,29 @@ const ProviderServiceDetailPage: React.FC = () => {
                           </div>
 
                           {/* Time Slots List Bones */}
-                          <div className="flex flex-col lg:flex-row lg:flex-wrap gap-2.5 lg:gap-2 pt-1">
+                          <div className="flex flex-col gap-2.5 pt-1 lg:flex-row lg:flex-wrap lg:gap-2">
                             {/* Slot 1 Bone */}
                             <React.Fragment>
                               {/* Mobile/Tablet */}
-                              <div className="flex lg:hidden items-center gap-2.5">
+                              <div className="flex items-center gap-2.5 lg:hidden">
                                 <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-200"></div>
                                 <div className="h-4 w-32 rounded bg-gray-100"></div>
                               </div>
                               {/* Laptop/Desktop */}
-                              <div className="hidden lg:block h-[30px] w-[130px] rounded-md bg-gray-100 border border-gray-200"></div>
+                              <div className="hidden h-[30px] w-[130px] rounded-md border border-gray-200 bg-gray-100 lg:block"></div>
                             </React.Fragment>
 
                             {/* Slot 2 Bone */}
-                            <div className={index === 1 ? "hidden" : "contents"}>
+                            <div
+                              className={index === 1 ? "hidden" : "contents"}
+                            >
                               {/* Mobile/Tablet */}
-                              <div className="flex lg:hidden items-center gap-2.5">
+                              <div className="flex items-center gap-2.5 lg:hidden">
                                 <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-200"></div>
                                 <div className="h-4 w-28 rounded bg-gray-100"></div>
                               </div>
                               {/* Laptop/Desktop */}
-                              <div className="hidden lg:block h-[30px] w-[110px] rounded-md bg-gray-100 border border-gray-200"></div>
+                              <div className="hidden h-[30px] w-[110px] rounded-md border border-gray-200 bg-gray-100 lg:block"></div>
                             </div>
                           </div>
                         </div>
@@ -1395,7 +1397,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         )}
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* Left: Location & Packages */}
           <div className="flex flex-col gap-8">
             <LockableSection

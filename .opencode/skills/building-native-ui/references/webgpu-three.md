@@ -48,7 +48,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
         mainFields: ["module"],
       },
       moduleName,
-      platform
+      platform,
     );
   }
   return context.resolveRequest(context, moduleName, platform);
@@ -104,7 +104,7 @@ export class ReactNativeCanvas {
 
 export const makeWebGPURenderer = (
   context: GPUCanvasContext,
-  { antialias = true }: { antialias?: boolean } = {}
+  { antialias = true }: { antialias?: boolean } = {},
 ) =>
   new THREE.WebGPURenderer({
     antialias,

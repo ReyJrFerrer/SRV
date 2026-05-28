@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Image } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  Image,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,7 +41,9 @@ interface ClientHeaderProps {
   userName?: string;
 }
 
-export default function ClientHeader({ userName = "Guest" }: ClientHeaderProps) {
+export default function ClientHeader({
+  userName = "Guest",
+}: ClientHeaderProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,14 +61,16 @@ export default function ClientHeader({ userName = "Guest" }: ClientHeaderProps) 
   }, []);
 
   const filteredSuggestions = searchQuery.trim()
-    ? MOCK_SERVICES
-        .flatMap((s) => [s.title, s.providerName])
-        .filter((name) => name.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? MOCK_SERVICES.flatMap((s) => [s.title, s.providerName]).filter((name) =>
+        name.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
     : [];
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      router.push(`/client/search-results?query=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(
+        `/client/search-results?query=${encodeURIComponent(searchQuery.trim())}`,
+      );
     }
   };
 
@@ -78,7 +89,12 @@ export default function ClientHeader({ userName = "Guest" }: ClientHeaderProps) 
           </View>
         </View>
         <Pressable style={styles.menuButton}>
-          <SymbolView name={{ ios: "line.3.horizontal", android: "menu", web: "menu" }} weight="semibold" size={28} tintColor="#2563EB" />
+          <SymbolView
+            name={{ ios: "line.3.horizontal", android: "menu", web: "menu" }}
+            weight="semibold"
+            size={28}
+            tintColor="#2563EB"
+          />
         </Pressable>
       </View>
 
@@ -86,7 +102,12 @@ export default function ClientHeader({ userName = "Guest" }: ClientHeaderProps) 
 
       <View style={styles.searchCard}>
         <Pressable style={styles.locationRow} disabled>
-          <SymbolView name={{ ios: "mappin", android: "location_on", web: "location_on" }} weight="medium" size={24} tintColor="#EAB308" />
+          <SymbolView
+            name={{ ios: "mappin", android: "location_on", web: "location_on" }}
+            weight="medium"
+            size={24}
+            tintColor="#EAB308"
+          />
           <Text style={styles.locationLabel}>My Location</Text>
         </Pressable>
 
@@ -122,7 +143,16 @@ export default function ClientHeader({ userName = "Guest" }: ClientHeaderProps) 
                     );
                   }}
                 >
-                  <SymbolView name={{ ios: "magnifyingglass", android: "search", web: "search" }} weight="light" size={14} tintColor="#9CA3AF" />
+                  <SymbolView
+                    name={{
+                      ios: "magnifyingglass",
+                      android: "search",
+                      web: "search",
+                    }}
+                    weight="light"
+                    size={14}
+                    tintColor="#9CA3AF"
+                  />
                   <Text style={styles.suggestionText}>{suggestion}</Text>
                 </Pressable>
               ))}

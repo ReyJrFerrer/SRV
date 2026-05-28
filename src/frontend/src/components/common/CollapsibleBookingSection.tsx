@@ -14,7 +14,10 @@ interface CollapsibleBookingSectionProps {
   forceExpanded?: boolean;
 }
 
-const variantStyles: Record<Variant, { border: string; bg: string; header: string }> = {
+const variantStyles: Record<
+  Variant,
+  { border: string; bg: string; header: string }
+> = {
   default: {
     border: "border-green-200",
     bg: "bg-green-50",

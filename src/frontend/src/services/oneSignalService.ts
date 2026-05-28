@@ -111,21 +111,18 @@ class OneSignalService {
    */
   private setupEventListeners(): void {
     // Listen for subscription changes
-    OneSignal.User.PushSubscription.addEventListener(
-      "change",
-      (event: any) => {
-        if (event.current.optedIn) {
-          const playerId = event.current.id;
-          this.currentPlayerId = playerId;
-          this.savePlayerIdMetadata(playerId, true);
-          this.registerPlayerId(playerId);
-        } else {
-          this.currentPlayerId = null;
-          this.clearPlayerIdMetadata();
-          this.unregisterPlayerId();
-        }
-      },
-    );
+    OneSignal.User.PushSubscription.addEventListener("change", (event: any) => {
+      if (event.current.optedIn) {
+        const playerId = event.current.id;
+        this.currentPlayerId = playerId;
+        this.savePlayerIdMetadata(playerId, true);
+        this.registerPlayerId(playerId);
+      } else {
+        this.currentPlayerId = null;
+        this.clearPlayerIdMetadata();
+        this.unregisterPlayerId();
+      }
+    });
 
     // Listen for notification clicks
     OneSignal.Notifications.addEventListener("click", (event: any) => {
@@ -137,10 +134,7 @@ class OneSignalService {
     });
 
     // Listen for foreground notifications
-    OneSignal.Notifications.addEventListener(
-      "foregroundWillDisplay",
-      () => {},
-    );
+    OneSignal.Notifications.addEventListener("foregroundWillDisplay", () => {});
   }
 
   /**
@@ -198,10 +192,10 @@ class OneSignalService {
       if (alreadySubscribed) {
         const existingPlayerId = OneSignal.User.onesignalId;
         if (existingPlayerId) {
-        this.currentPlayerId = existingPlayerId;
-        this.savePlayerIdMetadata(existingPlayerId, true);
-        this.registerPlayerId(existingPlayerId);
-        return existingPlayerId;
+          this.currentPlayerId = existingPlayerId;
+          this.savePlayerIdMetadata(existingPlayerId, true);
+          this.registerPlayerId(existingPlayerId);
+          return existingPlayerId;
         }
       }
 
@@ -421,7 +415,10 @@ class OneSignalService {
     try {
       const { httpsCallable } = await import("firebase/functions");
       const functions = getFirebaseFunctions();
-      const notificationActionFn = httpsCallable(functions, "notificationAction");
+      const notificationActionFn = httpsCallable(
+        functions,
+        "notificationAction",
+      );
       const result = await notificationActionFn({
         action: "storeOneSignalPlayerId",
         data: { playerId },
@@ -444,7 +441,10 @@ class OneSignalService {
 
       const { httpsCallable } = await import("firebase/functions");
       const functions = getFirebaseFunctions();
-      const notificationActionFn = httpsCallable(functions, "notificationAction");
+      const notificationActionFn = httpsCallable(
+        functions,
+        "notificationAction",
+      );
       const result = await notificationActionFn({
         action: "removeOneSignalPlayerId",
         data: { playerId },
@@ -522,7 +522,10 @@ class OneSignalService {
       await Promise.race([
         this.readyPromise,
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("OneSignal init timeout")), timeoutMs),
+          setTimeout(
+            () => reject(new Error("OneSignal init timeout")),
+            timeoutMs,
+          ),
         ),
       ]);
       return true;

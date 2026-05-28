@@ -346,14 +346,14 @@ const NotificationsPageSP = () => {
                   clearSelection();
                 }
               }}
-              className="rounded-lg bg-gray-100 px-2 py-2 text-xs sm:text-sm sm:px-3 font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+              className="rounded-lg bg-gray-100 px-2 py-2 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 sm:px-3 sm:text-sm"
             >
               {editMode ? "Done" : "Edit"}
             </button>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={handleSelectAll}
-                className="rounded-lg bg-gray-100 px-2 py-2 text-xs sm:text-sm sm:px-3 font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                className="rounded-lg bg-gray-100 px-2 py-2 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 sm:px-3 sm:text-sm"
               >
                 {selectedIds.length > 0 &&
                 selectedIds.length ===
@@ -365,7 +365,7 @@ const NotificationsPageSP = () => {
               {unread.length > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-2 py-2 text-xs sm:text-sm sm:px-3 font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900"
+                  className="flex items-center whitespace-nowrap rounded-lg bg-blue-100 px-2 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-200 hover:text-blue-900 sm:px-3 sm:text-sm"
                 >
                   <EnvelopeOpenIcon className="mr-1.5 h-4 w-4" />
                   Mark all as read
@@ -379,7 +379,7 @@ const NotificationsPageSP = () => {
       {editMode && (
         <div className="sticky top-14 z-30 mx-auto max-w-2xl px-2 md:px-0">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-md">
-            <div className="text-sm text-gray-700 whitespace-nowrap">
+            <div className="whitespace-nowrap text-sm text-gray-700">
               {selectedIds.length} selected
             </div>
             <div className="flex flex-wrap items-center gap-2">

@@ -259,8 +259,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             await sessionManager.clearSession();
           }
         }
-      } catch {}
-      finally {
+      } catch {
+      } finally {
         setIsLoading(false);
       }
     };

@@ -40,7 +40,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-
   // Static search bar placeholders
   const searchPlaceholders = [
     "Looking for a plumber?",
@@ -468,8 +467,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           userInfo={{ name: displayName, to: "/client/profile" }}
         />
       )}
-
-   
     </>
   );
 };

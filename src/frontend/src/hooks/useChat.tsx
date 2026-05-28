@@ -254,7 +254,12 @@ export const useChat = () => {
         setLoading(false);
       }
     }
-  }, [isAuthenticated, firebaseUser, enhanceConversationsWithNames, isMountedRef]);
+  }, [
+    isAuthenticated,
+    firebaseUser,
+    enhanceConversationsWithNames,
+    isMountedRef,
+  ]);
 
   /**
    * Fetch messages for a specific conversation

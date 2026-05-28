@@ -1,5 +1,15 @@
-import { useState, useRef, useEffect, Fragment, ReactNode, useMemo } from "react";
-import { ChevronDownIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+  useState,
+  useRef,
+  useEffect,
+  Fragment,
+  ReactNode,
+  useMemo,
+} from "react";
+import {
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 
 interface ResponsiveDropdownProps {
   triggerRef: React.RefObject<HTMLButtonElement | null>;
@@ -63,12 +73,10 @@ export function ResponsiveDropdown({
         <div
           ref={dropdownRef}
           className={`absolute z-50 ${width} ${
-            flipUp
-              ? "bottom-full mb-2"
-              : "mt-2"
+            flipUp ? "bottom-full mb-2" : "mt-2"
           } ${
             position === "right" ? "right-0" : "left-0"
-          } rounded-xl border border-gray-100 bg-white py-1 shadow-lg focus:outline-none max-h-60 overflow-y-auto`}
+          } max-h-60 overflow-y-auto rounded-xl border border-gray-100 bg-white py-1 shadow-lg focus:outline-none`}
         >
           {children}
         </div>
@@ -212,10 +220,15 @@ export function ResponsiveSelect({
           </div>
         )}
 
-        <div ref={listRef} className={filterable ? "max-h-48 overflow-y-auto" : undefined}>
+        <div
+          ref={listRef}
+          className={filterable ? "max-h-48 overflow-y-auto" : undefined}
+        >
           {filteredOptions.length === 0 ? (
             <div className="px-4 py-3 text-sm text-gray-500">
-              {filterable && filter ? "No matches found" : "No options available"}
+              {filterable && filter
+                ? "No matches found"
+                : "No options available"}
             </div>
           ) : (
             filteredOptions.map((option) => (
@@ -225,7 +238,7 @@ export function ResponsiveSelect({
                 onClick={() => handleSelect(option.value)}
                 className={`flex w-full items-center px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
                   value === option.value
-                    ? "bg-yellow-50 text-yellow-700 font-medium"
+                    ? "bg-yellow-50 font-medium text-yellow-700"
                     : "text-gray-700"
                 }`}
                 role="option"
@@ -238,9 +251,7 @@ export function ResponsiveSelect({
         </div>
       </ResponsiveDropdown>
 
-      {required && (
-        <input type="hidden" name={name} value={value} required />
-      )}
+      {required && <input type="hidden" name={name} value={value} required />}
     </div>
   );
 }

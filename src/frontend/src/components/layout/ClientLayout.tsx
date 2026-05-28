@@ -4,11 +4,13 @@ import ProtectedRoute from "./ProtectedRoute";
 import ClientOnRouteBanner from "../client/OnRouteBanner";
 import ClientActiveServiceBanner from "../client/ActiveServiceBanner";
 import BottomNavigation from "../client/NavigationBar";
+import { ClientNotificationBridge } from "../notifications/InAppNotificationBridge";
 
 export default function ClientLayout() {
   return (
     <ProtectedRoute requiredRole="Client">
       <div className="min-h-screen bg-gray-50">
+        <ClientNotificationBridge />
         <ClientOnRouteBanner />
         <ClientActiveServiceBanner />
         {/* Client-specific header/navigation can go here */}

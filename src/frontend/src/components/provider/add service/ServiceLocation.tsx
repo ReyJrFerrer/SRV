@@ -211,9 +211,8 @@ const ServiceLocation: React.FC<ServiceLocationProps> = ({
             if (!province || looksLikeRegion(province)) {
               try {
                 if (locality) {
-                  const { findProvinceByMunicipality } = await import(
-                    "../../../data/phLocations"
-                  );
+                  const { findProvinceByMunicipality } =
+                    await import("../../../data/phLocations");
                   const match = await findProvinceByMunicipality(locality);
                   if (match) {
                     province = match;

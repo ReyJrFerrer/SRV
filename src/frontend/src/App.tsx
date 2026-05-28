@@ -18,13 +18,8 @@ type CurrentView = "main" | "about" | "contact";
 const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    isAuthenticated,
-    firebaseUser,
-    login,
-    isLoading,
-    profileStatus,
-  } = useAuth();
+  const { isAuthenticated, firebaseUser, login, isLoading, profileStatus } =
+    useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [currentView, setCurrentView] = useState<CurrentView>("main");
   const [showSuspensionModal, setShowSuspensionModal] = useState(false);

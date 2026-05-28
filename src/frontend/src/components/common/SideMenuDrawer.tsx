@@ -53,10 +53,14 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
 
   const isClient = userRole === "client";
   const [showTourSelector, setShowTourSelector] = React.useState(false);
-  const [selectedTour, setSelectedTour] = React.useState<TourOption | null>(null);
+  const [selectedTour, setSelectedTour] = React.useState<TourOption | null>(
+    null,
+  );
 
   // Avatar caching to prevent flickering
-  const defaultAvatar = isClient ? "/default-client.svg" : "/default-provider.svg";
+  const defaultAvatar = isClient
+    ? "/default-client.svg"
+    : "/default-provider.svg";
   const avatarCacheKey = isClient ? "nav:client:avatar" : "nav:provider:avatar";
   const [stableProfileSrc, setStableProfileSrc] = React.useState<string>(() => {
     const cached =
@@ -154,7 +158,9 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
   const handleTourSelect = (tour: TourOption) => {
     sessionStorage.setItem("pending_tour", tour.flowType);
     window.dispatchEvent(
-      new CustomEvent("srv:start-tour", { detail: { flowType: tour.flowType } }),
+      new CustomEvent("srv:start-tour", {
+        detail: { flowType: tour.flowType },
+      }),
     );
     const routeMap: Record<string, string> = {
       client: "/client/home",
@@ -165,7 +171,9 @@ const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
       "provider-bookings": "/provider/bookings",
       "provider-services": "/provider/services",
     };
-    const targetRoute = routeMap[tour.flowType] || (isClient ? "/client/home" : "/provider/booking");
+    const targetRoute =
+      routeMap[tour.flowType] ||
+      (isClient ? "/client/home" : "/provider/booking");
     setShowTourSelector(false);
     setSelectedTour(tour);
     onClose();

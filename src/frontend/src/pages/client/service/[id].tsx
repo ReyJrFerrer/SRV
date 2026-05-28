@@ -97,9 +97,7 @@ const ClientServiceDetailsPage: React.FC = () => {
         setIsCheckingReputation(true);
         setReputationError(null);
 
-        const currentUserRep = await fetchUserReputation(
-          firebaseUser.uid,
-        );
+        const currentUserRep = await fetchUserReputation(firebaseUser.uid);
         const fetchedProviderRep = await fetchUserReputation(
           service.providerId,
         );
@@ -170,9 +168,7 @@ const ClientServiceDetailsPage: React.FC = () => {
   };
 
   const isOwnService = Boolean(
-    firebaseUser &&
-    service &&
-    firebaseUser.uid === service.providerId,
+    firebaseUser && service && firebaseUser.uid === service.providerId,
   );
 
   const handleChatProviderClick = async () => {
@@ -680,7 +676,7 @@ const ClientServiceDetailsPage: React.FC = () => {
               </div>
 
               {/* Right: Provider Details */}
-              <div className="flex min-w-0 w-full sm:min-w-[280px] sm:w-auto flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+              <div className="flex w-full min-w-0 flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100 sm:w-auto sm:min-w-[280px]">
                 <div className="flex items-center gap-4">
                   <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100">
                     <img

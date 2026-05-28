@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
@@ -154,7 +160,8 @@ const AddServicePage: React.FC = () => {
 
   // Check if there are validation errors
   const hasErrors = useMemo(() => {
-    if (!validationErrors || Object.keys(validationErrors).length === 0) return false;
+    if (!validationErrors || Object.keys(validationErrors).length === 0)
+      return false;
     const errorKeysToCheck = [
       "serviceOfferingTitle",
       "categoryId",
@@ -170,7 +177,8 @@ const AddServicePage: React.FC = () => {
     }
     if (validationErrors.packageFields) {
       for (const pkgErrors of Object.values(validationErrors.packageFields)) {
-        if (pkgErrors?.name || pkgErrors?.price || pkgErrors?.description) return true;
+        if (pkgErrors?.name || pkgErrors?.price || pkgErrors?.description)
+          return true;
       }
     }
     return false;
@@ -361,7 +369,8 @@ const AddServicePage: React.FC = () => {
               description?: string;
             } = {};
 
-            const allFieldsEmpty = !pkg.name.trim() && !pkg.description.trim() && !pkg.price;
+            const allFieldsEmpty =
+              !pkg.name.trim() && !pkg.description.trim() && !pkg.price;
 
             if (!allFieldsEmpty) {
               if (!pkg.name.trim()) {
@@ -626,10 +635,10 @@ const AddServicePage: React.FC = () => {
       return;
     }
 
-if (Object.keys(errors).length === 0) {
-    scrollToTop();
-    setCurrentStep((prev) => prev + 1);
-    setValidationErrors({});
+    if (Object.keys(errors).length === 0) {
+      scrollToTop();
+      setCurrentStep((prev) => prev + 1);
+      setValidationErrors({});
     } else {
       setValidationErrors(errors);
       setScrollToErrorTrigger((prev) => prev + 1);
@@ -1062,7 +1071,10 @@ if (Object.keys(errors).length === 0) {
       </header>
       {/* Draft UI & logic moved into ServiceDrafts (renders modals and banner) */}
       {/* Main Content */}
-      <main ref={mainContentRef} className="container mx-auto flex-grow px-4 pt-4 sm:p-6">
+      <main
+        ref={mainContentRef}
+        className="container mx-auto flex-grow px-4 pt-4 sm:p-6"
+      >
         <ProgressTracker currentStep={currentStep} hasErrors={hasErrors} />
         {renderStep()}
         {/* Navigation Buttons */}

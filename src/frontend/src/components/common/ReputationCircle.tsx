@@ -23,12 +23,12 @@ export default function ReputationCircle({
   return (
     <div className="rep-circle-wrapper flex flex-col items-center justify-center">
       <div
-        className={`cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95 ${celebrating ? 'rep-circle-celebrating' : ''}`}
+        className={`cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95 ${celebrating ? "rep-circle-celebrating" : ""}`}
         onClick={onClick}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if ((e.key === 'Enter' || e.key === ' ') && onClick) onClick();
+          if ((e.key === "Enter" || e.key === " ") && onClick) onClick();
         }}
       >
         <div className="relative flex h-56 w-56 items-center justify-center">
@@ -61,7 +61,8 @@ export default function ReputationCircle({
                 strokeDashoffset: offset,
                 transform: "rotate(-90deg)",
                 transformOrigin: "50% 50%",
-                transition: "stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease",
+                transition:
+                  "stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease",
               }}
             />
           </svg>
@@ -75,7 +76,7 @@ export default function ReputationCircle({
           </div>
 
           {celebrating && (
-            <div className="rep-circle-burst absolute inset-0 pointer-events-none z-20">
+            <div className="rep-circle-burst pointer-events-none absolute inset-0 z-20">
               <span className="burst-star s1">★</span>
               <span className="burst-star s2">★</span>
               <span className="burst-star s3">★</span>

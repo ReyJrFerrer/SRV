@@ -31,9 +31,7 @@ const ClientChatPage: React.FC = () => {
     sendingMessage,
   } = useChat();
   const [, setTick] = React.useState(0);
-  const [isDesktop, setIsDesktop] = useState<boolean>(
-    window.innerWidth >= 768,
-  );
+  const [isDesktop, setIsDesktop] = useState<boolean>(window.innerWidth >= 768);
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(location.state?.conversationId || null);
@@ -385,7 +383,7 @@ const ClientChatPage: React.FC = () => {
             </div>
           ) : conversations.length > 0 ? (
             <div
-              className={`w-full ${isDesktop ? "mx-auto my-4 flex max-h-[95vh] md:h-[calc(95vh-80px)] max-w-6xl overflow-hidden border border-gray-100 bg-white shadow-sm md:rounded-2xl" : "pb-[70px]"}`}
+              className={`w-full ${isDesktop ? "mx-auto my-4 flex max-h-[95vh] max-w-6xl overflow-hidden border border-gray-100 bg-white shadow-sm md:h-[calc(95vh-80px)] md:rounded-2xl" : "pb-[70px]"}`}
             >
               {(!selectedConversationId || isDesktop) && (
                 <ul
@@ -406,8 +404,7 @@ const ClientChatPage: React.FC = () => {
                       const conversation = conversationSummary.conversation;
                       const lastMessage =
                         conversationSummary.lastMessage?.[0] || undefined;
-                        const currentUserId =
-                        firebaseUser?.uid || "";
+                      const currentUserId = firebaseUser?.uid || "";
                       const otherUserId = conversationSummary.otherUserId;
                       const otherUserName =
                         conversationSummary.otherUserName ||
@@ -594,8 +591,7 @@ const ClientChatPage: React.FC = () => {
                           <>
                             {messages.map((message) => {
                               const isMine =
-                                firebaseUser?.uid ===
-                                message.senderId;
+                                firebaseUser?.uid === message.senderId;
                               return (
                                 <div
                                   key={message.id}

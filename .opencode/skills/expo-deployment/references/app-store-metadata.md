@@ -270,7 +270,7 @@ module.exports = async () => {
 
   // Fetch translations from CMS/localization service
   const translations = await fetch(
-    "https://api.example.com/app-store-copy"
+    "https://api.example.com/app-store-copy",
   ).then((r) => r.json());
 
   return {

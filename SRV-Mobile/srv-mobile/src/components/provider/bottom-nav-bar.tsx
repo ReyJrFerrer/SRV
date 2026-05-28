@@ -11,11 +11,36 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: "/provider/home" as Href, path: "/provider/home", label: "Home", icon: "house.fill" as SFSymbol },
-  { to: "/provider/bookings" as Href, path: "/provider/bookings", label: "Booking", icon: "calendar" as SFSymbol },
-  { to: "/provider/chat" as Href, path: "/provider/chat", label: "Chat", icon: "message.fill" as SFSymbol },
-  { to: "/provider/services" as Href, path: "/provider/services", label: "Services", icon: "wrench.fill" as SFSymbol },
-  { to: "/provider/notifications" as Href, path: "/provider/notifications", label: "Notifications", icon: "bell.fill" as SFSymbol },
+  {
+    to: "/provider/home" as Href,
+    path: "/provider/home",
+    label: "Home",
+    icon: "house.fill" as SFSymbol,
+  },
+  {
+    to: "/provider/bookings" as Href,
+    path: "/provider/bookings",
+    label: "Booking",
+    icon: "calendar" as SFSymbol,
+  },
+  {
+    to: "/provider/chat" as Href,
+    path: "/provider/chat",
+    label: "Chat",
+    icon: "message.fill" as SFSymbol,
+  },
+  {
+    to: "/provider/services" as Href,
+    path: "/provider/services",
+    label: "Services",
+    icon: "wrench.fill" as SFSymbol,
+  },
+  {
+    to: "/provider/notifications" as Href,
+    path: "/provider/notifications",
+    label: "Notifications",
+    icon: "bell.fill" as SFSymbol,
+  },
 ];
 
 export default function BottomNavBar() {
@@ -35,12 +60,7 @@ export default function BottomNavBar() {
                 size={24}
                 tintColor={isActive ? "#007AFF" : "#8E8E93"}
               />
-              <Text
-                style={[
-                  styles.label,
-                  isActive && styles.labelActive,
-                ]}
-              >
+              <Text style={[styles.label, isActive && styles.labelActive]}>
                 {item.label}
               </Text>
             </Pressable>

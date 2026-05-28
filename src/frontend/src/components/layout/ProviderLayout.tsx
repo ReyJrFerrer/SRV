@@ -4,6 +4,7 @@ import ProviderOnRouteBanner from "../provider/OnRouteBanner";
 import ActiveServiceBanner from "../provider/ActiveServiceBanner";
 import RouteTransition from "../common/pageFlowImprovements/RouteTransition";
 import BottomNavigation from "../provider/NavigationBar";
+import { ProviderNotificationBridge } from "../notifications/InAppNotificationBridge";
 
 export default function ProviderLayout() {
   const location = useLocation();
@@ -16,6 +17,7 @@ export default function ProviderLayout() {
       <div
         className={`min-h-screen bg-gray-50${isFullScreenRoute ? "" : " pb-20 md:pb-5 lg:pb-0"}`}
       >
+        <ProviderNotificationBridge />
         <ProviderOnRouteBanner />
         <ActiveServiceBanner />
         {/* Provider-specific header/navigation can go here */}

@@ -155,3 +155,63 @@
 .animate-fadeIn {
   animation: fadeIn 300ms ease-in-out both;
 }
+
+/* ── In-App Notification Popup Animations ── */
+
+@keyframes notification-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-120%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes notification-slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-120%) scale(0.96);
+  }
+}
+
+@keyframes notification-shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.notification-enter {
+  animation: notification-slide-down 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.notification-exit {
+  animation: notification-slide-up 200ms ease-in both;
+}
+
+.notification-timer {
+  animation: notification-shrink 5s linear forwards;
+}
+
+.notification-item {
+  transition: top 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Respect reduced motion preference for notifications */
+@media (prefers-reduced-motion: reduce) {
+  .notification-enter,
+  .notification-exit,
+  .notification-timer,
+  .notification-item {
+    animation: none !important;
+    transition: none !important;
+  }
+}

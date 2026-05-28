@@ -159,13 +159,8 @@ const ActiveServicePage: React.FC = () => {
         toast.error("No images were uploaded. Please try again.");
         return;
       }
-      await bookingCanisterService.updateProviderAttachments(
-        booking.id,
-        urls,
-      );
-      toast.success(
-        `${urls.length} image(s) uploaded successfully.`,
-      );
+      await bookingCanisterService.updateProviderAttachments(booking.id, urls);
+      toast.success(`${urls.length} image(s) uploaded successfully.`);
       // Cleanup previews
       previews.forEach((url) => URL.revokeObjectURL(url));
       setSelectedFiles([]);

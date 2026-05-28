@@ -65,17 +65,14 @@ export const ServiceProviderRecords: React.FC<ServiceProviderRecordsProps> = ({
           <select
             id="sortBy"
             value={sortBy}
-              onChange={(e) =>
-                onSortByChange(
-                  e.target.value as
-                    | "name"
-                    | "totalRevenue"
-                    | "completedBookings",
-                )
-              }
-              className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:w-48"
-            >
-              <option value="totalRevenue">Total Revenue</option>
+            onChange={(e) =>
+              onSortByChange(
+                e.target.value as "name" | "totalRevenue" | "completedBookings",
+              )
+            }
+            className="block w-40 rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:w-48"
+          >
+            <option value="totalRevenue">Total Revenue</option>
             <option value="completedBookings">Completed Bookings</option>
             <option value="name">Name</option>
           </select>

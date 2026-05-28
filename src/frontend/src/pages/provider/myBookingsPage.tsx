@@ -14,7 +14,9 @@ import { bookingCanisterService } from "../../services/bookingCanisterService";
 import ClientRatingInfoModal from "../../components/common/ClientRatingInfoModal";
 import { dispatchBookingInteracted } from "../../utils/interactionEvents";
 import { useProviderNotificationsWithPush } from "../../hooks/useProviderNotificationsWithPush";
-import SharedMyBookingsPage, { SharedBooking } from "../../components/shared/MyBookingsPage/SharedMyBookingsPage";
+import SharedMyBookingsPage, {
+  SharedBooking,
+} from "../../components/shared/MyBookingsPage/SharedMyBookingsPage";
 
 const ProviderBookingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -173,8 +175,7 @@ const ProviderBookingsPage: React.FC = () => {
 
   const renderBookingCard = (booking: SharedBooking) => {
     const clientId =
-      booking.clientProfile?.id?.toString() ||
-      booking.clientId?.toString();
+      booking.clientProfile?.id?.toString() || booking.clientId?.toString();
     const clientData =
       clientId && clientDataMap[clientId]
         ? clientDataMap[clientId]
@@ -183,10 +184,7 @@ const ProviderBookingsPage: React.FC = () => {
     return (
       <div
         onClick={() => {
-          if (
-            booking.status?.toLowerCase() === "inprogress" &&
-            booking.id
-          ) {
+          if (booking.status?.toLowerCase() === "inprogress" && booking.id) {
             navigate(`/provider/active-service/${booking.id}`);
           } else if (booking.id) {
             dispatchBookingInteracted(booking.id);
@@ -203,7 +201,9 @@ const ProviderBookingsPage: React.FC = () => {
             setDecliningBookingId(booking.id);
             setShowDeclineConfirm(true);
           }}
-          onCancelClick={(b: ProviderEnhancedBooking) => setCancellingBooking(b)}
+          onCancelClick={(b: ProviderEnhancedBooking) =>
+            setCancellingBooking(b)
+          }
           isDeclining={isBookingActionInProgress(booking.id, "decline")}
           acceptBookingById={acceptBookingById}
           isBookingActionInProgress={isBookingActionInProgress}
@@ -229,7 +229,9 @@ const ProviderBookingsPage: React.FC = () => {
         <DeclineConfirmDialog
           show={showDeclineConfirm}
           clientName={
-            decliningBookingId ? getClientName(decliningBookingId) : "the client"
+            decliningBookingId
+              ? getClientName(decliningBookingId)
+              : "the client"
           }
           isDeclinining={
             !!decliningBookingId &&

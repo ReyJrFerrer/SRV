@@ -117,7 +117,7 @@ export async function generateEphemeralKeyPair(): Promise<{
     network: NETWORK,
   });
 
-const { systemState } = await suiClient.core.getCurrentSystemState();
+  const { systemState } = await suiClient.core.getCurrentSystemState();
   const maxEpoch = Number(systemState.epoch) + 2;
 
   const ephemeralKeyPair = new Ed25519Keypair();
@@ -250,10 +250,7 @@ export function decodeJwtPayload(jwt: string): ZkLoginJwtPayload {
 /**
  * Derive the zkLogin Sui address from a JWT and user salt.
  */
-export function deriveZkLoginAddress(
-  jwt: string,
-  userSalt: string,
-): string {
+export function deriveZkLoginAddress(jwt: string, userSalt: string): string {
   return jwtToAddress(jwt, userSalt, false);
 }
 

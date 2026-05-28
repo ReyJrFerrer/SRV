@@ -5,7 +5,6 @@ export default function ClientMyBookings() {
   return (
     <View style={styles.container}>
       <Text>Client My Bookings</Text>
-            
     </View>
   );
 }

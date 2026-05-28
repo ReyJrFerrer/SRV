@@ -30,10 +30,14 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
 
   return (
     <div className="mb-6">
-      <div className={`rounded-xl border bg-white p-4 shadow-sm ${hasErrors ? "border-red-300" : "border-gray-200"}`}>
+      <div
+        className={`rounded-xl border bg-white p-4 shadow-sm ${hasErrors ? "border-red-300" : "border-gray-200"}`}
+      >
         <div className="mb-4 flex items-center justify-between">
           <div className="text-sm font-semibold text-gray-700">Progress</div>
-          <div className={`text-sm font-semibold ${hasErrors ? "text-red-600" : "text-blue-700"}`}>
+          <div
+            className={`text-sm font-semibold ${hasErrors ? "text-red-600" : "text-blue-700"}`}
+          >
             {hasErrors ? (
               <span className="flex items-center gap-1">
                 <ExclamationTriangleIcon className="h-4 w-4" />

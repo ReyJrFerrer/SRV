@@ -77,7 +77,7 @@ export async function exchangeForFirebaseToken(
 
     const result = await accountActionFn({
       action: "exchangeForFirebaseToken",
-      payload: { principal, email }
+      payload: { principal, email },
     });
     const data = result.data as IdentityBridgeResponse;
 
@@ -161,7 +161,7 @@ export async function createProfile(
         phone,
         role,
         email,
-      }
+      },
     });
 
     return result.data;
@@ -183,7 +183,7 @@ export async function validatePhone(phone: string): Promise<any> {
       action: "validatePhoneNumber",
       payload: {
         phone,
-      }
+      },
     });
 
     return result.data;
@@ -206,7 +206,7 @@ export async function getProfile(userId?: string): Promise<any> {
       action: "getProfile",
       payload: {
         userId,
-      }
+      },
     });
 
     return result.data;
@@ -232,7 +232,7 @@ export async function updateProfile(
       payload: {
         name,
         phone,
-      }
+      },
     });
 
     return result.data;
@@ -251,7 +251,7 @@ export async function switchUserRole(): Promise<any> {
     const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
     const result = await accountActionFn({
-      action: "switchUserRole"
+      action: "switchUserRole",
     });
 
     return result.data;
@@ -270,7 +270,7 @@ export async function getAllServiceProviders(): Promise<any> {
     const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
     const result = await accountActionFn({
-      action: "getAllServiceProviders"
+      action: "getAllServiceProviders",
     });
 
     return result.data;
@@ -297,7 +297,7 @@ export async function uploadProfilePicture(
         fileName,
         contentType,
         fileData,
-      }
+      },
     });
 
     return result.data;
@@ -315,7 +315,7 @@ export async function removeProfilePicture(): Promise<any> {
     const accountActionFn = httpsCallable(functionsInstance, "accountAction");
 
     const result = await accountActionFn({
-      action: "removeProfilePicture"
+      action: "removeProfilePicture",
     });
 
     return result.data;

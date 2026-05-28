@@ -291,7 +291,7 @@ function Tooltip({
   return (
     <div
       {...tooltipProps}
-      className="animate-in slide-in-from-bottom-4 fade-in relative flex max-h-[85vh] w-[calc(100vw-2rem)] sm:w-[20rem] md:w-[22rem] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300"
+      className="animate-in slide-in-from-bottom-4 fade-in relative flex max-h-[85vh] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] ring-1 ring-black/5 duration-300 sm:w-[20rem] md:w-[22rem]"
       role="dialog"
       aria-modal="true"
     >
@@ -309,7 +309,7 @@ function Tooltip({
           <img
             src={customStep.image}
             alt="SRV Character"
-            className="relative z-10 h-10 w-10 md:h-12 md:w-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.1)]"
+            className="relative z-10 h-10 w-10 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.1)] md:h-12 md:w-12"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = target.src.replace(/ /g, "%20");
@@ -322,17 +322,17 @@ function Tooltip({
         <div className="animate-in slide-in-from-right-2 fade-in duration-300">
           <div className="mb-1.5 flex items-center justify-between pr-6 md:mb-2 md:pr-8">
             {size && (
-              <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-blue-600 md:px-2 md:text-[10px]">
+              <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-blue-600 sm:text-[9px] md:px-2 md:text-[10px]">
                 Step {index + 1} of {size}
               </span>
             )}
           </div>
           {customStep.headline && (
-            <h2 className="mb-1.5 text-sm sm:text-base font-extrabold tracking-tight text-slate-900 md:mb-2 md:text-lg">
+            <h2 className="mb-1.5 text-sm font-extrabold tracking-tight text-slate-900 sm:text-base md:mb-2 md:text-lg">
               {customStep.headline}
             </h2>
           )}
-          <p className="mb-4 text-[10px] leading-snug sm:text-xs sm:leading-relaxed text-slate-600 md:mb-5">
+          <p className="mb-4 text-[10px] leading-snug text-slate-600 sm:text-xs sm:leading-relaxed md:mb-5">
             {step.content as React.ReactNode}
           </p>
         </div>
@@ -343,7 +343,7 @@ function Tooltip({
               <button
                 ref={backButtonRef}
                 {...backProps}
-                className="flex items-center justify-center rounded-xl border border-slate-200 px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 md:px-4 md:py-2.5 md:text-xs"
+                className="flex items-center justify-center rounded-xl border border-slate-200 px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 sm:px-3 sm:py-2 sm:text-xs md:px-4 md:py-2.5 md:text-xs"
               >
                 <ChevronLeftIcon className="mr-0.5 h-3 w-3 md:h-3.5 md:w-3.5" />{" "}
                 Back
@@ -355,7 +355,7 @@ function Tooltip({
             <button
               ref={nextButtonRef}
               {...primaryProps}
-              className="flex flex-1 items-center justify-center rounded-xl bg-blue-600 px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-white shadow-[0_4px_10px_-2px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-700 hover:shadow-[0_8px_16px_-4px_rgba(37,99,235,0.4)] active:scale-[0.98] md:px-5 md:py-2.5 md:text-sm"
+              className="flex flex-1 items-center justify-center rounded-xl bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-[0_4px_10px_-2px_rgba(37,99,235,0.3)] transition-all hover:bg-blue-700 hover:shadow-[0_8px_16px_-4px_rgba(37,99,235,0.4)] active:scale-[0.98] sm:px-4 sm:py-2 sm:text-xs md:px-5 md:py-2.5 md:text-sm"
             >
               {isLastStep ? "Finish Tour" : "Next"}
               {!isLastStep && (
@@ -679,7 +679,9 @@ export default function SpotlightTour({
 
   useEffect(() => {
     const handleStartTour = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { flowType?: string } | undefined;
+      const detail = (e as CustomEvent).detail as
+        | { flowType?: string }
+        | undefined;
       if (detail?.flowType !== flowType) return;
       sessionStorage.removeItem("pending_tour");
       setRun(false);

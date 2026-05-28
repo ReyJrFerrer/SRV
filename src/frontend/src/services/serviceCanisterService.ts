@@ -175,18 +175,18 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "createService",
         data: {
-        title,
-        description,
-        categoryId,
-        price,
-        location,
-        weeklySchedule,
-        instantBookingEnabled,
-        bookingNoticeHours,
-        maxBookingsPerDay,
-        serviceImages,
-        serviceCertificates,
-      }
+          title,
+          description,
+          categoryId,
+          price,
+          location,
+          weeklySchedule,
+          instantBookingEnabled,
+          bookingNoticeHours,
+          maxBookingsPerDay,
+          serviceImages,
+          serviceCertificates,
+        },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -232,7 +232,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getService",
-        data: { serviceId }
+        data: { serviceId },
       });
 
       const data = result.data as { success: boolean; service: any };
@@ -282,7 +282,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getServicesByProvider",
-        data: { providerId }
+        data: { providerId },
       });
 
       const data = result.data as { success: boolean; services: Service[] };
@@ -325,7 +325,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getServicesByCategory",
-        data: { categoryId }
+        data: { categoryId },
       });
 
       const data = result.data as { success: boolean; services: Service[] };
@@ -346,7 +346,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "updateServiceStatus",
-        data: { serviceId, status }
+        data: { serviceId, status },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -369,10 +369,10 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "searchServicesByLocation",
         data: {
-        userLocation: location,
-        maxDistance: radiusKm,
-        categoryId,
-      }
+          userLocation: location,
+          maxDistance: radiusKm,
+          categoryId,
+        },
       });
 
       const data = result.data as { success: boolean; services: Service[] };
@@ -402,17 +402,17 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "updateService",
         data: {
-        serviceId,
-        categoryId,
-        title,
-        description,
-        price,
-        location,
-        weeklySchedule,
-        instantBookingEnabled,
-        bookingNoticeHours,
-        maxBookingsPerDay,
-      }
+          serviceId,
+          categoryId,
+          title,
+          description,
+          price,
+          location,
+          weeklySchedule,
+          instantBookingEnabled,
+          bookingNoticeHours,
+          maxBookingsPerDay,
+        },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -430,7 +430,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "deleteService",
-        data: { serviceId }
+        data: { serviceId },
       });
 
       const data = result.data as { success: boolean; message: string };
@@ -448,7 +448,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "archiveService",
-        data: { serviceId }
+        data: { serviceId },
       });
 
       const data = result.data as { success: boolean; message: string };
@@ -466,7 +466,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "restoreService",
-        data: { serviceId }
+        data: { serviceId },
       });
 
       const data = result.data as { success: boolean; message: string };
@@ -484,7 +484,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "permanentDeleteService",
-        data: { serviceId }
+        data: { serviceId },
       });
 
       const data = result.data as { success: boolean; message: string };
@@ -537,7 +537,8 @@ export const serviceCanisterService = {
                 postalCode: data.location?.postalCode || "",
               },
               status: (data.status as ServiceStatus) || "Unavailable",
-              rating: data.averageRating ?? data.rating?.average ?? data.rating ?? 0,
+              rating:
+                data.averageRating ?? data.rating?.average ?? data.rating ?? 0,
               reviewCount: data.reviewCount ?? data.rating?.count ?? 0,
               imageUrls: data.imageUrls || [],
               certificateMedia: data.certificateMedia || [],
@@ -575,7 +576,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getAllServices",
-        data: {}
+        data: {},
       });
 
       const data = result.data as { success: boolean; services: Service[] };
@@ -600,7 +601,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "uploadServiceImages",
-        data: { serviceId, serviceImages }
+        data: { serviceId, serviceImages },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -621,7 +622,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "removeServiceImage",
-        data: { serviceId, imageUrl }
+        data: { serviceId, imageUrl },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -643,9 +644,9 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "reorderServiceImages",
         data: {
-        serviceId,
-        orderedImageUrls,
-      }
+          serviceId,
+          orderedImageUrls,
+        },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -671,9 +672,9 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "uploadServiceCertificates",
         data: {
-        serviceId,
-        serviceCertificates,
-      }
+          serviceId,
+          serviceCertificates,
+        },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -695,9 +696,9 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "removeServiceCertificate",
         data: {
-        serviceId,
-        certificateUrl,
-      }
+          serviceId,
+          certificateUrl,
+        },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -718,7 +719,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "verifyService",
-        data: { serviceId, isVerified }
+        data: { serviceId, isVerified },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -759,7 +760,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getAllCategories",
-        data: {}
+        data: {},
       });
 
       const data = result.data as {
@@ -786,11 +787,11 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "createServicePackage",
         data: {
-        serviceId,
-        title,
-        description,
-        price,
-      }
+          serviceId,
+          title,
+          description,
+          price,
+        },
       });
 
       const data = result.data as {
@@ -836,7 +837,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getServicePackages",
-        data: { serviceId }
+        data: { serviceId },
       });
 
       const data = result.data as {
@@ -857,7 +858,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getPackage",
-        data: { packageId }
+        data: { packageId },
       });
 
       const data = result.data as {
@@ -884,11 +885,11 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "updateServicePackage",
         data: {
-        packageId,
-        title,
-        description,
-        price,
-      }
+          packageId,
+          title,
+          description,
+          price,
+        },
       });
 
       const data = result.data as {
@@ -909,7 +910,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "deleteServicePackage",
-        data: { packageId }
+        data: { packageId },
       });
 
       const data = result.data as { success: boolean; message: string };
@@ -930,7 +931,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getCommissionQuote",
-        data: { categoryName, price }
+        data: { categoryName, price },
       });
 
       const data = result.data as CommissionQuote & { success: boolean };
@@ -953,10 +954,10 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "updateServiceRating",
         data: {
-        serviceId,
-        newRating,
-        newReviewCount,
-      }
+          serviceId,
+          newRating,
+          newReviewCount,
+        },
       });
 
       const data = result.data as { success: boolean; service: Service };
@@ -981,12 +982,12 @@ export const serviceCanisterService = {
       const result = await serviceActionFn({
         action: "setServiceAvailability",
         data: {
-        serviceId,
-        weeklySchedule,
-        instantBookingEnabled,
-        bookingNoticeHours,
-        maxBookingsPerDay,
-      }
+          serviceId,
+          weeklySchedule,
+          instantBookingEnabled,
+          bookingNoticeHours,
+          maxBookingsPerDay,
+        },
       });
 
       const data = result.data as {
@@ -1009,7 +1010,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getServiceAvailability",
-        data: { serviceId }
+        data: { serviceId },
       });
 
       const data = result.data as {
@@ -1033,7 +1034,7 @@ export const serviceCanisterService = {
       const serviceActionFn = httpsCallable(getFunctions(), "serviceAction");
       const result = await serviceActionFn({
         action: "getAvailableTimeSlots",
-        data: { serviceId, date }
+        data: { serviceId, date },
       });
 
       const data = result.data as {

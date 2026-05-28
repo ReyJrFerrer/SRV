@@ -381,7 +381,7 @@ export const AdminHomePage: React.FC = () => {
                   </p>
                 </div>
               )}
-              <div className="mt-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 pt-6">
+              <div className="mt-6 flex flex-col items-start gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-gray-900">
                     Admin Access Password

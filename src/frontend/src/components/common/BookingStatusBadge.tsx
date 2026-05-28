@@ -150,7 +150,8 @@ export const BookingStatusPill: React.FC<{
   variant?: "filled" | "text";
   size?: "sm" | "md";
 }> = ({ status, variant = "filled", size = "sm" }) => {
-  const sizeClasses = size === "md" ? "px-3 py-1 text-xs" : "px-2 py-0.5 text-[10px]";
+  const sizeClasses =
+    size === "md" ? "px-3 py-1 text-xs" : "px-2 py-0.5 text-[10px]";
 
   if (variant === "text") {
     return (

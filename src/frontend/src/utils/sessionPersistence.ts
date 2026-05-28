@@ -40,12 +40,16 @@ export class SessionManager {
   private validateSession(data: any): data is SessionData {
     if (!data || typeof data !== "object") return false;
     if (!data.principal || typeof data.principal !== "string") return false;
-    if (!data.firebaseToken || typeof data.firebaseToken !== "string") return false;
+    if (!data.firebaseToken || typeof data.firebaseToken !== "string")
+      return false;
     if (typeof data.expiresAt !== "number") return false;
     if (typeof data.sessionDuration !== "number") return false;
 
     // Sanity-check: session must have been created within the last 30 days.
-    const createdAt = data.createdAt || data.lastRefresh || data.expiresAt - data.sessionDuration;
+    const createdAt =
+      data.createdAt ||
+      data.lastRefresh ||
+      data.expiresAt - data.sessionDuration;
     if (Date.now() - createdAt > SessionManager.MAX_SESSION_AGE) return false;
 
     return true;

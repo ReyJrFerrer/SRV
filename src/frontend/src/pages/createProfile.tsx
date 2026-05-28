@@ -392,7 +392,8 @@ export default function CreateProfilePage() {
                 {reauthRequired ? (
                   <div className="space-y-4 pt-4 text-center">
                     <p className="font-medium text-slate-700">
-                      Your session has expired. Please sign in again to continue.
+                      Your session has expired. Please sign in again to
+                      continue.
                     </p>
                     <button
                       type="button"

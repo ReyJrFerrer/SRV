@@ -19,8 +19,7 @@ const BottomNavigation: React.FC = () => {
 
   // Section: Derived notification counts
   const bookingNotificationCount = React.useMemo(
-    () =>
-      notifications.filter((n) => !n.read && n.bookingId).length,
+    () => notifications.filter((n) => !n.read && n.bookingId).length,
     [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =

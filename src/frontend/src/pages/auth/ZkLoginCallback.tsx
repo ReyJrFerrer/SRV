@@ -49,7 +49,9 @@ export default function ZkLoginCallback() {
 
         if (firebaseError.code === "functions/failed-precondition") {
           const raw = firebaseError.details?.suspensionEndDate;
-          setSuspensionEndDate(raw === undefined ? undefined : raw === null ? null : new Date(raw));
+          setSuspensionEndDate(
+            raw === undefined ? undefined : raw === null ? null : new Date(raw),
+          );
           setStatus("locked");
         } else {
           setStatus("error");
@@ -122,9 +124,7 @@ export default function ZkLoginCallback() {
         <p className="text-lg font-medium text-gray-700">
           Completing sign in...
         </p>
-        <p className="mt-1 text-sm text-gray-500">
-          This may take a moment.
-        </p>
+        <p className="mt-1 text-sm text-gray-500">This may take a moment.</p>
       </div>
     </div>
   );

@@ -20,7 +20,6 @@ const ReceiptPage: React.FC = () => {
 
   const { checkCommissionValidation } = useProviderBookingManagement();
 
-
   const { booking, isLoading: isLoadingBooking } =
     useCachedProviderBooking(bookingId);
 
@@ -32,8 +31,10 @@ const ReceiptPage: React.FC = () => {
   const serviceTotal = booking?.price ?? urlPrice;
   const amountPaid = booking?.amountPaid ?? urlPaid;
   const changeGiven = urlChange;
-  const paymentMethod = booking?.paymentMethod 
-    ? (booking.paymentMethod === "CashOnHand" ? "Cash" : booking.paymentMethod)
+  const paymentMethod = booking?.paymentMethod
+    ? booking.paymentMethod === "CashOnHand"
+      ? "Cash"
+      : booking.paymentMethod
     : urlMethod;
 
   // Commission validation state

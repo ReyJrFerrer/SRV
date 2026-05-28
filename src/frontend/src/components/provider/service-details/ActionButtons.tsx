@@ -45,8 +45,8 @@ const ActionButtons: React.FC<Props> = ({
             disabled={isDeleting || hasActiveBookings}
             className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-all sm:w-auto ${
               isDeleting || hasActiveBookings
-                ? "cursor-not-allowed text-red-300 bg-red-100 hover:bg-red-200"
-              : "text-white bg-red-500 hover:bg-red-600 "
+                ? "cursor-not-allowed bg-red-100 text-red-300 hover:bg-red-200"
+                : "bg-red-500 text-white hover:bg-red-600 "
             }`}
           >
             <TrashIcon className="h-5 w-5" />
@@ -85,10 +85,10 @@ const ActionButtons: React.FC<Props> = ({
         <button
           onClick={onDeleteClick}
           disabled={isDeleting || hasActiveBookings}
-          className={`flex h-12 w-full items-center justify-center bg-red-500 text-white gap-2 shadow-sm rounded-xl px-4 text-sm font-medium transition-all sm:w-auto ${
+          className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-red-500 px-4 text-sm font-medium text-white shadow-sm transition-all sm:w-auto ${
             isDeleting || hasActiveBookings
-              ? "cursor-not-allowed text-red-300 bg-red-100 hover:bg-red-200"
-              : "text-red-500 bg-red-500 hover:bg-red-700 "
+              ? "cursor-not-allowed bg-red-100 text-red-300 hover:bg-red-200"
+              : "bg-red-500 text-red-500 hover:bg-red-700 "
           }`}
         >
           <TrashIcon className="h-5 w-5" />

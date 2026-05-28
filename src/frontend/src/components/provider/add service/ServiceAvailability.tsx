@@ -210,7 +210,11 @@ const ServiceAvailability: React.FC<ServiceAvailabilityProps> = ({
   const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollToErrorTrigger && (hasDayError || hasTimeSlotError) && errorRef.current) {
+    if (
+      scrollToErrorTrigger &&
+      (hasDayError || hasTimeSlotError) &&
+      errorRef.current
+    ) {
       errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [scrollToErrorTrigger, hasDayError, hasTimeSlotError]);

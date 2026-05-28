@@ -268,7 +268,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 <NativeTabs.Trigger name="home">
   <NativeTabs.Trigger.VectorIcon vector={Ionicons} name="home" />
   <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-</NativeTabs.Trigger>
+</NativeTabs.Trigger>;
 ```
 
 **Prefer SF Symbols + `md` prop over vector icons for native feel.**

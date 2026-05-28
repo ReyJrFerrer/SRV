@@ -10,7 +10,9 @@ import {
 import { useReviewManagement } from "../../../hooks/reviewManagement";
 import { useReputation } from "../../../hooks/useReputation";
 import { useNotifications } from "../../../hooks/useNotificationsWithPush";
-import SharedMyBookingsPage, { SharedBooking } from "../../../components/shared/MyBookingsPage/SharedMyBookingsPage";
+import SharedMyBookingsPage, {
+  SharedBooking,
+} from "../../../components/shared/MyBookingsPage/SharedMyBookingsPage";
 
 const MyBookingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -55,9 +57,7 @@ const MyBookingsPage: React.FC = () => {
     const fetchStatsForServices = async () => {
       const bookings = bookingManagement.bookings || [];
       const serviceIds = Array.from(
-        new Set(
-          bookings.map((b) => b.serviceId).filter(Boolean) as string[],
-        ),
+        new Set(bookings.map((b) => b.serviceId).filter(Boolean) as string[]),
       );
 
       const mapCopy = { ...serviceStatsMap };
@@ -67,9 +67,7 @@ const MyBookingsPage: React.FC = () => {
       await Promise.all(
         toFetch.map(async (serviceId) => {
           try {
-            const booking = bookings.find(
-              (b) => b.serviceId === serviceId,
-            );
+            const booking = bookings.find((b) => b.serviceId === serviceId);
 
             mapCopy[serviceId] = {
               averageRating: null,
@@ -151,7 +149,9 @@ const MyBookingsPage: React.FC = () => {
         booking={booking as EnhancedBooking}
         onCancelClick={(b) => setCancellingBooking(b)}
         averageRating={serviceStatsMap[booking.serviceId || ""]?.averageRating}
-        reviewCount={serviceStatsMap[booking.serviceId || ""]?.reviews.length ?? 0}
+        reviewCount={
+          serviceStatsMap[booking.serviceId || ""]?.reviews.length ?? 0
+        }
         reviews={serviceStatsMap[booking.serviceId || ""]?.reviews}
         reputation={serviceStatsMap[booking.serviceId || ""]?.reputation}
         hasNotification={notificationBookingIds.has(booking.id)}

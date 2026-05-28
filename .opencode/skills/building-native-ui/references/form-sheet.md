@@ -92,7 +92,7 @@ Use `sheetLargestUndimmedDetentIndex` (zero-indexed) to keep content behind the 
 
 ```tsx
 // app/_layout.tsx
-import { Stack } from 'expo-router';
+import { Stack } from "expo-router";
 
 export default function Layout() {
   return (
@@ -108,7 +108,7 @@ export default function Layout() {
         }}
       />
     </Stack>
-  )
+  );
 }
 ```
 

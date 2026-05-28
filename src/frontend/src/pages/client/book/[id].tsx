@@ -557,8 +557,7 @@ const BookingPage: React.FC = () => {
           setManualBarangayOptions(
             barangays.filter(
               (b: string) =>
-                b &&
-                b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+                b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
             ),
           );
           setSelectedBarangay("");
@@ -574,8 +573,7 @@ const BookingPage: React.FC = () => {
           setManualBarangayOptions(
             barangays.filter(
               (b: string) =>
-                b &&
-                b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+                b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
             ),
           );
         } else {
@@ -657,8 +655,7 @@ const BookingPage: React.FC = () => {
           (cityNorm === "dagupan" && provinceNorm === "region 1")
         ) {
           // Capitalize first letter for the API call
-          const muniName =
-            cityNorm.charAt(0).toUpperCase() + cityNorm.slice(1);
+          const muniName = cityNorm.charAt(0).toUpperCase() + cityNorm.slice(1);
           found = await fetchBarangays("Pangasinan", muniName);
         }
         // General case: resolve province from municipality
@@ -688,8 +685,7 @@ const BookingPage: React.FC = () => {
       if (found.length > 0) {
         setBarangayOptions(
           found.filter(
-            (b) =>
-              b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
+            (b) => b && b.trim().toLowerCase().replace(/\s+/g, "") !== "others",
           ),
         );
       } else if (cityNorm) {

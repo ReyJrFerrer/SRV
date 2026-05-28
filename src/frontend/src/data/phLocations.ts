@@ -54,7 +54,10 @@ export async function fetchMunicipalities(province: string): Promise<string[]> {
   if (cached) return cached;
 
   const fn = httpsCallable(getFirebaseFunctions(), "phLocationsAction");
-  const result = await fn({ action: "getMunicipalities", payload: { province } });
+  const result = await fn({
+    action: "getMunicipalities",
+    payload: { province },
+  });
   const data = (result.data as any).data as string[];
 
   municipalityCache.set(province, data);
@@ -73,7 +76,10 @@ export async function fetchBarangays(
   if (cached) return cached;
 
   const fn = httpsCallable(getFirebaseFunctions(), "phLocationsAction");
-  const result = await fn({ action: "getBarangays", payload: { province, municipality } });
+  const result = await fn({
+    action: "getBarangays",
+    payload: { province, municipality },
+  });
   const data = (result.data as any).data as string[];
 
   barangayCache.set(key, data);
@@ -89,11 +95,11 @@ export async function findProvinceByMunicipality(
   const cached = provinceByMuniCache.get(municipalityName);
   if (provinceByMuniCache.has(municipalityName)) return cached!;
 
-  const fn = httpsCallable(
-    getFirebaseFunctions(),
-    "phLocationsAction",
-  );
-  const result = await fn({ action: "findProvinceByMunicipality", payload: { municipality: municipalityName } });
+  const fn = httpsCallable(getFirebaseFunctions(), "phLocationsAction");
+  const result = await fn({
+    action: "findProvinceByMunicipality",
+    payload: { municipality: municipalityName },
+  });
   const data = (result.data as any).data as string | null;
 
   provinceByMuniCache.set(municipalityName, data);

@@ -39,7 +39,6 @@ interface Props {
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: (index: number) => void;
   onPreview: (url: string, type: "image" | "pdf") => void;
-  
 }
 
 const CertificationsSection: React.FC<Props> = ({
@@ -57,7 +56,6 @@ const CertificationsSection: React.FC<Props> = ({
   onUpload,
   onRemove,
   onPreview,
-  
 }) => {
   return (
     <section className="flex flex-col gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -224,9 +222,7 @@ const CertificationsSection: React.FC<Props> = ({
                 <button
                   key={index}
                   className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm focus:outline-none"
-                  onClick={() =>
-                    onPreview(url, "image")
-                  }
+                  onClick={() => onPreview(url, "image")}
                   type="button"
                   tabIndex={0}
                   aria-label="Inspect certificate"
@@ -237,14 +233,13 @@ const CertificationsSection: React.FC<Props> = ({
                       Failed to load
                     </div>
                   )}
-                  
-                    <img
-                      src={url}
-                      alt={`Certificate ${index + 1}`}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  
+
+                  <img
+                    src={url}
+                    alt={`Certificate ${index + 1}`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 </button>
               );
             })

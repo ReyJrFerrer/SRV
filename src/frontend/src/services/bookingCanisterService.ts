@@ -267,10 +267,7 @@ export const bookingCanisterService = {
    */
   async getClientBookings(clientId: string): Promise<Booking[]> {
     try {
-      const bookingActionFn = httpsCallable(
-        getFunctions(),
-        "bookingAction",
-      );
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       const result = await bookingActionFn({
         action: "getClientBookings",
@@ -293,10 +290,7 @@ export const bookingCanisterService = {
    */
   async getProviderBookings(providerId: string): Promise<Booking[]> {
     try {
-      const bookingActionFn = httpsCallable(
-        getFunctions(),
-        "bookingAction",
-      );
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       const result = await bookingActionFn({
         action: "getProviderBookings",
@@ -319,10 +313,7 @@ export const bookingCanisterService = {
    */
   async getBookingsByStatus(status: BookingStatus): Promise<Booking[]> {
     try {
-      const bookingActionFn = httpsCallable(
-        getFunctions(),
-        "bookingAction",
-      );
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       const result = await bookingActionFn({
         action: "getBookingsByStatus",
@@ -437,10 +428,7 @@ export const bookingCanisterService = {
    */
   async startNavigation(bookingId: string): Promise<Booking | null> {
     try {
-      const bookingActionFn = httpsCallable(
-        getFunctions(),
-        "bookingAction",
-      );
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       const result = await bookingActionFn({
         action: "startNavigation",
@@ -462,10 +450,7 @@ export const bookingCanisterService = {
     amountPaid?: number,
   ): Promise<Booking | null> {
     try {
-      const bookingActionFn = httpsCallable(
-        getFunctions(),
-        "bookingAction",
-      );
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       const result = await bookingActionFn({
         action: "completeBooking",
@@ -509,10 +494,7 @@ export const bookingCanisterService = {
     date: Date,
   ): Promise<AvailableSlot[] | null> {
     try {
-      const bookingActionFn = httpsCallable(
-        getFunctions(),
-        "bookingAction",
-      );
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       const result = await bookingActionFn({
         action: "getServiceAvailableSlots",
@@ -540,10 +522,7 @@ export const bookingCanisterService = {
     requestedDateTime: Date,
   ): Promise<boolean | null> {
     try {
-      const bookingActionFn = httpsCallable(
-        getFunctions(),
-        "bookingAction",
-      );
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       const result = await bookingActionFn({
         action: "checkServiceAvailability",
@@ -571,10 +550,7 @@ export const bookingCanisterService = {
     endDate?: Date,
   ): Promise<ClientAnalytics | null> {
     try {
-      const bookingActionFn = httpsCallable(
-        getFunctions(),
-        "bookingAction",
-      );
+      const bookingActionFn = httpsCallable(getFunctions(), "bookingAction");
 
       const result = await bookingActionFn({
         action: "getClientAnalytics",
@@ -830,20 +806,17 @@ function createSharedBookingListener(
     }
   };
 
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot: any) => {
-      if (snapshot.metadata?.fromCache && snapshot.empty) {
-        return;
-      }
-      const bookings: Booking[] = [];
-      snapshot.forEach((doc: any) => {
-        const data = { id: doc.id, ...doc.data() } as Booking;
-        bookings.push(mapBookingFields(data));
-      });
-      notifyAll(bookings);
-    },
-  );
+  const unsubscribe = onSnapshot(q, (snapshot: any) => {
+    if (snapshot.metadata?.fromCache && snapshot.empty) {
+      return;
+    }
+    const bookings: Booking[] = [];
+    snapshot.forEach((doc: any) => {
+      const data = { id: doc.id, ...doc.data() } as Booking;
+      bookings.push(mapBookingFields(data));
+    });
+    notifyAll(bookings);
+  });
 
   sharedBookingListeners.set(listenerId, {
     unsubscribe,

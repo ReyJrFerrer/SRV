@@ -32,7 +32,10 @@ export default function MainPage({
   const [celebrating, setCelebrating] = useState(false);
   const handleRepClick = () => {
     if (celebrating) return;
-    if (repScore >= 100) { setRepScore(50); return; }
+    if (repScore >= 100) {
+      setRepScore(50);
+      return;
+    }
     const next = repScore + 1;
     setRepScore(next);
     if (next === 100) {
@@ -807,9 +810,7 @@ export default function MainPage({
                   <SparklesIcon />
                 </div>
                 <div className="ai-rep-point-text">
-                  <h3 className="ai-rep-point-title">
-                    AI Review Intelligence
-                  </h3>
+                  <h3 className="ai-rep-point-title">AI Review Intelligence</h3>
                   <p className="ai-rep-point-description">
                     Automated analysis detects suspicious language patterns and
                     rating anomalies, keeping fake reviews out and reputation
@@ -823,12 +824,11 @@ export default function MainPage({
                   <ChartBarIcon />
                 </div>
                 <div className="ai-rep-point-text">
-                  <h3 className="ai-rep-point-title">
-                    Dynamic Scoring Engine
-                  </h3>
+                  <h3 className="ai-rep-point-title">Dynamic Scoring Engine</h3>
                   <p className="ai-rep-point-description">
-                    Always see the full picture with reputation scores updated in real-time from completed
-                    bookings, verified ratings, and AI-validated review data.
+                    Always see the full picture with reputation scores updated
+                    in real-time from completed bookings, verified ratings, and
+                    AI-validated review data.
                   </p>
                 </div>
               </div>
@@ -838,9 +838,7 @@ export default function MainPage({
                   <ShieldCheckIcon />
                 </div>
                 <div className="ai-rep-point-text">
-                  <h3 className="ai-rep-point-title">
-                    Trust Assurance
-                  </h3>
+                  <h3 className="ai-rep-point-title">Trust Assurance</h3>
                   <p className="ai-rep-point-description">
                     Fairness monitoring and anomaly flagging ensure the system
                     rewards genuine service excellence while protecting the

@@ -11,11 +11,36 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: "/client/home" as Href, path: "/client/home", label: "Home", icon: { ios: "house.fill", android: "home", web: "home" } },
-  { to: "/client/booking" as Href, path: "/client/booking", label: "Booking", icon: { ios: "calendar", android: "calendar_month", web: "calendar_month" } },
-  { to: "/client/chat" as Href, path: "/client/chat", label: "Chat", icon: { ios: "message.fill", android: "chat", web: "chat" } },
-  { to: "/client/notifications" as Href, path: "/client/notifications", label: "Notifications", icon: { ios: "bell.fill", android: "notifications", web: "notifications" } },
-  { to: "/client/profile" as Href, path: "/client/profile", label: "Profile", icon: { ios: "person.circle.fill", android: "person", web: "person" } },
+  {
+    to: "/client/home" as Href,
+    path: "/client/home",
+    label: "Home",
+    icon: { ios: "house.fill", android: "home", web: "home" },
+  },
+  {
+    to: "/client/booking" as Href,
+    path: "/client/booking",
+    label: "Booking",
+    icon: { ios: "calendar", android: "calendar_month", web: "calendar_month" },
+  },
+  {
+    to: "/client/chat" as Href,
+    path: "/client/chat",
+    label: "Chat",
+    icon: { ios: "message.fill", android: "chat", web: "chat" },
+  },
+  {
+    to: "/client/notifications" as Href,
+    path: "/client/notifications",
+    label: "Notifications",
+    icon: { ios: "bell.fill", android: "notifications", web: "notifications" },
+  },
+  {
+    to: "/client/profile" as Href,
+    path: "/client/profile",
+    label: "Profile",
+    icon: { ios: "person.circle.fill", android: "person", web: "person" },
+  },
 ];
 
 export default function BottomNavBar() {
@@ -35,12 +60,7 @@ export default function BottomNavBar() {
                 size={24}
                 tintColor={isActive ? "#007AFF" : "#8E8E93"}
               />
-              <Text
-                style={[
-                  styles.label,
-                  isActive && styles.labelActive,
-                ]}
-              >
+              <Text style={[styles.label, isActive && styles.labelActive]}>
                 {item.label}
               </Text>
             </Pressable>

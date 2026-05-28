@@ -88,20 +88,20 @@ const WalletPage: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   // Check if user needs onboarding
-    useEffect(() => {
-      if (!isAuthenticated || !firebaseUser) return;
+  useEffect(() => {
+    if (!isAuthenticated || !firebaseUser) return;
 
-      const checkOnboardingStatus = async () => {
-        try {
-          const profile = await authCanisterService.getMyProfile();
-          if (profile && !profile.isOnboarded) {
-            setShowOnboardingModal(true);
-          }
-        } catch (error) {}
-      };
+    const checkOnboardingStatus = async () => {
+      try {
+        const profile = await authCanisterService.getMyProfile();
+        if (profile && !profile.isOnboarded) {
+          setShowOnboardingModal(true);
+        }
+      } catch (error) {}
+    };
 
-      checkOnboardingStatus();
-    }, [isAuthenticated, firebaseUser]);
+    checkOnboardingStatus();
+  }, [isAuthenticated, firebaseUser]);
 
   // Periodically check for completed payments
   useEffect(() => {

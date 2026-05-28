@@ -39,8 +39,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-
-
   // Effect: fetch user profile when auth loads (location handled by post-login modal)
   useEffect(() => {
     const loadInitialData = async () => {
@@ -294,7 +292,9 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
                 </span>
               </button>
             </div>
-            <div className={`mt-2 transition-all duration-200 ${isMini ? "invisible h-0 opacity-0" : "visible opacity-100"}`}>
+            <div
+              className={`mt-2 transition-all duration-200 ${isMini ? "invisible h-0 opacity-0" : "visible opacity-100"}`}
+            >
               <MapFunctions ref={primaryMapRef} />
             </div>
           </div>
@@ -315,7 +315,6 @@ const Header: React.FC<HeaderProps> = ({ className, scrollTargetRef }) => {
           }}
         />
       )}
-
 
       {/* Mini sticky header as a fixed overlay */}
       {isMini && (

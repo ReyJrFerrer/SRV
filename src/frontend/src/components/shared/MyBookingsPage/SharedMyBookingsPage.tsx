@@ -65,7 +65,8 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
   const [statusFilter, setStatusFilter] = useState<BookingStatusTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   // Primary view toggle placed at the top bar
-  const [timingFilter, setTimingFilter] = useState<BookingTimingFilter>("Same Day");
+  const [timingFilter, setTimingFilter] =
+    useState<BookingTimingFilter>("Same Day");
   const [isTimingDropdownOpen, setIsTimingDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const timingDropdownRef = useRef<HTMLDivElement>(null);
@@ -115,7 +116,11 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
 
   const getBookingTime = (b: SharedBooking) => {
     try {
-      const dateStr = b.scheduledDateTime || b.requestedDate || b.requestedDateTime || b.createdAt;
+      const dateStr =
+        b.scheduledDateTime ||
+        b.requestedDate ||
+        b.requestedDateTime ||
+        b.createdAt;
       return new Date(dateStr).getTime() || 0;
     } catch (err) {
       return 0;
@@ -123,7 +128,11 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
   };
 
   const isSameDayBooking = (b: SharedBooking) => {
-    const dateStr = b.scheduledDateTime || b.requestedDate || b.requestedDateTime || b.createdAt;
+    const dateStr =
+      b.scheduledDateTime ||
+      b.requestedDate ||
+      b.requestedDateTime ||
+      b.createdAt;
     if (!dateStr) return false;
     const bookingDate = new Date(dateStr);
     if (isNaN(bookingDate.getTime())) return false;
@@ -169,7 +178,11 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
       processedBookings = processedBookings.filter((booking) => {
         const serviceName = (booking.serviceName || "").toString();
         const providerName = (booking.providerProfile?.name || "").toString();
-        const clientName = (booking.clientName || booking.clientProfile?.name || "").toString();
+        const clientName = (
+          booking.clientName ||
+          booking.clientProfile?.name ||
+          ""
+        ).toString();
         const categoryName = (
           booking.serviceDetails?.category?.name || ""
         ).toString();
@@ -241,12 +254,21 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
     }
 
     return processedBookings;
-  }, [statusFilter, bookings, searchTerm, selectedCategory, notificationBookingIds]);
+  }, [
+    statusFilter,
+    bookings,
+    searchTerm,
+    selectedCategory,
+    notificationBookingIds,
+  ]);
 
   // Completed bookings (separate collapsible section)
   const completedBookings = useMemo(() => {
     let filtered = (bookings || []).filter(
-      (b) => b && typeof b.status === "string" && b.status.toLowerCase() === "completed",
+      (b) =>
+        b &&
+        typeof b.status === "string" &&
+        b.status.toLowerCase() === "completed",
     );
 
     if (timingFilter !== "All") {
@@ -269,8 +291,14 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
       filtered = filtered.filter((b) => {
         const serviceName = (b.serviceName || "").toString();
         const providerName = (b.providerProfile?.name || "").toString();
-        const clientName = (b.clientName || b.clientProfile?.name || "").toString();
-        const categoryName = (b.serviceDetails?.category?.name || "").toString();
+        const clientName = (
+          b.clientName ||
+          b.clientProfile?.name ||
+          ""
+        ).toString();
+        const categoryName = (
+          b.serviceDetails?.category?.name || ""
+        ).toString();
         return (
           serviceName.toLowerCase().includes(q) ||
           providerName.toLowerCase().includes(q) ||
@@ -286,7 +314,13 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
       if (aNotif !== bNotif) return aNotif - bNotif;
       return getBookingTime(b) - getBookingTime(a);
     });
-  }, [bookings, searchTerm, selectedCategory, notificationBookingIds, timingFilter]);
+  }, [
+    bookings,
+    searchTerm,
+    selectedCategory,
+    notificationBookingIds,
+    timingFilter,
+  ]);
 
   // Cancelled/Declined bookings (separate collapsible section)
   const cancelledBookings = useMemo(() => {
@@ -318,8 +352,14 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
       filtered = filtered.filter((b) => {
         const serviceName = (b.serviceName || "").toString();
         const providerName = (b.providerProfile?.name || "").toString();
-        const clientName = (b.clientName || b.clientProfile?.name || "").toString();
-        const categoryName = (b.serviceDetails?.category?.name || "").toString();
+        const clientName = (
+          b.clientName ||
+          b.clientProfile?.name ||
+          ""
+        ).toString();
+        const categoryName = (
+          b.serviceDetails?.category?.name || ""
+        ).toString();
         return (
           serviceName.toLowerCase().includes(q) ||
           providerName.toLowerCase().includes(q) ||
@@ -335,7 +375,13 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
       if (aNotif !== bNotif) return aNotif - bNotif;
       return getBookingTime(b) - getBookingTime(a);
     });
-  }, [bookings, searchTerm, selectedCategory, notificationBookingIds, timingFilter]);
+  }, [
+    bookings,
+    searchTerm,
+    selectedCategory,
+    notificationBookingIds,
+    timingFilter,
+  ]);
 
   const { sameDayBookings, scheduledBookings } = useMemo(() => {
     const sameDay: SharedBooking[] = [];
@@ -370,34 +416,50 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
       }
     });
 
-    return { allSameDayBookingIds: sameDayIds, allScheduledBookingIds: scheduledIds };
+    return {
+      allSameDayBookingIds: sameDayIds,
+      allScheduledBookingIds: scheduledIds,
+    };
   }, [bookings]);
 
   const unreadSameDayCount = useMemo(() => {
-    return [...notificationBookingIds].filter((id) => id && allSameDayBookingIds.has(id)).length;
+    return [...notificationBookingIds].filter(
+      (id) => id && allSameDayBookingIds.has(id),
+    ).length;
   }, [notificationBookingIds, allSameDayBookingIds]);
 
   const unreadScheduledCount = useMemo(() => {
-    return [...notificationBookingIds].filter((id) => id && allScheduledBookingIds.has(id)).length;
+    return [...notificationBookingIds].filter(
+      (id) => id && allScheduledBookingIds.has(id),
+    ).length;
   }, [notificationBookingIds, allScheduledBookingIds]);
 
   const unreadCompletedCount = useMemo(() => {
-    return completedBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+    return completedBookings.filter((b) => notificationBookingIds.has(b.id))
+      .length;
   }, [completedBookings, notificationBookingIds]);
 
   const unreadCancelledCount = useMemo(() => {
-    return cancelledBookings.filter((b) => notificationBookingIds.has(b.id)).length;
+    return cancelledBookings.filter((b) => notificationBookingIds.has(b.id))
+      .length;
   }, [cancelledBookings, notificationBookingIds]);
 
   // View toggle for Scheduled section (default to list)
-  const [scheduledView, setScheduledView] = useState<"calendar" | "list">("list");
+  const [scheduledView, setScheduledView] = useState<"calendar" | "list">(
+    "list",
+  );
 
   const toCalendarItems = React.useCallback(
     (list: SharedBooking[]): CalendarItem[] => {
       return list
         .map((b) => ({
           id: b.id,
-          date: new Date(b.scheduledDateTime || b.requestedDate || b.requestedDateTime || b.createdAt),
+          date: new Date(
+            b.scheduledDateTime ||
+              b.requestedDate ||
+              b.requestedDateTime ||
+              b.createdAt,
+          ),
           title: b.serviceName || b.packageName || "Service",
           subtitle: b.providerProfile?.name || b.clientName || undefined,
           status: b.status,
@@ -445,7 +507,7 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
                       ? statusFilter.replace("_", " ")
                       : "Filters"}
                   </span>
-                  <span className="ml-1 text-xs text-gray-400 hidden md:inline">
+                  <span className="ml-1 hidden text-xs text-gray-400 md:inline">
                     {selectedCategory ? `| ${selectedCategory}` : ""}
                   </span>
                   <svg
@@ -542,7 +604,7 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
                 />
                 <button
                   type="button"
-                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
+                  className={`relative z-10 flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
                     timingFilter === "Same Day"
                       ? "text-gray-900"
                       : "text-gray-500 hover:text-gray-700"
@@ -561,7 +623,7 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
                 </button>
                 <button
                   type="button"
-                  className={`relative z-10 flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
+                  className={`relative z-10 flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-black transition-colors duration-300 ${
                     timingFilter === "Scheduled"
                       ? "text-white"
                       : "text-gray-500 hover:text-gray-700"
@@ -573,9 +635,13 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
                 >
                   <span>Scheduled</span>
                   {unreadScheduledCount > 0 && (
-                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-xs shadow-sm ring-2 ${
-                      timingFilter === "Scheduled" ? "bg-white text-red-600 ring-blue-600" : "bg-red-500 text-white ring-gray-100"
-                    }`}>
+                    <span
+                      className={`flex h-5 w-5 items-center justify-center rounded-full text-xs shadow-sm ring-2 ${
+                        timingFilter === "Scheduled"
+                          ? "bg-white text-red-600 ring-blue-600"
+                          : "bg-red-500 text-white ring-gray-100"
+                      }`}
+                    >
                       {unreadScheduledCount}
                     </span>
                   )}
@@ -594,9 +660,7 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
           ) : error ? (
             <div className="mt-4 rounded-2xl border border-red-100 bg-white py-16 text-center shadow-md">
               <ExclamationTriangleIcon className="mx-auto mb-4 h-16 w-16 text-red-300" />
-              <p className="mb-4 text-lg text-red-500">
-                {error}
-              </p>
+              <p className="mb-4 text-lg text-red-500">{error}</p>
               <button
                 onClick={onRetry}
                 className="rounded-2xl bg-blue-600 px-5 py-3.5 font-black text-white shadow-sm transition-all duration-300 hover:bg-blue-700 active:scale-95"
@@ -604,17 +668,28 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
                 Retry
               </button>
             </div>
-          ) : filteredBookings.length > 0 || completedBookings.length > 0 || cancelledBookings.length > 0 ? (
-            <div className="my-4 space-y-6 pb-16" data-tour={`${role}-bookings-list`}>
+          ) : filteredBookings.length > 0 ||
+            completedBookings.length > 0 ||
+            cancelledBookings.length > 0 ? (
+            <div
+              className="my-4 space-y-6 pb-16"
+              data-tour={`${role}-bookings-list`}
+            >
               {timingFilter === "Same Day" && sameDayBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
-                    <SparklesIcon className={`mr-2 h-5 w-5 ${role === "provider" ? "text-yellow-500" : "text-blue-600"}`} />
-                    <h2 className={`text-base font-bold tracking-wide ${role === "provider" ? "text-yellow-600" : "text-gray-900"}`}>
+                    <SparklesIcon
+                      className={`mr-2 h-5 w-5 ${role === "provider" ? "text-yellow-500" : "text-blue-600"}`}
+                    />
+                    <h2
+                      className={`text-base font-bold tracking-wide ${role === "provider" ? "text-yellow-600" : "text-gray-900"}`}
+                    >
                       Same Day {role === "provider" && "Bookings"}
                     </h2>
                   </div>
-                  <div className={`space-y-4 rounded-2xl border ${role === "provider" ? "border-yellow-200" : "border-gray-200"} bg-white p-4 shadow-sm md:space-y-6`}>
+                  <div
+                    className={`space-y-4 rounded-2xl border ${role === "provider" ? "border-yellow-200" : "border-gray-200"} bg-white p-4 shadow-sm md:space-y-6`}
+                  >
                     {sameDayBookings.map((booking, idx) => (
                       <Appear
                         key={booking.id}
@@ -643,8 +718,12 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
               {timingFilter === "Scheduled" && scheduledBookings.length > 0 && (
                 <section>
                   <div className="mb-3 flex items-center">
-                    <CalendarDaysIcon className={`mr-2 h-5 w-5 ${role === "provider" ? "text-blue-500" : "text-blue-600"}`} />
-                    <h2 className={`text-base font-bold tracking-wide ${role === "provider" ? "text-blue-700" : "text-gray-900"}`}>
+                    <CalendarDaysIcon
+                      className={`mr-2 h-5 w-5 ${role === "provider" ? "text-blue-500" : "text-blue-600"}`}
+                    />
+                    <h2
+                      className={`text-base font-bold tracking-wide ${role === "provider" ? "text-blue-700" : "text-gray-900"}`}
+                    >
                       Scheduled {role === "provider" && "Bookings"}
                     </h2>
                     <div className="ml-auto">
@@ -682,7 +761,9 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
                     </div>
                   </div>
                   {scheduledView === "calendar" ? (
-                    <div className={`rounded-2xl border ${role === "provider" ? "border-blue-200" : "border-gray-200"} bg-white p-3 shadow-sm`}>
+                    <div
+                      className={`rounded-2xl border ${role === "provider" ? "border-blue-200" : "border-gray-200"} bg-white p-3 shadow-sm`}
+                    >
                       <MonthlyBookingsCalendar
                         items={toCalendarItems(scheduledBookings)}
                         initialMonth={new Date()}
@@ -690,7 +771,9 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
                       />
                     </div>
                   ) : (
-                    <div className={`space-y-4 rounded-2xl border ${role === "provider" ? "border-blue-200" : "border-gray-200"} bg-white p-4 shadow-sm md:space-y-6`}>
+                    <div
+                      className={`space-y-4 rounded-2xl border ${role === "provider" ? "border-blue-200" : "border-gray-200"} bg-white p-4 shadow-sm md:space-y-6`}
+                    >
                       {scheduledBookings.map((booking, idx) => (
                         <Appear
                           key={booking.id}
@@ -721,12 +804,16 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
               {completedBookings.length > 0 && (
                 <CollapsibleBookingSection
                   title="Completed"
-                  icon={<CheckCircleIcon className="mr-2 h-5 w-5 text-green-500" />}
+                  icon={
+                    <CheckCircleIcon className="mr-2 h-5 w-5 text-green-500" />
+                  }
                   count={completedBookings.length}
                   unreadCount={unreadCompletedCount}
                   variant="default"
                   defaultExpanded={false}
-                  forceExpanded={statusFilter === "COMPLETED" ? true : undefined}
+                  forceExpanded={
+                    statusFilter === "COMPLETED" ? true : undefined
+                  }
                 >
                   {completedBookings.map((booking, idx) => (
                     <Appear
@@ -748,7 +835,9 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
                   unreadCount={unreadCancelledCount}
                   variant="warning"
                   defaultExpanded={false}
-                  forceExpanded={statusFilter === "CANCELLED" ? true : undefined}
+                  forceExpanded={
+                    statusFilter === "CANCELLED" ? true : undefined
+                  }
                 >
                   {cancelledBookings.map((booking, idx) => (
                     <Appear
@@ -763,10 +852,17 @@ const SharedMyBookingsPage: React.FC<SharedMyBookingsPageProps> = ({
               )}
             </div>
           ) : (
-            <div className={`rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm ${role === "provider" ? "h-[calc(100vh-250px)] flex flex-col items-center justify-center" : ""}`}>
-              <ClipboardDocumentListIcon className={`mx-auto mb-3 h-10 w-10 text-gray-300 ${role === "provider" ? "hidden" : ""}`} />
-              <p className={`font-medium ${role === "provider" ? "text-lg text-gray-500" : "text-sm text-gray-500"}`}>
-                No bookings found{role === "provider" && " with the current filters"}.
+            <div
+              className={`rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm ${role === "provider" ? "flex h-[calc(100vh-250px)] flex-col items-center justify-center" : ""}`}
+            >
+              <ClipboardDocumentListIcon
+                className={`mx-auto mb-3 h-10 w-10 text-gray-300 ${role === "provider" ? "hidden" : ""}`}
+              />
+              <p
+                className={`font-medium ${role === "provider" ? "text-lg text-gray-500" : "text-sm text-gray-500"}`}
+              >
+                No bookings found
+                {role === "provider" && " with the current filters"}.
               </p>
               {role === "client" && (
                 <p className="mt-1 text-xs text-gray-400">

@@ -28,7 +28,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   // Section: Derived notification counts
   const bookingNotificationCount = React.useMemo(
     () =>
-      notifications.filter((n) => (!n.read && n.bookingId) || (!n.read && n.type === "new_booking_request")).length,
+      notifications.filter(
+        (n) =>
+          (!n.read && n.bookingId) ||
+          (!n.read && n.type === "new_booking_request"),
+      ).length,
     [notifications],
   );
   const { profile, profileImageUrl, isUsingDefaultAvatar, isImageLoading } =
@@ -148,7 +152,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     };
   }, []);
 
-  const mobileOrder = ["Home", "Booking", "Chat",  "Notifications", "Profile"];
+  const mobileOrder = ["Home", "Booking", "Chat", "Notifications", "Profile"];
 
   return (
     <>
@@ -472,15 +476,12 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
                     }
                     className="absolute right-2 top-1 flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-black text-white shadow-sm"
                   >
-                    {filteredUnreadCount > 99
-                      ? "99+"
-                      : filteredUnreadCount}
+                    {filteredUnreadCount > 99 ? "99+" : filteredUnreadCount}
                   </span>
                 )}
               </Link>
             );
           })()}
-
         </div>
 
         {/* Bottom section: Settings anchored at bottom */}

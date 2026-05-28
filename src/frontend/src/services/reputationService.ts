@@ -1,6 +1,10 @@
 import { getFirebaseFirestore as getDb } from "./firebaseApp";
 import { doc, getDoc } from "firebase/firestore";
-import { getFunctions, httpsCallable, HttpsCallableResult } from "firebase/functions";
+import {
+  getFunctions,
+  httpsCallable,
+  HttpsCallableResult,
+} from "firebase/functions";
 
 interface ReputationResult {
   success: boolean;
@@ -29,10 +33,16 @@ interface Review {
 }
 
 class ReputationService {
-  private async callReputationAction<T>(action: string, data?: object): Promise<T> {
+  private async callReputationAction<T>(
+    action: string,
+    data?: object,
+  ): Promise<T> {
     const functions = getFunctions();
     const reputationAction = httpsCallable(functions, "reputationAction");
-    const result: HttpsCallableResult = await reputationAction({ action, ...data });
+    const result: HttpsCallableResult = await reputationAction({
+      action,
+      ...data,
+    });
     return result.data as T;
   }
 
@@ -94,7 +104,10 @@ class ReputationService {
     }
 
     try {
-      const result = await this.callReputationAction<ReputationResult>("initializeReputation", { userId });
+      const result = await this.callReputationAction<ReputationResult>(
+        "initializeReputation",
+        { userId },
+      );
       console.log("From reputation score", result);
       return result;
     } catch (error) {
@@ -109,20 +122,28 @@ class ReputationService {
     }
 
     try {
-      return await this.callReputationAction<ReputationResult>("updateUserReputation", { userId });
+      return await this.callReputationAction<ReputationResult>(
+        "updateUserReputation",
+        { userId },
+      );
     } catch (error) {
       console.error("Error updating user reputation:", error);
       throw error;
     }
   }
 
-  async updateProviderReputation(providerId: string): Promise<ReputationResult> {
+  async updateProviderReputation(
+    providerId: string,
+  ): Promise<ReputationResult> {
     if (!providerId) {
       throw new Error("Provider ID is required");
     }
 
     try {
-      return await this.callReputationAction<ReputationResult>("updateProviderReputation", { providerId });
+      return await this.callReputationAction<ReputationResult>(
+        "updateProviderReputation",
+        { providerId },
+      );
     } catch (error) {
       console.error("Error updating provider reputation:", error);
       throw error;
@@ -135,7 +156,10 @@ class ReputationService {
     }
 
     try {
-      return await this.callReputationAction<ReputationResult>("processReviewForReputation", { review });
+      return await this.callReputationAction<ReputationResult>(
+        "processReviewForReputation",
+        { review },
+      );
     } catch (error) {
       console.error("Error processing review for reputation:", error);
       throw error;
@@ -148,20 +172,28 @@ class ReputationService {
     }
 
     try {
-      return await this.callReputationAction<ReputationResult>("deductReputationForCancellation", { userId });
+      return await this.callReputationAction<ReputationResult>(
+        "deductReputationForCancellation",
+        { userId },
+      );
     } catch (error) {
       console.error("Error deducting reputation for cancellation:", error);
       throw error;
     }
   }
 
-  async deductReputationForSuspiciousReview(userId: string): Promise<ReputationResult> {
+  async deductReputationForSuspiciousReview(
+    userId: string,
+  ): Promise<ReputationResult> {
     if (!userId) {
       throw new Error("User ID is required");
     }
 
     try {
-      return await this.callReputationAction<ReputationResult>("deductReputationForSuspiciousReview", { userId });
+      return await this.callReputationAction<ReputationResult>(
+        "deductReputationForSuspiciousReview",
+        { userId },
+      );
     } catch (error) {
       console.error("Error deducting reputation for suspicious review:", error);
       throw error;

@@ -266,7 +266,7 @@ export const authCanisterService = {
         action: "updateUserActiveStatus",
         data: {
           isActive: isActive,
-        }
+        },
       });
 
       if (!result.data?.success) {
