@@ -82,14 +82,14 @@ function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDeta
             </td>
           </tr>
 
-          <!-- Message -->
+          ${hasSender ? buildChatMessageHtml(message, senderInfo, yellow, yellowDark, darkText, grayText, borderColor) : `
+          <!-- Description -->
           <tr>
             <td style="padding:10px 32px 0 32px;">
               <p style="margin:0;font-size:16px;color:${grayText};line-height:1.7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${escapeHtml(message)}</p>
             </td>
           </tr>
-
-          ${hasSender ? buildSenderInfoHtml(senderInfo, yellow, yellowDark, darkText, grayText, borderColor) : ""}
+          `}
 
           ${hasBooking ? buildBookingDetailsHtml(bookingDetails, yellow, yellowDark, darkText, grayText, borderColor) : ""}
 
@@ -251,7 +251,7 @@ function buildBookingDetailsHtml(details, yellow, yellowDark, darkText, grayText
   `;
 }
 
-function buildSenderInfoHtml(senderInfo, yellow, yellowDark, darkText, grayText, borderColor) {
+function buildChatMessageHtml(message, senderInfo, yellow, yellowDark, darkText, grayText, borderColor) {
   const phoneHtml = senderInfo.phone ? `
                       <tr>
                         <td style="padding:4px 0 0 0;">
@@ -262,24 +262,40 @@ function buildSenderInfoHtml(senderInfo, yellow, yellowDark, darkText, grayText,
   const roleLabel = senderInfo.role ? escapeHtml(senderInfo.role) : "Sender";
 
   return `
-          <!-- Sender Info -->
+          <!-- New Message -->
           <tr>
-            <td style="padding:24px 32px 0 32px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fefce8;border-radius:10px;border:1px solid ${borderColor};">
+            <td style="padding:16px 32px 0 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:10px;border:1px solid ${borderColor};">
                 <tr>
                   <td style="padding:16px 20px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding-bottom:8px;">
-                          <p style="margin:0;font-size:14px;font-weight:700;color:${darkText};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${roleLabel}</p>
+                          <p style="margin:0;font-size:12px;font-weight:700;color:${yellowDark};text-transform:uppercase;letter-spacing:0.05em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">New Message</p>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding:4px 0 0 0;">
-                          <p style="margin:0;font-size:14px;color:${darkText};font-weight:700;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${escapeHtml(senderInfo.name)}</p>
+                        <td style="padding-bottom:12px;">
+                          <p style="margin:0;font-size:16px;color:${darkText};line-height:1.7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${escapeHtml(message)}</p>
                         </td>
                       </tr>
-                      ${phoneHtml}
+                      <tr>
+                        <td style="padding-top:12px;border-top:1px solid ${borderColor};">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="padding-bottom:4px;">
+                                <p style="margin:0;font-size:12px;font-weight:700;color:${grayText};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${roleLabel}</p>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding:2px 0 0 0;">
+                                <p style="margin:0;font-size:14px;color:${darkText};font-weight:700;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${escapeHtml(senderInfo.name)}</p>
+                              </td>
+                            </tr>
+                            ${phoneHtml}
+                          </table>
+                        </td>
+                      </tr>
                     </table>
                   </td>
                 </tr>
