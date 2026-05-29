@@ -6,6 +6,7 @@ const {
   USER_TYPES,
   generateNotificationHref,
   sendOneSignalNotification,
+  sendEmailForNotification,
 } = require("./notification");
 
 const db = getFirestore();
@@ -105,8 +106,18 @@ exports.onMessageCreated = onDocumentCreated(
           },
         );
 
+        // Send email notification (non-blocking)
+        sendEmailForNotification(receiverId, notificationData).catch(
+          (error) => {
+            console.error(
+              "Failed to send email notification for chat message:",
+              error,
+            );
+          },
+        );
+
         console.log(
-          `Chat notification created and push initiated for ${receiverId}`,
+          `Chat notification created and push/email initiated for ${receiverId}`,
         );
       }
     } catch (notificationError) {

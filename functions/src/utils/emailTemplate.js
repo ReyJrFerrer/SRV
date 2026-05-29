@@ -9,7 +9,7 @@
  * @param {Object} [params.bookingDetails]
  * @return {{html: string, text: string}}
  */
-function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDetails}) {
+function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDetails, senderInfo}) {
   const logoUrl = `${appBaseUrl}/apple-touch-icon-180.png`;
   const characterUrl = `${appBaseUrl}/images/srv%20characters%20(SVG)/Sir%20V.%20GID.png`;
   const appUrl = href ?
@@ -24,6 +24,7 @@ function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDeta
   const borderColor = "#e5e7eb";
 
   const hasBooking = bookingDetails && bookingDetails.serviceName;
+  const hasSender = senderInfo && senderInfo.name;
 
   const html = `
 <!DOCTYPE html>
@@ -88,6 +89,8 @@ function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDeta
             </td>
           </tr>
 
+          ${hasSender ? buildSenderInfoHtml(senderInfo, yellow, yellowDark, darkText, grayText, borderColor) : ""}
+
           ${hasBooking ? buildBookingDetailsHtml(bookingDetails, yellow, yellowDark, darkText, grayText, borderColor) : ""}
 
           <!-- CTA Button -->
@@ -135,7 +138,7 @@ function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDeta
 </html>
   `.trim();
 
-  const text = buildTextVersion({name, title, message, href, appBaseUrl, bookingDetails, appUrl});
+  const text = buildTextVersion({name, title, message, href, appBaseUrl, bookingDetails, appUrl, senderInfo});
 
   return {html, text};
 }
@@ -248,6 +251,44 @@ function buildBookingDetailsHtml(details, yellow, yellowDark, darkText, grayText
   `;
 }
 
+function buildSenderInfoHtml(senderInfo, yellow, yellowDark, darkText, grayText, borderColor) {
+  const phoneHtml = senderInfo.phone ? `
+                      <tr>
+                        <td style="padding:4px 0 0 0;">
+                          <p style="margin:0;font-size:13px;color:${grayText};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">&#128222; ${escapeHtml(senderInfo.phone)}</p>
+                        </td>
+                      </tr>` : "";
+
+  const roleLabel = senderInfo.role ? escapeHtml(senderInfo.role) : "Sender";
+
+  return `
+          <!-- Sender Info -->
+          <tr>
+            <td style="padding:24px 32px 0 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fefce8;border-radius:10px;border:1px solid ${borderColor};">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom:8px;">
+                          <p style="margin:0;font-size:14px;font-weight:700;color:${darkText};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${roleLabel}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:4px 0 0 0;">
+                          <p style="margin:0;font-size:14px;color:${darkText};font-weight:700;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${escapeHtml(senderInfo.name)}</p>
+                        </td>
+                      </tr>
+                      ${phoneHtml}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+  `;
+}
+
 /**
  * Build the plain-text version of the email.
  * @param {Object} params
@@ -260,12 +301,18 @@ function buildBookingDetailsHtml(details, yellow, yellowDark, darkText, grayText
  * @param {string} params.appUrl
  * @return {string}
  */
-function buildTextVersion({name, title, message, href, appBaseUrl, bookingDetails, appUrl}) {
+function buildTextVersion({name, title, message, href, appBaseUrl, bookingDetails, appUrl, senderInfo}) {
   let text = `Hi ${name},
 
 ${title}
 
 ${message}`;
+
+  if (senderInfo && senderInfo.name) {
+    text += `\n\n--- Message From ---\n`;
+    text += `Name: ${senderInfo.name}\n`;
+    if (senderInfo.phone) text += `Phone: ${senderInfo.phone}\n`;
+  }
 
   if (bookingDetails && bookingDetails.serviceName) {
     text += `\n\n--- Booking Details ---\n`;

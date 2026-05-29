@@ -498,6 +498,31 @@ async function sendEmailForNotification(userId, notification) {
 
     const bookingDetails = await buildBookingDetailsForEmail(notification);
 
+    // For chat messages, fetch sender contact info to display in email
+    let senderInfo = null;
+    if (notification.notificationType === NOTIFICATION_TYPES.CHAT_MESSAGE) {
+      const senderId = notification.metadata?.senderId;
+      if (senderId) {
+        try {
+          const senderDoc = await db.collection("users").doc(senderId).get();
+          if (senderDoc.exists) {
+            const senderData = senderDoc.data();
+            const senderRole =
+              notification.userType === USER_TYPES.CLIENT
+                ? "Provider"
+                : "Client";
+            senderInfo = {
+              name: senderData.name || "User",
+              phone: senderData.phone || null,
+              role: senderRole,
+            };
+          }
+        } catch (e) {
+          console.error("Error fetching sender info for email:", e);
+        }
+      }
+    }
+
     const {html, text} = buildEmailTemplate({
       name: userData.name || "User",
       title: notification.title,
@@ -505,6 +530,7 @@ async function sendEmailForNotification(userId, notification) {
       href: notification.href || null,
       appBaseUrl: APP_BASE_URL,
       bookingDetails,
+      senderInfo,
     });
 
     await sendEmail({
