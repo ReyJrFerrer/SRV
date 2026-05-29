@@ -302,6 +302,177 @@ async function sendOneSignalNotification(userId, notification) {
 }
 
 /**
+ * Parse a date value assuming Philippine timezone (UTC+8) when no timezone is specified.
+ * @param {string|Date|Object} value The date value from Firestore
+ * @return {Date} A Date object in UTC representing the correct Philippine time
+ */
+function parsePhilippineDate(value) {
+  if (!value) return null;
+  let isoString =
+    typeof value === "string"
+      ? value
+      : value.toDate
+        ? value.toDate().toISOString()
+        : value.toISOString
+          ? value.toISOString()
+          : String(value);
+
+  // If the string lacks timezone info, append +08:00 (Asia/Manila)
+  if (!isoString.match(/[Zz]|[+-]\d{2}:?\d{2}$/)) {
+    isoString = isoString + "+08:00";
+  }
+
+  return new Date(isoString);
+}
+
+/**
+ * Build booking details for email enrichment
+ * Fetches related booking, service, packages, and contact info
+ * @param {Object} notification The notification object
+ * @return {Promise<Object|null>} Booking details or null
+ */
+async function buildBookingDetailsForEmail(notification) {
+  const bookingId = notification.relatedEntityId;
+  if (!bookingId) return null;
+
+  try {
+    const bookingDoc = await db.collection("bookings").doc(bookingId).get();
+    if (!bookingDoc.exists) return null;
+    const booking = bookingDoc.data();
+
+    // Service name
+    let serviceName = booking.serviceName || "Service";
+    if (booking.serviceId) {
+      try {
+        const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+        if (serviceDoc.exists) {
+          serviceName = serviceDoc.data().title || serviceName;
+        }
+      } catch (e) {
+        console.error("Error fetching service for email:", e);
+      }
+    }
+
+    // Package names
+    const packageNames = [];
+    if (
+      booking.servicePackageIds &&
+      Array.isArray(booking.servicePackageIds) &&
+      booking.servicePackageIds.length > 0
+    ) {
+      for (const packageId of booking.servicePackageIds) {
+        try {
+          const pkgDoc = await db.collection("service_packages").doc(packageId).get();
+          if (pkgDoc.exists && pkgDoc.data().name) {
+            packageNames.push(pkgDoc.data().name);
+          }
+        } catch (e) {
+          console.error("Error fetching package for email:", e);
+        }
+      }
+    }
+
+    // Contact info of the OTHER party
+    const recipientUserType = notification.userType;
+    const otherUserId =
+      recipientUserType === USER_TYPES.CLIENT
+        ? booking.providerId
+        : booking.clientId;
+    let contactInfo = null;
+    if (otherUserId) {
+      try {
+        const otherUserDoc = await db.collection("users").doc(otherUserId).get();
+        if (otherUserDoc.exists) {
+          const otherUser = otherUserDoc.data();
+          contactInfo = {
+            role: recipientUserType === USER_TYPES.CLIENT ? "Provider" : "Client",
+            name: otherUser.name || "User",
+            phone: otherUser.phone || null,
+            email: otherUser.email || null,
+          };
+        }
+      } catch (e) {
+        console.error("Error fetching contact user for email:", e);
+      }
+    }
+
+    // Location
+    const location =
+      typeof booking.location === "string"
+        ? booking.location
+        : booking.location?.address ||
+          booking.location?.formattedAddress ||
+          null;
+
+    let mapsUrl = null;
+    if (location) {
+      mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        location,
+      )}`;
+    }
+
+    // Dates — parse with explicit Asia/Manila timezone handling
+    let date = null;
+    let timeRange = null;
+    if (booking.requestedDate) {
+      try {
+        const requestedDate = parsePhilippineDate(booking.requestedDate);
+        date = requestedDate.toLocaleDateString("en-PH", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          timeZone: "Asia/Manila",
+        });
+        if (booking.scheduledDate) {
+          const scheduledDate = parsePhilippineDate(booking.scheduledDate);
+          const startTime = requestedDate.toLocaleTimeString("en-PH", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Asia/Manila",
+          });
+          const endTime = scheduledDate.toLocaleTimeString("en-PH", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Asia/Manila",
+          });
+          timeRange = `${startTime} - ${endTime}`;
+        }
+      } catch (e) {
+        console.error("Error formatting dates for email:", e);
+      }
+    }
+
+    // Price
+    let price = null;
+    if (booking.price != null) {
+      try {
+        price = `₱${Number(booking.price).toLocaleString("en-PH", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
+      } catch (e) {
+        price = `₱${booking.price}`;
+      }
+    }
+
+    return {
+      serviceName,
+      packageNames,
+      date,
+      timeRange,
+      location,
+      mapsUrl,
+      price,
+      contactInfo,
+    };
+  } catch (error) {
+    console.error("Error building booking details for email:", error);
+    return null;
+  }
+}
+
+/**
  * Send an email notification for a booking-related notification
  * Fetches the user's email from Firestore and sends a transactional email
  * Fails silently if the user has no email or if sending fails
@@ -325,12 +496,15 @@ async function sendEmailForNotification(userId, notification) {
       return;
     }
 
+    const bookingDetails = await buildBookingDetailsForEmail(notification);
+
     const {html, text} = buildEmailTemplate({
       name: userData.name || "User",
       title: notification.title,
       message: notification.message,
       href: notification.href || null,
       appBaseUrl: APP_BASE_URL,
+      bookingDetails,
     });
 
     await sendEmail({
