@@ -309,13 +309,13 @@ async function sendOneSignalNotification(userId, notification) {
 function parsePhilippineDate(value) {
   if (!value) return null;
   let isoString =
-    typeof value === "string"
-      ? value
-      : value.toDate
-        ? value.toDate().toISOString()
-        : value.toISOString
-          ? value.toISOString()
-          : String(value);
+    typeof value === "string" ?
+      value :
+      value.toDate ?
+        value.toDate().toISOString() :
+        value.toISOString ?
+          value.toISOString() :
+          String(value);
 
   // If the string lacks timezone info, append +08:00 (Asia/Manila)
   if (!isoString.match(/[Zz]|[+-]\d{2}:?\d{2}$/)) {
@@ -375,9 +375,9 @@ async function buildBookingDetailsForEmail(notification) {
     // Contact info of the OTHER party
     const recipientUserType = notification.userType;
     const otherUserId =
-      recipientUserType === USER_TYPES.CLIENT
-        ? booking.providerId
-        : booking.clientId;
+      recipientUserType === USER_TYPES.CLIENT ?
+        booking.providerId :
+        booking.clientId;
     let contactInfo = null;
     if (otherUserId) {
       try {
@@ -398,9 +398,9 @@ async function buildBookingDetailsForEmail(notification) {
 
     // Location
     const location =
-      typeof booking.location === "string"
-        ? booking.location
-        : booking.location?.address ||
+      typeof booking.location === "string" ?
+        booking.location :
+        booking.location?.address ||
           booking.location?.formattedAddress ||
           null;
 

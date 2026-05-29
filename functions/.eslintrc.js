@@ -89,6 +89,12 @@ module.exports = {
         "camelcase": ["error", {allow: ["_notification", "app_id", "include_player_ids"]}],
       },
     },
+    {
+      files: ["src/utils/emailTemplate.js"],
+      rules: {
+        "max-len": "off",
+      },
+    },
   ],
   globals: {
     // Firebase Functions globals

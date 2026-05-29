@@ -14,6 +14,16 @@ const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
 
 const transporter = nodemailer.createTransport(smtpConfig);
 
+/**
+ * Send an email via SMTP.
+ * @param {Object} params
+ * @param {string} params.to
+ * @param {string} params.subject
+ * @param {string} [params.text]
+ * @param {string} [params.html]
+ * @param {string} [params.fromName]
+ * @param {string} [params.replyTo]
+ */
 async function sendEmail({to, subject, text, html, fromName, replyTo}) {
   const mailOptions = {
     from: `"${fromName || "SRV"}" <${fromEmail}>`,

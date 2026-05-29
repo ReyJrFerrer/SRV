@@ -1,3 +1,14 @@
+/**
+ * Build an HTML email template.
+ * @param {Object} params
+ * @param {string} params.name
+ * @param {string} params.title
+ * @param {string} params.message
+ * @param {string} [params.href]
+ * @param {string} params.appBaseUrl
+ * @param {Object} [params.bookingDetails]
+ * @return {{html: string, text: string}}
+ */
 function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDetails}) {
   const logoUrl = `${appBaseUrl}/apple-touch-icon-180.png`;
   const characterUrl = `${appBaseUrl}/images/srv%20characters%20(SVG)/Sir%20V.%20GID.png`;
@@ -129,6 +140,16 @@ function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDeta
   return {html, text};
 }
 
+/**
+ * Build the booking details HTML section.
+ * @param {Object} details
+ * @param {string} yellow
+ * @param {string} yellowDark
+ * @param {string} darkText
+ * @param {string} grayText
+ * @param {string} borderColor
+ * @return {string}
+ */
 function buildBookingDetailsHtml(details, yellow, yellowDark, darkText, grayText, borderColor) {
   const packagesHtml =
     details.packageNames && details.packageNames.length > 0 ? `
@@ -173,7 +194,7 @@ function buildBookingDetailsHtml(details, yellow, yellowDark, darkText, grayText
 
   let contactHtml = "";
   if (details.contactInfo) {
-    const {role, name: contactName, phone, email} = details.contactInfo;
+    const {role, name: contactName, phone} = details.contactInfo;
     contactHtml = `
                       <tr>
                         <td style="padding:12px 0 0 0;border-top:1px solid ${borderColor};">
@@ -227,6 +248,18 @@ function buildBookingDetailsHtml(details, yellow, yellowDark, darkText, grayText
   `;
 }
 
+/**
+ * Build the plain-text version of the email.
+ * @param {Object} params
+ * @param {string} params.name
+ * @param {string} params.title
+ * @param {string} params.message
+ * @param {string} [params.href]
+ * @param {string} params.appBaseUrl
+ * @param {Object} [params.bookingDetails]
+ * @param {string} params.appUrl
+ * @return {string}
+ */
 function buildTextVersion({name, title, message, href, appBaseUrl, bookingDetails, appUrl}) {
   let text = `Hi ${name},
 
@@ -265,6 +298,11 @@ ${message}`;
   return text;
 }
 
+/**
+ * Escape HTML special characters.
+ * @param {string} str
+ * @return {string}
+ */
 function escapeHtml(str) {
   if (!str) return "";
   return str
