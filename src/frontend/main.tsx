@@ -470,6 +470,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                         <Route index element={<ClientRedirect />} />
                         <Route path="home" element={<ClientHome />} />
                         <Route path="chat" element={<ClientChat />} />
+                        <Route
+                          path="chat/:conversationId"
+                          element={<ClientChat />}
+                        />
                         <Route path="settings" element={<SettingsPageC />} />
                         <Route path="profile" element={<ClientProfilePage />} />
                         <Route path="ratings" element={<ClientRatingsPage />} />
@@ -555,6 +559,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                         <Route path="home" element={<ProviderHome />} />
                         <Route path="bookings" element={<ProviderBookings />} />
                         <Route path="chat" element={<ProviderChat />} />
+                        <Route
+                          path="chat/:conversationId"
+                          element={<ProviderChat />}
+                        />
                         <Route path="settings" element={<SettingsPageSP />} />
                         <Route
                           path="profile"

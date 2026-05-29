@@ -1,7 +1,7 @@
 // SECTION: Imports — dependencies for this page
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useChat } from "../../hooks/useChat";
 import { ProfileImage } from "../../components/common/ProfileImage";
 import {
@@ -39,6 +39,10 @@ const ClientChatPage: React.FC = () => {
   );
   const [selectedOtherUserImageUrl, setSelectedOtherUserImageUrl] =
     useState<string>(location.state?.otherUserImage || "");
+
+  const { conversationId: urlConversationId } = useParams<{
+    conversationId: string;
+  }>();
 
   const [messageText, setMessageText] = useState<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -106,6 +110,22 @@ const ClientChatPage: React.FC = () => {
     loadConversation,
     markAsRead,
   ]);
+
+  // Select conversation from URL param
+  useEffect(() => {
+    if (!urlConversationId || !conversations.length) return;
+    const match = conversations.find(
+      (c) => c.conversation.id === urlConversationId,
+    );
+    if (match) {
+      setSelectedConversationId(urlConversationId);
+      setSelectedOtherUserName(
+        match.otherUserName || `User ${match.otherUserId.slice(0, 8)}...`,
+      );
+      setSelectedOtherUserImageUrl(match.otherUserImageUrl || "");
+      markAsRead(urlConversationId).catch(() => {});
+    }
+  }, [urlConversationId, conversations, markAsRead]);
 
   // Reload conversation when selectedConversationId changes (handles returning from sub-page)
   useEffect(() => {

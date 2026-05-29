@@ -13,7 +13,7 @@ function buildEmailTemplate({name, title, message, href, appBaseUrl, bookingDeta
   const logoUrl = `${appBaseUrl}/apple-touch-icon-180.png`;
   const characterUrl = `${appBaseUrl}/images/srv%20characters%20(SVG)/Sir%20V.%20GID.png`;
   const appUrl = href ?
-    `${appBaseUrl}/#${href.replace(/^\/?#?/, "")}` :
+    `${appBaseUrl}/#/${href.replace(/^\/?#?/, "")}` :
     `${appBaseUrl}`;
 
   const yellow = "#fbbf24";

@@ -24,7 +24,17 @@ const HashRouterFix: React.FC = () => {
       return;
     }
 
-    // Case 2: Path-based route when using HashRouter
+    // Case 2: Hash exists but is missing the leading slash
+    // e.g. "#provider/chat/..." needs to be "#/provider/chat/..."
+    // External links (like email) may omit the slash after "#"
+    if (hash && hash !== "#" && !hash.startsWith("#/")) {
+      const correctedHash = `#/${hash.slice(1)}`;
+      const targetUrl = `${window.location.origin}/${correctedHash}`;
+      window.location.replace(targetUrl);
+      return;
+    }
+
+    // Case 3: Path-based route when using HashRouter
     // If we have a path other than "/" and we're using HashRouter,
     // the URL is malformed (path should be in hash, not pathname)
     if (pathname !== "/" && pathname !== "/index.html") {
