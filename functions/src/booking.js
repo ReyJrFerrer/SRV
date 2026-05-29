@@ -17,6 +17,8 @@ const {
   isSpamming,
   updateNotificationFrequency,
   sendOneSignalNotification,
+  sendEmailForNotification,
+  BOOKING_EMAIL_TYPES,
 } = require("./notification");
 const {
   checkUserReputationInternal,
@@ -231,6 +233,12 @@ async function createNotification(
     }).catch((error) => {
       console.error("Failed to send OneSignal notification:", error);
     });
+
+    if (BOOKING_EMAIL_TYPES.has(notificationType)) {
+      sendEmailForNotification(targetUserId, notification).catch((error) => {
+        console.error("Failed to send notification email:", error);
+      });
+    }
   } catch (error) {
     console.error("Error creating notification:", error);
   }

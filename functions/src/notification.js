@@ -9,6 +9,7 @@ const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {getFirestore} = require("../firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
+const {sendEmail} = require("./utils/email");
 
 const db = getFirestore();
 
@@ -54,6 +55,27 @@ const NOTIFICATION_TYPES = {
   BOOKING_AUTO_CANCELLED_NOT_CHOSEN: "booking_auto_cancelled_not_chosen",
   BOOKING_AUTO_CANCELLED_MISSED_SLOT: "booking_auto_cancelled_missed_slot",
 };
+
+// Booking-related notification types that also trigger email delivery
+const BOOKING_EMAIL_TYPES = new Set([
+  NOTIFICATION_TYPES.BOOKING_ACCEPTED,
+  NOTIFICATION_TYPES.BOOKING_DECLINED,
+  NOTIFICATION_TYPES.NEW_BOOKING_REQUEST,
+  NOTIFICATION_TYPES.BOOKING_CONFIRMATION,
+  NOTIFICATION_TYPES.BOOKING_CANCELLED,
+  NOTIFICATION_TYPES.BOOKING_COMPLETED,
+  NOTIFICATION_TYPES.BOOKING_RESCHEDULED,
+  NOTIFICATION_TYPES.SERVICE_RESCHEDULED,
+  NOTIFICATION_TYPES.SERVICE_REMINDER,
+  NOTIFICATION_TYPES.START_SERVICE,
+  NOTIFICATION_TYPES.PAYMENT_RECEIVED,
+  NOTIFICATION_TYPES.PAYMENT_FAILED,
+  NOTIFICATION_TYPES.PAYMENT_ISSUE,
+  NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_NOT_CHOSEN,
+  NOTIFICATION_TYPES.BOOKING_AUTO_CANCELLED_MISSED_SLOT,
+  NOTIFICATION_TYPES.CLIENT_NO_SHOW,
+  NOTIFICATION_TYPES.PROVIDER_ON_THE_WAY,
+]);
 
 // User types
 const USER_TYPES = {
@@ -278,6 +300,49 @@ async function sendOneSignalNotification(userId, notification) {
   }
 }
 
+/**
+ * Send an email notification for a booking-related notification
+ * Fetches the user's email from Firestore and sends a transactional email
+ * Fails silently if the user has no email or if sending fails
+ * @param {string} userId The target user ID
+ * @param {Object} notification The notification object
+ * @return {Promise<void>}
+ */
+async function sendEmailForNotification(userId, notification) {
+  try {
+    const userDoc = await db.collection("users").doc(userId).get();
+
+    if (!userDoc.exists) {
+      console.log(`Email: User ${userId} not found, skipping notification email`);
+      return;
+    }
+
+    const userData = userDoc.data();
+
+    if (!userData.email) {
+      console.log(`Email: User ${userId} has no email address, skipping`);
+      return;
+    }
+
+    const recipientName = userData.name || "User";
+
+    await sendEmail({
+      to: userData.email,
+      subject: notification.title,
+      text: `Hi ${recipientName},
+
+${notification.message}
+
+—
+This is an automated notification from SRV. Please do not reply to this email.
+
+Need help? Contact us at hello@srvpinoy.com`,
+    });
+  } catch (error) {
+    console.error(`Email: Failed to send notification email to user ${userId}:`, error);
+  }
+}
+
 // ============================================================================
 // SERVICE LAYER FUNCTIONS (INTERNAL)
 // ============================================================================
@@ -366,6 +431,12 @@ async function createNotification_notification(request) {
     }).catch((error) => {
       console.error("Failed to send OneSignal notification:", error);
     });
+
+    if (BOOKING_EMAIL_TYPES.has(notificationType)) {
+      sendEmailForNotification(targetUserId, notification).catch((error) => {
+        console.error("Failed to send notification email:", error);
+      });
+    }
 
     return {success: true, notificationId: notificationRef.id};
   } catch (error) {
@@ -1022,3 +1093,5 @@ exports.generateNotificationHref = generateNotificationHref;
 exports.isSpamming = isSpamming;
 exports.updateNotificationFrequency = updateNotificationFrequency;
 exports.sendOneSignalNotification = sendOneSignalNotification;
+exports.sendEmailForNotification = sendEmailForNotification;
+exports.BOOKING_EMAIL_TYPES = BOOKING_EMAIL_TYPES;

@@ -1,5 +1,5 @@
 const functions = require("firebase-functions");
-const nodemailer = require("nodemailer");
+const {sendEmail} = require("./src/utils/email");
 
 /**
  * Cloud Function to handle contact form submissions
@@ -45,25 +45,8 @@ exports.sendContactEmail = functions.https.onCall(async (data) => {
     );
   }
   functions.logger.info("Input validation passed.");
-  // Get SMTP configuration from environment variables
-  const smtpConfig = {
-    host: process.env.SMTP_HOST || "smtp.hostinger.com",
-    port: parseInt(process.env.SMTP_PORT) || 465,
-    secure: true, // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER || "hello@srvpinoy.com",
-      pass: process.env.SMTP_PASS,
-    },
-  };
 
   const toEmail = process.env.CONTACT_EMAIL || "hello@srvpinoy.com";
-  const fromName = process.env.FROM_NAME || "SRV Contact Form";
-  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
-
-  // Create transporter
-  const transporter = nodemailer.createTransport(smtpConfig);
-
-  // Email content
   const emailSubject = `Contact Form Submission: ${subject}`;
   const emailBody = `
 New contact form submission from SRV website:
@@ -80,19 +63,15 @@ This message was sent from the SRV contact form.
 Reply directly to this email to respond to the sender.
   `.trim();
 
-  // Email options
-  const mailOptions = {
-    from: `"${fromName}" <${fromEmail}>`,
-    to: toEmail,
-    replyTo: email,
-    subject: emailSubject,
-    text: emailBody,
-  };
-
   try {
     functions.logger.info(`Attempting to send email to ${toEmail}...`);
-    // Send email
-    await transporter.sendMail(mailOptions);
+    await sendEmail({
+      to: toEmail,
+      subject: emailSubject,
+      text: emailBody,
+      fromName: "SRV Contact Form",
+      replyTo: email,
+    });
 
     functions.logger.info("Email sent successfully.", {to: toEmail, from: email});
 
