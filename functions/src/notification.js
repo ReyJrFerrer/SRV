@@ -10,6 +10,7 @@ const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {getFirestore} = require("../firebase-admin");
 const {FieldValue} = require("firebase-admin/firestore");
 const {sendEmail} = require("./utils/email");
+const {buildEmailTemplate} = require("./utils/emailTemplate");
 
 const db = getFirestore();
 
@@ -324,19 +325,19 @@ async function sendEmailForNotification(userId, notification) {
       return;
     }
 
-    const recipientName = userData.name || "User";
+    const {html, text} = buildEmailTemplate({
+      name: userData.name || "User",
+      title: notification.title,
+      message: notification.message,
+      href: notification.href || null,
+      appBaseUrl: APP_BASE_URL,
+    });
 
     await sendEmail({
       to: userData.email,
       subject: notification.title,
-      text: `Hi ${recipientName},
-
-${notification.message}
-
-—
-This is an automated notification from SRV. Please do not reply to this email.
-
-Need help? Contact us at hello@srvpinoy.com`,
+      html,
+      text,
     });
   } catch (error) {
     console.error(`Email: Failed to send notification email to user ${userId}:`, error);
