@@ -508,9 +508,9 @@ async function sendEmailForNotification(userId, notification) {
           if (senderDoc.exists) {
             const senderData = senderDoc.data();
             const senderRole =
-              notification.userType === USER_TYPES.CLIENT
-                ? "Provider"
-                : "Client";
+              notification.userType === USER_TYPES.CLIENT ?
+                "Provider" :
+                "Client";
             senderInfo = {
               name: senderData.name || "User",
               phone: senderData.phone || null,

@@ -251,6 +251,17 @@ function buildBookingDetailsHtml(details, yellow, yellowDark, darkText, grayText
   `;
 }
 
+/**
+ * Builds the HTML for a chat message.
+ * @param {string} message
+ * @param {object} senderInfo
+ * @param {string} yellow
+ * @param {string} yellowDark
+ * @param {string} darkText
+ * @param {string} grayText
+ * @param {string} borderColor
+ * @return {string}
+ */
 function buildChatMessageHtml(message, senderInfo, yellow, yellowDark, darkText, grayText, borderColor) {
   const phoneHtml = senderInfo.phone ? `
                       <tr>
