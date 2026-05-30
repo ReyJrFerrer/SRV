@@ -68,7 +68,8 @@ export const useChat = () => {
   const [optimisticMessages, setOptimisticMessages] = useState<
     OptimisticMessage[]
   >([]);
-  const [loading, setLoading] = useState(false); // For initial loads only
+  const [loading, setLoading] = useState(false); // For conversations list loading
+  const [messagesLoading, setMessagesLoading] = useState(false); // For per-conversation message loading
 
   // Computed sending status from optimistic messages (for backward compatibility)
   const sendingMessage = optimisticMessages.some((m) => m.status === "sending");
@@ -195,7 +196,9 @@ export const useChat = () => {
       conversationsUnsubscribe.current = null;
     }
 
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -205,7 +208,9 @@ export const useChat = () => {
         await chatCanisterService.subscribeToConversationSummaries(
           userId,
           async (summaries) => {
-            if (!isMountedRef.current) return;
+            if (!isMountedRef.current) {
+              return;
+            }
 
             try {
               // Enhance conversations with user names
@@ -240,7 +245,7 @@ export const useChat = () => {
               }
             }
           },
-          () => {
+          (_err) => {
             if (!isMountedRef.current) return;
             if (isMountedRef.current) {
               setError("Could not load conversations.");
@@ -308,7 +313,7 @@ export const useChat = () => {
       const requestId = ++loadConversationRequestIdRef.current;
       activeConversationIdRef.current = conversationId;
 
-      setLoading(true);
+      setMessagesLoading(true);
       setError(null);
 
       try {
@@ -342,12 +347,12 @@ export const useChat = () => {
                   try {
                     dispatchMessagesUpdated(conversationId);
                   } catch (e) {}
-                  setLoading(false);
+                  setMessagesLoading(false);
                 }
               } catch (error) {
                 if (isMountedRef.current) {
                   setError("Could not process messages.");
-                  setLoading(false);
+                  setMessagesLoading(false);
                 }
               }
             },
@@ -361,7 +366,7 @@ export const useChat = () => {
               }
               if (isMountedRef.current) {
                 setError("Could not load messages.");
-                setLoading(false);
+                setMessagesLoading(false);
               }
             },
           );
@@ -406,7 +411,7 @@ export const useChat = () => {
       } catch (err) {
         if (isMountedRef.current) {
           setError("Could not load conversation.");
-          setLoading(false);
+          setMessagesLoading(false);
         }
       }
     },
@@ -630,15 +635,15 @@ export const useChat = () => {
       setupConversationsListener();
     } else {
       cleanupListeners();
-      if (isMountedRef.current) {
+      // Only clear conversations on real logout (isAuthenticated false),
+      // not on temporary firebaseUser null during token refresh
+      if (!isAuthenticated && isMountedRef.current) {
         setConversations([]);
+        clearCurrentConversation();
       }
-      clearCurrentConversation();
     }
 
-    return () => {
-      cleanupListeners();
-    };
+    return () => {};
   }, [
     isAuthenticated,
     firebaseUser,
@@ -672,6 +677,7 @@ export const useChat = () => {
     messages,
     optimisticMessages: visibleOptimisticMessages,
     loading,
+    messagesLoading,
     error,
     sendingMessage,
     loadConversation,

@@ -20,6 +20,7 @@ const ClientChatPage: React.FC = () => {
   const {
     conversations,
     loading,
+    messagesLoading,
     error,
     markAsRead,
     loadConversation,
@@ -600,8 +601,12 @@ const ClientChatPage: React.FC = () => {
                         onMouseDown={handlePageInteract}
                         onTouchStart={handlePageInteract}
                       >
-                        {messages.length === 0 &&
-                        optimisticMessages.length === 0 ? (
+                        {messagesLoading ? (
+                          <div className="flex h-full items-center justify-center">
+                            <p className="text-gray-500">Loading messages...</p>
+                          </div>
+                        ) : messages.length === 0 &&
+                          optimisticMessages.length === 0 ? (
                           <div className="flex h-full items-center justify-center">
                             <p className="text-gray-500">
                               No messages yet. Start the conversation!

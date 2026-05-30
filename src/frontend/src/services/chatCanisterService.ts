@@ -42,6 +42,10 @@ const sharedConversationSummariesListeners = new Map<
   }
 >();
 
+// Pending setup promises to prevent race conditions when multiple subscribers
+// call subscribeToConversationSummaries concurrently (e.g. Strict Mode double-mount)
+const pendingConversationSummarySetups = new Map<string, Promise<void>>();
+
 // Helper to safely unsubscribe a listener
 const safeUnsubscribe = async (
   listenerId: string,
@@ -530,7 +534,6 @@ export const chatCanisterService = {
     const clientListenerId = `conversations-client-${userId}`;
     const providerListenerId = `conversations-provider-${userId}`;
 
-    // Clean up existing listeners
     await Promise.all([
       safeUnsubscribe(clientListenerId),
       safeUnsubscribe(providerListenerId),
@@ -538,24 +541,23 @@ export const chatCanisterService = {
     let unsubscribed = false;
     const conversationMap = new Map<string, any>();
 
-    // Debounce the update function to prevent rapid updates
     const debouncedUpdate = debounce(() => {
       if (!unsubscribed) {
         try {
           const allConversations = Array.from(conversationMap.values());
           onUpdate(allConversations);
-        } catch (error) {}
+        } catch (error) {
+          console.error(error);
+        }
       }
-    }, 200); // 200ms debounce
+    }, 200);
 
     try {
-      // Query for conversations where user is client
       const clientQuery = query(
         collection(getDb(), "conversations"),
         where("clientId", "==", userId),
       );
 
-      // Listen to client conversations
       const clientUnsubscribe = onSnapshot(
         clientQuery,
         (snapshot) => {
@@ -571,7 +573,9 @@ export const chatCanisterService = {
               }
             });
             debouncedUpdate();
-          } catch (error) {}
+          } catch (error) {
+            console.error(error);
+          }
         },
         (error) => {
           if (unsubscribed) return;
@@ -579,19 +583,16 @@ export const chatCanisterService = {
         },
       );
 
-      // Register client listener
       activeListeners.set(clientListenerId, {
         unsubscribe: clientUnsubscribe,
         isTerminating: false,
       });
 
-      // Query for conversations where user is provider
       const providerQuery = query(
         collection(getDb(), "conversations"),
         where("providerId", "==", userId),
       );
 
-      // Listen to provider conversations
       const providerUnsubscribe = onSnapshot(
         providerQuery,
         (snapshot) => {
@@ -607,7 +608,9 @@ export const chatCanisterService = {
               }
             });
             debouncedUpdate();
-          } catch (error) {}
+          } catch (error) {
+            console.error(error);
+          }
         },
         (error) => {
           if (unsubscribed) return;
@@ -615,13 +618,11 @@ export const chatCanisterService = {
         },
       );
 
-      // Register provider listener
       activeListeners.set(providerListenerId, {
         unsubscribe: providerUnsubscribe,
         isTerminating: false,
       });
 
-      // Return combined unsubscribe function
       return async () => {
         if (unsubscribed) return;
 
@@ -634,7 +635,7 @@ export const chatCanisterService = {
       };
     } catch (error) {
       if (onError) onError(error as Error);
-      return async () => {}; // Return no-op unsubscribe
+      return async () => {};
     }
   },
 
@@ -723,11 +724,7 @@ export const chatCanisterService = {
     const listenerId = `conversation-summaries-${userId}`;
     const existing = sharedConversationSummariesListeners.get(listenerId);
 
-    if (existing) {
-      existing.callbacks.add(onUpdate);
-      if (existing.lastData) {
-        onUpdate(existing.lastData);
-      }
+    const makeUnsubscribe = (): AsyncUnsubscribe => {
       return async () => {
         const l = sharedConversationSummariesListeners.get(listenerId);
         if (l) {
@@ -744,69 +741,86 @@ export const chatCanisterService = {
           }
         }
       };
+    };
+
+    if (existing) {
+      existing.callbacks.add(onUpdate);
+      if (existing.lastData) {
+        onUpdate(existing.lastData);
+      }
+      return makeUnsubscribe();
     }
 
-    // First subscriber — create the shared listener
-    const notifyAll = debounce((summaries: FrontendConversationSummary[]) => {
-      const listener = sharedConversationSummariesListeners.get(listenerId);
-      if (listener) {
-        listener.lastData = summaries;
-        listener.callbacks.forEach((cb) => cb(summaries));
-      }
-    }, 300);
-
-    const unsubscribe = await this.subscribeToConversations(
-      userId,
-      (conversations) => {
-        try {
-          const summaries = conversations.map((conv) => {
-            const backendSummary = {
-              conversation: conv,
-              lastMessage: [],
-            };
-            return adaptBackendConversationSummary(backendSummary);
-          });
-
-          summaries.sort((a, b) => {
-            const timeA =
-              a.conversation.lastMessageAt || a.conversation.createdAt;
-            const timeB =
-              b.conversation.lastMessageAt || b.conversation.createdAt;
-            return new Date(timeB).getTime() - new Date(timeA).getTime();
-          });
-
-          notifyAll(summaries);
-        } catch (error) {}
-      },
-      onError,
-    );
-
-    const entry = {
-      unsubscribe,
-      callbacks: new Set<(summaries: FrontendConversationSummary[]) => void>([
-        onUpdate,
-      ]),
-      lastData: null as FrontendConversationSummary[] | null,
-    };
-
-    sharedConversationSummariesListeners.set(listenerId, entry);
-
-    return async () => {
-      const l = sharedConversationSummariesListeners.get(listenerId);
-      if (l) {
-        l.callbacks.delete(onUpdate);
-        if (l.callbacks.size === 0) {
-          setTimeout(async () => {
-            const current =
-              sharedConversationSummariesListeners.get(listenerId);
-            if (current && current.callbacks.size === 0) {
-              await current.unsubscribe();
-              sharedConversationSummariesListeners.delete(listenerId);
-            }
-          }, 1000);
+    const pending = pendingConversationSummarySetups.get(listenerId);
+    if (pending) {
+      await pending;
+      const entry = sharedConversationSummariesListeners.get(listenerId);
+      if (entry) {
+        entry.callbacks.add(onUpdate);
+        if (entry.lastData) {
+          onUpdate(entry.lastData);
         }
       }
-    };
+      return makeUnsubscribe();
+    }
+
+    const setupPromise = (async () => {
+      const notifyAll = debounce((summaries: FrontendConversationSummary[]) => {
+        const listener = sharedConversationSummariesListeners.get(listenerId);
+        if (listener) {
+          listener.lastData = summaries;
+          listener.callbacks.forEach((cb) => cb(summaries));
+        }
+      }, 300);
+
+      const unsubscribe = await this.subscribeToConversations(
+        userId,
+        (conversations) => {
+          try {
+            const summaries = conversations.map((conv) => {
+              const backendSummary = {
+                conversation: conv,
+                lastMessage: [],
+              };
+              return adaptBackendConversationSummary(backendSummary);
+            });
+
+            summaries.sort((a, b) => {
+              const timeA =
+                a.conversation.lastMessageAt || a.conversation.createdAt;
+              const timeB =
+                b.conversation.lastMessageAt || b.conversation.createdAt;
+              return new Date(timeB).getTime() - new Date(timeA).getTime();
+            });
+
+            notifyAll(summaries);
+          } catch (error) {
+            console.error(error);
+          }
+        },
+        onError,
+      );
+
+      const entry = {
+        unsubscribe,
+        callbacks: new Set<(summaries: FrontendConversationSummary[]) => void>([
+          onUpdate,
+        ]),
+        lastData: null as FrontendConversationSummary[] | null,
+      };
+
+      sharedConversationSummariesListeners.set(listenerId, entry);
+    })();
+
+    pendingConversationSummarySetups.set(listenerId, setupPromise);
+
+    try {
+      await setupPromise;
+    } finally {
+      pendingConversationSummarySetups.delete(listenerId);
+    }
+
+    return makeUnsubscribe();
   },
 };
 
