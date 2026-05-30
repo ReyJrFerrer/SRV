@@ -11,12 +11,62 @@ const {
 
 const db = getFirestore();
 
+const CHAT_EMAIL_COOLDOWN_MS = 60 * 60 * 1000;
+
 /**
  * Generates a unique ID based on timestamp and random string.
  * @return {string} Unique identifier
  */
 function generateId() {
   return Date.now().toString() + Math.random().toString(36).substring(2, 9);
+}
+
+/**
+ * Checks whether a chat email notification can be sent for a given
+ * receiver+conversation pair. Returns true if at least one hour has
+ * elapsed since the last email for that pair, and atomically updates
+ * the cooldown timestamp.
+ * @param {string} receiverId The receiving user's ID
+ * @param {string} conversationId The conversation ID
+ * @return {Promise<boolean>} Whether the email may be sent
+ */
+async function canSendChatEmail(receiverId, conversationId) {
+  const cooldownKey = `${receiverId}_${conversationId}`;
+  const cooldownRef = db.collection("chatEmailCooldowns").doc(cooldownKey);
+  const now = Date.now();
+
+  try {
+    let allowed = false;
+
+    await db.runTransaction(async (transaction) => {
+      const cooldownDoc = await transaction.get(cooldownRef);
+
+      if (!cooldownDoc.exists) {
+        transaction.set(cooldownRef, {
+          receiverId,
+          conversationId,
+          lastEmailSentAt: FieldValue.serverTimestamp(),
+        });
+        allowed = true;
+        return;
+      }
+
+      const data = cooldownDoc.data();
+      const lastSent = data.lastEmailSentAt?.toMillis?.() ?? 0;
+
+      if (now - lastSent >= CHAT_EMAIL_COOLDOWN_MS) {
+        transaction.update(cooldownRef, {
+          lastEmailSentAt: FieldValue.serverTimestamp(),
+        });
+        allowed = true;
+      }
+    });
+
+    return allowed;
+  } catch (error) {
+    console.error("Error checking chat email cooldown:", error);
+    return false;
+  }
 }
 
 /**
@@ -106,15 +156,29 @@ exports.onMessageCreated = onDocumentCreated(
           },
         );
 
-        // Send email notification (non-blocking)
-        sendEmailForNotification(receiverId, notificationData).catch(
-          (error) => {
-            console.error(
-              "Failed to send email notification for chat message:",
-              error,
+        // Send email notification (non-blocking, rate-limited to 1 per hour per conversation)
+        canSendChatEmail(receiverId, conversationId).then((allowed) => {
+          if (!allowed) {
+            console.log(
+              `Chat email skipped for ${receiverId} (conversation ${conversationId}): 
+              cooldown active`,
             );
-          },
-        );
+            return;
+          }
+          sendEmailForNotification(receiverId, notificationData).catch(
+            (error) => {
+              console.error(
+                "Failed to send email notification for chat message:",
+                error,
+              );
+            },
+          );
+        }).catch((error) => {
+          console.error(
+            "Failed to check chat email cooldown:",
+            error,
+          );
+        });
 
         console.log(
           `Chat notification created and push/email initiated for ${receiverId}`,
