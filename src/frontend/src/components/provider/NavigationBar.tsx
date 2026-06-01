@@ -30,7 +30,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
     () =>
       notifications.filter(
         (n) =>
-          (!n.read && n.bookingId) ||
+          (!n.read && n.bookingId && n.type !== "chat_message") ||
           (!n.read && n.type === "new_booking_request"),
       ).length,
     [notifications],

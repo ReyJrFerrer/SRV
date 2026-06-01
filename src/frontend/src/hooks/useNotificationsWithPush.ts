@@ -148,11 +148,8 @@ const setPushSentIds = async (ids: string[]) => {
 
 // Enhanced hook with push notification integration
 export const useNotificationsWithPush = () => {
-  const {
-    bookings,
-    loading: bookingLoading,
-    error: bookingError,
-  } = useBookingManagement();
+  const { loading: bookingLoading, error: bookingError } =
+    useBookingManagement();
 
   const { firebaseUser } = useAuth();
   const { pwaState } = usePWA();
@@ -308,7 +305,7 @@ export const useNotificationsWithPush = () => {
       setError("Failed to load notifications");
       setLoading(false);
     }
-  }, [bookings]);
+  }, [firebaseUser, pwaState.pushSubscribed]);
 
   // Re-fetch notifications whenever the bookings data changes
   useEffect(() => {

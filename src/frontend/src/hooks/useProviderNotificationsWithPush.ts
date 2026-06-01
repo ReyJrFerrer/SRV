@@ -144,11 +144,8 @@ const setProviderPushSentIds = async (ids: string[]) => {
 
 // Enhanced provider hook with push notification integration
 export const useProviderNotificationsWithPush = () => {
-  const {
-    bookings,
-    loading: bookingLoading,
-    error: bookingError,
-  } = useProviderBookingManagement();
+  const { loading: bookingLoading, error: bookingError } =
+    useProviderBookingManagement();
 
   const { firebaseUser } = useAuth();
   const { pwaState } = usePWA();
@@ -305,7 +302,7 @@ export const useProviderNotificationsWithPush = () => {
       setError("Failed to load provider notifications");
       setLoading(false);
     }
-  }, [bookings]);
+  }, [firebaseUser, pwaState.pushSubscribed]);
 
   // Re-fetch notifications whenever the bookings data changes
   useEffect(() => {

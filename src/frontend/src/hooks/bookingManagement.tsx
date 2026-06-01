@@ -593,7 +593,12 @@ export const useBookingManagement = (): BookingManagementHook => {
         transformedBookings.map((booking) => enrichBookingWithAllData(booking)),
       );
 
-      setUserBookings(enrichedBookings);
+      setUserBookings((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(enrichedBookings)) {
+          return prev;
+        }
+        return enrichedBookings;
+      });
     } catch (error) {
       handleBookingError(error, "load user bookings");
     } finally {
@@ -838,7 +843,12 @@ export const useBookingManagement = (): BookingManagementHook => {
           ),
         );
 
-        setUserBookings(enrichedBookings);
+        setUserBookings((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(enrichedBookings)) {
+            return prev;
+          }
+          return enrichedBookings;
+        });
         setLoadingState("bookings", false);
       } catch (error) {
         handleBookingError(error, "enrich client bookings");
