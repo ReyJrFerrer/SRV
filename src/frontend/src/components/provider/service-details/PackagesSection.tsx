@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BriefcaseIcon,
   PlusIcon,
@@ -51,6 +51,19 @@ const PackagesSection: React.FC<Props> = ({
   setPackageFormPrice,
 }) => {
   const [viewingPackage, setViewingPackage] = useState<ServicePackage | null>(null);
+
+  useEffect(() => {
+    if (viewingPackage) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    // Cleanup when component unmounts or modal closes
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [viewingPackage]);
 
   const handlePriceInputChange = (value: string) => {
     // Allow only numbers by stripping non-digit characters
