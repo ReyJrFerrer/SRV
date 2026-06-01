@@ -633,14 +633,14 @@ const ClientChatPage: React.FC = () => {
                                       />
                                     </div>
                                   )}
-                                  <div
-                                    className={`max-w-xs rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
-                                  >
-                                    <p className="text-sm">
-                                      {typeof message.content === "string"
-                                        ? message.content
-                                        : message.content?.encryptedText}
-                                    </p>
+                                    <div
+                                      className={`max-w-[85%] sm:max-w-md rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
+                                    >
+                                      <p className="text-sm break-words whitespace-pre-wrap">
+                                        {typeof message.content === "string"
+                                          ? message.content
+                                          : message.content?.encryptedText}
+                                      </p>
                                     <p
                                       className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
                                     >
@@ -661,9 +661,9 @@ const ClientChatPage: React.FC = () => {
                                   className={`flex items-end justify-end gap-2 ${message.status === "failed" ? "cursor-pointer" : ""}`}
                                 >
                                   <div
-                                    className={`max-w-xs rounded-2xl px-4 py-2 transition-all duration-300 md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white opacity-100"}`}
+                                    className={`max-w-[85%] sm:max-w-md rounded-2xl px-4 py-2 transition-all duration-300 md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white opacity-100"}`}
                                   >
-                                    <p className="text-sm">{message.content}</p>
+                                    <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
                                     <p
                                       className={`mt-1 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-blue-200" : message.status === "failed" ? "text-red-200" : "text-blue-100"}`}
                                     >
@@ -684,28 +684,35 @@ const ClientChatPage: React.FC = () => {
                       <div className="shrink-0 border-t border-gray-200 bg-white p-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:sticky md:bottom-0 md:bg-white md:p-3">
                         <form
                           onSubmit={handleSendMessage}
-                          className="flex items-center gap-3"
+                          className="flex w-full flex-col gap-1"
                         >
-                          <input
-                            type="text"
-                            value={messageText}
-                            onChange={(e) => setMessageText(e.target.value)}
-                            placeholder="Type a message..."
-                            maxLength={500}
-                            disabled={sendingMessage || !currentConversation}
-                            className="w-full flex-1 rounded-full border border-transparent bg-gray-50 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                          />
-                          <button
-                            type="submit"
-                            disabled={
-                              sendingMessage ||
-                              !messageText.trim() ||
-                              !currentConversation
-                            }
-                            className="rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
-                          >
-                            <PaperAirplaneIcon className="h-5 w-5" />
-                          </button>
+                          <div className="flex w-full items-center gap-3">
+                            <input
+                              type="text"
+                              value={messageText}
+                              onChange={(e) => setMessageText(e.target.value)}
+                              placeholder="Type a message..."
+                              maxLength={1000}
+                              disabled={sendingMessage || !currentConversation}
+                              className="w-full flex-1 rounded-full border border-transparent bg-gray-50 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                            />
+                            <button
+                              type="submit"
+                              disabled={
+                                sendingMessage ||
+                                !messageText.trim() ||
+                                !currentConversation
+                              }
+                              className="shrink-0 rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+                            >
+                              <PaperAirplaneIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                          {messageText.length > 0 && (
+                            <div className="px-4 text-right text-[10px] text-gray-400">
+                              {messageText.trim().split(/\s+/).filter(Boolean).length} words • {messageText.length}/1000
+                            </div>
+                          )}
                         </form>
                       </div>
                     </div>
