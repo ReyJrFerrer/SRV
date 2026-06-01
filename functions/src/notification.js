@@ -26,6 +26,18 @@ const SPAM_PREVENTION_WINDOW = 5 * 60 * 1000;
 const MAX_NOTIFICATIONS_PER_WINDOW = 10;
 const NOTIFICATION_EXPIRY_DAYS = 30;
 
+// OneSignal player ID validation (must be a valid UUID, rejects "local-" prefixed dev IDs)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate that a player ID is a proper UUID (not a local-development ID).
+ * @param {string} playerId
+ * @return {boolean}
+ */
+function isValidOneSignalPlayerId(playerId) {
+  return typeof playerId === "string" && UUID_REGEX.test(playerId);
+}
+
 // Notification types
 const NOTIFICATION_TYPES = {
   BOOKING_ACCEPTED: "booking_accepted",
@@ -232,10 +244,18 @@ async function sendOneSignalNotification(userId, notification) {
     }
 
     const userData = userDoc.data();
-    const playerIds = userData.oneSignalPlayerIds || [];
+    const rawPlayerIds = userData.oneSignalPlayerIds || [];
+    const playerIds = rawPlayerIds.filter(isValidOneSignalPlayerId);
+
+    if (playerIds.length < rawPlayerIds.length) {
+      const filtered = rawPlayerIds.length - playerIds.length;
+      console.warn(
+        `OneSignal: Filtered out ${filtered} invalid player ID(s) for user ${userId}`,
+      );
+    }
 
     if (playerIds.length === 0) {
-      console.log(`OneSignal: User ${userId} has no registered player IDs`);
+      console.log(`OneSignal: User ${userId} has no valid registered player IDs`);
       return false;
     }
 
@@ -906,6 +926,11 @@ async function storeOneSignalPlayerId_notification(request) {
 
   if (!playerId) {
     throw new HttpsError("invalid-argument", "Player ID is required");
+  }
+
+  if (!isValidOneSignalPlayerId(playerId)) {
+    console.warn(`OneSignal: Rejecting invalid player ID format: ${playerId}`);
+    throw new HttpsError("invalid-argument", "Player ID is not a valid UUID");
   }
 
   try {

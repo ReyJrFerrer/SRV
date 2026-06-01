@@ -19,6 +19,9 @@ interface PlayerIdMetadata {
   isSubscribed: boolean;
 }
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 class OneSignalService {
   private static instance: OneSignalService;
   private isInitialized = false;
@@ -28,6 +31,10 @@ class OneSignalService {
 
   // Storage keys
   private readonly PLAYER_ID_STORAGE_KEY = "onesignal_player_metadata";
+
+  private isValidPlayerId(playerId: string): boolean {
+    return UUID_REGEX.test(playerId);
+  }
 
   private constructor() {
     this.readyPromise = new Promise((resolve) => {
@@ -96,7 +103,7 @@ class OneSignalService {
         // Get player ID (OneSignal User ID)
         try {
           const playerId = OneSignal.User.onesignalId;
-          if (playerId) {
+          if (playerId && this.isValidPlayerId(playerId)) {
             this.currentPlayerId = playerId;
             this.savePlayerIdMetadata(playerId, true);
             this.registerPlayerId(playerId);
@@ -114,9 +121,11 @@ class OneSignalService {
     OneSignal.User.PushSubscription.addEventListener("change", (event: any) => {
       if (event.current.optedIn) {
         const playerId = event.current.id;
-        this.currentPlayerId = playerId;
-        this.savePlayerIdMetadata(playerId, true);
-        this.registerPlayerId(playerId);
+        if (playerId && this.isValidPlayerId(playerId)) {
+          this.currentPlayerId = playerId;
+          this.savePlayerIdMetadata(playerId, true);
+          this.registerPlayerId(playerId);
+        }
       } else {
         this.currentPlayerId = null;
         this.clearPlayerIdMetadata();
@@ -191,7 +200,7 @@ class OneSignalService {
       const alreadySubscribed = OneSignal.User.PushSubscription.optedIn;
       if (alreadySubscribed) {
         const existingPlayerId = OneSignal.User.onesignalId;
-        if (existingPlayerId) {
+        if (existingPlayerId && this.isValidPlayerId(existingPlayerId)) {
           this.currentPlayerId = existingPlayerId;
           this.savePlayerIdMetadata(existingPlayerId, true);
           this.registerPlayerId(existingPlayerId);
@@ -289,6 +298,10 @@ class OneSignalService {
       if (!playerId) {
         // Fallback: try push token
         playerId = OneSignal.User.PushSubscription.token ?? null;
+      }
+
+      if (playerId && !this.isValidPlayerId(playerId)) {
+        return null;
       }
 
       return playerId;
