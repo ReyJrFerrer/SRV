@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   BriefcaseIcon,
   PlusIcon,
   BanknotesIcon,
   TagIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import Tooltip from "../../common/Tooltip";
 import { ServicePackage } from "../../../services/serviceCanisterService";
@@ -49,6 +50,8 @@ const PackagesSection: React.FC<Props> = ({
   setPackageFormDescription,
   setPackageFormPrice,
 }) => {
+  const [viewingPackage, setViewingPackage] = useState<ServicePackage | null>(null);
+
   const handlePriceInputChange = (value: string) => {
     // Allow only numbers by stripping non-digit characters
     let numericValue = value.replace(/[^0-9]/g, "");
@@ -139,7 +142,7 @@ const PackagesSection: React.FC<Props> = ({
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-yellow-500 focus:ring-yellow-500"
                     placeholder="e.g., Basic Cleaning, Premium Tune-up"
                     required
-                    maxLength={40}
+                    maxLength={500}
                     disabled={packageFormLoading}
                   />
                 </div>
@@ -158,7 +161,7 @@ const PackagesSection: React.FC<Props> = ({
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-yellow-500 focus:ring-yellow-500"
                     placeholder="Brief description of what's included in this package"
                     required
-                    maxLength={100}
+                    maxLength={1000}
                     disabled={packageFormLoading}
                   ></textarea>
                 </div>
@@ -279,6 +282,12 @@ const PackagesSection: React.FC<Props> = ({
                       <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-gray-600 sm:text-sm">
                         {pkg.description}
                       </p>
+                      <button
+                        onClick={() => setViewingPackage(pkg)}
+                        className="mt-2 text-[13px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        View details
+                      </button>
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -289,18 +298,6 @@ const PackagesSection: React.FC<Props> = ({
                       </div>
                     </div>
                   </div>
-
-                  {/**
-                 * Commenting the breakdown of price since we removed the commission functionalities
-                 * 
-                 *   <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 sm:text-xs">
-                      ₱{pkg.price.toFixed(2)} total
-                    </span>
-                  </div>
-                 * 
-                 * 
-                 */}
                 </div>
 
                 <div className="border-t border-gray-100" />
@@ -376,6 +373,48 @@ const PackagesSection: React.FC<Props> = ({
           ) : null}
         </div>
       </div>
+
+      {viewingPackage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 p-4">
+              <h3 className="truncate pr-4 text-lg font-bold text-gray-900">
+                Package Details
+              </h3>
+              <button
+                onClick={() => setViewingPackage(null)}
+                className="rounded-full bg-gray-100 p-2 transition-colors hover:bg-gray-200"
+              >
+                <XMarkIcon className="h-5 w-5 text-gray-600" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6">
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <h4 className="break-words text-xl font-extrabold text-gray-900">
+                  {viewingPackage.title}
+                </h4>
+                <div className="flex shrink-0 items-center gap-1 rounded-lg bg-yellow-50 px-3 py-1 text-yellow-700">
+                  <BanknotesIcon className="h-5 w-5" />
+                  <span className="text-lg font-bold">
+                    ₱{viewingPackage.price.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              <div className="prose prose-sm max-w-none whitespace-pre-wrap break-words text-gray-600">
+                {viewingPackage.description}
+              </div>
+            </div>
+            <div className="flex justify-end border-t border-gray-100 p-4">
+              <button
+                onClick={() => setViewingPackage(null)}
+                className="rounded-xl bg-gray-900 px-5 py-2.5 font-medium text-white transition-colors hover:bg-gray-800"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

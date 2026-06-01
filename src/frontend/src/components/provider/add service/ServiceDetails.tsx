@@ -418,7 +418,7 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 ? "border-red-300 bg-white focus:border-red-500"
                                 : "border-gray-200 bg-white focus:border-yellow-400"
                             }`}
-                            maxLength={40}
+                            maxLength={500}
                           />
                           {pkgError &&
                             pkgError.name &&
@@ -487,8 +487,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({
                                 ? "border-red-300 bg-white focus:border-red-500"
                                 : "border-gray-200 bg-white focus:border-yellow-400"
                             }`}
-                            placeholder="Describe what's included in this package. 150 words maximum"
-                            maxLength={150}
+                            placeholder="Describe what's included in this package. 1000 characters maximum"
+                            maxLength={1000}
                           />
                           {pkgError &&
                             pkgError.description &&
