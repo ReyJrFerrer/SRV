@@ -309,6 +309,36 @@ const ClientChatPage: React.FC = () => {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (!e.clipboardData || !e.clipboardData.items) return;
+
+    const items = Array.from(e.clipboardData.items);
+    const newFiles: SelectedFile[] = [];
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          const previewUrl = URL.createObjectURL(file);
+          // provide a random id to match ChatAttachmentPicker format if it expects it
+          newFiles.push({ file, previewUrl, id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}` } as any);
+        }
+      }
+    }
+
+    if (newFiles.length > 0) {
+      setSelectedFiles((prev) => {
+        const combined = [...prev, ...newFiles];
+        if (combined.length > 5) {
+          // Cleanup excess urls
+          combined.slice(5).forEach((f) => URL.revokeObjectURL(f.previewUrl));
+          return combined.slice(0, 5);
+        }
+        return combined;
+      });
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentConversation || !firebaseUser || sendingMessage) return;
@@ -623,6 +653,7 @@ const ClientChatPage: React.FC = () => {
                               type="text"
                               value={messageText}
                               onChange={(e) => setMessageText(e.target.value)}
+                              onPaste={handlePaste}
                               placeholder="Type a message..."
                               maxLength={1000}
                               disabled={sendingMessage || !currentConversation}
