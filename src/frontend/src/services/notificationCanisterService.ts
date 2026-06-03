@@ -10,10 +10,7 @@ import {
   Timestamp,
   limit as firestoreLimit,
 } from "firebase/firestore";
-import {
-  getFirebaseFunctions,
-  getFirebaseFirestore,
-} from "./firebaseApp";
+import { getFirebaseFunctions, getFirebaseFirestore } from "./firebaseApp";
 
 const functions = getFirebaseFunctions();
 const db = getFirebaseFirestore();

@@ -1121,6 +1121,99 @@ export const mediaService = {
  * - Videos are passed through as-is with size/type validation
  * Returns an array of public URLs.
  */
+export interface ChatAttachmentResult {
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  fileUrl: string;
+  thumbnailUrl: string | null;
+  mediaId: string;
+}
+
+export const uploadChatAttachments = async (
+  conversationId: string,
+  files: File[],
+): Promise<ChatAttachmentResult[]> => {
+  if (!files || files.length === 0) {
+    throw new Error("No files to upload");
+  }
+  if (files.length > 5) {
+    throw new Error("Maximum 5 attachments per message");
+  }
+
+  const CHAT_IMAGE_TARGET_KB = 500;
+  const CHAT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+  const mediaActionFn = httpsCallable<
+    {
+      action: string;
+      fileName: string;
+      contentType: string;
+      fileData: string;
+      conversationId: string;
+    },
+    {
+      success: boolean;
+      data: {
+        url: string;
+        mediaId: string;
+        fileName: string;
+        fileSize: number;
+        fileType: string;
+        thumbnailUrl: string | null;
+      };
+    }
+  >(functions, "mediaAction");
+
+  const results: ChatAttachmentResult[] = [];
+
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) {
+      throw new Error(
+        `Only images are supported right now. "${file.name}" is ${file.type || "unknown type"}.`,
+      );
+    }
+
+    let toUpload: File = file;
+    const currentSizeKB = file.size / 1024;
+    if (currentSizeKB > CHAT_IMAGE_TARGET_KB) {
+      toUpload = await intelligentScaleImageTo450KB(file, CHAT_IMAGE_TARGET_KB);
+    }
+
+    if (toUpload.size > CHAT_IMAGE_MAX_BYTES) {
+      throw new Error(
+        `"${file.name}" is still too large after compression (${(toUpload.size / (1024 * 1024)).toFixed(1)}MB). Max 5MB.`,
+      );
+    }
+
+    const data = await fileToUint8Array(toUpload);
+    const base64 = uint8ArrayToBase64(data);
+
+    const result = await mediaActionFn({
+      action: "uploadChatAttachment",
+      fileName: file.name,
+      contentType: file.type,
+      fileData: base64,
+      conversationId,
+    });
+
+    if (!result.data.success || !result.data.data.url) {
+      throw new Error(`Failed to upload "${file.name}"`);
+    }
+
+    const d = result.data.data;
+    results.push({
+      fileName: d.fileName,
+      fileSize: d.fileSize,
+      fileType: d.fileType,
+      fileUrl: d.url,
+      thumbnailUrl: d.thumbnailUrl || null,
+      mediaId: d.mediaId,
+    });
+  }
+
+  return results;
+};
+
 export const uploadProblemProofMedia = async (
   files: File[],
   options: ImageUploadOptions = {},

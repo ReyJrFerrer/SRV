@@ -190,11 +190,11 @@ const InAppNotificationPopup: React.FC<InAppNotificationPopupProps> = ({
         {/* Background timer gradient — fills the card and shrinks over time */}
         {!notification.exiting && (
           <div
-            className="notification-timer absolute inset-y-0 left-0 pointer-events-none"
+            className="notification-timer pointer-events-none absolute inset-y-0 left-0"
             style={{
               background: `linear-gradient(to right, ${style.accentColor}60, ${style.accentColor}30 60%, transparent)`,
               animation: `notification-shrink ${notification.duration ?? 5000}ms linear forwards`,
-            }}    
+            }}
           />
         )}
 

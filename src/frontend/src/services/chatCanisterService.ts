@@ -82,12 +82,14 @@ export interface FrontendMessage {
     encryptedText: string;
     encryptionKey: string;
   };
-  attachment?: {
+  attachment?: Array<{
     fileName: string;
     fileSize: number;
     fileType: string;
     fileUrl: string;
-  };
+    thumbnailUrl?: string | null;
+    mediaId?: string | null;
+  }>;
   status: "Sent" | "Delivered" | "Read";
   createdAt: string;
   readAt?: string;
@@ -107,6 +109,10 @@ export interface FrontendConversation {
     senderId: string;
     messageType: "Text" | "File";
     createdAt: string;
+    attachment?: Array<{
+      fileName: string;
+      fileType: string;
+    }>;
   };
 }
 
@@ -155,12 +161,14 @@ const adaptBackendMessage = (backendMessage: any): FrontendMessage => {
     },
     attachment:
       backendMessage.attachment && backendMessage.attachment.length > 0
-        ? {
-            fileName: backendMessage.attachment[0].fileName,
-            fileSize: Number(backendMessage.attachment[0].fileSize),
-            fileType: backendMessage.attachment[0].fileType,
-            fileUrl: backendMessage.attachment[0].fileUrl,
-          }
+        ? backendMessage.attachment.map((att: any) => ({
+            fileName: att.fileName,
+            fileSize: Number(att.fileSize),
+            fileType: att.fileType,
+            fileUrl: att.fileUrl,
+            thumbnailUrl: att.thumbnailUrl || null,
+            mediaId: att.mediaId || null,
+          }))
         : undefined,
     status: getMessageStatus(backendMessage.status),
     createdAt: backendMessage.createdAt,
@@ -361,6 +369,100 @@ export const chatCanisterService = {
       return adaptBackendMessage(newMessage);
     } catch (error) {
       throw new Error(`Failed to send message: ${error}`);
+    }
+  },
+
+  async sendMediaMessage(
+    conversationId: string,
+    receiverId: string,
+    senderId: string,
+    attachments: Array<{
+      fileName: string;
+      fileSize: number;
+      fileType: string;
+      fileUrl: string;
+      thumbnailUrl?: string | null;
+      mediaId?: string | null;
+    }>,
+    caption: string = "",
+  ): Promise<FrontendMessage | null> {
+    try {
+      if (!attachments || attachments.length === 0) {
+        throw new Error("At least one attachment is required");
+      }
+      if (attachments.length > 5) {
+        throw new Error("Maximum 5 attachments per message");
+      }
+      if (caption.length > 1000) {
+        throw new Error("Caption cannot exceed 1000 characters");
+      }
+
+      const db = getDb();
+      const messageId =
+        Date.now().toString() + Math.random().toString(36).substring(2, 9);
+      const now = new Date().toISOString();
+
+      const newMessage = {
+        id: messageId,
+        conversationId,
+        senderId,
+        receiverId,
+        participants: [senderId, receiverId],
+        messageType: { File: null },
+        content: {
+          encryptedText: caption.trim(),
+          encryptionKey: "",
+        },
+        attachment: attachments.map((att) => ({
+          fileName: att.fileName,
+          fileSize: att.fileSize,
+          fileType: att.fileType,
+          fileUrl: att.fileUrl,
+          thumbnailUrl: att.thumbnailUrl || null,
+          mediaId: att.mediaId || null,
+        })),
+        status: { Sent: null },
+        createdAt: now,
+        readAt: [],
+      };
+
+      const previewText = caption.trim() || "📷 Photo";
+
+      await runTransaction(db, async (transaction) => {
+        const convRef = doc(db, "conversations", conversationId);
+        const convDoc = await transaction.get(convRef);
+        if (!convDoc.exists()) {
+          throw new Error("Conversation not found");
+        }
+
+        const convData = convDoc.data();
+        const updatedUnreadCount = { ...convData.unreadCount };
+        updatedUnreadCount[receiverId] =
+          (updatedUnreadCount[receiverId] || 0) + 1;
+
+        transaction.update(convRef, {
+          lastMessageAt: now,
+          unreadCount: updatedUnreadCount,
+          lastMessagePreview: {
+            id: messageId,
+            content: previewText,
+            senderId,
+            messageType: "File",
+            createdAt: now,
+            attachment: attachments.map((att) => ({
+              fileName: att.fileName,
+              fileType: att.fileType,
+            })),
+          },
+        });
+
+        const messageRef = doc(db, "messages", messageId);
+        transaction.set(messageRef, newMessage);
+      });
+
+      return adaptBackendMessage(newMessage);
+    } catch (error) {
+      throw new Error(`Failed to send media message: ${error}`);
     }
   },
 
@@ -676,10 +778,11 @@ export const chatCanisterService = {
           if (unsubscribed) return;
 
           try {
-            const messages = snapshot.docs.map((doc) => ({
+            const rawDocs = snapshot.docs.map((doc) => ({
               id: doc.id,
               ...doc.data(),
             }));
+            const messages = rawDocs.map(adaptBackendMessage);
             // Reverse to show oldest first (chronological)
             messages.reverse();
             debouncedUpdate(messages);

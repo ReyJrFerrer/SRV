@@ -197,7 +197,6 @@
   animation: notification-slide-up 200ms ease-in both;
 }
 
-
 .notification-item {
   transition: top 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }

@@ -11,6 +11,14 @@ import {
 } from "@heroicons/react/24/solid";
 import EmptyState from "../../components/common/EmptyState";
 import SmartHeader from "../../components/common/SmartHeader";
+import {
+  ChatAttachmentPicker,
+  SelectedFile,
+} from "../../components/chat/ChatAttachmentPicker";
+import {
+  ChatAttachmentPreview,
+  attachmentPreviewText,
+} from "../../components/chat/ChatAttachmentPreview";
 
 const ClientChatPage: React.FC = () => {
   const { isAuthenticated, firebaseUser } = useAuth();
@@ -27,6 +35,7 @@ const ClientChatPage: React.FC = () => {
     messages,
     optimisticMessages,
     sendMessage,
+    sendMediaMessage,
     retryMessage,
     sendingMessage,
   } = useChat();
@@ -46,6 +55,7 @@ const ClientChatPage: React.FC = () => {
   }>();
 
   const [messageText, setMessageText] = useState<string>("");
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const lastMarkedRef = useRef<{ id: string; t: number } | null>(null);
@@ -301,20 +311,27 @@ const ClientChatPage: React.FC = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !messageText.trim() ||
-      !currentConversation ||
-      !firebaseUser ||
-      sendingMessage
-    )
-      return;
+    if (!currentConversation || !firebaseUser || sendingMessage) return;
+    const text = messageText.trim();
+    const hasImages = selectedFiles.length > 0;
+    if (!text && !hasImages) return;
     try {
       const currentUserId = firebaseUser.uid;
       const receiverId =
         currentConversation.clientId === currentUserId
           ? currentConversation.providerId
           : currentConversation.clientId;
-      await sendMessage(messageText.trim(), receiverId);
+      if (hasImages) {
+        await sendMediaMessage(
+          selectedFiles.map((f) => f.file),
+          text,
+          receiverId,
+        );
+        selectedFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+        setSelectedFiles([]);
+      } else {
+        await sendMessage(text, receiverId);
+      }
       setMessageText("");
     } catch {}
   };
@@ -416,13 +433,29 @@ const ClientChatPage: React.FC = () => {
                             </div>
                             <div className="mt-1 flex items-start justify-between">
                               <p className="truncate text-sm text-gray-700 group-hover:text-blue-800">
-                                {lastMessage?.content?.encryptedText ? (
-                                  lastMessage.content.encryptedText
-                                ) : (
-                                  <span className="italic text-gray-400">
-                                    No messages yet
-                                  </span>
-                                )}
+                                {(() => {
+                                  if (
+                                    lastMessage?.messageType === "File" &&
+                                    lastMessage.attachment &&
+                                    lastMessage.attachment.length > 0
+                                  ) {
+                                    return (
+                                      <span className="italic">
+                                        {attachmentPreviewText(
+                                          lastMessage.attachment,
+                                        )}
+                                      </span>
+                                    );
+                                  }
+                                  if (lastMessage?.content?.encryptedText) {
+                                    return lastMessage.content.encryptedText;
+                                  }
+                                  return (
+                                    <span className="italic text-gray-400">
+                                      No messages yet
+                                    </span>
+                                  );
+                                })()}
                               </p>
                             </div>
                           </div>
@@ -501,14 +534,29 @@ const ClientChatPage: React.FC = () => {
                                       />
                                     </div>
                                   )}
-                                    <div
-                                      className={`max-w-[85%] sm:max-w-md rounded-2xl px-4 py-2 md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
-                                    >
-                                      <p className="text-sm break-words whitespace-pre-wrap">
+                                  <div
+                                    className={`max-w-[85%] rounded-2xl px-4 py-2 sm:max-w-md md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
+                                  >
+                                    {message.messageType === "File" &&
+                                    Array.isArray(message.attachment) &&
+                                    message.attachment.length > 0 ? (
+                                      <ChatAttachmentPreview
+                                        attachments={message.attachment}
+                                        caption={
+                                          typeof message.content === "string"
+                                            ? message.content
+                                            : message.content?.encryptedText ||
+                                              ""
+                                        }
+                                        isMine={isMine}
+                                      />
+                                    ) : (
+                                      <p className="whitespace-pre-wrap break-words text-sm">
                                         {typeof message.content === "string"
                                           ? message.content
                                           : message.content?.encryptedText}
                                       </p>
+                                    )}
                                     <p
                                       className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
                                     >
@@ -529,9 +577,20 @@ const ClientChatPage: React.FC = () => {
                                   className={`flex items-end justify-end gap-2 ${message.status === "failed" ? "cursor-pointer" : ""}`}
                                 >
                                   <div
-                                    className={`max-w-[85%] sm:max-w-md rounded-2xl px-4 py-2 transition-all duration-300 md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white opacity-100"}`}
+                                    className={`max-w-[85%] rounded-2xl px-4 py-2 transition-all duration-300 sm:max-w-md md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white opacity-100"}`}
                                   >
-                                    <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
+                                    {message.attachments &&
+                                    message.attachments.length > 0 ? (
+                                      <ChatAttachmentPreview
+                                        attachments={message.attachments}
+                                        caption={message.content}
+                                        isMine={true}
+                                      />
+                                    ) : (
+                                      <p className="whitespace-pre-wrap break-words text-sm">
+                                        {message.content}
+                                      </p>
+                                    )}
                                     <p
                                       className={`mt-1 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-blue-200" : message.status === "failed" ? "text-red-200" : "text-blue-100"}`}
                                     >
@@ -554,7 +613,12 @@ const ClientChatPage: React.FC = () => {
                           onSubmit={handleSendMessage}
                           className="flex w-full flex-col gap-1"
                         >
-                          <div className="flex w-full items-center gap-3">
+                          <div className="flex w-full items-center gap-2">
+                            <ChatAttachmentPicker
+                              selectedFiles={selectedFiles}
+                              onFilesChange={setSelectedFiles}
+                              disabled={sendingMessage || !currentConversation}
+                            />
                             <input
                               type="text"
                               value={messageText}
@@ -568,7 +632,8 @@ const ClientChatPage: React.FC = () => {
                               type="submit"
                               disabled={
                                 sendingMessage ||
-                                !messageText.trim() ||
+                                (!messageText.trim() &&
+                                  selectedFiles.length === 0) ||
                                 !currentConversation
                               }
                               className="shrink-0 rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
@@ -578,7 +643,11 @@ const ClientChatPage: React.FC = () => {
                           </div>
                           {messageText.length > 0 && (
                             <div className="px-4 text-right text-[10px] text-gray-400">
-                              {messageText.trim().split(/\s+/).filter(Boolean).length} words • {messageText.length}/1000
+                              {
+                                messageText.trim().split(/\s+/).filter(Boolean)
+                                  .length
+                              }{" "}
+                              words • {messageText.length}/1000
                             </div>
                           )}
                         </form>

@@ -50,7 +50,9 @@ const PackagesSection: React.FC<Props> = ({
   setPackageFormDescription,
   setPackageFormPrice,
 }) => {
-  const [viewingPackage, setViewingPackage] = useState<ServicePackage | null>(null);
+  const [viewingPackage, setViewingPackage] = useState<ServicePackage | null>(
+    null,
+  );
 
   useEffect(() => {
     if (viewingPackage) {

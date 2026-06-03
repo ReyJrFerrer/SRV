@@ -80,8 +80,10 @@ exports.onMessageCreated = onDocumentCreated(
     if (!snap) return;
     const message = snap.data();
     const {conversationId, senderId, receiverId, content} = message;
+    const hasAttachment =
+      Array.isArray(message.attachment) && message.attachment.length > 0;
 
-    if (!content || !content.encryptedText) return;
+    if ((!content || !content.encryptedText) && !hasAttachment) return;
 
     try {
       const senderDoc = await db.collection("users").doc(senderId).get();
@@ -103,10 +105,22 @@ exports.onMessageCreated = onDocumentCreated(
 
         const senderName =
           senderData.displayName || senderData.name || "Someone";
-        const textContent = content.encryptedText;
-        const messagePreview =
-          textContent.trim().substring(0, 50) +
-          (textContent.length > 50 ? "..." : "");
+        let messagePreview;
+        if (content && content.encryptedText) {
+          const textContent = content.encryptedText;
+          messagePreview =
+            textContent.trim().substring(0, 50) +
+            (textContent.length > 50 ? "..." : "");
+        } else if (hasAttachment) {
+          const att = message.attachment[0];
+          const fileType = att?.fileType || "";
+          if (fileType.startsWith("image/")) messagePreview = "📷 Photo";
+          else if (fileType.startsWith("video/")) messagePreview = "🎥 Video";
+          else if (fileType === "application/pdf") messagePreview = "📄 PDF";
+          else messagePreview = `📎 ${att?.fileName || "Attachment"}`;
+        } else {
+          messagePreview = "New message";
+        }
 
         // Create notification in Firestore
         const notificationId = generateId();

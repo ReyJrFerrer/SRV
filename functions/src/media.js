@@ -67,9 +67,11 @@ function validateContentType(contentType) {
  * @return {boolean} True if valid
  */
 function validateFileSize(fileSize, mediaType, contentType) {
-  // Special handling for ProblemProof videos
   if (mediaType === "ProblemProof" && contentType?.startsWith("video/")) {
     return fileSize > 0 && fileSize <= MAX_PROBLEM_PROOF_VIDEO_SIZE;
+  }
+  if (mediaType === "ChatAttachment") {
+    return fileSize > 0 && fileSize <= 5 * 1024 * 1024;
   }
   const maxSize =
     mediaType === "RemittancePaymentProof" ? MAX_REMITTANCE_FILE_SIZE : MAX_FILE_SIZE;
@@ -92,6 +94,7 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
     RemittancePaymentProof: "remittance",
     ReportAttachment: "reports",
     ProblemProof: "problem-proof",
+    ChatAttachment: "chat-attachments",
   }[mediaType];
 
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -814,6 +817,7 @@ async function uploadMediaInternal({
     "ServiceCertificate",
     "RemittancePaymentProof",
     "ReportAttachment",
+    "ChatAttachment",
   ];
   if (!validMediaTypes.includes(mediaType)) {
     throw new Error(`Invalid media type: ${mediaType}`);
@@ -823,7 +827,7 @@ async function uploadMediaInternal({
   const buffer = Buffer.from(fileData, "base64");
   const fileSize = buffer.length;
 
-  if (!validateFileSize(fileSize, mediaType)) {
+  if (!validateFileSize(fileSize, mediaType, contentType)) {
     const maxSize =
       mediaType === "RemittancePaymentProof" ?
         MAX_REMITTANCE_FILE_SIZE :
@@ -1011,13 +1015,146 @@ async function updateCertificateValidationStatusInternal(mediaId, newStatus) {
 }
 
 
+async function uploadChatAttachmentHandler(request) {
+  const data = request.data;
+  const authInfo = getAuthInfo({auth: request.auth}, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  const {fileName, contentType, fileData, conversationId} = data;
+
+  if (!fileName || fileName.length === 0 || fileName.length > 255) {
+    throw new HttpsError(
+      "invalid-argument",
+      "File name must be between 1 and 255 characters",
+    );
+  }
+
+  if (!contentType || !contentType.startsWith("image/")) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Only image files are supported for chat attachments",
+    );
+  }
+
+  if (!validateContentType(contentType)) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Unsupported image type: ${contentType}`,
+    );
+  }
+
+  if (!conversationId) {
+    throw new HttpsError("invalid-argument", "conversationId is required");
+  }
+
+  let fileBuffer;
+  try {
+    const base64Data = fileData.includes(",") ? fileData.split(",")[1] : fileData;
+    fileBuffer = Buffer.from(base64Data, "base64");
+  } catch (error) {
+    throw new HttpsError("invalid-argument", "Invalid file data format");
+  }
+
+  const fileSize = fileBuffer.length;
+  if (!validateFileSize(fileSize, "ChatAttachment", contentType)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Image size must be between 1 byte and 5MB",
+    );
+  }
+
+  try {
+    const mediaId = await generateUuid();
+    const downloadToken = await generateUuid();
+    const ownerId = authInfo.uid;
+    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath = `chat-attachments/${conversationId}/${mediaId}_${sanitizedFileName}`;
+
+    const file = bucket.file(filePath);
+    await file.save(fileBuffer, {
+      metadata: {
+        contentType: contentType,
+        metadata: {
+          mediaId: mediaId,
+          ownerId: ownerId,
+          mediaType: "ChatAttachment",
+          conversationId: conversationId,
+          firebaseStorageDownloadTokens: downloadToken,
+        },
+      },
+    });
+
+    let publicUrl;
+    if (
+      process.env.FUNCTIONS_EMULATOR === "true" ||
+      process.env.FIREBASE_STORAGE_EMULATOR_HOST
+    ) {
+      const encodedPath = encodeURIComponent(filePath);
+      publicUrl = `http://127.0.0.1:9199/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
+    } else {
+      const encodedPath = encodeURIComponent(filePath);
+      publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
+    }
+
+    return {
+      success: true,
+      data: {
+        url: publicUrl,
+        mediaId: mediaId,
+        fileName: fileName,
+        fileSize: fileSize,
+        fileType: contentType,
+        thumbnailUrl: null,
+      },
+    };
+  } catch (error) {
+    console.error("Error uploading chat attachment:", error);
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+async function deleteChatAttachmentHandler(request) {
+  const data = request.data;
+  const authInfo = getAuthInfo({auth: request.auth}, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  const {filePath, conversationId} = data;
+  if (!filePath) {
+    throw new HttpsError("invalid-argument", "filePath is required");
+  }
+
+  if (!filePath.startsWith(`chat-attachments/${conversationId || ""}`)) {
+    throw new HttpsError(
+      "permission-denied",
+      "Cannot delete attachments outside your conversation",
+    );
+  }
+
+  try {
+    const file = bucket.file(filePath);
+    await file.delete().catch((err) => {
+      console.warn("File may already be deleted:", err.message);
+    });
+
+    return {success: true, data: "Chat attachment deleted successfully"};
+  } catch (error) {
+    console.error("Error deleting chat attachment:", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
+}
+
 // ============================================================================
 // TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
 // ============================================================================
 
 exports.mediaAction = onCall(
   {
-    memory: "256MiB",
+    memory: "512MiB",
   },
   async (request) => {
     const {action} = request.data || {};
@@ -1050,6 +1187,10 @@ exports.mediaAction = onCall(
         return await updateCertificateValidationStatusHandler(request);
       case "getCertificatesByValidationStatus":
         return await getCertificatesByValidationStatusHandler(request);
+      case "uploadChatAttachment":
+        return await uploadChatAttachmentHandler(request);
+      case "deleteChatAttachment":
+        return await deleteChatAttachmentHandler(request);
       default:
         throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }

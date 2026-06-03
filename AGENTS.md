@@ -83,3 +83,48 @@ Also React/Vite. Separate workspace with its own `package.json` and build. Deplo
 | File naming        | kebab-case for files, PascalCase for components, camelCase for utils/services             |
 | Icons              | `@heroicons/react` (outline style imported as `.../24/outline`)                           |
 | Push notifications | OneSignal v16 via `react-onesignal` (NOT raw FCM unless firebase-messaging-sw.js)         |
+
+## Chat System Current State
+
+### Backend (`functions/src/chat.js`)
+
+- **Single trigger**: `onMessageCreated` — Firestore `onDocumentCreated` on `messages/{messageId}` (database `srvefirestore`)
+- Creates in-app notification in `notifications` collection, sends OneSignal push (non-blocking), and sends email with 1-hour cooldown per receiver+conversation pair (`chatEmailCooldowns` collection)
+- **Text-only**: only processes messages where `content.encryptedText` exists; message preview = first 50 chars of text
+- **No attachment awareness**: trigger ignores any attachment data on the message document
+
+### Frontend Service (`src/frontend/src/services/chatCanisterService.ts`)
+
+- **Firestore-based** (despite the "canister" name, all chat data lives in Firestore, not ICP)
+- `FrontendMessage` interface already has `attachment?: { fileName, fileSize, fileType, fileUrl }` and `messageType: "Text" | "File"`
+- `adaptBackendMessage()` parses attachments from Firestore array format (`attachment[0]`)
+- `sendMessage()` is **text-only**: hardcodes `messageType: { Text: null }`, `attachment: []`
+- Real-time via `onSnapshot` with 200ms debounce; shared listener pattern for conversation summaries
+
+### Frontend UI
+
+- `pages/client/chat.tsx` and `pages/provider/chat.tsx` — full-page chat views
+- **No attachment UI anywhere**: no file picker, no attachment rendering in message bubbles
+- `useChat.tsx` hook: `sendMessage(content: string, receiverId: string)` — no file parameter
+
+### Media System (`functions/src/media.js`)
+
+- `mediaAction` callable with action-based routing (upload, get, delete, etc.)
+- Media types: `UserProfile`, `ServiceImage`, `ServiceCertificate`, `RemittancePaymentProof`, `ReportAttachment`, `ProblemProof` — **no `ChatAttachment` type**
+- Storage bucket: `srve-7133d` (Firebase Cloud Storage)
+- Size limits: 1MB general, 1MB remittance, 30MB problem-proof video
+- Supported MIME: images (jpeg, png, gif, webp, bmp, svg, heic), PDF, video (mp4, webm, quicktime)
+- Internal helpers exported for cross-module use: `uploadMediaInternal`, `deleteMediaInternal`
+
+### Key Gaps (no media sending in chat)
+
+1. No `ChatAttachment` media type in `functions/src/media.js`
+2. `chatCanisterService.sendMessage()` doesn't accept or store attachments
+3. `useChat.sendMessage()` only accepts string content
+4. No file picker or attachment preview UI in any chat component
+5. `onMessageCreated` trigger doesn't generate attachment-aware notification previews
+6. No thumbnail generation for image/video attachments
+
+### Implementation plan
+
+See `CHAT-MEDIA-PLAN.md` for the detailed plan to add media sending (images, PDFs, text files, videos) to chat.

@@ -8,6 +8,7 @@ import chatCanisterService, {
   AsyncUnsubscribe,
 } from "../services/chatCanisterService";
 import { authCanisterService } from "../services/authCanisterService";
+import { uploadChatAttachments } from "../services/mediaService";
 import {
   dispatchConversationsUpdated,
   dispatchMessagesUpdated,
@@ -49,6 +50,12 @@ export interface OptimisticMessage {
   content: string;
   createdAt: Date;
   status: OptimisticMessageStatus;
+  attachments?: Array<{
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    fileUrl: string;
+  }>;
 }
 
 /**
@@ -501,6 +508,96 @@ export const useChat = () => {
     [isAuthenticated, firebaseUser, currentConversation],
   );
 
+  const sendMediaMessage = useCallback(
+    async (
+      files: File[],
+      caption: string,
+      receiverId: string,
+    ): Promise<OptimisticMessage | null> => {
+      if (!isAuthenticated || !firebaseUser || !currentConversation) {
+        throw new Error("Authentication and active conversation required");
+      }
+      if (!files || files.length === 0) {
+        throw new Error("At least one image is required");
+      }
+      if (files.length > 5) {
+        throw new Error("Maximum 5 attachments per message");
+      }
+      if (caption.length > 1000) {
+        throw new Error("Caption cannot exceed 1000 characters");
+      }
+
+      const currentUserId = firebaseUser.uid;
+
+      const optimisticMsg: OptimisticMessage = {
+        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        conversationId: currentConversation.id,
+        senderId: currentUserId,
+        content: caption.trim(),
+        createdAt: new Date(),
+        status: "sending",
+        attachments: [],
+      };
+
+      setOptimisticMessages((prev) => [...prev, optimisticMsg]);
+      setError(null);
+
+      try {
+        const uploaded = await uploadChatAttachments(
+          currentConversation.id,
+          files,
+        );
+
+        setOptimisticMessages((prev) =>
+          prev.map((m) =>
+            m.id === optimisticMsg.id
+              ? {
+                  ...m,
+                  attachments: uploaded.map((u) => ({
+                    fileName: u.fileName,
+                    fileSize: u.fileSize,
+                    fileType: u.fileType,
+                    fileUrl: u.fileUrl,
+                  })),
+                }
+              : m,
+          ),
+        );
+
+        await chatCanisterService.sendMediaMessage(
+          currentConversation.id,
+          receiverId,
+          currentUserId,
+          uploaded,
+          caption.trim(),
+        );
+
+        setOptimisticMessages((prev) =>
+          prev.map((m) =>
+            m.id === optimisticMsg.id
+              ? { ...m, status: "sent" as OptimisticMessageStatus }
+              : m,
+          ),
+        );
+
+        return optimisticMsg;
+      } catch (err) {
+        setOptimisticMessages((prev) =>
+          prev.map((m) =>
+            m.id === optimisticMsg.id
+              ? { ...m, status: "failed" as OptimisticMessageStatus }
+              : m,
+          ),
+        );
+        setError(
+          err instanceof Error ? err.message : "Could not send media message.",
+        );
+        throw err;
+      }
+    },
+    [isAuthenticated, firebaseUser, currentConversation],
+  );
+
   /**
    * Retry a failed message
    */
@@ -660,6 +757,11 @@ export const useChat = () => {
     const hasMatchingRealMessage = messages.some((m) => {
       const realContent =
         typeof m.content === "string" ? m.content : m.content?.encryptedText;
+      const hasAttachments =
+        Array.isArray(m.attachment) && m.attachment.length > 0;
+      const optHasAttachments =
+        Array.isArray(optMsg.attachments) && optMsg.attachments.length > 0;
+      if (hasAttachments !== optHasAttachments) return false;
       return (
         m.senderId === optMsg.senderId &&
         realContent === optMsg.content &&
@@ -682,6 +784,7 @@ export const useChat = () => {
     sendingMessage,
     loadConversation,
     sendMessage,
+    sendMediaMessage,
     retryMessage,
     createConversation,
     markAsRead,
