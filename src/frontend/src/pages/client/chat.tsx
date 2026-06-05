@@ -740,12 +740,10 @@ const ClientChatPage: React.FC = () => {
                                       />
                                     </div>
                                   )}
-                                  <div
-                                    className={`max-w-[85%] rounded-2xl px-4 py-2 sm:max-w-md md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
-                                  >
-                                    {message.messageType === "File" &&
-                                    Array.isArray(message.attachment) &&
-                                    message.attachment.length > 0 ? (
+                                  {message.messageType === "File" &&
+                                  Array.isArray(message.attachment) &&
+                                  message.attachment.length > 0 ? (
+                                    <div className="max-w-[85%] sm:max-w-md md:max-w-2xl xl:max-w-3xl">
                                       <ChatAttachmentPreview
                                         attachments={message.attachment}
                                         caption={
@@ -756,19 +754,26 @@ const ClientChatPage: React.FC = () => {
                                         }
                                         isMine={isMine}
                                       />
-                                    ) : (
+                                      <p className="mt-1 text-right text-xs text-gray-400">
+                                        {formatDateTime(message.createdAt)}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <div
+                                      className={`max-w-[85%] rounded-2xl px-4 py-2 sm:max-w-md md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
+                                    >
                                       <p className="whitespace-pre-wrap break-words text-sm">
                                         {typeof message.content === "string"
                                           ? message.content
                                           : message.content?.encryptedText}
                                       </p>
-                                    )}
-                                    <p
-                                      className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
-                                    >
-                                      {formatDateTime(message.createdAt)}
-                                    </p>
-                                  </div>
+                                      <p
+                                        className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
+                                      >
+                                        {formatDateTime(message.createdAt)}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
@@ -782,31 +787,42 @@ const ClientChatPage: React.FC = () => {
                                   }
                                   className={`flex items-end justify-end gap-2 ${message.status === "failed" ? "cursor-pointer" : ""}`}
                                 >
-                                  <div
-                                    className={`max-w-[85%] rounded-2xl px-4 py-2 transition-all duration-300 sm:max-w-md md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white opacity-100"}`}
-                                  >
-                                    {message.attachments &&
-                                    message.attachments.length > 0 ? (
+                                  {message.attachments &&
+                                  message.attachments.length > 0 ? (
+                                    <div className="max-w-[85%] sm:max-w-md md:max-w-2xl xl:max-w-3xl">
                                       <ChatAttachmentPreview
                                         attachments={message.attachments}
                                         caption={message.content}
                                         isMine={true}
                                       />
-                                    ) : (
+                                      <p
+                                        className={`mt-1 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-gray-400" : message.status === "failed" ? "text-red-400" : "text-gray-400"}`}
+                                      >
+                                        {message.status === "sending"
+                                          ? "Sending..."
+                                          : message.status === "failed"
+                                            ? "Failed - Tap to retry"
+                                            : "Sent"}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <div
+                                      className={`max-w-[85%] rounded-2xl px-4 py-2 transition-all duration-300 sm:max-w-md md:max-w-2xl xl:max-w-3xl ${message.status === "failed" ? "rounded-br-none bg-red-500 text-white" : message.status === "sending" ? "rounded-br-none bg-blue-400 text-white opacity-70" : "rounded-br-none bg-blue-600 text-white opacity-100"}`}
+                                    >
                                       <p className="whitespace-pre-wrap break-words text-sm">
                                         {message.content}
                                       </p>
-                                    )}
-                                    <p
-                                      className={`mt-1 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-blue-200" : message.status === "failed" ? "text-red-200" : "text-blue-100"}`}
-                                    >
-                                      {message.status === "sending"
-                                        ? "Sending..."
-                                        : message.status === "failed"
-                                          ? "Failed - Tap to retry"
-                                          : "Sent"}
-                                    </p>
-                                  </div>
+                                      <p
+                                        className={`mt-1 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-blue-200" : message.status === "failed" ? "text-red-200" : "text-blue-100"}`}
+                                      >
+                                        {message.status === "sending"
+                                          ? "Sending..."
+                                          : message.status === "failed"
+                                            ? "Failed - Tap to retry"
+                                            : "Sent"}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
