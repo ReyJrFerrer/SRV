@@ -393,6 +393,9 @@ const ClientChatPage: React.FC = () => {
         currentConversation.clientId === currentUserId
           ? currentConversation.providerId
           : currentConversation.clientId;
+      if (text) {
+        await sendMessage(text, receiverId);
+      }
       if (hasImages) {
         await sendMediaMessage(
           selectedFiles.map((f) => f.file),
@@ -401,9 +404,6 @@ const ClientChatPage: React.FC = () => {
         );
         selectedFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
         setSelectedFiles([]);
-      }
-      if (text) {
-        await sendMessage(text, receiverId);
       }
       setMessageText("");
       resetTextarea();
