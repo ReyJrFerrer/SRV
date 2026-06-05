@@ -1015,6 +1015,11 @@ async function updateCertificateValidationStatusInternal(mediaId, newStatus) {
 }
 
 
+/**
+ * Upload a chat attachment image
+ * @param {object} request - The request object
+ * @return {Promise<object>} Upload result with file URL and metadata
+ */
 async function uploadChatAttachmentHandler(request) {
   const data = request.data;
   const authInfo = getAuthInfo({auth: request.auth}, data);
@@ -1115,6 +1120,11 @@ async function uploadChatAttachmentHandler(request) {
   }
 }
 
+/**
+ * Delete a chat attachment from storage
+ * @param {object} request - The request object
+ * @return {Promise<object>} Deletion result
+ */
 async function deleteChatAttachmentHandler(request) {
   const data = request.data;
   const authInfo = getAuthInfo({auth: request.auth}, data);
