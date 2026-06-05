@@ -8,12 +8,15 @@ import {
   PaperAirplaneIcon,
   ChatBubbleLeftRightIcon,
   ArrowLeftIcon,
+  PlusIcon,
 } from "@heroicons/react/24/solid";
 import EmptyState from "../../components/common/EmptyState";
 import SmartHeader from "../../components/common/SmartHeader";
 import authCanisterService from "../../services/authCanisterService";
 import {
-  ChatAttachmentPicker,
+  ChatAttachmentTrigger,
+  ChatAttachmentTriggerHandle,
+  ChatAttachmentStrip,
   SelectedFile,
 } from "../../components/chat/ChatAttachmentPicker";
 import {
@@ -75,7 +78,10 @@ const ClientChatPage: React.FC = () => {
     useState<boolean>(!!servicePreview);
   const [messageText, setMessageText] = useState<string>("");
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const attachmentTriggerRef = useRef<ChatAttachmentTriggerHandle>(null);
   const lastMarkedRef = useRef<{ id: string; t: number } | null>(null);
   const prevUnreadMapRef = useRef<Map<string, number>>(new Map());
   const defaultTitleRef = useRef<string>("Messages | SRV");
@@ -371,7 +377,17 @@ const ClientChatPage: React.FC = () => {
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handleFilesPicked = (newFiles: SelectedFile[]) => {
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveAttachment = (id: string) => {
+    const match = selectedFiles.find((f) => f.id === id);
+    if (match) URL.revokeObjectURL(match.previewUrl);
+    setSelectedFiles(selectedFiles.filter((f) => f.id !== id));
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (!e.clipboardData || !e.clipboardData.items) return;
 
     const items = Array.from(e.clipboardData.items);
@@ -383,7 +399,11 @@ const ClientChatPage: React.FC = () => {
         if (file) {
           const previewUrl = URL.createObjectURL(file);
           // provide a random id to match ChatAttachmentPicker format if it expects it
-          newFiles.push({ file, previewUrl, id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}` } as any);
+          newFiles.push({
+            file,
+            previewUrl,
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          } as any);
         }
       }
     }
@@ -398,6 +418,28 @@ const ClientChatPage: React.FC = () => {
         }
         return combined;
       });
+    }
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessageText(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 200) + "px";
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      const form = textareaRef.current?.closest("form");
+      if (form) form.requestSubmit();
+    }
+  };
+
+  const resetTextarea = () => {
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = "auto";
     }
   };
 
@@ -425,6 +467,7 @@ const ClientChatPage: React.FC = () => {
         await sendMessage(text, receiverId);
       }
       setMessageText("");
+      resetTextarea();
     } catch {}
   };
 
@@ -770,49 +813,70 @@ const ClientChatPage: React.FC = () => {
                         )}
                       </div>
                       {/* Composer */}
-                      <div className="shrink-0 border-t border-gray-200 bg-white p-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:sticky md:bottom-0 md:bg-white md:p-3">
+                      <div className="shrink-0  bg-white p-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:sticky md:bottom-0 md:bg-white md:p-3">
                         <form
                           onSubmit={handleSendMessage}
-                          className="flex w-full flex-col gap-1"
+                          className="flex w-full items-end gap-2"
                         >
-                          <div className="flex w-full items-center gap-2">
-                            <ChatAttachmentPicker
+                          <ChatAttachmentTrigger
+                            ref={attachmentTriggerRef}
+                            onFilesPicked={handleFilesPicked}
+                            onError={setAttachmentError}
+                            disabled={sendingMessage || !currentConversation}
+                            currentCount={selectedFiles.length}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => attachmentTriggerRef.current?.open()}
+                            disabled={
+                              sendingMessage ||
+                              !currentConversation ||
+                              selectedFiles.length >= 5
+                            }
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600 disabled:opacity-40"
+                            aria-label="Attach image"
+                          >
+                            <PlusIcon className="h-5 w-5" />
+                          </button>
+                          <div className="flex min-w-0 flex-1 flex-col rounded-2xl bg-gray-50 px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                            <ChatAttachmentStrip
                               selectedFiles={selectedFiles}
-                              onFilesChange={setSelectedFiles}
-                              disabled={sendingMessage || !currentConversation}
-                            />
-                            <input
-                              type="text"
-                              value={messageText}
-                              onChange={(e) => setMessageText(e.target.value)}
-                              onPaste={handlePaste}
-                              placeholder="Type a message..."
-                              maxLength={1000}
-                              disabled={sendingMessage || !currentConversation}
-                              className="w-full flex-1 rounded-full border border-transparent bg-gray-50 px-4 py-2 text-base focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                            />
-                            <button
-                              type="submit"
-                              disabled={
-                                sendingMessage ||
-                                (!messageText.trim() &&
-                                  selectedFiles.length === 0) ||
-                                !currentConversation
+                              onRemove={handleRemoveAttachment}
+                              onAddClick={() =>
+                                attachmentTriggerRef.current?.open()
                               }
-                              className="shrink-0 rounded-full bg-blue-600 p-3 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
-                            >
-                              <PaperAirplaneIcon className="h-5 w-5" />
-                            </button>
-                          </div>
-                          {messageText.length > 0 && (
-                            <div className="px-4 text-right text-[10px] text-gray-400">
-                              {
-                                messageText.trim().split(/\s+/).filter(Boolean)
-                                  .length
-                              }{" "}
-                              words • {messageText.length}/1000
+                              disabled={sendingMessage || !currentConversation}
+                              error={attachmentError}
+                            />
+                            <div className="flex w-full items-end gap-2">
+                              <textarea
+                                ref={textareaRef}
+                                value={messageText}
+                                onChange={handleTextChange}
+                                onKeyDown={handleKeyDown}
+                                onPaste={handlePaste}
+                                placeholder="Type a message..."
+                                maxLength={1000}
+                                rows={1}
+                                disabled={
+                                  sendingMessage || !currentConversation
+                                }
+                                 className="max-h-[200px] w-full flex-1 resize-none bg-transparent px-1 py-0.5 text-base leading-snug focus:outline-none disabled:opacity-50"
+                              />
+                              <button
+                                type="submit"
+                                disabled={
+                                  sendingMessage ||
+                                  (!messageText.trim() &&
+                                    selectedFiles.length === 0) ||
+                                  !currentConversation
+                                }
+                                className="shrink-0 rounded-full bg-blue-600 p-2 text-white shadow transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+                              >
+                                <PaperAirplaneIcon className="h-5 w-5" />
+                              </button>
                             </div>
-                          )}
+                          </div>
                         </form>
                       </div>
                     </div>
