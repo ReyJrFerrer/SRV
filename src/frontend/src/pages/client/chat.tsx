@@ -445,7 +445,7 @@ const ClientChatPage: React.FC = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentConversation || !firebaseUser || sendingMessage) return;
+    if (!currentConversation || !firebaseUser) return;
     const text = messageText.trim();
     const hasImages = selectedFiles.length > 0;
     if (!text && !hasImages) return;
@@ -458,12 +458,13 @@ const ClientChatPage: React.FC = () => {
       if (hasImages) {
         await sendMediaMessage(
           selectedFiles.map((f) => f.file),
-          text,
+          "",
           receiverId,
         );
         selectedFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
         setSelectedFiles([]);
-      } else {
+      }
+      if (text) {
         await sendMessage(text, receiverId);
       }
       setMessageText("");
