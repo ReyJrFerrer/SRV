@@ -44,6 +44,10 @@ const SUPPORTED_CONTENT_TYPES = [
   "image/heic",
   // Documents
   "application/pdf",
+  "text/plain",
+  "text/csv",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   // Problem proof videos
   "video/mp4",
   "video/webm",
@@ -71,10 +75,7 @@ function validateFileSize(fileSize, mediaType, contentType) {
     return fileSize > 0 && fileSize <= MAX_PROBLEM_PROOF_VIDEO_SIZE;
   }
   if (mediaType === "ChatAttachment") {
-    if (contentType?.startsWith("video/")) {
-      return fileSize > 0;
-    }
-    return fileSize > 0 && fileSize <= 5 * 1024 * 1024;
+    return fileSize > 0 && fileSize <= 1024 * 1024 * 1024;
   }
   const maxSize =
     mediaType === "RemittancePaymentProof" ? MAX_REMITTANCE_FILE_SIZE : MAX_FILE_SIZE;
@@ -1041,10 +1042,10 @@ async function initChatAttachmentUploadHandler(request) {
     );
   }
 
-  if (!contentType || (!contentType.startsWith("image/") && !contentType.startsWith("video/"))) {
+  if (!contentType || (!contentType.startsWith("image/") && !contentType.startsWith("video/") && !contentType.startsWith("application/") && !contentType.startsWith("text/"))) {
     throw new HttpsError(
       "invalid-argument",
-      "Only image and video files are supported for chat attachments",
+      "Only image, video, and document files are supported for chat attachments",
     );
   }
 

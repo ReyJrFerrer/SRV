@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  DocumentIcon,
+  PhotoIcon,
+  VideoCameraIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { PlayIcon } from "@heroicons/react/24/solid";
 
 export interface ChatAttachmentItem {
@@ -129,7 +134,7 @@ export function ChatAttachmentPreview({
                   : "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100"
               }`}
             >
-              <span className="text-base">📎</span>
+              <DocumentIcon className="h-4 w-4 flex-shrink-0" />
               <span className="min-w-0 flex-1 truncate">{att.fileName}</span>
               <span className={isMine ? "text-white/70" : "text-gray-500"}>
                 {formatSize(att.fileSize)}
@@ -191,11 +196,37 @@ function formatSize(bytes: number): string {
 
 export function attachmentPreviewText(
   attachments?: ChatAttachmentItem[],
-): string {
+): React.ReactNode {
   if (!attachments || attachments.length === 0) return "";
   const first = attachments[0];
-  if (first.fileType.startsWith("image/")) return "📷 Photo";
-  if (first.fileType.startsWith("video/")) return "🎥 Video";
-  if (first.fileType === "application/pdf") return "📄 PDF";
-  return `📎 ${first.fileName || "Attachment"}`;
+  if (first.fileType.startsWith("image/")) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <PhotoIcon className="h-3.5 w-3.5" />
+        Photo
+      </span>
+    );
+  }
+  if (first.fileType.startsWith("video/")) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <VideoCameraIcon className="h-3.5 w-3.5" />
+        Video
+      </span>
+    );
+  }
+  if (first.fileType === "application/pdf") {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <DocumentIcon className="h-3.5 w-3.5" />
+        PDF
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1">
+      <DocumentIcon className="h-3.5 w-3.5" />
+      {first.fileName || "Attachment"}
+    </span>
+  );
 }

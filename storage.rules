@@ -29,6 +29,17 @@ service firebase.storage {
              request.resource.contentType == 'application/pdf';
     }
     
+    // Helper function to validate chat attachment content types
+    function isValidChatAttachmentType() {
+      return request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType.matches('video/.*') ||
+             request.resource.contentType == 'application/pdf' ||
+             request.resource.contentType == 'text/plain' ||
+             request.resource.contentType == 'text/csv' ||
+             request.resource.contentType == 'application/msword' ||
+             request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+    
     // User profile images - users/{userId}/{mediaId}_{filename}
     match /users/{userId}/{allPaths=**} {
       // Allow public read access (profile pictures should be publicly viewable)
@@ -105,8 +116,9 @@ service firebase.storage {
       allow read: if isAuthenticated();
       
       // Allow write by authenticated users
-      // Images & Videos: max 1GB
+      // Images, Videos, Documents: max 1GB
       allow write: if isAuthenticated() && 
+                      isValidChatAttachmentType() &&
                       isValidSize(1024);
       
       // Allow delete by authenticated users

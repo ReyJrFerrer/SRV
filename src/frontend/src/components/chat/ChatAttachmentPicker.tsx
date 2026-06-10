@@ -1,5 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import { PlusIcon, XMarkIcon, PlayIcon } from "@heroicons/react/24/solid";
+import { DocumentIcon } from "@heroicons/react/24/outline";
 
 export interface SelectedFile {
   file: File;
@@ -46,10 +47,14 @@ export const ChatAttachmentTrigger = forwardRef<
     if (picked.length === 0) return;
 
     const invalid = picked.find(
-      (f) => !f.type.startsWith("image/") && !f.type.startsWith("video/"),
+      (f) =>
+        !f.type.startsWith("image/") &&
+        !f.type.startsWith("video/") &&
+        !f.type.startsWith("application/") &&
+        !f.type.startsWith("text/"),
     );
     if (invalid) {
-      onError?.("Only images and videos are supported.");
+      onError?.("Only images, videos, and documents are supported.");
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
@@ -75,7 +80,7 @@ export const ChatAttachmentTrigger = forwardRef<
     <input
       ref={inputRef}
       type="file"
-      accept="image/*,video/*"
+      accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/csv,.pdf,.doc,.docx,.txt,.csv"
       multiple
       onChange={handleChange}
       className="hidden"
@@ -123,6 +128,14 @@ export function ChatAttachmentStrip({
                     <PlayIcon className="h-5 w-5 text-white/90" />
                   </div>
                 </div>
+              ) : sf.file.type.startsWith("application/") ||
+                sf.file.type.startsWith("text/") ? (
+                <div className="flex h-16 w-16 flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 p-1 shadow-sm">
+                  <DocumentIcon className="h-6 w-6 text-gray-500" />
+                  <span className="mt-0.5 max-w-[3.5rem] truncate text-[9px] text-gray-500">
+                    {sf.file.name}
+                  </span>
+                </div>
               ) : (
                 <img
                   src={sf.previewUrl}
@@ -146,7 +159,7 @@ export function ChatAttachmentStrip({
               onClick={onAddClick}
               disabled={disabled}
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 text-gray-400 transition-colors hover:border-blue-400 hover:text-blue-500 disabled:opacity-40"
-              aria-label="Add another image or video"
+              aria-label="Add another image, video, or document"
             >
               <PlusIcon className="h-6 w-6" />
             </button>

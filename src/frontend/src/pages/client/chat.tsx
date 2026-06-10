@@ -743,7 +743,9 @@ const ClientChatPage: React.FC = () => {
                                   {message.messageType === "File" &&
                                   Array.isArray(message.attachment) &&
                                   message.attachment.length > 0 ? (
-                                    <div className="max-w-[85%] sm:max-w-md md:max-w-2xl xl:max-w-3xl">
+                                    <div
+                                      className={`max-w-[85%] rounded-2xl px-4 py-2 sm:max-w-md md:max-w-2xl xl:max-w-3xl ${isMine ? "rounded-br-none bg-blue-600 text-white" : "rounded-bl-none border border-gray-200 bg-white text-gray-800"}`}
+                                    >
                                       <ChatAttachmentPreview
                                         attachments={message.attachment}
                                         caption={
@@ -754,7 +756,9 @@ const ClientChatPage: React.FC = () => {
                                         }
                                         isMine={isMine}
                                       />
-                                      <p className="mt-1 text-right text-xs text-gray-400">
+                                      <p
+                                        className={`mt-1 text-right text-xs ${isMine ? "text-blue-100" : "text-gray-400"}`}
+                                      >
                                         {formatDateTime(message.createdAt)}
                                       </p>
                                     </div>
@@ -789,14 +793,14 @@ const ClientChatPage: React.FC = () => {
                                 >
                                   {message.attachments &&
                                   message.attachments.length > 0 ? (
-                                    <div className="max-w-[85%] sm:max-w-md md:max-w-2xl xl:max-w-3xl">
+                                    <div className="max-w-[85%] rounded-2xl rounded-br-none bg-blue-600 px-4 py-2 text-white sm:max-w-md md:max-w-2xl xl:max-w-3xl">
                                       <ChatAttachmentPreview
                                         attachments={message.attachments}
                                         caption={message.content}
                                         isMine={true}
                                       />
                                       <p
-                                        className={`mt-1 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-gray-400" : message.status === "failed" ? "text-red-400" : "text-gray-400"}`}
+                                        className={`mt-1 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-blue-100" : message.status === "failed" ? "text-red-300" : "text-blue-100"}`}
                                       >
                                         {message.status === "sending"
                                           ? "Sending..."
@@ -851,7 +855,7 @@ const ClientChatPage: React.FC = () => {
                               selectedFiles.length >= 5
                             }
                             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600 disabled:opacity-40"
-                            aria-label="Attach image or video"
+                            aria-label="Attach image, video, or document"
                           >
                             <PlusIcon className="h-5 w-5" />
                           </button>

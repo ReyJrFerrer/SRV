@@ -1170,9 +1170,11 @@ export const uploadChatAttachments = async (
   for (const file of files) {
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
-    if (!isImage && !isVideo) {
+    const isDocument =
+      file.type.startsWith("application/") || file.type.startsWith("text/");
+    if (!isImage && !isVideo && !isDocument) {
       throw new Error(
-        `Only images and videos are supported right now. "${file.name}" is ${file.type || "unknown type"}.`,
+        `Only images, videos, and documents are supported right now. "${file.name}" is ${file.type || "unknown type"}.`,
       );
     }
 
@@ -1185,11 +1187,11 @@ export const uploadChatAttachments = async (
           CHAT_IMAGE_TARGET_KB,
         );
       }
-      if (toUpload.size > CHAT_IMAGE_MAX_BYTES) {
-        throw new Error(
-          `"${file.name}" is still too large after compression (${(toUpload.size / (1024 * 1024)).toFixed(1)}MB). Max 1GB.`,
-        );
-      }
+    }
+    if (toUpload.size > CHAT_IMAGE_MAX_BYTES) {
+      throw new Error(
+        `"${file.name}" is too large (${(toUpload.size / (1024 * 1024)).toFixed(1)}MB). Max 1GB.`,
+      );
     }
 
     // 1. Backend validates metadata and returns a pre-approved path

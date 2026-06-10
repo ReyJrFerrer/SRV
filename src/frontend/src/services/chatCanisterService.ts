@@ -430,12 +430,12 @@ export const chatCanisterService = {
       const previewText =
         caption.trim() ||
         (firstAtt.fileType.startsWith("video/")
-          ? "🎥 Video"
+          ? "Video"
           : firstAtt.fileType.startsWith("image/")
-            ? "📷 Photo"
+            ? "Photo"
             : firstAtt.fileType === "application/pdf"
-              ? "📄 PDF"
-              : `📎 ${firstAtt.fileName}`);
+              ? "PDF"
+              : firstAtt.fileName || "Attachment");
 
       await runTransaction(db, async (transaction) => {
         const convRef = doc(db, "conversations", conversationId);
