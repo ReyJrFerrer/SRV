@@ -99,6 +99,20 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
     
+    // Chat attachments - chat-attachments/{conversationId}/{mediaId}_{filename}
+    match /chat-attachments/{conversationId}/{allPaths=**} {
+      // Allow read by authenticated users
+      allow read: if isAuthenticated();
+      
+      // Allow write by authenticated users
+      // Images & Videos: max 1GB
+      allow write: if isAuthenticated() && 
+                      isValidSize(1024);
+      
+      // Allow delete by authenticated users
+      allow delete: if isAuthenticated();
+    }
+    
     // Deny all other access
     match /{allPaths=**} {
       allow read, write: if false;

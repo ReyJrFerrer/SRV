@@ -719,7 +719,7 @@ const ClientChatPage: React.FC = () => {
                               selectedFiles.length >= 5
                             }
                             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600 disabled:opacity-40"
-                            aria-label="Attach image"
+                            aria-label="Attach image or video"
                           >
                             <PlusIcon className="h-5 w-5" />
                           </button>

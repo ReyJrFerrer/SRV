@@ -71,6 +71,9 @@ function validateFileSize(fileSize, mediaType, contentType) {
     return fileSize > 0 && fileSize <= MAX_PROBLEM_PROOF_VIDEO_SIZE;
   }
   if (mediaType === "ChatAttachment") {
+    if (contentType?.startsWith("video/")) {
+      return fileSize > 0;
+    }
     return fileSize > 0 && fileSize <= 5 * 1024 * 1024;
   }
   const maxSize =
@@ -1016,18 +1019,20 @@ async function updateCertificateValidationStatusInternal(mediaId, newStatus) {
 
 
 /**
- * Upload a chat attachment image
+ * Initiate a chat attachment upload.
+ * Validates metadata and returns a pre-approved Storage path.
+ * The client uploads the file directly via the Firebase Storage SDK.
  * @param {object} request - The request object
- * @return {Promise<object>} Upload result with file URL and metadata
+ * @return {Promise<object>} Upload metadata with filePath and mediaId
  */
-async function uploadChatAttachmentHandler(request) {
+async function initChatAttachmentUploadHandler(request) {
   const data = request.data;
   const authInfo = getAuthInfo({auth: request.auth}, data);
   if (!authInfo.hasAuth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  const {fileName, contentType, fileData, conversationId} = data;
+  const {fileName, contentType, fileSize, conversationId} = data;
 
   if (!fileName || fileName.length === 0 || fileName.length > 255) {
     throw new HttpsError(
@@ -1036,17 +1041,17 @@ async function uploadChatAttachmentHandler(request) {
     );
   }
 
-  if (!contentType || !contentType.startsWith("image/")) {
+  if (!contentType || (!contentType.startsWith("image/") && !contentType.startsWith("video/"))) {
     throw new HttpsError(
       "invalid-argument",
-      "Only image files are supported for chat attachments",
+      "Only image and video files are supported for chat attachments",
     );
   }
 
   if (!validateContentType(contentType)) {
     throw new HttpsError(
       "invalid-argument",
-      `Unsupported image type: ${contentType}`,
+      `Unsupported file type: ${contentType}`,
     );
   }
 
@@ -1054,70 +1059,28 @@ async function uploadChatAttachmentHandler(request) {
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  let fileBuffer;
-  try {
-    const base64Data = fileData.includes(",") ? fileData.split(",")[1] : fileData;
-    fileBuffer = Buffer.from(base64Data, "base64");
-  } catch (error) {
-    throw new HttpsError("invalid-argument", "Invalid file data format");
-  }
-
-  const fileSize = fileBuffer.length;
-  if (!validateFileSize(fileSize, "ChatAttachment", contentType)) {
+  const size = Number(fileSize) || 0;
+  if (size <= 0 || size > 1024 * 1024 * 1024) {
     throw new HttpsError(
       "invalid-argument",
-      "Image size must be between 1 byte and 5MB",
+      "File must be between 1 byte and 1GB.",
     );
   }
 
-  try {
-    const mediaId = await generateUuid();
-    const downloadToken = await generateUuid();
-    const ownerId = authInfo.uid;
-    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const filePath = `chat-attachments/${conversationId}/${mediaId}_${sanitizedFileName}`;
+  const mediaId = await generateUuid();
+  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const filePath = `chat-attachments/${conversationId}/${mediaId}_${sanitizedFileName}`;
 
-    const file = bucket.file(filePath);
-    await file.save(fileBuffer, {
-      metadata: {
-        contentType: contentType,
-        metadata: {
-          mediaId: mediaId,
-          ownerId: ownerId,
-          mediaType: "ChatAttachment",
-          conversationId: conversationId,
-          firebaseStorageDownloadTokens: downloadToken,
-        },
-      },
-    });
-
-    let publicUrl;
-    if (
-      process.env.FUNCTIONS_EMULATOR === "true" ||
-      process.env.FIREBASE_STORAGE_EMULATOR_HOST
-    ) {
-      const encodedPath = encodeURIComponent(filePath);
-      publicUrl = `http://127.0.0.1:9199/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
-    } else {
-      const encodedPath = encodeURIComponent(filePath);
-      publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
-    }
-
-    return {
-      success: true,
-      data: {
-        url: publicUrl,
-        mediaId: mediaId,
-        fileName: fileName,
-        fileSize: fileSize,
-        fileType: contentType,
-        thumbnailUrl: null,
-      },
-    };
-  } catch (error) {
-    console.error("Error uploading chat attachment:", error);
-    throw new HttpsError("internal", error.message);
-  }
+  return {
+    success: true,
+    data: {
+      mediaId: mediaId,
+      filePath: filePath,
+      fileName: fileName,
+      fileType: contentType,
+      thumbnailUrl: null,
+    },
+  };
 }
 
 /**
@@ -1197,8 +1160,8 @@ exports.mediaAction = onCall(
         return await updateCertificateValidationStatusHandler(request);
       case "getCertificatesByValidationStatus":
         return await getCertificatesByValidationStatusHandler(request);
-      case "uploadChatAttachment":
-        return await uploadChatAttachmentHandler(request);
+      case "initChatAttachment":
+        return await initChatAttachmentUploadHandler(request);
       case "deleteChatAttachment":
         return await deleteChatAttachmentHandler(request);
       default:

@@ -182,7 +182,12 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       }
 
       return "/images/ai-sp/others.svg";
-    }, [loadedServiceImages, userImageUrl, service.category?.slug, isLoadingImages]);
+    }, [
+      loadedServiceImages,
+      userImageUrl,
+      service.category?.slug,
+      isLoadingImages,
+    ]);
 
     React.useLayoutEffect(() => {
       setImageLoaded(false);

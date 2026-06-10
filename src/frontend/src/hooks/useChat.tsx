@@ -518,7 +518,7 @@ export const useChat = () => {
         throw new Error("Authentication and active conversation required");
       }
       if (!files || files.length === 0) {
-        throw new Error("At least one image is required");
+        throw new Error("At least one attachment is required");
       }
       if (files.length > 5) {
         throw new Error("Maximum 5 attachments per message");

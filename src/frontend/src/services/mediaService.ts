@@ -2,7 +2,8 @@
 import { authCanisterService } from "./authCanisterService";
 import { serviceCanisterService } from "./serviceCanisterService";
 import { httpsCallable } from "firebase/functions";
-import { getFirebaseFunctions } from "./firebaseApp";
+import { getFirebaseFunctions, getFirebaseStorage } from "./firebaseApp";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 // Get Firebase Functions instance with correct region
 const functions = getFirebaseFunctions();
@@ -1142,70 +1143,93 @@ export const uploadChatAttachments = async (
   }
 
   const CHAT_IMAGE_TARGET_KB = 500;
-  const CHAT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+  const CHAT_IMAGE_MAX_BYTES = 1024 * 1024 * 1024;
   const mediaActionFn = httpsCallable<
     {
       action: string;
       fileName: string;
       contentType: string;
-      fileData: string;
+      fileSize: number;
       conversationId: string;
     },
     {
       success: boolean;
       data: {
-        url: string;
         mediaId: string;
+        filePath: string;
         fileName: string;
-        fileSize: number;
         fileType: string;
         thumbnailUrl: string | null;
       };
     }
   >(functions, "mediaAction");
 
+  const storage = getFirebaseStorage();
   const results: ChatAttachmentResult[] = [];
 
   for (const file of files) {
-    if (!file.type.startsWith("image/")) {
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    if (!isImage && !isVideo) {
       throw new Error(
-        `Only images are supported right now. "${file.name}" is ${file.type || "unknown type"}.`,
+        `Only images and videos are supported right now. "${file.name}" is ${file.type || "unknown type"}.`,
       );
     }
 
     let toUpload: File = file;
-    const currentSizeKB = file.size / 1024;
-    if (currentSizeKB > CHAT_IMAGE_TARGET_KB) {
-      toUpload = await intelligentScaleImageTo450KB(file, CHAT_IMAGE_TARGET_KB);
+    if (isImage) {
+      const currentSizeKB = file.size / 1024;
+      if (currentSizeKB > CHAT_IMAGE_TARGET_KB) {
+        toUpload = await intelligentScaleImageTo450KB(
+          file,
+          CHAT_IMAGE_TARGET_KB,
+        );
+      }
+      if (toUpload.size > CHAT_IMAGE_MAX_BYTES) {
+        throw new Error(
+          `"${file.name}" is still too large after compression (${(toUpload.size / (1024 * 1024)).toFixed(1)}MB). Max 1GB.`,
+        );
+      }
     }
 
-    if (toUpload.size > CHAT_IMAGE_MAX_BYTES) {
-      throw new Error(
-        `"${file.name}" is still too large after compression (${(toUpload.size / (1024 * 1024)).toFixed(1)}MB). Max 5MB.`,
-      );
-    }
-
-    const data = await fileToUint8Array(toUpload);
-    const base64 = uint8ArrayToBase64(data);
-
-    const result = await mediaActionFn({
-      action: "uploadChatAttachment",
+    // 1. Backend validates metadata and returns a pre-approved path
+    const initResult = await mediaActionFn({
+      action: "initChatAttachment",
       fileName: file.name,
       contentType: file.type,
-      fileData: base64,
+      fileSize: toUpload.size,
       conversationId,
     });
 
-    if (!result.data.success || !result.data.data.url) {
-      throw new Error(`Failed to upload "${file.name}"`);
+    if (!initResult.data.success || !initResult.data.data.filePath) {
+      throw new Error(`Failed to initiate upload for "${file.name}"`);
     }
 
-    const d = result.data.data;
+    const d = initResult.data.data;
+    const storageRef = ref(storage, d.filePath);
+
+    // 2. Upload directly to Firebase Storage (no base64, no body limit)
+    const uploadTask = uploadBytesResumable(storageRef, toUpload, {
+      contentType: file.type,
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        null,
+        (error) => reject(error),
+        () => resolve(),
+      );
+    });
+
+    // 3. Get the public download URL
+    const url = await getDownloadURL(storageRef);
+
     results.push({
       fileName: d.fileName,
-      fileSize: d.fileSize,
+      fileSize: toUpload.size,
       fileType: d.fileType,
-      fileUrl: d.url,
+      fileUrl: url,
       thumbnailUrl: d.thumbnailUrl || null,
       mediaId: d.mediaId,
     });

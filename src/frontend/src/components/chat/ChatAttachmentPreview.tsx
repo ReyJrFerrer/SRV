@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { PlayIcon } from "@heroicons/react/24/solid";
 
 export interface ChatAttachmentItem {
   fileName: string;
@@ -38,12 +39,16 @@ export function ChatAttachmentPreview({
   }
 
   const images = attachments.filter((a) => a.fileType.startsWith("image/"));
-  const others = attachments.filter((a) => !a.fileType.startsWith("image/"));
+  const videos = attachments.filter((a) => a.fileType.startsWith("video/"));
+  const others = attachments.filter(
+    (a) => !a.fileType.startsWith("image/") && !a.fileType.startsWith("video/"),
+  );
 
+  const mediaCount = images.length + videos.length;
   const gridClass =
-    images.length === 1
+    mediaCount === 1
       ? "grid grid-cols-1 gap-1"
-      : images.length === 2
+      : mediaCount === 2
         ? "grid grid-cols-2 gap-1"
         : "grid grid-cols-2 gap-1";
 
@@ -66,9 +71,7 @@ export function ChatAttachmentPreview({
                   loading="lazy"
                   referrerPolicy="no-referrer"
                   className={`w-full cursor-zoom-in object-cover transition-opacity group-hover:opacity-90 ${
-                    images.length === 1
-                      ? "max-h-64 rounded-lg"
-                      : "aspect-square"
+                    mediaCount === 1 ? "max-h-64 rounded-lg" : "aspect-square"
                   }`}
                   onError={(e) => {
                     const el = e.currentTarget;
@@ -77,6 +80,35 @@ export function ChatAttachmentPreview({
                     }
                   }}
                 />
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {videos.length > 0 && (
+        <div className={gridClass}>
+          {videos.map((att, idx) => {
+            const globalIdx = attachments.indexOf(att);
+            return (
+              <button
+                key={`${att.fileUrl}-${idx}`}
+                type="button"
+                onClick={() => setLightboxIndex(globalIdx)}
+                className="group relative block overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                <video
+                  src={att.fileUrl}
+                  preload="metadata"
+                  muted
+                  playsInline
+                  className={`w-full cursor-pointer object-cover transition-opacity group-hover:opacity-90 ${
+                    mediaCount === 1 ? "max-h-64 rounded-lg" : "aspect-square"
+                  }`}
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors group-hover:bg-black/30">
+                  <PlayIcon className="h-8 w-8 text-white/90" />
+                </div>
               </button>
             );
           })}
@@ -127,13 +159,23 @@ export function ChatAttachmentPreview({
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
-          <img
-            src={attachments[lightboxIndex].fileUrl}
-            alt={attachments[lightboxIndex].fileName}
-            referrerPolicy="no-referrer"
-            className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
+          {attachments[lightboxIndex].fileType.startsWith("video/") ? (
+            <video
+              src={attachments[lightboxIndex].fileUrl}
+              controls
+              autoPlay
+              className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <img
+              src={attachments[lightboxIndex].fileUrl}
+              alt={attachments[lightboxIndex].fileName}
+              referrerPolicy="no-referrer"
+              className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
         </div>
       )}
     </div>

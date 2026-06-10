@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle, useRef } from "react";
-import { PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, XMarkIcon, PlayIcon } from "@heroicons/react/24/solid";
 
 export interface SelectedFile {
   file: File;
@@ -45,16 +45,18 @@ export const ChatAttachmentTrigger = forwardRef<
     const picked = Array.from(e.target.files || []);
     if (picked.length === 0) return;
 
-    const invalid = picked.find((f) => !f.type.startsWith("image/"));
+    const invalid = picked.find(
+      (f) => !f.type.startsWith("image/") && !f.type.startsWith("video/"),
+    );
     if (invalid) {
-      onError?.("Only images are supported right now.");
+      onError?.("Only images and videos are supported.");
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
 
     const combined = currentCount + picked.length;
     if (combined > maxFiles) {
-      onError?.(`You can attach up to ${maxFiles} images per message.`);
+      onError?.(`You can attach up to ${maxFiles} files per message.`);
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
@@ -73,7 +75,7 @@ export const ChatAttachmentTrigger = forwardRef<
     <input
       ref={inputRef}
       type="file"
-      accept="image/*"
+      accept="image/*,video/*"
       multiple
       onChange={handleChange}
       className="hidden"
@@ -104,16 +106,30 @@ export function ChatAttachmentStrip({
   const atMax = selectedFiles.length >= maxFiles;
 
   return (
-    <div className="px-1 pt-1.5 pb-1.5">
+    <div className="px-1 pb-1.5 pt-1.5">
       {selectedFiles.length > 0 && (
         <div className="flex gap-2 overflow-x-auto px-1.5 pt-1.5">
           {selectedFiles.map((sf) => (
             <div key={sf.id} className="group relative shrink-0">
-              <img
-                src={sf.previewUrl}
-                alt={sf.file.name}
-                className="h-16 w-16 rounded-xl border border-gray-200 object-cover shadow-sm"
-              />
+              {sf.file.type.startsWith("video/") ? (
+                <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-gray-200 bg-black shadow-sm">
+                  <video
+                    src={sf.previewUrl}
+                    muted
+                    preload="metadata"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <PlayIcon className="h-5 w-5 text-white/90" />
+                  </div>
+                </div>
+              ) : (
+                <img
+                  src={sf.previewUrl}
+                  alt={sf.file.name}
+                  className="h-16 w-16 rounded-xl border border-gray-200 object-cover shadow-sm"
+                />
+              )}
               <button
                 type="button"
                 onClick={() => onRemove(sf.id)}
@@ -130,7 +146,7 @@ export function ChatAttachmentStrip({
               onClick={onAddClick}
               disabled={disabled}
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 text-gray-400 transition-colors hover:border-blue-400 hover:text-blue-500 disabled:opacity-40"
-              aria-label="Add another image"
+              aria-label="Add another image or video"
             >
               <PlusIcon className="h-6 w-6" />
             </button>
