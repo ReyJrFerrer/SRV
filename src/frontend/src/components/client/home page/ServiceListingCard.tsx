@@ -1,4 +1,3 @@
-// Imports
 import React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -6,7 +5,6 @@ import {
   MapPinIcon,
   CheckBadgeIcon,
 } from "@heroicons/react/24/solid";
-// ReputationBadge removed per request; use local color mapping for the top-right badge
 import { EnrichedService } from "../../../hooks/serviceInformation";
 import { useServiceImages, useUserImage } from "../../../hooks/useMediaLoader";
 
@@ -22,10 +20,63 @@ export interface EnhancedServiceData {
 interface ServiceListItemProps {
   service: EnrichedService;
   serviceData: EnhancedServiceData;
-  inCategories?: boolean;
   isGridItem?: boolean;
+  /** @deprecated no longer used — kept for callers that still pass it */
+  inCategories?: boolean;
+  /** @deprecated no longer used — kept for callers that still pass it */
   retainMobileLayout?: boolean;
 }
+
+// Constants
+const CATEGORY_ICON_MAP: Record<string, string> = {
+  "gadget-technicians": "gadget-technicians.svg",
+  "beauty-services": "beauty-services.svg",
+  "home-services": "home-services.svg",
+  "beauty-wellness": "beauty-wellness.svg",
+  "automobile-repairs": "automobile-repairs.svg",
+  "cleaning-services": "cleaning-services.svg",
+  "delivery-errands": "delivery-errands.svg",
+  photographer: "photographer.svg",
+  tutoring: "tutoring.svg",
+  others: "others.svg",
+};
+
+const PRICE_LOCATION_CONTAINER_CLASS =
+  "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100";
+
+// Pure functions
+const getCategoryIcon = (slug: string | undefined): string => {
+  if (!slug) return "/images/categories/others.svg";
+  if (CATEGORY_ICON_MAP[slug]) {
+    return `/images/categories/${CATEGORY_ICON_MAP[slug]}`;
+  }
+  return `/images/categories/${slug.replace(/-/g, " ")}.svg`;
+};
+
+const renderRatingStars = (rating: number, size: string = "h-3 w-3") => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+  return (
+    <div className="flex items-center">
+      {Array.from({ length: fullStars }, (_, i) => (
+        <StarIcon key={`full-${i}`} className={`${size} text-yellow-400`} />
+      ))}
+      {hasHalfStar && (
+        <div className="relative">
+          <StarIcon className={`${size} text-gray-300`} />
+          <div className="absolute inset-0 w-1/2 overflow-hidden">
+            <StarIcon className={`${size} text-yellow-400`} />
+          </div>
+        </div>
+      )}
+      {Array.from({ length: emptyStars }, (_, i) => (
+        <StarIcon key={`empty-${i}`} className={`${size} text-gray-300`} />
+      ))}
+    </div>
+  );
+};
 
 // Skeleton
 export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
@@ -72,9 +123,9 @@ export const ServiceListingCardSkeleton: React.FC<{ className?: string }> = ({
   );
 };
 
-// Component
+// Main component
 const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
-  ({ service, serviceData, isGridItem = false }) => {
+  ({ service, serviceData }) => {
     const [imageLoaded, setImageLoaded] = React.useState(false);
     const [imageSrc, setImageSrc] = React.useState<string>(
       `/images/ai-sp/${service.category?.slug || "others"}.svg`,
@@ -82,7 +133,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     const [showContent, setShowContent] = React.useState(false);
     const mountTimeRef = React.useRef<number>(Date.now());
     const skeletonShownAtRef = React.useRef<number | null>(null);
-    const imgRef = React.useRef<HTMLImageElement>(null);
 
     const { images: serviceImages, isLoading: isLoadingServiceImages } =
       useServiceImages(service.id, serviceData.mediaUrls, {
@@ -107,64 +157,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     }, [serviceImages]);
 
     const { isVerified, averageRating, totalReviews } = serviceData;
-
-    const serviceRating = {
-      average: averageRating,
-      count: totalReviews,
-      loading: false,
-    };
-
-    const itemWidthClass = isGridItem ? "w-full" : "w-full";
-
-    const priceLocationContainerClass =
-      "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100";
-
-    const renderRatingStars = (rating: number, size: string = "h-3 w-3") => {
-      const fullStars = Math.floor(rating);
-      const hasHalfStar = rating % 1 >= 0.5;
-      const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
-      return (
-        <div className="flex items-center">
-          {Array.from({ length: fullStars }, (_, i) => (
-            <StarIcon key={`full-${i}`} className={`${size} text-yellow-400`} />
-          ))}
-          {hasHalfStar && (
-            <div className="relative">
-              <StarIcon className={`${size} text-gray-300`} />
-              <div className="absolute inset-0 w-1/2 overflow-hidden">
-                <StarIcon className={`${size} text-yellow-400`} />
-              </div>
-            </div>
-          )}
-          {Array.from({ length: emptyStars }, (_, i) => (
-            <StarIcon key={`empty-${i}`} className={`${size} text-gray-300`} />
-          ))}
-        </div>
-      );
-    };
-
-    const categoryIconMap: Record<string, string> = {
-      "gadget-technicians": "gadget-technicians.svg",
-      "beauty-services": "beauty-services.svg",
-      "home-services": "home-services.svg",
-      "beauty-wellness": "beauty-wellness.svg",
-      "automobile-repairs": "automobile-repairs.svg",
-      "cleaning-services": "cleaning-services.svg",
-      "delivery-errands": "delivery-errands.svg",
-      photographer: "photographer.svg",
-      tutoring: "tutoring.svg",
-      others: "others.svg",
-    };
-
-    const getCategoryIcon = (slug: string | undefined): string => {
-      if (!slug) return "/images/categories/others.svg";
-      if (categoryIconMap[slug]) {
-        return `/images/categories/${categoryIconMap[slug]}`;
-      }
-      const fallback = `/images/categories/${slug.replace(/-/g, " ")}.svg`;
-      return fallback;
-    };
 
     const imageSource = React.useMemo(() => {
       const isValidImageUrl = (u?: string | null): u is string =>
@@ -201,10 +193,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         return;
       }
 
-      // For HTTP(S) images (e.g. Firebase Storage) preload with a detached
-      // Image object so the load event fires reliably even when the browser
-      // has the resource in cache — notably Firefox skips onLoad on cached
-      // <img> elements but the detached object still fires it.
       const img = new Image();
       img.onload = () => {
         setImageLoaded(true);
@@ -223,14 +211,38 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     React.useEffect(() => {
       if (showContent) return;
-      const isContentReady = !isLoadingImages && imageLoaded;
-      if (!isContentReady) return;
 
-      const timeSinceMount = Date.now() - mountTimeRef.current;
       const FAST_LOAD_THRESHOLD = 200;
       const MIN_SKELETON_DURATION = 400;
+      const MAX_SKELETON_DURATION = 5000;
+      const elapsed = Date.now() - mountTimeRef.current;
 
-      if (timeSinceMount < FAST_LOAD_THRESHOLD) {
+      const isContentReady = !isLoadingImages && imageLoaded;
+      if (isContentReady) {
+        if (elapsed < FAST_LOAD_THRESHOLD) {
+          setShowContent(true);
+          return;
+        }
+
+        if (skeletonShownAtRef.current === null) {
+          skeletonShownAtRef.current = Date.now();
+        }
+        const skeletonDuration = Date.now() - skeletonShownAtRef.current;
+        if (skeletonDuration < MIN_SKELETON_DURATION) {
+          const remainingTime = MIN_SKELETON_DURATION - skeletonDuration;
+          const timer = setTimeout(() => {
+            setShowContent(true);
+          }, remainingTime);
+          return () => clearTimeout(timer);
+        } else {
+          setShowContent(true);
+          return;
+        }
+      }
+
+      // Fallback: if we've been waiting too long, show the card anyway
+      // to prevent indefinite skeleton on silent image-load failures.
+      if (elapsed >= MAX_SKELETON_DURATION) {
         setShowContent(true);
         return;
       }
@@ -238,19 +250,15 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       if (skeletonShownAtRef.current === null) {
         skeletonShownAtRef.current = Date.now();
       }
-      const skeletonDuration = Date.now() - skeletonShownAtRef.current;
-      if (skeletonDuration < MIN_SKELETON_DURATION) {
-        const remainingTime = MIN_SKELETON_DURATION - skeletonDuration;
-        const timer = setTimeout(() => {
+      const remaining = MAX_SKELETON_DURATION - elapsed;
+      const timer = setTimeout(() => {
+        if (!showContent) {
           setShowContent(true);
-        }, remainingTime);
-        return () => clearTimeout(timer);
-      } else {
-        setShowContent(true);
-      }
+        }
+      }, remaining);
+      return () => clearTimeout(timer);
     }, [isLoadingImages, imageLoaded, showContent]);
 
-    // Show skeleton while content is not ready
     if (!showContent) {
       return <ServiceListingCardSkeleton />;
     }
@@ -259,13 +267,15 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       <div className="tour-client-service-card group relative flex flex-col items-center">
         <Link
           to={`/client/service/${service.id}`}
-          className={`service-card relative block ${itemWidthClass} overflow-hidden rounded-xl border border-gray-200 bg-white pb-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group-hover:pb-2`}
+          aria-label={`View ${service.title} service details`}
+          className={`service-card relative block w-full overflow-hidden rounded-xl border border-gray-200 bg-white pb-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md group-hover:pb-2`}
         >
           <div className="relative">
             <img
-              ref={imgRef}
               src={imageSrc}
               alt={service.title}
+              loading="lazy"
+              decoding="async"
               className={`service-image h-40 w-full rounded-t-2xl object-cover transition-opacity duration-300
                   ${imageLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => {
@@ -354,7 +364,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 )}
             </div>
 
-            <div className={priceLocationContainerClass}>
+            <div className={PRICE_LOCATION_CONTAINER_CLASS}>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-bold text-blue-600">
                   {`₱${service.price.amount.toLocaleString(undefined, {
@@ -364,14 +374,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
                 </span>
               </div>
               <div className="flex items-center text-sm">
-                {serviceRating.count > 0 ? (
+                {totalReviews > 0 ? (
                   <>
-                    {renderRatingStars(serviceRating.average, "h-4 w-4")}
+                    {renderRatingStars(averageRating, "h-4 w-4")}
                     <span className="ml-1 font-semibold text-blue-600">
-                      {serviceRating.average.toFixed(1)}
+                      {averageRating.toFixed(1)}
                     </span>
                     <span className="ml-1 text-xs text-blue-400">
-                      ({serviceRating.count})
+                      ({totalReviews})
                     </span>
                   </>
                 ) : (
