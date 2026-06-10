@@ -332,11 +332,15 @@ const ClientChatPage: React.FC = () => {
     const newFiles: SelectedFile[] = [];
 
     for (const item of items) {
-      if (item.type.startsWith("image/")) {
+      if (
+        item.type.startsWith("image/") ||
+        item.type.startsWith("video/") ||
+        item.type.startsWith("application/") ||
+        item.type.startsWith("text/")
+      ) {
         const file = item.getAsFile();
         if (file) {
           const previewUrl = URL.createObjectURL(file);
-          // provide a random id to match ChatAttachmentPicker format if it expects it
           newFiles.push({
             file,
             previewUrl,
@@ -347,10 +351,10 @@ const ClientChatPage: React.FC = () => {
     }
 
     if (newFiles.length > 0) {
+      e.preventDefault();
       setSelectedFiles((prev) => {
         const combined = [...prev, ...newFiles];
         if (combined.length > 5) {
-          // Cleanup excess urls
           combined.slice(5).forEach((f) => URL.revokeObjectURL(f.previewUrl));
           return combined.slice(0, 5);
         }

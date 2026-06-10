@@ -114,9 +114,9 @@ exports.onMessageCreated = onDocumentCreated(
         } else if (hasAttachment) {
           const att = message.attachment[0];
           const fileType = att?.fileType || "";
-          if (fileType.startsWith("image/")) messagePreview = "Photo";
-          else if (fileType.startsWith("video/")) messagePreview = "Video";
-          else if (fileType === "application/pdf") messagePreview = "PDF";
+          if (fileType.startsWith("image/")) messagePreview = senderName + " sent a Photo";
+          else if (fileType.startsWith("video/")) messagePreview = senderName + " sent a Video";
+          else if (fileType === "application/pdf") messagePreview = senderName + " sent a PDF";
           else messagePreview = att?.fileName || "Attachment";
         } else {
           messagePreview = "New message";
