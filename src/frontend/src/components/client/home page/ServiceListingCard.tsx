@@ -82,6 +82,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
     const [showContent, setShowContent] = React.useState(false);
     const mountTimeRef = React.useRef<number>(Date.now());
     const skeletonShownAtRef = React.useRef<number | null>(null);
+    const imgRef = React.useRef<HTMLImageElement>(null);
 
     const { images: serviceImages, isLoading: isLoadingServiceImages } =
       useServiceImages(service.id, serviceData.mediaUrls, {
@@ -97,10 +98,13 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
 
     const isLoadingImages = isLoadingServiceImages || isLoadingUserImage;
 
-    const loadedServiceImages =
-      serviceImages
-        ?.map((img) => img.dataUrl)
-        .filter((url): url is string => !!url && url.length > 0) || [];
+    const loadedServiceImages = React.useMemo(() => {
+      return (
+        serviceImages
+          ?.map((img) => img.dataUrl)
+          .filter((url): url is string => !!url && url.length > 0) || []
+      );
+    }, [serviceImages]);
 
     const { isVerified, averageRating, totalReviews } = serviceData;
 
@@ -162,7 +166,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       return fallback;
     };
 
-    const getImageSource = (): string => {
+    const imageSource = React.useMemo(() => {
       const isValidImageUrl = (u?: string | null): u is string =>
         !!u &&
         u.length > 20 &&
@@ -186,11 +190,9 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
       }
 
       return "/images/ai-sp/others.svg";
-    };
+    }, [loadedServiceImages, userImageUrl, service.category?.slug, isLoadingImages]);
 
-    React.useEffect(() => {
-      const imageSource = getImageSource();
-
+    React.useLayoutEffect(() => {
       setImageLoaded(false);
       setImageSrc(imageSource);
 
@@ -199,6 +201,10 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         return;
       }
 
+      // For HTTP(S) images (e.g. Firebase Storage) preload with a detached
+      // Image object so the load event fires reliably even when the browser
+      // has the resource in cache — notably Firefox skips onLoad on cached
+      // <img> elements but the detached object still fires it.
       const img = new Image();
       img.onload = () => {
         setImageLoaded(true);
@@ -213,12 +219,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         img.onload = null;
         img.onerror = null;
       };
-    }, [
-      loadedServiceImages,
-      userImageUrl,
-      service.category?.slug,
-      isLoadingImages,
-    ]);
+    }, [imageSource]);
 
     React.useEffect(() => {
       if (showContent) return;
@@ -262,10 +263,14 @@ const ServiceListItem: React.FC<ServiceListItemProps> = React.memo(
         >
           <div className="relative">
             <img
+              ref={imgRef}
               src={imageSrc}
               alt={service.title}
-              className={`service-image h-40 w-full rounded-t-2xl object-cover transition-opacity duration-1000
+              className={`service-image h-40 w-full rounded-t-2xl object-cover transition-opacity duration-300
                   ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+              onLoad={() => {
+                setImageLoaded(true);
+              }}
               onError={(e) => {
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = "/images/ai-sp/others.svg";
