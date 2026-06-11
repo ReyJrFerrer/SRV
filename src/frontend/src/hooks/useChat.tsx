@@ -529,62 +529,88 @@ export const useChat = () => {
 
       const currentUserId = firebaseUser.uid;
 
-      const optimisticMsg: OptimisticMessage = {
-        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        conversationId: currentConversation.id,
-        senderId: currentUserId,
-        content: caption.trim(),
-        createdAt: new Date(),
-        status: "sending",
-        attachments: [],
+      const groupFiles = (fileList: File[]): Map<string, File[]> => {
+        const groups = new Map<string, File[]>();
+        for (const file of fileList) {
+          const key = file.type.startsWith("image/")
+            ? "image"
+            : file.type.startsWith("video/")
+              ? "video"
+              : "document";
+          const group = groups.get(key) || [];
+          group.push(file);
+          groups.set(key, group);
+        }
+        return groups;
       };
 
-      setOptimisticMessages((prev) => [...prev, optimisticMsg]);
+      const fileGroups = groupFiles(files);
+      const groupEntries = Array.from(fileGroups.entries());
+
+      const optimisticMsgs: OptimisticMessage[] = groupEntries.map(
+        ([_type], idx) => ({
+          id: `temp-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 9)}`,
+          conversationId: currentConversation.id,
+          senderId: currentUserId,
+          content: idx === 0 ? caption.trim() : "",
+          createdAt: new Date(),
+          status: "sending" as OptimisticMessageStatus,
+          attachments: [],
+        }),
+      );
+
+      setOptimisticMessages((prev) => [...prev, ...optimisticMsgs]);
       setError(null);
 
       try {
-        const uploaded = await uploadChatAttachments(
-          currentConversation.id,
-          files,
-        );
+        for (let i = 0; i < groupEntries.length; i++) {
+          const [, groupFileList] = groupEntries[i];
+          const msg = optimisticMsgs[i];
 
-        setOptimisticMessages((prev) =>
-          prev.map((m) =>
-            m.id === optimisticMsg.id
-              ? {
-                  ...m,
-                  attachments: uploaded.map((u) => ({
-                    fileName: u.fileName,
-                    fileSize: u.fileSize,
-                    fileType: u.fileType,
-                    fileUrl: u.fileUrl,
-                  })),
-                }
-              : m,
-          ),
-        );
+          const uploaded = await uploadChatAttachments(
+            currentConversation.id,
+            groupFileList,
+          );
 
-        await chatCanisterService.sendMediaMessage(
-          currentConversation.id,
-          receiverId,
-          currentUserId,
-          uploaded,
-          caption.trim(),
-        );
+          setOptimisticMessages((prev) =>
+            prev.map((m) =>
+              m.id === msg.id
+                ? {
+                    ...m,
+                    attachments: uploaded.map((u) => ({
+                      fileName: u.fileName,
+                      fileSize: u.fileSize,
+                      fileType: u.fileType,
+                      fileUrl: u.fileUrl,
+                    })),
+                  }
+                : m,
+            ),
+          );
 
-        setOptimisticMessages((prev) =>
-          prev.map((m) =>
-            m.id === optimisticMsg.id
-              ? { ...m, status: "sent" as OptimisticMessageStatus }
-              : m,
-          ),
-        );
+          await chatCanisterService.sendMediaMessage(
+            currentConversation.id,
+            receiverId,
+            currentUserId,
+            uploaded,
+            i === 0 ? caption.trim() : "",
+          );
 
-        return optimisticMsg;
+          setOptimisticMessages((prev) =>
+            prev.map((m) =>
+              m.id === msg.id
+                ? { ...m, status: "sent" as OptimisticMessageStatus }
+                : m,
+            ),
+          );
+        }
+
+        return optimisticMsgs[optimisticMsgs.length - 1];
       } catch (err) {
         setOptimisticMessages((prev) =>
           prev.map((m) =>
-            m.id === optimisticMsg.id
+            optimisticMsgs.some((om) => om.id === m.id) &&
+            m.status === "sending"
               ? { ...m, status: "failed" as OptimisticMessageStatus }
               : m,
           ),

@@ -128,15 +128,19 @@ export function ChatAttachmentPreview({
               href={att.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${
+              className={`inline-flex max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${
                 isMine
-                  ? "border-white/30 bg-white/10 text-white hover:bg-white/20"
+                  ? "border-white/40 bg-white/95 text-gray-800 hover:bg-gray-100"
                   : "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100"
               }`}
             >
-              <DocumentIcon className="h-4 w-4 flex-shrink-0" />
-              <span className="min-w-0 flex-1 truncate">{att.fileName}</span>
-              <span className={isMine ? "text-white/70" : "text-gray-500"}>
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-50">
+                <DocumentIcon className="h-20 w-20 text-blue-600" />
+              </div>
+              <span className="min-w-0 max-w-[200px] truncate font-medium">
+                {att.fileName}
+              </span>
+              <span className={isMine ? "text-gray-400" : "text-gray-500"}>
                 {formatSize(att.fileSize)}
               </span>
             </a>
