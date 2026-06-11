@@ -747,7 +747,7 @@
 
 .services-preview-section {
   background-color: white;
-  padding: 6rem 0;
+  padding: 6rem 0 1rem 0;
 }
 
 .services-header {
@@ -1684,7 +1684,6 @@ body.menu-open {
     height: 450px;
   }
 
-
   .member-image-container {
     width: 300px;
     height: 300px;
@@ -1809,7 +1808,6 @@ body.menu-open {
   .info-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
-
 }
 
 @media (max-width: 768px) {
@@ -1959,7 +1957,6 @@ body.menu-open {
     width: 200px;
     height: 200px;
   }
-
 
   .info-grid {
     grid-template-columns: 1fr;
@@ -2160,8 +2157,6 @@ body.menu-open {
     font-size: 0.85rem;
   }
 
-
-
   .overlay-title {
     font-size: 1.4rem;
   }
@@ -2310,8 +2305,6 @@ body.menu-open {
     font-size: 0.7rem;
   }
 
-
-
   .pillar-header {
     padding: 12px;
   }
@@ -2370,7 +2363,6 @@ body.menu-open {
   .service-category {
     padding: 1rem 0.8rem;
   }
-
 
   .member-image-container {
     width: 100px;
