@@ -801,136 +801,6 @@
   font-size: 0.9rem;
 }
 
-.services-gallery {
-  margin: 3rem 0;
-}
-
-.services-subtitle {
-  text-align: center;
-  margin-top: 1rem;
-  color: #666;
-}
-
-.gallery-container {
-  position: relative;
-  width: 62%;
-  height: 520px; /* slightly smaller */
-  overflow: hidden;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  margin: 0 auto;
-}
-
-.gallery-image-wrapper {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  opacity: 0;
-  transition: opacity 0.7s ease;
-  transform: scale(1.05);
-}
-
-/* Category icon overlay (shared with MainPage gallery) */
-
-.gallery-image-wrapper.active {
-  opacity: 1;
-  transform: scale(1);
-  z-index: 1;
-}
-
-.gallery-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.image-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 2.2rem 2.6rem; /* larger padding */
-  /* expanded yellow gradient covering more of the image */
-  background: linear-gradient(
-    180deg,
-    rgba(253, 204, 56, 0) 0%,
-    rgba(253, 204, 56, 0.18) 30%,
-    rgba(253, 204, 56, 0.9) 100%
-  );
-  color: #0f172a;
-  opacity: 1; /* show by default */
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease;
-}
-
-.gallery-image-wrapper:hover .image-overlay {
-  opacity: 1;
-}
-
-.overlay-title {
-  font-size: 1.6rem;
-  margin-bottom: 0.4rem;
-  font-weight: 800;
-  color: #ffffff; /* ensure overlay title is white on yellow gradient */
-}
-
-.overlay-description {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.95); /* white-ish description for contrast */
-}
-
-.gallery-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 1rem;
-}
-
-.gallery-control {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  margin: 0 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition:
-    transform 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.gallery-control:hover {
-  background: #2563eb;
-  transform: scale(1.1);
-}
-
-.gallery-indicators {
-  display: flex;
-  gap: 8px;
-}
-
-.gallery-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: #cbd5e1;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.gallery-indicator.active {
-  background-color: #3b82f6;
-  transform: scale(1.2);
-}
-
 .additional-info-section {
   background-color: white;
   padding: 5rem 0;
@@ -1814,9 +1684,6 @@ body.menu-open {
     height: 450px;
   }
 
-  .gallery-container {
-    width: 65%;
-  }
 
   .member-image-container {
     width: 300px;
@@ -1943,9 +1810,6 @@ body.menu-open {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 
-  .gallery-container {
-    width: 75%;
-  }
 }
 
 @media (max-width: 768px) {
@@ -2096,10 +1960,6 @@ body.menu-open {
     height: 200px;
   }
 
-  .gallery-container {
-    width: 85%;
-    height: 400px;
-  }
 
   .info-grid {
     grid-template-columns: 1fr;
@@ -2300,15 +2160,7 @@ body.menu-open {
     font-size: 0.85rem;
   }
 
-  .gallery-container {
-    width: 95%;
-    height: 300px;
-  }
 
-  .gallery-control {
-    width: 35px;
-    height: 35px;
-  }
 
   .overlay-title {
     font-size: 1.4rem;
@@ -2458,14 +2310,7 @@ body.menu-open {
     font-size: 0.7rem;
   }
 
-  .gallery-container {
-    height: 250px;
-  }
 
-  .gallery-control {
-    width: 30px;
-    height: 30px;
-  }
 
   .pillar-header {
     padding: 12px;
@@ -2526,9 +2371,6 @@ body.menu-open {
     padding: 1rem 0.8rem;
   }
 
-  .gallery-container {
-    height: 200px;
-  }
 
   .member-image-container {
     width: 100px;

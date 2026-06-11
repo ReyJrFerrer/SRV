@@ -94,19 +94,6 @@
   transform: translateY(0);
 }
 
-/* (Optional) Ensure gallery indicators visible */
-.gallery-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #d1d5db;
-  cursor: pointer;
-  transition: background 0.25s;
-}
-.gallery-indicator.active {
-  background: #2563eb;
-}
-
 /* SERVICES (Services We Connect) */
 .services-preview-section .service-init {
   opacity: 0;
