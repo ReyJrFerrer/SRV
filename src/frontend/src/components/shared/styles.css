@@ -3397,8 +3397,8 @@ body.menu-open {
 
 /* AI-Powered Trust & Reputation Section */
 .ai-reputation-section {
-  padding-bottom: 5rem;
-  background-color: #ffffff;
+  padding: 5rem 0;
+  background-color: #1e293b;
 }
 
 .ai-reputation-header {
@@ -3409,13 +3409,13 @@ body.menu-open {
 .ai-reputation-title {
   font-size: 1.875rem;
   font-weight: bold;
-  color: #1e293b;
+  color: #ffffff;
   margin-bottom: 1rem;
   font-family: "rubik";
 }
 
 .ai-reputation-description {
-  color: #4b5563;
+  color: #cbd5e1;
   max-width: 48rem;
   margin: 0 auto;
   font-size: 1.125rem;
@@ -3504,7 +3504,7 @@ body.menu-open {
 
 .rep-circle-hint {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: #64748b;
   font-weight: 500;
   text-align: center;
 }
@@ -3659,7 +3659,7 @@ body.menu-open {
 .ai-rep-point-title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #ffffff;
   margin-bottom: 0.35rem;
   font-family: "rubik";
 }
@@ -3667,7 +3667,7 @@ body.menu-open {
 .ai-rep-point-description {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: #4b5563;
+  color: #cbd5e1;
 }
 
 /* Scroll animation for AI Reputation points */
