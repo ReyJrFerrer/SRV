@@ -617,20 +617,6 @@ export default function MainPage({
               </div>
             </div>
 
-            {/* Card 5: Massage Services (Square) */}
-            <div className="bento-card md:col-span-1 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col overflow-hidden relative group">
-              <div className="z-10 relative mb-6">
-                <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 border border-purple-100/50">
-                  <img src="/images/categories/beauty-wellness.svg" alt="Massage Services" className="w-8 h-8" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-3 font-rubik">Massage Services</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">Therapy & relaxation treatments</p>
-              </div>
-              <div className="flex-1 relative min-h-[180px] rounded-[1.5rem] overflow-hidden shadow-inner mt-auto">
-                <img src="services/massager.jpeg" alt="Massage Services" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              </div>
-            </div>
-
             {/* Card 6: Delivery & Errands (Wide) */}
             <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 overflow-hidden relative group">
               <div className="flex-1 flex flex-col justify-center z-10 relative">
@@ -642,6 +628,20 @@ export default function MainPage({
               </div>
               <div className="flex-1 relative min-h-[220px] md:min-h-full rounded-[1.5rem] overflow-hidden shadow-inner">
                 <img src="services/delivery-man.jpeg" alt="Delivery & Errands" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+            </div>
+
+            {/* Card 5: Massage Services (Square) */}
+            <div className="bento-card md:col-span-1 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col overflow-hidden relative group">
+              <div className="z-10 relative mb-6">
+                <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 border border-purple-100/50">
+                  <img src="/images/categories/beauty-wellness.svg" alt="Massage Services" className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-3 font-rubik">Massage Services</h3>
+                <p className="text-slate-500 text-lg leading-relaxed">Therapy & relaxation treatments</p>
+              </div>
+              <div className="flex-1 relative min-h-[180px] rounded-[1.5rem] overflow-hidden shadow-inner mt-auto">
+                <img src="services/massager.jpeg" alt="Massage Services" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
             </div>
 
