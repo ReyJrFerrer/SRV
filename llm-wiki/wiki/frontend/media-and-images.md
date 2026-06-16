@@ -23,15 +23,15 @@ System-defined types in `functions/src/media.js`:
 | `RemittancePaymentProof` | Payment receipts | 1MB |
 | `ReportAttachment` | Report evidence | 1MB |
 | `ProblemProof` | Issue documentation (video) | 30MB |
-| `ChatAttachment` | Chat media files | 1GB |
+| `ChatAttachment` | Images, videos, documents | 1GB |
 
-**`ChatAttachment`** IS registered (line 824 in `media.js`), with its own storage folder `chat-attachments/`, 1GB file size limit, and dedicated handlers for init/upload and delete. This was originally listed as missing but is fully implemented.
+`ChatAttachment` supports images, videos, and documents (PDF, DOC, DOCX, TXT, CSV). Directory: `chat-attachments/`. Actions: `initChatAttachment` (validate + return path), `deleteChatAttachment` (participant-verified delete).
 
 ## Storage Path Pattern
 
 ```
-/media/{userId}/{uuid}.{ext}          — general media
-/chat-attachments/{conversationId}/{uuid}.{ext}  — chat files
+/media/{userId}/{uuid}.{ext}                             — general media
+/chat-attachments/{conversationId}/{mediaId}_{sanitizedName} — chat files
 ```
 
 ## Upload Pipeline
@@ -40,17 +40,24 @@ System-defined types in `functions/src/media.js`:
 |---|---|---|---|
 | `uploadProfilePicture` | 400×400 Canvas | 450KB | JPEG, PNG, WebP |
 | `uploadServiceImage` | 1024×1024 + server thumb | 450KB | JPEG, PNG, WebP, GIF |
-| `uploadChatAttachments` | Image compression >500KB | 450KB (10MB video) | Images (jpeg/png/gif/webp/bmp/svg/heic), PDF, video (mp4/webm/quicktime) |
+| `uploadChatAttachments` | Image compression >500KB | 1GB | Images (jpeg/png/gif/webp/bmp/svg/heic), video (mp4/webm/quicktime), documents (pdf/doc/docx/txt/csv) |
 
-Client-side resizing via Canvas API before upload for profile and service images. Chat images >500KB are compressed via `intelligentScaleImageTo450KB`.
+Client-side resizing via Canvas API for profile and service images. Chat images >500KB compressed via `intelligentScaleImageTo450KB`. Videos and documents pass through without compression.
 
 ## Chat Attachment Upload Flow
 
-Two-step process in `mediaService.uploadChatAttachments()` (`mediaService.ts` line 1134):
+Two-step process in `mediaService.uploadChatAttachments()` (`mediaService.ts` line 1134), changed from base64 to direct Storage upload in commit `a8fba8fb`:
 
-1. **`initChatAttachment`** callable action → validates metadata, returns pre-approved Storage path and `mediaId`
-2. **`uploadBytesResumable`** to Firebase Storage at the pre-approved path (no base64)
-3. Returns `ChatAttachmentResult[]` with `{ fileName, fileSize, fileType, fileUrl, thumbnailUrl, mediaId }`
+1. **`initChatAttachment`** callable action → validates `{fileName, contentType, fileSize, conversationId}`, returns `{filePath, mediaId, fileName, fileType, thumbnailUrl}`
+2. **`uploadBytesResumable`** directly to Firebase Storage at pre-approved path (no base64, no Cloud Function body limit)
+3. **`getDownloadURL`** for public URL
+4. Returns `ChatAttachmentResult[]` with `{ fileName, fileSize, fileType, fileUrl, thumbnailUrl, mediaId }`
+
+### Key architectural change
+
+Before `a8fba8fb`: files were converted to base64 → sent through `mediaAction("uploadChatAttachment", {fileData: base64})` → Cloud Function saved to Storage → returned URL. This was limited by Cloud Function request body size (~10MB), effectively capping attachments at ~5MB.
+
+After `a8fba8fb`: Cloud Function only validates and returns a pre-approved path. Client uploads directly via `uploadBytesResumable` — no body size limit, supporting files up to 1GB.
 
 ## Retrieval & Caching (3 Layers)
 
