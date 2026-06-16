@@ -3402,25 +3402,12 @@ body.menu-open {
 }
 
 .ai-reputation-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 0.75rem;
-  margin-bottom: 0;
-}
-
-.ai-reputation-kicker {
-  margin: 0;
-  color: #f59e0b;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 3rem;
 }
 
 .ai-reputation-title {
-  font-size: clamp(2rem, 2.7vw, 3rem);
+  font-size: 1.875rem;
   font-weight: bold;
   color: #ffffff;
   margin-bottom: 1rem;
@@ -3431,169 +3418,26 @@ body.menu-open {
   color: #cbd5e1;
   max-width: 48rem;
   margin: 0 auto;
-}
-
-.ai-reputation-intro {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.ai-reputation-visual-card {
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 2rem;
-  padding: 1.25rem 1.25rem 1rem;
-  box-shadow:
-    0 24px 70px rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-}
-
-.ai-reputation-visual-shell {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 280px;
-  overflow: hidden;
-}
-
-.ai-reputation-visual-shell::before {
-  content: "";
-  position: absolute;
-  inset: 14% 20%;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.18), transparent 70%);
-  filter: blur(6px);
-}
-
-.ai-reputation-visual-orbit {
-  position: absolute;
-  width: min(100%, 20rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1px dashed rgba(148, 163, 184, 0.35);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
-}
-
-.ai-reputation-visual-shell > .rep-circle-wrapper {
-  position: relative;
-  z-index: 1;
-}
-
-.ai-reputation-visual-caption {
-  margin-top: 0.85rem;
-  padding: 0 0.25rem 0.1rem;
-}
-
-.ai-reputation-visual-label {
-  display: inline-flex;
-  margin-bottom: 0.4rem;
-  color: #0f172a;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.ai-reputation-visual-caption p {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.9rem;
-  line-height: 1.55;
-}
-
-.ai-reputation-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0;
-  padding-top: 2.5rem;
-}
-
-.ai-rep-point {
-  display: grid;
-  grid-template-columns: minmax(3.5rem, auto) auto minmax(0, 1fr);
-  gap: 0.85rem;
-  align-items: start;
-  padding: 1.1rem 0;
-}
-
-.ai-rep-point + .ai-rep-point {
-  border-top: 1px solid rgba(226, 232, 240, 0.9);
-}
-
-.ai-rep-point-index {
-  font-size: clamp(2.5rem, 4.5vw, 3.9rem);
-  line-height: 0.8;
-  font-weight: 800;
-  letter-spacing: -0.08em;
-  color: rgba(245, 158, 11, 0.2);
-  font-family: "rubik";
-  user-select: none;
-}
-
-.ai-rep-point-icon {
-  flex-shrink: 0;
-  width: 2.9rem;
-  height: 2.9rem;
-  border-radius: 0.9rem;
-  background: rgba(254, 243, 199, 0.95);
-  color: #f59e0b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(253, 224, 71, 0.45);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  transition: all 0.3s ease;
-}
-
-.ai-rep-point-icon svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.ai-rep-point:hover .ai-rep-point-icon {
-  background: #fef08a;
-  color: #ca8a04;
-  transform: translateY(-1px);
-}
-
-.ai-rep-point-text {
-  flex: 1;
-  padding-top: 0;
-}
-
-.ai-rep-point-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 0.45rem;
-  font-family: "rubik";
-}
-
-.ai-rep-point-description {
-  font-size: 0.92rem;
+  font-size: 1.125rem;
   line-height: 1.6;
-  color: #475569;
-  max-width: 34rem;
 }
 
-.ai-rep-point.ai-rep-point-large.ai-rep-init {
-  opacity: 0;
-  transform: translateY(16px);
+/* Split layout: visual left, content right */
+.ai-reputation-split {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-.ai-rep-point.ai-rep-point-large.ai-rep-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
+/* Left: Interactive Reputation Circle */
 .rep-circle-wrapper {
+  flex: 0 0 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .rep-circle-container {
@@ -3611,8 +3455,8 @@ body.menu-open {
 
 .rep-circle-ring {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 180px;
+  height: 180px;
 }
 
 .rep-circle-fill {
@@ -3629,8 +3473,8 @@ body.menu-open {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 108px;
-  height: 108px;
+  width: 122px;
+  height: 122px;
   border-radius: 50%;
   background: white;
   display: flex;
@@ -3642,7 +3486,7 @@ body.menu-open {
 }
 
 .rep-circle-score {
-  font-size: 2.15rem;
+  font-size: 2.5rem;
   font-weight: 800;
   font-family: "rubik";
   line-height: 1;
@@ -3650,7 +3494,7 @@ body.menu-open {
 }
 
 .rep-circle-label {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -3739,29 +3583,13 @@ body.menu-open {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 900;
   color: #f59e0b;
   font-family: "rubik";
   letter-spacing: 0.05em;
   opacity: 0;
   animation: msg-pop 3s ease-out forwards;
-}
-
-@media (min-width: 1024px) {
-  .ai-reputation-layout {
-    align-items: stretch;
-  }
-
-  .ai-reputation-intro,
-  .ai-reputation-content {
-    height: 100%;
-  }
-
-  .ai-reputation-content {
-    justify-content: space-between;
-    padding-top: 0;
-  }
 }
 
 @keyframes msg-pop {
@@ -3785,30 +3613,13 @@ body.menu-open {
   }
 }
 
-/* Scroll animation for AI Reputation points */
-.ai-rep-point.ai-rep-init {
-  opacity: 0;
-  transform: translateX(20px);
-  transition:
-    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  transition-delay: var(--ai-rep-delay, 0ms);
+/* Right: Content Points */
+.ai-reputation-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
 }
-
-.ai-rep-point.ai-rep-in {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-@media (max-width: 900px) {
-  .ai-reputation-layout {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .ai-reputation-content {
-    padding-top: 0;
-  }
 
 .ai-rep-point {
   display: flex;
@@ -3885,41 +3696,16 @@ body.menu-open {
   }
 
   .rep-circle-ring {
-    width: 122px;
-    height: 122px;
+    width: 150px;
+    height: 150px;
   }
 
   .rep-circle-inner {
-    width: 84px;
-    height: 84px;
+    width: 102px;
+    height: 102px;
   }
 
   .rep-circle-score {
-    font-size: 1.55rem;
-  }
-
-  .rep-circle-hint {
-    font-size: 0.66rem;
-  }
-
-  .ai-reputation-visual-caption p {
-    font-size: 0.84rem;
-  }
-
-  .ai-reputation-description {
-    font-size: 0.92rem;
-  }
-
-  .ai-reputation-header {
-    gap: 0.6rem;
-  }
-
-  .ai-reputation-visual-label {
-    font-size: 0.78rem;
-  }
-
-  .ai-reputation-content {
-    flex-direction: column;
-    gap: 0;
+    font-size: 2rem;
   }
 }
