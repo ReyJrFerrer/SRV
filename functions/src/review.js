@@ -1033,6 +1033,163 @@ async function flagReview_review(request) {
 }
 
 /**
+ * Flag a review for admin review (provider-facing, creates a report in reports collection)
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
+async function flagReviewForAdmin_review(request) {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {reviewId, reason, reviewData} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  if (!reviewId || !reason?.trim()) {
+    throw new HttpsError("invalid-argument", "Review ID and reason are required");
+  }
+
+  try {
+    const userRef = db.collection("users").doc(authInfo.uid);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      throw new HttpsError("not-found", "User profile not found");
+    }
+    const userProfile = userSnap.data();
+
+    const reportId = `report_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    const report = {
+      id: reportId,
+      userId: authInfo.uid,
+      userName: userProfile?.name || "Unknown",
+      userPhone: userProfile?.phone || "Unknown",
+      reportType: "review_flag",
+      description: JSON.stringify({
+        title: "Review Flagged",
+        description: `Provider flagged a review for admin review. Reason: ${reason}`,
+        category: "service",
+        source: "review_flag",
+        reviewId,
+        flagReason: reason,
+        ...reviewData,
+      }),
+      attachments: [],
+      status: "open",
+      createdAt: new Date().toISOString(),
+    };
+
+    await db.collection("reports").doc(reportId).set(report);
+    return {success: true, data: report};
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+/**
+ * Get all review flag reports (admin only)
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
+async function getReviewFlagReports_review(request) {
+  const context = {auth: request.auth, rawRequest: request};
+  const authInfo = getAuthInfo(context, request.data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError("permission-denied", "Admin access required");
+  }
+
+  try {
+    const snap = await db
+      .collection("reports")
+      .where("reportType", "==", "review_flag")
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const reports = [];
+    snap.forEach((doc) => reports.push(doc.data()));
+    return {success: true, data: reports};
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+/**
+ * Get my review flag reports (authenticated user)
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
+async function getMyReviewFlagReports_review(request) {
+  const context = {auth: request.auth, rawRequest: request};
+  const authInfo = getAuthInfo(context, request.data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  try {
+    const snap = await db
+      .collection("reports")
+      .where("userId", "==", authInfo.uid)
+      .where("reportType", "==", "review_flag")
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const reports = [];
+    snap.forEach((doc) => reports.push(doc.data()));
+    return {success: true, data: reports};
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+/**
+ * Update review flag report status (admin only)
+ * @param {Object} request
+ * @return {Promise<Object>} Result object
+ */
+async function updateReviewFlagReportStatus_review(request) {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {reportId, status} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError("permission-denied", "Admin access required");
+  }
+
+  if (!reportId || !status) {
+    throw new HttpsError("invalid-argument", "Report ID and status are required");
+  }
+
+  try {
+    const ref = db.collection("reports").doc(reportId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new HttpsError("not-found", "Report not found");
+    }
+
+    await ref.update({status, updatedAt: new Date().toISOString()});
+    return {success: true, data: {id: reportId, status}};
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+}
+
+/**
  * Get reviews for a provider
  * @param {Object} request
  * @return {Promise<Object>} Result object
@@ -1488,6 +1645,14 @@ exports.reviewAction = onCall(
         return await getReviewStatistics_review(request);
       case "flagReview":
         return await flagReview_review(request);
+      case "flagReviewForAdmin":
+        return await flagReviewForAdmin_review(request);
+      case "getReviewFlagReports":
+        return await getReviewFlagReports_review(request);
+      case "getMyReviewFlagReports":
+        return await getMyReviewFlagReports_review(request);
+      case "updateReviewFlagReportStatus":
+        return await updateReviewFlagReportStatus_review(request);
       case "getProviderReviews":
         return await getProviderReviews_review(request);
       case "getServiceReviews":

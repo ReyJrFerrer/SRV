@@ -786,26 +786,44 @@ export default function MainPage({
       {/* AI-Powered Trust & Reputation */}
       <section className="ai-reputation-section">
         <div className="container">
-          <div className="ai-reputation-header">
-            <h2 className="ai-reputation-title">
-              AI-Powered Trust & Reputation
-            </h2>
-            <p className="ai-reputation-description">
-              Every booking builds trust. Our AI engine analyzes reviews,
-              detects suspicious patterns, and powers a reputation system you
-              can rely on.
-            </p>
-          </div>
+          <div className="ai-reputation-layout">
+            <div className="ai-reputation-intro">
+              <div className="ai-reputation-header">
+                <p className="ai-reputation-kicker">Trust engine</p>
+                <h2 className="ai-reputation-title">
+                  AI-Powered Trust & Reputation
+                </h2>
+                <p className="ai-reputation-description">
+                  Every booking builds trust. Our AI engine analyzes reviews,
+                  detects suspicious patterns, and powers a reputation system
+                  you can rely on.
+                </p>
+              </div>
 
-          <div className="ai-reputation-split">
-            <ReputationCircle
-              score={repScore}
-              onClick={handleRepClick}
-              celebrating={celebrating}
-            />
+              <div className="ai-reputation-visual-card">
+                <div className="ai-reputation-visual-shell">
+                  <div className="ai-reputation-visual-orbit"></div>
+                  <ReputationCircle
+                    score={repScore}
+                    onClick={handleRepClick}
+                    celebrating={celebrating}
+                  />
+                </div>
+                <div className="ai-reputation-visual-caption">
+                  <span className="ai-reputation-visual-label">
+                    Interactive trust score
+                  </span>
+                  <p>
+                    Click the circle to see how reputation grows as verified
+                    bookings and AI review checks build confidence.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <div className="ai-reputation-content">
-              <div className="ai-rep-point">
+              <div className="ai-rep-point ai-rep-point-large">
+                <div className="ai-rep-point-index">01</div>
                 <div className="ai-rep-point-icon">
                   <SparklesIcon />
                 </div>
@@ -819,7 +837,8 @@ export default function MainPage({
                 </div>
               </div>
 
-              <div className="ai-rep-point">
+              <div className="ai-rep-point ai-rep-point-large">
+                <div className="ai-rep-point-index">02</div>
                 <div className="ai-rep-point-icon">
                   <ChartBarIcon />
                 </div>
@@ -833,7 +852,8 @@ export default function MainPage({
                 </div>
               </div>
 
-              <div className="ai-rep-point">
+              <div className="ai-rep-point ai-rep-point-large">
+                <div className="ai-rep-point-index">03</div>
                 <div className="ai-rep-point-icon">
                   <ShieldCheckIcon />
                 </div>

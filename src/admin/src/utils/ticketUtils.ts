@@ -72,6 +72,9 @@ const buildTagsFromSource = (source: string, category: string): string[] => {
   if (source?.includes?.("consecutive_bad_reviews")) {
     tags.push("review-bomb");
   }
+  if (source === "review_flag") {
+    tags.push("review-flag");
+  }
 
   if (category === "cancellation") {
     tags.push("cancellation");
@@ -103,7 +106,7 @@ export const convertReportsToTickets = (
         submittedAt: report.createdAt,
         lastUpdated: report.createdAt,
         tags: tags,
-        comments: [],
+        comments: report.comments || [],
         attachments: report.attachments || [],
         aiAnalysis: parsedData.aiAnalysis
           ? {
@@ -134,7 +137,7 @@ export const convertReportsToTickets = (
         submittedAt: report.createdAt,
         lastUpdated: report.createdAt,
         tags: ["legacy", "user-report"],
-        comments: [],
+        comments: report.comments || [],
         attachments: report.attachments || [],
       };
     }

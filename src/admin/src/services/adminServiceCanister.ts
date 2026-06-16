@@ -23,6 +23,7 @@ export {
   getFeedbackStats,
   getAllFeedback,
   updateReportStatus,
+  addReportComment,
   sendTicketCommentNotificationToUser,
   updateAdminActor,
 } from "./index";

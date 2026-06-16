@@ -97,6 +97,7 @@ export {
   getFeedbackStats,
   getAllFeedback,
   updateReportStatus,
+  addReportComment,
 } from "./feedbackServices";
 
 // Export notification function
