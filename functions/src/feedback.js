@@ -1,5 +1,6 @@
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {getFirestore} = require("../firebase-admin");
+const {FieldValue} = require("firebase-admin/firestore");
 
 const db = getFirestore();
 
@@ -735,6 +736,55 @@ async function getRecentReportsService(request) {
     console.error("Error in getRecentReports:", error);
   }
 }
+/**
+ * Add a comment to a report (admin only)
+ * @param {Object} request The callable request
+ */
+async function addReportCommentService(request) {
+  const data = request.data;
+  const context = {auth: request.auth, rawRequest: request};
+  const payload = data.data || data;
+  const {reportId, comment} = payload;
+
+  const authInfo = getAuthInfo(context, data);
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
+    throw new HttpsError("permission-denied", "Admin access required");
+  }
+
+  if (!reportId || !comment || !comment.content?.trim()) {
+    throw new HttpsError("invalid-argument", "Report ID and comment content are required");
+  }
+
+  try {
+    const ref = db.collection("reports").doc(reportId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new HttpsError("not-found", "Report not found");
+    }
+
+    const commentWithTimestamp = {
+      id: comment.id || `COMMENT-${Date.now()}`,
+      author: comment.author || "Admin",
+      content: comment.content.trim(),
+      timestamp: comment.timestamp || new Date().toISOString(),
+      isInternal: !!comment.isInternal,
+    };
+
+    await ref.update({
+      comments: FieldValue.arrayUnion(commentWithTimestamp),
+      updatedAt: new Date().toISOString(),
+    });
+
+    return {success: true, data: commentWithTimestamp};
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    console.error("Error in addReportComment:", error);
+    throw new HttpsError("internal", error.message);
+  }
+}
+
 // ============================================================================
 // TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
 // ============================================================================
@@ -785,6 +835,8 @@ exports.feedbackAction = onCall(
         return await getReportByIdService(innerRequest);
       case "getRecentReports":
         return await getRecentReportsService(innerRequest);
+      case "addReportComment":
+        return await addReportCommentService(innerRequest);
       default:
         throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }

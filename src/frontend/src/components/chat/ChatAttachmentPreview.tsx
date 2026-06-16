@@ -58,7 +58,7 @@ export function ChatAttachmentPreview({
         : "grid grid-cols-2 gap-1";
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0">
       {images.length > 0 && (
         <div className={gridClass}>
           {images.map((att, idx) => {
@@ -128,21 +128,21 @@ export function ChatAttachmentPreview({
               href={att.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`inline-flex max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${
+              className={`flex items-center gap-3 rounded-2xl p-3 text-sm transition-colors ${
                 isMine
-                  ? "border-white/40 bg-white/95 text-gray-800 hover:bg-gray-100"
-                  : "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100"
+                  ? "bg-[#e4e6eb] text-gray-900 hover:bg-[#d8dadf]"
+                  : "bg-[#f0f0f0] text-gray-900 hover:bg-[#e4e6eb]"
               }`}
             >
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-50">
-                <DocumentIcon className="h-20 w-20 text-blue-600" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white">
+                <DocumentIcon className="h-5 w-5 text-gray-600" />
               </div>
-              <span className="min-w-0 max-w-[200px] truncate font-medium">
-                {att.fileName}
-              </span>
-              <span className={isMine ? "text-gray-400" : "text-gray-500"}>
-                {formatSize(att.fileSize)}
-              </span>
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate font-medium">{att.fileName}</span>
+                <span className="text-xs text-gray-500">
+                  {formatSize(att.fileSize)}
+                </span>
+              </div>
             </a>
           ))}
         </div>
@@ -193,9 +193,13 @@ export function ChatAttachmentPreview({
 
 function formatSize(bytes: number): string {
   if (!bytes || bytes <= 0) return "";
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+  const kb = 1024;
+  const mb = kb * 1024;
+  const gb = mb * 1024;
+  if (bytes < kb) return `${bytes} B`;
+  if (bytes < mb) return `${(bytes / kb).toFixed(1)} KB`;
+  if (bytes < gb) return `${(bytes / mb).toFixed(1)} MB`;
+  return `${(bytes / gb).toFixed(1)} GB`;
 }
 
 export function attachmentPreviewText(

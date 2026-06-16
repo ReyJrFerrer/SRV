@@ -32,11 +32,11 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 items-stretch md:grid-cols-2 lg:grid-cols-3">
         {[...Array(6)].map((_, i) => (
           <div
             key={i}
-            className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+            className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm h-full"
           >
             <div className="animate-pulse">
               <div className="mb-2 h-4 w-1/2 rounded bg-gray-200"></div>
@@ -104,12 +104,12 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
         <h2 className="text-xl font-semibold text-blue-900">System Overview</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 items-stretch md:grid-cols-2 lg:grid-cols-3">
         {statCards.map((card, index) => {
           const Icon = card.icon;
           const CardContent = (
             <div
-              className={`relative overflow-hidden rounded-xl border border-yellow-100 bg-white p-6 shadow-sm transition-all hover:shadow-md ${
+              className={`relative overflow-hidden rounded-xl border border-yellow-100 bg-white p-6 shadow-sm transition-all hover:shadow-md flex flex-col justify-between h-full ${
                 card.title === "Pending Validations" ||
                 card.title === "Pending Tickets" ||
                 card.title === "App Feedback"
@@ -140,27 +140,26 @@ export const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
               </div>
 
               {card.isAlert && (
-                <div className="mt-3 text-xs font-medium text-yellow-800">
+                <div className="mt-3 text-xs font-medium text-yellow-800 hidden sm:block">
                   Requires attention
                 </div>
               )}
             </div>
           );
-
           return card.title === "Pending Validations" ? (
-            <Link key={index} to="/validation-inbox">
+            <Link key={index} to="/validation-inbox" className="h-full">
               {CardContent}
             </Link>
           ) : card.title === "Pending Tickets" ? (
-            <Link key={index} to="/ticket-inbox">
+            <Link key={index} to="/ticket-inbox" className="h-full">
               {CardContent}
             </Link>
           ) : card.title === "App Feedback" ? (
-            <Link key={index} to="/feedback">
+            <Link key={index} to="/feedback" className="h-full">
               {CardContent}
             </Link>
           ) : (
-            <div key={index}>{CardContent}</div>
+            <div key={index} className="h-full">{CardContent}</div>
           );
         })}
       </div>

@@ -161,6 +161,7 @@ export const getReportsFromFeedbackCanister = async (): Promise<any[]> => {
       status: report.status || "open",
       createdAt: report.createdAt || new Date().toISOString(),
       attachments: report.attachments || [],
+      comments: report.comments || [],
     }));
   } catch (error) {
     console.error("Error fetching reports from Firebase", error);
@@ -274,6 +275,32 @@ export const updateReportStatus = async (
     }
   } catch (error) {
     console.error("Error updating report status", error);
+    return false;
+  }
+};
+
+// Add a comment to a report
+export const addReportComment = async (
+  reportId: string,
+  comment: {
+    id: string;
+    author: string;
+    content: string;
+    timestamp: string;
+    isInternal: boolean;
+  },
+): Promise<boolean> => {
+  try {
+    requireAuth();
+
+    const result = await callFirebaseFunction("feedbackAction", {
+      action: "addReportComment",
+      payload: { reportId, comment },
+    });
+
+    return !!result;
+  } catch (error) {
+    console.error("Error adding report comment", error);
     return false;
   }
 };

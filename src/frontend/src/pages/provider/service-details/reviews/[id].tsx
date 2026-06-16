@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeftIcon,
@@ -9,6 +9,9 @@ import { useServiceReviews } from "../../../../hooks/reviewManagement";
 import { useServiceManagement } from "../../../../hooks/serviceManagement";
 import { useProviderBookingManagement } from "../../../../hooks/useProviderBookingManagement";
 import { useUserImage } from "../../../../hooks/useMediaLoader";
+import { reviewCanisterService } from "../../../../services/reviewCanisterService";
+import FlagReviewDialog from "../../../../components/provider/service-details/FlagReviewDialog";
+import { toast, Toaster } from "sonner";
 
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({
   rating,
@@ -34,7 +37,16 @@ const ReviewItem: React.FC<{
   isServiceOwner: boolean;
   formatReviewDate: (date: string) => string;
   getRelativeTime: (date: string) => string;
-}> = ({ review, isServiceOwner, formatReviewDate, getRelativeTime }) => {
+  flaggedReviewIds: Set<string>;
+  onFlagReview: (review: any) => void;
+}> = ({
+  review,
+  isServiceOwner,
+  formatReviewDate,
+  getRelativeTime,
+  flaggedReviewIds,
+  onFlagReview,
+}) => {
   const { userImageUrl: clientImageUrl } = useUserImage(
     review.clientProfile?.profilePicture?.imageUrl,
   );
@@ -92,20 +104,18 @@ const ReviewItem: React.FC<{
       {isServiceOwner && (
         <div className="mt-2 flex items-center space-x-2 border-t border-blue-100 pt-2">
           <span className="text-xs text-gray-500">Provider actions:</span>
-          {review.status === "Visible" && (
-            <button className="text-xs text-yellow-600 hover:underline">
-              Hide Review
+          {flaggedReviewIds.has(review.id) ? (
+            <span className="text-xs font-medium text-green-600">
+              Flagged ✓
+            </span>
+          ) : (
+            <button
+              onClick={() => onFlagReview(review)}
+              className="text-xs text-red-600 hover:underline"
+            >
+              Flag Review
             </button>
           )}
-          {review.status === "Hidden" && (
-            <button className="text-xs text-green-600 hover:underline">
-              Show Review
-            </button>
-          )}
-          <span className="text-xs text-gray-300">•</span>
-          <button className="text-xs text-red-600 hover:underline">
-            Flag Review
-          </button>
         </div>
       )}
       {review.canEdit && (
@@ -172,11 +182,57 @@ const ServiceReviewsPage: React.FC = () => {
   >("newest");
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [showHiddenReviews, setShowHiddenReviews] = useState(false);
+  const [showFlagDialog, setShowFlagDialog] = useState(false);
+  const [flagSubmitting, setFlagSubmitting] = useState(false);
+  const [flaggedReviewIds, setFlaggedReviewIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [selectedReview, setSelectedReview] = useState<any>(null);
 
   const isServiceOwner = React.useMemo(() => {
     if (!service || !providerProfile) return false;
     return service.providerId === providerProfile.id;
   }, [service, providerProfile]);
+
+  const openFlagDialog = useCallback((review: any) => {
+    setSelectedReview(review);
+    setShowFlagDialog(true);
+  }, []);
+
+  const handleFlagReview = useCallback(
+    async (reason: string) => {
+      if (!selectedReview) return;
+      setFlagSubmitting(true);
+      try {
+        await reviewCanisterService.flagReviewForAdmin({
+          reviewId: selectedReview.id,
+          reason,
+          reviewData: {
+            rating: selectedReview.rating,
+            comment: selectedReview.comment || "",
+            clientName: selectedReview.clientName || "Anonymous",
+            serviceName: service?.name || "",
+            serviceId: serviceId || "",
+          },
+        });
+        setFlaggedReviewIds(
+          (prev) => new Set(prev).add(selectedReview.id),
+        );
+        setShowFlagDialog(false);
+        setSelectedReview(null);
+        toast.success("Review flagged. Admin will review it shortly.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Failed to flag review. Please try again.",
+        );
+      } finally {
+        setFlagSubmitting(false);
+      }
+    },
+    [selectedReview, service?.name, serviceId],
+  );
 
   const sortedAndFilteredReviews = React.useMemo(() => {
     let filtered = reviews;
@@ -216,10 +272,6 @@ const ServiceReviewsPage: React.FC = () => {
     (review) => review.status === "Visible",
   );
   const hiddenReviews = reviews.filter((review) => review.status === "Hidden");
-  const flaggedReviews = reviews.filter(
-    (review) => review.status === "Flagged",
-  );
-
   if (serviceLoading || reviewsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
@@ -320,10 +372,10 @@ const ServiceReviewsPage: React.FC = () => {
                     {hiddenReviews.length} Hidden
                   </span>
                 )}
-                {flaggedReviews.length > 0 && (
+                {flaggedReviewIds.size > 0 && (
                   <span className="flex items-center">
                     <span className="mr-1 text-red-500">🚩</span>
-                    {flaggedReviews.length} Flagged
+                    {flaggedReviewIds.size} Flagged
                   </span>
                 )}
               </div>
@@ -474,6 +526,8 @@ const ServiceReviewsPage: React.FC = () => {
                 isServiceOwner={isServiceOwner}
                 formatReviewDate={formatReviewDate}
                 getRelativeTime={getRelativeTime}
+                flaggedReviewIds={flaggedReviewIds}
+                onFlagReview={openFlagDialog}
               />
             ))}
           </div>
@@ -495,6 +549,19 @@ const ServiceReviewsPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      <FlagReviewDialog
+        open={showFlagDialog}
+        review={selectedReview}
+        isFlagging={flagSubmitting}
+        onCancel={() => {
+          setShowFlagDialog(false);
+          setSelectedReview(null);
+        }}
+        onConfirm={handleFlagReview}
+      />
+
+      <Toaster position="top-center" richColors />
     </div>
   );
 };

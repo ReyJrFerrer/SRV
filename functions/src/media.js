@@ -1042,7 +1042,8 @@ async function initChatAttachmentUploadHandler(request) {
     );
   }
 
-  if (!contentType || (!contentType.startsWith("image/") && !contentType.startsWith("video/") && !contentType.startsWith("application/") && !contentType.startsWith("text/"))) {
+  if (!contentType || (!contentType.startsWith("image/") && !contentType.startsWith("video/") &&
+  !contentType.startsWith("application/") && !contentType.startsWith("text/"))) {
     throw new HttpsError(
       "invalid-argument",
       "Only image, video, and document files are supported for chat attachments",

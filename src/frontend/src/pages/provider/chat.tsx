@@ -626,7 +626,7 @@ const ClientChatPage: React.FC = () => {
                                         }
                                         isMine={isMine}
                                       />
-                                      <p className="mt-1 text-right text-xs text-gray-400">
+                                      <p className="mt-0 text-right text-xs text-gray-400">
                                         {formatDateTime(message.createdAt)}
                                       </p>
                                     </div>
@@ -668,7 +668,7 @@ const ClientChatPage: React.FC = () => {
                                         isMine={true}
                                       />
                                       <p
-                                        className={`mt-1 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-gray-400" : message.status === "failed" ? "text-red-400" : "text-gray-400"}`}
+                                        className={`mt-0 text-right text-xs transition-colors duration-300 ${message.status === "sending" ? "text-gray-400" : message.status === "failed" ? "text-red-400" : "text-gray-400"}`}
                                       >
                                         {message.status === "sending"
                                           ? "Sending..."

@@ -1,0 +1,47 @@
+# SRV Wiki Index
+
+This is the page catalog for the LLM-compiled knowledge base. Every wiki page is listed here with a link and one-line summary.
+
+## Architecture
+
+- [[Reputation System Overview]] — Hybrid Firestore/blockchain reputation architecture (actual: Firestore JS)
+- [[Reputation System ICP]] — ICP canister trust engine (legacy design reference)
+- [[Reputation System Sui]] — Sui Move reputation module (standalone, not integrated)
+- [[Firebase Hybrid Architecture]] — 18 deployed Cloud Functions, Firestore, services overview
+
+## Backend
+
+- [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
+- [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
+- [[Send Contact Email]] — v1 callable contact form handler
+
+## Frontend
+
+- [[Frontend Overview]] — Stack, entry point chain, directory structure, conventions
+- [[Routing and Layouts]] — HashRouter route groups, client/provider layouts, auth guards
+- [[Authentication Flow]] — zkLogin (Google OAuth via Sui) + Firebase custom token bridge
+- [[Services Layer]] — All 20 service modules (Firebase, auth, booking, chat, media, wallet)
+- [[State and Hooks]] — Zustand stores, React contexts, 26 custom hooks
+- [[Chat System]] — Firestore-based chat architecture, data model, known media gaps
+- [[Media and Images]] — Upload pipeline, 3-layer caching, Firebase Storage, chat attachment gap
+- [[Version Cache Busting]] — Multi-layered cache clearing for Firebase deployments
+
+## Domain
+
+- [[Reputation Scoring Algorithm]] — Bayesian average, penalties, time decay, and review weighting (as implemented in `reputationMath.js`)
+
+## Decisions
+
+- [[Chat Media Implementation]] — Plan for media attachments, partially started in media.js
+
+## Operations
+
+- [[FCM Push Notifications]] — FCM configuration, testing, and troubleshooting
+- [[Firebase Functions Optimization]] — Gen 2 best practices with actual config comparison
+- [[PH Location Data]] — Philippine geographic data service (in-memory)
+- [[Functions Lint Report]] — Lint findings for functions/ directory architecture
+
+---
+
+_Last updated: 2026-06-16_
+_Pages: 20_

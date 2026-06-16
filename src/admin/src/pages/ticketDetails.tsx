@@ -173,6 +173,22 @@ export const TicketDetailsPage: React.FC = () => {
       isInternal,
     };
 
+    const reportId = ticket.id.replace(REPORT_PREFIX, "");
+
+    // Persist comment to Firestore
+    try {
+      const { addReportComment } =
+        await import("../services/adminServiceCanister");
+      const persisted = await addReportComment(reportId, comment);
+      if (!persisted) {
+        console.error("Failed to persist comment");
+        return;
+      }
+    } catch (error) {
+      console.error("Error persisting comment:", error);
+      return;
+    }
+
     setTicket((prev) =>
       prev
         ? {
@@ -183,21 +199,22 @@ export const TicketDetailsPage: React.FC = () => {
         : null,
     );
 
-    // Send notification to user about the new comment
-    try {
-      const { sendTicketCommentNotificationToUser } =
-        await import("../services/adminServiceCanister");
-      const reportId = ticket.id.replace(REPORT_PREFIX, "");
+    // Send notification to user only for public comments
+    if (!isInternal) {
+      try {
+        const { sendTicketCommentNotificationToUser } =
+          await import("../services/adminServiceCanister");
 
-      await sendTicketCommentNotificationToUser(
-        ticket.submittedById,
-        reportId,
-        ticket.title,
-        newComment.trim(),
-        isInternal,
-      );
-    } catch (error) {
-      console.error("Error sending comment notification:", error);
+        await sendTicketCommentNotificationToUser(
+          ticket.submittedById,
+          reportId,
+          ticket.title,
+          newComment.trim(),
+          isInternal,
+        );
+      } catch (error) {
+        console.error("Error sending comment notification:", error);
+      }
     }
 
     setNewComment("");
