@@ -121,7 +121,7 @@ export function ChatAttachmentPreview({
       )}
 
       {others.length > 0 && (
-        <div className="space-y-0">
+        <div className="space-y-1">
           {others.map((att, idx) => (
             <a
               key={`${att.fileUrl}-${idx}`}
