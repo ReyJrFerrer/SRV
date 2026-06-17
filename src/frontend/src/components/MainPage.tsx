@@ -59,91 +59,7 @@ export default function MainPage({
 
   // ===================== RESTORED / NEW EFFECTS =====================
 
-  // Services gallery autoplay + indicators
-  useEffect(() => {
-    const galleryContainer =
-      document.querySelector<HTMLElement>(".gallery-container");
-    if (!galleryContainer) return;
-    const slides = Array.from(
-      document.querySelectorAll<HTMLElement>(".gallery-image-wrapper"),
-    );
-    const prevBtn = document.querySelector<HTMLButtonElement>(".prev-btn");
-    const nextBtn = document.querySelector<HTMLButtonElement>(".next-btn");
-    const indicators = document.querySelector<HTMLElement>(
-      ".gallery-indicators",
-    );
-    let currentIndex = 0;
-    let autoplay: ReturnType<typeof setInterval> | null = null;
-
-    // Apply enhanced transition classes (single time)
-    slides.forEach((s) => {
-      s.style.transition =
-        "opacity 1s cubic-bezier(.4,0,.2,1), transform 1.2s cubic-bezier(.25,.8,.25,1)";
-      s.style.willChange = "opacity, transform";
-    });
-
-    slides.forEach((_, index) => {
-      const indicator = document.createElement("div");
-      indicator.classList.add("gallery-indicator");
-      if (index === 0) indicator.classList.add("active");
-      indicator.addEventListener("click", () => {
-        currentIndex = index;
-        updateGallery();
-      });
-      indicators?.appendChild(indicator);
-    });
-
-    function updateGallery() {
-      slides.forEach((s) => s.classList.remove("active"));
-      slides[currentIndex].classList.add("active");
-      document
-        .querySelectorAll(".gallery-indicator")
-        .forEach((ind, i) =>
-          ind.classList.toggle("active", i === currentIndex),
-        );
-    }
-
-    function goTo(delta: number) {
-      currentIndex = (currentIndex + delta + slides.length) % slides.length;
-      updateGallery();
-      restartAutoplay();
-    }
-    const handleNext = () => goTo(1);
-    const handlePrev = () => goTo(-1);
-
-    slides.forEach((slide) => {
-      slide.addEventListener("click", handleNext);
-    });
-    nextBtn?.addEventListener("click", handleNext);
-    prevBtn?.addEventListener("click", handlePrev);
-
-    function startAutoplay() {
-      autoplay = setInterval(handleNext, 3000);
-    }
-    function stopAutoplay() {
-      if (autoplay) clearInterval(autoplay);
-    }
-    function restartAutoplay() {
-      stopAutoplay();
-      startAutoplay();
-    }
-    startAutoplay();
-
-    const pause = () => stopAutoplay();
-    const resume = () => startAutoplay();
-    galleryContainer.addEventListener("mouseenter", pause);
-    galleryContainer.addEventListener("mouseleave", resume);
-
-    return () => {
-      stopAutoplay();
-      nextBtn?.removeEventListener("click", handleNext);
-      prevBtn?.removeEventListener("click", handlePrev);
-      galleryContainer.removeEventListener("mouseenter", pause);
-      galleryContainer.removeEventListener("mouseleave", resume);
-      slides.forEach((slide) => slide.removeEventListener("click", handleNext));
-      if (indicators) indicators.innerHTML = "";
-    };
-  }, []);
+  // Services gallery logic removed in favor of Bento Grid
 
   // Hero stagger animation
   useEffect(() => {
@@ -265,7 +181,7 @@ export default function MainPage({
     };
   }, []);
 
-  // Services We Connect (gallery wrappers & title) animation
+  // Services We Connect (bento cards & title) animation
   useEffect(() => {
     const section = document.querySelector<HTMLElement>(
       ".services-preview-section",
@@ -273,7 +189,7 @@ export default function MainPage({
     if (!section) return;
     const title = section.querySelector<HTMLElement>(".services-title");
     const items = Array.from(
-      section.querySelectorAll<HTMLElement>(".gallery-image-wrapper"),
+      section.querySelectorAll<HTMLElement>(".bento-card"),
     );
     if (title) title.classList.add("service-title-init");
     items.forEach((it, i) => {
@@ -644,140 +560,103 @@ export default function MainPage({
             <h2 className="services-title">Services We Connect</h2>
           </div>
 
-          <div className="services-gallery">
-            <div className="gallery-container">
-              <div className="gallery-image-wrapper active" data-index="0">
-                <img
-                  src="services/electrician.jpeg"
-                  alt="Home Repairs"
-                  className="gallery-image"
-                />
-                <img
-                  src="/images/categories/home-services.svg"
-                  alt="Home Repairs category icon"
-                  className="category-icon"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Home Repairs</h3>
-                  <p className="overlay-description">
-                    Electricians, plumbers, carpenters
-                  </p>
+          <div className="services-bento-grid grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 pb-8">
+            {/* Card 1: Home Repairs (Wide) */}
+            <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 overflow-hidden relative group">
+              <div className="flex-1 flex flex-col justify-center z-10 relative">
+                <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mb-6 border border-red-100/50">
+                  <img src="/images/categories/home-services.svg" alt="Home Repairs" className="w-8 h-8" />
                 </div>
+                <h3 className="text-3xl font-bold text-slate-800 mb-3 font-rubik">Home Repairs</h3>
+                <p className="text-slate-500 text-lg leading-relaxed">Electricians, plumbers, carpenters</p>
               </div>
-              <div className="gallery-image-wrapper" data-index="1">
-                <img
-                  src="services/mechanic.jpeg"
-                  alt="Automobile Repairs"
-                  className="gallery-image"
-                />
-                <img
-                  src="/images/categories/automobile-repairs.svg"
-                  alt="Automobile Repairs category icon"
-                  className="category-icon"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Automobile Repairs</h3>
-                  <p className="overlay-description">
-                    Mechanics, car detailing
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="2">
-                <img
-                  src="services/technician.jpeg"
-                  alt="Gadget & Appliance Tech"
-                  className="gallery-image"
-                />
-                <img
-                  src="/images/categories/gadget-technicians.svg"
-                  alt="Gadget & Appliance Tech category icon"
-                  className="category-icon"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Gadget & Appliance Tech</h3>
-                  <p className="overlay-description">
-                    Phone repair, appliance fixing
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="3">
-                <img
-                  src="services/hair-stylist.jpeg"
-                  alt="Beauty Services"
-                  className="gallery-image"
-                />
-                <img
-                  src="/images/categories/beauty-services.svg"
-                  alt="Beauty Services category icon"
-                  className="category-icon"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Beauty Services</h3>
-                  <p className="overlay-description">
-                    Hair styling, manicures, facials
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="4">
-                <img
-                  src="services/massager.jpeg"
-                  alt="Massage Services"
-                  className="gallery-image"
-                />
-                <img
-                  src="/images/categories/beauty-wellness.svg"
-                  alt="Massage Services category icon"
-                  className="category-icon"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Massage Services</h3>
-                  <p className="overlay-description">
-                    Massage therapy, relaxation treatments
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="5">
-                <img
-                  src="services/delivery-man.jpeg"
-                  alt="Delivery & Errands"
-                  className="gallery-image"
-                />
-                <img
-                  src="/images/categories/delivery-errands.svg"
-                  alt="Delivery & Errands category icon"
-                  className="category-icon"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Delivery & Errands</h3>
-                  <p className="overlay-description">
-                    Shopping, document delivery
-                  </p>
-                </div>
-              </div>
-              <div className="gallery-image-wrapper" data-index="6">
-                <img
-                  src="services/tutor.jpeg"
-                  alt="Tutoring"
-                  className="gallery-image"
-                />
-                <img
-                  src="/images/categories/tutoring.svg"
-                  alt="Tutoring category icon"
-                  className="category-icon"
-                />
-                <div className="image-overlay">
-                  <h3 className="overlay-title">Tutoring</h3>
-                  <p className="overlay-description">
-                    Academic support, skill training
-                  </p>
-                </div>
+              <div className="flex-1 relative min-h-[220px] md:min-h-full rounded-[1.5rem] overflow-hidden shadow-inner">
+                <img src="services/electrician.jpeg" alt="Home Repairs" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
             </div>
 
-            <div className="gallery-controls">
-              <button className="gallery-control prev-btn">◀</button>
-              <div className="gallery-indicators"></div>
-              <button className="gallery-control next-btn">▶</button>
+            {/* Card 2: Automobile Repairs (Square) */}
+            <div className="bento-card md:col-span-1 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col overflow-hidden relative group">
+              <div className="z-10 relative mb-6">
+                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 border border-blue-100/50">
+                  <img src="/images/categories/automobile-repairs.svg" alt="Automobile Repairs" className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-3 font-rubik">Automobile Repairs</h3>
+                <p className="text-slate-500 text-lg leading-relaxed">Mechanics, car detailing</p>
+              </div>
+              <div className="flex-1 relative min-h-[180px] rounded-[1.5rem] overflow-hidden shadow-inner mt-auto">
+                <img src="services/mechanic.jpeg" alt="Automobile Repairs" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+            </div>
+
+            {/* Card 3: Gadget & Appliance Tech (Square) */}
+            <div className="bento-card md:col-span-1 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col overflow-hidden relative group">
+              <div className="z-10 relative mb-6">
+                <div className="w-14 h-14 bg-gray-50 border border-gray-100/50 rounded-2xl flex items-center justify-center mb-6">
+                  <img src="/images/categories/gadget-technicians.svg" alt="Gadget & Appliance Tech" className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-3 font-rubik">Gadget Tech</h3>
+                <p className="text-slate-500 text-lg leading-relaxed">Phone repair, appliance fixing</p>
+              </div>
+              <div className="flex-1 relative min-h-[180px] rounded-[1.5rem] overflow-hidden shadow-inner mt-auto">
+                <img src="services/technician.jpeg" alt="Gadget & Appliance Tech" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+            </div>
+
+            {/* Card 4: Beauty Services (Wide) */}
+            <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 overflow-hidden relative group">
+              <div className="flex-1 flex flex-col justify-center z-10 relative order-2 md:order-1">
+                <div className="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mb-6 border border-pink-100/50">
+                  <img src="/images/categories/beauty-services.svg" alt="Beauty Services" className="w-8 h-8" />
+                </div>
+                <h3 className="text-3xl font-bold text-slate-800 mb-3 font-rubik">Beauty Services</h3>
+                <p className="text-slate-500 text-lg leading-relaxed">Hair styling, manicures, facials</p>
+              </div>
+              <div className="flex-1 relative min-h-[220px] md:min-h-full rounded-[1.5rem] overflow-hidden shadow-inner order-1 md:order-2">
+                <img src="services/hair-stylist.jpeg" alt="Beauty Services" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+            </div>
+
+            {/* Card 6: Delivery & Errands (Wide) */}
+            <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 overflow-hidden relative group">
+              <div className="flex-1 flex flex-col justify-center z-10 relative">
+                <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mb-6 border border-green-100/50">
+                  <img src="/images/categories/delivery-errands.svg" alt="Delivery & Errands" className="w-8 h-8" />
+                </div>
+                <h3 className="text-3xl font-bold text-slate-800 mb-3 font-rubik">Delivery & Errands</h3>
+                <p className="text-slate-500 text-lg leading-relaxed">Shopping, document delivery</p>
+              </div>
+              <div className="flex-1 relative min-h-[220px] md:min-h-full rounded-[1.5rem] overflow-hidden shadow-inner">
+                <img src="services/delivery-man.jpeg" alt="Delivery & Errands" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+            </div>
+
+            {/* Card 5: Massage Services (Square) */}
+            <div className="bento-card md:col-span-1 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col overflow-hidden relative group">
+              <div className="z-10 relative mb-6">
+                <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 border border-purple-100/50">
+                  <img src="/images/categories/beauty-wellness.svg" alt="Massage Services" className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-3 font-rubik">Massage Services</h3>
+                <p className="text-slate-500 text-lg leading-relaxed">Therapy & relaxation treatments</p>
+              </div>
+              <div className="flex-1 relative min-h-[180px] rounded-[1.5rem] overflow-hidden shadow-inner mt-auto">
+                <img src="services/massager.jpeg" alt="Massage Services" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+            </div>
+
+            {/* Card 7: Tutoring (Full span bottom) */}
+            <div className="bento-card md:col-span-3 bg-white rounded-[2rem] p-8 md:p-10 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 overflow-hidden relative group">
+              <div className="flex-1 flex flex-col justify-center z-10 relative md:max-w-md">
+                <div className="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center mb-6 border border-yellow-100/50">
+                  <img src="/images/categories/tutoring.svg" alt="Tutoring" className="w-8 h-8" />
+                </div>
+                <h3 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4 font-rubik">Tutoring</h3>
+                <p className="text-slate-500 text-lg leading-relaxed">Academic support, skill training, and personal development</p>
+              </div>
+              <div className="flex-[2] relative min-h-[260px] md:min-h-[320px] rounded-[1.5rem] overflow-hidden shadow-inner mt-4 md:mt-0">
+                <img src="services/tutor.jpeg" alt="Tutoring" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 object-[center_30%]" />
+              </div>
             </div>
           </div>
         </div>
@@ -786,44 +665,26 @@ export default function MainPage({
       {/* AI-Powered Trust & Reputation */}
       <section className="ai-reputation-section">
         <div className="container">
-          <div className="ai-reputation-layout">
-            <div className="ai-reputation-intro">
-              <div className="ai-reputation-header">
-                <p className="ai-reputation-kicker">Trust engine</p>
-                <h2 className="ai-reputation-title">
-                  AI-Powered Trust & Reputation
-                </h2>
-                <p className="ai-reputation-description">
-                  Every booking builds trust. Our AI engine analyzes reviews,
-                  detects suspicious patterns, and powers a reputation system
-                  you can rely on.
-                </p>
-              </div>
+          <div className="ai-reputation-header">
+            <h2 className="ai-reputation-title">
+              AI-Powered Trust & Reputation
+            </h2>
+            <p className="ai-reputation-description">
+              Every booking builds trust. Our AI engine analyzes reviews,
+              detects suspicious patterns, and powers a reputation system you
+              can rely on.
+            </p>
+          </div>
 
-              <div className="ai-reputation-visual-card">
-                <div className="ai-reputation-visual-shell">
-                  <div className="ai-reputation-visual-orbit"></div>
-                  <ReputationCircle
-                    score={repScore}
-                    onClick={handleRepClick}
-                    celebrating={celebrating}
-                  />
-                </div>
-                <div className="ai-reputation-visual-caption">
-                  <span className="ai-reputation-visual-label">
-                    Interactive trust score
-                  </span>
-                  <p>
-                    Click the circle to see how reputation grows as verified
-                    bookings and AI review checks build confidence.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="ai-reputation-split">
+            <ReputationCircle
+              score={repScore}
+              onClick={handleRepClick}
+              celebrating={celebrating}
+            />
 
             <div className="ai-reputation-content">
-              <div className="ai-rep-point ai-rep-point-large">
-                <div className="ai-rep-point-index">01</div>
+              <div className="ai-rep-point">
                 <div className="ai-rep-point-icon">
                   <SparklesIcon />
                 </div>
@@ -837,8 +698,7 @@ export default function MainPage({
                 </div>
               </div>
 
-              <div className="ai-rep-point ai-rep-point-large">
-                <div className="ai-rep-point-index">02</div>
+              <div className="ai-rep-point">
                 <div className="ai-rep-point-icon">
                   <ChartBarIcon />
                 </div>
@@ -852,8 +712,7 @@ export default function MainPage({
                 </div>
               </div>
 
-              <div className="ai-rep-point ai-rep-point-large">
-                <div className="ai-rep-point-index">03</div>
+              <div className="ai-rep-point">
                 <div className="ai-rep-point-icon">
                   <ShieldCheckIcon />
                 </div>
