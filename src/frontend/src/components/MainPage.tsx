@@ -563,8 +563,8 @@ export default function MainPage({
           <div className="services-bento-grid mt-10 grid grid-cols-1 gap-6 pb-8 md:grid-cols-3">
             {/* Card 1: Home Repairs (Wide) */}
             <div className="bento-card group relative flex flex-col gap-6 overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-2 md:flex-row">
-              <div className="relative z-10 flex flex-1 flex-col justify-center">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-red-100/50 bg-red-50">
+              <div className="relative z-10 flex flex-1 flex-col justify-center max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-red-100/50 bg-red-50 max-md:hidden md:flex">
                   <img
                     src="/images/categories/home-services.svg"
                     alt="Home Repairs"
@@ -578,7 +578,7 @@ export default function MainPage({
                   Electricians, plumbers, carpenters
                 </p>
               </div>
-              <div className="relative min-h-[220px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner md:min-h-full">
+              <div className="relative min-h-[220px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 md:min-h-full">
                 <img
                   src="services/electrician.jpeg"
                   alt="Home Repairs"
@@ -589,8 +589,8 @@ export default function MainPage({
 
             {/* Card 2: Automobile Repairs (Square) */}
             <div className="bento-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-1">
-              <div className="relative z-10 mb-6">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100/50 bg-blue-50">
+              <div className="relative z-10 mb-6 max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-blue-100/50 bg-blue-50 max-md:hidden md:flex">
                   <img
                     src="/images/categories/automobile-repairs.svg"
                     alt="Automobile Repairs"
@@ -604,7 +604,7 @@ export default function MainPage({
                   Mechanics, car detailing
                 </p>
               </div>
-              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner">
+              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 max-md:mb-6 max-md:mt-0">
                 <img
                   src="services/mechanic.jpeg"
                   alt="Automobile Repairs"
@@ -615,8 +615,8 @@ export default function MainPage({
 
             {/* Card 3: Gadget & Appliance Tech (Square) */}
             <div className="bento-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-1">
-              <div className="relative z-10 mb-6">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-100/50 bg-gray-50">
+              <div className="relative z-10 mb-6 max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-gray-100/50 bg-gray-50 max-md:hidden md:flex">
                   <img
                     src="/images/categories/gadget-technicians.svg"
                     alt="Gadget & Appliance Tech"
@@ -630,7 +630,7 @@ export default function MainPage({
                   Phone repair, appliance fixing
                 </p>
               </div>
-              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner">
+              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 max-md:mb-6 max-md:mt-0">
                 <img
                   src="services/technician.jpeg"
                   alt="Gadget & Appliance Tech"
@@ -642,7 +642,7 @@ export default function MainPage({
             {/* Card 4: Beauty Services (Wide) */}
             <div className="bento-card group relative flex flex-col gap-6 overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-2 md:flex-row">
               <div className="relative z-10 order-2 flex flex-1 flex-col justify-center md:order-1">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-pink-100/50 bg-pink-50">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-pink-100/50 bg-pink-50 max-md:hidden md:flex">
                   <img
                     src="/images/categories/beauty-services.svg"
                     alt="Beauty Services"
@@ -667,8 +667,8 @@ export default function MainPage({
 
             {/* Card 6: Delivery & Errands (Wide) */}
             <div className="bento-card group relative flex flex-col gap-6 overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-2 md:flex-row">
-              <div className="relative z-10 flex flex-1 flex-col justify-center">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-green-100/50 bg-green-50">
+              <div className="relative z-10 flex flex-1 flex-col justify-center max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-green-100/50 bg-green-50 max-md:hidden md:flex">
                   <img
                     src="/images/categories/delivery-errands.svg"
                     alt="Delivery & Errands"
@@ -682,7 +682,7 @@ export default function MainPage({
                   Shopping, document delivery
                 </p>
               </div>
-              <div className="relative min-h-[220px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner md:min-h-full">
+              <div className="relative min-h-[220px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 md:min-h-full">
                 <img
                   src="services/delivery-man.jpeg"
                   alt="Delivery & Errands"
@@ -693,8 +693,8 @@ export default function MainPage({
 
             {/* Card 5: Massage Services (Square) */}
             <div className="bento-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-1">
-              <div className="relative z-10 mb-6">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-purple-100/50 bg-purple-50">
+              <div className="relative z-10 mb-6 max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-purple-100/50 bg-purple-50 max-md:hidden md:flex">
                   <img
                     src="/images/categories/beauty-wellness.svg"
                     alt="Massage Services"
@@ -708,7 +708,7 @@ export default function MainPage({
                   Therapy & relaxation treatments
                 </p>
               </div>
-              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner">
+              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 max-md:mb-6 max-md:mt-0">
                 <img
                   src="services/massager.jpeg"
                   alt="Massage Services"
@@ -719,8 +719,8 @@ export default function MainPage({
 
             {/* Card 7: Tutoring (Square) */}
             <div className="bento-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-1">
-              <div className="relative z-10 mb-6">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-100/50 bg-yellow-50">
+              <div className="relative z-10 mb-6 max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-yellow-100/50 bg-yellow-50 max-md:hidden md:flex">
                   <img
                     src="/images/categories/tutoring.svg"
                     alt="Tutoring"
@@ -734,7 +734,7 @@ export default function MainPage({
                   Academic support, skill training, and personal development
                 </p>
               </div>
-              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner">
+              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 max-md:mb-6 max-md:mt-0">
                 <img
                   src="services/tutor.jpeg"
                   alt="Tutoring"
@@ -746,7 +746,7 @@ export default function MainPage({
             {/* Card 8: Online Services (Wide) */}
             <div className="bento-card group relative flex flex-col gap-6 overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-2 md:flex-row">
               <div className="relative z-10 order-2 flex flex-1 flex-col justify-center md:order-1">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-indigo-100/50 bg-indigo-50">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-indigo-100/50 bg-indigo-50 max-md:hidden md:flex">
                   <img
                     src="/images/categories/others.svg"
                     alt="Online Services"
