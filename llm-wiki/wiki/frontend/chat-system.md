@@ -101,12 +101,11 @@ Text-only input, no file picker. Conversation previews only show `content.encryp
 
 ## Remaining Gaps
 
-1. **GlobalChatDock.tsx** — No attachment support (text-only input, no file picker, no attachment rendering).
-2. **No thumbnail generation** — `thumbnailUrl` is always `null` in `initChatAttachmentUploadHandler`. 200px image thumbnails from the plan were never implemented.
-3. **No upload progress tracking** — `uploadChatAttachments()` calls `uploadBytesResumable` but passes `null` for the progress callback.
-4. **No attachment cleanup on message delete** — Deleted messages' files remain in Firebase Storage indefinitely.
-5. **Mobile app (Phase 7)** — Not implemented for React Native chat.
-6. **Storage security rules** — `chat-attachments/` path rules in `firebase.storage.rules` not verified.
+1. **No thumbnail generation** — `thumbnailUrl` is always `null` in `initChatAttachmentUploadHandler`. 200px image thumbnails from the plan were never implemented.
+2. **No upload progress tracking** — `uploadChatAttachments()` calls `uploadBytesResumable` but passes `null` for the progress callback.
+3. **No attachment cleanup on message delete** — Deleted messages' files remain in Firebase Storage indefinitely.
+4. **Mobile app (Phase 7)** — Not implemented for React Native chat.
+5. **Storage security rules** — `chat-attachments/` path rules in `firebase.storage.rules` not verified.
 
 ## Notifications Integration
 

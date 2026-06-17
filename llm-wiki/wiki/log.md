@@ -77,3 +77,15 @@ Ingested git commits from `d54a0d74` (Initial Chat Overhaul) through `1106eb19` 
 - [[Media and Images]] — Updated `uploadChatAttachments` pipeline: `initChatAttachment` action (not `uploadChatAttachment`), direct `uploadBytesResumable` to Storage (no base64), document types in file type table, 1GB max for all chat files, path pattern with `mediaId_sanitizedName`, `validateFileSize` now allows unlimited for video content. Added architectural change note explaining why base64 was replaced.
 
 Updated index.md (20 pages, 6 categories).
+
+## [2026-06-17] ingest | Service creation to booking workflow
+
+Ingested full end-to-end workflow: provider service creation → client discovery → booking → state machine → completion.
+
+**New pages (4):**
+- [[Service Creation Workflow]] — 5-step wizard, data flow, Firestore document structure, post-creation lifecycle
+- [[Booking System]] — Creation flow, full state machine with all 7 statuses and valid transitions, payment lifecycle, scheduled functions, provider/client actions
+- [[Service and Booking Models]] — All domain types: Service, ServicePackage, Booking, Location, Availability, Schedule, enriched UI types, collection structure, entity relationships
+- [[Service Discovery and Listing]] — All listing routes, home page, search (client-side), categories, service detail page with Book Now gating, data layer hooks, location & distance
+
+Updated index.md (24 pages, 6 categories).

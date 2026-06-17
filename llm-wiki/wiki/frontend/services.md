@@ -5,6 +5,9 @@ related:
   - [[Frontend Overview]]
   - [[Chat System]]
   - [[Media and Images]]
+  - [[Service Discovery and Listing]]
+  - [[Booking System]]
+  - [[Service Creation Workflow]]
 ---
 
 # Services Layer

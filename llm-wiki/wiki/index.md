@@ -11,6 +11,8 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 ## Backend
 
+- [[Service Creation Workflow]] — Provider service creation, 5-step wizard → Cloud Function → Firestore
+- [[Booking System]] — Client booking creation, state machine, payment lifecycle, all status transitions
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
 - [[Send Contact Email]] — v1 callable contact form handler
@@ -21,6 +23,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Routing and Layouts]] — HashRouter route groups, client/provider layouts, auth guards
 - [[Authentication Flow]] — zkLogin (Google OAuth via Sui) + Firebase custom token bridge
 - [[Services Layer]] — All 20 service modules (Firebase, auth, booking, chat, media, wallet)
+- [[Service Discovery and Listing]] — How clients find, search, browse, and view services
 - [[State and Hooks]] — Zustand stores, React contexts, 26 custom hooks
 - [[Chat System]] — Firestore-based chat architecture, data model, known media gaps
 - [[Media and Images]] — Upload pipeline, 3-layer caching, Firebase Storage, chat attachment gap
@@ -28,6 +31,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 ## Domain
 
+- [[Service and Booking Models]] — Core entities: Service, ServicePackage, Booking, Location, Availability, enriched UI types
 - [[Reputation Scoring Algorithm]] — Bayesian average, penalties, time decay, and review weighting (as implemented in `reputationMath.js`)
 
 ## Decisions
@@ -43,5 +47,5 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 ---
 
-_Last updated: 2026-06-16_
-_Pages: 20_
+_Last updated: 2026-06-17_
+_Pages: 24_

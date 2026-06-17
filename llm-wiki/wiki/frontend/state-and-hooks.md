@@ -5,6 +5,9 @@ related:
   - [[Frontend Overview]]
   - [[Chat System]]
   - [[Media and Images]]
+  - [[Service Creation Workflow]]
+  - [[Booking System]]
+  - [[Service Discovery and Listing]]
 ---
 
 # State and Hooks

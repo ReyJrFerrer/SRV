@@ -1,0 +1,214 @@
+---
+tags: [backend, booking, state-machine, workflow]
+date: 2026-06-17
+related:
+  - [[Service Creation Workflow]]
+  - [[Service and Booking Models]]
+  - [[Service Discovery and Listing]]
+  - [[Firebase Architecture]]
+sources:
+  - functions/src/booking.js
+  - src/frontend/src/services/bookingCanisterService.ts
+  - src/frontend/src/hooks/bookRequest.tsx
+  - src/frontend/src/hooks/bookingManagement.tsx
+  - src/frontend/src/pages/client/book/[id].tsx
+  - src/frontend/src/pages/client/booking/
+---
+
+# Booking System
+
+The complete lifecycle of a booking, from client service discovery through booking creation, status transitions, payment, and completion.
+
+## Booking Creation Flow
+
+### Step 1: Service Discovery
+
+Client discovers services through:
+- **Home page** (`/client/home`) — category grid + service rows (real-time Firestore subscription)
+- **Search** (`/client/search-results?q=...`) — client-side text/price/rating filtering
+- **Category page** (`/client/categories/:slug`) — filtered by category
+- **View all** (`/client/service/view-all`) — full listing
+
+### Step 2: Service Detail → Book Now
+
+`/client/service/:id` (`src/frontend/src/pages/client/service/[id].tsx`):
+- Shows: service info, provider info, packages, availability schedule, reviews
+- **"Book Now" button** navigates to `/client/book/:serviceId`
+- Gated by reputation: both client and provider must have `trustScore >= 5`
+- Disabled if: no packages, own service, inactive service, low reputation
+
+### Step 3: Booking Form (`/client/book/:id`)
+
+Six sections rendered by dedicated components in `src/frontend/src/components/client/book/`:
+
+| Section | Component | Fields |
+|---------|-----------|--------|
+| Package Selection | `PackagesSection.tsx` | Checkbox selection of ≥1 package |
+| Schedule | `ScheduleSection.tsx` | Same-day vs scheduled toggle, date picker, time slot picker |
+| Location | `ServiceLocationSection.tsx` | Google Maps pin or manual address entry |
+| Payment | `PaymentSection.tsx` | Cash (with "change for"), GCash (disabled placeholder), SRVWallet |
+| Problem Proof | `MediaAttachmentSection.tsx` | Photo/video uploads (for repair categories) |
+| Notes | `NotesSection.tsx` | Optional note (50 char limit) |
+
+Auto-saves draft to localStorage (`booking_draft_v1_<serviceId>`).
+
+### Step 4: Submit
+
+`handleConfirmBooking()` in `book/[id].tsx`:
+
+```
+  If GCash:
+    → createDirectPayment() → GCash invoice URL → redirect to /payment-pending
+      → polls checkInvoiceStatus() every 10s → on PAID/SETTLED → createBookingRequest()
+  If Cash/Direct:
+    → upload problem proof media → createBookingRequest()
+      → bookingCanisterService.createBooking()
+        → httpsCallable("bookingAction") { action: "createBooking" }
+```
+
+### Step 5: Cloud Function — `createBooking_booking`
+
+**File**: `functions/src/booking.js` (lines ~500-540)
+
+Validates:
+- Auth, reputation scores ≥ 5 (both parties)
+- Service exists, is active (`status === "Available"`), belongs to specified provider
+- Package IDs are valid, belong to this service
+- No time-slot conflicts (`checkBookingConflicts()`)
+- Schedule is in the future, matches provider's availability window
+
+Creates Firestore document:
+
+```javascript
+bookings/{bookingId}: {
+  id: string,
+  clientId: string,
+  providerId: string,
+  providerName: null,              // populated asynchronously
+  serviceId: string,
+  servicePackageIds: string[],
+  status: "Requested",             // initial state
+  requestedDate: string,           // ISO timestamp
+  scheduledDate: string,           // requested service date/time
+  startedDate: null,
+  completedDate: null,
+  price: number,                   // sum of selected package prices
+  amountPaid: number | null,
+  serviceTime: null,
+  location: Location,
+  evidence: null,
+  attachments: string[],           // problem proof media URLs
+  notes: string | null,
+  paymentMethod: "CashOnHand" | "GCash" | "SRVWallet",
+  locationDetection: "automatic" | "manual",
+  paymentStatus: "PENDING" | "PAID_HELD",  // PAID_HELD if GCash
+  paymentId: string | null,        // GCash payment reference
+  heldAmount: number | null,
+  releasedAmount: null,
+  paymentReleased: null,
+  releasedAt: null,
+  payoutId: null,
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+}
+```
+
+Creates in-app notification for provider (`NEW_BOOKING_REQUEST`).
+
+## Booking State Machine
+
+### Valid Statuses
+
+| Status | Description | Entered By |
+|--------|-------------|------------|
+| `Requested` | Initial state | Client (on create) |
+| `Accepted` | Provider accepted | Provider |
+| `Declined` | Provider declined | Provider |
+| `Cancelled` | Either party cancelled | Client or Provider |
+| `InProgress` | Provider started work | Provider |
+| `Completed` | Provider finished | Provider |
+| `Disputed` | Either party disputes | Client or Provider |
+
+### Valid Transitions
+
+```
+Requested → [Accepted, Declined, Cancelled]
+Accepted → [InProgress, Cancelled]
+InProgress → [Completed, Disputed, Cancelled]
+Completed → [Disputed]
+Declined → []            (terminal)
+Cancelled → []           (terminal)
+Disputed → []            (terminal)
+```
+
+Enforced in `functions/src/booking.js` (lines 75-86) — any transition not in this map is rejected.
+
+### Scheduled State Transitions
+
+| Cron | Function | Action |
+|------|----------|--------|
+| Daily midnight (`0 0 * * *`) | `cancelMissedBookings` | Cancels `Accepted` bookings past their scheduled time; cancels expired `Requested` bookings |
+| Every 10 min (`*/10 * * * *`) | `sendServiceReminders` | Sends push/notification reminders for bookings starting ~30 min |
+
+## Payment Status Lifecycle
+
+```
+PENDING → (GCash payment received) → PAID_HELD → (admin/auto release) → RELEASED
+```
+
+- **PENDING**: Cash on hand (no digital payment) or GCash pending
+- **PAID_HELD**: GCash payment confirmed, held in escrow
+- **RELEASED**: Funds released to provider (via `releasePayment` action — admin or automated)
+
+## Provider Booking Actions
+
+All via `bookingAction` Cloud Function:
+
+| Action | Endpoint | What It Does |
+|--------|----------|--------------|
+| `acceptBooking` | `bookingAction` | Validates transition Requested→Accepted, creates notification for client |
+| `declineBooking` | `bookingAction` | Validates transition Requested→Declined |
+| `cancelBooking` | `bookingAction` | Either party: transitions to Cancelled from Requested/Accepted/InProgress |
+| `startService` | `bookingAction` | Transition Accepted→InProgress; starts GPS tracking publishing |
+| `completeService` | `bookingAction` | Transition InProgress→Completed; provider marks job done |
+| `releasePayment` | `bookingAction` | Admin action: releases held GCash funds to provider |
+| `getBookingAnalytics` | `bookingAction` | Provider booking statistics |
+
+## Client Booking Actions
+
+| Action | Endpoint | What It Does |
+|--------|----------|--------------|
+| `clientCancelBooking` | `bookingAction` | Client cancels (with rules per status) |
+| `disputeBooking` | `bookingAction` | Client disputes a completed booking |
+
+## Real-Time Subscriptions
+
+- **Client**: `useBookingManagement()` → `bookingCanisterService.subscribeToClientBookings()` → Firestore `onSnapshot` on `bookings` where `clientId == currentUser` (300ms debounce)
+- **Provider**: `useProviderBookingManagement()` → similar subscription filtered by `providerId`
+- Both streams enrich raw bookings with provider profile, service details, and package details
+
+## Post-Booking Pages
+
+| Route | Page | Purpose |
+|-------|------|---------|
+| `/client/booking/confirmation` | `BookingConfirmation` | "Request Sent!" summary |
+| `/client/booking/payment-pending` | `PaymentPending` | GCash payment polling (10s interval) |
+| `/client/booking` | `MyBookingsIndex` | List of all client bookings (grouped by status tabs) |
+| `/client/booking/:id` | `BookingDetailPage` | Single booking detail + progress tracker + action buttons |
+| `/client/booking/receipt/:id` | `BookingReceipt` | Completed booking receipt |
+| `/client/tracking/:bookingId` | `TrackingPage` | Real-time provider GPS tracking map |
+| `/provider/bookings` | `ProviderBookings` | Provider booking dashboard |
+| `/provider/booking/:id` | `ProviderBookingDetail` | Single provider booking detail |
+| `/provider/active-service/:bookingId` | `ProviderActiveService` | Active service management |
+| `/provider/complete-service/:bookingId` | `ProviderCompleteService` | Service completion flow |
+| `/provider/directions/:bookingId` | `ProviderDirections` | Navigation to client location |
+
+## Key Architecture Notes
+
+1. **Firestore-native** — all booking data lives in Firestore's `bookings` collection; no ICP canisters
+2. **Callable-only mutation** — all writes go through `bookingAction` Cloud Function (no direct Firestore client writes)
+3. **Real-time reads** — Firestore `onSnapshot` subscriptions for booking lists and detail pages
+4. **Payment is separate** — GCash flow (directPay) is independent of booking creation; only `createBookingRequest` ties them together
+5. **Draft auto-save** — booking form saves/restores drafts from localStorage
+6. **Reputation gate** — both client and provider must have trustScore ≥ 5 to create a booking
+7. **No service-level booking limits** — `maxBookingsPerDay` on service exists but not enforced in booking creation v1
