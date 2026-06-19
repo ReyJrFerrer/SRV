@@ -509,10 +509,10 @@ const ServiceReviewsPage: React.FC = () => {
         {/* Bulk Actions Bar */}
         {selectedReviews.size > 0 && (
           <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-            <div className="text-sm font-medium text-blue-900">
+            <span className="text-sm font-medium text-blue-900">
               {selectedReviews.size} review
               {selectedReviews.size === 1 ? "" : "s"} selected
-            </div>
+            </span>
             <div className="flex gap-2">
               <button
                 onClick={() => handleBulkAction("restore")}
@@ -542,10 +542,8 @@ const ServiceReviewsPage: React.FC = () => {
               <span className="text-sm font-medium text-gray-700">Select:</span>
               <button
                 onClick={() =>
-                  setSelectedReviews((prev) =>
-                    sortedAndFilteredReviews.every((r) => prev.has(r.id))
-                      ? new Set()
-                      : new Set(sortedAndFilteredReviews.map((r) => r.id)),
+                  setSelectedReviews(
+                    new Set(sortedAndFilteredReviews.map((r) => r.id)),
                   )
                 }
                 className="rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
@@ -554,19 +552,13 @@ const ServiceReviewsPage: React.FC = () => {
               </button>
               <button
                 onClick={() =>
-                  setSelectedReviews((prev) => {
-                    const ids = sortedAndFilteredReviews
-                      .filter((r) => r.status === "Visible")
-                      .map((r) => r.id);
-                    const allSelected = ids.every((id) => prev.has(id));
-                    const next = new Set(prev);
-                    if (allSelected) {
-                      ids.forEach((id) => next.delete(id));
-                    } else {
-                      ids.forEach((id) => next.add(id));
-                    }
-                    return next;
-                  })
+                  setSelectedReviews(
+                    new Set(
+                      sortedAndFilteredReviews
+                        .filter((r) => r.status === "Visible")
+                        .map((r) => r.id),
+                    ),
+                  )
                 }
                 className="rounded-md bg-green-600 px-3 py-1 text-sm font-medium text-white hover:bg-green-700"
               >
@@ -576,19 +568,13 @@ const ServiceReviewsPage: React.FC = () => {
               </button>
               <button
                 onClick={() =>
-                  setSelectedReviews((prev) => {
-                    const ids = sortedAndFilteredReviews
-                      .filter((r) => r.status === "Hidden")
-                      .map((r) => r.id);
-                    const allSelected = ids.every((id) => prev.has(id));
-                    const next = new Set(prev);
-                    if (allSelected) {
-                      ids.forEach((id) => next.delete(id));
-                    } else {
-                      ids.forEach((id) => next.add(id));
-                    }
-                    return next;
-                  })
+                  setSelectedReviews(
+                    new Set(
+                      sortedAndFilteredReviews
+                        .filter((r) => r.status === "Hidden")
+                        .map((r) => r.id),
+                    ),
+                  )
                 }
                 className="rounded-md bg-yellow-500 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-600"
               >
@@ -596,6 +582,15 @@ const ServiceReviewsPage: React.FC = () => {
                 {sortedAndFilteredReviews.filter((r) => r.status === "Hidden").length}
                 )
               </button>
+              {selectedReviews.size > 0 && (
+                <button
+                  onClick={() => setSelectedReviews(new Set())}
+                  className="ml-auto rounded-md bg-gray-500 px-3 py-1 text-sm font-medium text-white hover:bg-gray-600"
+                  title="Clear selection"
+                >
+                  Clear
+                </button>
+              )}
             </div>
 
             {sortedAndFilteredReviews.map((review) => {
