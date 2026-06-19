@@ -68,6 +68,12 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
     }
   }, [isOpen, userId]);
 
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
   const loadReviews = async () => {
     setLoading(true);
     setError(null);
