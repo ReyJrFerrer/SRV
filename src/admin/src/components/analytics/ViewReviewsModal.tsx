@@ -1,6 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { adminServiceCanister } from "../../services/adminServiceCanister";
-import { StarIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import {
+  StarIcon,
+  XMarkIcon,
+  TrashIcon,
+  ArrowPathIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/24/solid";
+import { DeleteConfirmModal } from "../DeleteConfirmModal";
 
 interface Review {
   id: string;
@@ -10,6 +17,8 @@ interface Review {
   providerId?: string;
   clientId?: string;
   bookingId?: string;
+  status?: string;
+  type?: string;
 }
 
 interface ViewReviewsModalProps {
@@ -49,6 +58,10 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
   const [activeTab, setActiveTab] = useState<"all" | "received" | "given">(
     "all",
   );
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -75,6 +88,39 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
       setError("Failed to load reviews.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    setDeletingReviewId(reviewId);
+    try {
+      await adminServiceCanister.deleteReview(reviewId);
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === reviewId ? { ...r, status: "Hidden" } : r,
+        ),
+      );
+      setShowDeleteConfirm(null);
+    } catch {
+      setError("Failed to delete review.");
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
+  const handleRestoreReview = async (reviewId: string) => {
+    setDeletingReviewId(reviewId);
+    try {
+      await adminServiceCanister.restoreReview(reviewId);
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === reviewId ? { ...r, status: "Visible" } : r,
+        ),
+      );
+    } catch {
+      setError("Failed to restore review.");
+    } finally {
+      setDeletingReviewId(null);
     }
   };
 
@@ -213,47 +259,87 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
                       new Date(b.createdAt).getTime() -
                       new Date(a.createdAt).getTime(),
                   )
-                  .map((rev) => (
-                    <div
-                      key={rev.id}
-                      className="rounded-xl bg-white p-5 shadow"
-                    >
-                      <div className="mb-1 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center">
-                            {[1, 2, 3, 4, 5].map((s) => (
-                              <StarIcon
-                                key={s}
-                                className={`h-4 w-4 ${
-                                  s <= rev.rating
-                                    ? "text-yellow-400"
-                                    : "text-gray-200"
-                                }`}
-                              />
-                            ))}
+                  .map((rev) => {
+                    const isHidden = rev.status === "Hidden";
+                    return (
+                      <div
+                        key={rev.id}
+                        className={`rounded-xl bg-white p-5 shadow ${
+                          isHidden
+                            ? "border-l-4 border-orange-400 bg-orange-50/30"
+                            : ""
+                        }`}
+                      >
+                        <div className="mb-1 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <StarIcon
+                                  key={s}
+                                  className={`h-4 w-4 ${
+                                    s <= rev.rating
+                                      ? "text-yellow-400"
+                                      : "text-gray-200"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {rev.type === "received" ? "Received" : "Given"}
+                            </span>
+                            {isHidden && (
+                              <span className="flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                                <EyeSlashIcon className="h-3 w-3" />
+                                Hidden
+                              </span>
+                            )}
                           </div>
-                          <span className="text-xs text-gray-500">
-                            {(rev as any).type === "received"
-                              ? "Received"
-                              : "Given"}
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <div className="text-xs text-gray-500">
+                              {new Date(rev.createdAt).toLocaleDateString()}
+                            </div>
+                            {isHidden ? (
+                              <button
+                                onClick={() => handleRestoreReview(rev.id)}
+                                disabled={deletingReviewId === rev.id}
+                                className="rounded-full p-1.5 text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
+                                title="Restore review"
+                              >
+                                <ArrowPathIcon className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setShowDeleteConfirm(rev.id)}
+                                disabled={deletingReviewId === rev.id}
+                                className="rounded-full p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                                title="Delete review"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(rev.createdAt).toLocaleDateString()}
-                        </div>
+                        {rev.comment && (
+                          <p className="mt-2 text-sm text-gray-700">
+                            {rev.comment}
+                          </p>
+                        )}
                       </div>
-                      {rev.comment && (
-                        <p className="mt-2 text-sm text-gray-700">
-                          {rev.comment}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </>
           )}
         </div>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={!!showDeleteConfirm}
+        reviewId={showDeleteConfirm}
+        isDeleting={deletingReviewId === showDeleteConfirm}
+        onConfirm={handleDeleteReview}
+        onCancel={() => setShowDeleteConfirm(null)}
+      />
     </div>
   );
 };

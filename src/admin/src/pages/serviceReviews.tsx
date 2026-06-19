@@ -4,19 +4,19 @@ import {
   ArrowLeftIcon,
   EyeSlashIcon,
   ChartBarIcon,
+  TrashIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { serviceCanister } from "../services/serviceCanister";
 import { getProfile } from "../services/identityBridge";
-import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { StarRatingDisplay } from "../components/StarRatingDisplay";
 import { ServiceReviewItem } from "../components/analytics/ServiceReviewItem";
 import {
   sortReviews,
   filterReviewsByRating,
   filterReviewsByVisibility,
-  handleDeleteReview,
-  handleRestoreReview,
 } from "../utils/reviewUtils";
 
 const formatReviewDate = (dateString: string): string => {
@@ -83,10 +83,11 @@ const ServiceReviewsPage: React.FC = () => {
   >("newest");
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [showHiddenReviews, setShowHiddenReviews] = useState(true);
-  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
-    null,
+  const [selectedReviews, setSelectedReviews] = useState<Set<string>>(
+    new Set(),
   );
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -105,68 +106,73 @@ const ServiceReviewsPage: React.FC = () => {
       .finally(() => setServiceLoading(false));
   }, [serviceId]);
 
-  useEffect(() => {
+  const loadReviews = async () => {
     if (!serviceId) return;
     setReviewsLoading(true);
-    adminServiceCanister
-      .getServiceReviews(serviceId, true)
-      .then((data) => {
-        setReviews(data);
-        setReviewsError(null);
+    try {
+      const data = await adminServiceCanister.getServiceReviews(
+        serviceId,
+        true,
+      );
+      setReviews(data);
+      setReviewsError(null);
 
-        // Fetch reviewer profiles for each unique clientId
-        const uniqueClientIds = [
-          ...new Set(
-            data
-              .map((r: any) => r.clientId)
-              .filter((id: any): id is string => !!id),
-          ),
-        ];
+      const uniqueClientIds = [
+        ...new Set(
+          data
+            .map((r: any) => r.clientId)
+            .filter((id: any): id is string => !!id),
+        ),
+      ];
 
-        if (uniqueClientIds.length > 0) {
-          Promise.all(
-            uniqueClientIds.map(async (clientId) => {
-              try {
-                const profile = await getProfile(clientId);
-                if (profile && profile.success && profile.profile) {
-                  return {
-                    clientId,
-                    name: profile.profile.name || "Unknown User",
-                    imageUrl:
-                      profile.profile.profilePicture?.imageUrl ||
-                      "/default-client.svg",
-                  };
-                }
+      if (uniqueClientIds.length > 0) {
+        const profiles = await Promise.all(
+          uniqueClientIds.map(async (clientId) => {
+            try {
+              const profile = await getProfile(clientId);
+              if (profile && profile.success && profile.profile) {
                 return {
                   clientId,
-                  name: "Unknown User",
-                  imageUrl: "/default-client.svg",
-                };
-              } catch {
-                return {
-                  clientId,
-                  name: "Unknown User",
-                  imageUrl: "/default-client.svg",
+                  name: profile.profile.name || "Unknown User",
+                  imageUrl:
+                    profile.profile.profilePicture?.imageUrl ||
+                    "/default-client.svg",
                 };
               }
-            }),
-          ).then((profiles) => {
-            const profilesMap = profiles.reduce(
-              (acc, { clientId, name, imageUrl }) => {
-                acc[clientId] = { name, imageUrl };
-                return acc;
-              },
-              {} as Record<string, { name: string; imageUrl: string }>,
-            );
-            setReviewerProfiles(profilesMap);
-          });
-        }
-      })
-      .catch((err) => {
-        console.error("Error loading reviews:", err);
-        setReviewsError("Failed to load reviews");
-      })
-      .finally(() => setReviewsLoading(false));
+              return {
+                clientId,
+                name: "Unknown User",
+                imageUrl: "/default-client.svg",
+              };
+            } catch {
+              return {
+                clientId,
+                name: "Unknown User",
+                imageUrl: "/default-client.svg",
+              };
+            }
+          }),
+        );
+        const profilesMap = profiles.reduce(
+          (acc, { clientId, name, imageUrl }) => {
+            acc[clientId] = { name, imageUrl };
+            return acc;
+          },
+          {} as Record<string, { name: string; imageUrl: string }>,
+        );
+        setReviewerProfiles(profilesMap);
+      }
+    } catch (err) {
+      console.error("Error loading reviews:", err);
+      setReviewsError("Failed to load reviews");
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!serviceId) return;
+    loadReviews();
   }, [serviceId]);
 
   useEffect(() => {
@@ -193,59 +199,70 @@ const ServiceReviewsPage: React.FC = () => {
     (review) => review.status === "Flagged",
   );
 
-  const onDeleteSuccess = async () => {
-    setShowDeleteConfirm(null);
-    if (serviceId) {
-      setReviewsLoading(true);
-      try {
-        const data = await adminServiceCanister.getServiceReviews(
-          serviceId,
-          true,
-        );
-        setReviews(data);
-      } catch (err) {
-        console.error("Error refreshing reviews:", err);
-      } finally {
-        setReviewsLoading(false);
-      }
+  const toggleSelectAll = () => {
+    if (selectedReviews.size === sortedAndFilteredReviews.length) {
+      setSelectedReviews(new Set());
+    } else {
+      setSelectedReviews(new Set(sortedAndFilteredReviews.map((r) => r.id)));
     }
   };
 
-  const onRestoreSuccess = async () => {
-    if (serviceId) {
-      setReviewsLoading(true);
-      try {
-        const data = await adminServiceCanister.getServiceReviews(
-          serviceId,
-          true,
-        );
-        setReviews(data);
-      } catch (err) {
-        console.error("Error refreshing reviews:", err);
-      } finally {
-        setReviewsLoading(false);
+  const toggleSelectReview = (reviewId: string) => {
+    setSelectedReviews((prev) => {
+      const next = new Set(prev);
+      if (next.has(reviewId)) {
+        next.delete(reviewId);
+      } else {
+        next.add(reviewId);
       }
+      return next;
+    });
+  };
+
+  const handleBulkAction = async (action: "delete" | "restore") => {
+    if (selectedReviews.size === 0) return;
+
+    setBulkActionLoading(true);
+    setError(null);
+    try {
+      const reviewIds = Array.from(selectedReviews);
+      const results = await Promise.allSettled(
+        reviewIds.map((reviewId) =>
+          action === "delete"
+            ? adminServiceCanister.deleteReview(reviewId)
+            : adminServiceCanister.restoreReview(reviewId),
+        ),
+      );
+
+      const errors: string[] = [];
+      results.forEach((result, index) => {
+        if (result.status === "rejected") {
+          console.error(
+            `Error ${action === "delete" ? "deleting" : "restoring"} review ${reviewIds[index]}:`,
+            result.reason,
+          );
+          errors.push(reviewIds[index]);
+        }
+      });
+
+      await loadReviews();
+      setSelectedReviews(new Set());
+      if (errors.length > 0) {
+        setError(
+          `Failed to ${action === "delete" ? "delete" : "restore"} ${errors.length} of ${reviewIds.length} review(s).`,
+        );
+      }
+    } catch (e) {
+      console.error(
+        `Error ${action === "delete" ? "deleting" : "restoring"} reviews:`,
+        e,
+      );
+      setError(
+        `Failed to ${action === "delete" ? "delete" : "restore"} reviews.`,
+      );
+    } finally {
+      setBulkActionLoading(false);
     }
-  };
-
-  const handleDelete = async (reviewId: string) => {
-    await handleDeleteReview(
-      reviewId,
-      (id) => adminServiceCanister.deleteReview(id),
-      onDeleteSuccess,
-      (err) => setError(err),
-      setDeletingReviewId,
-    );
-  };
-
-  const handleRestore = async (reviewId: string) => {
-    await handleRestoreReview(
-      reviewId,
-      (id) => adminServiceCanister.restoreReview(id),
-      onRestoreSuccess,
-      (err) => setError(err),
-      setDeletingReviewId,
-    );
   };
 
   if (serviceLoading || reviewsLoading) {
@@ -492,9 +509,53 @@ const ServiceReviewsPage: React.FC = () => {
           </div>
         )}
 
+        {/* Bulk Actions Bar */}
+        {selectedReviews.size > 0 && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+            <div className="text-sm font-medium text-blue-900">
+              {selectedReviews.size} review
+              {selectedReviews.size === 1 ? "" : "s"} selected
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleBulkAction("restore")}
+                disabled={bulkActionLoading}
+                className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+              >
+                <ArrowPathIcon className="h-4 w-4" />
+                Restore
+              </button>
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                disabled={bulkActionLoading}
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                <TrashIcon className="h-4 w-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Reviews List */}
         {sortedAndFilteredReviews.length > 0 ? (
           <div className="space-y-6">
+            {/* Select All Checkbox */}
+            <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
+              <input
+                type="checkbox"
+                checked={
+                  selectedReviews.size === sortedAndFilteredReviews.length &&
+                  sortedAndFilteredReviews.length > 0
+                }
+                onChange={toggleSelectAll}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Select All ({sortedAndFilteredReviews.length})
+              </span>
+            </div>
+
             {sortedAndFilteredReviews.map((review) => {
               const profile = reviewerProfiles[review.clientId];
               return (
@@ -506,10 +567,9 @@ const ServiceReviewsPage: React.FC = () => {
                   }}
                   formatReviewDate={formatReviewDate}
                   getRelativeTime={getRelativeTime}
-                  isDeleting={deletingReviewId === review.id}
-                  onRestore={handleRestore}
-                  onShowDeleteConfirm={setShowDeleteConfirm}
                   clientAvatarUrl={profile?.imageUrl}
+                  isSelected={selectedReviews.has(review.id)}
+                  onSelect={toggleSelectReview}
                 />
               );
             })}
@@ -533,12 +593,18 @@ const ServiceReviewsPage: React.FC = () => {
         )}
       </main>
 
-      <DeleteConfirmModal
-        isOpen={showDeleteConfirm !== null}
-        reviewId={showDeleteConfirm}
-        isDeleting={deletingReviewId !== null}
-        onConfirm={handleDelete}
-        onCancel={() => setShowDeleteConfirm(null)}
+      <ConfirmModal
+        isOpen={showBulkDeleteConfirm}
+        title="Delete Reviews"
+        message={`Are you sure you want to delete ${selectedReviews.size} review(s)?`}
+        confirmText="Delete"
+        confirmColor="bg-red-600 hover:bg-red-700"
+        isLoading={bulkActionLoading}
+        onConfirm={() => {
+          handleBulkAction("delete");
+          setShowBulkDeleteConfirm(false);
+        }}
+        onCancel={() => setShowBulkDeleteConfirm(false)}
       />
     </div>
   );
