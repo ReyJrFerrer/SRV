@@ -666,4 +666,128 @@ Current model: `Disputed` is terminal. Future: add admin mediation workflow with
 
 ---
 
+## 14. Notification Dispatch
+
+### 14.1 New Notification Types
+
+The following constants must be added to `NOTIFICATION_TYPES` in `functions/src/notification.js`:
+
+```javascript
+const NOTIFICATION_TYPES = {
+  // ... existing types ...
+
+  // Online Project notifications
+  NEW_ONLINE_PROJECT_REQUEST:    "new_online_project_request",
+  ONLINE_PROJECT_ACCEPTED:       "online_project_accepted",
+  ONLINE_PROJECT_DECLINED:       "online_project_declined",
+  ONLINE_PROJECT_COUNTER_OFFER:  "online_project_counter_offer",
+  ONLINE_PROJECT_CANCELLED:      "online_project_cancelled",
+  ONLINE_PROJECT_DISPUTED:       "online_project_disputed",
+  ONLINE_PROJECT_COMPLETED:      "online_project_completed",
+  DELIVERABLE_SUBMITTED:         "deliverable_submitted",
+  MILESTONE_APPROVED:            "milestone_approved",
+  REVISIONS_REQUESTED:           "revisions_requested",
+};
+```
+
+### 14.2 Local `createNotification()` Helper
+
+`onlineProject.js` follows the same pattern as `booking.js` — a local `createNotification()` function that writes directly to Firestore and calls push/email helpers from `notification.js`, avoiding an extra HTTP callable round-trip.
+
+**Signature** (same shape as booking.js):
+
+```javascript
+async function createNotification(
+  targetUserId,       // string — Firestore UID
+  userType,           // "client" | "provider" (from USER_TYPES)
+  notificationType,   // string — from NOTIFICATION_TYPES
+  title,              // string
+  message,            // string
+  onlineProjectId,    // string — related entity ID
+  metadata = null,    // object | null
+)
+```
+
+**Internal flow** (identical structure to `booking.js` at `booking.js:167-245`):
+
+1. Validate required params and enum values.
+2. Check spam prevention via `isSpamming()`.
+3. Generate `href` via `generateNotificationHref()` — will need a new mapping for online project paths.
+4. Write doc to Firestore `notifications/{autoId}`.
+5. Update `notificationFrequency` counter.
+6. Fire-and-forget `sendOneSignalNotification()` (push).
+7. If type is in email types set, fire-and-forget `sendEmailForNotification()`.
+
+### 14.3 Notification Dispatch Table
+
+Every lifecycle event in the `onlineProjectAction` callable dispatches a notification. The table below specifies each dispatch call.
+
+Create notifications **after** the state transition has been committed to Firestore, **before** returning the response. Errors in notification dispatch are logged but never thrown — they must not block the primary operation.
+
+| Action | Transition | Target | Notification Type | Title | Message Template | Metadata |
+|--------|-----------|--------|-------------------|-------|------------------|----------|
+| `createOnlineProject` | → `Pending` | Provider | `NEW_ONLINE_PROJECT_REQUEST` | "New Online Project Request" | `{clientName} requested {projectTitle} — {packageName}` | `{clientId, clientName, serviceId, serviceName, packageId, packageName, projectId}` |
+| `acceptProject` | → `Active` | Client | `ONLINE_PROJECT_ACCEPTED` | "Project Accepted" | `{providerName} accepted your project request for {projectTitle}` | `{providerId, providerName, serviceId, serviceName, projectId}` |
+| `declineProject` | → `Declined` | Client | `ONLINE_PROJECT_DECLINED` | "Project Declined" | `{providerName} declined your project request for {projectTitle}` | `{providerId, providerName, serviceId, serviceName, projectId}` |
+| `negotiateProject` | → `Negotiating` | Client | `ONLINE_PROJECT_COUNTER_OFFER` | "Counter Offer Received" | `{providerName} sent a counter offer for {projectTitle}` | `{providerId, providerName, serviceId, serviceName, projectId, offerId}` |
+| `acceptCounterOffer` | → `Active` | Provider | `ONLINE_PROJECT_ACCEPTED` | "Counter Offer Accepted" | `{clientName} accepted your counter offer for {projectTitle}` | `{clientId, clientName, serviceId, serviceName, projectId}` |
+| `submitDeliverable` | → `InReview` | Client | `DELIVERABLE_SUBMITTED` | "Deliverable Ready for Review" | `{providerName} submitted a deliverable for {projectTitle}` | `{providerId, providerName, deliverableId, milestoneIndex?, projectId}` |
+| `approveDeliverable` (all milestones done or simple mode) | → `Completed` | Provider | `ONLINE_PROJECT_COMPLETED` | "Project Completed" | `{clientName} approved your deliverable — {projectTitle} is complete` | `{clientId, clientName, projectId}` |
+| `approveDeliverable` (milestone mode, more milestones remain) | → `Active` | Provider | `MILESTONE_APPROVED` | "Milestone Approved" | `{clientName} approved milestone "{milestoneTitle}" for {projectTitle}` | `{clientId, clientName, milestoneTitle, milestoneIndex, projectId}` |
+| `requestRevisions` | → `RevisionsRequested` | Provider | `REVISIONS_REQUESTED` | "Revisions Requested" | `{clientName} requested revisions for {projectTitle} — {revisionNotes}` | `{clientId, clientName, deliverableId, projectId}` |
+| `cancelProject` (by client) | → `Cancelled` | Provider | `ONLINE_PROJECT_CANCELLED` | "Project Cancelled" | `{clientName} cancelled the project {projectTitle}` | `{clientId, clientName, projectId}` |
+| `cancelProject` (by provider) | → `Cancelled` | Client | `ONLINE_PROJECT_CANCELLED` | "Project Cancelled" | `{providerName} cancelled the project {projectTitle}` | `{providerId, providerName, projectId}` |
+| `disputeProject` | → `Disputed` | Both parties | `ONLINE_PROJECT_DISPUTED` | "Project Disputed" | `{projectTitle} has been marked as disputed. An admin will review the case.` | `{projectId, initiatedBy: "client" \| "provider"}` |
+
+### 14.4 Implementation Notes
+
+- **Local copy of `createNotification`**: `onlineProject.js` defines `createNotification` as a local function (same pattern as `booking.js:167-245`), importing constants and helper functions directly from `notification.js`. It does **not** call the `notificationAction` callable — that path is for client-side notification creation only.
+- **`generateNotificationHref` mapping**: The `generateNotificationHref()` function in `notification.js` must be extended to generate correct deep-link paths for online project notifications. Each notification type maps to a frontend route:
+  - `NEW_ONLINE_PROJECT_REQUEST` → `/provider/online-project/{projectId}`
+  - `ONLINE_PROJECT_ACCEPTED` → `/client/online-project/{projectId}`
+  - `ONLINE_PROJECT_DECLINED` → `/client/online-projects`
+  - `ONLINE_PROJECT_COUNTER_OFFER` → `/client/online-project/{projectId}`
+  - `DELIVERABLE_SUBMITTED` → `/client/online-project/{projectId}`
+  - `MILESTONE_APPROVED` → `/provider/online-project/{projectId}`
+  - `REVISIONS_REQUESTED` → `/provider/online-project/{projectId}`
+  - `ONLINE_PROJECT_COMPLETED` → `/client/online-project/{projectId}`
+  - `ONLINE_PROJECT_CANCELLED` → `/online-projects` (role-agnostic — client/provider list)
+  - `ONLINE_PROJECT_DISPUTED` → `/online-project/{projectId}` (dispute page, future)
+- **Email dispatch**: Initially, no online project notification types are added to `BOOKING_EMAIL_TYPES`. Email support can be introduced when volume warrants it. The notification is always delivered via in-app + push.
+- **Error tolerance**: All `createNotification()` calls are wrapped in try/catch, logged via `functions.logger.error`, and never propagated. A notification failure must not prevent the primary action from succeeding.
+
+---
+
+## 15. File Manifest (Updated)
+
+### New Files (12 — unchanged)
+
+```
+src/frontend/src/services/onlineProjectCanisterService.ts
+src/frontend/src/hooks/useOnlineProject.tsx
+src/frontend/src/hooks/useProviderOnlineProject.tsx
+src/frontend/src/pages/client/online-book/[id].tsx
+src/frontend/src/pages/client/online-projects.tsx
+src/frontend/src/pages/client/online-project/[id].tsx
+src/frontend/src/pages/provider/online-projects.tsx
+src/frontend/src/pages/provider/online-project/[id].tsx
+src/frontend/src/pages/provider/online-project/submit-deliverable/[id].tsx
+src/frontend/src/components/provider/add service/DeliverableConfigSection.tsx
+src/frontend/src/components/client/online-book/ProjectBriefSection.tsx
+functions/src/onlineProject.js
+```
+
+### Modified Files (6)
+
+```
+src/frontend/src/services/serviceCanisterService.ts     — Add serviceMode, onlineConfig, OnlineServiceConfig
+src/frontend/src/pages/provider/services/add.tsx        — Mode toggle, conditional steps
+src/frontend/src/pages/client/service/[id].tsx          — Conditional CTA
+src/frontend/main.tsx                                   — Add 6 routes
+functions/src/media.js                                  — Add ProjectBriefAttachment type (50MB)
+functions/src/notification.js                           — Add 10 online project NOTIFICATION_TYPES + href mappings
+```
+
+---
+
 *Last updated: 2026-06-19*
