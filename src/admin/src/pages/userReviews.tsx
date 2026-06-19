@@ -61,6 +61,12 @@ const UserReviewsPage: React.FC = () => {
     }
   }, [userId]);
 
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
   const loadReviews = async () => {
     if (!userId) return;
 
@@ -328,11 +334,6 @@ const UserReviewsPage: React.FC = () => {
     }
   };
 
-  // Toggle select all
-  const toggleSelectAll = () => {
-    setSelectedReviews(toggleSelectAllUtil(selectedReviews, displayReviews));
-  };
-
   // Toggle select single review
   const toggleSelectReview = (reviewId: string) => {
     setSelectedReviews(toggleSelectReviewUtil(selectedReviews, reviewId));
@@ -451,20 +452,57 @@ const UserReviewsPage: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Select All Checkbox */}
+              {/* Selection buttons */}
               <div className="mb-3 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedReviews.size === displayReviews.length &&
-                    displayReviews.length > 0
+                <span className="text-sm font-medium text-gray-700">Select:</span>
+                <button
+                  onClick={() =>
+                    setSelectedReviews((prev) =>
+                      displayReviews.every((r) => prev.has(r.id))
+                        ? new Set()
+                        : new Set(displayReviews.map((r) => r.id)),
+                    )
                   }
-                  onChange={toggleSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Select All ({displayReviews.length})
-                </span>
+                  className="rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  All ({displayReviews.length})
+                </button>
+                <button
+                  onClick={() =>
+                    setSelectedReviews((prev) => {
+                      const ids = visibleReviews.map((r) => r.id);
+                      const allSelected = ids.every((id) => prev.has(id));
+                      const next = new Set(prev);
+                      if (allSelected) {
+                        ids.forEach((id) => next.delete(id));
+                      } else {
+                        ids.forEach((id) => next.add(id));
+                      }
+                      return next;
+                    })
+                  }
+                  className="rounded-md bg-green-600 px-3 py-1 text-sm font-medium text-white hover:bg-green-700"
+                >
+                  Visible ({visibleReviews.length})
+                </button>
+                <button
+                  onClick={() =>
+                    setSelectedReviews((prev) => {
+                      const ids = hiddenReviews.map((r) => r.id);
+                      const allSelected = ids.every((id) => prev.has(id));
+                      const next = new Set(prev);
+                      if (allSelected) {
+                        ids.forEach((id) => next.delete(id));
+                      } else {
+                        ids.forEach((id) => next.add(id));
+                      }
+                      return next;
+                    })
+                  }
+                  className="rounded-md bg-yellow-500 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-600"
+                >
+                  Hidden ({hiddenReviews.length})
+                </button>
               </div>
 
               {/* Reviews List */}

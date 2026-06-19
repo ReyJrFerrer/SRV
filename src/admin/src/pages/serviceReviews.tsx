@@ -182,6 +182,12 @@ const ServiceReviewsPage: React.FC = () => {
     }
   }, [service]);
 
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
   const sortedAndFilteredReviews = useMemo(() => {
     let filtered = filterReviewsByVisibility(reviews, showHiddenReviews);
     filtered = filterReviewsByRating(filtered, filterRating);
@@ -197,14 +203,6 @@ const ServiceReviewsPage: React.FC = () => {
   const flaggedReviews = reviews.filter(
     (review) => review.status === "Flagged",
   );
-
-  const toggleSelectAll = () => {
-    if (selectedReviews.size === sortedAndFilteredReviews.length) {
-      setSelectedReviews(new Set());
-    } else {
-      setSelectedReviews(new Set(sortedAndFilteredReviews.map((r) => r.id)));
-    }
-  };
 
   const toggleSelectReview = (reviewId: string) => {
     setSelectedReviews((prev) => {
@@ -539,20 +537,65 @@ const ServiceReviewsPage: React.FC = () => {
         {/* Reviews List */}
         {sortedAndFilteredReviews.length > 0 ? (
           <div className="space-y-6">
-            {/* Select All Checkbox */}
-            <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
-              <input
-                type="checkbox"
-                checked={
-                  selectedReviews.size === sortedAndFilteredReviews.length &&
-                  sortedAndFilteredReviews.length > 0
+            {/* Selection buttons */}
+            <div className="mb-3 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
+              <span className="text-sm font-medium text-gray-700">Select:</span>
+              <button
+                onClick={() =>
+                  setSelectedReviews((prev) =>
+                    sortedAndFilteredReviews.every((r) => prev.has(r.id))
+                      ? new Set()
+                      : new Set(sortedAndFilteredReviews.map((r) => r.id)),
+                  )
                 }
-                onChange={toggleSelectAll}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-700">
-                Select All ({sortedAndFilteredReviews.length})
-              </span>
+                className="rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                All ({sortedAndFilteredReviews.length})
+              </button>
+              <button
+                onClick={() =>
+                  setSelectedReviews((prev) => {
+                    const ids = sortedAndFilteredReviews
+                      .filter((r) => r.status === "Visible")
+                      .map((r) => r.id);
+                    const allSelected = ids.every((id) => prev.has(id));
+                    const next = new Set(prev);
+                    if (allSelected) {
+                      ids.forEach((id) => next.delete(id));
+                    } else {
+                      ids.forEach((id) => next.add(id));
+                    }
+                    return next;
+                  })
+                }
+                className="rounded-md bg-green-600 px-3 py-1 text-sm font-medium text-white hover:bg-green-700"
+              >
+                Visible (
+                {sortedAndFilteredReviews.filter((r) => r.status === "Visible").length}
+                )
+              </button>
+              <button
+                onClick={() =>
+                  setSelectedReviews((prev) => {
+                    const ids = sortedAndFilteredReviews
+                      .filter((r) => r.status === "Hidden")
+                      .map((r) => r.id);
+                    const allSelected = ids.every((id) => prev.has(id));
+                    const next = new Set(prev);
+                    if (allSelected) {
+                      ids.forEach((id) => next.delete(id));
+                    } else {
+                      ids.forEach((id) => next.add(id));
+                    }
+                    return next;
+                  })
+                }
+                className="rounded-md bg-yellow-500 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-600"
+              >
+                Hidden (
+                {sortedAndFilteredReviews.filter((r) => r.status === "Hidden").length}
+                )
+              </button>
             </div>
 
             {sortedAndFilteredReviews.map((review) => {
