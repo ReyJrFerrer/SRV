@@ -4,7 +4,6 @@ import {
   ArrowLeftIcon,
   EyeSlashIcon,
   ChartBarIcon,
-  TrashIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import { adminServiceCanister } from "../services/adminServiceCanister";
@@ -249,16 +248,16 @@ const ServiceReviewsPage: React.FC = () => {
       setSelectedReviews(new Set());
       if (errors.length > 0) {
         setError(
-          `Failed to ${action === "delete" ? "delete" : "restore"} ${errors.length} of ${reviewIds.length} review(s).`,
+          `Failed to ${action === "delete" ? "hide" : "restore"} ${errors.length} of ${reviewIds.length} review(s).`,
         );
       }
     } catch (e) {
       console.error(
-        `Error ${action === "delete" ? "deleting" : "restoring"} reviews:`,
+        `Error ${action === "delete" ? "hiding" : "restoring"} reviews:`,
         e,
       );
       setError(
-        `Failed to ${action === "delete" ? "delete" : "restore"} reviews.`,
+        `Failed to ${action === "delete" ? "hide" : "restore"} reviews.`,
       );
     } finally {
       setBulkActionLoading(false);
@@ -530,8 +529,8 @@ const ServiceReviewsPage: React.FC = () => {
                 disabled={bulkActionLoading}
                 className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
-                <TrashIcon className="h-4 w-4" />
-                Delete
+                <EyeSlashIcon className="h-4 w-4" />
+                Hide
               </button>
             </div>
           </div>
@@ -595,9 +594,9 @@ const ServiceReviewsPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={showBulkDeleteConfirm}
-        title="Delete Reviews"
-        message={`Are you sure you want to delete ${selectedReviews.size} review(s)?`}
-        confirmText="Delete"
+        title="Hide Reviews"
+        message={`Are you sure you want to hide ${selectedReviews.size} review(s)?`}
+        confirmText="Hide"
         confirmColor="bg-red-600 hover:bg-red-700"
         isLoading={bulkActionLoading}
         onConfirm={() => {

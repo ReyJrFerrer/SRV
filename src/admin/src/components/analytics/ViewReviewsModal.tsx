@@ -3,7 +3,6 @@ import { adminServiceCanister } from "../../services/adminServiceCanister";
 import {
   StarIcon,
   XMarkIcon,
-  TrashIcon,
   ArrowPathIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/solid";
@@ -102,7 +101,7 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
       );
       setShowDeleteConfirm(null);
     } catch {
-      setError("Failed to delete review.");
+      setError("Failed to hide review.");
     } finally {
       setDeletingReviewId(null);
     }
@@ -312,9 +311,9 @@ export const ViewReviewsModal: React.FC<ViewReviewsModalProps> = ({
                                 onClick={() => setShowDeleteConfirm(rev.id)}
                                 disabled={deletingReviewId === rev.id}
                                 className="rounded-full p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
-                                title="Delete review"
+                                title="Hide review"
                               >
-                                <TrashIcon className="h-4 w-4" />
+                                <EyeSlashIcon className="h-4 w-4" />
                               </button>
                             )}
                           </div>
