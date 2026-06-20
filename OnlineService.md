@@ -53,6 +53,7 @@ interface Service {
 - **Default**: `"HomeService"` — backward compatible. All existing services remain unchanged.
 - **Immutable after creation**: The service mode cannot be toggled after the service is created. A provider must create a new service for the other mode.
 - **Validation**: On creation, the Cloud Function enforces that required fields for each mode are present.
+- **`updateService` enforcement**: The existing `updateService_service` handler in `functions/src/service.js` uses a whitelist-by-destructuring approach (only 9 named fields are read and written), so `serviceMode` is already implicitly protected. However, to make this explicit and prevent future regressions, `updateService` must actively reject any payload that includes `serviceMode` or `onlineConfig` with a `400 invalid-argument` error: "serviceMode and onlineConfig are immutable after creation. Create a new service for a different mode."
 
 ### 1.2 `OnlineServiceConfig`
 
@@ -130,17 +131,29 @@ interface OnlineProject {
     milestones?: MilestoneDefinition[];
   };
 
-  // Deliverable Submissions
-  deliverables: DeliverableSubmission[];
+  // Deliverable Submissions (stored in subcollection — see 2.5)
+  // deliverableCount caches the number of submissions on the parent doc
+  // for list-view display without fetching the subcollection.
+  deliverableCount: number;
 
   // Communication
   meetingUrl?: string;               // Placeholder — no provider integrated yet
+
+  // Dispute Resolution
+  disputeReason?: string;            // Reason provided by the party who initiated the dispute
+  disputeInitiatedBy?: string;       // "client" | "provider" — who filed the dispute
+  disputeInitiatedAt?: string;       // ISO 8601 — when the dispute was filed
+  resolutionNote?: string;           // Admin's explanation of the resolution decision
+  resolvedBy?: string;               // Firestore UID of the admin who resolved
+  resolvedAt?: string;               // ISO 8601 timestamp of resolution
 
   // Timestamps (ISO 8601 strings — same convention as Booking)
   createdAt: string;
   updatedAt: string;
   acceptedAt?: string;
   completedAt?: string;
+  lastNegotiationAt?: string;        // Updated on every negotiate/counter — used for staleness detection
+  autoCancelled?: boolean;           // Set to true when auto-cancelled by cron (Section 4.5)
 }
 ```
 
@@ -156,26 +169,42 @@ type OnlineProjectStatus =
   | "Completed"             // Client approved final deliverable
   | "Declined"              // Provider rejected request
   | "Cancelled"             // Either party cancels
-  | "Disputed";             // Either party disputes
+  | "Disputed"              // Either party disputes — awaiting admin resolution
+  | "ResolvedForClient"     // Admin resolved dispute in client's favor
+  | "ResolvedForProvider"   // Admin resolved dispute in provider's favor
+  | "Dismissed";            // Admin dismissed dispute (no merit)
 ```
 
 ### 2.4 Valid Transitions
 
 ```
-Pending → [Active, Negotiating, Declined]
+Pending → [Active, Negotiating, Declined, Cancelled (client only)]
 Negotiating → [Active, Declined, Cancelled]
 Active → [InReview, Cancelled]
-InReview → [Completed, RevisionsRequested]
-RevisionsRequested → [Active (resubmit), Cancelled]
+InReview → [Completed, RevisionsRequested, Active, Disputed]
+RevisionsRequested → [InReview (resubmit), Cancelled, Disputed]
 Completed → [Disputed]
+Disputed → [ResolvedForClient, ResolvedForProvider, Dismissed]   (admin only)
 Declined → []              (terminal)
 Cancelled → []             (terminal)
-Disputed → []              (terminal)
+ResolvedForClient → []     (terminal)
+ResolvedForProvider → []   (terminal)
+Dismissed → []             (terminal)
 ```
 
-Enforced server-side in the Cloud Function — any transition not in this map is rejected.
+Enforced server-side in the Cloud Function — any transition not in this map is rejected. The three `Disputed → *` transitions are gated to admin callers only (Section 4.3).
 
-### 2.5 Deliverable Submission
+**Semantic notes**:
+- **`Decline` vs `Cancel` from `Pending`**: `Decline` is provider-only (rejecting the project request — negative signal, notifies client). `Cancel` from `Pending` is client-only (withdrawing the request — neutral signal, notifies provider). The provider should never `Cancel` from `Pending`; they use `Decline` instead. The backend enforces this: `cancelProject` from `Pending` with a provider caller is rejected.
+- **`RevisionsRequested → InReview`**: This is the "resubmit" path. The provider calls `submitDeliverable` again; the handler accepts `RevisionsRequested` and transitions directly to `InReview`. See Section 2.5 for the deliverable payload specification.
+
+### 2.5 Deliverable Submission (Subcollection)
+
+Deliverables are stored in a **subcollection** under each project, matching the same pattern used for negotiation offers (Section 2.6). This avoids the 1MB Firestore document limit risk from accumulating files and revision history across multiple milestones.
+
+```
+Firestore: online_projects/{onlineProjectId}/deliverables/{deliverableId}
+```
 
 ```typescript
 interface DeliverableSubmission {
@@ -183,10 +212,10 @@ interface DeliverableSubmission {
   milestoneIndex?: number;       // Which milestone this fulfills (if milestone mode)
   files: DeliverableFile[];
   notes?: string;
-  submittedAt: string;                 // ISO 8601
+  submittedAt: string;           // ISO 8601
   status: "Submitted" | "Approved" | "RevisionsRequested";
   clientFeedback?: string;
-  revisionCount: number;         // Tracks revision iterations
+  revisionCount: number;         // Tracks total revision iterations for this milestone/scope
 }
 
 interface DeliverableFile {
@@ -196,6 +225,23 @@ interface DeliverableFile {
   fileType: string;
 }
 ```
+
+The parent `OnlineProject` document caches `deliverableCount` (updated atomically in the same transaction as the subcollection write) so list views can show submission counts without fetching the subcollection.
+
+Each call to `submitDeliverable` creates a **new** document — the subcollection is append-only, providing a complete version history. The `submitDeliverable` handler:
+1. Creates the deliverable doc in the subcollection
+2. Increments `deliverableCount` on the parent doc (inside a transaction)
+3. Transitions the project status to `InReview`
+
+**Resubmission (Revision) Flow**:
+
+When the client requests revisions (`requestRevisions`), the most recent deliverable's `status` is set to `"RevisionsRequested"` and the project status moves to `RevisionsRequested`. The provider then calls `submitDeliverable` again to resubmit:
+
+1. The handler accepts `RevisionsRequested` status (in addition to `Active`) — see Section 4.3.
+2. A **new** `DeliverableSubmission` is appended to the `deliverables` array. The previous submission remains in the array with `status: "RevisionsRequested"` as a permanent audit record.
+3. The new submission's `revisionCount` is calculated as `previousSubmission.revisionCount + 1` (for the same `milestoneIndex`, or overall if simple mode).
+4. The handler validates that the total `revisionCount` across all submissions for this milestone (or overall) does not exceed the configured `revisionRounds`.
+5. Status transitions directly to `InReview` (not through `Active`).
 
 ### 2.6 Negotiation Offers (Subcollection)
 
@@ -218,6 +264,13 @@ interface NegotiationOffer {
   message: string;
   createdAt: string;                // ISO 8601
   status: "Pending" | "Accepted" | "Rejected";
+
+  // Denormalized from parent project doc — written atomically in the
+  // same transaction that creates this offer. Eliminates the need for
+  // a get() on the parent document in Firestore security rules,
+  // reducing per-read cost and latency on every negotiation read.
+  clientId: string;
+  providerId: string;
 }
 ```
 
@@ -227,7 +280,7 @@ Both `negotiateProject` and `acceptCounterOffer` handlers use a Firestore **tran
 
 1. **Transaction start**: `db.runTransaction()` — reads the project document inside the transaction.
 2. **Validate status**: Confirms the project is in `Pending` or `Negotiating` (for negotiate) or `Negotiating` (for accept). If the status changed between the client's read and the transaction, the transaction retries.
-3. **Write offer doc**: `setDoc(doc(projectRef, "negotiations", offerId), offerData)` — creates a new offer document in the subcollection.
+3. **Write offer doc**: `setDoc(doc(projectRef, "negotiations", offerId), offerData)` — creates a new offer document in the subcollection. The offer document includes `clientId` and `providerId` copied from the project document read in step 1. This denormalization is atomic with the write and ensures Firestore security rules can gate reads on `resource.data.clientId`/`resource.data.providerId` without an extra `get()` on the parent document.
 4. **Update project**: `update(projectRef, { status: newStatus, ... })` — transitions the project state.
 5. **Commit**: Firestore auto-retries on contention. If the other party's concurrent negotiation commits first, the retry re-reads the project and the second transaction's status validation fails — the caller receives a "conflict" error.
 
@@ -259,6 +312,70 @@ const offersSnapshot = await getDocs(
 ```
 
 The frontend hook subscribes to the subcollection via `onSnapshot` for real-time updates on new offers. No caching of the offer array on the parent project document is needed — the subcollection is the single source of truth.
+
+### 2.7 Payment History (Subcollection)
+
+`recordPayment` updates `amountPaid` and `paymentStatus` on the parent project document. Without an audit trail, incorrect or fraudulent payment entries are irrecoverable — there is no way to trace what changed, when, or by whom.
+
+Every payment mutation writes an immutable record to a **subcollection** under the project. The parent document's `amountPaid` and `paymentStatus` remain the fast-read path for dashboards; the subcollection is the source of truth for reconciliation and dispute evidence.
+
+```
+Firestore: online_projects/{onlineProjectId}/payment_history/{recordId}
+```
+
+```typescript
+interface PaymentRecord {
+  id: string;
+  projectId: string;
+  recordedBy: string;              // Firestore UID of the provider or admin
+  recordedByRole: "provider" | "admin";
+  amountDelta: number;             // Signed: positive = payment received, negative = correction/refund
+  amountBefore: number;            // amountPaid on parent doc before this mutation
+  amountAfter: number;             // amountPaid on parent doc after this mutation
+  paymentStatusBefore: "Pending" | "Partial" | "Full";
+  paymentStatusAfter: "Pending" | "Partial" | "Full";
+  notes?: string;                  // Optional reason / context
+  createdAt: string;               // ISO 8601
+}
+```
+
+#### Write Atomicity
+
+`recordPayment` uses a Firestore **transaction** to atomically:
+
+1. Read the current project document (capture `amountPaid` and `paymentStatus` as `amountBefore`/`paymentStatusBefore`).
+2. Compute `amountAfter = amountBefore + amountDelta` and derive `paymentStatusAfter` (`"Full"` if `amountAfter >= agreedPrice`, `"Partial"` if `> 0`, `"Pending"` if `0`).
+3. Validate `amountAfter >= 0` (reject negative totals — corrections that would overcorrect must be re-entered).
+4. Write the `PaymentRecord` document to `payment_history/{autoId}`.
+5. Update the parent project document's `amountPaid`, `paymentStatus`, and `paymentNotes`.
+
+#### Reading Payment History
+
+```typescript
+const historySnapshot = await getDocs(
+  query(
+    collection(db, "online_projects", projectId, "payment_history"),
+    orderBy("createdAt", "asc"),
+  ),
+);
+```
+
+The provider project detail page renders a payment timeline from this subcollection. The client sees the same history (read-only) for transparency.
+
+#### Firestore Rules
+
+The `payment_history` subcollection inherits the same participant-read, backend-only-write pattern as `negotiations`. `clientId` and `providerId` are denormalized onto each `PaymentRecord` document for the same zero-`get()` rule evaluation:
+
+```firestore
+match /payment_history/{recordId} {
+  allow read: if request.auth.uid == resource.data.clientId
+              || request.auth.uid == resource.data.providerId
+              || request.auth.token.isAdmin == true;
+  allow create: if false;   // Only via Cloud Function (Admin SDK, inside transaction)
+  allow update: if false;   // Immutable after creation
+  allow delete: if false;   // Audit records are never deleted
+}
+```
 
 ---
 
@@ -343,6 +460,9 @@ exports.onlineProjectAction = onCall(async (request) => {
     case "requestRevisions":        return requestRevisions_handler(request, data);
     case "cancelProject":           return cancelProject_handler(request, data);
     case "disputeProject":          return disputeProject_handler(request, data);
+    case "resolveDisputeForClient": return resolveDisputeForClient_handler(request, data);
+    case "resolveDisputeForProvider": return resolveDisputeForProvider_handler(request, data);
+    case "dismissDispute":          return dismissDispute_handler(request, data);
     case "recordPayment":           return recordPayment_handler(request, data);
     case "getProject":              return getProject_handler(request, data);
     case "getClientProjects":         return getClientProjects_handler(request, data);
@@ -358,19 +478,24 @@ exports.onlineProjectAction = onCall(async (request) => {
 
 | Action | Validates | Mutates |
 |--------|-----------|---------|
-| `createOnlineProject` | Service is OnlineService + Available, provider != client, brief length, package belongs to service | Creates doc in `Pending` |
+| `createOnlineProject` | Service is OnlineService + Available, provider != client, brief length, package belongs to service, `idempotencyKey` is valid UUID and not already used (Section 17.3) | Creates doc in `Pending`, records idempotency key in `online_project_idempotency` |
 | `acceptProject` | Status is Pending or Negotiating | Sets `agreedPrice`/`agreedDeadline` from original or last offer, status → `Active`, sets `acceptedAt` |
 | `declineProject` | Status is Pending or Negotiating | Status → `Declined` |
-| `negotiateProject` | Status is Pending or Negotiating | Creates offer doc in `negotiations` subcollection (inside transaction), status → `Negotiating` |
-| `acceptCounterOffer` | Status is Negotiating | Reads latest offer from `negotiations` subcollection (inside transaction), sets `agreedPrice`/`agreedDeadline` from offer, marks that offer as `Accepted` + remaining `Rejected`, status → `Active` |
-| `submitDeliverable` | Status is Active, revision count not exceeded | Stores pre-uploaded file URLs in deliverable (files uploaded client-side via two-step init flow, same as `ProjectBriefAttachment`), appends to `deliverables`, status → `InReview` |
-| `approveDeliverable` | Status is InReview | If all milestones approved or simple mode → status `Completed`, sets `completedAt`. Else keeps `Active` for remaining milestones. |
-| `requestRevisions` | Status is InReview, revisions remaining > 0 | Sets deliverable status → `RevisionsRequested`, decrements remaining revisions, overall status → `RevisionsRequested` |
-| `cancelProject` | Status is Active, InReview, RevisionsRequested, Negotiating, Pending | Status → `Cancelled` |
-| `disputeProject` | Status is InReview, Completed | Status → `Disputed` |
-| `recordPayment` | Provider or admin | Updates `amountPaid` and `paymentStatus` |
+| `negotiateProject` | Status is Pending or Negotiating, negotiation rounds < 10 (Section 17.2) | Creates offer doc in `negotiations` subcollection (inside transaction), status → `Negotiating`, sets `lastNegotiationAt` |
+| `acceptCounterOffer` | Status is Negotiating, negotiation rounds < 10 (Section 17.2) | Reads latest offer from `negotiations` subcollection (inside transaction), sets `agreedPrice`/`agreedDeadline` from offer, marks that offer as `Accepted` + remaining `Rejected`, status → `Active`, sets `lastNegotiationAt` |
+| `submitDeliverable` | Status is Active or RevisionsRequested, revision rounds not exceeded | Creates a `DeliverableSubmission` doc in the `deliverables` subcollection (inside transaction), increments `deliverableCount` on parent. From `Active`: status → `InReview`. From `RevisionsRequested`: status → `InReview` (resubmit path). |
+| `approveDeliverable` | Status is InReview | Updates the latest deliverable doc in the `deliverables` subcollection: sets its `status` to `"Approved"`. If all milestones approved or simple mode → status `Completed`, sets `completedAt`, dispatches `REVIEW_REMINDER` (to client) and `REVIEW_REQUEST` (to provider). Else keeps `Active` for remaining milestones. |
+| `requestRevisions` | Status is InReview, revisions remaining > 0 | Updates the latest deliverable doc in the `deliverables` subcollection: sets its `status` to `"RevisionsRequested"` and stores `clientFeedback`. Decrements remaining revisions on parent. Overall status → `RevisionsRequested`. |
+| `cancelProject` | Status is Active, InReview, RevisionsRequested, Negotiating (any party), or Pending (client only — provider must use `declineProject` for Pending) | Status → `Cancelled` |
+| `disputeProject` | Status is InReview, Completed, RevisionsRequested | Status → `Disputed`, sets `disputeReason` (from caller's input), `disputeInitiatedBy`, `disputeInitiatedAt` |
+| `resolveDisputeForClient` | **Admin only**, status is Disputed | Status → `ResolvedForClient`, sets `resolutionNote`, `resolvedAt`, `resolvedBy`. Notifies both parties. |
+| `resolveDisputeForProvider` | **Admin only**, status is Disputed | Status → `ResolvedForProvider`, sets `resolutionNote`, `resolvedAt`, `resolvedBy`. Notifies both parties. |
+| `dismissDispute` | **Admin only**, status is Disputed | Status → `Dismissed`, sets `resolutionNote`, `resolvedAt`, `resolvedBy`. Notifies both parties. Dispute deemed without merit. |
+| `recordPayment` | **Client only** (caller must be the project client) | Inside transaction: writes immutable `PaymentRecord` to `payment_history` subcollection (with `amountBefore`/`amountAfter`, `recordedBy`, signed `amountDelta`), then updates parent doc `amountPaid` and `paymentStatus`. The provider cannot unilaterally record payments — they request payment via chat/notification, and the client records it. This prevents abuse (see Section 17.5 rationale). |
 | `getClientProjectAnalytics` | Client or admin, optional `startDate`/`endDate` | Returns aggregated metrics for client's projects in date range |
 | `getProviderProjectAnalytics` | Admin only, `providerId`, optional `startDate`/`endDate` | Returns aggregated metrics for provider's projects in date range |
+| `getClientProjects` | Client or admin, optional `limit` (default 50, Section 17.1) | Returns client's projects ordered by `createdAt` DESC |
+| `getProviderProjects` | Provider or admin, optional `limit` (default 50, Section 17.1) | Returns provider's projects ordered by `createdAt` DESC |
 
 ### 4.4 State Machine Enforcement
 
@@ -378,26 +503,83 @@ Same pattern as `booking.js`:
 
 ```javascript
 const VALID_TRANSITIONS = {
-  Pending:              ["Active", "Negotiating", "Declined"],
+  Pending:              ["Active", "Negotiating", "Declined", "Cancelled"],
   Negotiating:          ["Active", "Declined", "Cancelled"],
   Active:               ["InReview", "Cancelled"],
-  InReview:             ["Completed", "RevisionsRequested"],
-  RevisionsRequested:   ["Active", "Cancelled"],
+  InReview:             ["Completed", "RevisionsRequested", "Active", "Disputed"],
+  RevisionsRequested:   ["InReview", "Cancelled", "Disputed"],
   Completed:            ["Disputed"],
+  Disputed:             ["ResolvedForClient", "ResolvedForProvider", "Dismissed"],
   Declined:             [],
   Cancelled:            [],
-  Disputed:             [],
+  ResolvedForClient:    [],
+  ResolvedForProvider:  [],
+  Dismissed:            [],
 };
+
+const ADMIN_ONLY_TRANSITIONS = new Set([
+  "ResolvedForClient",
+  "ResolvedForProvider",
+  "Dismissed",
+]);
 
 function isValidTransition(from, to) {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
+
+function requiresAdmin(targetStatus) {
+  return ADMIN_ONLY_TRANSITIONS.has(targetStatus);
+}
 ```
 
-### 4.5 Scheduled Functions (Future)
+**Role-specific gating**: The `cancelProject` handler additionally checks the caller's role when the project is in `Pending` status — only the client is allowed to cancel from `Pending`. A provider attempting `cancelProject` on a `Pending` project receives a `"permission-denied"` error: "Provider cannot cancel a Pending project. Use declineProject instead." This is enforced in the handler, not in the transition map (the transition map permits the state change; the handler adds the role gate).
 
-- `autoCancelExpiredProjects` — Daily cron: cancels `Pending` projects older than 7 days, `Negotiating` older than 14 days (not in initial build).
-- `sendProjectReminders` — Reminds providers of approaching deadlines.
+### 4.5 Scheduled Functions (Initial Build)
+
+The following scheduled (cron) functions run in the initial build. They follow the same `onSchedule` pattern as existing functions.
+
+#### `autoCancelExpiredProjects`
+
+Daily cron that cancels stale projects to prevent indefinite accumulation:
+
+| Condition | Action | Notification |
+|-----------|--------|-------------|
+| `Pending` older than **7 days** from `createdAt` | Status → `Cancelled`, sets `autoCancelled: true` | Both parties receive `ONLINE_PROJECT_CANCELLED` with message "This project request was automatically cancelled due to inactivity." |
+| `Negotiating` with `lastNegotiationAt` older than **14 days** (or `createdAt` older than 14 days if `lastNegotiationAt` is not set) | Status → `Cancelled`, sets `autoCancelled: true` | Both parties receive `ONLINE_PROJECT_CANCELLED` with message "This project negotiation was automatically cancelled due to inactivity." |
+
+```javascript
+// fires every 24 hours
+exports.autoCancelExpiredProjects = onSchedule("every day 00:00", async () => {
+  const now = admin.firestore.Timestamp.now();
+  const sevenDaysAgo = new Date(now.toMillis() - 7 * 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(now.toMillis() - 14 * 24 * 60 * 60 * 1000);
+
+  // Cancel expired Pending projects
+  const pendingExpired = await db.collection("online_projects")
+    .where("status", "==", "Pending")
+    .where("createdAt", "<", sevenDaysAgo.toISOString())
+    .get();
+
+  // Cancel expired Negotiating projects
+  const negotiatingExpired = await db.collection("online_projects")
+    .where("status", "==", "Negotiating")
+    .where("lastNegotiationAt", "<", fourteenDaysAgo.toISOString())
+    .get();
+  // Plus fallback for negotiating docs without lastNegotiationAt:
+  // .where("status", "==", "Negotiating")
+  // .where("createdAt", "<", fourteenDaysAgo.toISOString())
+
+  // For each expired project, batch-update status and dispatch notifications
+});
+```
+
+#### `sendProjectReminders`
+
+(Kept as future — Section 12.5.)
+
+#### Index Requirement
+
+The `Negotiating` expiry query uses `WHERE status = X AND lastNegotiationAt < Y` — this is covered by the `status ASC, createdAt DESC` index (Section 15.1) if `lastNegotiationAt` ordering is acceptable. For optimal performance, an explicit composite index on `[status ASC, lastNegotiationAt ASC]` should be added to `firestore.indexes.json`. See Section 15.1 for the updated index list.
 
 ### 4.6 Conversation Creation (Client-Side)
 
@@ -509,7 +691,7 @@ async function getProviderProjectAnalytics_handler(request, data) {
 
 #### Index Requirement
 
-Both queries use `WHERE providerId/clientId = X AND createdAt >= Y AND createdAt <= Z` — this is already covered by the existing composite indexes (Section 16) since the leading field (clientId/providerId) is the same and `createdAt` DESC ordering is satisfied by the same index in both directions.
+Both queries use `WHERE providerId/clientId = X AND createdAt >= Y AND createdAt <= Z` — this is covered by the composite indexes defined in Section 15 (which are new additions to `firestore.indexes.json`; the existing file contains only one index for the `messages` collection). The leading field (clientId/providerId) is the same and `createdAt` DESC ordering is satisfied by the same index in both directions.
 
 ---
 
@@ -569,12 +751,22 @@ const maxSizeText = mediaType === "ProjectBriefAttachment" ?
 
 **5. `getStorageStatsHandler()` — Type breakdown** (line ~582)
 
+The existing `typeBreakdown` only lists 4 types and is already missing `ReportAttachment`, `ChatAttachment`, and `ProblemProof`:
+
 ```javascript
 const typeBreakdown = {
-  // ... existing entries ...
+  UserProfile: 0,
+  ServiceImage: 0,
+  ServiceCertificate: 0,
+  RemittancePaymentProof: 0,
+  // Missing: ReportAttachment — not counted in stats
+  // Missing: ChatAttachment — not counted in stats
+  // Missing: ProblemProof — not counted in stats
   ProjectBriefAttachment: 0,
 };
 ```
+
+**Pre-existing gap**: `ReportAttachment`, `ChatAttachment`, and `ProblemProof` are also missing from this list. They work correctly at runtime (the `forEach` loop dynamically counts any `mediaType` it encounters) but they will not appear with a `0` default in stats responses when no documents of that type exist. This affects admin storage statistics accuracy. Fixing these is outside the scope of this spec but recommended as a follow-up.
 
 **6. Supported content types** — `SUPPORTED_CONTENT_TYPES` (line ~35)
 
@@ -642,6 +834,9 @@ if (service.serviceMode === "OnlineService") {
 |---------|-----------|---------|
 | Package Selection | `PackagesSection.tsx` with `selectionMode="single"` | The existing component uses multi-select checkboxes (for home-service bookings where multiple packages can be bundled). A new `selectionMode` prop switches it to radio-button single-select for online projects. Client picks exactly one package. |
 | Project Brief | `ProjectBriefSection.tsx` (new) | Text area (50–2000 chars) + file upload (images, docs, PDFs — 50MB limit) via `ProjectBriefAttachment` |
+| Timeline | `TimelineSection.tsx` (new) | Displays provider's delivery range from config. Client picks desired date within range. |
+| Payment Summary | `PaymentSummarySection.tsx` (new) | Shows package price. "Payment is manually arranged" notice. |
+| Review & Submit | `ReviewSubmitSection.tsx` (new) | Read-only summary + Submit button |
 
 The `PackagesSection.tsx` refactor adds a `selectionMode` prop:
 
@@ -662,9 +857,6 @@ When `selectionMode === "single"`:
 - Validation requires exactly one selected package (not ≥ 1).
 
 The component file stays at `src/frontend/src/components/client/book/PackagesSection.tsx` — no new file. The online booking page imports it with `selectionMode="single"`; the existing booking page is unaffected (defaults to `"multiple"`).
-| Timeline | `TimelineSection.tsx` (new) | Displays provider's delivery range from config. Client picks desired date within range. |
-| Payment Summary | `PaymentSummarySection.tsx` (new) | Shows package price. "Payment is manually arranged" notice. |
-| Review & Submit | `ReviewSubmitSection.tsx` (new) | Read-only summary + Submit button |
 
 ### 6.4 Client Project List (`/client/online-projects`)
 
@@ -846,43 +1038,9 @@ Add under `/provider/*`:
 
 ---
 
-## 11. File Manifest
+## 11. Key Design Decisions
 
-### New Files (15)
-
-```
-src/frontend/src/services/onlineProjectCanisterService.ts
-src/frontend/src/hooks/useOnlineProject.tsx
-src/frontend/src/hooks/useProviderOnlineProject.tsx
-src/frontend/src/pages/client/online-book/[id].tsx
-src/frontend/src/pages/client/online-projects.tsx
-src/frontend/src/pages/client/online-project/[id].tsx
-src/frontend/src/pages/provider/online-projects.tsx
-src/frontend/src/pages/provider/online-project/[id].tsx
-src/frontend/src/pages/provider/online-project/submit-deliverable/[id].tsx
-src/frontend/src/components/provider/add service/DeliverableConfigSection.tsx
-src/frontend/src/components/client/online-book/ProjectBriefSection.tsx
-src/frontend/src/components/client/online-book/TimelineSection.tsx
-src/frontend/src/components/client/online-book/PaymentSummarySection.tsx
-src/frontend/src/components/client/online-book/ReviewSubmitSection.tsx
-functions/src/onlineProject.js
-```
-
-### Modified Files (5)
-
-```
-src/frontend/src/services/serviceCanisterService.ts    — Add serviceMode, onlineConfig, OnlineServiceConfig
-src/frontend/src/pages/provider/services/add.tsx       — Mode toggle, conditional steps
-src/frontend/src/pages/client/service/[id].tsx         — Conditional CTA
-src/frontend/main.tsx                                  — Add 6 routes
-functions/src/media.js                                 — Add ProjectBriefAttachment type (50MB)
-```
-
----
-
-## 12. Key Design Decisions
-
-### 12.1 Why a Separate Entity (OnlineProject ≠ Booking)
+### 11.1 Why a Separate Entity (OnlineProject ≠ Booking)
 
 Home services and online projects have fundamentally different lifecycles:
 
@@ -898,31 +1056,61 @@ Home services and online projects have fundamentally different lifecycles:
 
 Sharing a single entity would create a combinatorial explosion of conditional logic and make both systems harder to maintain.
 
-### 12.2 Why Not Subclass Booking
+### 11.2 Why Not Subclass Booking
 
 - **TypeScript complexity**: A discriminated union or `mode`-gated fields on `Booking` would require extensive type narrowing everywhere.
 - **Firestore query performance**: Single collection with mixed types creates index bloat and confusing queries.
 - **Evolution**: The two systems will evolve independently (e.g., escrow for bookings, milestone payments for projects). Separate collections let each evolve without touching the other.
 - **State machine enforcement**: `isValidStatusTransition` in `booking.js` would need to branch on mode — error-prone.
 
-### 12.3 Why Milestones Are Optional ("Both — Provider's Choice")
+### 11.3 Why Milestones Are Optional ("Both — Provider's Choice")
 
 - Simple projects (logo design, article writing) don't need milestones — just a deadline and revision rounds.
 - Complex projects (web development, business registration) benefit from milestone tracking.
 - Letting the provider choose per-package keeps the system flexible without forcing complexity on simple use cases.
 
----
+### 11.4 Timestamp Convention
 
-## 13. Future Considerations
+The codebase has an existing inconsistency in how timestamps are typed:
 
-### 13.1 Meeting Provider Integration
+| Interface | `createdAt` / `updatedAt` Type | Source |
+|-----------|-------------------------------|--------|
+| `Service` | `any` (Firestore Timestamp) | `serviceCanisterService.ts:119-120` |
+| `Booking` | `string` (ISO 8601) | Booking interface |
+| `OnlineProject` | `string` (ISO 8601) | This spec |
+
+The `Service` interface's `any` type with the comment `// Firestore Timestamp` is a legacy convention from the earliest version of the app. All new entities (`Booking`, `OnlineProject`, `NegotiationOffer`, `DeliverableSubmission`) use ISO 8601 strings, which the backend writes via `new Date().toISOString()`.
+
+**Rule for new code**: All timestamps in new entities and Cloud Functions must use ISO 8601 strings. The `Service` type's Firestore Timestamp convention is legacy and should not be replicated. If the Service interface is refactored in the future, its timestamps should be changed to `string` to match the rest of the codebase.
+
+### 11.5 Review/Rating After Completion
+
+Online projects reuse the existing review system instead of creating a separate one:
+
+- The `Review` interface (in `reviewCanisterService.ts`) gains an optional `projectId: string` field alongside the existing `bookingId: string`. One of the two must be present.
+- The `submitReview` and `submitProviderReview` Cloud Functions accept either `bookingId` or `projectId`. When `projectId` is provided, validation checks the project's status is `Completed` and the caller is the project client (for client→provider reviews) or provider (for provider→client reviews).
+- The review page route (`/client/review/:id` and `/provider/rate-client/:id`) already exists and works with either entity type — the page reads the review ID from the URL and fetches the related booking or project data.
+- The **review reminder notification** fires inside `approveDeliverable` when the transition to `Completed` happens, using the same `REVIEW_REMINDER` and `REVIEW_REQUEST` notification types as bookings (see Section 13.3).
+- Reviews for online projects are linked to the project via `projectId`, but the reputation scoring, quality scoring, and display logic are identical to booking reviews — no changes needed to the review analysis or reputation system.
+
+### 11.6 Commission Not Applied
+
+Commission fees are **not applied** to online projects. This is a deliberate design choice:
+
+- **The `OnlineProject` entity has no `commissionFee` or `commissionRate` fields**. The `Service` and `Package` types in `serviceCanisterService.ts` do define these fields (used for home-service bookings), but `onlineConfig` (Section 1.2) does not include commission settings.
+- **The `originalPrice` and `agreedPrice` on `OnlineProject` are the full amounts**. Frontend price display for online services shows the package price directly — no `commissionFee` addition (unlike `PackagesSection.tsx` which adds commission to home-service prices).
+- **Rationale**: Online projects represent ongoing professional engagements (design, development, consulting) where the provider sets fixed project-based pricing. Commission on home services covers platform costs for scheduling, navigation, and escrow-dispute overhead that doesn't apply to online projects. Escrow is disabled for online projects (Section 13.3 in Future Considerations), and there is no navigation/dispatch infrastructure cost. If a commission model is introduced later (e.g., a flat listing fee or milestone-based percentage), it should be added as new fields on `OnlineServiceConfig`, not inherited from the home-service commission system.
+
+## 12. Future Considerations
+
+### 12.1 Meeting Provider Integration
 
 The `meetingUrl` field is a placeholder. When integrated, recommended approach:
 - **Daily.co** prebuilt iframe — simplest embed, no app install required.
 - Room URL generated via Cloud Function on project accept.
 - Both client and provider detail pages show "Join Meeting" when Active+.
 
-### 13.2 Milestone-Based Payment Release
+### 12.2 Milestone-Based Payment Release
 
 When escrow is re-enabled, milestones map naturally to partial releases:
 ```
@@ -930,22 +1118,28 @@ When escrow is re-enabled, milestones map naturally to partial releases:
 2. Final Files (50%) → PAID_HELD → released on Approve
 ```
 
-### 13.3 Escrow Re-Enablement
+### 12.3 Escrow Re-Enablement
 
 The `paymentStatus` and `amountPaid` fields are designed to be forward-compatible:
 - `"Pending"` | `"Partial"` | `"Full"` maps cleanly to future escrow states.
 - `amountPaid` can become the total released-to-provider sum.
 - New fields (`heldAmount`, `releasedAmount`) can be added without migration.
 
-### 13.4 Dispute Resolution
+### 12.4 Dispute Resolution (Implemented — Basic Admin Flow)
 
-Current model: `Disputed` is terminal. Future: add admin mediation workflow with evidence submission (deliverable versions, chat logs, brief).
+The initial build includes a basic admin mediation workflow. When a project enters `Disputed` state, an admin reviews the case (using evidence from deliverable versions, chat logs, brief, and payment history) and takes one of three actions:
+
+- **`resolveDisputeForClient`** → `ResolvedForClient` — Admin rules in client's favor (e.g., refund, re-do). The `resolutionNote` documents the rationale.
+- **`resolveDisputeForProvider`** → `ResolvedForProvider` — Admin rules in provider's favor (e.g., payment stands, deliverable accepted). The `resolutionNote` documents the rationale.
+- **`dismissDispute`** → `Dismissed` — Admin determines the dispute has no merit. The project remains in its pre-dispute effective state (completed work stands).
+
+Future enhancements: structured evidence submission (file uploads from both parties), escalation tiers, automated timeout (auto-dismiss after N days with no admin action), and integration with escrow release/hold logic.
 
 ---
 
-## 14. Notification Dispatch
+## 13. Notification Dispatch
 
-### 14.1 New Notification Types
+### 13.1 New Notification Types
 
 The following constants must be added to `NOTIFICATION_TYPES` in `functions/src/notification.js`:
 
@@ -961,13 +1155,16 @@ const NOTIFICATION_TYPES = {
   ONLINE_PROJECT_CANCELLED:      "online_project_cancelled",
   ONLINE_PROJECT_DISPUTED:       "online_project_disputed",
   ONLINE_PROJECT_COMPLETED:      "online_project_completed",
+  DISPUTE_RESOLVED_FOR_CLIENT:   "dispute_resolved_for_client",
+  DISPUTE_RESOLVED_FOR_PROVIDER: "dispute_resolved_for_provider",
+  DISPUTE_DISMISSED:             "dispute_dismissed",
   DELIVERABLE_SUBMITTED:         "deliverable_submitted",
   MILESTONE_APPROVED:            "milestone_approved",
   REVISIONS_REQUESTED:           "revisions_requested",
 };
 ```
 
-### 14.2 Local `createNotification()` Helper
+### 13.2 Local `createNotification()` Helper
 
 `onlineProject.js` follows the same pattern as `booking.js` — a local `createNotification()` function that writes directly to Firestore and calls push/email helpers from `notification.js`, avoiding an extra HTTP callable round-trip.
 
@@ -995,7 +1192,7 @@ async function createNotification(
 6. Fire-and-forget `sendOneSignalNotification()` (push).
 7. If type is in email types set, fire-and-forget `sendEmailForNotification()`.
 
-### 14.3 Notification Dispatch Table
+### 13.3 Notification Dispatch Table
 
 Every lifecycle event in the `onlineProjectAction` callable dispatches a notification. The table below specifies each dispatch call.
 
@@ -1010,13 +1207,19 @@ Create notifications **after** the state transition has been committed to Firest
 | `acceptCounterOffer` | → `Active` | Provider | `ONLINE_PROJECT_ACCEPTED` | "Counter Offer Accepted" | `{clientName} accepted your counter offer for {projectTitle}` | `{clientId, clientName, serviceId, serviceName, projectId}` |
 | `submitDeliverable` | → `InReview` | Client | `DELIVERABLE_SUBMITTED` | "Deliverable Ready for Review" | `{providerName} submitted a deliverable for {projectTitle}` | `{providerId, providerName, deliverableId, milestoneIndex?, projectId}` |
 | `approveDeliverable` (all milestones done or simple mode) | → `Completed` | Provider | `ONLINE_PROJECT_COMPLETED` | "Project Completed" | `{clientName} approved your deliverable — {projectTitle} is complete` | `{clientId, clientName, projectId}` |
+| `approveDeliverable` (on → `Completed`) | → `Completed` | Client | `REVIEW_REMINDER` | "Share Your Experience" | `Please review your "{projectTitle}" project with {providerName}` | `{providerId, providerName, projectId}` |
+| `approveDeliverable` (on → `Completed`) | → `Completed` | Provider | `REVIEW_REQUEST` | "Rate Your Client" | `Rate your experience with {clientName} for "{projectTitle}"` | `{clientId, clientName, projectId}` |
 | `approveDeliverable` (milestone mode, more milestones remain) | → `Active` | Provider | `MILESTONE_APPROVED` | "Milestone Approved" | `{clientName} approved milestone "{milestoneTitle}" for {projectTitle}` | `{clientId, clientName, milestoneTitle, milestoneIndex, projectId}` |
 | `requestRevisions` | → `RevisionsRequested` | Provider | `REVISIONS_REQUESTED` | "Revisions Requested" | `{clientName} requested revisions for {projectTitle} — {revisionNotes}` | `{clientId, clientName, deliverableId, projectId}` |
 | `cancelProject` (by client) | → `Cancelled` | Provider | `ONLINE_PROJECT_CANCELLED` | "Project Cancelled" | `{clientName} cancelled the project {projectTitle}` | `{clientId, clientName, projectId}` |
 | `cancelProject` (by provider) | → `Cancelled` | Client | `ONLINE_PROJECT_CANCELLED` | "Project Cancelled" | `{providerName} cancelled the project {projectTitle}` | `{providerId, providerName, projectId}` |
+| `autoCancelExpiredProjects` (cron) | → `Cancelled` | Both parties | `ONLINE_PROJECT_CANCELLED` | "Project Auto-Cancelled" | `{projectTitle} was automatically cancelled due to inactivity.` | `{projectId, autoCancelled: true, reason: "pending_expired" \| "negotiating_expired"}` |
 | `disputeProject` | → `Disputed` | Both parties | `ONLINE_PROJECT_DISPUTED` | "Project Disputed" | `{projectTitle} has been marked as disputed. An admin will review the case.` | `{projectId, initiatedBy: "client" \| "provider"}` |
+| `resolveDisputeForClient` | → `ResolvedForClient` | Both parties | `DISPUTE_RESOLVED_FOR_CLIENT` | "Dispute Resolved — Client" | `The dispute for {projectTitle} has been resolved in the client's favor. Resolution: {resolutionNote}` | `{projectId, resolvedBy, resolutionNote}` |
+| `resolveDisputeForProvider` | → `ResolvedForProvider` | Both parties | `DISPUTE_RESOLVED_FOR_PROVIDER` | "Dispute Resolved — Provider" | `The dispute for {projectTitle} has been resolved in the provider's favor. Resolution: {resolutionNote}` | `{projectId, resolvedBy, resolutionNote}` |
+| `dismissDispute` | → `Dismissed` | Both parties | `DISPUTE_DISMISSED` | "Dispute Dismissed" | `The dispute for {projectTitle} has been dismissed. Note: {resolutionNote}` | `{projectId, resolvedBy, resolutionNote}` |
 
-### 14.4 Implementation Notes
+### 13.4 Implementation Notes
 
 - **Local copy of `createNotification`**: `onlineProject.js` defines `createNotification` as a local function (same pattern as `booking.js:167-245`), importing constants and helper functions directly from `notification.js`. It does **not** call the `notificationAction` callable — that path is for client-side notification creation only.
 - **`generateNotificationHref` mapping**: The `generateNotificationHref()` function in `notification.js` must be extended to generate correct deep-link paths for online project notifications. Each notification type maps to a frontend route:
@@ -1028,14 +1231,19 @@ Create notifications **after** the state transition has been committed to Firest
   - `MILESTONE_APPROVED` → `/provider/online-project/{projectId}`
   - `REVISIONS_REQUESTED` → `/provider/online-project/{projectId}`
   - `ONLINE_PROJECT_COMPLETED` → `/client/online-project/{projectId}`
-  - `ONLINE_PROJECT_CANCELLED` → `/online-projects` (role-agnostic — client/provider list)
-  - `ONLINE_PROJECT_DISPUTED` → `/online-project/{projectId}` (dispute page, future)
+  - `ONLINE_PROJECT_CANCELLED` → `/client/online-projects` (client) or `/provider/online-projects` (provider)
+  - `ONLINE_PROJECT_DISPUTED` → `/client/online-project/{projectId}` (client) or `/provider/online-project/{projectId}` (provider)
+  - `DISPUTE_RESOLVED_FOR_CLIENT` → `/client/online-project/{projectId}` (client) or `/provider/online-project/{projectId}` (provider)
+  - `DISPUTE_RESOLVED_FOR_PROVIDER` → `/client/online-project/{projectId}` (client) or `/provider/online-project/{projectId}` (provider)
+  - `DISPUTE_DISMISSED` → `/client/online-project/{projectId}` (client) or `/provider/online-project/{projectId}` (provider)
+
+  The function already receives `userType` as a parameter (from `USER_TYPES`), so role-specific paths use the existing `isProvider` branching pattern. Notifications targeting the provider (e.g., `NEW_ONLINE_PROJECT_REQUEST`, `MILESTONE_APPROVED`) always generate `/provider/...` paths. Notifications targeting the client (e.g., `ONLINE_PROJECT_ACCEPTED`, `DELIVERABLE_SUBMITTED`) always generate `/client/...` paths. For `ONLINE_PROJECT_CANCELLED` and `ONLINE_PROJECT_DISPUTED`, which can target either party, the `userType` parameter determines the prefix.
 - **Email dispatch**: Initially, no online project notification types are added to `BOOKING_EMAIL_TYPES`. Email support can be introduced when volume warrants it. The notification is always delivered via in-app + push.
 - **Error tolerance**: All `createNotification()` calls are wrapped in try/catch, logged via `functions.logger.error`, and never propagated. A notification failure must not prevent the primary action from succeeding.
 
 ---
 
-## 15. File Manifest (Updated)
+## 14. File Manifest
 
 ### New Files (15)
 
@@ -1057,25 +1265,27 @@ src/frontend/src/components/client/online-book/ReviewSubmitSection.tsx
 functions/src/onlineProject.js
 ```
 
-### Modified Files (9 — unchanged)
+### Modified Files (11)
 
 ```
 src/frontend/src/services/serviceCanisterService.ts        — Add serviceMode, onlineConfig, OnlineServiceConfig
+src/frontend/src/services/reviewCanisterService.ts         — Add projectId field to Review interface
 src/frontend/src/pages/provider/services/add.tsx           — Mode toggle, conditional steps
 src/frontend/src/pages/client/service/[id].tsx             — Conditional CTA
 src/frontend/src/components/client/book/PackagesSection.tsx — Add selectionMode prop (single vs. multi)
 src/frontend/main.tsx                                      — Add 6 routes
 functions/src/media.js                                     — Register ProjectBriefAttachment in generateFilePath, validMediaTypes, validateFileSize, uploadMediaHandler error text, getStorageStatsHandler; add initProjectBriefUpload action + handler
-functions/src/notification.js                              — Add 10 online project NOTIFICATION_TYPES + href mappings
-firestore.indexes.json                                     — Add 3 composite indexes (clientId/createdAt, providerId/createdAt, status/createdAt)
-firestore.rules                                            — Add online_projects + negotiations rules (participant read, backend-only write)
+functions/src/notification.js                              — Add 13 online project NOTIFICATION_TYPES + href mappings
+functions/src/review.js                                    — Accept projectId alongside bookingId in submitReview and submitProviderReview
+firestore.indexes.json                                     — Add 4 composite indexes (clientId/createdAt, providerId/createdAt, status/createdAt, status/lastNegotiationAt)
+firestore.rules                                            — Add online_projects + negotiations + deliverables + payment_history + online_project_idempotency rules (participant read, backend-only write, audit immutability)
 ```
 
 ---
 
-## 16. Firestore Index Configuration
+## 15. Firestore Index Configuration
 
-### 16.1 Required Composite Indexes
+### 15.1 Required Composite Indexes
 
 The `online_projects` collection needs composite indexes for the list queries used by client and provider dashboards. Without these, Firestore returns an error on first query with an `orderBy` on a field not in the equality filter.
 
@@ -1084,8 +1294,9 @@ The `online_projects` collection needs composite indexes for the list queries us
 | `online_projects` | `clientId` ASC, `createdAt` DESC | Client project list: `WHERE clientId = X ORDER BY createdAt DESC` |
 | `online_projects` | `providerId` ASC, `createdAt` DESC | Provider project list: `WHERE providerId = X ORDER BY createdAt DESC` |
 | `online_projects` | `status` ASC, `createdAt` DESC | Status-tabbed views: `WHERE status = X ORDER BY createdAt DESC` (admin / tab filtering) |
+| `online_projects` | `status` ASC, `lastNegotiationAt` ASC | Auto-expiry cron: `WHERE status = "Negotiating" AND lastNegotiationAt < 14-days-ago ORDER BY lastNegotiationAt ASC` (Section 4.5) |
 
-### 16.2 Index Definition (Add to `firestore.indexes.json`)
+### 15.2 Index Definition (Add to `firestore.indexes.json`)
 
 ```json
 {
@@ -1121,13 +1332,21 @@ The `online_projects` collection needs composite indexes for the list queries us
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "online_projects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "lastNegotiationAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
 }
 ```
 
-### 16.3 Deployment
+### 15.3 Deployment
 
 Deploy via Firebase CLI:
 
@@ -1137,7 +1356,7 @@ firebase deploy --only firestore:indexes
 
 Firestore index creation is asynchronous — indexes may take 1–5 minutes to build after deployment. Queries that depend on a not-yet-ready index will fail. For development, Firestore auto-suggests missing indexes in the error message's error link, which opens the Firebase console to create them on demand.
 
-### 16.4 Single-Field Indexes (Automatic)
+### 15.4 Single-Field Indexes (Automatic)
 
 Firestore automatically creates ascending and descending indexes for every single field. No explicit config is needed for equality-only queries like:
 
@@ -1147,9 +1366,9 @@ Firestore automatically creates ascending and descending indexes for every singl
 
 ---
 
-## 17. Firestore Security Rules
+## 16. Firestore Security Rules
 
-### 17.1 Rule Pattern
+### 16.1 Rule Pattern
 
 The existing `firestore.rules` uses a deny-by-default pattern (`match /{path=**} { allow read, write: if false; }`) with explicit per-collection grants. The `online_projects` collection follows the same participant-gated pattern as `bookings` — but write access is locked to the backend only (Cloud Functions via Admin SDK).
 
@@ -1166,33 +1385,291 @@ match /online_projects/{projectId} {
   allow delete: if false;   // Projects are never deleted
 
   // Negotiation offers subcollection — same gating as parent.
+  // clientId and providerId are denormalized onto each offer document
+  // (written atomically in the Cloud Function transaction), so rules
+  // check resource.data directly — no get() on the parent, no extra
+  // document read per rule evaluation.
   match /negotiations/{offerId} {
-    allow read: if request.auth.uid == get(/databases/$(database)/documents/online_projects/$(projectId)).data.clientId
-                || request.auth.uid == get(/databases/$(database)/documents/online_projects/$(projectId)).data.providerId
+    allow read: if request.auth.uid == resource.data.clientId
+                || request.auth.uid == resource.data.providerId
                 || request.auth.token.isAdmin == true;
     allow create: if false;   // Only via Cloud Function (Admin SDK, inside transaction)
     allow update: if false;
     allow delete: if false;
   }
+
+  // Deliverables subcollection — append-only version history.
+  // Each DeliverableSubmission stores clientId and providerId
+  // (denormalized from parent in the Cloud Function transaction).
+  match /deliverables/{deliverableId} {
+    allow read: if request.auth.uid == resource.data.clientId
+                || request.auth.uid == resource.data.providerId
+                || request.auth.token.isAdmin == true;
+    allow create: if false;   // Only via Cloud Function (Admin SDK, inside transaction)
+    allow update: if false;   // Only via Cloud Function (Admin SDK)
+    allow delete: if false;   // History is never deleted
+  }
+
+  // Payment history subcollection — immutable audit trail.
+  // clientId and providerId are denormalized onto each PaymentRecord
+  // (written atomically in the recordPayment transaction).
+  // Records are append-only: update and delete are permanently denied.
+  match /payment_history/{recordId} {
+    allow read: if request.auth.uid == resource.data.clientId
+                || request.auth.uid == resource.data.providerId
+                || request.auth.token.isAdmin == true;
+    allow create: if false;   // Only via Cloud Function (Admin SDK, inside transaction)
+    allow update: if false;   // Immutable after creation
+    allow delete: if false;   // Audit records are never deleted
+  }
+}
+
+// Idempotency keys for createOnlineProject — backend-only.
+// Clients never read or write this collection directly. The Cloud Function
+// checks for existing keys before creating a project to prevent duplicates
+// from network retries. Keys are pruned after 24 hours by a scheduled function.
+match /online_project_idempotency/{idempotencyKey} {
+  allow read: if false;   // Backend-only
+  allow create: if false; // Only via Cloud Function (Admin SDK)
+  allow update: if false;
+  allow delete: if false;
 }
 ```
 
-### 17.2 Rationale
+### 16.2 Rationale
 
 | Design Choice | Reason |
 |---------------|--------|
 | `read` gated by `clientId` / `providerId` | Matches `bookings` rule. Client and provider dashboards need real-time `onSnapshot` subscriptions — rules must allow read for participants. |
 | `create`, `update`, `delete` set to `false` | All mutations go through the `onlineProjectAction` callable, which uses the Admin SDK (bypasses rules). Direct client writes would bypass state-machine enforcement, transaction guarantees, and notification dispatch. |
-| `negotiations` subcollection uses `get()` on parent doc | Avoids storing redundant owner fields on each offer doc. The `get()` call reads the parent `online_projects/{projectId}` to check `clientId`/`providerId`. |
+| `negotiations` subcollection uses denormalized `clientId`/`providerId` | Each `NegotiationOffer` document stores `clientId` and `providerId` (written atomically in the Cloud Function transaction). Rules check `resource.data` directly — zero extra document reads per rule evaluation. The backend enforces consistency: the transaction reads the parent project and copies its `clientId`/`providerId` into the offer doc, so the values are always correct at write time. |
+| `deliverables` subcollection is append-only | Same pattern as `negotiations`. Deliverable submissions accumulate files and revision history across milestones. Storing them on the parent doc risks the 1MB Firestore document limit. A subcollection ensures each submission is a separate document. Rules allow read by participants, write by Cloud Function only. |
+| `payment_history` subcollection is append-only | `update: if false` and `delete: if false` enforce immutability at the rules layer, not just the application layer. Even if a bug in the Cloud Function attempted to modify or delete a record, the rules would reject it (Admin SDK bypasses rules, but the function code never issues update/delete on this subcollection). Combined with the transaction-based write, this creates a tamper-evident audit trail. |
 | `delete: if false` on parent | Projects are soft-deleted via status → `Cancelled`/`Declined`. Hard deletes would orphan negotiations and break audit trails. |
+| `online_project_idempotency` is fully locked | Clients never read or write idempotency keys directly. The Cloud Function uses the Admin SDK (bypasses rules) to check and record keys. Locking all operations at the rules layer prevents any client-side tampering with the deduplication mechanism. |
 
-### 17.3 Deployment
+### 16.3 Deployment
 
 ```bash
 firebase deploy --only firestore:rules
 ```
 
 Rules take effect immediately after deployment (no propagation delay like indexes).
+
+---
+
+## 17. Operational Concerns
+
+### 17.1 Pagination Strategy
+
+Project list queries use **limit-only pagination** (default 50), matching the existing `booking.js` pattern:
+
+```javascript
+// getClientProjects_handler
+const { clientId, limit = 50 } = data;
+const projectsQuery = await db.collection("online_projects")
+  .where("clientId", "==", clientId)
+  .orderBy("createdAt", "desc")
+  .limit(limit)
+  .get();
+
+// getProviderProjects_handler
+const { providerId, limit = 50 } = data;
+const projectsQuery = await db.collection("online_projects")
+  .where("providerId", "==", providerId)
+  .orderBy("createdAt", "desc")
+  .limit(limit)
+  .get();
+```
+
+**Rationale**: Matches `getClientBookings_booking` and `getProviderBookings_booking` (booking.js:1306-1371). Most users will have fewer than 50 active projects. If a provider accumulates hundreds of projects, cursor-based pagination can be added in a future iteration.
+
+**Frontend hooks**: `useOnlineProjects()` and `useProviderOnlineProjects()` pass `limit: 50` to the Cloud Function. No "Load More" UI is needed initially — the 50 most recent projects are displayed.
+
+### 17.2 Negotiation Rate Limiting
+
+To prevent infinite negotiation loops and stalling tactics, the spec enforces a **maximum of 10 negotiation rounds** per project.
+
+**Implementation** (in `negotiateProject_handler` and `acceptCounterOffer_handler`):
+
+```javascript
+// Count existing offers in the negotiations subcollection
+const offersSnapshot = await db.collection("online_projects")
+  .doc(projectId)
+  .collection("negotiations")
+  .get();
+
+if (offersSnapshot.size >= 10) {
+  throw new HttpsError(
+    "failed-precondition",
+    "Maximum negotiation rounds (10) reached. Accept, decline, or cancel the project."
+  );
+}
+```
+
+**Transaction safety**: The count check must happen **inside the Firestore transaction** (using `transaction.get()`) to prevent race conditions where both parties submit a counter-offer simultaneously and both pass the check.
+
+**User feedback**: The frontend displays "Round X of 10" in the negotiation UI. When 10 rounds are reached, the "Counter Offer" button is disabled with a tooltip: "Maximum negotiation rounds reached."
+
+**Rationale**: Prevents abuse while allowing reasonable back-and-forth. Matches the principle of bounded negotiation in professional services.
+
+### 17.3 Idempotency for `createOnlineProject`
+
+To prevent duplicate projects from network retries, the client supplies an **idempotency key** (UUID) with each `createOnlineProject` request.
+
+**Client-side** (in `useCreateOnlineProject` hook):
+
+```typescript
+import { v4 as uuidv4 } from "uuid";
+
+const createOnlineProject = async (data: CreateOnlineProjectData) => {
+  const idempotencyKey = uuidv4();
+  return onlineProjectCanisterService.createOnlineProject({
+    ...data,
+    idempotencyKey,
+  });
+};
+```
+
+**Backend** (in `createOnlineProject_handler`):
+
+```javascript
+const { idempotencyKey, ...projectData } = data;
+
+if (!idempotencyKey || typeof idempotencyKey !== "string") {
+  throw new HttpsError("invalid-argument", "idempotencyKey is required");
+}
+
+// Check if this idempotency key was already used
+const existingDoc = await db.collection("online_project_idempotency")
+  .doc(idempotencyKey)
+  .get();
+
+if (existingDoc.exists) {
+  // Return the existing project ID instead of creating a duplicate
+  return { success: true, data: { projectId: existingDoc.data().projectId } };
+}
+
+// Create the project
+const projectId = generateProjectId();
+await db.collection("online_projects").doc(projectId).set(newProject);
+
+// Record the idempotency key
+await db.collection("online_project_idempotency").doc(idempotencyKey).set({
+  projectId,
+  clientId: authInfo.uid,
+  createdAt: new Date().toISOString(),
+});
+
+return { success: true, data: { projectId } };
+```
+
+**Cleanup**: A scheduled function (future) prunes `online_project_idempotency` docs older than 24 hours. Idempotency keys are short-lived — they only need to survive the network retry window.
+
+**Rationale**: Matches industry best practices (Stripe, AWS). Prevents duplicate projects from double-taps or network timeouts. The separate `online_project_idempotency` collection avoids polluting the main `online_projects` collection with metadata.
+
+### 17.4 Search and Filter for Project Lists
+
+The client and provider project list pages include **search and filter UI** matching the `SharedMyBookingsPage` pattern:
+
+**Search input**: Free-text search across:
+- Project title (service name + package name)
+- Client/provider name
+- Brief excerpt (first 100 chars)
+- Project ID
+
+**Filter dropdowns**:
+- **Status filter**: All, Active, Pending, Completed, Cancelled/Declined (matches tab structure)
+- **Package filter**: Dynamically populated from the user's projects (e.g., "Logo Design", "Web Development")
+
+**Sorting**: Programmatic (no user-facing sort control):
+- Active/Pending tabs: newest first (createdAt DESC)
+- Completed tab: completion date DESC
+- Cancelled/Declined tab: cancellation date DESC
+
+**Implementation**: Search and filtering happen **client-side** after fetching the 50 most recent projects. This matches the `SharedMyBookingsPage` pattern where `searchTerm` and `statusFilter` are applied in-memory to the fetched bookings array.
+
+**Rationale**: With a 50-project limit, client-side filtering is performant and avoids additional backend complexity. If the limit increases in the future, server-side search (via Firestore queries or Algolia) can be added.
+
+### 17.5 Optimistic UI Strategy
+
+Since all writes go through Cloud Functions (Admin SDK), the frontend cannot optimistically update Firestore. Instead, the UI uses a **pending state pattern** to provide immediate feedback:
+
+**Action buttons** (Accept, Decline, Submit Deliverable, etc.):
+1. On click: button shows spinner, becomes disabled, text changes to "Processing..."
+2. On success: button re-enables, success toast appears, data refreshes via `onSnapshot`
+3. On error: button re-enables, error toast appears with retry option
+
+**Implementation** (in hooks like `useAcceptProject`):
+
+```typescript
+const [isPending, setIsPending] = useState(false);
+
+const acceptProject = async (projectId: string) => {
+  setIsPending(true);
+  try {
+    await onlineProjectCanisterService.acceptProject(projectId);
+    toast.success("Project accepted");
+  } catch (error) {
+    toast.error("Failed to accept project. Please try again.");
+    throw error;
+  } finally {
+    setIsPending(false);
+  }
+};
+
+return { acceptProject, isPending };
+```
+
+**UI components** consume `isPending`:
+
+```tsx
+<Button
+  onClick={() => acceptProject(project.id)}
+  disabled={isPending}
+>
+  {isPending ? <Spinner /> : "Accept Project"}
+</Button>
+```
+
+**Rationale**: Prevents double-taps, provides immediate feedback, and avoids the complexity of optimistic updates (which would require rollback logic on Cloud Function failure). The `onSnapshot` listener ensures the UI updates as soon as the Cloud Function commits the change.
+
+### 17.6 Data Migration for Existing Services
+
+Existing `Service` documents in Firestore lack the `serviceMode` field. The spec treats missing `serviceMode` as `"HomeService"` (backward compatible).
+
+**Backend queries**: When filtering services by mode, use an `in` query that includes `null`:
+
+```javascript
+// Get all HomeService services (including legacy docs without serviceMode)
+const homeServicesQuery = await db.collection("services")
+  .where("serviceMode", "in", ["HomeService", null])
+  .get();
+
+// Get all OnlineService services (new docs only)
+const onlineServicesQuery = await db.collection("services")
+  .where("serviceMode", "==", "OnlineService")
+  .get();
+```
+
+**Frontend type safety**: The `Service` interface defines `serviceMode` as optional with a default:
+
+```typescript
+interface Service {
+  // ... existing fields ...
+  serviceMode?: "HomeService" | "OnlineService";  // Optional for legacy docs
+  onlineConfig?: OnlineServiceConfig;
+}
+
+// Helper function to normalize
+function getServiceMode(service: Service): "HomeService" | "OnlineService" {
+  return service.serviceMode ?? "HomeService";
+}
+```
+
+**No migration script**: A bulk update to add `serviceMode: "HomeService"` to all existing services is unnecessary. The `in` query handles both legacy and new documents. If a migration is desired in the future, it can be run as a one-time admin script.
+
+**Rationale**: Avoids a risky bulk write operation. The `in` query is efficient (Firestore supports it natively). New services created after deployment will always have `serviceMode` set explicitly.
 
 --- 
 
