@@ -97,8 +97,8 @@ services/{serviceId}: {
   maxBookingsPerDay: number,        // defaults 10
   commissionFee: number,
   commissionRate: number,
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
+  createdAt: string,           // ISO 8601
+  updatedAt: string,           // ISO 8601
 }
 ```
 
@@ -113,8 +113,8 @@ service_packages/{autoId}: {
   title: string,
   description: string,
   price: number,
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
+  createdAt: string,           // ISO 8601
+  updatedAt: string,           // ISO 8601
 }
 ```
 

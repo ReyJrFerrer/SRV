@@ -93,7 +93,41 @@ Direct `getDownloadURL(ref)` for uncached images. The chain is:
 
 ## Backend Media Action
 
-`mediaAction` callable Cloud Function routes by action: `upload`, `get`, `delete`, `list`, `getUploadUrl`, `initChatAttachment`, `deleteChatAttachment`. Internal helpers (`uploadMediaInternal`, `deleteMediaInternal`) exported for cross-module use from `functions/src/media.js`.
+`mediaAction` callable Cloud Function routes by action: `upload`, `get`, `delete`, `list`, `getUploadUrl`, `initChatAttachment`, `deleteChatAttachment`, `initProjectBriefUpload`. Internal helpers (`uploadMediaInternal`, `deleteMediaInternal`) exported for cross-module use from `functions/src/media.js`.
+
+## Media Type Registration (6 Scattered Touchpoints)
+
+There is **no central config** for media types. Registering a new type requires entries in **6 separate locations** scattered across `functions/src/media.js`. Missing any one causes silent failures or incorrect behavior.
+
+| # | Location | Line ~ | What to Add |
+|---|----------|--------|-------------|
+| 1 | `mediaTypeFolder` in `generateFilePath()` | 94 | Maps media type string → Storage folder prefix (e.g., `ServiceImage → "services"`). Determines the Storage path. |
+| 2 | `validMediaTypes` array in `uploadMediaInternal()` | 818 | Whitelist for the base64 upload path. Types missing here are rejected with "Invalid media type". |
+| 3 | `validateFileSize()` function | 73 | Type-specific max-size condition. Falls through to generic caps (`MAX_FILE_SIZE` = 1MB, `MAX_REMITTANCE_FILE_SIZE` = 1MB). |
+| 4 | `maxSizeText` in `uploadMediaHandler()` error message | 176 | Human-readable size text in validation error messages. Missing entries show wrong cap. |
+| 5 | `typeBreakdown` in `getStorageStatsHandler()` | 582 | Stats aggregation key. Types missing here don't appear in admin storage stats. |
+| 6 | `SUPPORTED_CONTENT_TYPES` array | 35 | Allowed MIME type whitelist. Only needed if the new type requires content types not already listed. |
+
+### Reference: Existing Registration
+
+| Media Type | Folder | Cap | Init Action |
+|------------|--------|-----|-------------|
+| `UserProfile` | `users/` | 1MB | — |
+| `ServiceImage` | `services/` | 1MB | — |
+| `ServiceCertificate` | `certificates/` | 1MB | — |
+| `RemittancePaymentProof` | `remittance/` | 1MB | — |
+| `ReportAttachment` | `reports/` | 1MB | — |
+| `ProblemProof` | `problem-proof/` | 30MB (video) | — |
+| `ChatAttachment` | `chat-attachments/` | 1GB | `initChatAttachment` (two-step) |
+| `ProjectBriefAttachment` | `project-briefs/` | 50MB | `initProjectBriefUpload` (two-step) |
+
+The **two-step init pattern** (used by `ChatAttachment` and `ProjectBriefAttachment`) adds a 7th touchpoint: a new case in the `mediaAction` switch dispatch and a dedicated handler function.
+
+### Design Debt
+
+- No single `REGISTERED_MEDIA_TYPES = [...]` array drives all config — each location is maintained manually
+- `ProblemProof` is missing from `validMediaTypes` yet works because it bypasses `uploadMediaInternal` (goes through `uploadMediaHandler` directly)
+- Adding a type means updating 6+ files/functions; easy to miss one during development
 
 ## Remaining Media Gaps
 

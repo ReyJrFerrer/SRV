@@ -108,8 +108,8 @@ bookings/{bookingId}: {
   paymentReleased: null,
   releasedAt: null,
   payoutId: null,
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
+  createdAt: string,           // ISO 8601
+  updatedAt: string,           // ISO 8601
 }
 ```
 

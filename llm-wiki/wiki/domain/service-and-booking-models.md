@@ -43,8 +43,8 @@ interface Service {
   instantBookingEnabled?: boolean;
   bookingNoticeHours?: number;
   maxBookingsPerDay?: number;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: string;           // ISO 8601
+  updatedAt: string;           // ISO 8601
   // Runtime-enriched fields:
   providerName?: string;
   distance?: number;
@@ -123,8 +123,8 @@ interface ServiceCertificateMedia {
   fileSize: number;
   mediaType: "ServiceCertificate";
   ownerId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: string;           // ISO 8601
+  updatedAt: string;           // ISO 8601
   validationStatus?: "Pending" | "Validated" | "Rejected";
 }
 ```
@@ -142,8 +142,8 @@ interface ServicePackage {
   price: number;          // PHP, 1–1,000,000
   commissionFee: number;
   commissionRate: number;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: string;           // ISO 8601
+  updatedAt: string;           // ISO 8601
   // Runtime:
   totalAmount?: number;
 }
@@ -177,8 +177,8 @@ interface ProviderAvailability {
     day: DayOfWeek;
     availability: DayAvailability;
   }>;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: string;           // ISO 8601
+  updatedAt: string;           // ISO 8601
 }
 ```
 

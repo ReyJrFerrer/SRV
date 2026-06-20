@@ -13,6 +13,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 - [[Service Creation Workflow]] — Provider service creation, 5-step wizard → Cloud Function → Firestore
 - [[Booking System]] — Client booking creation, state machine, payment lifecycle, all status transitions
+- [[Online Projects]] — Online/digital service entity, state machine, Cloud Function actions, client-side conversation creation
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
 - [[Send Contact Email]] — v1 callable contact form handler
@@ -47,5 +48,5 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 ---
 
-_Last updated: 2026-06-17_
-_Pages: 24_
+_Last updated: 2026-06-19_
+_Pages: 25_

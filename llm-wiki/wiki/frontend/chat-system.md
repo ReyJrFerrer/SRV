@@ -40,7 +40,7 @@ Triggers: Cloud Function `onMessageCreated` on `messages/{messageId}`
 - **`subscribeToConversationSummaries()`**: Real-time listener returning `ConversationSummary[]` with last message preview + unread counts.
 - **`subscribeToMessages(conversationId)`**: Real-time message list with 200ms debounce.
 - **`markConversationAsRead()`**: Updates Firestore read timestamp.
-- **`getOrCreateConversation()`**: Finds existing or creates new conversation doc.
+- **`createConversation(clientId, providerId)`** (line 255): Implements a get-or-create pattern — queries Firestore `conversations` for an existing active conversation between the two users, returns it if found, otherwise creates a new conversation doc via client-side `setDoc`. Used after booking acceptance and after online project acceptance to ensure a chat channel exists.
 - **`adaptBackendMessage()`** (line 131): Parses multi-attachment array from Firestore — maps all 6 fields per attachment item.
 
 ## Hook Layer
