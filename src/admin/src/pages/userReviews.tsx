@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { TrashIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
+import { EyeSlashIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { adminServiceCanister } from "../services/adminServiceCanister";
 import { ReviewItem } from "../components/analytics/ReviewItem";
@@ -60,6 +60,12 @@ const UserReviewsPage: React.FC = () => {
       loadReviews();
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const loadReviews = async () => {
     if (!userId) return;
@@ -254,7 +260,7 @@ const UserReviewsPage: React.FC = () => {
       setSelectedReviews(new Set());
     } catch (e) {
       console.error("Error deleting review:", e);
-      setError("Failed to delete review.");
+      setError("Failed to hide review.");
     } finally {
       setDeletingReviewId(null);
     }
@@ -312,25 +318,20 @@ const UserReviewsPage: React.FC = () => {
       setSelectedReviews(new Set());
       if (errors.length > 0) {
         setError(
-          `Failed to ${action === "delete" ? "delete" : "restore"} ${errors.length} of ${reviewIds.length} review(s).`,
+          `Failed to ${action === "delete" ? "hide" : "restore"} ${errors.length} of ${reviewIds.length} review(s).`,
         );
       }
     } catch (e) {
       console.error(
-        `Error ${action === "delete" ? "deleting" : "restoring"} reviews:`,
+        `Error ${action === "delete" ? "hiding" : "restoring"} reviews:`,
         e,
       );
       setError(
-        `Failed to ${action === "delete" ? "delete" : "restore"} reviews.`,
+        `Failed to ${action === "delete" ? "hide" : "restore"} reviews.`,
       );
     } finally {
       setBulkActionLoading(false);
     }
-  };
-
-  // Toggle select all
-  const toggleSelectAll = () => {
-    setSelectedReviews(toggleSelectAllUtil(selectedReviews, displayReviews));
   };
 
   // Toggle select single review
@@ -402,10 +403,10 @@ const UserReviewsPage: React.FC = () => {
         {/* Bulk Actions Bar */}
         {selectedReviews.size > 0 && (
           <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-            <div className="text-sm font-medium text-blue-900">
+            <span className="text-sm font-medium text-blue-900">
               {selectedReviews.size} review
               {selectedReviews.size === 1 ? "" : "s"} selected
-            </div>
+            </span>
             <div className="flex gap-2">
               <button
                 onClick={() => handleBulkAction("restore")}
@@ -420,8 +421,8 @@ const UserReviewsPage: React.FC = () => {
                 disabled={bulkActionLoading}
                 className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
-                <TrashIcon className="h-4 w-4" />
-                Delete
+                <EyeSlashIcon className="h-4 w-4" />
+                Hide
               </button>
             </div>
           </div>
@@ -451,21 +452,49 @@ const UserReviewsPage: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Select All Checkbox */}
+              {/* Selection buttons */}
               <div className="mb-3 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2">
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedReviews.size === displayReviews.length &&
-                    displayReviews.length > 0
+                <span className="text-sm font-medium text-gray-700">Select:</span>
+                <button
+                  onClick={() =>
+                    setSelectedReviews(
+                      new Set(displayReviews.map((r) => r.id)),
+                    )
                   }
-                  onChange={toggleSelectAll}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Select All ({displayReviews.length})
-                </span>
-              </div>
+                  className="rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  All ({displayReviews.length})
+                </button>
+                <button
+                  onClick={() =>
+                    setSelectedReviews(
+                      new Set(visibleReviews.map((r) => r.id)),
+                    )
+                  }
+                  className="rounded-md bg-green-600 px-3 py-1 text-sm font-medium text-white hover:bg-green-700"
+                >
+                  Visible ({visibleReviews.length})
+                </button>
+                <button
+                  onClick={() =>
+                    setSelectedReviews(
+                      new Set(hiddenReviews.map((r) => r.id)),
+                    )
+                  }
+                  className="rounded-md bg-yellow-500 px-3 py-1 text-sm font-medium text-white hover:bg-yellow-600"
+                >
+                  Hidden ({hiddenReviews.length})
+                </button>
+              {selectedReviews.size > 0 && (
+                <button
+                  onClick={() => setSelectedReviews(new Set())}
+                  className="ml-auto rounded-md bg-gray-500 px-3 py-1 text-sm font-medium text-white hover:bg-gray-600"
+                  title="Clear selection"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
 
               {/* Reviews List */}
               <div className="space-y-3">
@@ -538,9 +567,9 @@ const UserReviewsPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={showBulkDeleteConfirm}
-        title="Delete Reviews"
-        message={`Are you sure you want to delete ${selectedReviews.size} review(s)?`}
-        confirmText="Delete"
+        title="Hide Reviews"
+        message={`Are you sure you want to hide ${selectedReviews.size} review(s)?`}
+        confirmText="Hide"
         confirmColor="bg-red-600 hover:bg-red-700"
         isLoading={bulkActionLoading}
         onConfirm={() => {

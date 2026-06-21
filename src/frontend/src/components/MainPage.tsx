@@ -560,102 +560,213 @@ export default function MainPage({
             <h2 className="services-title">Services We Connect</h2>
           </div>
 
-          <div className="services-bento-grid grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 pb-8">
+          <div className="services-bento-grid mt-10 grid grid-cols-1 gap-6 pb-8 md:grid-cols-3">
             {/* Card 1: Home Repairs (Wide) */}
-            <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 overflow-hidden relative group">
-              <div className="flex-1 flex flex-col justify-center z-10 relative">
-                <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mb-6 border border-red-100/50">
-                  <img src="/images/categories/home-services.svg" alt="Home Repairs" className="w-8 h-8" />
+            <div className="bento-card group relative flex flex-col gap-6 overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-2 md:flex-row">
+              <div className="relative z-10 flex flex-1 flex-col justify-center max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-red-100/50 bg-red-50 max-md:hidden md:flex">
+                  <img
+                    src="/images/categories/home-services.svg"
+                    alt="Home Repairs"
+                    className="h-8 w-8"
+                  />
                 </div>
-                <h3 className="text-3xl font-bold text-slate-800 mb-3 font-rubik">Home Repairs</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">Electricians, plumbers, carpenters</p>
+                <h3 className="font-rubik mb-3 text-3xl font-bold text-slate-800">
+                  Home Repairs
+                </h3>
+                <p className="text-lg leading-relaxed text-slate-500">
+                  Electricians, plumbers, carpenters
+                </p>
               </div>
-              <div className="flex-1 relative min-h-[220px] md:min-h-full rounded-[1.5rem] overflow-hidden shadow-inner">
-                <img src="services/electrician.jpeg" alt="Home Repairs" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="relative min-h-[220px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 md:min-h-full">
+                <img
+                  src="services/electrician.jpeg"
+                  alt="Home Repairs"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             </div>
 
             {/* Card 2: Automobile Repairs (Square) */}
-            <div className="bento-card md:col-span-1 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col overflow-hidden relative group">
-              <div className="z-10 relative mb-6">
-                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 border border-blue-100/50">
-                  <img src="/images/categories/automobile-repairs.svg" alt="Automobile Repairs" className="w-8 h-8" />
+            <div className="bento-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-1">
+              <div className="relative z-10 mb-6 max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-blue-100/50 bg-blue-50 max-md:hidden md:flex">
+                  <img
+                    src="/images/categories/automobile-repairs.svg"
+                    alt="Automobile Repairs"
+                    className="h-8 w-8"
+                  />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-3 font-rubik">Automobile Repairs</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">Mechanics, car detailing</p>
+                <h3 className="font-rubik mb-3 text-2xl font-bold text-slate-800">
+                  Automobile Repairs
+                </h3>
+                <p className="text-lg leading-relaxed text-slate-500">
+                  Mechanics, car detailing
+                </p>
               </div>
-              <div className="flex-1 relative min-h-[180px] rounded-[1.5rem] overflow-hidden shadow-inner mt-auto">
-                <img src="services/mechanic.jpeg" alt="Automobile Repairs" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 max-md:mb-6 max-md:mt-0">
+                <img
+                  src="services/mechanic.jpeg"
+                  alt="Automobile Repairs"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             </div>
 
             {/* Card 3: Gadget & Appliance Tech (Square) */}
-            <div className="bento-card md:col-span-1 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col overflow-hidden relative group">
-              <div className="z-10 relative mb-6">
-                <div className="w-14 h-14 bg-gray-50 border border-gray-100/50 rounded-2xl flex items-center justify-center mb-6">
-                  <img src="/images/categories/gadget-technicians.svg" alt="Gadget & Appliance Tech" className="w-8 h-8" />
+            <div className="bento-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-1">
+              <div className="relative z-10 mb-6 max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-gray-100/50 bg-gray-50 max-md:hidden md:flex">
+                  <img
+                    src="/images/categories/gadget-technicians.svg"
+                    alt="Gadget & Appliance Tech"
+                    className="h-8 w-8"
+                  />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-3 font-rubik">Gadget Tech</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">Phone repair, appliance fixing</p>
+                <h3 className="font-rubik mb-3 text-2xl font-bold text-slate-800">
+                  Gadget Tech
+                </h3>
+                <p className="text-lg leading-relaxed text-slate-500">
+                  Phone repair, appliance fixing
+                </p>
               </div>
-              <div className="flex-1 relative min-h-[180px] rounded-[1.5rem] overflow-hidden shadow-inner mt-auto">
-                <img src="services/technician.jpeg" alt="Gadget & Appliance Tech" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 max-md:mb-6 max-md:mt-0">
+                <img
+                  src="services/technician.jpeg"
+                  alt="Gadget & Appliance Tech"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             </div>
 
             {/* Card 4: Beauty Services (Wide) */}
-            <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 overflow-hidden relative group">
-              <div className="flex-1 flex flex-col justify-center z-10 relative order-2 md:order-1">
-                <div className="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mb-6 border border-pink-100/50">
-                  <img src="/images/categories/beauty-services.svg" alt="Beauty Services" className="w-8 h-8" />
+            <div className="bento-card group relative flex flex-col gap-6 overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-2 md:flex-row">
+              <div className="relative z-10 order-2 flex flex-1 flex-col justify-center md:order-1">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-pink-100/50 bg-pink-50 max-md:hidden md:flex">
+                  <img
+                    src="/images/categories/beauty-services.svg"
+                    alt="Beauty Services"
+                    className="h-8 w-8"
+                  />
                 </div>
-                <h3 className="text-3xl font-bold text-slate-800 mb-3 font-rubik">Beauty Services</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">Hair styling, manicures, facials</p>
+                <h3 className="font-rubik mb-3 text-3xl font-bold text-slate-800">
+                  Beauty Services
+                </h3>
+                <p className="text-lg leading-relaxed text-slate-500">
+                  Hair styling, manicures, facials
+                </p>
               </div>
-              <div className="flex-1 relative min-h-[220px] md:min-h-full rounded-[1.5rem] overflow-hidden shadow-inner order-1 md:order-2">
-                <img src="services/hair-stylist.jpeg" alt="Beauty Services" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="relative order-1 min-h-[220px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner md:order-2 md:min-h-full">
+                <img
+                  src="services/hair-stylist.jpeg"
+                  alt="Beauty Services"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             </div>
 
             {/* Card 6: Delivery & Errands (Wide) */}
-            <div className="bento-card md:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 overflow-hidden relative group">
-              <div className="flex-1 flex flex-col justify-center z-10 relative">
-                <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mb-6 border border-green-100/50">
-                  <img src="/images/categories/delivery-errands.svg" alt="Delivery & Errands" className="w-8 h-8" />
+            <div className="bento-card group relative flex flex-col gap-6 overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-2 md:flex-row">
+              <div className="relative z-10 flex flex-1 flex-col justify-center max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-green-100/50 bg-green-50 max-md:hidden md:flex">
+                  <img
+                    src="/images/categories/delivery-errands.svg"
+                    alt="Delivery & Errands"
+                    className="h-8 w-8"
+                  />
                 </div>
-                <h3 className="text-3xl font-bold text-slate-800 mb-3 font-rubik">Delivery & Errands</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">Shopping, document delivery</p>
+                <h3 className="font-rubik mb-3 text-3xl font-bold text-slate-800">
+                  Delivery & Errands
+                </h3>
+                <p className="text-lg leading-relaxed text-slate-500">
+                  Shopping, document delivery
+                </p>
               </div>
-              <div className="flex-1 relative min-h-[220px] md:min-h-full rounded-[1.5rem] overflow-hidden shadow-inner">
-                <img src="services/delivery-man.jpeg" alt="Delivery & Errands" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="relative min-h-[220px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 md:min-h-full">
+                <img
+                  src="services/delivery-man.jpeg"
+                  alt="Delivery & Errands"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             </div>
 
             {/* Card 5: Massage Services (Square) */}
-            <div className="bento-card md:col-span-1 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 flex flex-col overflow-hidden relative group">
-              <div className="z-10 relative mb-6">
-                <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 border border-purple-100/50">
-                  <img src="/images/categories/beauty-wellness.svg" alt="Massage Services" className="w-8 h-8" />
+            <div className="bento-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-1">
+              <div className="relative z-10 mb-6 max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-purple-100/50 bg-purple-50 max-md:hidden md:flex">
+                  <img
+                    src="/images/categories/beauty-wellness.svg"
+                    alt="Massage Services"
+                    className="h-8 w-8"
+                  />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-3 font-rubik">Massage Services</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">Therapy & relaxation treatments</p>
+                <h3 className="font-rubik mb-3 text-2xl font-bold text-slate-800">
+                  Massage Services
+                </h3>
+                <p className="text-lg leading-relaxed text-slate-500">
+                  Therapy & relaxation treatments
+                </p>
               </div>
-              <div className="flex-1 relative min-h-[180px] rounded-[1.5rem] overflow-hidden shadow-inner mt-auto">
-                <img src="services/massager.jpeg" alt="Massage Services" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 max-md:mb-6 max-md:mt-0">
+                <img
+                  src="services/massager.jpeg"
+                  alt="Massage Services"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             </div>
 
-            {/* Card 7: Tutoring (Full span bottom) */}
-            <div className="bento-card md:col-span-3 bg-white rounded-[2rem] p-8 md:p-10 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 overflow-hidden relative group">
-              <div className="flex-1 flex flex-col justify-center z-10 relative md:max-w-md">
-                <div className="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center mb-6 border border-yellow-100/50">
-                  <img src="/images/categories/tutoring.svg" alt="Tutoring" className="w-8 h-8" />
+            {/* Card 7: Tutoring (Square) */}
+            <div className="bento-card group relative flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-1">
+              <div className="relative z-10 mb-6 max-md:order-2">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-yellow-100/50 bg-yellow-50 max-md:hidden md:flex">
+                  <img
+                    src="/images/categories/tutoring.svg"
+                    alt="Tutoring"
+                    className="h-8 w-8"
+                  />
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4 font-rubik">Tutoring</h3>
-                <p className="text-slate-500 text-lg leading-relaxed">Academic support, skill training, and personal development</p>
+                <h3 className="font-rubik mb-3 text-2xl font-bold text-slate-800">
+                  Tutoring
+                </h3>
+                <p className="text-lg leading-relaxed text-slate-500">
+                  Academic support, skill training, and personal development
+                </p>
               </div>
-              <div className="flex-[2] relative min-h-[260px] md:min-h-[320px] rounded-[1.5rem] overflow-hidden shadow-inner mt-4 md:mt-0">
-                <img src="services/tutor.jpeg" alt="Tutoring" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 object-[center_30%]" />
+              <div className="relative mt-auto min-h-[180px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner max-md:order-1 max-md:mb-6 max-md:mt-0">
+                <img
+                  src="services/tutor.jpeg"
+                  alt="Tutoring"
+                  className="absolute inset-0 h-full w-full object-cover object-[center_30%] transition-transform duration-700 group-hover:scale-105"
+                />
+              </div>
+            </div>
+
+            {/* Card 8: Online Services (Wide) */}
+            <div className="bento-card group relative flex flex-col gap-6 overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm md:col-span-2 md:flex-row">
+              <div className="relative z-10 order-2 flex flex-1 flex-col justify-center md:order-1">
+                <div className="mb-6 h-14 w-14 items-center justify-center rounded-2xl border border-indigo-100/50 bg-indigo-50 max-md:hidden md:flex">
+                  <img
+                    src="/images/categories/others.svg"
+                    alt="Online Services"
+                    className="h-8 w-8"
+                  />
+                </div>
+                <h3 className="font-rubik mb-3 text-3xl font-bold text-slate-800">
+                  Online Services
+                </h3>
+                <p className="text-lg leading-relaxed text-slate-500">
+                  Virtual consultations, online booking, and digital services at
+                  your fingertips
+                </p>
+              </div>
+              <div className="relative order-1 min-h-[220px] flex-1 overflow-hidden rounded-[1.5rem] shadow-inner md:order-2 md:min-h-full">
+                <img
+                  src="services/online-services.png"
+                  alt="Online Services"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             </div>
           </div>
