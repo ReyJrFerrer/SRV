@@ -228,6 +228,8 @@ async function createService_service(request) {
     maxBookingsPerDay,
     serviceImages,
     serviceCertificates,
+    serviceMode,
+    onlineConfig,
   } = payload;
 
 
@@ -256,11 +258,28 @@ async function createService_service(request) {
       `Service price must be between ₱${MIN_PRICE} and ₱${MAX_PRICE}`);
   }
 
-  const locationValid = validateLocation(location);
-  if (!locationValid) {
+  const resolvedServiceMode = serviceMode || "HomeService";
+  if (resolvedServiceMode !== "HomeService" && resolvedServiceMode !== "OnlineService") {
     throw new HttpsError(
       "invalid-argument",
-      "Invalid location data");
+      "serviceMode must be 'HomeService' or 'OnlineService'",
+    );
+  }
+
+  if (resolvedServiceMode === "OnlineService" && !onlineConfig) {
+    throw new HttpsError(
+      "invalid-argument",
+      "onlineConfig is required for OnlineService mode",
+    );
+  }
+
+  if (resolvedServiceMode === "HomeService") {
+    const locationValid = validateLocation(location);
+    if (!locationValid) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Invalid location data");
+    }
   }
 
   // Validate category exists
@@ -328,7 +347,7 @@ async function createService_service(request) {
       description,
       category,
       price,
-      location,
+      location: resolvedServiceMode === "OnlineService" ? null : location,
       status: "Available",
       rating: null,
       reviewCount: 0,
@@ -340,6 +359,8 @@ async function createService_service(request) {
       instantBookingEnabled: instantBookingEnabled || false,
       bookingNoticeHours: bookingNoticeHours || null,
       maxBookingsPerDay: maxBookingsPerDay || null,
+      serviceMode: resolvedServiceMode,
+      onlineConfig: resolvedServiceMode === "OnlineService" ? onlineConfig : null,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -589,6 +610,14 @@ async function updateService_service(request) {
     bookingNoticeHours,
     maxBookingsPerDay,
   } = payload;
+
+  if (payload.serviceMode !== undefined || payload.onlineConfig !== undefined) {
+    throw new HttpsError(
+      "invalid-argument",
+      "serviceMode and onlineConfig are immutable after creation. " +
+      "Create a new service for a different mode.",
+    );
+  }
 
   if (!serviceId) {
     throw new HttpsError(
@@ -1666,6 +1695,166 @@ async function initializeCategoriesDirectly() {
       parentId: null,
       slug: "others",
       imageUrl: "/images/HomeServices-CoverImage.jpg",
+    },
+    {
+      id: "cat-011",
+      name: "Web Development",
+      description: "Frontend and backend web development services",
+      parentId: null,
+      slug: "web-development",
+      imageUrl: "/images/WebDevelopment-CoverImage.jpg",
+    },
+    {
+      id: "cat-012",
+      name: "UI/UX Design",
+      description: "User interface and user experience design services",
+      parentId: null,
+      slug: "ui-ux-design",
+      imageUrl: "/images/UIUXDesign-CoverImage.jpg",
+    },
+    {
+      id: "cat-013",
+      name: "CMS Management",
+      description: "WordPress, Shopify, Wix and other CMS platform management",
+      parentId: null,
+      slug: "cms-management",
+      imageUrl: "/images/CMSManagement-CoverImage.jpg",
+    },
+    {
+      id: "cat-014",
+      name: "IT Support & Troubleshooting",
+      description: "Remote IT support and technical troubleshooting services",
+      parentId: null,
+      slug: "it-support",
+      imageUrl: "/images/ITSupport-CoverImage.jpg",
+    },
+    {
+      id: "cat-015",
+      name: "Video Editing",
+      description: "Professional video editing and post-production services",
+      parentId: null,
+      slug: "video-editing",
+      imageUrl: "/images/VideoEditing-CoverImage.jpg",
+    },
+    {
+      id: "cat-016",
+      name: "Graphic Design",
+      description: "Branding, logos, and graphic design services",
+      parentId: null,
+      slug: "graphic-design",
+      imageUrl: "/images/GraphicDesign-CoverImage.jpg",
+    },
+    {
+      id: "cat-017",
+      name: "Copywriting",
+      description: "Professional copywriting and content creation services",
+      parentId: null,
+      slug: "copywriting",
+      imageUrl: "/images/Copywriting-CoverImage.jpg",
+    },
+    {
+      id: "cat-018",
+      name: "Digital Marketing & SEO",
+      description: "Digital marketing strategy and SEO optimization services",
+      parentId: null,
+      slug: "digital-marketing-seo",
+      imageUrl: "/images/DigitalMarketing-CoverImage.jpg",
+    },
+    {
+      id: "cat-019",
+      name: "Business Registration",
+      description: "DTI, SEC, permits and business registration assistance",
+      parentId: null,
+      slug: "business-registration",
+      imageUrl: "/images/BusinessRegistration-CoverImage.jpg",
+    },
+    {
+      id: "cat-020",
+      name: "Tax & Financial Consulting",
+      description: "Tax preparation and financial consulting services",
+      parentId: null,
+      slug: "tax-financial-consulting",
+      imageUrl: "/images/TaxConsulting-CoverImage.jpg",
+    },
+    {
+      id: "cat-021",
+      name: "Legal Contract Drafting",
+      description: "Legal document and contract drafting services",
+      parentId: null,
+      slug: "legal-contract-drafting",
+      imageUrl: "/images/LegalContract-CoverImage.jpg",
+    },
+    {
+      id: "cat-022",
+      name: "Bookkeeping & Accounting",
+      description: "Bookkeeping and accounting management services",
+      parentId: null,
+      slug: "bookkeeping-accounting",
+      imageUrl: "/images/Bookkeeping-CoverImage.jpg",
+    },
+    {
+      id: "cat-023",
+      name: "Payroll Management",
+      description: "Payroll processing and management services",
+      parentId: null,
+      slug: "payroll-management",
+      imageUrl: "/images/PayrollManagement-CoverImage.jpg",
+    },
+    {
+      id: "cat-024",
+      name: "Virtual Assistant Services",
+      description: "Remote virtual assistant and administrative support",
+      parentId: null,
+      slug: "virtual-assistant",
+      imageUrl: "/images/VirtualAssistant-CoverImage.jpg",
+    },
+    {
+      id: "cat-025",
+      name: "Project Management",
+      description: "Remote project management and coordination services",
+      parentId: null,
+      slug: "project-management",
+      imageUrl: "/images/ProjectManagement-CoverImage.jpg",
+    },
+    {
+      id: "cat-026",
+      name: "Academic Tutoring",
+      description: "Online academic tutoring and educational instruction",
+      parentId: null,
+      slug: "academic-tutoring",
+      imageUrl: "/images/AcademicTutoring-CoverImage.jpg",
+    },
+    {
+      id: "cat-027",
+      name: "Business & Startup Coaching",
+      description: "Business mentoring and startup coaching services",
+      parentId: null,
+      slug: "business-startup-coaching",
+      imageUrl: "/images/BusinessCoaching-CoverImage.jpg",
+    },
+    {
+      id: "cat-028",
+      name: "Music & Arts Instruction",
+      description: "Online music lessons and arts instruction",
+      parentId: null,
+      slug: "music-arts-instruction",
+      imageUrl: "/images/MusicArts-CoverImage.jpg",
+    },
+    {
+      id: "cat-029",
+      name: "Coding & Software Training",
+      description: "Programming tutorials and software training courses",
+      parentId: null,
+      slug: "coding-software-training",
+      imageUrl: "/images/CodingTraining-CoverImage.jpg",
+    },
+    {
+      id: "cat-030",
+      name: "Fitness Coaching",
+      description: "Online fitness coaching and personal training",
+      parentId: null,
+      slug: "fitness-coaching",
+      imageUrl: "/images/FitnessCoaching-CoverImage.jpg",
     },
 
   ];

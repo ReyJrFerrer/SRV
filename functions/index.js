@@ -105,6 +105,16 @@ exports.notificationAction = notificationAction;
 exports.cleanupExpiredNotifications = cleanupExpiredNotifications;
 exports.cleanupNotificationFrequency = cleanupNotificationFrequency;
 
+// Import Online Project Management functions
+const {
+  onlineProjectAction,
+  autoCancelExpiredProjects,
+} = require("./src/onlineProject");
+
+// Export Online Project Management Functions
+exports.onlineProjectAction = onlineProjectAction;
+exports.autoCancelExpiredProjects = autoCancelExpiredProjects;
+
 // Export Media Management Functions
 exports.mediaAction = mediaAction;
 

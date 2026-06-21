@@ -79,6 +79,50 @@ service cloud.firestore {
         }
     }
 
+    // Online projects — participants can read; only Cloud Functions can write.
+    match /online_projects/{projectId} {
+      allow read: if request.auth.uid == resource.data.clientId
+                  || request.auth.uid == resource.data.providerId
+                  || request.auth.token.isAdmin == true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+
+      match /negotiations/{offerId} {
+        allow read: if request.auth.uid == resource.data.clientId
+                    || request.auth.uid == resource.data.providerId
+                    || request.auth.token.isAdmin == true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      match /deliverables/{deliverableId} {
+        allow read: if request.auth.uid == resource.data.clientId
+                    || request.auth.uid == resource.data.providerId
+                    || request.auth.token.isAdmin == true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      match /payment_history/{recordId} {
+        allow read: if request.auth.uid == resource.data.clientId
+                    || request.auth.uid == resource.data.providerId
+                    || request.auth.token.isAdmin == true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    match /online_project_idempotency/{idempotencyKey} {
+      allow read: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
     // Default deny all other collections
     match /{path=**} {
       allow read, write: if false;

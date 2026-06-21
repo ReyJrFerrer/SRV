@@ -67,6 +67,19 @@ const NOTIFICATION_TYPES = {
   PAYMENT_ISSUE: "payment_issue",
   BOOKING_AUTO_CANCELLED_NOT_CHOSEN: "booking_auto_cancelled_not_chosen",
   BOOKING_AUTO_CANCELLED_MISSED_SLOT: "booking_auto_cancelled_missed_slot",
+  NEW_ONLINE_PROJECT_REQUEST: "new_online_project_request",
+  ONLINE_PROJECT_ACCEPTED: "online_project_accepted",
+  ONLINE_PROJECT_DECLINED: "online_project_declined",
+  ONLINE_PROJECT_COUNTER_OFFER: "online_project_counter_offer",
+  ONLINE_PROJECT_CANCELLED: "online_project_cancelled",
+  ONLINE_PROJECT_DISPUTED: "online_project_disputed",
+  ONLINE_PROJECT_COMPLETED: "online_project_completed",
+  DISPUTE_RESOLVED_FOR_CLIENT: "dispute_resolved_for_client",
+  DISPUTE_RESOLVED_FOR_PROVIDER: "dispute_resolved_for_provider",
+  DISPUTE_DISMISSED: "dispute_dismissed",
+  DELIVERABLE_SUBMITTED: "deliverable_submitted",
+  MILESTONE_APPROVED: "milestone_approved",
+  REVISIONS_REQUESTED: "revisions_requested",
 };
 
 // Booking-related notification types that also trigger email delivery
@@ -154,6 +167,42 @@ function generateNotificationHref(notificationType, userType, entityId) {
     return isProvider ? `/provider/bookings` : `/client/home`;
   case NOTIFICATION_TYPES.SERVICE_REMINDER:
     return isProvider ? `/provider/booking/${entityId}` : `/client/booking/${entityId}`;
+  case NOTIFICATION_TYPES.NEW_ONLINE_PROJECT_REQUEST:
+    return `/provider/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.ONLINE_PROJECT_ACCEPTED:
+    return isProvider ?
+      `/provider/online-project/${entityId}` :
+      `/client/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.ONLINE_PROJECT_DECLINED:
+    return `/client/online-projects`;
+  case NOTIFICATION_TYPES.ONLINE_PROJECT_COUNTER_OFFER:
+    return `/client/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.DELIVERABLE_SUBMITTED:
+    return `/client/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.MILESTONE_APPROVED:
+    return `/provider/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.REVISIONS_REQUESTED:
+    return `/provider/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.ONLINE_PROJECT_COMPLETED:
+    return `/client/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.ONLINE_PROJECT_CANCELLED:
+    return isProvider ? `/provider/online-projects` : `/client/online-projects`;
+  case NOTIFICATION_TYPES.ONLINE_PROJECT_DISPUTED:
+    return isProvider ?
+      `/provider/online-project/${entityId}` :
+      `/client/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.DISPUTE_RESOLVED_FOR_CLIENT:
+    return isProvider ?
+      `/provider/online-project/${entityId}` :
+      `/client/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.DISPUTE_RESOLVED_FOR_PROVIDER:
+    return isProvider ?
+      `/provider/online-project/${entityId}` :
+      `/client/online-project/${entityId}`;
+  case NOTIFICATION_TYPES.DISPUTE_DISMISSED:
+    return isProvider ?
+      `/provider/online-project/${entityId}` :
+      `/client/online-project/${entityId}`;
   default:
     return isProvider ? `/provider/booking/${entityId}` : `/client/booking/${entityId}`;
   }

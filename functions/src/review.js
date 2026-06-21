@@ -92,15 +92,15 @@ async function submitReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const {bookingId, rating, comment = ""} = payload;
+  const {bookingId, projectId, rating, comment = ""} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  if (!bookingId) {
-    throw new HttpsError("invalid-argument", "Booking ID is required");
+  if (!bookingId && !projectId) {
+    throw new HttpsError("invalid-argument", "Booking ID or Project ID is required");
   }
 
   if (!isValidRating(rating)) {
@@ -118,6 +118,88 @@ async function submitReview_review(request) {
   }
 
   try {
+    if (projectId) {
+      const result = await db.runTransaction(async (transaction) => {
+        const projectRef = db.collection("online_projects").doc(projectId);
+        const projectSnap = await transaction.get(projectRef);
+
+        if (!projectSnap.exists) {
+          throw new HttpsError("not-found", "Online project not found");
+        }
+
+        const project = projectSnap.data();
+
+        if (project.clientId !== authInfo.uid) {
+          throw new HttpsError("permission-denied", "Not authorized to review this project");
+        }
+
+        if (project.status !== "Completed" || !project.completedAt) {
+          throw new HttpsError(
+            "failed-precondition",
+            "Project is not completed yet. Cannot submit review until project is completed.",
+          );
+        }
+
+        if (!isWithinReviewWindow(project.completedAt)) {
+          const msg = `Review window has expired. Reviews must be submitted within ` +
+            `${REVIEW_WINDOW_DAYS} days of project completion`;
+          throw new HttpsError("deadline-exceeded", msg);
+        }
+
+        const existingReviewsSnap = await db
+          .collection("reviews")
+          .where("projectId", "==", projectId)
+          .where("clientId", "==", authInfo.uid)
+          .get();
+
+        if (!existingReviewsSnap.empty) {
+          throw new HttpsError("already-exists", "Review already exists for this project");
+        }
+
+        const serviceRef = db.collection("services").doc(project.serviceId);
+        const serviceSnap = await transaction.get(serviceRef);
+
+        const reviewId = generateId();
+        const now = new Date().toISOString();
+
+        const newReview = {
+          id: reviewId,
+          projectId: projectId,
+          clientId: authInfo.uid,
+          providerId: project.providerId,
+          serviceId: project.serviceId,
+          rating: rating,
+          comment: comment,
+          createdAt: now,
+          updatedAt: now,
+          status: "Visible",
+          qualityScore: calculateQualityScore({rating, comment}),
+        };
+
+        const reviewRef = db.collection("reviews").doc(reviewId);
+        transaction.set(reviewRef, newReview);
+
+        if (serviceSnap.exists) {
+          const service = serviceSnap.data();
+          const currentRating = service.averageRating || 0;
+          const currentCount = service.reviewCount || 0;
+          const newCount = currentCount + 1;
+          const newAverageRating = ((currentRating * currentCount) + rating) / newCount;
+
+          transaction.update(serviceRef, {
+            averageRating: newAverageRating,
+            reviewCount: newCount,
+            updatedAt: now,
+          });
+        }
+
+        return {success: true, data: newReview};
+      });
+
+      await processReviewForReputationInternal(result.data, true);
+      return result;
+    }
+
     const result = await db.runTransaction(async (transaction) => {
       const bookingRef = db.collection("bookings").doc(bookingId);
       const bookingSnap = await transaction.get(bookingRef);
@@ -1330,15 +1412,15 @@ async function submitProviderReview_review(request) {
   const data = request.data;
   const context = {auth: request.auth, rawRequest: request};
   const payload = data.data || data;
-  const {bookingId, rating, comment = ""} = payload;
+  const {bookingId, projectId, rating, comment = ""} = payload;
 
   const authInfo = getAuthInfo(context, data);
   if (!authInfo.hasAuth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  if (!bookingId) {
-    throw new HttpsError("invalid-argument", "Booking ID is required");
+  if (!bookingId && !projectId) {
+    throw new HttpsError("invalid-argument", "Booking ID or Project ID is required");
   }
 
   if (!isValidRating(rating)) {
@@ -1356,6 +1438,83 @@ async function submitProviderReview_review(request) {
   }
 
   try {
+    if (projectId) {
+      const result = await db.runTransaction(async (transaction) => {
+        const projectRef = db.collection("online_projects").doc(projectId);
+        const projectSnap = await transaction.get(projectRef);
+
+        if (!projectSnap.exists) {
+          throw new HttpsError("not-found", "Online project not found");
+        }
+
+        const project = projectSnap.data();
+
+        if (project.providerId !== authInfo.uid) {
+          throw new HttpsError(
+            "permission-denied",
+            "Only the project provider can review the client",
+          );
+        }
+
+        if (project.status !== "Completed") {
+          throw new HttpsError(
+            "failed-precondition",
+            "Can only review completed projects",
+          );
+        }
+
+        if (!isWithinReviewWindow(project.completedAt)) {
+          const msg = `Review window has expired. Reviews must be submitted within ` +
+            `${REVIEW_WINDOW_DAYS} days of project completion`;
+          throw new HttpsError("deadline-exceeded", msg);
+        }
+
+        const existingReviewsSnap = await db
+          .collection("providerReviews")
+          .where("projectId", "==", projectId)
+          .where("providerId", "==", authInfo.uid)
+          .get();
+
+        if (!existingReviewsSnap.empty) {
+          throw new HttpsError(
+            "already-exists",
+            "You have already reviewed this client for this project",
+          );
+        }
+
+        const reviewId = generateId();
+        const now = new Date().toISOString();
+        const qualityScore = calculateQualityScore({rating, comment});
+
+        const providerReview = {
+          id: reviewId,
+          projectId: projectId,
+          clientId: project.clientId,
+          providerId: authInfo.uid,
+          serviceId: project.serviceId,
+          rating: rating,
+          comment: comment,
+          createdAt: now,
+          updatedAt: now,
+          status: "Visible",
+          qualityScore: qualityScore,
+          reviewType: "ProviderToClient",
+        };
+
+        const reviewRef = db.collection("providerReviews").doc(reviewId);
+        transaction.set(reviewRef, providerReview);
+
+        return {
+          success: true,
+          message: "Provider review submitted successfully",
+          data: providerReview,
+        };
+      });
+
+      await processReviewForReputationInternal(result.data, true);
+      return result;
+    }
+
     const result = await db.runTransaction(async (transaction) => {
       const bookingRef = db.collection("bookings").doc(bookingId);
       const bookingSnap = await transaction.get(bookingRef);

@@ -32,6 +32,8 @@ function getAuthInfo(context, data) {
 const MAX_FILE_SIZE = 1000000; // 1MB in bytes (general images)
 const MAX_REMITTANCE_FILE_SIZE = 1048576; // 1MB in bytes
 const MAX_PROBLEM_PROOF_VIDEO_SIZE = 30 * 1024 * 1024; // 30MB for short clips
+const MAX_PROJECT_BRIEF_FILE_SIZE = 50 * 1024 * 1024; // 50MB for project briefs
+const MAX_PROJECT_DELIVERABLE_FILE_SIZE = 500 * 1024 * 1024; // 500MB for deliverables
 const SUPPORTED_CONTENT_TYPES = [
   // Images
   "image/jpeg",
@@ -77,6 +79,12 @@ function validateFileSize(fileSize, mediaType, contentType) {
   if (mediaType === "ChatAttachment") {
     return fileSize > 0 && fileSize <= 1024 * 1024 * 1024;
   }
+  if (mediaType === "ProjectBriefAttachment") {
+    return fileSize > 0 && fileSize <= MAX_PROJECT_BRIEF_FILE_SIZE;
+  }
+  if (mediaType === "ProjectDeliverable") {
+    return fileSize > 0 && fileSize <= MAX_PROJECT_DELIVERABLE_FILE_SIZE;
+  }
   const maxSize =
     mediaType === "RemittancePaymentProof" ? MAX_REMITTANCE_FILE_SIZE : MAX_FILE_SIZE;
   return fileSize > 0 && fileSize <= maxSize;
@@ -99,6 +107,8 @@ function generateFilePath(ownerId, mediaType, fileName, mediaId) {
     ReportAttachment: "reports",
     ProblemProof: "problem-proof",
     ChatAttachment: "chat-attachments",
+    ProjectBriefAttachment: "project-briefs",
+    ProjectDeliverable: "project-deliverables",
   }[mediaType];
 
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -177,7 +187,11 @@ async function uploadMediaHandler(request) {
       "1MB" :
       mediaType === "ProblemProof" && contentType?.startsWith("video/") ?
         "30MB" :
-        "1MB";
+        mediaType === "ProjectBriefAttachment" ?
+          "50MB" :
+          mediaType === "ProjectDeliverable" ?
+            "500MB" :
+            "1MB";
     throw new HttpsError(
       "invalid-argument",
       `File size must be between 1 byte and ${maxSizeText} for this media type`,
@@ -584,6 +598,8 @@ async function getStorageStatsHandler(request) {
       ServiceImage: 0,
       ServiceCertificate: 0,
       RemittancePaymentProof: 0,
+      ProjectBriefAttachment: 0,
+      ProjectDeliverable: 0,
     };
     const uniqueOwners = new Set();
 
@@ -822,6 +838,8 @@ async function uploadMediaInternal({
     "RemittancePaymentProof",
     "ReportAttachment",
     "ChatAttachment",
+    "ProjectBriefAttachment",
+    "ProjectDeliverable",
   ];
   if (!validMediaTypes.includes(mediaType)) {
     throw new Error(`Invalid media type: ${mediaType}`);
@@ -1123,6 +1141,149 @@ async function deleteChatAttachmentHandler(request) {
   }
 }
 
+/**
+ * Initialize a project brief file upload
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} Result with upload metadata
+ */
+async function initProjectBriefUploadHandler(request) {
+  const data = request.data;
+  const authInfo = getAuthInfo({auth: request.auth}, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  const {fileName, contentType, fileSize, serviceId} = data;
+
+  if (!fileName || fileName.length === 0 || fileName.length > 255) {
+    throw new HttpsError(
+      "invalid-argument",
+      "File name must be between 1 and 255 characters",
+    );
+  }
+
+  if (!contentType || !validateContentType(contentType)) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Unsupported file type: ${contentType}`,
+    );
+  }
+
+  const size = Number(fileSize) || 0;
+  if (size <= 0 || size > MAX_PROJECT_BRIEF_FILE_SIZE) {
+    throw new HttpsError(
+      "invalid-argument",
+      "File must be between 1 byte and 50MB.",
+    );
+  }
+
+  if (!serviceId) {
+    throw new HttpsError("invalid-argument", "serviceId is required");
+  }
+
+  const serviceDoc = await db.collection("services").doc(serviceId).get();
+  if (!serviceDoc.exists) {
+    throw new HttpsError("not-found", "Service not found");
+  }
+
+  const service = serviceDoc.data();
+  if (service.serviceMode !== "OnlineService") {
+    throw new HttpsError("invalid-argument", "Service is not an online service");
+  }
+
+  if (service.status !== "Available") {
+    throw new HttpsError("failed-precondition", "Service is not currently available");
+  }
+
+  if (service.providerId === authInfo.uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Cannot upload a brief attachment for your own service",
+    );
+  }
+
+  const mediaId = await generateUuid();
+  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const filePath = `project-briefs/${authInfo.uid}/${mediaId}_${sanitizedFileName}`;
+
+  return {
+    success: true,
+    data: {
+      mediaId,
+      filePath,
+      fileName,
+      fileType: contentType,
+      thumbnailUrl: null,
+    },
+  };
+}
+
+/**
+ * Initialize a project deliverable file upload
+ * @param {Object} request The callable request
+ * @return {Promise<Object>} Result with upload metadata
+ */
+async function initProjectDeliverableUploadHandler(request) {
+  const data = request.data;
+  const authInfo = getAuthInfo({auth: request.auth}, data);
+  if (!authInfo.hasAuth) {
+    throw new HttpsError("unauthenticated", "User must be authenticated");
+  }
+
+  const {fileName, contentType, fileSize, projectId} = data;
+
+  if (!fileName || fileName.length === 0 || fileName.length > 255) {
+    throw new HttpsError(
+      "invalid-argument",
+      "File name must be between 1 and 255 characters",
+    );
+  }
+
+  if (!contentType || !validateContentType(contentType)) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Unsupported file type: ${contentType}`,
+    );
+  }
+
+  const size = Number(fileSize) || 0;
+  if (size <= 0 || size > MAX_PROJECT_DELIVERABLE_FILE_SIZE) {
+    throw new HttpsError(
+      "invalid-argument",
+      "File must be between 1 byte and 500MB.",
+    );
+  }
+
+  if (!projectId) {
+    throw new HttpsError("invalid-argument", "projectId is required");
+  }
+
+  const projectDoc = await db.collection("online_projects").doc(projectId).get();
+  if (!projectDoc.exists) {
+    throw new HttpsError("not-found", "Online project not found");
+  }
+
+  const project = projectDoc.data();
+  if (project.providerId !== authInfo.uid && !authInfo.isAdmin) {
+    throw new HttpsError("permission-denied", "Only the project provider can upload deliverables");
+  }
+
+  const mediaId = await generateUuid();
+  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const filePath = `project-deliverables/${authInfo.uid}/${mediaId}_${sanitizedFileName}`;
+
+  return {
+    success: true,
+    data: {
+      mediaId,
+      filePath,
+      fileName,
+      fileType: contentType,
+      thumbnailUrl: null,
+    },
+  };
+}
+
 // ============================================================================
 // TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
 // ============================================================================
@@ -1166,6 +1327,10 @@ exports.mediaAction = onCall(
         return await initChatAttachmentUploadHandler(request);
       case "deleteChatAttachment":
         return await deleteChatAttachmentHandler(request);
+      case "initProjectBriefUpload":
+        return await initProjectBriefUploadHandler(request);
+      case "initProjectDeliverableUpload":
+        return await initProjectDeliverableUploadHandler(request);
       default:
         throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
