@@ -100,7 +100,8 @@ bookings/{bookingId}: {
   attachments: string[],           // problem proof media URLs
   notes: string | null,
   paymentMethod: "CashOnHand" | "GCash" | "SRVWallet",
-  locationDetection: "automatic" | "manual",
+  locationDetection: "automatic" | "manual",  // how client location was captured
+  navigationStartedNotified: false | true,     // set by startNavigation
   paymentStatus: "PENDING" | "PAID_HELD",  // PAID_HELD if GCash
   paymentId: string | null,        // GCash payment reference
   heldAmount: number | null,
@@ -168,9 +169,10 @@ All via `bookingAction` Cloud Function:
 |--------|----------|--------------|
 | `acceptBooking` | `bookingAction` | Validates transition Requested→Accepted, creates notification for client |
 | `declineBooking` | `bookingAction` | Validates transition Requested→Declined |
-| `cancelBooking` | `bookingAction` | Either party: transitions to Cancelled from Requested/Accepted/InProgress |
-| `startService` | `bookingAction` | Transition Accepted→InProgress; starts GPS tracking publishing |
-| `completeService` | `bookingAction` | Transition InProgress→Completed; provider marks job done |
+| `cancelBooking` | `bookingAction` | Either party: transitions to Cancelled from Requested/Accepted/InProgress. Deducts reputation via `deductReputationForCancellationInternal`. Auto-creates `reports` doc with cancellation details. |
+| `startNavigation` | `bookingAction` | **Status-neutral** — sends notification, initializes RTDB `providerLocations/{bookingId}` node for GPS tracking |
+| `startService` | `bookingAction` | Transition Accepted→InProgress; marks startedDate; cleans up RTDB node |
+| `completeService` | `bookingAction` | Transition InProgress→Completed; provider marks job done; sends review reminders |
 | `releasePayment` | `bookingAction` | Admin action: releases held GCash funds to provider |
 | `getBookingAnalytics` | `bookingAction` | Provider booking statistics |
 
@@ -203,12 +205,43 @@ All via `bookingAction` Cloud Function:
 | `/provider/complete-service/:bookingId` | `ProviderCompleteService` | Service completion flow |
 | `/provider/directions/:bookingId` | `ProviderDirections` | Navigation to client location |
 
+## Hidden / Undocumented Features
+
+### `startNavigation` Action
+
+`booking.js:771-862` — does **not** change booking status. Called by the provider before `startBooking`:
+- Sends `START_NAVIGATION` notification to client
+- Initializes Firebase Realtime Database node at `providerLocations/{bookingId}` with provider/client IDs
+- Sets `navigationStartedNotified: true` flag on booking
+
+### `cancelConflictingBookings`
+
+When a provider **accepts** one booking (`Accept` transition), all other `Requested` bookings for the same provider/service/day that overlap with the accepted time slot are **automatically cancelled** with reason `"auto_cancelled_not_chosen"`. Creates `BOOKING_AUTO_CANCELLED_NOT_CHOSEN` notifications for affected clients.
+
+### Cancellation Reputation Deduction + Report
+
+`booking.js:1148-1239` — when cancelled from `Accepted`/`InProgress`/`Requested`:
+- `deductReputationForCancellationInternal(authInfo.uid)` is called on the canceller
+- A detailed report is auto-created in the `reports` collection with cancellation reason, role, service name, and user info
+
+### Shared Booking Listener Pattern
+
+`bookingCanisterService.ts:762-842` — `createSharedBookingListener` + `sharedBookingListeners` Map. Multiple React components can subscribe to the same Firestore query without creating extra `onSnapshot` listeners. Deduplicates by `listenerId` (`client-{clientId}`, `provider-{providerId}`, `status-{status}`, `booking-{bookingId}`). Cleanup uses a 1000ms timeout before removing the underlying listener.
+
+### `servicePackageId` / `servicePackageIds` Duality
+
+`bookingCanisterService.ts:154-157` — backend returns `servicePackageIds`, frontend legacy interface uses `servicePackageId`. The `mapBookingFields` function bridges them:
+
+```typescript
+servicePackageId: booking.servicePackageIds || booking.servicePackageId || [],
+```
+
 ## Key Architecture Notes
 
 1. **Firestore-native** — all booking data lives in Firestore's `bookings` collection; no ICP canisters
-2. **Callable-only mutation** — all writes go through `bookingAction` Cloud Function (no direct Firestore client writes)
+2. **Almost callable-only mutation** — most writes go through `bookingAction` Cloud Function, but `updateProviderAttachments()` uses direct Firestore `updateDoc` + `arrayUnion` client-side (`bookingCanisterService.ts:608-622`)
 3. **Real-time reads** — Firestore `onSnapshot` subscriptions for booking lists and detail pages
 4. **Payment is separate** — GCash flow (directPay) is independent of booking creation; only `createBookingRequest` ties them together
 5. **Draft auto-save** — booking form saves/restores drafts from localStorage
-6. **Reputation gate** — both client and provider must have trustScore ≥ 5 to create a booking
+6. **Reputation gate** — both client and provider must have trustScore **above** 5 (backend rejects `trustScore <= 5`; frontend gate uses `>= 5`)
 7. **No service-level booking limits** — `maxBookingsPerDay` on service exists but not enforced in booking creation v1

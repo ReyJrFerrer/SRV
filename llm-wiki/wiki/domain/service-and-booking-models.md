@@ -43,8 +43,8 @@ interface Service {
   instantBookingEnabled?: boolean;
   bookingNoticeHours?: number;
   maxBookingsPerDay?: number;
-  createdAt: string;           // ISO 8601
-  updatedAt: string;           // ISO 8601
+  createdAt: any;              // ISO 8601 string from backend; Firestore Timestamp from direct reads
+  updatedAt: any;              // ISO 8601 string from backend; Firestore Timestamp from direct reads
   // Runtime-enriched fields:
   providerName?: string;
   distance?: number;
@@ -85,15 +85,15 @@ interface ServiceCategory {
 }
 ```
 
-10 predefined categories (seeded in Firestore by `getAllCategories_service`):
+10 predefined categories (seeded in Firestore by `initializeCategoriesDirectly` in `service.js:1589-1671`):
 
-1. Home Repairs (`home-repairs`)
-2. Cleaning (`cleaning`)
-3. Automobile (`automobile`)
-4. Gadget (`gadget`)
-5. Beauty (`beauty`)
-6. Delivery (`delivery`)
-7. Massage (`massage`)
+1. Home Repairs (`home-services`)
+2. Cleaning Services (`cleaning-services`)
+3. Automobile Repairs (`automobile-repairs`)
+4. Gadget Technicians (`gadget-technicians`)
+5. Beauty Services (`beauty-services`)
+6. Delivery and Errands (`delivery-errands`)
+7. Massage Services (`beauty-wellness`)
 8. Tutoring (`tutoring`)
 9. Photographer (`photographer`)
 10. Others (`others`)
@@ -140,14 +140,16 @@ interface ServicePackage {
   title: string;
   description: string;
   price: number;          // PHP, 1–1,000,000
-  commissionFee: number;
-  commissionRate: number;
+  commissionFee: number;       // frontend type — NOT set by createServicePackage_service
+  commissionRate: number;      // frontend type — NOT set by createServicePackage_service
   createdAt: string;           // ISO 8601
   updatedAt: string;           // ISO 8601
   // Runtime:
   totalAmount?: number;
 }
 ```
+
+**Note**: The backend `createServicePackage_service` (`service.js:1786-1794`) does **not** set `commissionFee` or `commissionRate` on packages. These fields exist only in the frontend type for display purposes — they are likely populated by a separate commission calculation or left as defaults.
 
 **Rules**: 1–5 packages per service. Names must be unique within a service. The service's `price` field is the minimum across its packages.
 
@@ -168,7 +170,7 @@ interface DayAvailability {
 }
 
 interface ProviderAvailability {
-  providerId: string;
+  providerId: string;           // string in serviceCanisterService.ts, Principal in bookingCanisterService.ts
   isActive: boolean;
   instantBookingEnabled: boolean;
   bookingNoticeHours: number;
@@ -189,11 +191,11 @@ interface ProviderAvailability {
 ```typescript
 interface Booking {
   id: string;
-  clientId: string;
-  providerId: string;
+  clientId: string;             // Principal type in service, string at runtime
+  providerId: string;           // Principal type in service, string at runtime
   serviceId: string;
-  servicePackageId: string[];     // deprecated
-  servicePackageIds?: string[];
+  servicePackageId: string[];     // deprecated — frontend legacy alias
+  servicePackageIds?: string[];   // actual backend field; bridged by mapBookingFields (bookingCanisterService.ts:154-157)
   status: BookingStatus;
   requestedDate: string;
   scheduledDate: string;
@@ -270,6 +272,7 @@ interface BookingRequest {
 
 ```typescript
 // Frontend display enrichment — adds joined data from other collections
+// Two variants exist: EnhancedService (serviceManagement.tsx) and EnrichedService (serviceInformation.tsx)
 interface EnhancedService extends Service {
   providerProfile?: FrontendProfile;
   formattedLocation?: string;
@@ -280,8 +283,8 @@ interface EnhancedService extends Service {
   formattedPrice?: string;
   averageRating?: number;
   totalReviews?: number;
-  images?: string[];
-  certifications?: string[];
+  images?: string[];            // static frontend alias for imageUrls
+  certifications?: string[];   // static frontend alias for certificateMedia
 }
 
 interface EnhancedBooking extends Booking {

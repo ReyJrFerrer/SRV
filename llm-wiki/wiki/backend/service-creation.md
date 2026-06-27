@@ -27,7 +27,7 @@ The end-to-end flow for a provider to create a service, from the 5-step UI wizar
 
 | Step | Component | Fields Collected |
 |------|-----------|-----------------|
-| 1 — Service Details | `ServiceDetails.tsx` | Title (3-500 chars), category (from Firestore `categories`), up to 5 packages (name, description, price PHP 1–1,000,000) |
+| 1 — Service Details | `ServiceDetails.tsx` | Title (1-500 chars), description (1-1000 chars), category (from Firestore `categories`), up to 5 packages (name, description, price PHP 1–1,000,000) |
 | 2 — Availability | `ServiceAvailability.tsx` | Day selection (≥1), time slots per day (validated: no overlap, start < end), same-time-for-all-days toggle |
 | 3 — Location | `ServiceLocation.tsx` | Province + City/municipality (from PH locations data), GPS toggle for coordinates, address details |
 | 4 — Images | `ServiceImageUpload.tsx` | Up to 10 service images (PNG/JPEG, 10MB max), up to 10 certificates (image/PDF, 450KB max) |
@@ -92,9 +92,9 @@ services/{serviceId}: {
   certificateMedia: ServiceCertificateMedia[],
   isVerifiedService: boolean,       // true if certificates uploaded
   weeklySchedule: DaySchedule[],
-  instantBookingEnabled: boolean,   // defaults true
-  bookingNoticeHours: number,       // defaults 2
-  maxBookingsPerDay: number,        // defaults 10
+  instantBookingEnabled: boolean,   // defaults false (backend: `instantBookingEnabled || false`)
+  bookingNoticeHours: number,       // defaults null (backend: `bookingNoticeHours || null`)
+  maxBookingsPerDay: number,        // defaults null (backend: `maxBookingsPerDay || null`)
   commissionFee: number,
   commissionRate: number,
   createdAt: string,           // ISO 8601

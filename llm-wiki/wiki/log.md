@@ -195,3 +195,31 @@ Redefined the wiki's raw source layer from `llm-wiki/raw/` to the actual codebas
 **Updated skill**: `llm-wiki/SKILL.md` — Architecture, directory layout, ingest operation, page format, log format, and integration notes all reflect code-as-source convention.
 
 **Cleaned up 12 wiki pages**: Removed 15 `raw/specs/` references from frontmatter `sources:` fields, replaced with actual code paths or docs/ paths where appropriate. Zero remaining `raw/` references in any wiki page.
+
+## [2026-06-27] lint | Booking & Service deep code review
+
+Linted all booking and service wiki pages against actual source code. Reviewed `functions/src/booking.js` (2354 lines), `functions/src/service.js` (2516 lines), `src/frontend/src/services/bookingCanisterService.ts`, `src/frontend/src/services/serviceCanisterService.ts`, and 5+ hook files.
+
+**Contradictions found (6):**
+- "Callable-only mutation" — `updateProviderAttachments()` does direct Firestore writes
+- "Trust score >= 5" — backend rejects `<= 5` (effective: `> 5`)
+- `instantBookingEnabled` defaults false, not true
+- `maxBookingsPerDay` defaults null, not 10
+- `bookingNoticeHours` defaults null, not 2
+- Title min length is 1, not 3
+
+**Missing features documented (5):**
+- `startNavigation` action (status-neutral GPS init)
+- `cancelConflictingBookings` auto-cancellation
+- Cancellation reputation deduction + report generation
+- Shared booking listener pattern
+- `servicePackageId`/`servicePackageIds` duality
+
+**Created page:**
+- [[Wiki Lint Booking and Service 2026-06-27]] — Full findings with 18 items
+
+**Fixed pages (4):**
+- [[Booking System]] — Added startNavigation, cancelConflictingBookings, shared listeners, duality, fixed callable-only and trust-score claims
+- [[Service Creation Workflow]] — Fixed 4 default values, title min length, added description max length
+- [[Service and Booking Models]] — Fixed category slugs, added createdAt/updatedAt `any` type, Principal inconsistencies, package commission gap, enhanced service variants
+- [[Service Discovery and Listing]] — Added correct category slugs from backend

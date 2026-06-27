@@ -46,8 +46,9 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[PH Location Data]] — Philippine geographic data service (in-memory)
 - [[Functions Lint Report]] — Lint findings for functions/ directory architecture
 - [[Wiki Lint 2026-06-27]] — Health check: contradictions, orphans, gaps, stale claims
+- [[Wiki Lint Booking and Service 2026-06-27]] — Booking/service focused lint: 6 contradictions, 8 missing docs, 3 stale claims, 3 gaps
 
 ---
 
 _Last updated: 2026-06-27_
-_Pages: 26_ (raw layer redefined to codebase; `llm-wiki/raw/` deleted)
+_Pages: 27_
