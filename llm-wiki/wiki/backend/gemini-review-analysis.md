@@ -2,7 +2,9 @@
 tags: [backend, ai, reviews, gemini]
 date: 2026-06-16
 sources:
-  - raw/specs/gemini_integration.md
+  - functions/src/utils/geminiClient.js
+  - functions/src/utils/reviewAnalyzer.js
+  - functions/src/queueReviewAnalysis.js
 related:
   - [[Reputation System Overview]]
   - [[Reputation Scoring Algorithm]]

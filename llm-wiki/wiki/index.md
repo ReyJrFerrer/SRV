@@ -45,8 +45,9 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Firebase Functions Optimization]] — Gen 2 best practices with actual config comparison
 - [[PH Location Data]] — Philippine geographic data service (in-memory)
 - [[Functions Lint Report]] — Lint findings for functions/ directory architecture
+- [[Wiki Lint 2026-06-27]] — Health check: contradictions, orphans, gaps, stale claims
 
 ---
 
-_Last updated: 2026-06-19_
-_Pages: 25_
+_Last updated: 2026-06-27_
+_Pages: 26_ (raw layer redefined to codebase; `llm-wiki/raw/` deleted)

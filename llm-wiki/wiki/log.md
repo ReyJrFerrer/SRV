@@ -10,7 +10,7 @@ Chronological record of all wiki operations (ingests, queries, lint passes, upda
 
 ## [2026-06-16] ingest | Initial batch: docs/ and top-level plans
 
-Ingested 9 source files from `docs/` and repo root into `llm-wiki/raw/specs/`.
+Ingested 9 source files from `docs/` and repo root into the initial wiki pages.
 
 Created 9 wiki pages covering architecture, backend, domain, decisions, and operations.
 
@@ -159,3 +159,39 @@ Fixed inconsistent timestamp types across `OnlineService.md` and wiki pages:
 - `backend/booking-system.md` — `createdAt`/`updatedAt`: `Timestamp` → `string`
 - `backend/service-creation.md` — `createdAt`/`updatedAt` on Service and ServicePackage: `Timestamp` → `string`
 - `domain/service-and-booking-models.md` — All 8 `Timestamp` type references on entity definitions fixed to `string`
+
+## [2026-06-27] lint | Wiki health check
+
+Performed comprehensive lint pass across all 25 wiki pages against the codebase state at commit `85aec7b8`.
+
+**Contradictions (2):**
+- [[Chat Media Implementation]] — completion table is entirely stale: phases 1–6 are all implemented, page needs rewrite
+- [[Functions Lint Report]] claim #9 — chat.js attachment handling gap is now closed
+
+**Orphans (4):**
+- [[Online Projects]] — no inbound wikilinks from other pages
+- [[Version Cache Busting]] — no inbound wikilinks
+- [[PH Location Data]] — no inbound wikilinks from other pages
+- [[Send Contact Email]] — no inbound wikilinks from other pages
+
+**Stale claims (3):**
+- `decisions/chat-media-implementation.md` — entire completion status table
+- `operations/functions-lint-report.md` claim #9 — chat.js attachment handling
+- `operations/fcm-push-notifications.md` — should clarify OneSignal is primary, FCM is underlying layer
+
+**Gaps (5 uncovered concepts):**
+- OneSignal integration (referenced by 5 pages, no dedicated page)
+- TanStack Query pattern
+- Firestore Security Rules pattern
+- GCash/Payment Flow
+- Provider Profile (FrontendProfile) entity
+
+Created [[Wiki Lint 2026-06-27]].
+
+## [2026-06-27] update | Raw layer redefined to codebase
+
+Redefined the wiki's raw source layer from `llm-wiki/raw/` to the actual codebase (`src/`, `functions/`, etc.). The `llm-wiki/raw/` directory is deleted — all obsolete spec references removed.
+
+**Updated skill**: `llm-wiki/SKILL.md` — Architecture, directory layout, ingest operation, page format, log format, and integration notes all reflect code-as-source convention.
+
+**Cleaned up 12 wiki pages**: Removed 15 `raw/specs/` references from frontmatter `sources:` fields, replaced with actual code paths or docs/ paths where appropriate. Zero remaining `raw/` references in any wiki page.

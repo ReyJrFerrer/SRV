@@ -2,7 +2,6 @@
 tags: [decisions, chat, media]
 date: 2026-06-16
 sources:
-  - raw/specs/CHAT-MEDIA-PLAN.md
   - functions/src/media.js
   - functions/src/chat.js
 related:

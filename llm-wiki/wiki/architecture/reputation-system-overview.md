@@ -2,8 +2,6 @@
 tags: [architecture, reputation]
 date: 2026-06-16
 sources:
-  - raw/specs/comprehensive_reputation_system.md
-  - raw/specs/reputation_system.md
   - functions/src/reputation.js
   - functions/src/utils/reputationMath.js
 related:

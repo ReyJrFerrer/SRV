@@ -2,7 +2,10 @@
 tags: [backend, cloud-functions, online-service]
 date: 2026-06-19
 sources:
-  - raw/specs/OnlineService.md
+  - functions/src/onlineProject.js
+  - src/frontend/src/services/onlineProjectCanisterService.ts
+  - src/frontend/src/hooks/useOnlineProject.tsx
+  - src/frontend/src/hooks/useProviderOnlineProject.tsx
 related:
   - [[Booking System]]
   - [[Service Creation Workflow]]

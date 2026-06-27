@@ -2,7 +2,7 @@
 tags: [architecture, backend, reputation, sui]
 date: 2026-06-16
 sources:
-  - raw/specs/REPUTATION_SUI.md
+  - docs/REPUTATION_SUI.md
   - functions/src/utils/reputationMath.js
 related:
   - [[Reputation System Overview]]

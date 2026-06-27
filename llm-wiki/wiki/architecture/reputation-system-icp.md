@@ -2,7 +2,7 @@
 tags: [architecture, backend, reputation, icp]
 date: 2026-06-16
 sources:
-  - raw/specs/comprehensive_reputation_system.md
+  - docs/comprehensive_reputation_system.md
 related:
   - [[Reputation System Overview]]
   - [[Reputation Service (Firestore)]]

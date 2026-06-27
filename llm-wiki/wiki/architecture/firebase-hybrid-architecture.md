@@ -5,7 +5,6 @@ sources:
   - functions/index.js
   - functions/firebase-admin.js
   - functions/src/media.js
-  - raw/specs/comprehensive_reputation_system.md
 related:
   - [[Reputation System Overview]]
   - [[Firebase Functions Optimization]]

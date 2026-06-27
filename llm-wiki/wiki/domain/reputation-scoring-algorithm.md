@@ -3,8 +3,6 @@ tags: [domain, reputation]
 date: 2026-06-16
 sources:
   - functions/src/utils/reputationMath.js
-  - raw/specs/reputation_system.md
-  - raw/specs/comprehensive_reputation_system.md
 related:
   - [[Reputation System Overview]]
   - [[Reputation Service (Firestore)]]
