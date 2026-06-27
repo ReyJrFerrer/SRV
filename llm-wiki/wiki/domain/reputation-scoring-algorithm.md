@@ -54,10 +54,11 @@ BASE_SCORE (50)
 BASE_SCORE (50)
 + completion_points (min(25, completed * 1.25))
 + rating_quality (bayesian-based, with different multipliers)
+  - if avg is null: +5 (new provider bonus)
   - if avg < 3.0: penalty of (3 - avg) * 2.0 (< 3 bks) or * 8.0 (3+ bks)
   - if avg >= 3.0: reward of (avg - 3) * 2.5 (< 3 bks) or * 12.5 (3+ bks)
 + age_points (same as client)
-+ consistency_bonus (up to 10 based on avg rating tier, 5 at 10+ bookings)
++ consistency_bonus (up to 10 based on avg rating tier, 5 at 10+ bookings with null avg)
 + recency * 0.3 (same as client)
 + frequency * 0.1 (same as client)
 + experience_bonus (5 at 50+, 3 at 25+, 1 at 10+ bookings)
@@ -69,23 +70,28 @@ BASE_SCORE (50)
 
 | Level | Score Range |
 |---|---|
-| New | 0–20 |
-| Low | 20–50 |
-| Medium | 50–80 |
-| High | 80–100 |
-| VeryHigh | >100 |
+| Low | 0–20 |
+| Medium | 20–50 |
+| High | 50–80 |
+| VeryHigh | 80–100 |
+
+> **Note**: The `TrustLevel` typedef includes `'New'` but `determineTrustLevel()` never returns it — scores 0–20 return "Low".
 
 ## Penalties
 
 | Flag | Deduction | Stacking |
-|---|---|---|
+|---|---|---|---|
 | ReviewBomb | 15 + 5 if multiple flags | Capped at 50% of score (clients) / 40% (providers) |
 | CompetitiveManipulation | 15 + 5 if multiple flags | Same |
 | FakeEvidence | 10 + 3 if multiple flags | Same |
 | IdentityFraud | 15 + 10 if multiple flags | Same |
 | AbusiveContent | 20 + 10 if multiple flags | Same |
-| Cancellation | 5 pts flat | Applied separately in `deductReputationForCancellationInternal` |
+| Other | 5 pts flat | No stacking bonus |
+
+> Cancellation penalty (5 pts) is applied separately by `deductReputationForCancellationInternal` in `reputation.js`, not through `DetectionFlag` enums.
 
 ## Review Weighting
 
-A review's impact on reputation depends on the reviewer's own trust score (0.5x–1.5x), trust level bonuses, review quality (length and detail), and time decay (180-day half-life). See [[Gemini Review Analysis]] for AI-based content analysis.
+> **Not implemented.** No per-review weighting exists in the codebase. `processReviewForReputationInternal` recalculates both user and provider trust scores independently from Firestore aggregates without applying a reviewer-trust multiplier, review-quality bonus, or time decay factor. Each review affects reputation equally through the aggregate rating and booking count it contributes to.
+
+See [[Gemini Review Analysis]] for AI-based content analysis.

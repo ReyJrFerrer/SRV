@@ -16,6 +16,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Online Projects]] — Online/digital service entity, state machine, Cloud Function actions, client-side conversation creation
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
+- [[Review System]] — 23 backend actions, 2 Firestore collections, AI analysis, moderation, frontend hooks
 - [[Send Contact Email]] — v1 callable contact form handler
 
 ## Frontend
@@ -47,8 +48,9 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Functions Lint Report]] — Lint findings for functions/ directory architecture
 - [[Wiki Lint 2026-06-27]] — Health check: contradictions, orphans, gaps, stale claims
 - [[Wiki Lint Booking and Service 2026-06-27]] — Booking/service focused lint: 6 contradictions, 8 missing docs, 3 stale claims, 3 gaps
+- [[Wiki Lint Review and Reputation 2026-06-27]] — Review/reputation focused lint: 3 contradictions, 15 missing docs, 4 stale claims, 5 gaps
 
 ---
 
 _Last updated: 2026-06-27_
-_Pages: 27_
+_Pages: 29_

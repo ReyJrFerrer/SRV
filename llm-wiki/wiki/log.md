@@ -223,3 +223,39 @@ Linted all booking and service wiki pages against actual source code. Reviewed `
 - [[Service Creation Workflow]] — Fixed 4 default values, title min length, added description max length
 - [[Service and Booking Models]] — Fixed category slugs, added createdAt/updatedAt `any` type, Principal inconsistencies, package commission gap, enhanced service variants
 - [[Service Discovery and Listing]] — Added correct category slugs from backend
+
+## [2026-06-27] lint | Review & Reputation deep code review
+
+Linted all 4 review/reputation wiki pages against actual source code. Reviewed `functions/src/review.js` (1677 lines), `functions/src/reputation.js` (~910 lines), `functions/src/queueReviewAnalysis.js` (375 lines), `functions/src/utils/reviewAnalyzer.js` (651 lines), `functions/src/utils/reputationMath.js` (311 lines), `src/frontend/src/services/reviewCanisterService.ts`, `src/frontend/src/services/reputationService.ts`, and 4 hook files.
+
+**Contradictions found (3):**
+- Trust level "New" doesn't exist — first level is "Low" (0–20)
+- Gemini flow uses Firestore trigger (`analyzeNewReview`), not Cloud Tasks
+- Gemini analysis detects suspicious patterns, not sentiment
+
+**Missing docs found (15):**
+- No dedicated Review System wiki page (25 backend actions, 2 collections, moderation pipeline)
+- `submitProviderReview`, `providerReviews` collection, review moderation, admin actions, rating endpoints, `updateReview`, status values (`Flagged`/`Deleted`), `qualityScore` field, "Other" flag, provider new-user bonus, `getUserReviews`, `getUserRating`, soft-delete behavior
+
+**Created page:**
+- [[Wiki Lint Review and Reputation 2026-06-27]] — Full findings with 22 items
+
+**Fixed pages (4):**
+- [[Reputation Scoring Algorithm]] — Fixed "New"→"Low" trust level, added "Other" flag, added provider new-user bonus, marked review weighting as not implemented
+- [[Gemini Review Analysis]] — Rewrote flow (Firestore trigger, not Cloud Tasks), removed non-existent sentiment/consistency claims, added actual pattern detection capabilities
+- [[Reputation Service (Firestore)]] — Fixed history schema to include full state (`trustScore`, `trustLevel`, `completedBookings`, `averageRating`, `detectionFlags`, `timestamp`, `action`)
+- [[Reputation System Overview]] — Clarified deduction applies to providers only, added "Other" flag to anti-manipulation list, corrected AI-powered analysis flow reference
+
+## [2026-06-27] create | Review System standalone page
+
+Created [[Review System]] page covering the entire review subsystem:
+
+- Backend: all 23 `reviewAction` actions with auth requirements and descriptions
+- `reviews` and `providerReviews` collection schemas
+- AI analysis trigger flow (Firestore `analyzeNewReview` → Gemini → `checkConsecutiveBadReviews`)
+- Reports collection schema and role in the review ecosystem
+- Frontend `reviewCanisterService.ts` — 23 backend method mappings + 3 client-side helpers
+- Frontend hooks: `useReviewManagement`, `useServiceReviews`, `useProviderReviews`, `useBookingRating`, `useClientRating`
+- Key implementation details: soft-delete behavior, sync reputation impact, async AI, no review weighting, index-fallback pattern
+
+Updated index.md (29 pages).

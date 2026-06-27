@@ -45,8 +45,10 @@ All routed through `reputationAction` via an `action` parameter:
 
 ```
 reputations/{userId}  →  { trustScore, trustLevel, completedBookings, averageRating, detectionFlags, lastUpdated }
-reputations/{userId}/history/{timestamp}  →  { trustScore, timestamp }
+reputations/{userId}/history/{timestamp}  →  { trustScore, trustLevel, completedBookings, averageRating, detectionFlags, timestamp, action }
 ```
+
+> **Note**: History records store full state snapshots, not just trust score. The `action` field records what triggered the update (e.g., `"update"`).
 
 ## Key Implementation Detail
 
