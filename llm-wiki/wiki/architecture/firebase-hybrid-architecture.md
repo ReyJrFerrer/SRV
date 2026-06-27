@@ -16,7 +16,7 @@ related:
 
 # Firebase Architecture
 
-SRV uses Firebase for the cloud backend layer, with 18 deployed Cloud Functions (17 v2, 1 v1), Firestore as the primary data store, and Firebase Hosting for the frontend.
+SRV uses Firebase for the cloud backend layer, with **20** deployed Cloud Functions (19 v2 onCall/onDocumentCreated/onSchedule + 1 v1 onCall), Firestore as the primary data store, and Firebase Hosting for the frontend.
 
 ## Firebase Services
 

@@ -9,7 +9,7 @@ related:
 
 # Media and Images
 
-Media is stored in **Firebase Cloud Storage** (`srve-7133d` bucket). The upload/download pipeline goes through `mediaService.ts` with client-side resizing, server-side thumbnails (for service images), and a multi-layer caching system.
+Media is stored in **Firebase Cloud Storage** (`srve-7133d` bucket). The upload/download pipeline goes through `mediaService.ts` with client-side resizing and a multi-layer caching system. **No server-side thumbnail generation exists** — `thumbnailUrl` is always `null`.
 
 ## Media Types
 
@@ -119,9 +119,11 @@ There is **no central config** for media types. Registering a new type requires 
 | `ReportAttachment` | `reports/` | 1MB | — |
 | `ProblemProof` | `problem-proof/` | 30MB (video) | — |
 | `ChatAttachment` | `chat-attachments/` | 1GB | `initChatAttachment` (two-step) |
-| `ProjectBriefAttachment` | `project-briefs/` | 50MB | `initProjectBriefUpload` (two-step) |
+| `ProjectBriefAttachment` | `project-briefs/` | 50MB | `initProjectBriefUpload` (planned, not implemented) |
 
-The **two-step init pattern** (used by `ChatAttachment` and `ProjectBriefAttachment`) adds a 7th touchpoint: a new case in the `mediaAction` switch dispatch and a dedicated handler function.
+> **Note**: `ProjectBriefAttachment` is **not yet registered** in `media.js`. It is defined in the `OnlineService.md` spec but has no entry in `generateFilePath`, `uploadMediaInternal.validMediaTypes`, or the `mediaAction` switch. The `initProjectBriefUpload` handler does not exist in the codebase.
+
+The **two-step init pattern** (used by `ChatAttachment`, planned for `ProjectBriefAttachment`) adds a 7th touchpoint: a new case in the `mediaAction` switch dispatch and a dedicated handler function.
 
 ### Design Debt
 

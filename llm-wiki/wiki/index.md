@@ -18,6 +18,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
 - [[Review System]] — 23 backend actions, 2 Firestore collections, AI analysis, moderation, frontend hooks
 - [[Send Contact Email]] — v1 callable contact form handler
+- [[Notification System]] — Multi-channel notifications: 23 types, OneSignal push, transactional email, Firestore store, spam prevention, frontend hooks
 
 ## Frontend
 
@@ -27,8 +28,8 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Services Layer]] — All 20 service modules (Firebase, auth, booking, chat, media, wallet)
 - [[Service Discovery and Listing]] — How clients find, search, browse, and view services
 - [[State and Hooks]] — Zustand stores, React contexts, 26 custom hooks
-- [[Chat System]] — Firestore-based chat architecture, data model, known media gaps
-- [[Media and Images]] — Upload pipeline, 3-layer caching, Firebase Storage, chat attachment gap
+- [[Chat System]] — Firestore-based chat architecture, data model, chat notifications
+- [[Media and Images]] — Upload pipeline, 3-layer caching, Firebase Storage, chat attachments
 - [[Version Cache Busting]] — Multi-layered cache clearing for Firebase deployments
 
 ## Domain
@@ -38,7 +39,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 ## Decisions
 
-- [[Chat Media Implementation]] — Plan for media attachments, partially started in media.js
+- [[Chat Media Implementation]] — Plan for media attachments, implemented except mobile port
 
 ## Operations
 
@@ -49,8 +50,9 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Wiki Lint 2026-06-27]] — Health check: contradictions, orphans, gaps, stale claims
 - [[Wiki Lint Booking and Service 2026-06-27]] — Booking/service focused lint: 6 contradictions, 8 missing docs, 3 stale claims, 3 gaps
 - [[Wiki Lint Review and Reputation 2026-06-27]] — Review/reputation focused lint: 3 contradictions, 15 missing docs, 4 stale claims, 5 gaps
+- [[Wiki Lint Media and Notifications 2026-06-27]] — Media/notification focused lint: 4 contradictions, 11 missing docs, 3 stale claims, 4 gaps
 
 ---
 
 _Last updated: 2026-06-27_
-_Pages: 29_
+_Pages: 31_

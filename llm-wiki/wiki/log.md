@@ -259,3 +259,51 @@ Created [[Review System]] page covering the entire review subsystem:
 - Key implementation details: soft-delete behavior, sync reputation impact, async AI, no review weighting, index-fallback pattern
 
 Updated index.md (29 pages).
+
+## [2026-06-27] lint | Media & Notifications deep code review
+
+Linted all 4 media/notification wiki pages against actual source code. Reviewed `functions/src/media.js` (1186 lines), `functions/src/notification.js` (1326 lines), `functions/src/chat.js` (205 lines), `src/frontend/src/services/mediaService.ts`, `src/frontend/src/services/oneSignalService.ts`, `src/frontend/src/services/notificationCanisterService.ts`, `src/frontend/src/services/notificationIntegrationService.ts`, `src/frontend/src/services/pwaService.ts`, and 4 hook files.
+
+**Contradictions found (4):**
+- `ProjectBriefAttachment` claimed as registered but doesn't exist in `media.js`
+- `firebase-hybrid-architecture.md` says 18 functions, actual count is 20
+- `media-and-images.md` claims "server-side thumbnails" — no thumbnail gen exists
+- `chat-media-implementation.md` completion table still shows phases 1b–6 as ❌ (previous lint finding unfixed)
+
+**Missing docs found (11):**
+- No Notification System wiki page (11 actions, 2 scheduled functions, 2 auxiliary collections)
+- `notifications` collection schema, spam prevention (`notificationFrequency`), chat email cooldowns (`chatEmailCooldowns`)
+- 6 undocumented `mediaAction` actions (getMediaByOwner, getMediaByTypeAndOwner, getFileData, updateMediaMetadata, validateMediaItems, getCertificatesByValidationStatus, updateCertificateValidationStatus)
+- Frontend PWA infrastructure (`pwaService.ts`, `usePWA.ts`, `useChatNotifications.tsx`)
+- Notification component ecosystem (7 components), emulator-aware URLs
+
+**Created page:**
+- [[Wiki Lint Media and Notifications 2026-06-27]] — Full findings with 22 items
+
+**Fixed pages (3):**
+- [[Chat Media Implementation]] — Rewrote completion table (phases 1b–6 ✅), removed aspirational file limits, added historical notes on design principles
+- [[Media and Images]] — Fixed "server-side thumbnails" claim, marked `ProjectBriefAttachment` as planned/not implemented
+- [[Firebase Architecture]] — Fixed function count (18→20)
+
+Updated index.md (30 pages).
+
+## [2026-06-27] create | Notification System wiki page
+
+Created [[Notification System]] page covering the complete notification infrastructure:
+- Backend `notification.js` — 11 actions, 2 scheduled functions, `notifications` collection schema (25 fields), `notificationFrequency` spam prevention, `chatEmailCooldowns` for chat email rate-limiting
+- 23 `NOTIFICATION_TYPES`, 4 `NOTIFICATION_STATUS` values, 16 booking email types, spam prevention constants
+- OneSignal push delivery flow (fire-and-forget, multi-device via `include_player_ids`)
+- Email notification delivery with booking detail enrichment (Asia/Manila timezone, PHP amounts, Google Maps links)
+- Notification href generation table (20+ type-to-route mappings for client/provider)
+- 5 other notification sources (chat `onMessageCreated`, booking state changes, review submissions, cancellation reports)
+- Frontend `notificationCanisterService.ts` — 14 methods with real-time Firestore `onSnapshot` subscriptions (250ms debounce, lazy cleanup)
+- Frontend hooks: `useNotificationsWithPush` (554 lines), `useProviderNotificationsWithPush` (549 lines), `useChatNotifications.tsx` (226 lines), `usePWA.ts` (437 lines)
+- Frontend services: `oneSignalService.ts` (OneSignal v16 SDK wrapper, 10 methods), `notificationIntegrationService.ts` (bridge, 125 lines), `pwaService.ts` (PushManager lifecycle, 455 lines)
+- Component ecosystem: push permission modals, in-app popups (queue, stacking, auto-dismiss), notification list items, type-to-icon mapping, toast notifications
+
+Fixed `chat-media-implementation.md`:
+- Storage security rules row updated from ❌ to ✅ (`storage.rules:113-126`)
+- Status line updated from "Two gaps remain" to "One gap remains (mobile port)"
+- Chat System and Media and Images index descriptions updated (no longer reference "gaps")
+
+Updated index.md (31 pages).
