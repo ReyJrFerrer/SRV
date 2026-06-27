@@ -20,9 +20,10 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-xs rounded-xl bg-white p-6 shadow-2xl">
-        <h3 className="mb-2 text-lg font-bold text-red-700">Hide Review?</h3>
+        <h3 className="mb-2 text-lg font-bold text-red-700">Delete Review?</h3>
         <p className="mb-4 text-sm text-gray-700">
-          Are you sure you want to hide this review?
+          Are you sure you want to delete this review? This action will hide the
+          review and cannot be undone.
         </p>
         <div className="flex gap-2">
           <button
@@ -37,7 +38,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             onClick={() => onConfirm(reviewId)}
             disabled={isDeleting}
           >
-            {isDeleting ? "Hiding..." : "Hide"}
+            {isDeleting ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>

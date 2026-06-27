@@ -1,24 +1,32 @@
 import React from "react";
-import { EyeSlashIcon } from "@heroicons/react/24/solid";
+import {
+  EyeSlashIcon,
+  TrashIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/solid";
 import { StarRatingDisplay } from "../StarRatingDisplay";
 
 interface ServiceReviewItemProps {
   review: any;
   formatReviewDate: (date: string) => string;
   getRelativeTime: (date: string) => string;
+  isDeleting: boolean;
+  onRestore: (reviewId: string) => void;
+  onShowDeleteConfirm: (reviewId: string) => void;
   clientAvatarUrl?: string;
-  isSelected: boolean;
-  onSelect: (reviewId: string) => void;
 }
 
 export const ServiceReviewItem: React.FC<ServiceReviewItemProps> = ({
   review,
   formatReviewDate,
   getRelativeTime,
+  isDeleting,
+  onRestore,
+  onShowDeleteConfirm,
   clientAvatarUrl,
-  isSelected,
-  onSelect,
 }) => {
+  const isHidden = review.status === "Hidden";
+
   return (
     <div
       className={`rounded-2xl border bg-white/95 p-6 shadow-md transition ${
@@ -28,14 +36,6 @@ export const ServiceReviewItem: React.FC<ServiceReviewItemProps> = ({
       }`}
     >
       <div className="mb-3 flex items-start">
-        <div className="mr-3 mt-1 flex-shrink-0">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => onSelect(review.id)}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-        </div>
         <div className="relative mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-blue-100 bg-blue-50">
           <img
             src={clientAvatarUrl || "/default-client.svg"}
@@ -54,6 +54,25 @@ export const ServiceReviewItem: React.FC<ServiceReviewItemProps> = ({
                   <EyeSlashIcon className="mr-1 h-4 w-4" />
                   {review.status}
                 </div>
+              )}
+              {isHidden ? (
+                <button
+                  onClick={() => onRestore(review.id)}
+                  disabled={isDeleting}
+                  className="rounded-full p-1.5 text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
+                  title="Restore review"
+                >
+                  <ArrowPathIcon className="h-5 w-5" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => onShowDeleteConfirm(review.id)}
+                  disabled={isDeleting}
+                  className="rounded-full p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                  title="Delete review"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
               )}
             </div>
           </div>

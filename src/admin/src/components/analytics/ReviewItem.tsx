@@ -1,6 +1,7 @@
 import React from "react";
 import {
   StarIcon,
+  TrashIcon,
   ArrowPathIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/solid";
@@ -114,9 +115,9 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
               onClick={() => onShowDeleteConfirm(review.id)}
               disabled={isDeleting || bulkActionLoading}
               className="rounded-full p-1.5 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
-              title="Hide review"
+              title="Delete review"
             >
-              <EyeSlashIcon className="h-4 w-4" />
+              <TrashIcon className="h-4 w-4" />
             </button>
           )}
         </div>
