@@ -7,39 +7,40 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Reputation System Overview]] — Hybrid Firestore/blockchain reputation architecture (actual: Firestore JS)
 - [[Reputation System ICP]] — ICP canister trust engine (legacy design reference)
 - [[Reputation System Sui]] — Sui Move reputation module (standalone, not integrated)
-- [[Firebase Hybrid Architecture]] — 18 deployed Cloud Functions, Firestore, services overview
+- [[Firebase Hybrid Architecture]] — 20 deployed Cloud Functions, Firestore, services overview (Phase 1: +1 for onlineProjectAction)
 
 ## Backend
 
-- [[Service Creation Workflow]] — Provider service creation, 5-step wizard → Cloud Function → Firestore
-- [[Booking System]] — Client booking creation, state machine, payment lifecycle, all status transitions
-- [[Online Projects]] — Online/digital service entity, state machine, Cloud Function actions, client-side conversation creation
+- [[Service Creation Workflow]] — Provider service creation, 6-step wizard (Phase 1: +1 Step 0 serviceMode) → Cloud Function → Firestore
+- [[Booking System]] — Client booking creation, state machine, payment lifecycle, all status transitions; Phase 2: multi-session `scheduledSessions[]`
+- [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
 - [[Review System]] — 23 backend actions, 2 Firestore collections, AI analysis, moderation, frontend hooks
 - [[Send Contact Email]] — v1 callable contact form handler
-- [[Notification System]] — Multi-channel notifications: 23 types, OneSignal push, transactional email, Firestore store, spam prevention, frontend hooks
+- [[Notification System]] — Multi-channel notifications: 23 → 31 types (Phase 1: +8 for online projects), OneSignal push, transactional email, Firestore store, spam prevention, frontend hooks
 
 ## Frontend
 
 - [[Frontend Overview]] — Stack, entry point chain, directory structure, conventions
 - [[Routing and Layouts]] — HashRouter route groups, client/provider layouts, auth guards
 - [[Authentication Flow]] — zkLogin (Google OAuth via Sui) + Firebase custom token bridge
-- [[Services Layer]] — All 20 service modules (Firebase, auth, booking, chat, media, wallet)
-- [[Service Discovery and Listing]] — How clients find, search, browse, and view services
-- [[State and Hooks]] — Zustand stores, React contexts, 26 custom hooks
+- [[Services Layer]] — All 20 service modules (Firebase, auth, booking, chat, media, wallet); Phase 1: +1 `onlineProjectCanisterService.ts`
+- [[Service Discovery and Listing]] — How clients find, search, browse, and view services; Phase 1: +serviceMode filter
+- [[State and Hooks]] — Zustand stores, React contexts, 26 custom hooks; Phase 1: +2 online project hooks
 - [[Chat System]] — Firestore-based chat architecture, data model, chat notifications
-- [[Media and Images]] — Upload pipeline, 3-layer caching, Firebase Storage, chat attachments
+- [[Media and Images]] — Upload pipeline, 3-layer caching, Firebase Storage, chat attachments, **ProjectBriefAttachment (Phase 1)**
 - [[Version Cache Busting]] — Multi-layered cache clearing for Firebase deployments
 
 ## Domain
 
-- [[Service and Booking Models]] — Core entities: Service, ServicePackage, Booking, Location, Availability, enriched UI types
+- [[Service and Booking Models]] — Core entities: Service (4 new fields), ServicePackage (3 types), Booking (scheduledSessions[]), OnlineProject, Location, Availability, enriched UI types
 - [[Reputation Scoring Algorithm]] — Bayesian average, penalties, time decay, and review weighting (as implemented in `reputationMath.js`)
 
 ## Decisions
 
 - [[Chat Media Implementation]] — Plan for media attachments, implemented except mobile port
+- [[Grill Record: Online Services Integration]] — Design review: 20 online services, 2 engagement models, 3 new categories, 22 Cloud Functions target (2026-06-27)
 
 ## Operations
 
@@ -55,4 +56,4 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 ---
 
 _Last updated: 2026-06-27_
-_Pages: 31_
+_Pages: 32_

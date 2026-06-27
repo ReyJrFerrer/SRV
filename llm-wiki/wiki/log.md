@@ -307,3 +307,26 @@ Fixed `chat-media-implementation.md`:
 - Chat System and Media and Images index descriptions updated (no longer reference "gaps")
 
 Updated index.md (31 pages).
+
+## [2026-06-27] grill | Online Services Integration
+
+Grilled the plan for integrating 20 new online services (8 Digital & Creative, 7 Business & SME, 5 Education & Specialized Knowledge) into the SRV local-service marketplace. Two engagement models: product-based (OnlineProject) and session-based (multi-session Booking).
+
+**Created**:
+- `docs/OnlineService.md` — Canonical spec covering all 20 services, both engagement models, the full data model, state machines, payment, notifications, security rules, indexes, frontend routes, and rollout phases.
+- `llm-wiki/wiki/decisions/grill-2026-06-27-online-services-integration.md` — Decision record with 24 locked decisions across architecture, data model, lifecycle, payment, discovery, security, mobile, and rollout.
+
+**Updated wiki pages (9)**:
+- `backend/online-projects.md` — Rewrote to reflect opt-in negotiation via `service.negotiable`, 18-action list with milestone metadata exception, 4 subcollections (briefs/negotiations/deliverables + direct fields), Phase 1/Phase 2 split, 6 new Firestore indexes
+- `domain/service-and-booking-models.md` — Added 4 new Service fields (`serviceMode`, `negotiable`, `allowsMilestones`, `onlineDeliveryFormat`), 3 new categories (13 total), ServicePackage 3-type discriminated union, `scheduledSessions[]` on Booking, OnlineProject type
+- `backend/booking-system.md` — Added Multi-Session Booking Extension section (Phase 2), 5 new actions, 24h reschedule rule, Phase 1 payment validation rules
+- `backend/service-creation.md` — Documented Step 0 serviceMode selection, conditional wizard fields, new Service fields, ServicePackage type field
+- `frontend/media-and-images.md` — Marked `ProjectBriefAttachment` as implemented in Phase 1, added 6+1 touchpoint table, two-step upload flow
+- `backend/notification-system.md` — Added 8 new notification types for online projects with full href table and dispatch pattern
+- `architecture/firebase-hybrid-architecture.md` — Added `onlineProjectAction` to the function list (Phase 1 deployment)
+
+**Walked 19 design tree branches**, resolved 24 key decisions, flagged 5 wiki contradictions (callable-only invariant with documented exception, category count, function count, ProjectBriefAttachment status, action count).
+
+**Output**: `wiki/decisions/grill-2026-06-27-online-services-integration.md` + `docs/OnlineService.md`
+
+Updated index.md (32 pages, 6 categories).

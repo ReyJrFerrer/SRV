@@ -15,23 +15,27 @@ Media is stored in **Firebase Cloud Storage** (`srve-7133d` bucket). The upload/
 
 System-defined types in `functions/src/media.js`:
 
-| Type | Purpose | Max Size |
-|------|---------|----------|
-| `UserProfile` | Profile pictures | 1MB |
-| `ServiceImage` | Service listing images | 1MB |
-| `ServiceCertificate` | Provider certification documents | 1MB |
-| `RemittancePaymentProof` | Payment receipts | 1MB |
-| `ReportAttachment` | Report evidence | 1MB |
-| `ProblemProof` | Issue documentation (video) | 30MB |
-| `ChatAttachment` | Images, videos, documents | 1GB |
+| Type | Purpose | Max Size | Status |
+|------|---------|----------|--------|
+| `UserProfile` | Profile pictures | 1MB | implemented |
+| `ServiceImage` | Service listing images | 1MB | implemented |
+| `ServiceCertificate` | Provider certification documents | 1MB | implemented |
+| `RemittancePaymentProof` | Payment receipts | 1MB | implemented |
+| `ReportAttachment` | Report evidence | 1MB | implemented |
+| `ProblemProof` | Issue documentation (video) | 30MB | implemented |
+| `ChatAttachment` | Images, videos, documents | 1GB | implemented |
+| `ProjectBriefAttachment` | Project brief documents | 50MB | **implemented in Phase 1** (see §ProjectBriefAttachment) |
 
 `ChatAttachment` supports images, videos, and documents (PDF, DOC, DOCX, TXT, CSV). Directory: `chat-attachments/`. Actions: `initChatAttachment` (validate + return path), `deleteChatAttachment` (participant-verified delete).
+
+`ProjectBriefAttachment` is the new media type for the OnlineProject brief form. Directory: `project-briefs/`. Action: `initProjectBriefUpload` (validate + return path). Documents and images up to 50MB.
 
 ## Storage Path Pattern
 
 ```
 /media/{userId}/{uuid}.{ext}                             — general media
 /chat-attachments/{conversationId}/{mediaId}_{sanitizedName} — chat files
+/project-briefs/{ownerId}/{mediaId}_{sanitizedFileName}  — project brief files (Phase 1)
 ```
 
 ## Upload Pipeline
@@ -95,6 +99,52 @@ Direct `getDownloadURL(ref)` for uncached images. The chain is:
 
 `mediaAction` callable Cloud Function routes by action: `upload`, `get`, `delete`, `list`, `getUploadUrl`, `initChatAttachment`, `deleteChatAttachment`, `initProjectBriefUpload`. Internal helpers (`uploadMediaInternal`, `deleteMediaInternal`) exported for cross-module use from `functions/src/media.js`.
 
+## ProjectBriefAttachment (Phase 1)
+
+The new `ProjectBriefAttachment` media type is for files attached to an online project brief. It follows the same 2-step upload pattern as `ChatAttachment`.
+
+### Specifications
+
+| Attribute | Value |
+|---|---|
+| Folder | `project-briefs/` |
+| Cap | 50MB per file |
+| Path | `project-briefs/{ownerId}/{mediaId}_{sanitizedFileName}` |
+| Init action | `initProjectBriefUpload` (new action in `mediaAction` switch) |
+| Content types | All `SUPPORTED_CONTENT_TYPES` (images, PDFs, DOC, DOCX, TXT, CSV) |
+| Status | **Implemented in Phase 1** of the Online Services rollout |
+
+### The 6 Scattered Touchpoints (now complete for Phase 1)
+
+| # | Location | Line ~ | Status |
+|---|----------|--------|--------|
+| 1 | `mediaTypeFolder` in `generateFilePath()` | 94 | ✓ added in Phase 1 |
+| 2 | `validMediaTypes` array in `uploadMediaInternal()` | 818 | ✓ added in Phase 1 |
+| 3 | `validateFileSize()` function | 73 | ✓ added in Phase 1 (50MB cap) |
+| 4 | `maxSizeText` in `uploadMediaHandler()` | 176 | ✓ added in Phase 1 |
+| 5 | `typeBreakdown` in `getStorageStatsHandler()` | 582 | ✓ added in Phase 1 |
+| 6 | `SUPPORTED_CONTENT_TYPES` array | 35 | unchanged (already comprehensive) |
+| **7** | **`initProjectBriefUpload` handler in `mediaAction` switch** | — | ✓ added in Phase 1 |
+
+### Two-Step Upload Flow
+
+1. **`initProjectBriefUpload`** callable action → validates `{fileName, contentType, fileSize, projectId}`, returns `{filePath, mediaId, fileName, fileType, thumbnailUrl: null}`
+2. **`uploadBytesResumable`** directly to Firebase Storage at pre-approved path (no base64, no Cloud Function body limit)
+3. **`getDownloadURL`** for public URL
+4. Returns `{ fileName, fileSize, fileType, fileUrl, thumbnailUrl, mediaId }`
+5. Client includes the `mediaId` in `createOnlineProject` to attach the file to the brief
+
+### Storage Rules
+
+`project-briefs/{ownerId}/{file}` in `storage.rules` (mirrors `chat-attachments/`):
+
+```firestore
+match /project-briefs/{ownerId}/{file} {
+  allow read: if request.auth != null;
+  allow write: if request.auth.uid == ownerId;
+}
+```
+
 ## Media Type Registration (6 Scattered Touchpoints)
 
 There is **no central config** for media types. Registering a new type requires entries in **6 separate locations** scattered across `functions/src/media.js`. Missing any one causes silent failures or incorrect behavior.
@@ -119,11 +169,9 @@ There is **no central config** for media types. Registering a new type requires 
 | `ReportAttachment` | `reports/` | 1MB | — |
 | `ProblemProof` | `problem-proof/` | 30MB (video) | — |
 | `ChatAttachment` | `chat-attachments/` | 1GB | `initChatAttachment` (two-step) |
-| `ProjectBriefAttachment` | `project-briefs/` | 50MB | `initProjectBriefUpload` (planned, not implemented) |
+| `ProjectBriefAttachment` | `project-briefs/` | 50MB | `initProjectBriefUpload` (two-step, implemented Phase 1) |
 
-> **Note**: `ProjectBriefAttachment` is **not yet registered** in `media.js`. It is defined in the `OnlineService.md` spec but has no entry in `generateFilePath`, `uploadMediaInternal.validMediaTypes`, or the `mediaAction` switch. The `initProjectBriefUpload` handler does not exist in the codebase.
-
-The **two-step init pattern** (used by `ChatAttachment`, planned for `ProjectBriefAttachment`) adds a 7th touchpoint: a new case in the `mediaAction` switch dispatch and a dedicated handler function.
+All 6+1 touchpoints for `ProjectBriefAttachment` are now registered in `media.js` as part of Phase 1. See the §ProjectBriefAttachment section above for the full details.
 
 ### Design Debt
 

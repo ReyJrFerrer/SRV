@@ -18,6 +18,8 @@ related:
   - [[FCM Push Notifications]]
   - [[Services Layer]]
   - [[State and Hooks]]
+  - [[Online Projects]]
+  - [[Grill Record: Online Services Integration]]
 ---
 
 # Notification System
@@ -34,7 +36,7 @@ notificationAction ({ action, data }) → dispatches to internal handler
 
 ### Constants
 
-#### Notification Types (23)
+#### Notification Types (23 → 31 with Phase 1)
 
 ```
 NOTIFICATION_TYPES =
@@ -46,8 +48,14 @@ NOTIFICATION_TYPES =
   service_rescheduled, service_reminder, promo_offer,
   provider_on_the_way, booking_rescheduled, client_no_show,
   payment_issue, booking_auto_cancelled_not_chosen,
-  booking_auto_cancelled_missed_slot
+  booking_auto_cancelled_missed_slot,
+  // Phase 1 — Online Services (NEW, 8 types)
+  project_created, project_accepted, project_declined,
+  project_negotiation_received, project_negotiation_accepted,
+  deliverable_submitted, deliverable_approved, revision_requested
 ```
+
+> **Phase 1 (Online Services)** adds 8 new notification types for the OnlineProject lifecycle. Each is dispatched via the local `createNotification()` pattern in `onlineProject.js`. The 8 new types are listed in the table below.
 
 #### Notification Statuses
 
@@ -328,6 +336,45 @@ PWA lifecycle service (455 lines):
 
 - `ToastNotifications` — Simple toast notification component
 
+## Phase 1 — Online Services Notification Types (8 new)
+
+Phase 1 of the Online Services rollout adds 8 new notification types for the `OnlineProject` lifecycle. Each follows the same dispatch pattern as booking notifications: a local `createNotification()` call inside `onlineProject.js` after the state transition is committed.
+
+| # | Type Constant | Trigger Action | Recipient | Href (client) | Href (provider) |
+|---|---------------|----------------|-----------|---------------|-----------------|
+| 1 | `project_created` | `createOnlineProject` | Provider | — | `/provider/project/{id}` |
+| 2 | `project_accepted` | `acceptProject` | Client | `/client/project/{id}` | — |
+| 3 | `project_declined` | `declineProject` | Client | `/client/project/{id}` | — |
+| 4 | `project_negotiation_received` | `negotiateProject` (either side) | Other party | `/client/project/{id}?tab=negotiations` | `/provider/project/{id}?tab=negotiations` |
+| 5 | `project_negotiation_accepted` | `acceptCounterOffer` | Other party | `/client/project/{id}` | `/provider/project/{id}` |
+| 6 | `deliverable_submitted` | `submitDeliverable` | Client | `/client/project/{id}?tab=deliverables` | — |
+| 7 | `deliverable_approved` | `approveDeliverable` (full or partial) | Provider | — | `/provider/project/{id}?tab=deliverables` |
+| 8 | `revision_requested` | `requestRevision` | Provider | — | `/provider/project/{id}?tab=deliverables` |
+
+### Dispatch Pattern
+
+Each action in `onlineProject.js` calls the local `createNotification()` after the Firestore transaction commits. The pattern:
+
+```javascript
+// Inside onlineProjectAction switch case
+await createNotification({
+  targetUserId: otherPartyId,
+  userType: otherPartyRole,        // 'client' | 'provider'
+  type: 'project_created',
+  title: 'New project request',
+  message: `${clientName} requested "${project.title}"`,
+  relatedEntityType: 'online_project',
+  relatedEntityId: project.id,
+  metadata: { projectId: project.id, clientId, providerId },
+});
+```
+
+`createNotification()` (in `notification.js`) handles the spam-prevention check (`canReceiveNotification`), OneSignal push dispatch, and email dispatch.
+
+### Multi-Session Booking Notifications (Phase 2)
+
+Reuse existing booking notification types (`BOOKING_*`). No new types needed for Phase 2 multi-session booking. A future enhancement may add `SESSION_REMINDER` (24h before each session) but is deferred.
+
 ## Related
 
 - [[Chat System]] — Chat notifications via `onMessageCreated` trigger
@@ -335,3 +382,5 @@ PWA lifecycle service (455 lines):
 - [[Services Layer]] — Frontend service architecture context
 - [[State and Hooks]] — Hook system context
 - [[Media and Images]] — Media attachments in chat notifications
+- [[Online Projects]] — Source of the 8 new notification types (Phase 1)
+- [[Grill Record: Online Services Integration]] — Decision record for online services
