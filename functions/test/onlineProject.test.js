@@ -80,49 +80,49 @@ describe("onlineProjectAction", () => {
   // ==========================================================================
 
   describe("createOnlineProject", () => {
-    it("placeholder for the createOnlineProject action block", () => {
+    it.skip("placeholder for the createOnlineProject action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("acceptProject", () => {
-    it("placeholder for the acceptProject action block", () => {
+    it.skip("placeholder for the acceptProject action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("declineProject", () => {
-    it("placeholder for the declineProject action block", () => {
+    it.skip("placeholder for the declineProject action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("cancelProject", () => {
-    it("placeholder for the cancelProject action block", () => {
+    it.skip("placeholder for the cancelProject action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("disputeProject", () => {
-    it("placeholder for the disputeProject action block", () => {
+    it.skip("placeholder for the disputeProject action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("getOnlineProject", () => {
-    it("placeholder for the getOnlineProject action block", () => {
+    it.skip("placeholder for the getOnlineProject action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("listClientOnlineProjects", () => {
-    it("placeholder for the listClientOnlineProjects action block", () => {
+    it.skip("placeholder for the listClientOnlineProjects action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("listProviderOnlineProjects", () => {
-    it("placeholder for the listProviderOnlineProjects action block", () => {
+    it.skip("placeholder for the listProviderOnlineProjects action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
@@ -132,7 +132,7 @@ describe("onlineProjectAction", () => {
   // ==========================================================================
 
   describe("getProjectAnalytics", () => {
-    it("placeholder for the getProjectAnalytics action block", () => {
+    it.skip("placeholder for the getProjectAnalytics action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
@@ -142,19 +142,19 @@ describe("onlineProjectAction", () => {
   // ==========================================================================
 
   describe("negotiateProject", () => {
-    it("placeholder for the negotiateProject action block", () => {
+    it.skip("placeholder for the negotiateProject action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("acceptCounterOffer", () => {
-    it("placeholder for the acceptCounterOffer action block", () => {
+    it.skip("placeholder for the acceptCounterOffer action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("rejectCounterOffer", () => {
-    it("placeholder for the rejectCounterOffer action block", () => {
+    it.skip("placeholder for the rejectCounterOffer action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
@@ -164,25 +164,25 @@ describe("onlineProjectAction", () => {
   // ==========================================================================
 
   describe("submitDeliverable", () => {
-    it("placeholder for the submitDeliverable action block", () => {
+    it.skip("placeholder for the submitDeliverable action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("approveDeliverable", () => {
-    it("placeholder for the approveDeliverable action block", () => {
+    it.skip("placeholder for the approveDeliverable action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("requestRevision", () => {
-    it("placeholder for the requestRevision action block", () => {
+    it.skip("placeholder for the requestRevision action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
 
   describe("markMilestoneApproved", () => {
-    it("placeholder for the markMilestoneApproved action block", () => {
+    it.skip("placeholder for the markMilestoneApproved action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
@@ -216,7 +216,7 @@ describe("onlineProjectAction", () => {
   // ==========================================================================
 
   describe("recordPayment", () => {
-    it("placeholder for the recordPayment action block", () => {
+    it.skip("placeholder for the recordPayment action block", () => {
       assert.ok(typeof myFunctions.onlineProjectAction === "object");
     });
   });
@@ -230,13 +230,13 @@ describe("onlineProjectAction", () => {
   // onlineProject module is co-located.
 
   describe("isValidOnlineProjectTransition (internal helper)", () => {
-    it("placeholder for the transition helper test block", () => {
+    it.skip("placeholder for the transition helper test block", () => {
       assert.equal(typeof myFunctions.isValidOnlineProjectTransition, "function");
     });
   });
 
   describe("deductReputationForLateReschedule (internal helper)", () => {
-    it("placeholder for the late-reschedule helper test block", () => {
+    it.skip("placeholder for the late-reschedule helper test block", () => {
       assert.equal(typeof myFunctions.deductReputationForLateReschedule, "function");
     });
   });

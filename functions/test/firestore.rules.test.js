@@ -65,34 +65,35 @@ describe("firestore.rules — online_projects milestone metadata exception", () 
    * @return {Promise<{projectRef: FirebaseFirestore.DocumentReference}>}
    */
   async function seedProjectAs(uid, isAdmin = false) {
-    const ctx = testEnv.withSecurityRulesDisabled();
-    const projectRef = ctx.firestore().collection("online_projects").doc(projectId);
-    await projectRef.set({
-      id: projectId,
-      clientId,
-      providerId,
-      serviceId: "service-1",
-      packageId: "package-1",
-      packageType: "Milestone",
-      status: "Active",
-      milestones: [
-        {
-          id: "ms-1",
-          title: "Design",
-          description: "Initial design",
-          dueDate: "2026-07-01T00:00:00.000Z",
-          percentage: 50,
-          status: "Pending",
-        },
-      ],
-      revisionsRemaining: 3,
-      workStarted: false,
-      amountPaid: 0,
-      paymentStatus: "PENDING",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    // Seed with security rules disabled so we can write freely.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const projectRef = ctx.firestore().collection("online_projects").doc(projectId);
+      await projectRef.set({
+        id: projectId,
+        clientId,
+        providerId,
+        serviceId: "service-1",
+        packageId: "package-1",
+        packageType: "Milestone",
+        status: "Active",
+        milestones: [
+          {
+            id: "ms-1",
+            title: "Design",
+            description: "Initial design",
+            dueDate: "2026-07-01T00:00:00.000Z",
+            percentage: 50,
+            status: "Pending",
+          },
+        ],
+        revisionsRemaining: 3,
+        workStarted: false,
+        amountPaid: 0,
+        paymentStatus: "PENDING",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     });
-    await ctx.cleanup();
 
     const token = isAdmin ? {isAdmin: true} : {};
     const userFirestore = testEnv.authenticatedContext(uid, token).firestore();

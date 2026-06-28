@@ -38,6 +38,16 @@ const MAX_SERVICE_CERTIFICATES = 10;
 const MIN_PACKAGE_TITLE_LENGTH = 1;
 const MAX_PACKAGE_TITLE_LENGTH = 500;
 
+// Online-service field validation (per docs/OnlineService.md §4.1, §4.2, §5)
+const VALID_SERVICE_MODES = new Set(["InPerson", "Online", "Hybrid"]);
+const VALID_ONLINE_DELIVERY_FORMATS = new Set(["live", "async", "mixed"]);
+const VALID_PACKAGE_TYPES = new Set(["Fixed", "Milestone", "Session"]);
+const MIN_SESSION_COUNT = 1;
+const MAX_SESSION_COUNT = 50;
+const MIN_SESSION_DURATION_MINUTES = 15;
+const MAX_SESSION_DURATION_MINUTES = 240;
+const VALID_SESSION_TYPES = new Set(["live", "recorded"]);
+
 
 /**
  * Calculate distance between two locations using Haversine formula
@@ -124,6 +134,185 @@ function validateLocation(location) {
     location.address &&
     location.address.length > 0
   );
+}
+
+/**
+ * Validate the 4 new online-service fields on a Service.
+ * Per docs/OnlineService.md section 4.2:
+ *   - InPerson: negotiable=false, allowsMilestones=false, onlineDeliveryFormat=null
+ *   - Online or Hybrid: onlineDeliveryFormat must be set to live, async, or mixed
+ *
+ * Throws an HttpsError on invalid combinations. Returns the resolved
+ * (defaulted) field values for the caller to persist.
+ * @param {string} serviceMode - The serviceMode field, or undefined to default
+ * @param {boolean|undefined} negotiable - Whether the service can be negotiated
+ * @param {boolean|undefined} allowsMilestones - Whether milestones are supported
+ * @param {string|null|undefined} onlineDeliveryFormat - live, async, mixed, or null
+ * @return {Object} The resolved fields to persist
+ */
+function validateServiceMode(serviceMode, negotiable, allowsMilestones, onlineDeliveryFormat) {
+  // Resolve serviceMode default: missing -> "InPerson" (backfill default per §20.1)
+  const resolvedMode = serviceMode === undefined ? "InPerson" : serviceMode;
+  if (!VALID_SERVICE_MODES.has(resolvedMode)) {
+    throw new HttpsError(
+      "invalid-argument",
+      `serviceMode must be one of: ${[...VALID_SERVICE_MODES].join(", ")}`,
+    );
+  }
+
+  // Resolve other defaults
+  const resolvedNegotiable = negotiable === undefined ? false : negotiable;
+  const resolvedAllowsMilestones = allowsMilestones === undefined ? false : allowsMilestones;
+  const resolvedDeliveryFormat = onlineDeliveryFormat === undefined ? null : onlineDeliveryFormat;
+
+  if (resolvedMode === "InPerson") {
+    if (resolvedNegotiable !== false) {
+      throw new HttpsError(
+        "invalid-argument",
+        "InPerson services must have negotiable=false",
+      );
+    }
+    if (resolvedAllowsMilestones !== false) {
+      throw new HttpsError(
+        "invalid-argument",
+        "InPerson services must have allowsMilestones=false",
+      );
+    }
+    if (resolvedDeliveryFormat !== null) {
+      throw new HttpsError(
+        "invalid-argument",
+        "InPerson services must have onlineDeliveryFormat=null",
+      );
+    }
+  } else {
+    // Online or Hybrid: onlineDeliveryFormat is required.
+    if (resolvedDeliveryFormat === null || resolvedDeliveryFormat === undefined) {
+      throw new HttpsError(
+        "invalid-argument",
+        `${resolvedMode} services must set onlineDeliveryFormat (live, async, or mixed)`,
+      );
+    }
+    if (!VALID_ONLINE_DELIVERY_FORMATS.has(resolvedDeliveryFormat)) {
+      throw new HttpsError(
+        "invalid-argument",
+        `onlineDeliveryFormat must be one of: ${[...VALID_ONLINE_DELIVERY_FORMATS].join(", ")}`,
+      );
+    }
+  }
+
+  return {
+    serviceMode: resolvedMode,
+    negotiable: resolvedNegotiable,
+    allowsMilestones: resolvedAllowsMilestones,
+    onlineDeliveryFormat: resolvedDeliveryFormat,
+  };
+}
+
+/**
+ * Validate a ServicePackage's `type` field and its type-specific
+ * sub-fields. Per docs/OnlineService.md §5.1–§5.3:
+ *   - Fixed:    no extra fields required
+ *   - Milestone: milestones[] required; percentages must sum to exactly 100
+ *   - Session:  sessionCount (1–50), sessionDurationMinutes (15–240),
+ *               sessionType ('live' | 'recorded') all required
+ *
+ * Throws HttpsError on validation failure. Returns the resolved package
+ * shape (type + type-specific fields) for the caller to persist.
+ * @param {string|undefined} type - The package type
+ * @param {Object} payload - The raw payload (for type-specific fields)
+ * @return {{type: string, typeFields: Object}}
+ */
+function validateServicePackageType(type, payload) {
+  if (type === undefined || type === null) {
+    throw new HttpsError(
+      "invalid-argument",
+      "ServicePackage type is required (Fixed, Milestone, or Session)",
+    );
+  }
+  if (!VALID_PACKAGE_TYPES.has(type)) {
+    throw new HttpsError(
+      "invalid-argument",
+      `ServicePackage type must be one of: ${[...VALID_PACKAGE_TYPES].join(", ")}`,
+    );
+  }
+
+  const typeFields = {};
+
+  if (type === "Fixed") {
+    // No extra fields required.
+  } else if (type === "Milestone") {
+    const milestones = payload.milestones;
+    if (!Array.isArray(milestones) || milestones.length === 0) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Milestone package must have a non-empty milestones[] array",
+      );
+    }
+    let total = 0;
+    for (const m of milestones) {
+      if (!m || typeof m.title !== "string" || m.title.length === 0) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Each milestone must have a non-empty title",
+        );
+      }
+      if (typeof m.description !== "string") {
+        throw new HttpsError(
+          "invalid-argument",
+          "Each milestone must have a description string",
+        );
+      }
+      if (typeof m.dueDateOffsetDays !== "number" || m.dueDateOffsetDays < 0) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Each milestone must have a non-negative dueDateOffsetDays (number)",
+        );
+      }
+      if (typeof m.percentage !== "number" ||
+        m.percentage < 1 || m.percentage > 100) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Each milestone percentage must be a number between 1 and 100",
+        );
+      }
+      total += m.percentage;
+    }
+    if (total !== 100) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Milestone percentages must sum to exactly 100 (got ${total})`,
+      );
+    }
+    typeFields.milestones = milestones;
+  } else if (type === "Session") {
+    const {sessionCount, sessionDurationMinutes, sessionType} = payload;
+    if (typeof sessionCount !== "number" ||
+      sessionCount < MIN_SESSION_COUNT || sessionCount > MAX_SESSION_COUNT) {
+      throw new HttpsError(
+        "invalid-argument",
+        `sessionCount must be a number between ${MIN_SESSION_COUNT} and ${MAX_SESSION_COUNT}`,
+      );
+    }
+    if (typeof sessionDurationMinutes !== "number" ||
+      sessionDurationMinutes < MIN_SESSION_DURATION_MINUTES ||
+      sessionDurationMinutes > MAX_SESSION_DURATION_MINUTES) {
+      throw new HttpsError(
+        "invalid-argument",
+        `sessionDurationMinutes: ${MIN_SESSION_DURATION_MINUTES}-${MAX_SESSION_DURATION_MINUTES}`,
+      );
+    }
+    if (!VALID_SESSION_TYPES.has(sessionType)) {
+      throw new HttpsError(
+        "invalid-argument",
+        `sessionType must be one of: ${[...VALID_SESSION_TYPES].join(", ")}`,
+      );
+    }
+    typeFields.sessionCount = sessionCount;
+    typeFields.sessionDurationMinutes = sessionDurationMinutes;
+    typeFields.sessionType = sessionType;
+  }
+
+  return {type, typeFields};
 }
 
 /**
@@ -228,6 +417,10 @@ async function createService_service(request) {
     maxBookingsPerDay,
     serviceImages,
     serviceCertificates,
+    serviceMode,
+    negotiable,
+    allowsMilestones,
+    onlineDeliveryFormat,
   } = payload;
 
 
@@ -262,6 +455,14 @@ async function createService_service(request) {
       "invalid-argument",
       "Invalid location data");
   }
+
+  // Validate the 4 new online-service fields (per docs/OnlineService.md §4.2).
+  const onlineFields = validateServiceMode(
+    serviceMode,
+    negotiable,
+    allowsMilestones,
+    onlineDeliveryFormat,
+  );
 
   // Validate category exists
   const categoryDoc = await db.collection("categories").doc(categoryId).get();
@@ -340,6 +541,10 @@ async function createService_service(request) {
       instantBookingEnabled: instantBookingEnabled || false,
       bookingNoticeHours: bookingNoticeHours || null,
       maxBookingsPerDay: maxBookingsPerDay || null,
+      serviceMode: onlineFields.serviceMode,
+      negotiable: onlineFields.negotiable,
+      allowsMilestones: onlineFields.allowsMilestones,
+      onlineDeliveryFormat: onlineFields.onlineDeliveryFormat,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -1726,7 +1931,7 @@ async function createServicePackage_service(request) {
 
   // Extract the actual payload from data.data
   const payload = data.data || data;
-  const {serviceId, title, description, price} = payload;
+  const {serviceId, title, description, price, type} = payload;
 
   if (!serviceId || !title || !description || !price) {
     throw new HttpsError(
@@ -1780,6 +1985,12 @@ async function createServicePackage_service(request) {
       );
     }
 
+    // Validate the package type and its type-specific sub-fields.
+    // Per docs/OnlineService.md §5: type defaults to "Fixed" when omitted
+    // (backfill default per §20.1), so an omitted `type` is treated as Fixed.
+    const resolvedType = type === undefined ? "Fixed" : type;
+    const packageType = validateServicePackageType(resolvedType, payload);
+
     const packageRef = db.collection("service_packages").doc();
     const timestamp = new Date().toISOString();
 
@@ -1789,6 +2000,8 @@ async function createServicePackage_service(request) {
       title,
       description,
       price,
+      type: packageType.type,
+      ...packageType.typeFields,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
