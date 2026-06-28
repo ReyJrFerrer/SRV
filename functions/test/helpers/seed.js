@@ -549,6 +549,376 @@ async function seedProviderReview(opts = {}) {
   return {id};
 }
 
+// ============================================================================
+// Online project test seeders
+// ============================================================================
+//
+// Scenario-based seeders for online project tests. Each seeder builds a
+// complete chain (client + provider + online service + package + reputation)
+// and writes the online_projects doc + any subcollection docs in the right
+// state, so the calling action has all the data it needs.
+
+/**
+ * Build an online service object with the 4 new online-service fields.
+ * Mirrors `docs/OnlineService.md` §4.1. Default `serviceMode: "Online"`
+ * because most tests target online services.
+ * @param {Object} overrides
+ * @return {Object}
+ */
+function buildOnlineService(overrides = {}) {
+  return {
+    ...buildService(overrides),
+    serviceMode: "Online",
+    negotiable: false,
+    allowsMilestones: false,
+    onlineDeliveryFormat: "async",
+    ...overrides,
+  };
+}
+
+/**
+ * Build an OnlineProject document with sensible defaults.
+ * Field set mirrors `docs/OnlineService.md` §6.2.
+ * @param {Object} opts
+ * @return {Object}
+ */
+function buildOnlineProject(opts) {
+  const now = new Date().toISOString();
+  const base = {
+    id: opts.id,
+    clientId: opts.clientId,
+    providerId: opts.providerId,
+    serviceId: opts.serviceId,
+    serviceName: opts.serviceName || "Test Online Service",
+    serviceCategory: opts.serviceCategory || {
+      id: "digital-creative-services",
+      name: "Digital & Creative",
+      slug: "digital-creative-services",
+    },
+    packageId: opts.packageId,
+    packageType: opts.packageType || "Fixed",
+    packageSnapshot: opts.packageSnapshot || {
+      title: "Test Package",
+      description: "Default test package",
+      price: opts.price || 500,
+      type: opts.packageType || "Fixed",
+      typeFields: {},
+    },
+    title: opts.title || "Test Online Project",
+    description: opts.description || "A test project for online project testing",
+    price: opts.price || 500,
+    deadline: opts.deadline || futureDate(14),
+    milestones: opts.milestones || [],
+    briefId: opts.briefId || null,
+    status: opts.status,
+    revisionsRemaining: opts.revisionsRemaining !== undefined ? opts.revisionsRemaining : 3,
+    workStarted: opts.workStarted !== undefined ? opts.workStarted : false,
+    conversationId: opts.conversationId || null,
+    amountPaid: opts.amountPaid || 0,
+    paymentStatus: opts.paymentStatus || "PENDING",
+    paymentMethod: opts.paymentMethod || "SRVWallet",
+    paymentId: opts.paymentId || null,
+    createdAt: opts.createdAt || now,
+    updatedAt: opts.updatedAt || now,
+  };
+  if (opts.acceptedAt) base.acceptedAt = opts.acceptedAt;
+  if (opts.completedAt) base.completedAt = opts.completedAt;
+  if (opts.cancelledAt) base.cancelledAt = opts.cancelledAt;
+  if (opts.declinedAt) base.declinedAt = opts.declinedAt;
+  if (opts.disputedAt) base.disputedAt = opts.disputedAt;
+  return base;
+}
+
+/**
+ * Build a Milestone-type ServicePackage with milestones[].
+ * Field set mirrors `docs/OnlineService.md` §5.2.
+ * @param {Object} overrides
+ * @return {Object}
+ */
+function buildMilestonePackage(overrides = {}) {
+  return {
+    ...buildServicePackage({
+      type: "Milestone",
+      ...overrides,
+    }),
+    milestones: overrides.milestones || [
+      {title: "Design", description: "Initial design", dueDateOffsetDays: 7, percentage: 30},
+      {title: "Build", description: "Implementation", dueDateOffsetDays: 14, percentage: 50},
+      {title: "Deploy", description: "Launch", dueDateOffsetDays: 21, percentage: 20},
+    ],
+  };
+}
+
+/**
+ * Build a Session-type ServicePackage with session params.
+ * Field set mirrors `docs/OnlineService.md` §5.3.
+ * @param {Object} overrides
+ * @return {Object}
+ */
+function buildSessionPackage(overrides = {}) {
+  return {
+    ...buildServicePackage({
+      type: "Session",
+      ...overrides,
+    }),
+    sessionCount: overrides.sessionCount || 5,
+    sessionDurationMinutes: overrides.sessionDurationMinutes || 60,
+    sessionType: overrides.sessionType || "live",
+  };
+}
+
+/**
+ * Build a milestone object for use inside an OnlineProject.milestones[].
+ * @param {Object} opts
+ * @return {Object}
+ */
+function buildOnlineProjectMilestone(opts) {
+  return {
+    id: opts.id || `ms-${uniqueId()}`,
+    title: opts.title || "Test Milestone",
+    description: opts.description || "A test milestone",
+    dueDate: opts.dueDate || futureDate(7),
+    percentage: opts.percentage || 100,
+    status: opts.status || "Pending",
+    submittedAt: opts.submittedAt || null,
+    approvedAt: opts.approvedAt || null,
+  };
+}
+
+/**
+ * Seed a service doc with the online-service fields.
+ * @param {Object} overrides
+ * @return {Promise<{id: string}>}
+ */
+async function seedOnlineService(overrides = {}) {
+  const id = overrides.id || `service-online-${uniqueId()}`;
+  const data = {...buildOnlineService(overrides), id};
+  delete data.id;
+  await db.collection("services").doc(id).set(data);
+  return {id};
+}
+
+/**
+ * Seed an online project doc.
+ * @param {Object} opts
+ * @return {Promise<{id: string, projectId: string}>}
+ */
+async function seedOnlineProject(opts = {}) {
+  const projectId = opts.projectId || opts.id || `op-${uniqueId()}`;
+  const data = {...buildOnlineProject({...opts, id: projectId})};
+  delete data.id;
+  await db.collection("online_projects").doc(projectId).set(data);
+  return {id: projectId, projectId};
+}
+
+/**
+ * Seed an online project in Pending status.
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectPending(opts = {}) {
+  const base = await seedBaseEntities(opts);
+  const pkg = await seedServicePackage({
+    serviceId: base.serviceId,
+    ...opts.package,
+  });
+  const project = await seedOnlineProject({
+    ...opts,
+    projectId: opts.projectId,
+    clientId: base.clientId,
+    providerId: base.providerId,
+    serviceId: base.serviceId,
+    packageId: pkg.id,
+    status: "Pending",
+  });
+  return {projectId: project.projectId, ...base, packageId: pkg.id};
+}
+
+/**
+ * Seed an online project in Negotiating status (one Pending offer exists).
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectNegotiating(opts = {}) {
+  const base = await seedOnlineProjectPending(opts);
+  await db.collection("online_projects").doc(base.projectId)
+    .update({status: "Negotiating"});
+  await seedNegotiationOffer({
+    projectId: base.projectId,
+    clientId: base.clientId,
+    providerId: base.providerId,
+    status: "Pending",
+  });
+  return base;
+}
+
+/**
+ * Seed an online project in Active status with `workStarted` false.
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectActive(opts = {}) {
+  const base = await seedOnlineProjectPending(opts);
+  await db.collection("online_projects").doc(base.projectId)
+    .update({status: "Active", acceptedAt: new Date().toISOString()});
+  return base;
+}
+
+/**
+ * Seed an online project in InReview status (workStarted=true, deliverable exists).
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectInReview(opts = {}) {
+  const base = await seedOnlineProjectActive(opts);
+  await db.collection("online_projects").doc(base.projectId)
+    .update({status: "InReview", workStarted: true});
+  await seedDeliverable({
+    projectId: base.projectId,
+    providerId: base.providerId,
+  });
+  return base;
+}
+
+/**
+ * Seed an online project in RevisionsRequested status.
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectRevisionsRequested(opts = {}) {
+  const base = await seedOnlineProjectInReview(opts);
+  await db.collection("online_projects").doc(base.projectId)
+    .update({status: "RevisionsRequested"});
+  return base;
+}
+
+/**
+ * Seed an online project in Completed status (terminal, but Disputed is reachable).
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectCompleted(opts = {}) {
+  const base = await seedOnlineProjectInReview(opts);
+  await db.collection("online_projects").doc(base.projectId)
+    .update({status: "Completed", completedAt: new Date().toISOString()});
+  return base;
+}
+
+/**
+ * Seed an online project in Declined status (terminal).
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectDeclined(opts = {}) {
+  const base = await seedOnlineProjectPending(opts);
+  await db.collection("online_projects").doc(base.projectId)
+    .update({status: "Declined", declinedAt: new Date().toISOString()});
+  return base;
+}
+
+/**
+ * Seed an online project in Cancelled status (terminal).
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectCancelled(opts = {}) {
+  const base = await seedOnlineProjectActive(opts);
+  await db.collection("online_projects").doc(base.projectId)
+    .update({status: "Cancelled", cancelledAt: new Date().toISOString()});
+  return base;
+}
+
+/**
+ * Seed an online project in Disputed status (terminal).
+ * @param {Object} opts
+ * @return {Promise<Object>}
+ */
+async function seedOnlineProjectDisputed(opts = {}) {
+  const base = await seedOnlineProjectCompleted(opts);
+  await db.collection("online_projects").doc(base.projectId)
+    .update({status: "Disputed", disputedAt: new Date().toISOString()});
+  return base;
+}
+
+/**
+ * Seed a ProjectBrief subcollection doc.
+ * Field set mirrors `docs/OnlineService.md` §6.3.
+ * @param {Object} opts
+ * @return {Promise<{id: string}>}
+ */
+async function seedBrief(opts = {}) {
+  const id = opts.id || `brief-${uniqueId()}`;
+  const now = new Date().toISOString();
+  const data = {
+    projectId: opts.projectId,
+    clientId: opts.clientId,
+    scope: opts.scope || "Build a website",
+    requirements: opts.requirements || "Use React, deploy to Vercel",
+    attachments: opts.attachments || [],
+    suggestedPrice: opts.suggestedPrice || null,
+    suggestedDeadline: opts.suggestedDeadline || null,
+    suggestedRevisions: opts.suggestedRevisions || null,
+    additionalNotes: opts.additionalNotes || null,
+    createdAt: opts.createdAt || now,
+    updatedAt: opts.updatedAt || now,
+    ...opts.overrides,
+  };
+  await db.collection("online_projects").doc(opts.projectId)
+    .collection("briefs").doc(id).set(data);
+  return {id};
+}
+
+/**
+ * Seed a NegotiationOffer subcollection doc.
+ * Field set mirrors `docs/OnlineService.md` §6.4.
+ * @param {Object} opts
+ * @return {Promise<{id: string}>}
+ */
+async function seedNegotiationOffer(opts = {}) {
+  const id = opts.id || `offer-${uniqueId()}`;
+  const now = new Date().toISOString();
+  const data = {
+    projectId: opts.projectId,
+    authorId: opts.authorId || opts.clientId,
+    authorRole: opts.authorRole || "client",
+    price: opts.price || 500,
+    deadline: opts.deadline || futureDate(14),
+    scope: opts.scope || "Build a website",
+    revisionRounds: opts.revisionRounds !== undefined ? opts.revisionRounds : 3,
+    message: opts.message || null,
+    status: opts.status || "Pending",
+    createdAt: opts.createdAt || now,
+    respondedAt: opts.respondedAt || null,
+  };
+  await db.collection("online_projects").doc(opts.projectId)
+    .collection("negotiations").doc(id).set(data);
+  return {id};
+}
+
+/**
+ * Seed a DeliverableSubmission subcollection doc.
+ * Field set mirrors `docs/OnlineService.md` §6.5.
+ * @param {Object} opts
+ * @return {Promise<{id: string}>}
+ */
+async function seedDeliverable(opts = {}) {
+  const id = opts.id || `deliverable-${uniqueId()}`;
+  const now = new Date().toISOString();
+  const data = {
+    projectId: opts.projectId,
+    milestoneId: opts.milestoneId || null,
+    attachments: opts.attachments || [],
+    notes: opts.notes || null,
+    submittedAt: opts.submittedAt || now,
+    reviewedAt: opts.reviewedAt || null,
+    reviewStatus: opts.reviewStatus || "Pending",
+    reviewNotes: opts.reviewNotes || null,
+  };
+  await db.collection("online_projects").doc(opts.projectId)
+    .collection("deliverables").doc(id).set(data);
+  return {id};
+}
+
 module.exports = {
   uniqueId,
   futureDate,
@@ -560,6 +930,11 @@ module.exports = {
   buildServiceLocation,
   buildReview,
   buildProviderReview,
+  buildOnlineService,
+  buildOnlineProject,
+  buildMilestonePackage,
+  buildSessionPackage,
+  buildOnlineProjectMilestone,
   seedUser,
   seedService,
   seedServicePackage,
@@ -576,4 +951,18 @@ module.exports = {
   seedCancelledBooking,
   seedReview,
   seedProviderReview,
+  seedOnlineService,
+  seedOnlineProject,
+  seedOnlineProjectPending,
+  seedOnlineProjectNegotiating,
+  seedOnlineProjectActive,
+  seedOnlineProjectInReview,
+  seedOnlineProjectRevisionsRequested,
+  seedOnlineProjectCompleted,
+  seedOnlineProjectDeclined,
+  seedOnlineProjectCancelled,
+  seedOnlineProjectDisputed,
+  seedBrief,
+  seedNegotiationOffer,
+  seedDeliverable,
 };

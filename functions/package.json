@@ -29,6 +29,7 @@
     "xendit-node": "^7.0.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.2",
     "dotenv": "^17.4.2",
     "eslint": "^8.57.1",
     "eslint-config-google": "^0.14.0",

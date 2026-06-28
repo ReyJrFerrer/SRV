@@ -27,6 +27,9 @@ const LOG_FILES = [
   "test-output-review.log",
   "test-output-account.log",
   "test-output-reputation.log",
+  "test-output-onlineProject.log",
+  "test-output-service-online.log",
+  "test-output-rules.log",
 ];
 for (const f of LOG_FILES) {
   fs.writeFileSync(path.join(__dirname, f), "", "utf-8");
@@ -46,9 +49,12 @@ function logFileForTest(filePath) {
   const base = path.basename(filePath);
   if (base.includes("booking.test")) return "test-output-booking.log";
   if (base.includes("service.test")) return "test-output-service.log";
+  if (base.includes("service.online.test")) return "test-output-service-online.log";
   if (base.includes("review.test")) return "test-output-review.log";
   if (base.includes("account.test")) return "test-output-account.log";
   if (base.includes("reputation.test")) return "test-output-reputation.log";
+  if (base.includes("onlineProject.test")) return "test-output-onlineProject.log";
+  if (base.includes("firestore.rules.test")) return "test-output-rules.log";
   return "test-output.log";
 }
 
@@ -101,13 +107,33 @@ const COLLECTIONS_TO_CLEAR = [
   "pending_users",
   "categories",
   "media",
+  "online_projects",
+  "online_projects_briefs",
+  "online_projects_negotiations",
+  "online_projects_deliverables",
 ];
 
 /**
  * Clear all known collections in the emulator between tests.
+ * Also clears subcollections of `online_projects` (briefs, negotiations,
+ * deliverables) so online-project tests start from a known state.
  * @return {Promise<void>}
  */
 async function clearCollections() {
+  // Clear online_projects subcollections first (they live under each project doc).
+  const projectSnap = await db.collection("online_projects").get();
+  if (!projectSnap.empty) {
+    for (const projectDoc of projectSnap.docs) {
+      for (const subName of ["briefs", "negotiations", "deliverables"]) {
+        const subSnap = await projectDoc.ref.collection(subName).get();
+        if (subSnap.empty) continue;
+        const batch = db.batch();
+        subSnap.docs.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
+    }
+  }
+
   for (const name of COLLECTIONS_TO_CLEAR) {
     const snapshot = await db.collection(name).get();
     if (snapshot.empty) continue;

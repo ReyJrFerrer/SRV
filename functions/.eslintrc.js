@@ -86,6 +86,12 @@ module.exports = {
       },
     },
     {
+      files: ["src/onlineProject.js"],
+      rules: {
+        "camelcase": ["error", {allow: ["_onlineProject"]}],
+      },
+    },
+    {
       files: ["src/notification.js"],
       rules: {
         "camelcase": ["error", {allow: ["_notification", "app_id", "include_player_ids"]}],

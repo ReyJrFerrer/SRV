@@ -186,12 +186,12 @@ describe("accountAction", () => {
       const res = await wrapped(
         makeRequest(
           {
-              action: "createProfile",
-              payload: {
-                name: "Test User",
-                phone: "09123456789",
-                role: "Client",
-              },
+            action: "createProfile",
+            payload: {
+              name: "Test User",
+              phone: "09123456789",
+              role: "Client",
+            },
           },
           makeAuth(principal),
         ),
