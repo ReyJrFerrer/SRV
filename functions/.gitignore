@@ -1,6 +1,8 @@
 node_modules/
 *.local
 .runtimeconfig.json
+.env
+.env.test
 
 bun.lock
 package-lock.json
