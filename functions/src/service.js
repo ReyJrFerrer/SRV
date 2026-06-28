@@ -48,6 +48,9 @@ const MIN_SESSION_DURATION_MINUTES = 15;
 const MAX_SESSION_DURATION_MINUTES = 240;
 const VALID_SESSION_TYPES = new Set(["live", "recorded"]);
 
+// 1-5 packages-per-service rule (per docs/OnlineService.md §5.4)
+const MAX_PACKAGES_PER_SERVICE = 5;
+
 
 /**
  * Calculate distance between two locations using Haversine formula
@@ -142,15 +145,26 @@ function validateLocation(location) {
  *   - InPerson: negotiable=false, allowsMilestones=false, onlineDeliveryFormat=null
  *   - Online or Hybrid: onlineDeliveryFormat must be set to live, async, or mixed
  *
+ * Per docs/OnlineService.md section 4.3:
+ *   - InPerson and Hybrid: weeklySchedule is REQUIRED (in-person leg needs a schedule)
+ *   - Online: weeklySchedule is OPTIONAL
+ *
  * Throws an HttpsError on invalid combinations. Returns the resolved
  * (defaulted) field values for the caller to persist.
  * @param {string} serviceMode - The serviceMode field, or undefined to default
  * @param {boolean|undefined} negotiable - Whether the service can be negotiated
  * @param {boolean|undefined} allowsMilestones - Whether milestones are supported
  * @param {string|null|undefined} onlineDeliveryFormat - live, async, mixed, or null
+ * @param {Array|null|undefined} weeklySchedule - Weekly schedule array, or null
  * @return {Object} The resolved fields to persist
  */
-function validateServiceMode(serviceMode, negotiable, allowsMilestones, onlineDeliveryFormat) {
+function validateServiceMode(
+  serviceMode,
+  negotiable,
+  allowsMilestones,
+  onlineDeliveryFormat,
+  weeklySchedule,
+) {
   // Resolve serviceMode default: missing -> "InPerson" (backfill default per §20.1)
   const resolvedMode = serviceMode === undefined ? "InPerson" : serviceMode;
   if (!VALID_SERVICE_MODES.has(resolvedMode)) {
@@ -196,6 +210,17 @@ function validateServiceMode(serviceMode, negotiable, allowsMilestones, onlineDe
       throw new HttpsError(
         "invalid-argument",
         `onlineDeliveryFormat must be one of: ${[...VALID_ONLINE_DELIVERY_FORMATS].join(", ")}`,
+      );
+    }
+  }
+
+  // weeklySchedule is required for InPerson and Hybrid (in-person leg),
+  // optional for Online.
+  if (resolvedMode === "InPerson" || resolvedMode === "Hybrid") {
+    if (!weeklySchedule) {
+      throw new HttpsError(
+        "invalid-argument",
+        `${resolvedMode} services require a weeklySchedule (in-person leg)`,
       );
     }
   }
@@ -457,11 +482,13 @@ async function createService_service(request) {
   }
 
   // Validate the 4 new online-service fields (per docs/OnlineService.md §4.2).
+  // weeklySchedule is also validated: required for InPerson/Hybrid (§4.3).
   const onlineFields = validateServiceMode(
     serviceMode,
     negotiable,
     allowsMilestones,
     onlineDeliveryFormat,
+    weeklySchedule,
   );
 
   // Validate category exists
@@ -1957,6 +1984,18 @@ async function createServicePackage_service(request) {
       );
     }
 
+    // Enforce 1-5 packages-per-service rule (per docs/OnlineService.md §5.4).
+    // Count existing packages for this service.
+    const existingPackagesSnap = await db.collection("service_packages")
+      .where("serviceId", "==", serviceId)
+      .get();
+    if (existingPackagesSnap.size >= MAX_PACKAGES_PER_SERVICE) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Maximum ${MAX_PACKAGES_PER_SERVICE} packages per service reached`,
+      );
+    }
+
     // Validate input
     console.log("Starting validation...");
     console.log("Title validation - Min:", MIN_PACKAGE_TITLE_LENGTH, "Max:",
@@ -2007,6 +2046,28 @@ async function createServicePackage_service(request) {
     };
 
     await packageRef.set(newPackage);
+
+    // Enforce Service.price = min(package.prices) invariant.
+    // Per docs/OnlineService.md §5.4: "A service's `price` field remains
+    // the minimum across its packages (unchanged)." When a new package
+    // is created with a price lower than the service's current price,
+    // update the service's price transactionally.
+    if (price < service.price) {
+      const serviceRef = db.collection("services").doc(serviceId);
+      await db.runTransaction(async (tx) => {
+        const fresh = await tx.get(serviceRef);
+        if (!fresh.exists) {
+          throw new HttpsError("not-found", "Service not found");
+        }
+        const freshPrice = fresh.data().price;
+        if (price < freshPrice) {
+          tx.update(serviceRef, {
+            price: price,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      });
+    }
 
     return {success: true, package: newPackage};
   } catch (error) {

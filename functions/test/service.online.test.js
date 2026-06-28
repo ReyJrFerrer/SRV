@@ -14,7 +14,7 @@
 
 const assert = require("node:assert/strict");
 
-const {test, clearCollections} = require("./mocha");
+const {test, db, clearCollections} = require("./mocha");
 const {
   seedUser,
   seedCategory,
@@ -178,6 +178,9 @@ describe("serviceAction — online service fields (Phase 1)", () => {
               negotiable: true,
               allowsMilestones: true,
               onlineDeliveryFormat: "live",
+              weeklySchedule: [
+                {day: "Monday", enabled: true, startTime: "09:00", endTime: "17:00"},
+              ],
             }),
           },
           makeAuth(provider.id),
@@ -237,6 +240,532 @@ describe("serviceAction — online service fields (Phase 1)", () => {
         ),
         /PERMISSION_DENIED|invalid-argument|serviceMode/i,
       );
+    });
+  });
+
+  // ==========================================================================
+  // A2. weeklySchedule validation (per docs/OnlineService.md §4.3)
+  // ==========================================================================
+  //
+  // Per the spec: weeklySchedule is Required for InPerson and Hybrid services
+  // (in-person leg must have a schedule), and Optional for Online services.
+
+  describe("createService — weeklySchedule requirement", () => {
+    /**
+     * Build a minimal weeklySchedule with one slot.
+     * @return {Object}
+     */
+    function sampleWeeklySchedule() {
+      return [
+        {day: "Monday", enabled: true, startTime: "09:00", endTime: "17:00"},
+      ];
+    }
+
+    it("accepts serviceMode='InPerson' with a valid weeklySchedule", async () => {
+      const provider = await seedUser();
+      const res = await wrapped(
+        makeRequest(
+          {
+            action: "createService",
+            data: baseServicePayload({
+              serviceMode: "InPerson",
+              weeklySchedule: sampleWeeklySchedule(),
+            }),
+          },
+          makeAuth(provider.id),
+        ),
+      );
+      assert.equal(res.success, true);
+      assert.equal(res.service.serviceMode, "InPerson");
+    });
+
+    it("rejects serviceMode='InPerson' with weeklySchedule=null", async () => {
+      const provider = await seedUser();
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createService",
+              data: baseServicePayload({
+                serviceMode: "InPerson",
+                weeklySchedule: null,
+              }),
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /INVALID_ARGUMENT|weeklySchedule|schedule.*required/i,
+      );
+    });
+
+    it("rejects serviceMode='Hybrid' with weeklySchedule=null", async () => {
+      const provider = await seedUser();
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createService",
+              data: baseServicePayload({
+                serviceMode: "Hybrid",
+                negotiable: true,
+                allowsMilestones: true,
+                onlineDeliveryFormat: "live",
+                weeklySchedule: null,
+              }),
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /INVALID_ARGUMENT|weeklySchedule|schedule.*required/i,
+      );
+    });
+
+    it("accepts serviceMode='Online' with weeklySchedule=null (optional)", async () => {
+      const provider = await seedUser();
+      const res = await wrapped(
+        makeRequest(
+          {
+            action: "createService",
+            data: baseServicePayload({
+              serviceMode: "Online",
+              onlineDeliveryFormat: "async",
+              weeklySchedule: null,
+            }),
+          },
+          makeAuth(provider.id),
+        ),
+      );
+      assert.equal(res.success, true);
+    });
+
+    it("accepts serviceMode='Hybrid' with a valid weeklySchedule (boundary)", async () => {
+      const provider = await seedUser();
+      const res = await wrapped(
+        makeRequest(
+          {
+            action: "createService",
+            data: baseServicePayload({
+              serviceMode: "Hybrid",
+              negotiable: true,
+              allowsMilestones: true,
+              onlineDeliveryFormat: "live",
+              weeklySchedule: sampleWeeklySchedule(),
+            }),
+          },
+          makeAuth(provider.id),
+        ),
+      );
+      assert.equal(res.success, true);
+    });
+
+    it("rejects missing serviceMode (defaults to InPerson) + missing weeklySchedule", async () => {
+      const provider = await seedUser();
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createService",
+              data: baseServicePayload({weeklySchedule: null}),
+              // serviceMode omitted -> defaults to "InPerson"
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /INVALID_ARGUMENT|weeklySchedule|schedule.*required/i,
+      );
+    });
+
+    it("rejects weeklySchedule=null combined with invalid serviceMode", async () => {
+      const provider = await seedUser();
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createService",
+              data: baseServicePayload({
+                serviceMode: "Teleportation",
+                weeklySchedule: null,
+              }),
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /INVALID_ARGUMENT|serviceMode|weeklySchedule|schedule.*required/i,
+      );
+    });
+  });
+
+  // ==========================================================================
+  // A3. 1-5 packages-per-service rule (per docs/OnlineService.md §5.4)
+  // ==========================================================================
+  //
+  // Per the spec: "Existing 1–5 packages-per-service rule applies to all 3 types."
+  // Currently the rule is not enforced. We add it as part of Gap 3.
+
+  describe("createServicePackage — 1-5 packages-per-service rule", () => {
+    /**
+     * Create N packages for a service and return the package IDs.
+     * @param {string} serviceId
+     * @param {string} providerId
+     * @param {number} count
+     * @return {Promise<Array<string>>}
+     */
+    async function seedPackages(serviceId, providerId, count) {
+      const ids = [];
+      for (let i = 0; i < count; i++) {
+        const res = await wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                serviceId,
+                title: `Package ${i + 1}`,
+                description: `Test package ${i + 1}`,
+                price: 100 + i,
+                type: "Fixed",
+              },
+            },
+            makeAuth(providerId),
+          ),
+        );
+        ids.push(res.package.id);
+      }
+      return ids;
+    }
+
+    it("accepts the 1st package on a service (boundary low)", async () => {
+      const provider = await seedUser();
+      const svc = await seedService({providerId: provider.id});
+      const res = await wrapped(
+        makeRequest(
+          {
+            action: "createServicePackage",
+            data: {
+              serviceId: svc.id,
+              title: "First Package",
+              description: "The first one",
+              price: 100,
+              type: "Fixed",
+            },
+          },
+          makeAuth(provider.id),
+        ),
+      );
+      assert.equal(res.success, true);
+    });
+
+    it("accepts the 5th package on a service (boundary high)", async () => {
+      const provider = await seedUser();
+      const svc = await seedService({providerId: provider.id});
+      // Seed 4 packages, then add the 5th.
+      await seedPackages(svc.id, provider.id, 4);
+      const res = await wrapped(
+        makeRequest(
+          {
+            action: "createServicePackage",
+            data: {
+              serviceId: svc.id,
+              title: "Fifth Package",
+              description: "The fifth one",
+              price: 500,
+              type: "Fixed",
+            },
+          },
+          makeAuth(provider.id),
+        ),
+      );
+      assert.equal(res.success, true);
+    });
+
+    it("rejects the 6th package on a service", async () => {
+      const provider = await seedUser();
+      const svc = await seedService({providerId: provider.id});
+      // Seed 5 packages (the max).
+      await seedPackages(svc.id, provider.id, 5);
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                serviceId: svc.id,
+                title: "Sixth Package",
+                description: "Should be rejected",
+                price: 600,
+                type: "Fixed",
+              },
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /INVALID_ARGUMENT|too many|maximum|limit|6th/i,
+      );
+    });
+
+    it("rejects unauthenticated callers", async () => {
+      const svc = await seedService();
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                serviceId: svc.id,
+                title: "Pkg",
+                description: "Desc",
+                price: 100,
+                type: "Fixed",
+              },
+            },
+          ),
+        ),
+        /User must be authenticated/i,
+      );
+    });
+
+    it("rejects missing serviceId", async () => {
+      const provider = await seedUser();
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                title: "Pkg",
+                description: "Desc",
+                price: 100,
+                type: "Fixed",
+              },
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /INVALID_ARGUMENT|required/i,
+      );
+    });
+
+    it("rejects when service belongs to a different provider", async () => {
+      const provider = await seedUser();
+      const otherProvider = await seedUser();
+      const svc = await seedService({providerId: otherProvider.id});
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                serviceId: svc.id,
+                title: "Pkg",
+                description: "Desc",
+                price: 100,
+                type: "Fixed",
+              },
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /PERMISSION_DENIED|permission|provider can create/i,
+      );
+    });
+
+    it("getServicePackages returns [] for a service with 0 packages", async () => {
+      const svc = await seedService();
+      const res = await wrapped(
+        makeRequest(
+          {action: "getServicePackages", data: {serviceId: svc.id}},
+        ),
+      );
+      assert.equal(res.success, true);
+      assert.equal(res.packages.length, 0);
+    });
+  });
+
+  // ==========================================================================
+  // A4. Service.price = min(package.prices) invariant (per docs/OnlineService.md §5.4)
+  // ==========================================================================
+  //
+  // Per the spec: "A service's `price` field remains the minimum across its
+  // packages (unchanged)." When a new package is created with a price lower
+  // than the service's current price, the service's price should be updated
+  // transactionally.
+
+  describe("createServicePackage — Service.price = min(package.prices) invariant", () => {
+    it("does not change Service.price when package price > current", async () => {
+      const provider = await seedUser();
+      const svc = await seedService({providerId: provider.id, price: 500});
+      await wrapped(
+        makeRequest(
+          {
+            action: "createServicePackage",
+            data: {
+              serviceId: svc.id,
+              title: "Expensive Package",
+              description: "Higher than service",
+              price: 800,
+              type: "Fixed",
+            },
+          },
+          makeAuth(provider.id),
+        ),
+      );
+      const after = await db.collection("services").doc(svc.id).get();
+      assert.equal(after.data().price, 500);
+    });
+
+    it("updates Service.price when package price < current (transactional)", async () => {
+      const provider = await seedUser();
+      const svc = await seedService({providerId: provider.id, price: 500});
+      await wrapped(
+        makeRequest(
+          {
+            action: "createServicePackage",
+            data: {
+              serviceId: svc.id,
+              title: "Cheaper Package",
+              description: "Lower than service",
+              price: 200,
+              type: "Fixed",
+            },
+          },
+          makeAuth(provider.id),
+        ),
+      );
+      const after = await db.collection("services").doc(svc.id).get();
+      assert.equal(after.data().price, 200);
+    });
+
+    it("does not change Service.price when package price == current (boundary)", async () => {
+      const provider = await seedUser();
+      const svc = await seedService({providerId: provider.id, price: 500});
+      await wrapped(
+        makeRequest(
+          {
+            action: "createServicePackage",
+            data: {
+              serviceId: svc.id,
+              title: "Same Price Package",
+              description: "Equal to service",
+              price: 500,
+              type: "Fixed",
+            },
+          },
+          makeAuth(provider.id),
+        ),
+      );
+      const after = await db.collection("services").doc(svc.id).get();
+      assert.equal(after.data().price, 500);
+    });
+
+    it("rejects package with price 0 (invalid)", async () => {
+      const provider = await seedUser();
+      const svc = await seedService({providerId: provider.id, price: 500});
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                serviceId: svc.id,
+                title: "Free Package",
+                description: "Should be rejected",
+                price: 0,
+                type: "Fixed",
+              },
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /INVALID_ARGUMENT|price.*required|price.*between/i,
+      );
+      // Service.price should be unchanged
+      const after = await db.collection("services").doc(svc.id).get();
+      assert.equal(after.data().price, 500);
+    });
+
+    it("rejects unauthenticated callers", async () => {
+      const svc = await seedService();
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                serviceId: svc.id,
+                title: "Pkg",
+                description: "Desc",
+                price: 100,
+                type: "Fixed",
+              },
+            },
+          ),
+        ),
+        /User must be authenticated/i,
+      );
+    });
+
+    it("rejects missing serviceId", async () => {
+      const provider = await seedUser();
+      await assert.rejects(
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                title: "Pkg",
+                description: "Desc",
+                price: 100,
+                type: "Fixed",
+              },
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        /INVALID_ARGUMENT|required/i,
+      );
+    });
+
+    it("concurrent package creates: both updates apply, final price = min", async () => {
+      const provider = await seedUser();
+      const svc = await seedService({providerId: provider.id, price: 1000});
+      // Fire 2 concurrent package creates. One is at 800, the other at 300.
+      // The lower of the two (300) should win, regardless of order.
+      const [res1, res2] = await Promise.all([
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                serviceId: svc.id,
+                title: "P1",
+                description: "D1",
+                price: 800,
+                type: "Fixed",
+              },
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+        wrapped(
+          makeRequest(
+            {
+              action: "createServicePackage",
+              data: {
+                serviceId: svc.id,
+                title: "P2",
+                description: "D2",
+                price: 300,
+                type: "Fixed",
+              },
+            },
+            makeAuth(provider.id),
+          ),
+        ),
+      ]);
+      assert.equal(res1.success, true);
+      assert.equal(res2.success, true);
+      const after = await db.collection("services").doc(svc.id).get();
+      // The minimum of {1000, 800, 300} = 300
+      assert.equal(after.data().price, 300);
     });
   });
 });

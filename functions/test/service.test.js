@@ -61,7 +61,9 @@ function baseServicePayload(overrides = {}) {
     categoryId: "cat-test-1",
     price: 500,
     location: buildServiceLocation(),
-    weeklySchedule: null,
+    weeklySchedule: [
+      {day: "Monday", enabled: true, startTime: "09:00", endTime: "17:00"},
+    ],
     instantBookingEnabled: false,
     bookingNoticeHours: 24,
     maxBookingsPerDay: 5,
