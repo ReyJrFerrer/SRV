@@ -16,18 +16,40 @@ if (!process.env.FUNCTIONS_EMULATOR) {
 process.env.SMTP_HOST = "127.0.0.1";
 process.env.SMTP_PORT = "1";
 
-const testLogPath = path.join(__dirname, "test-output.log");
-fs.writeFileSync(testLogPath, "", "utf-8");
+const LOG_FILES = [
+  "test-output.log",
+  "test-output-booking.log",
+  "test-output-service.log",
+];
+for (const f of LOG_FILES) {
+  fs.writeFileSync(path.join(__dirname, f), "", "utf-8");
+}
 
 let currentTest = "setup";
+let currentLogFile = "test-output.log";
+
+/**
+ * Derive the log filename from the test's file path.
+ * Falls back to "test-output.log" for unknown test files.
+ * @param {string} filePath
+ * @return {string}
+ */
+function logFileForTest(filePath) {
+  if (!filePath) return "test-output.log";
+  const base = path.basename(filePath);
+  if (base.includes("booking.test")) return "test-output-booking.log";
+  if (base.includes("service.test")) return "test-output-service.log";
+  return "test-output.log";
+}
 
 beforeEach(function () {
   currentTest = this.currentTest.fullTitle();
+  currentLogFile = logFileForTest(this.currentTest.file);
 });
 
 console.error = (...args) => {
   fs.appendFileSync(
-    testLogPath,
+    path.join(__dirname, currentLogFile),
     `[${currentTest}] ${new Date().toISOString()} ${util.format(...args)}\n`,
     "utf-8",
   );
@@ -66,6 +88,8 @@ const COLLECTIONS_TO_CLEAR = [
   "chatEmailCooldowns",
   "providerLocations",
   "paymentAuditTrail",
+  "categories",
+  "media",
 ];
 
 async function clearCollections() {

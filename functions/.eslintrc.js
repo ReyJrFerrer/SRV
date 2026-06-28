@@ -57,6 +57,8 @@ module.exports = {
       },
       rules: {
         "no-unused-expressions": "off", // Allow chai expressions
+        "require-jsdoc": "off", // Test helpers don't need JSDoc
+        "max-len": ["error", {code: 140, ignoreUrls: true}], // Test data is verbose
       },
     },
     {

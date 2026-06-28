@@ -407,6 +407,77 @@ async function seedCancelledBooking(opts = {}) {
   return {bookingId, ...base};
 }
 
+// ============================================================================
+// Service test seeders
+// ============================================================================
+
+/**
+ * Build a category object with defaults.
+ * @param {Object} overrides
+ * @return {Object}
+ */
+function buildCategory(overrides = {}) {
+  const id = overrides.id || `cat-${uniqueId()}`;
+  return {
+    id,
+    name: overrides.name || "Test Category",
+    description: "Test category for testing",
+    slug: overrides.slug || `test-category-${uniqueId()}`,
+    parentId: null,
+    imageUrl: "/images/test.jpg",
+    ...overrides,
+  };
+}
+
+/**
+ * Seed a category doc.
+ * @param {Object} overrides
+ * @return {Promise<{id: string}>}
+ */
+async function seedCategory(overrides = {}) {
+  const data = buildCategory(overrides);
+  const id = data.id;
+  const docData = {...data};
+  await db.collection("categories").doc(id).set(docData);
+  return {id};
+}
+
+/**
+ * Seed an archived service with deletion scheduled in the future.
+ * @param {Object} overrides
+ * @return {Promise<{id: string, providerId: string}>}
+ */
+async function seedArchivedService(overrides = {}) {
+  const providerId = overrides.providerId || `user-${uniqueId()}`;
+  const serviceId = overrides.id || `service-archived-${uniqueId()}`;
+  const now = new Date();
+  const serviceData = {
+    ...buildService({providerId, ...overrides}),
+    id: serviceId,
+    status: "Archived",
+    previousStatus: "Available",
+    archivedAt: now.toISOString(),
+    deletionScheduledAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  };
+  delete serviceData.id;
+  await db.collection("services").doc(serviceId).set(serviceData);
+  return {id: serviceId, providerId};
+}
+
+/**
+ * Build a valid service location with latitude/longitude format.
+ * @param {Object} overrides
+ * @return {Object}
+ */
+function buildServiceLocation(overrides = {}) {
+  return {
+    latitude: 14.5,
+    longitude: 121.0,
+    address: "Test Address",
+    ...overrides,
+  };
+}
+
 module.exports = {
   uniqueId,
   futureDate,
@@ -414,11 +485,15 @@ module.exports = {
   buildService,
   buildServicePackage,
   buildBooking,
+  buildCategory,
+  buildServiceLocation,
   seedUser,
   seedService,
   seedServicePackage,
   seedReputation,
   seedBaseEntities,
+  seedCategory,
+  seedArchivedService,
   seedPendingBooking,
   seedActiveBooking,
   seedInProgressBooking,

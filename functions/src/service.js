@@ -2323,9 +2323,10 @@ async function getAllServicesInternal() {
 
 
 /**
- * Scheduled job to permanently delete archived services past their deletion date
+ * Handler for scheduled deletion of archived services past their deletion date.
+ * Exported separately for testability.
  */
-exports.processScheduledDeletions = onSchedule("0 0 * * *", async (_event) => {
+async function processScheduledDeletionsHandler() {
   const now = new Date().toISOString();
 
   try {
@@ -2424,7 +2425,10 @@ exports.processScheduledDeletions = onSchedule("0 0 * * *", async (_event) => {
   } catch (error) {
     console.error("Error in processScheduledDeletions:", error);
   }
-});
+}
+
+exports.processScheduledDeletions = onSchedule("0 0 * * *", processScheduledDeletionsHandler);
+exports.processScheduledDeletionsHandler = processScheduledDeletionsHandler;
 // ============================================================================
 // TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
 // ============================================================================
