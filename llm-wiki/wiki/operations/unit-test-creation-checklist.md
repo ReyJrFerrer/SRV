@@ -16,8 +16,11 @@ sources:
   - functions/src/review.js
   - functions/src/notification.js
   - functions/src/reputation.js
+  - functions/src/account.js
   - functions/src/utils/reputationMath.js
   - functions/.eslintrc.js
+  - functions/test/account.test.js
+  - functions/test/reputation.test.js
 ---
 
 # Unit Test Creation Checklist
@@ -324,7 +327,35 @@ After the test file lands:
 | Side effect assertions | service rating/count, booking flag, reports doc, status transitions |
 | Lint clean | yes |
 
+### Account (11 actions)
+
+| Metric | Value |
+|---|---|
+| Total cases | 49 |
+| Actions covered | 11 / 11 |
+| Auth paths | ~11 |
+| Validation errors | ~10 |
+| Doc-not-found paths | ~6 |
+| Boundary values | name length (2–50), phone length (10–15), isActive type check |
+| Side effect assertions | reputation init, pending_users cleanup, media lifecycle |
+| Lint clean | yes |
+
+### Reputation (7 actions)
+
+| Metric | Value |
+|---|---|
+| Total cases | 31 |
+| Actions covered | 7 / 7 |
+| Auth paths | ~3 (admin-only guard) |
+| Validation errors | ~5 |
+| Idempotency guards | 2 (already exists, already flagged) |
+| Boundary values | score floor at 0 |
+| Side effect assertions | reputation doc persistence, history subcollection entries, detection flag propagation |
+| Lint clean | yes |
+
 Reference implementations:
 - [[Booking Test Infrastructure]] — test stack, helpers, coverage matrix
 - [[Booking Test QA Findings 2026-06-28]] — 3 critical bugs found and fixed
 - [[Service Test Infrastructure]] — 168-case serviceAction test suite, seeders, per-action matrix
+- [[Account Test Infrastructure]] — 49-case accountAction test suite, bug fix documentation
+- [[Reputation Test Infrastructure]] — 31-case reputationAction test suite, history assertions

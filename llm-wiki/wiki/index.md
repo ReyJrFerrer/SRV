@@ -15,6 +15,9 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Booking System]] — Client booking creation, state machine, payment lifecycle, all status transitions; Phase 2: multi-session `scheduledSessions[]`
 - [[Booking Test Infrastructure]] — Mocha + firebase-functions-test, 97 cases, scenario seeders, coverage matrix
 - [[Service Test Infrastructure]] — Mocha + firebase-functions-test, 168 cases, 29 actions, per-action coverage matrix
+- [[Review Test Infrastructure]] — Mocha + firebase-functions-test, 115 cases, 23 actions, per-action coverage matrix
+- [[Account Test Infrastructure]] — Mocha + firebase-functions-test, 49 cases, 11 actions, per-action coverage matrix, bug fix (payload destructuring)
+- [[Reputation Test Infrastructure]] — Mocha + firebase-functions-test, 31 cases, 7 actions, per-action coverage matrix, history subcollection assertions
 - [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
@@ -67,4 +70,4 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 ---
 
 _Last updated: 2026-06-28_
-_Pages: 38_
+_Pages: 40_

@@ -12,6 +12,9 @@ if (!process.env.GCLOUD_PROJECT) {
 if (!process.env.FUNCTIONS_EMULATOR) {
   process.env.FUNCTIONS_EMULATOR = "true";
 }
+if (!process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+  process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
+}
 
 /* Force SMTP connection failure so sendMail() errors appear in the log. */
 process.env.SMTP_HOST = "127.0.0.1";
@@ -91,6 +94,7 @@ const COLLECTIONS_TO_CLEAR = [
   "chatEmailCooldowns",
   "providerLocations",
   "paymentAuditTrail",
+  "pending_users",
   "categories",
   "media",
 ];

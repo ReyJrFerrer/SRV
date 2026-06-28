@@ -440,3 +440,35 @@ Created [[Service Test Infrastructure]] — 168 integration tests for `serviceAc
 - [[Unit Test Creation Checklist]] — Added Service coverage stats reference, updated sources
 - [[Booking Test Infrastructure]] — Updated log file description to reflect per-suite routing
 - `index.md` — Added [[Service Test Infrastructure]] under Backend (37 pages)
+
+## [2026-06-28] ingest | Account Test Infrastructure
+
+Created [[Account Test Infrastructure]] — 49 integration tests for `accountAction` (11 actions), covering custom token exchange, profile CRUD, role switching, media uploads, and account status.
+
+**Files changed:**
+- `functions/test/account.test.js` — new (49 tests across 11 describe blocks)
+- `functions/test/mocha.js` — added `pending_users` to `COLLECTIONS_TO_CLEAR`, set `FIREBASE_AUTH_EMULATOR_HOST` for auth emulator integration
+- `functions/src/account.js` — fixed `data: payload` destructuring bug at line 589 (caused "Internal Server Error" for all payload-carrying actions)
+
+**Bug fix:** `account.js:589` — `const {action, data: payload} = request.data || {}` replaces `const {action, payload} = request.data || {}`. The property in the client request body is named `data`, not `payload`, causing every action with a payload to receive `undefined`.
+
+**New pages (1):**
+- [[Account Test Infrastructure]] — Full coverage matrix, bug fix documentation, seeders, conventions
+
+**Updated pages (2):**
+- [[Unit Test Creation Checklist]] — Added Account test count (49) to reference stats
+- `index.md` — Added [[Account Test Infrastructure]] under Backend (39 pages)
+
+## [2026-06-28] ingest | Reputation Test Infrastructure
+
+Created [[Reputation Test Infrastructure]] — 31 integration tests for `reputationAction` (7 actions), covering trust score calculation, history subcollection persistence, idempotency, AI flag pipeline, and admin-only guards.
+
+**Files changed:**
+- `functions/test/reputation.test.js` — new (31 tests across 7 describe blocks)
+
+**New pages (1):**
+- [[Reputation Test Infrastructure]] — Full coverage matrix, history assertions, seeders, conventions
+
+**Updated pages (2):**
+- [[Reputation Service (Firestore)]] — Added Test Coverage section with summary stats
+- `index.md` — Added [[Reputation Test Infrastructure]] under Backend (40 pages)

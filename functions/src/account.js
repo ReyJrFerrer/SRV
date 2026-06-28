@@ -586,7 +586,7 @@ exports.accountAction = onCall(
     memory: "256MiB",
   },
   async (request) => {
-    const {action, payload} = request.data || {};
+    const {action, data: payload} = request.data || {};
     const auth = request.auth;
 
     if (!action) {
