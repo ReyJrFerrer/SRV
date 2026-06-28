@@ -13,7 +13,8 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 - [[Service Creation Workflow]] — Provider service creation, 6-step wizard (Phase 1: +1 Step 0 serviceMode) → Cloud Function → Firestore
 - [[Booking System]] — Client booking creation, state machine, payment lifecycle, all status transitions; Phase 2: multi-session `scheduledSessions[]`
-- [[Booking Test Infrastructure]] — Mocha + firebase-functions-test, 46 cases, scenario seeders, coverage matrix
+- [[Booking Test Infrastructure]] — Mocha + firebase-functions-test, 97 cases, scenario seeders, coverage matrix
+- [[Service Test Infrastructure]] — Mocha + firebase-functions-test, 168 cases, 29 actions, per-action coverage matrix
 - [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection

@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 const fs = require("fs");
 const path = require("path");
 const util = require("util");
@@ -42,7 +43,7 @@ function logFileForTest(filePath) {
   return "test-output.log";
 }
 
-beforeEach(function () {
+beforeEach(function() {
   currentTest = this.currentTest.fullTitle();
   currentLogFile = logFileForTest(this.currentTest.file);
 });
@@ -92,6 +93,10 @@ const COLLECTIONS_TO_CLEAR = [
   "media",
 ];
 
+/**
+ * Clear all known collections in the emulator between tests.
+ * @return {Promise<void>}
+ */
 async function clearCollections() {
   for (const name of COLLECTIONS_TO_CLEAR) {
     const snapshot = await db.collection(name).get();

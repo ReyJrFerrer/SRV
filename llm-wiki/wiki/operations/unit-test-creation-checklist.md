@@ -8,12 +8,15 @@ related:
   - [[Grill Record: Unit Test Creation Checklist]]
 sources:
   - functions/test/booking.test.js
+  - functions/test/service.test.js
   - functions/test/mocha.js
   - functions/test/helpers/seed.js
   - functions/src/booking.js
+  - functions/src/service.js
   - functions/src/notification.js
   - functions/src/reputation.js
   - functions/src/utils/reputationMath.js
+  - functions/.eslintrc.js
 ---
 
 # Unit Test Creation Checklist
@@ -278,9 +281,9 @@ After the test file lands:
 - ❌ **Don't forget to add new collections to `COLLECTIONS_TO_CLEAR`** — tests will leak state
 - ❌ **Don't test only the happy path** — every action needs all 7 categories
 
-## Reference: Booking Test Coverage Stats
+## Reference: Coverage Stats
 
-After applying this checklist to `bookingAction`, the test suite achieved:
+### Booking (17 actions)
 
 | Metric | Value |
 |---|---|
@@ -292,6 +295,19 @@ After applying this checklist to `bookingAction`, the test suite achieved:
 | Edge case coverage | ~95% |
 | Lint clean | yes |
 
+### Service (29 actions)
+
+| Metric | Value |
+|---|---|
+| Total cases | 168 |
+| Actions covered | 29 / 29 |
+| Doc-not-found paths | ~25 / 25 |
+| Empty-result paths | 5 / 5 (100%) |
+| State machine coverage | 1 transition (restoreService) |
+| Boundary values | ~15 (price, title, desc, images, certs, hours, bookings) |
+| Lint clean | yes |
+
 Reference implementations:
 - [[Booking Test Infrastructure]] — test stack, helpers, coverage matrix
 - [[Booking Test QA Findings 2026-06-28]] — 3 critical bugs found and fixed
+- [[Service Test Infrastructure]] — 168-case serviceAction test suite, seeders, per-action matrix

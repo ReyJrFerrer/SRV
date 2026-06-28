@@ -402,3 +402,22 @@ Grilled plan for a reusable wiki checklist that codifies the patterns from `book
 **Output**: `wiki/decisions/grill-2026-06-28-unit-test-checklist.md` + `wiki/operations/unit-test-creation-checklist.md`
 
 Updated index.md (36 pages, 7 categories).
+
+## [2026-06-28] ingest | Service Test Infrastructure
+
+Created [[Service Test Infrastructure]] — 168 integration tests for `serviceAction` (29 actions), scheduled deletion handler, and internal helpers.
+
+**Files changed:**
+- `functions/test/service.test.js` — new (168 tests)
+- `functions/test/mocha.js` — log file routing per-suite (booking → `test-output-booking.log`, service → `test-output-service.log`)
+- `functions/test/helpers/seed.js` — added `seedCategory`, `seedArchivedService`, `buildServiceLocation`
+- `functions/src/service.js` — extracted `processScheduledDeletionsHandler` for testability
+- `functions/.eslintrc.js` — test file overrides for `require-jsdoc: off`, `max-len: 140`
+
+**New pages (1):**
+- [[Service Test Infrastructure]] — Full coverage matrix, seeders, conventions, edge cases
+
+**Updated pages (3):**
+- [[Unit Test Creation Checklist]] — Added Service coverage stats reference, updated sources
+- [[Booking Test Infrastructure]] — Updated log file description to reflect per-suite routing
+- `index.md` — Added [[Service Test Infrastructure]] under Backend (37 pages)

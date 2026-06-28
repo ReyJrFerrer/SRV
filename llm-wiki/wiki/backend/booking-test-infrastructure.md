@@ -48,7 +48,7 @@ functions/test/
 - Forces `FUNCTIONS_EMULATOR=true` so `firebase-admin` skips prod auth paths
 - Forces `SMTP_HOST=127.0.0.1`, `SMTP_PORT=1` so transactional emails fail fast (logged but don't break tests)
 - Initializes `firebase-admin` against the emulator with project ID `srve-7133d`
-- Wraps `console.error` to a log file (`test-output.log`) per-test for debug
+- Wraps `console.error` to a per-suite log file via `this.currentTest.file` routing: `test-output-booking.log` / `test-output-service.log` / `test-output.log` (fallback)
 - Exports `test` (firebase-functions-test instance), `db` (Firestore), `clearCollections()`
 
 ### `helpers/seed.js` — Scenario Seeders
