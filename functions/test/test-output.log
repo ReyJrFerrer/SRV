@@ -1,4 +1,4 @@
-[bookingAction createBooking rejects unauthenticated callers] 2026-06-28T05:34:59.273Z Email: Failed to send notification email to user user-1782624899210-3-3226: Error: connect ECONNREFUSED 127.0.0.1:1
+[bookingAction createBooking rejects unauthenticated callers] 2026-06-28T06:27:46.989Z Email: Failed to send notification email to user user-1782628066927-3-2570: Error: connect ECONNREFUSED 127.0.0.1:1
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
   errno: -61,
   code: 'ESOCKET',
@@ -7,339 +7,855 @@
   port: 1,
   command: 'CONN'
 }
-[bookingAction createBooking rejects unauthenticated callers] 2026-06-28T05:34:59.307Z Error executing action [createBooking]: HttpsError: User must be authenticated
+[bookingAction createBooking rejects unauthenticated callers] 2026-06-28T06:27:47.015Z Error executing action [createBooking]: HttpsError: User must be authenticated
     at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:380:11)
     at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:22
     at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
     at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
-    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:126:9) {
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:129:9) {
   code: 'unauthenticated',
   details: undefined,
   httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
 }
-[bookingAction createBooking rejects when client reputation is at or below 5] 2026-06-28T05:34:59.344Z Error in createBooking: HttpsError: Your reputation score (5) is too low to create a booking. Please contact support if you believe this is an error.
+[bookingAction createBooking rejects when client reputation is at or below 5] 2026-06-28T06:27:47.049Z Error in createBooking: HttpsError: Your reputation score (5) is too low to create a booking. Please contact support if you believe this is an error.
     at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:403:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:148:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:151:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction createBooking rejects when client reputation is at or below 5] 2026-06-28T05:34:59.345Z Error executing action [createBooking]: HttpsError: Your reputation score (5) is too low to create a booking. Please contact support if you believe this is an error.
+[bookingAction createBooking rejects when client reputation is at or below 5] 2026-06-28T06:27:47.049Z Error executing action [createBooking]: HttpsError: Your reputation score (5) is too low to create a booking. Please contact support if you believe this is an error.
     at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:403:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:148:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:151:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction createBooking rejects an unknown service ID] 2026-06-28T05:34:59.385Z Error in createBooking: HttpsError: Service not found
+[bookingAction createBooking rejects an unknown service ID] 2026-06-28T06:27:47.088Z Error in createBooking: HttpsError: Service not found
     at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:429:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:173:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:176:7) {
   code: 'not-found',
   details: undefined,
   httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
 }
-[bookingAction createBooking rejects an unknown service ID] 2026-06-28T05:34:59.385Z Error executing action [createBooking]: HttpsError: Service not found
+[bookingAction createBooking rejects an unknown service ID] 2026-06-28T06:27:47.089Z Error executing action [createBooking]: HttpsError: Service not found
     at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:429:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:173:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:176:7) {
   code: 'not-found',
   details: undefined,
   httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
 }
-[bookingAction acceptBooking rejects when caller is not the provider] 2026-06-28T05:34:59.452Z Email: Failed to send notification email to user user-1782624899413-25-4079: Error: connect ECONNREFUSED 127.0.0.1:1
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
-  errno: -61,
-  code: 'ESOCKET',
-  syscall: 'connect',
-  address: '127.0.0.1',
-  port: 1,
-  command: 'CONN'
-}
-[bookingAction acceptBooking rejects when caller is not the provider] 2026-06-28T05:34:59.484Z Error in acceptBooking: HttpsError: Not authorized to update this booking
-    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:601:13)
+[bookingAction createBooking rejects when the provider reputation is at or below 5] 2026-06-28T06:27:47.125Z Error in createBooking: HttpsError: This provider is currently not accepting new bookings due to reputation issues. Please try another provider.
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:420:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:226:7) {
-  code: 'permission-denied',
-  details: undefined,
-  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
-}
-[bookingAction acceptBooking rejects when caller is not the provider] 2026-06-28T05:34:59.485Z Error executing action [acceptBooking]: HttpsError: Not authorized to update this booking
-    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:601:13)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
-    at async waitForActual (node:assert:646:5)
-    at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:226:7) {
-  code: 'permission-denied',
-  details: undefined,
-  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
-}
-[bookingAction acceptBooking rejects invalid transition from a terminal state] 2026-06-28T05:34:59.521Z Error in acceptBooking: HttpsError: Invalid status transition from Cancelled to Accepted
-    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:605:13)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
-    at async waitForActual (node:assert:646:5)
-    at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:239:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:202:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction acceptBooking rejects invalid transition from a terminal state] 2026-06-28T05:34:59.521Z Error executing action [acceptBooking]: HttpsError: Invalid status transition from Cancelled to Accepted
-    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:605:13)
+[bookingAction createBooking rejects when the provider reputation is at or below 5] 2026-06-28T06:27:47.125Z Error executing action [createBooking]: HttpsError: This provider is currently not accepting new bookings due to reputation issues. Please try another provider.
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:420:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:239:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:202:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction declineBooking rejects invalid transition from InProgress] 2026-06-28T05:34:59.589Z Email: Failed to send notification email to user user-1782624899559-46-7109: Error: connect ECONNREFUSED 127.0.0.1:1
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
-  errno: -61,
-  code: 'ESOCKET',
-  syscall: 'connect',
-  address: '127.0.0.1',
-  port: 1,
-  command: 'CONN'
-}
-[bookingAction declineBooking rejects invalid transition from InProgress] 2026-06-28T05:34:59.619Z Error in declineBooking: HttpsError: Invalid status transition from InProgress to Declined
-    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:714:13)
+[bookingAction createBooking rejects when the service is inactive] 2026-06-28T06:27:47.161Z Error in createBooking: HttpsError: Service is not available for booking
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:442:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:16
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:277:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:232:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction declineBooking rejects invalid transition from InProgress] 2026-06-28T05:34:59.620Z Error executing action [declineBooking]: HttpsError: Invalid status transition from InProgress to Declined
-    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:714:13)
+[bookingAction createBooking rejects when the service is inactive] 2026-06-28T06:27:47.162Z Error executing action [createBooking]: HttpsError: Service is not available for booking
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:442:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:16
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:277:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:232:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction startNavigation rejects when caller is not the provider] 2026-06-28T05:34:59.786Z Error in startNavigation: HttpsError: Not authorized to update this booking
-    at startNavigation_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:795:13)
+[bookingAction createBooking rejects when the service belongs to a different provider] 2026-06-28T06:27:47.201Z Error in createBooking: HttpsError: Service does not belong to the specified provider
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:435:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2316:16
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:328:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:260:7) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction startNavigation rejects when caller is not the provider] 2026-06-28T05:34:59.786Z Error executing action [startNavigation]: HttpsError: Not authorized to update this booking
-    at startNavigation_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:795:13)
+[bookingAction createBooking rejects when the service belongs to a different provider] 2026-06-28T06:27:47.202Z Error executing action [createBooking]: HttpsError: Service does not belong to the specified provider
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:435:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2316:16
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:328:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:260:7) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction startBooking transitions Accepted -> InProgress and notifies the client] 2026-06-28T05:34:59.842Z Email: Failed to send notification email to user user-1782624899818-81-3623: Error: connect ECONNREFUSED 127.0.0.1:1
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
-  errno: -61,
-  code: 'ESOCKET',
-  syscall: 'connect',
-  address: '127.0.0.1',
-  port: 1,
-  command: 'CONN'
-}
-[bookingAction startBooking rejects invalid transition from Requested] 2026-06-28T05:34:59.888Z Error in startBooking: HttpsError: Invalid status transition from Requested to InProgress
-    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:897:13)
+[bookingAction createBooking rejects when a package belongs to a different service] 2026-06-28T06:27:47.241Z Error in createBooking: HttpsError: Package pkg-1782628067233-52-4289 belongs to service service-other-1782628067233-51-4419, but booking is for service service-1782628067232-49-7688.
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:464:17)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:16
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:363:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:288:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction createBooking rejects when a package belongs to a different service] 2026-06-28T06:27:47.241Z Error executing action [createBooking]: HttpsError: Package pkg-1782628067233-52-4289 belongs to service service-other-1782628067233-51-4419, but booking is for service service-1782628067232-49-7688.
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:464:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:288:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction createBooking rejects when a package does not exist] 2026-06-28T06:27:47.279Z Error in createBooking: HttpsError: Package with ID nonexistent-pkg not found in 'service_packages' collection.
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:455:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:314:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction createBooking rejects when a package does not exist] 2026-06-28T06:27:47.279Z Error executing action [createBooking]: HttpsError: Package with ID nonexistent-pkg not found in 'service_packages' collection.
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:455:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:314:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction createBooking rejects when a time conflict exists with an Accepted booking] 2026-06-28T06:27:47.318Z Error in createBooking: HttpsError: The requested time conflicts with an existing booking.
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:487:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:371:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction startBooking rejects invalid transition from Requested] 2026-06-28T05:34:59.889Z Error executing action [startBooking]: HttpsError: Invalid status transition from Requested to InProgress
-    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:897:13)
+[bookingAction createBooking rejects when a time conflict exists with an Accepted booking] 2026-06-28T06:27:47.318Z Error executing action [createBooking]: HttpsError: The requested time conflicts with an existing booking.
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:487:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:16
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:363:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:371:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction completeBooking transitions InProgress -> Completed and sends 3 notifications] 2026-06-28T05:34:59.951Z Email: Failed to send notification email to user user-1782624899920-95-8894: Error: connect ECONNREFUSED 127.0.0.1:1
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
-  errno: -61,
-  code: 'ESOCKET',
-  syscall: 'connect',
-  address: '127.0.0.1',
-  port: 1,
-  command: 'CONN'
-}
-[bookingAction completeBooking rejects when caller is the client] 2026-06-28T05:35:00.000Z Error in completeBooking: HttpsError: Not authorized to update this booking
-    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1005:13)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:16
-    at async waitForActual (node:assert:646:5)
-    at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:400:7) {
-  code: 'permission-denied',
-  details: undefined,
-  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
-}
-[bookingAction completeBooking rejects when caller is the client] 2026-06-28T05:35:00.000Z Error executing action [completeBooking]: HttpsError: Not authorized to update this booking
-    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1005:13)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:16
-    at async waitForActual (node:assert:646:5)
-    at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:400:7) {
-  code: 'permission-denied',
-  details: undefined,
-  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
-}
-[bookingAction cancelBooking transitions to Cancelled, deducts reputation, creates a report] 2026-06-28T05:35:00.061Z Email: Failed to send notification email to user user-1782624900028-111-6751: Error: connect ECONNREFUSED 127.0.0.1:1
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
-  errno: -61,
-  code: 'ESOCKET',
-  syscall: 'connect',
-  address: '127.0.0.1',
-  port: 1,
-  command: 'CONN'
-}
-[bookingAction cancelBooking rejects cancellation without a reason] 2026-06-28T05:35:00.092Z Error executing action [cancelBooking]: HttpsError: A reason for cancellation is required
-    at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1117:11)
-    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:22
+[bookingAction createBooking rejects when required fields are missing] 2026-06-28T06:27:47.349Z Error executing action [createBooking]: HttpsError: Required parameters missing: serviceId, providerId, price, location, requestedDate, paymentMethod
+    at createBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:385:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2310:22
     at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
     at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
-    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:455:9) {
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:397:9) {
   code: 'invalid-argument',
   details: undefined,
   httpErrorCode: { canonicalName: 'INVALID_ARGUMENT', status: 400 }
 }
-[bookingAction cancelBooking rejects cancellation from a terminal state] 2026-06-28T05:35:00.128Z Error in cancelBooking: HttpsError: Invalid status transition from Completed to Cancelled
+[bookingAction acceptBooking rejects when caller is not the provider] 2026-06-28T06:27:47.413Z Email: Failed to send notification email to user user-1782628067376-72-5308: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction acceptBooking rejects when caller is not the provider] 2026-06-28T06:27:47.444Z Error in acceptBooking: HttpsError: Not authorized to update this booking
+    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:601:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:448:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction acceptBooking rejects when caller is not the provider] 2026-06-28T06:27:47.444Z Error executing action [acceptBooking]: HttpsError: Not authorized to update this booking
+    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:601:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:448:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction acceptBooking rejects invalid transition from a terminal state] 2026-06-28T06:27:47.477Z Error in acceptBooking: HttpsError: Invalid status transition from Cancelled to Accepted
+    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:605:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:461:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction acceptBooking rejects invalid transition from a terminal state] 2026-06-28T06:27:47.477Z Error executing action [acceptBooking]: HttpsError: Invalid status transition from Cancelled to Accepted
+    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:605:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:461:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction acceptBooking rejects unauthenticated callers] 2026-06-28T06:27:47.514Z Error executing action [acceptBooking]: HttpsError: User must be authenticated
+    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:585:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:475:9) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction acceptBooking rejects when booking does not exist] 2026-06-28T06:27:47.547Z Error in acceptBooking: HttpsError: Booking not found
+    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:595:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:486:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction acceptBooking rejects when booking does not exist] 2026-06-28T06:27:47.547Z Error executing action [acceptBooking]: HttpsError: Booking not found
+    at acceptBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:595:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2312:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:486:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction acceptBooking auto-cancels conflicting Requested bookings on the same time slot] 2026-06-28T06:27:47.608Z Email: Failed to send notification email to user user-1782628067577-114-644: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction declineBooking transitions Requested -> Declined (terminal) and notifies the client] 2026-06-28T06:27:47.621Z Email: Failed to send notification email to user user-1782628067573-107-9539: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction declineBooking rejects invalid transition from InProgress] 2026-06-28T06:27:47.669Z Email: Failed to send notification email to user user-1782628067643-117-4613: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction declineBooking rejects invalid transition from InProgress] 2026-06-28T06:27:47.704Z Error in declineBooking: HttpsError: Invalid status transition from InProgress to Declined
+    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:714:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:608:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction declineBooking rejects invalid transition from InProgress] 2026-06-28T06:27:47.705Z Error executing action [declineBooking]: HttpsError: Invalid status transition from InProgress to Declined
+    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:714:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:608:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction declineBooking rejects unauthenticated callers] 2026-06-28T06:27:47.738Z Error executing action [declineBooking]: HttpsError: User must be authenticated
+    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:694:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:619:9) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction declineBooking rejects when caller is not the provider] 2026-06-28T06:27:47.768Z Error in declineBooking: HttpsError: Not authorized to update this booking
+    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:710:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:628:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction declineBooking rejects when caller is not the provider] 2026-06-28T06:27:47.768Z Error executing action [declineBooking]: HttpsError: Not authorized to update this booking
+    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:710:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:628:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction declineBooking rejects when booking does not exist] 2026-06-28T06:27:47.797Z Error in declineBooking: HttpsError: Booking not found
+    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:704:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:638:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction declineBooking rejects when booking does not exist] 2026-06-28T06:27:47.797Z Error executing action [declineBooking]: HttpsError: Booking not found
+    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:704:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:638:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction declineBooking rejects when bookingId is missing] 2026-06-28T06:27:47.866Z Error executing action [declineBooking]: HttpsError: bookingId is required
+    at declineBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:698:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2314:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:652:9) {
+  code: 'invalid-argument',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'INVALID_ARGUMENT', status: 400 }
+}
+[bookingAction startNavigation rejects when caller is not the provider] 2026-06-28T06:27:48.007Z Error in startNavigation: HttpsError: Not authorized to update this booking
+    at startNavigation_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:795:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2316:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:702:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction startNavigation rejects when caller is not the provider] 2026-06-28T06:27:48.007Z Error executing action [startNavigation]: HttpsError: Not authorized to update this booking
+    at startNavigation_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:795:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2316:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:702:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction startNavigation rejects unauthenticated callers] 2026-06-28T06:27:48.037Z Error executing action [startNavigation]: HttpsError: User must be authenticated
+    at startNavigation_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:779:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2316:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:713:9) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction startNavigation rejects when booking does not exist] 2026-06-28T06:27:48.067Z Error in startNavigation: HttpsError: Booking not found
+    at startNavigation_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:789:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2316:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:722:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction startNavigation rejects when booking does not exist] 2026-06-28T06:27:48.068Z Error executing action [startNavigation]: HttpsError: Booking not found
+    at startNavigation_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:789:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2316:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:722:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction startBooking transitions Accepted -> InProgress and notifies both parties] 2026-06-28T06:27:48.126Z Email: Failed to send notification email to user user-1782628068100-194-6330: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction startBooking rejects invalid transition from Requested] 2026-06-28T06:27:48.167Z Error in startBooking: HttpsError: Invalid status transition from Requested to InProgress
+    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:897:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:766:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction startBooking rejects invalid transition from Requested] 2026-06-28T06:27:48.167Z Error executing action [startBooking]: HttpsError: Invalid status transition from Requested to InProgress
+    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:897:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:766:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction startBooking rejects unauthenticated callers] 2026-06-28T06:27:48.198Z Error executing action [startBooking]: HttpsError: User must be authenticated
+    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:877:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:777:9) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction startBooking rejects when caller is not the provider] 2026-06-28T06:27:48.234Z Error in startBooking: HttpsError: Not authorized to update this booking
+    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:893:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:786:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction startBooking rejects when caller is not the provider] 2026-06-28T06:27:48.234Z Error executing action [startBooking]: HttpsError: Not authorized to update this booking
+    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:893:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:786:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction startBooking rejects when booking does not exist] 2026-06-28T06:27:48.266Z Error in startBooking: HttpsError: Booking not found
+    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:887:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:796:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction startBooking rejects when booking does not exist] 2026-06-28T06:27:48.267Z Error executing action [startBooking]: HttpsError: Booking not found
+    at startBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:887:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2318:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:796:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction completeBooking transitions InProgress -> Completed and sends 3 notifications] 2026-06-28T06:27:48.316Z Email: Failed to send notification email to user user-1782628068293-229-4779: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction completeBooking rejects when caller is the client] 2026-06-28T06:27:48.361Z Error in completeBooking: HttpsError: Not authorized to update this booking
+    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1005:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:845:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction completeBooking rejects when caller is the client] 2026-06-28T06:27:48.361Z Error executing action [completeBooking]: HttpsError: Not authorized to update this booking
+    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1005:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:845:7) {
+  code: 'permission-denied',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
+}
+[bookingAction completeBooking rejects unauthenticated callers] 2026-06-28T06:27:48.388Z Error executing action [completeBooking]: HttpsError: User must be authenticated
+    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:989:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:856:9) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction completeBooking rejects when booking does not exist] 2026-06-28T06:27:48.420Z Error in completeBooking: HttpsError: Booking not found
+    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:999:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:865:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction completeBooking rejects when booking does not exist] 2026-06-28T06:27:48.420Z Error executing action [completeBooking]: HttpsError: Booking not found
+    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:999:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:865:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction completeBooking rejects invalid transition from Requested] 2026-06-28T06:27:48.446Z Error in completeBooking: HttpsError: Invalid status transition from Requested to Completed
+    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1009:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:878:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction completeBooking rejects invalid transition from Requested] 2026-06-28T06:27:48.447Z Error executing action [completeBooking]: HttpsError: Invalid status transition from Requested to Completed
+    at completeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1009:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2320:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:878:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction cancelBooking transitions to Cancelled, deducts reputation, creates a report] 2026-06-28T06:27:48.508Z Email: Failed to send notification email to user user-1782628068476-266-1871: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction cancelBooking rejects cancellation without a reason] 2026-06-28T06:27:48.565Z Email: Failed to send notification email to user user-1782628068536-271-2311: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction cancelBooking rejects cancellation without a reason] 2026-06-28T06:27:48.591Z Error executing action [cancelBooking]: HttpsError: A reason for cancellation is required
+    at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1117:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:955:9) {
+  code: 'invalid-argument',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'INVALID_ARGUMENT', status: 400 }
+}
+[bookingAction cancelBooking rejects cancellation from a terminal state] 2026-06-28T06:27:48.623Z Error in cancelBooking: HttpsError: Invalid status transition from Completed to Cancelled
     at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1142:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:467:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:967:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction cancelBooking rejects cancellation from a terminal state] 2026-06-28T05:35:00.129Z Error executing action [cancelBooking]: HttpsError: Invalid status transition from Completed to Cancelled
+[bookingAction cancelBooking rejects cancellation from a terminal state] 2026-06-28T06:27:48.623Z Error executing action [cancelBooking]: HttpsError: Invalid status transition from Completed to Cancelled
     at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1142:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:467:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:967:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction cancelBooking rejects when caller is neither client nor provider] 2026-06-28T05:35:00.163Z Error in cancelBooking: HttpsError: Not authorized to update this booking
+[bookingAction cancelBooking rejects when caller is neither client nor provider] 2026-06-28T06:27:48.655Z Error in cancelBooking: HttpsError: Not authorized to update this booking
     at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1138:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:481:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:981:7) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction cancelBooking rejects when caller is neither client nor provider] 2026-06-28T05:35:00.163Z Error executing action [cancelBooking]: HttpsError: Not authorized to update this booking
+[bookingAction cancelBooking rejects when caller is neither client nor provider] 2026-06-28T06:27:48.655Z Error executing action [cancelBooking]: HttpsError: Not authorized to update this booking
     at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1138:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:481:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:981:7) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction getBooking rejects a third party] 2026-06-28T05:35:00.296Z Error in getBooking: HttpsError: Not authorized to view this booking
+[bookingAction cancelBooking rejects unauthenticated callers] 2026-06-28T06:27:48.683Z Error executing action [cancelBooking]: HttpsError: User must be authenticated
+    at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1122:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:995:9) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction cancelBooking rejects when booking does not exist] 2026-06-28T06:27:48.714Z Error in cancelBooking: HttpsError: Booking not found
+    at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1132:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1006:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction cancelBooking rejects when booking does not exist] 2026-06-28T06:27:48.715Z Error executing action [cancelBooking]: HttpsError: Booking not found
+    at cancelBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1132:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2322:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1006:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction getBooking returns the booking to the client] 2026-06-28T06:27:48.771Z Email: Failed to send notification email to user user-1782628068745-318-7805: Error: connect ECONNREFUSED 127.0.0.1:1
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
+  errno: -61,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 1,
+  command: 'CONN'
+}
+[bookingAction getBooking rejects a third party] 2026-06-28T06:27:48.893Z Error in getBooking: HttpsError: Not authorized to view this booking
     at getBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1288:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2324:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:534:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1077:7) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction getBooking rejects a third party] 2026-06-28T05:35:00.296Z Error executing action [getBooking]: HttpsError: Not authorized to view this booking
+[bookingAction getBooking rejects a third party] 2026-06-28T06:27:48.893Z Error executing action [getBooking]: HttpsError: Not authorized to view this booking
     at getBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1288:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2324:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:534:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1077:7) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction getClientBookings rejects querying another client's bookings without admin] 2026-06-28T05:35:00.361Z Error executing action [getClientBookings]: HttpsError: Not authorized to view these bookings
+[bookingAction getBooking rejects unauthenticated callers] 2026-06-28T06:27:48.922Z Error executing action [getBooking]: HttpsError: User must be authenticated
+    at getBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1270:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2324:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1091:9) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction getBooking rejects when booking does not exist] 2026-06-28T06:27:48.955Z Error in getBooking: HttpsError: Booking not found
+    at getBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1280:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2324:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1100:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction getBooking rejects when booking does not exist] 2026-06-28T06:27:48.955Z Error executing action [getBooking]: HttpsError: Booking not found
+    at getBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1280:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2324:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1100:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction getClientBookings rejects querying another client's bookings without admin] 2026-06-28T06:27:49.020Z Error executing action [getClientBookings]: HttpsError: Not authorized to view these bookings
     at getClientBookings_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1319:11)
     at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2326:22
     at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
     at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
-    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:567:9) {
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1133:9) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction getProviderBookings rejects non-admin querying another provider's bookings] 2026-06-28T05:35:00.428Z Error executing action [getProviderBookings]: HttpsError: Not authorized to view these bookings
+[bookingAction getClientBookings rejects unauthenticated callers] 2026-06-28T06:27:49.109Z Error executing action [getClientBookings]: HttpsError: User must be authenticated
+    at getClientBookings_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1314:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2326:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1169:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction getProviderBookings rejects non-admin querying another provider's bookings] 2026-06-28T06:27:49.173Z Error executing action [getProviderBookings]: HttpsError: Not authorized to view these bookings
     at getProviderBookings_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1355:11)
     at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2328:22
     at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
     at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
-    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:598:9) {
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1197:9) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction getBookingsByStatus rejects non-admin callers] 2026-06-28T05:35:00.492Z Error executing action [getBookingsByStatus]: HttpsError: Admin access required
+[bookingAction getProviderBookings rejects unauthenticated callers] 2026-06-28T06:27:49.265Z Error executing action [getProviderBookings]: HttpsError: User must be authenticated
+    at getProviderBookings_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1350:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2328:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1231:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction getBookingsByStatus rejects non-admin callers] 2026-06-28T06:27:49.325Z Error executing action [getBookingsByStatus]: HttpsError: Admin access required
     at getBookingsByStatus_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1386:11)
     at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2330:22
     at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
     at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
-    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:628:9)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1258:9)
     at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
     at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
     at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
@@ -353,71 +869,261 @@
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction disputeBooking rejects invalid transition from Requested] 2026-06-28T05:35:00.567Z Error in disputeBooking: HttpsError: Invalid status transition from Requested to Disputed
+[bookingAction getBookingsByStatus rejects when status is missing] 2026-06-28T06:27:49.380Z Error executing action [getBookingsByStatus]: HttpsError: status is required
+    at getBookingsByStatus_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1390:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2330:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1280:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'invalid-argument',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'INVALID_ARGUMENT', status: 400 }
+}
+[bookingAction disputeBooking rejects invalid transition from Requested] 2026-06-28T06:27:49.464Z Error in disputeBooking: HttpsError: Invalid status transition from Requested to Disputed
     at disputeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1441:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2332:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:664:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1316:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction disputeBooking rejects invalid transition from Requested] 2026-06-28T05:35:00.567Z Error executing action [disputeBooking]: HttpsError: Invalid status transition from Requested to Disputed
+[bookingAction disputeBooking rejects invalid transition from Requested] 2026-06-28T06:27:49.464Z Error executing action [disputeBooking]: HttpsError: Invalid status transition from Requested to Disputed
     at disputeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1441:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2332:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:664:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1316:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction disputeBooking rejects dispute from an already-Disputed booking (terminal state)] 2026-06-28T05:35:00.600Z Error in disputeBooking: HttpsError: Invalid status transition from Disputed to Disputed
+[bookingAction disputeBooking rejects dispute from an already-Disputed booking (terminal state)] 2026-06-28T06:27:49.505Z Error in disputeBooking: HttpsError: Invalid status transition from Disputed to Disputed
     at disputeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1441:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2332:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:677:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1329:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction disputeBooking rejects dispute from an already-Disputed booking (terminal state)] 2026-06-28T05:35:00.600Z Error executing action [disputeBooking]: HttpsError: Invalid status transition from Disputed to Disputed
+[bookingAction disputeBooking rejects dispute from an already-Disputed booking (terminal state)] 2026-06-28T06:27:49.505Z Error executing action [disputeBooking]: HttpsError: Invalid status transition from Disputed to Disputed
     at disputeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1441:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2332:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:677:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1329:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction getClientAnalytics rejects non-admin querying another client's analytics] 2026-06-28T05:35:00.786Z Error executing action [getClientAnalytics]: HttpsError: Not authorized to view these analytics
+[bookingAction disputeBooking rejects unauthenticated callers] 2026-06-28T06:27:49.583Z Error executing action [disputeBooking]: HttpsError: User must be authenticated
+    at disputeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1421:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2332:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1359:9) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction disputeBooking rejects when booking does not exist] 2026-06-28T06:27:49.617Z Error in disputeBooking: HttpsError: Booking not found
+    at disputeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1431:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2332:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1368:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction disputeBooking rejects when booking does not exist] 2026-06-28T06:27:49.617Z Error executing action [disputeBooking]: HttpsError: Booking not found
+    at disputeBooking_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1431:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2332:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1368:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction checkServiceAvailability rejects unauthenticated callers] 2026-06-28T06:27:49.723Z Error executing action [checkServiceAvailability]: HttpsError: User must be authenticated
+    at checkServiceAvailability_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1503:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2334:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1415:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction checkServiceAvailability rejects when service does not exist] 2026-06-28T06:27:49.748Z Error in checkServiceAvailability: HttpsError: Service not found
+    at checkServiceAvailability_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1513:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2334:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1426:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction checkServiceAvailability rejects when service does not exist] 2026-06-28T06:27:49.748Z Error executing action [checkServiceAvailability]: HttpsError: Service not found
+    at checkServiceAvailability_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1513:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2334:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1426:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction checkServiceAvailability rejects when serviceId is missing] 2026-06-28T06:27:49.775Z Error executing action [checkServiceAvailability]: HttpsError: serviceId and requestedDateTime are required
+    at checkServiceAvailability_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1507:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2334:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1439:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'invalid-argument',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'INVALID_ARGUMENT', status: 400 }
+}
+[bookingAction getServiceAvailableSlots rejects unauthenticated callers] 2026-06-28T06:27:49.864Z Error executing action [getServiceAvailableSlots]: HttpsError: User must be authenticated
+    at getServiceAvailableSlots_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1599:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2336:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1499:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction getServiceAvailableSlots rejects when service does not exist] 2026-06-28T06:27:49.891Z Error in getServiceAvailableSlots: HttpsError: Service not found
+    at getServiceAvailableSlots_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1609:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2336:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1510:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction getServiceAvailableSlots rejects when service does not exist] 2026-06-28T06:27:49.891Z Error executing action [getServiceAvailableSlots]: HttpsError: Service not found
+    at getServiceAvailableSlots_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1609:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2336:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1510:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction getClientAnalytics rejects non-admin querying another client's analytics] 2026-06-28T06:27:49.953Z Error executing action [getClientAnalytics]: HttpsError: Not authorized to view these analytics
     at getClientAnalytics_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1714:11)
     at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2338:22
     at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
     at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
-    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:793:9) {
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1544:9) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction getProviderAnalytics rejects non-admin callers] 2026-06-28T05:35:00.848Z Error executing action [getProviderAnalytics]: HttpsError: Only ADMIN users can get provider analytics
+[bookingAction getClientAnalytics rejects unauthenticated callers] 2026-06-28T06:27:50.049Z Error executing action [getClientAnalytics]: HttpsError: User must be authenticated
+    at getClientAnalytics_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1709:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2338:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1581:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'unauthenticated',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'UNAUTHENTICATED', status: 401 }
+}
+[bookingAction getProviderAnalytics rejects non-admin callers] 2026-06-28T06:27:50.116Z Error executing action [getProviderAnalytics]: HttpsError: Only ADMIN users can get provider analytics
     at getProviderAnalytics_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1796:11)
     at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2340:22
     at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
     at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
-    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:823:9) {
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1608:9) {
   code: 'permission-denied',
   details: undefined,
   httpErrorCode: { canonicalName: 'PERMISSION_DENIED', status: 403 }
 }
-[bookingAction releasePayment rejects release for a non-Completed booking] 2026-06-28T05:35:00.899Z Email: Failed to send notification email to user user-1782624900875-294-6804: Error: connect ECONNREFUSED 127.0.0.1:1
+[bookingAction getProviderAnalytics rejects when providerId is missing] 2026-06-28T06:27:50.174Z Error executing action [getProviderAnalytics]: HttpsError: Provider ID is required
+    at getProviderAnalytics_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1800:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2340:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1635:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'invalid-argument',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'INVALID_ARGUMENT', status: 400 }
+}
+[bookingAction releasePayment rejects release for a non-Completed booking] 2026-06-28T06:27:50.221Z Email: Failed to send notification email to user user-1782628070201-561-6030: Error: connect ECONNREFUSED 127.0.0.1:1
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1705:16) {
   errno: -61,
   code: 'ESOCKET',
@@ -426,47 +1132,120 @@
   port: 1,
   command: 'CONN'
 }
-[bookingAction releasePayment rejects release for a non-Completed booking] 2026-06-28T05:35:00.926Z Error in releasePayment: HttpsError: Payment can only be released for completed bookings
+[bookingAction releasePayment rejects release for a non-Completed booking] 2026-06-28T06:27:50.254Z Error in releasePayment: HttpsError: Payment can only be released for completed bookings
     at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1931:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:873:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1685:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction releasePayment rejects release for a non-Completed booking] 2026-06-28T05:35:00.926Z Error executing action [releasePayment]: HttpsError: Payment can only be released for completed bookings
+[bookingAction releasePayment rejects release for a non-Completed booking] 2026-06-28T06:27:50.255Z Error executing action [releasePayment]: HttpsError: Payment can only be released for completed bookings
     at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1931:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:873:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1685:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction releasePayment rejects release for CashOnHand bookings] 2026-06-28T05:35:00.960Z Error in releasePayment: HttpsError: Cash payments do not require release
+[bookingAction releasePayment rejects release for CashOnHand bookings] 2026-06-28T06:27:50.288Z Error in releasePayment: HttpsError: Cash payments do not require release
     at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1945:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:913:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1725:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
 }
-[bookingAction releasePayment rejects release for CashOnHand bookings] 2026-06-28T05:35:00.960Z Error executing action [releasePayment]: HttpsError: Cash payments do not require release
+[bookingAction releasePayment rejects release for CashOnHand bookings] 2026-06-28T06:27:50.288Z Error executing action [releasePayment]: HttpsError: Cash payments do not require release
     at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1945:13)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
     at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:16
     at async waitForActual (node:assert:646:5)
     at async strict.rejects (node:assert:769:25)
-    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:913:7) {
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1725:7) {
   code: 'failed-precondition',
   details: undefined,
   httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction releasePayment rejects release when payment has already been released] 2026-06-28T06:27:50.322Z Error in releasePayment: HttpsError: Payment has already been released for this booking
+    at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1938:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1746:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction releasePayment rejects release when payment has already been released] 2026-06-28T06:27:50.323Z Error executing action [releasePayment]: HttpsError: Payment has already been released for this booking
+    at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1938:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1746:7) {
+  code: 'failed-precondition',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'FAILED_PRECONDITION', status: 400 }
+}
+[bookingAction releasePayment rejects release when bookingId is missing] 2026-06-28T06:27:50.350Z Error executing action [releasePayment]: HttpsError: bookingId, releasedAmount, and commissionRetained are required
+    at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1916:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1762:9)
+    at callFn (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:366:21)
+    at Runnable.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runnable.js:354:5)
+    at Runner.runTest (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:719:10)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:842:12
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:634:14)
+    at /Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:644:7
+    at next (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:527:14)
+    at Immediate.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/node_modules/mocha/lib/runner.js:612:5)
+    at process.processImmediate (node:internal/timers:504:21) {
+  code: 'invalid-argument',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'INVALID_ARGUMENT', status: 400 }
+}
+[bookingAction releasePayment rejects release when releasedAmount is missing] 2026-06-28T06:27:50.379Z Error executing action [releasePayment]: HttpsError: bookingId, releasedAmount, and commissionRetained are required
+    at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1916:11)
+    at /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:22
+    at Function.run (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions/lib/common/onInit.js:33:16)
+    at wrapped (/Volumes/DevSSD/Projects/SRV/functions/node_modules/firebase-functions-test/lib/v1.js:71:30)
+    at Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1778:9) {
+  code: 'invalid-argument',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'INVALID_ARGUMENT', status: 400 }
+}
+[bookingAction releasePayment rejects release when booking does not exist] 2026-06-28T06:27:50.407Z Error in releasePayment: HttpsError: Booking not found
+    at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1925:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1792:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
+}
+[bookingAction releasePayment rejects release when booking does not exist] 2026-06-28T06:27:50.407Z Error executing action [releasePayment]: HttpsError: Booking not found
+    at releasePayment_booking (/Volumes/DevSSD/Projects/SRV/functions/src/booking.js:1925:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /Volumes/DevSSD/Projects/SRV/functions/src/booking.js:2342:16
+    at async waitForActual (node:assert:646:5)
+    at async strict.rejects (node:assert:769:25)
+    at async Context.<anonymous> (/Volumes/DevSSD/Projects/SRV/functions/test/booking.test.js:1792:7) {
+  code: 'not-found',
+  details: undefined,
+  httpErrorCode: { canonicalName: 'NOT_FOUND', status: 404 }
 }

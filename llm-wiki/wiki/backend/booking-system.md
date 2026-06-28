@@ -8,6 +8,8 @@ related:
   - [[Firebase Architecture]]
   - [[Online Projects]]
   - [[Grill Record: Online Services Integration]]
+  - [[Booking Test Infrastructure]]
+  - [[Booking Test QA Findings 2026-06-28]]
 sources:
   - functions/src/booking.js
   - src/frontend/src/services/bookingCanisterService.ts
@@ -15,6 +17,7 @@ sources:
   - src/frontend/src/hooks/bookingManagement.tsx
   - src/frontend/src/pages/client/book/[id].tsx
   - src/frontend/src/pages/client/booking/
+  - functions/test/booking.test.js
   - docs/OnlineService.md
 ---
 
@@ -343,6 +346,25 @@ const isLate = hoursUntilStart < 24;
 - **Escrow**: Same as existing booking — `GCash` goes `PENDING` → `PAID_HELD` → `RELEASED` on booking completion.
 - **Refund**: Per session if the booking itself is cancelled before any session starts. No refund for individual cancelled sessions after the first session starts.
 
+## Test Coverage
+
+The backend integration test suite at `functions/test/booking.test.js` was significantly expanded to **97 cases across all 17 actions** (~95% edge case coverage). It uses Mocha + `firebase-functions-test` against the real Firestore emulator.
+
+**Stack**: `firebase-functions-test` 3.4 wraps `bookingAction`; tests run against the Firestore + Auth emulator (no mocks); scenario-based seeders (`seedPendingBooking`, `seedActiveBooking`, etc.) build a complete client/provider/service/package/reputation chain for each test.
+
+**Coverage summary** (see [[Booking Test Infrastructure]] for full matrix):
+- 🟢 All 17 actions are now strongly covered
+- 11/11 doc-not-found paths tested
+- 5/5 empty-result list/analytics paths tested
+- All 3 critical bugs from the initial QA review are resolved
+
+**Remaining minor gaps** (see [[Booking Test QA Findings 2026-06-28]] for full resolution log):
+- `acceptBooking` direct time-conflict guard (`booking.js:618-623`) not yet tested
+- 2 of 3 silent error-swallow try-catches in `cancelBooking` not directly tested (report creation, RTDB cleanup)
+- Date fragility in `getServiceAvailableSlots` (`new Date().getDay()` for day-of-week)
+
+**Imports**: The test file imports `NOTIFICATION_TYPES` from `notification.js` and `CANCELLATION_PENALTY` from `reputationMath.js` to keep assertions in sync with the source-of-truth constants.
+
 ## Key Architecture Notes
 
 1. **Firestore-native** — all booking data lives in Firestore's `bookings` collection; no ICP canisters
@@ -353,3 +375,4 @@ const isLate = hoursUntilStart < 24;
 6. **Reputation gate** — both client and provider must have trustScore **above** 5 (backend rejects `trustScore <= 5`; frontend gate uses `>= 5`)
 7. **No service-level booking limits** — `maxBookingsPerDay` on service exists but not enforced in booking creation v1
 8. **Phase 2 multi-session extension** — `scheduledSessions[]` array on Booking entity enables session-based services (tutoring, coaching, etc.); 5 new `bookingAction` actions added; 24h reschedule rule with reputation penalty; `CashOnHand` rejected for online services
+9. **Test infrastructure added (2026-06-28)** — first integration test suite covers all 17 `bookingAction` cases; see [[Booking Test Infrastructure]]

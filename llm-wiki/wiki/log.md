@@ -330,3 +330,56 @@ Grilled the plan for integrating 20 new online services (8 Digital & Creative, 7
 **Output**: `wiki/decisions/grill-2026-06-27-online-services-integration.md` + `docs/OnlineService.md`
 
 Updated index.md (32 pages, 6 categories).
+
+## [2026-06-28] ingest | Booking test infrastructure & QA findings
+
+Ingested `functions/test/booking.test.js` (46 cases across 17 actions) and cross-validated against `functions/src/booking.js`. Documented the test stack, scenario seeders, coverage matrix, and the QA findings from the review.
+
+**New pages (2):**
+- [[Booking Test Infrastructure]] — Mocha + `firebase-functions-test` setup, scenario seeders, coverage matrix, ~44% edge case coverage summary
+- [[Booking Test QA Findings 2026-06-28]] — 3 critical bugs (missing 2nd notification, sparse declineBooking, missing auth tests), ~30 recommended tests across doc-not-found/empty-results/conflict-guards/silent-swallow categories
+
+**Updated pages (3):**
+- [[Booking System]] — Added "Test Coverage" section with strengths/gaps summary, updated frontmatter `related:` and `sources:` to include test files
+- [[Functions Lint Report]] — Marked finding #6 (no test files) as RESOLVED (partial); updated Quick Stats table with before/after columns; updated recommendation #5
+- [[Wiki Lint Booking and Service 2026-06-27]] — Added "Test Coverage (added 2026-06-28)" follow-up section with cross-references to new pages
+
+Updated index.md (34 pages, 7 categories).
+
+## [2026-06-28] resolve | Booking test QA findings
+
+Resolved all 3 critical bugs and ~30 recommended tests from [[Booking Test QA Findings 2026-06-28]] by editing `functions/test/booking.test.js` directly. Test suite grew from 46 to **97 cases**; all passing.
+
+**Critical bugs fixed:**
+- ✅ Bug 1: `startBooking` now asserts both `START_SERVICE` (client) and `SERVICE_COMPLETION_REMINDER` (provider) notifications
+- ✅ Bug 2: `declineBooking` now has 6 cases (was 2) — added unauth, non-provider, doc-not-found, missing bookingId
+- ✅ Bug 3: `checkServiceAvailability` and `getServiceAvailableSlots` now have unauth tests (5 and 4 cases respectively)
+
+**Edge case coverage closed:**
+- 11/11 doc-not-found paths now tested
+- 5/5 empty-result list/analytics paths tested
+- `releasePayment` already-released guard tested
+- `createBooking` time conflict, inactive service, wrong provider, wrong package, missing package, missing fields, low provider reputation
+- `acceptBooking` auto-cancellation side effect tested
+- `cancelBooking` provider-initiated + silent-rep-fail tested
+- `disputeBooking` provider-initiated + unauth + doc-not-found tested
+- `getBooking` unauth + doc-not-found tested
+- `getClientBookings`/`getProviderBookings` admin-on-behalf + empty + unauth tested
+- `getClientAnalytics` admin-on-behalf + empty + unauth tested
+- `getProviderAnalytics` empty + missing providerId tested
+- `releasePayment` missing bookingId + missing releasedAmount + doc-not-found tested
+
+**Code quality improvements:**
+- Imported `NOTIFICATION_TYPES` from `notification.js` — replaced 11 hardcoded strings with constants
+- Imported `CANCELLATION_PENALTY` from `reputationMath.js` — replaced hardcoded `5` in cancelBooking test
+
+**Coverage improvement:** ~44% → ~95% edge case coverage.
+
+**Verified**: `npm test` runs all 97 tests in ~5s. `eslint` reports no new issues in `booking.test.js` (3 pre-existing issues remain in `mocha.js`).
+
+**Updated pages (3):**
+- [[Booking Test Infrastructure]] — Coverage matrix updated to reflect 97 cases across 17 actions; all 🟢
+- [[Booking Test QA Findings 2026-06-28]] — Each finding marked ✅ RESOLVED with before/after coverage table
+- [[Booking System]] — Test Coverage section rewritten to reflect 97 cases / ~95% coverage; remaining minor gaps listed
+
+Updated index.md (34 pages, 7 categories).

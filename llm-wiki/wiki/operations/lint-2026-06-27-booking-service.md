@@ -8,9 +8,12 @@ related:
   - [[Services Layer]]
   - [[Service Discovery and Listing]]
   - [[State and Hooks]]
+  - [[Booking Test Infrastructure]]
+  - [[Booking Test QA Findings 2026-06-28]]
 sources:
   - functions/src/booking.js
   - functions/src/service.js
+  - functions/test/booking.test.js
   - src/frontend/src/services/bookingCanisterService.ts
   - src/frontend/src/services/serviceCanisterService.ts
   - src/frontend/src/hooks/bookingManagement.tsx
@@ -148,3 +151,19 @@ Wiki doesn't mention `MAX_DESCRIPTION_LENGTH = 1000` which is enforced server-si
 | Missing documentation | 8 |
 | Stale claims | 3 |
 | Gaps | 3 |
+
+## Test Coverage (added 2026-06-28)
+
+Following this lint pass, `functions/test/booking.test.js` was added — the first integration test suite for the booking domain. It runs against the real Firestore emulator and exercises all 17 `bookingAction` cases (46 test cases total).
+
+**Status against this lint's findings:**
+- "Callable-only mutation" (#1) — test setup includes scenario seeders and direct DB writes for `seedCompletedBooking` (CashOnHand branch), so the test file itself uses direct writes for setup. The lint finding still holds for the booking flow.
+- Trust score gate (#2) — verified correct in tests: `seedReputation(clientId, {trustScore: 5})` causes `createBooking` to reject. Boundary value tested.
+
+**New gaps discovered** (see [[Booking Test QA Findings 2026-06-28]] for details):
+- 0/11 doc-not-found paths tested across actions
+- `startBooking` test asserts only 1 of 2 notifications (provider's `service_completion_reminder` missing)
+- `acceptBooking` auto-cancellation side effect (`cancelConflictingBookings`) not tested
+- 0/5 empty-result list/analytics paths tested
+- `releasePayment` already-released guard not tested
+- Silent error-swallow paths in `cancelBooking` not tested

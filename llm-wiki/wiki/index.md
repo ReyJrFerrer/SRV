@@ -13,6 +13,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 - [[Service Creation Workflow]] — Provider service creation, 6-step wizard (Phase 1: +1 Step 0 serviceMode) → Cloud Function → Firestore
 - [[Booking System]] — Client booking creation, state machine, payment lifecycle, all status transitions; Phase 2: multi-session `scheduledSessions[]`
+- [[Booking Test Infrastructure]] — Mocha + firebase-functions-test, 46 cases, scenario seeders, coverage matrix
 - [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
@@ -52,8 +53,9 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Wiki Lint Booking and Service 2026-06-27]] — Booking/service focused lint: 6 contradictions, 8 missing docs, 3 stale claims, 3 gaps
 - [[Wiki Lint Review and Reputation 2026-06-27]] — Review/reputation focused lint: 3 contradictions, 15 missing docs, 4 stale claims, 5 gaps
 - [[Wiki Lint Media and Notifications 2026-06-27]] — Media/notification focused lint: 4 contradictions, 11 missing docs, 3 stale claims, 4 gaps
+- [[Booking Test QA Findings 2026-06-28]] — QA review of `booking.test.js`: 3 critical bugs, ~30 recommended tests, ~44% edge case coverage
 
 ---
 
-_Last updated: 2026-06-27_
-_Pages: 32_
+_Last updated: 2026-06-28_
+_Pages: 34_
