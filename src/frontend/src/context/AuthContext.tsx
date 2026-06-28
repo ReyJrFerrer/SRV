@@ -354,7 +354,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authCanisterService.updateUserActiveStatus(false);
     } catch (err) {
-      console.error("[AuthContext] updateUserActiveStatus(false) failed:", err);
+      
     }
 
     await sessionManager.clearSession();
