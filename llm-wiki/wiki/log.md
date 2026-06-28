@@ -403,6 +403,25 @@ Grilled plan for a reusable wiki checklist that codifies the patterns from `book
 
 Updated index.md (36 pages, 7 categories).
 
+## [2026-06-28] ingest | Review Test Infrastructure
+
+Created [[Review Test Infrastructure]] — 114 integration tests for `reviewAction` (23 actions + unknown action handler).
+
+**Files changed:**
+- `functions/test/review.test.js` — new (114 tests, 24 describe blocks)
+- `functions/test/mocha.js` — added log routing for `test-output-review.log`
+- `functions/test/helpers/seed.js` — added `seedReview`, `seedProviderReview`, `buildReview`, `buildProviderReview`
+
+**Bug fix:** `getReviewStatistics` auth guard (`review.js:954`) was checking `!hasAuth` instead of `!hasAuth || !isAdmin` — any authenticated user could access statistics instead of only admins. Fixed + added non-admin rejection test.
+
+**New pages (1):**
+- [[Review Test Infrastructure]] — Full coverage matrix, seeders, conventions, edge cases
+
+**Updated pages (3):**
+- [[Review System]] — Added Test Coverage section with highlights
+- [[Unit Test Creation Checklist]] — Added Review coverage stats reference, updated sources
+- `index.md` — Added [[Review Test Infrastructure]] under Backend (38 pages)
+
 ## [2026-06-28] ingest | Service Test Infrastructure
 
 Created [[Service Test Infrastructure]] — 168 integration tests for `serviceAction` (29 actions), scheduled deletion handler, and internal helpers.

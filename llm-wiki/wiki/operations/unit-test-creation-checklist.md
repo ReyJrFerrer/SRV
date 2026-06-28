@@ -13,6 +13,7 @@ sources:
   - functions/test/helpers/seed.js
   - functions/src/booking.js
   - functions/src/service.js
+  - functions/src/review.js
   - functions/src/notification.js
   - functions/src/reputation.js
   - functions/src/utils/reputationMath.js
@@ -305,6 +306,22 @@ After the test file lands:
 | Empty-result paths | 5 / 5 (100%) |
 | State machine coverage | 1 transition (restoreService) |
 | Boundary values | ~15 (price, title, desc, images, certs, hours, bookings) |
+| Lint clean | yes |
+
+### Review (23 actions)
+
+| Metric | Value |
+|---|---|
+| Total cases | 115 |
+| Actions covered | 23 / 23 (+ unknown action handler) |
+| Auth paths | ~35 |
+| Validation errors | ~25 |
+| Doc-not-found paths | ~12 |
+| State-machine errors | 6 (hidden read, hidden update, already-hidden delete, not-hidden restore, not-completed submit, not-completed submitProviderReview) |
+| Duplicate/conflict guards | 3 (duplicate submitReview, duplicate submitProviderReview, already-hidden deleteReview) |
+| Empty-result paths | ~8 |
+| Boundary values | ~6 (rating 0/6, comment 501, review window 31d, rating unchanged) |
+| Side effect assertions | service rating/count, booking flag, reports doc, status transitions |
 | Lint clean | yes |
 
 Reference implementations:

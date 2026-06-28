@@ -255,6 +255,22 @@ Main hook wrapping `reviewCanisterService` with profile enrichment, caching, and
 4. **No review weighting**: Despite being documented in older wiki versions, there is no per-review weighting based on reviewer trust score, review quality, or time decay. Each review affects reputation equally through aggregate rating and booking counts.
 5. **Index-fallback pattern**: Several query functions (`getUserReviews`, `getServiceReviews`, `getClientProviderReviews`) fall back to in-memory filtering when Firestore composite indexes are missing.
 
+## Test Coverage
+
+114 integration tests covering all 23 actions plus the unknown-action handler. See [[Review Test Infrastructure]] for the full coverage matrix, test patterns, and known source bugs found during testing.
+
+**Coverage highlights:**
+- Auth paths: ~35 tests (unauth, wrong-role, stranger, admin)
+- Validation errors: ~25 tests (missing fields, invalid rating, exceeded comment length, expired review window)
+- State-machine errors: 6 tests (hidden read, hidden update, already-hidden delete, not-hidden restore, not-completed submit, duplicate reviews)
+- Side-effect assertions: service `averageRating`/`reviewCount`, booking `providerReviewSubmitted`, reports collection, doc status transitions
+- Lint: clean | Passing: 114/114
+
+**Test files:**
+- `functions/test/review.test.js` — full test suite
+- `functions/test/helpers/seed.js` — added `seedReview`, `seedProviderReview`, `buildReview`, `buildProviderReview`
+- `functions/test/mocha.js` — log routing to `test-output-review.log`
+
 ## Related
 
 - [[Gemini Review Analysis]] — AI analysis pipeline triggered by new reviews

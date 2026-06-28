@@ -478,6 +478,77 @@ function buildServiceLocation(overrides = {}) {
   };
 }
 
+/**
+ * Build a review object with sensible defaults.
+ * @param {Object} opts
+ * @return {Object}
+ */
+function buildReview(opts = {}) {
+  const now = new Date().toISOString();
+  return {
+    id: opts.id || `rev-${uniqueId()}`,
+    bookingId: opts.bookingId || `bk-${uniqueId()}`,
+    clientId: opts.clientId || `user-${uniqueId()}`,
+    providerId: opts.providerId || `user-${uniqueId()}`,
+    serviceId: opts.serviceId || `service-${uniqueId()}`,
+    rating: opts.rating || 5,
+    comment: opts.comment || "Great service!",
+    status: opts.status || "Visible",
+    qualityScore: opts.qualityScore || 0.8,
+    createdAt: opts.createdAt || now,
+    updatedAt: opts.updatedAt || now,
+  };
+}
+
+/**
+ * Seed a review doc in the `reviews` collection.
+ * @param {Object} opts
+ * @return {Promise<{id: string}>}
+ */
+async function seedReview(opts = {}) {
+  const data = buildReview(opts);
+  const id = data.id;
+  const docData = {...data};
+  await db.collection("reviews").doc(id).set(docData);
+  return {id};
+}
+
+/**
+ * Build a provider review object with sensible defaults.
+ * @param {Object} opts
+ * @return {Object}
+ */
+function buildProviderReview(opts = {}) {
+  const now = new Date().toISOString();
+  return {
+    id: opts.id || `pr-${uniqueId()}`,
+    bookingId: opts.bookingId || `bk-${uniqueId()}`,
+    clientId: opts.clientId || `user-${uniqueId()}`,
+    providerId: opts.providerId || `user-${uniqueId()}`,
+    serviceId: opts.serviceId || `service-${uniqueId()}`,
+    rating: opts.rating || 5,
+    comment: opts.comment || "Great client!",
+    status: opts.status || "Visible",
+    qualityScore: opts.qualityScore || 0.8,
+    reviewType: "ProviderToClient",
+    createdAt: opts.createdAt || now,
+    updatedAt: opts.updatedAt || now,
+  };
+}
+
+/**
+ * Seed a provider review doc in the `providerReviews` collection.
+ * @param {Object} opts
+ * @return {Promise<{id: string}>}
+ */
+async function seedProviderReview(opts = {}) {
+  const data = buildProviderReview(opts);
+  const id = data.id;
+  const docData = {...data};
+  await db.collection("providerReviews").doc(id).set(docData);
+  return {id};
+}
+
 module.exports = {
   uniqueId,
   futureDate,
@@ -487,6 +558,8 @@ module.exports = {
   buildBooking,
   buildCategory,
   buildServiceLocation,
+  buildReview,
+  buildProviderReview,
   seedUser,
   seedService,
   seedServicePackage,
@@ -501,4 +574,6 @@ module.exports = {
   seedDisputedBooking,
   seedDeclinedBooking,
   seedCancelledBooking,
+  seedReview,
+  seedProviderReview,
 };

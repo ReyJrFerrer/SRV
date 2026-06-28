@@ -19,6 +19,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
 - [[Review System]] — 23 backend actions, 2 Firestore collections, AI analysis, moderation, frontend hooks
+- [[Review Test Infrastructure]] — Mocha + firebase-functions-test, 114 cases, 23 actions, per-action coverage matrix
 - [[Send Contact Email]] — v1 callable contact form handler
 - [[Notification System]] — Multi-channel notifications: 23 → 31 types (Phase 1: +8 for online projects), OneSignal push, transactional email, Firestore store, spam prevention, frontend hooks
 
@@ -66,4 +67,4 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 ---
 
 _Last updated: 2026-06-28_
-_Pages: 36_
+_Pages: 38_
