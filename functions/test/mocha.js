@@ -25,6 +25,8 @@ const LOG_FILES = [
   "test-output-booking.log",
   "test-output-service.log",
   "test-output-review.log",
+  "test-output-account.log",
+  "test-output-reputation.log",
 ];
 for (const f of LOG_FILES) {
   fs.writeFileSync(path.join(__dirname, f), "", "utf-8");
@@ -45,6 +47,8 @@ function logFileForTest(filePath) {
   if (base.includes("booking.test")) return "test-output-booking.log";
   if (base.includes("service.test")) return "test-output-service.log";
   if (base.includes("review.test")) return "test-output-review.log";
+  if (base.includes("account.test")) return "test-output-account.log";
+  if (base.includes("reputation.test")) return "test-output-reputation.log";
   return "test-output.log";
 }
 
