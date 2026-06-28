@@ -49,13 +49,20 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Firebase Functions Optimization]] — Gen 2 best practices with actual config comparison
 - [[PH Location Data]] — Philippine geographic data service (in-memory)
 - [[Functions Lint Report]] — Lint findings for functions/ directory architecture
+- [[Unit Test Creation Checklist]] — 8-step checklist for adding integration tests to any Cloud Function (action-dispatch, scheduled, trigger, internal)
 - [[Wiki Lint 2026-06-27]] — Health check: contradictions, orphans, gaps, stale claims
 - [[Wiki Lint Booking and Service 2026-06-27]] — Booking/service focused lint: 6 contradictions, 8 missing docs, 3 stale claims, 3 gaps
 - [[Wiki Lint Review and Reputation 2026-06-27]] — Review/reputation focused lint: 3 contradictions, 15 missing docs, 4 stale claims, 5 gaps
 - [[Wiki Lint Media and Notifications 2026-06-27]] — Media/notification focused lint: 4 contradictions, 11 missing docs, 3 stale claims, 4 gaps
 - [[Booking Test QA Findings 2026-06-28]] — QA review of `booking.test.js`: 3 critical bugs, ~30 recommended tests, ~44% edge case coverage
 
+## Decisions
+
+- [[Chat Media Implementation]] — Plan for media attachments, implemented except mobile port
+- [[Grill Record: Online Services Integration]] — Design review: 20 online services, 2 engagement models, 3 new categories, 22 Cloud Functions target (2026-06-27)
+- [[Grill Record: Unit Test Creation Checklist]] — 8-step reusable checklist for unit test creation, derived from booking.test.js QA review (2026-06-28)
+
 ---
 
 _Last updated: 2026-06-28_
-_Pages: 34_
+_Pages: 36_

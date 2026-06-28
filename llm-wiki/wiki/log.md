@@ -383,3 +383,22 @@ Resolved all 3 critical bugs and ~30 recommended tests from [[Booking Test QA Fi
 - [[Booking System]] — Test Coverage section rewritten to reflect 97 cases / ~95% coverage; remaining minor gaps listed
 
 Updated index.md (34 pages, 7 categories).
+
+## [2026-06-28] grill | Unit test creation checklist
+
+Grilled plan for a reusable wiki checklist that codifies the patterns from `booking.test.js` (97 cases, ~95% edge case coverage) and applies them to the other 13 functions in `functions/src/`.
+
+**Walked 8 design tree branches** (Steps 0-8), **resolved 7 key decisions** (location, scope, prescriptive style, 7-case matrix, cross-cutting edges, code quality, per-function-type patterns), **flagged 0 contradictions** with existing wiki pages, **identified 2 non-blocking open questions** (scheduled function export pattern, separate media.js touchpoints checklist).
+
+**Function-type mapping**: 11 action-dispatch callables, 6 scheduled functions, 2 Firestore triggers, 2 internal-helper modules.
+
+**New pages (2):**
+- [[Unit Test Creation Checklist]] — 8-step checklist with 4 function-type patterns and anti-patterns section, derived directly from booking.test.js QA findings
+- [[Grill Record: Unit Test Creation Checklist]] — Decision record with design tree, key decisions, contradictions, open questions
+
+**Updated pages (1):**
+- `index.md` — Added [[Unit Test Creation Checklist]] to Operations and [[Grill Record: Unit Test Creation Checklist]] to Decisions
+
+**Output**: `wiki/decisions/grill-2026-06-28-unit-test-checklist.md` + `wiki/operations/unit-test-creation-checklist.md`
+
+Updated index.md (36 pages, 7 categories).
