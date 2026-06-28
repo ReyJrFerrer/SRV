@@ -69,7 +69,7 @@ describe("accountAction", () => {
     it("creates a custom token for a new user without email", async () => {
       const principal = `principal-${uniqueId()}`;
       const res = await wrapped(
-        makeRequest({action: "exchangeForFirebaseToken", data: {principal}}),
+        makeRequest({action: "exchangeForFirebaseToken", payload: {principal}}),
       );
 
       assert.equal(res.success, true);
@@ -86,7 +86,7 @@ describe("accountAction", () => {
       const res = await wrapped(
         makeRequest({
           action: "exchangeForFirebaseToken",
-          data: {principal, email},
+          payload: {principal, email},
         }),
       );
 
@@ -99,7 +99,7 @@ describe("accountAction", () => {
     it("sets hasProfile=true for existing users", async () => {
       const {id} = await seedUser({name: "Existing User"});
       const res = await wrapped(
-        makeRequest({action: "exchangeForFirebaseToken", data: {principal: id}}),
+        makeRequest({action: "exchangeForFirebaseToken", payload: {principal: id}}),
       );
 
       assert.equal(res.success, true);
@@ -110,7 +110,7 @@ describe("accountAction", () => {
 
     it("rejects when principal is missing", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "exchangeForFirebaseToken", data: {}})),
+        wrapped(makeRequest({action: "exchangeForFirebaseToken", payload: {}})),
         /INVALID_ARGUMENT|Principal is required/i,
       );
     });
@@ -118,7 +118,7 @@ describe("accountAction", () => {
     it("rejects when account is locked", async () => {
       const {id} = await seedUser({locked: true});
       await assert.rejects(
-        wrapped(makeRequest({action: "exchangeForFirebaseToken", data: {principal: id}})),
+        wrapped(makeRequest({action: "exchangeForFirebaseToken", payload: {principal: id}})),
         /PRECONDITION_FAILED|Account has been locked/i,
       );
     });
@@ -132,7 +132,7 @@ describe("accountAction", () => {
       const {id} = await seedUser();
       const res = await wrapped(
         makeRequest(
-          {action: "validatePhoneNumber", data: {phone: "09123456789"}},
+          {action: "validatePhoneNumber", payload: {phone: "09123456789"}},
           makeAuth(id),
         ),
       );
@@ -143,7 +143,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "validatePhoneNumber", data: {phone: "09123456789"}})),
+        wrapped(makeRequest({action: "validatePhoneNumber", payload: {phone: "09123456789"}})),
         /User must be authenticated/i,
       );
     });
@@ -153,7 +153,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "validatePhoneNumber", data: {phone: "123"}},
+            {action: "validatePhoneNumber", payload: {phone: "123"}},
             makeAuth(id),
           ),
         ),
@@ -168,7 +168,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "validatePhoneNumber", data: {phone}},
+            {action: "validatePhoneNumber", payload: {phone}},
             makeAuth(id),
           ),
         ),
@@ -186,12 +186,12 @@ describe("accountAction", () => {
       const res = await wrapped(
         makeRequest(
           {
-            action: "createProfile",
-            data: {
-              name: "Test User",
-              phone: "09123456789",
-              role: "Client",
-            },
+              action: "createProfile",
+              payload: {
+                name: "Test User",
+                phone: "09123456789",
+                role: "Client",
+              },
           },
           makeAuth(principal),
         ),
@@ -212,7 +212,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "createProfile", data: {name: "Test", phone: "09123456789"}})),
+        wrapped(makeRequest({action: "createProfile", payload: {name: "Test", phone: "09123456789"}})),
         /User must be authenticated/i,
       );
     });
@@ -222,7 +222,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "createProfile", data: {name: "X", phone: "09123456789"}},
+            {action: "createProfile", payload: {name: "X", phone: "09123456789"}},
             makeAuth(id),
           ),
         ),
@@ -235,7 +235,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "createProfile", data: {name: "Test User", phone: "123"}},
+            {action: "createProfile", payload: {name: "Test User", phone: "123"}},
             makeAuth(id),
           ),
         ),
@@ -250,7 +250,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "createProfile", data: {name: "Test User", phone}},
+            {action: "createProfile", payload: {name: "Test User", phone}},
             makeAuth(id),
           ),
         ),
@@ -263,7 +263,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "createProfile", data: {name: "Another", phone: "09123456789"}},
+            {action: "createProfile", payload: {name: "Another", phone: "09123456789"}},
             makeAuth(id),
           ),
         ),
@@ -280,7 +280,7 @@ describe("accountAction", () => {
         makeRequest(
           {
             action: "createProfile",
-            data: {name: "Test User", phone: "09123456789"},
+            payload: {name: "Test User", phone: "09123456789"},
           },
           makeAuth(principal),
         ),
@@ -301,7 +301,7 @@ describe("accountAction", () => {
     it("returns own profile when no userId specified", async () => {
       const {id} = await seedUser({name: "Self Profile"});
       const res = await wrapped(
-        makeRequest({action: "getProfile", data: {}}, makeAuth(id)),
+        makeRequest({action: "getProfile", payload: {}}, makeAuth(id)),
       );
 
       assert.equal(res.success, true);
@@ -313,7 +313,7 @@ describe("accountAction", () => {
       const {id: otherId} = await seedUser({name: "Other User"});
       const res = await wrapped(
         makeRequest(
-          {action: "getProfile", data: {userId: otherId}},
+          {action: "getProfile", payload: {userId: otherId}},
           makeAuth(ownId),
         ),
       );
@@ -324,7 +324,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "getProfile", data: {}})),
+        wrapped(makeRequest({action: "getProfile", payload: {}})),
         /User must be authenticated/i,
       );
     });
@@ -334,7 +334,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "getProfile", data: {userId: "nonexistent-user"}},
+            {action: "getProfile", payload: {userId: "nonexistent-user"}},
             makeAuth(id),
           ),
         ),
@@ -351,7 +351,7 @@ describe("accountAction", () => {
       const {id} = await seedUser({name: "Original Name"});
       const res = await wrapped(
         makeRequest(
-          {action: "updateProfile", data: {name: "Updated Name"}},
+          {action: "updateProfile", payload: {name: "Updated Name"}},
           makeAuth(id),
         ),
       );
@@ -365,7 +365,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "updateProfile", data: {name: "New Name"}})),
+        wrapped(makeRequest({action: "updateProfile", payload: {name: "New Name"}})),
         /User must be authenticated/i,
       );
     });
@@ -375,7 +375,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "updateProfile", data: {name: "X"}},
+            {action: "updateProfile", payload: {name: "X"}},
             makeAuth(id),
           ),
         ),
@@ -387,7 +387,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "updateProfile", data: {name: "New Name"}},
+            {action: "updateProfile", payload: {name: "New Name"}},
             makeAuth("nonexistent-user"),
           ),
         ),
@@ -403,7 +403,7 @@ describe("accountAction", () => {
     it("switches from Client to ServiceProvider", async () => {
       const {id} = await seedUser({activeRole: "Client", role: "ServiceProvider"});
       const res = await wrapped(
-        makeRequest({action: "switchUserRole", data: {}}, makeAuth(id)),
+        makeRequest({action: "switchUserRole", payload: {}}, makeAuth(id)),
       );
 
       assert.equal(res.success, true);
@@ -413,7 +413,7 @@ describe("accountAction", () => {
     it("switches from ServiceProvider to Client", async () => {
       const {id} = await seedUser({activeRole: "ServiceProvider", role: "ServiceProvider"});
       const res = await wrapped(
-        makeRequest({action: "switchUserRole", data: {}}, makeAuth(id)),
+        makeRequest({action: "switchUserRole", payload: {}}, makeAuth(id)),
       );
 
       assert.equal(res.success, true);
@@ -422,7 +422,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "switchUserRole", data: {}})),
+        wrapped(makeRequest({action: "switchUserRole", payload: {}})),
         /User must be authenticated/i,
       );
     });
@@ -430,7 +430,7 @@ describe("accountAction", () => {
     it("rejects when profile is not found", async () => {
       await assert.rejects(
         wrapped(
-          makeRequest({action: "switchUserRole", data: {}}, makeAuth("nonexistent-user")),
+          makeRequest({action: "switchUserRole", payload: {}}, makeAuth("nonexistent-user")),
         ),
         /NOT_FOUND|not.found/i,
       );
@@ -440,7 +440,7 @@ describe("accountAction", () => {
       const {id} = await seedUser({activeRole: "Admin", role: "Admin"});
       await assert.rejects(
         wrapped(
-          makeRequest({action: "switchUserRole", data: {}}, makeAuth(id)),
+          makeRequest({action: "switchUserRole", payload: {}}, makeAuth(id)),
         ),
         /INVALID_ARGUMENT|Admin role cannot be switched/i,
       );
@@ -457,7 +457,7 @@ describe("accountAction", () => {
       const {id} = await seedUser();
 
       const res = await wrapped(
-        makeRequest({action: "getAllServiceProviders", data: {}}, makeAuth(id)),
+        makeRequest({action: "getAllServiceProviders", payload: {}}, makeAuth(id)),
       );
 
       assert.equal(res.success, true);
@@ -466,7 +466,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "getAllServiceProviders", data: {}})),
+        wrapped(makeRequest({action: "getAllServiceProviders", payload: {}})),
         /User must be authenticated/i,
       );
     });
@@ -474,7 +474,7 @@ describe("accountAction", () => {
     it("returns empty array when no providers exist", async () => {
       const {id} = await seedUser();
       const res = await wrapped(
-        makeRequest({action: "getAllServiceProviders", data: {}}, makeAuth(id)),
+        makeRequest({action: "getAllServiceProviders", payload: {}}, makeAuth(id)),
       );
 
       assert.equal(res.success, true);
@@ -492,7 +492,7 @@ describe("accountAction", () => {
       const {id} = await seedUser();
 
       const res = await wrapped(
-        makeRequest({action: "getAllUsers", data: {}}, makeAuth(id)),
+        makeRequest({action: "getAllUsers", payload: {}}, makeAuth(id)),
       );
 
       assert.equal(res.success, true);
@@ -501,7 +501,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "getAllUsers", data: {}})),
+        wrapped(makeRequest({action: "getAllUsers", payload: {}})),
         /User must be authenticated/i,
       );
     });
@@ -512,7 +512,7 @@ describe("accountAction", () => {
       // Use a principal that doesn't have a Firestore profile as auth
       const authUid = `auth-${uniqueId()}`;
       const res = await wrapped(
-        makeRequest({action: "getAllUsers", data: {}}, makeAuth(authUid)),
+        makeRequest({action: "getAllUsers", payload: {}}, makeAuth(authUid)),
       );
 
       assert.equal(res.success, true);
@@ -530,7 +530,7 @@ describe("accountAction", () => {
         makeRequest(
           {
             action: "uploadProfilePicture",
-            data: {
+            payload: {
               fileName: "avatar.jpg",
               contentType: "image/jpeg",
               fileData: Buffer.from("fake-image-data").toString("base64"),
@@ -559,7 +559,7 @@ describe("accountAction", () => {
         makeRequest(
           {
             action: "uploadProfilePicture",
-            data: {
+            payload: {
               fileName: "new-avatar.jpg",
               contentType: "image/jpeg",
               fileData: Buffer.from("new-image-data").toString("base64"),
@@ -578,7 +578,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(makeRequest({
           action: "uploadProfilePicture",
-          data: {fileName: "a.jpg", contentType: "image/jpeg", fileData: "data"},
+          payload: {fileName: "a.jpg", contentType: "image/jpeg", fileData: "data"},
         })),
         /User must be authenticated/i,
       );
@@ -589,7 +589,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "uploadProfilePicture", data: {fileName: "a.jpg"}},
+            {action: "uploadProfilePicture", payload: {fileName: "a.jpg"}},
             makeAuth(id),
           ),
         ),
@@ -603,7 +603,7 @@ describe("accountAction", () => {
           makeRequest(
             {
               action: "uploadProfilePicture",
-              data: {fileName: "a.jpg", contentType: "image/jpeg", fileData: "data"},
+              payload: {fileName: "a.jpg", contentType: "image/jpeg", fileData: "data"},
             },
             makeAuth("nonexistent-user"),
           ),
@@ -631,7 +631,7 @@ describe("accountAction", () => {
       });
 
       const res = await wrapped(
-        makeRequest({action: "removeProfilePicture", data: {}}, makeAuth(id)),
+        makeRequest({action: "removeProfilePicture", payload: {}}, makeAuth(id)),
       );
 
       assert.equal(res.success, true);
@@ -640,7 +640,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "removeProfilePicture", data: {}})),
+        wrapped(makeRequest({action: "removeProfilePicture", payload: {}})),
         /User must be authenticated/i,
       );
     });
@@ -648,7 +648,7 @@ describe("accountAction", () => {
     it("rejects when profile is not found", async () => {
       await assert.rejects(
         wrapped(
-          makeRequest({action: "removeProfilePicture", data: {}}, makeAuth("nonexistent-user")),
+          makeRequest({action: "removeProfilePicture", payload: {}}, makeAuth("nonexistent-user")),
         ),
         /NOT_FOUND|not.found/i,
       );
@@ -658,7 +658,7 @@ describe("accountAction", () => {
       const {id} = await seedUser({name: "No Pic"});
       await assert.rejects(
         wrapped(
-          makeRequest({action: "removeProfilePicture", data: {}}, makeAuth(id)),
+          makeRequest({action: "removeProfilePicture", payload: {}}, makeAuth(id)),
         ),
         /NOT_FOUND|No profile picture/i,
       );
@@ -673,7 +673,7 @@ describe("accountAction", () => {
       const {id} = await seedUser({name: "Status User", isActive: false});
       const res = await wrapped(
         makeRequest(
-          {action: "updateUserActiveStatus", data: {isActive: true}},
+          {action: "updateUserActiveStatus", payload: {isActive: true}},
           makeAuth(id),
         ),
       );
@@ -689,7 +689,7 @@ describe("accountAction", () => {
       const {id} = await seedUser({name: "Deactivate User", isActive: true});
       const res = await wrapped(
         makeRequest(
-          {action: "updateUserActiveStatus", data: {isActive: false}},
+          {action: "updateUserActiveStatus", payload: {isActive: false}},
           makeAuth(id),
         ),
       );
@@ -703,7 +703,7 @@ describe("accountAction", () => {
 
     it("rejects unauthenticated callers", async () => {
       await assert.rejects(
-        wrapped(makeRequest({action: "updateUserActiveStatus", data: {isActive: true}})),
+        wrapped(makeRequest({action: "updateUserActiveStatus", payload: {isActive: true}})),
         /User must be authenticated/i,
       );
     });
@@ -713,7 +713,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "updateUserActiveStatus", data: {isActive: "yes"}},
+            {action: "updateUserActiveStatus", payload: {isActive: "yes"}},
             makeAuth(id),
           ),
         ),
@@ -725,7 +725,7 @@ describe("accountAction", () => {
       await assert.rejects(
         wrapped(
           makeRequest(
-            {action: "updateUserActiveStatus", data: {isActive: true}},
+            {action: "updateUserActiveStatus", payload: {isActive: true}},
             makeAuth("nonexistent-user"),
           ),
         ),

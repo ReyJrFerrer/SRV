@@ -331,7 +331,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (result.hasProfile) {
         try {
           await authCanisterService.updateUserActiveStatus(true);
-        } catch {}
+        } catch (err) {
+          console.error("[AuthContext] updateUserActiveStatus(true) failed:", err);
+        }
       }
 
       clearEphemeralData();
@@ -351,7 +353,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       await authCanisterService.updateUserActiveStatus(false);
-    } catch {}
+    } catch (err) {
+      console.error("[AuthContext] updateUserActiveStatus(false) failed:", err);
+    }
 
     await sessionManager.clearSession();
     clearEphemeralData();

@@ -53,23 +53,19 @@ functions/test/
 | `seedUser(opts)` | Creates user docs for auth context and profile testing |
 | `uniqueId()` | Generates unique principal IDs |
 
-## Bug Fix: `payload` Destructuring
+## Inconsistency Fixed: `data` → `payload` in `authCanisterService.ts`
 
-During test creation, a bug was discovered and fixed in `functions/src/account.js:589`:
+During login testing, a `data`/`payload` inconsistency was discovered. The handler at `functions/src/account.js:589` destructures `payload` from `request.data`:
 
 ```javascript
-// Before (broken):
 const {action, payload} = request.data || {};
-
-// After (fixed):
-const {action, data: payload} = request.data || {};
 ```
 
-The handler destructured `payload` from `request.data`, but the property in the client request body is named `data`, not `payload`. This meant every action that passed a payload object (`createProfile`, `validatePhoneNumber`, `updateProfile`, `uploadProfilePicture`, `updateUserActiveStatus`) received `undefined` for its data argument, causing `TypeError: Cannot destructure property of 'data' as it is undefined`. The catch-all in the dispatch then re-threw as "Internal Server Error".
+The primary frontend caller (`identityBridge.ts`) correctly sends `payload` as the key for all action data. However, `authCanisterService.ts:updateUserActiveStatus` was sending `data` instead, causing `payload` to be `undefined` in the handler. The `updateUserActiveStatus` action would fail silently with `"isActive must be a boolean value"` because the destructured payload was `undefined`.
 
-Actions that only used `auth` (e.g., `switchUserRole`, `getAllServiceProviders`, `getAllUsers`) were unaffected and worked correctly even with the bug.
+**Fix**: Changed `data: { isActive }` to `payload: { isActive }` in `src/frontend/src/services/authCanisterService.ts:267` to match the `identityBridge.ts` convention.
 
-Exact same destructuring pattern in `reputation.js` was unaffected because the service functions there use a different pattern: `const data = request.data; const payload = data.data \|\| data;`.
+Test payloads were also updated from `data:` to `payload:` to match the handler destructuring.
 
 ## Coverage Matrix
 

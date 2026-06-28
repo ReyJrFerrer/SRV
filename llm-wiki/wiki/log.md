@@ -472,3 +472,14 @@ Created [[Reputation Test Infrastructure]] — 31 integration tests for `reputat
 **Updated pages (2):**
 - [[Reputation Service (Firestore)]] — Added Test Coverage section with summary stats
 - `index.md` — Added [[Reputation Test Infrastructure]] under Backend (40 pages)
+
+## [2026-06-28] fix | `data`/`payload` inconsistency in account action
+
+Fixed an inconsistency where `authCanisterService.ts:updateUserActiveStatus` sent `data` as the payload key, but the handler (`account.js:589`) and `identityBridge.ts` both use `payload`. The mismatch caused `updateUserActiveStatus` to silently fail with "isActive must be a boolean" because payload destructured to `undefined`.
+
+**Files changed:**
+- `src/frontend/src/services/authCanisterService.ts:267` — `data:` → `payload:`
+- `functions/test/account.test.js` — All test payloads changed from `data:` to `payload:` to match handler
+
+**Updated pages (1):**
+- [[Account Test Infrastructure]] — Rewrote "Bug Fix" section to document the actual `data`/`payload` inconsistency
