@@ -2,7 +2,9 @@
 tags: [frontend, deployment, caching]
 date: 2026-06-16
 sources:
-  - raw/specs/CACHE_CLEARING.md
+  - docs/CACHE_CLEARING.md
+  - src/frontend/scripts/generate-version.js
+  - src/frontend/src/utils/versionChecker.ts
 related:
   - [[Firebase Functions Optimization]]
 ---

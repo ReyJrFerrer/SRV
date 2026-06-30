@@ -45,14 +45,28 @@ All routed through `reputationAction` via an `action` parameter:
 
 ```
 reputations/{userId}  →  { trustScore, trustLevel, completedBookings, averageRating, detectionFlags, lastUpdated }
-reputations/{userId}/history/{timestamp}  →  { trustScore, timestamp }
+reputations/{userId}/history/{timestamp}  →  { trustScore, trustLevel, completedBookings, averageRating, detectionFlags, timestamp, action }
 ```
+
+> **Note**: History records store full state snapshots, not just trust score. The `action` field records what triggered the update (e.g., `"update"`).
 
 ## Key Implementation Detail
 
 `reputation.js` duplicates `admin.initializeApp()` (line 19–28) instead of importing from `firebase-admin.js`. This is a known issue in the [[Functions Lint Report]].
 
+## Test Coverage
+
+31 integration tests covering all 7 actions — see [[Reputation Test Infrastructure]] for the full coverage matrix.
+
+| Metric | Value |
+|---|---|
+| Total cases | 31 |
+| Actions covered | 7 / 7 |
+| Tests passing | 31 / 31 |
+| Lint clean | yes |
+
 ## Related Pages
 
 - [[Reputation Scoring Algorithm]] — Full formula breakdown
 - [[Gemini Review Analysis]] — AI analysis pipeline that feeds into this service
+- [[Reputation Test Infrastructure]] — 31 test cases, per-action matrix

@@ -18,7 +18,7 @@ This skill maintains a persistent, LLM-compiled wiki at `llm-wiki/` for the SRV 
 
 Three layers:
 
-1. **Raw sources** (`llm-wiki/raw/`) — immutable source materials you drop in: specs, meeting notes, design docs, external references. The LLM reads from here but never modifies.
+1. **Raw sources** (`src/`, `functions/`, `scripts/` — the actual codebase) — the source of truth. The wiki describes and summarizes the code. The LLM reads source files to derive wiki content. The code is never modified by wiki operations.
 2. **The wiki** (`llm-wiki/wiki/`) — LLM-generated markdown pages: summaries, entity docs, concept pages, cross-linked with `[[wikilinks]]`. The LLM owns this layer entirely.
 3. **This skill** — the schema that tells the LLM how to structure and maintain the wiki.
 
@@ -26,12 +26,8 @@ Three layers:
 
 ```
 llm-wiki/
-├── raw/
-│   ├── specs/            # Feature requirements, PRDs
-│   ├── meetings/          # Meeting notes, sync transcripts
-│   └── references/        # External docs (Firebase, ICP, Expo)
-├── wiki/
-│   ├── architecture/      # System architecture pages
+└── wiki/
+    ├── architecture/      # System architecture pages
 │   ├── backend/           # ICP canisters, Firebase Functions
 │   ├── frontend/          # React/Vite component tree, routing
 │   ├── mobile/            # Expo/RN structure and patterns
@@ -58,14 +54,14 @@ Use this skill when the user says anything involving:
 
 ### 1. Ingest
 
-The user drops a source into `llm-wiki/raw/` (or asks you to write one there) and says "ingest this." Steps:
+The user says "ingest `<code-path>`" — the source is an actual file in the codebase (e.g., `functions/src/booking.js`, `src/frontend/src/hooks/useChat.tsx`). Steps:
 
-1. **Read the source** from `llm-wiki/raw/<path>`.
+1. **Read the source** from the specified code path (e.g., `functions/src/booking.js`).
 2. **Discuss** key takeaways with the user to understand what to emphasize.
 3. **Write summary pages** in the appropriate `llm-wiki/wiki/` subdirectory:
    - One page per major concept/entity/decision.
    - Use `[[Page Name]]` wikilinks to cross-reference existing pages.
-   - Add YAML frontmatter: `tags`, `date`, `sources` (paths to raw files).
+   - Add YAML frontmatter: `tags`, `date`, `sources` (paths to actual code files).
 4. **Update existing pages** that are touched by the new source — revise summaries, note contradictions, strengthen or challenge claims.
 5. **Update `index.md`**: add the new page(s) with a one-line summary under the correct category.
 6. **Append to `log.md`**: `## [YYYY-MM-DD] ingest | <Source Title>` with brief notes on what was added/changed.
@@ -100,7 +96,8 @@ Every wiki page follows this convention:
 tags: [architecture, backend]
 date: 2026-06-16
 sources:
-  - raw/specs/feature-x.md
+  - functions/src/feature-x.js
+  - src/frontend/src/services/feature-x.ts
 related:
   - [[Related Page]]
   - [[Another Page]]
@@ -120,7 +117,7 @@ Body content using `[[Wikilinks]]` to reference other pages.
 
 ## References
 
-- Source: `raw/specs/feature-x.md`
+- Source: `functions/src/feature-x.js`
 ```
 
 ## Index Maintenance
@@ -142,7 +139,7 @@ Update it on every ingest. When querying, read it first to locate relevant pages
 
 - Created [[Feature X Architecture]]
 - Updated [[Authentication Flow]] with new token handling
-- Raw source: `raw/specs/feature-x.md`
+- Source: `functions/src/feature-x.js`
 ```
 
 Each entry starts with `## [YYYY-MM-DD]` so it's parseable with `grep "^## \[" log.md | tail -5`.
@@ -157,6 +154,5 @@ Each entry starts with `## [YYYY-MM-DD]` so it's parseable with `grep "^## \[" l
 ## Integration Notes
 
 - The wiki complements `AGENTS.md` — AGENTS.md has session-level project context; the wiki has accumulated deep knowledge.
-- Existing `docs/` directory and top-level `.md` plan files (e.g. `CHAT-MEDIA-PLAN.md`) are good initial ingest sources.
 - The wiki is plain markdown in a git repo — version history, branching, and collaboration come for free.
 - At small scale, `index.md` is sufficient for navigation. No vector DB or embedding pipeline needed.

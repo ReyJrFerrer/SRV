@@ -2,8 +2,6 @@
 tags: [architecture, reputation]
 date: 2026-06-16
 sources:
-  - raw/specs/comprehensive_reputation_system.md
-  - raw/specs/reputation_system.md
   - functions/src/reputation.js
   - functions/src/utils/reputationMath.js
 related:
@@ -45,6 +43,6 @@ The original design used an IC canister for tamper-proof scoring. See [[Reputati
 ## Key Design Principles (Still Apply)
 
 - **Bayesian average** prevents score manipulation for new users with few ratings
-- **Deduction logic** penalizes when Bayesian average drops below 3.0
-- **Anti-manipulation flags** detect review bombing, competitive manipulation, abusive content
-- **AI-powered review analysis** via Gemini (see [[Gemini Review Analysis]])
+- **Deduction logic** penalizes providers when Bayesian average drops below 3.0 (client scoring has no such penalty)
+- **Anti-manipulation flags** detect review bombing, competitive manipulation, fake evidence, identity fraud, abusive content, and other suspicious activity (see [[Reputation Scoring Algorithm]] for penalties)
+- **AI-powered review analysis** via Firestore-triggered Gemini analysis (see [[Gemini Review Analysis]])

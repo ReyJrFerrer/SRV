@@ -36,7 +36,7 @@ All 20 service modules in `src/frontend/src/services/`. Services abstract Fireba
 | Service                  | File                        | Purpose                                                                                                                                                                      |
 | ------------------------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bookingCanisterService` | `bookingCanisterService.ts` | Booking CRUD + real-time Firestore listeners: `createBooking()`, `acceptBooking()`, `declineBooking()`, `cancelBooking()`, `startService()`, `completeService()` + analytics |
-| `serviceCanisterService` | `serviceCanisterService.ts` | Service CRUD: `createService()`, `updateService()`, `deleteService()`, `getServices()`, `getServiceDetails()`, `searchServices()`, availability, certificate media           |
+| `serviceCanisterService` | `serviceCanisterService.ts` | Service CRUD: `createService()`, `updateService()`, `deleteService()`, `getAllServices()`, `getService()`, `searchServicesByLocation()`, availability, certificate media, commission quote, packages |
 | `reviewCanisterService`  | `reviewCanisterService.ts`  | Review CRUD via Cloud Functions: `submitReview()`, `getReview()`, `getProviderRating()`, `getServiceRating()`, `getUserRating()`, `hideReview()`, `flagReview()`             |
 | `reputationService`      | `reputationService.ts`      | Reputation score fetching from Firestore doc `reputations/{userId}`                                                                                                          |
 

@@ -2,7 +2,9 @@
 tags: [frontend, chat, realtime]
 date: 2026-06-16
 sources:
-  - raw/specs/CHAT-MEDIA-PLAN.md
+  - src/frontend/src/services/chatCanisterService.ts
+  - src/frontend/src/hooks/useChat.tsx
+  - functions/src/chat.js
 related:
   - [[Services Layer]]
   - [[Media and Images]]

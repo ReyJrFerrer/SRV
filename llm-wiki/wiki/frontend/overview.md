@@ -2,7 +2,9 @@
 tags: [frontend, architecture]
 date: 2026-06-16
 sources:
-  - raw/specs/CHAT-MEDIA-PLAN.md
+  - src/frontend/main.tsx
+  - src/frontend/vite.config.ts
+  - src/frontend/package.json
 related:
   - [[Routing and Layouts]]
   - [[Authentication Flow]]

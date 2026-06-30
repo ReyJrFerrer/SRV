@@ -7,6 +7,8 @@ related:
   - [[Reputation System ICP]]
   - [[Reputation System Sui]]
   - [[Chat Media Implementation]]
+  - [[Booking Test Infrastructure]]
+  - [[Booking Test QA Findings 2026-06-28]]
 ---
 
 # Lint Report: `functions/` Architecture
@@ -51,9 +53,16 @@ Lint pass against the actual `functions/` codebase. Findings are grouped by seve
 
 `sendContactEmail.js` uses the v1 SDK (`require("firebase-functions")`, `functions.https.onCall`). All 17 other functions use v2. This means different cold-start behavior, different context objects, and inconsistent error handling.
 
-### 6. No test files
+### 6. ~~No test files~~ — RESOLVED 2026-06-28 (partial)
 
-Zero test files exist anywhere under `functions/`. No `*.test.js`, `*.spec.js`, or `__tests__/` directory. This is a quality and regression risk.
+**Original finding**: Zero test files exist anywhere under `functions/`. No `*.test.js`, `*.spec.js`, or `__tests__/` directory. This is a quality and regression risk.
+
+**Resolution**: `functions/test/booking.test.js` was added with 46 integration test cases across all 17 `bookingAction` cases. It uses Mocha + `firebase-functions-test` against the real Firestore emulator. See [[Booking Test Infrastructure]] for full details and [[Booking Test QA Findings 2026-06-28]] for coverage gaps and recommended additions.
+
+**Status**: Partial. `booking.test.js` covers the consolidated `bookingAction` callable. Still missing tests for:
+- Other Cloud Functions (`reputationAction`, `reviewAction`, `notificationAction`, `mediaAction`, `onlineProjectAction`, `serviceAction`, `chatAction`, `sendContactEmail`)
+- Pure modules: `reputationMath.js` (pure math — easy to unit test without emulator)
+- Scheduled functions (`cancelMissedBookings`, `sendServiceReminders`)
 
 ### 7. Empty `src/lib/` directory
 
@@ -91,18 +100,18 @@ Uses a different pattern from all other functions. Not documented.
 2. **Update wiki**: Correct all reputation pages to reflect the JS-only, Firestore-based implementation. Move ICP/Sui details to a "Future / Legacy Architecture" section.
 3. **Consolidate admin init**: Remove standalone `admin.initializeApp()` from `reputation.js` and `account.js`; use `require("../firebase-admin")` like all other files.
 4. **Convert `sendContactEmail.js`** to v2 SDK for consistency.
-5. **Add tests**: Start with at least `reputationMath.js` unit tests since it's pure math.
+5. **Add tests**: Start with at least `reputationMath.js` unit tests since it's pure math. *(partially resolved 2026-06-28: booking.test.js added; reputation tests still missing)*
 6. **Document PH location data** in the wiki.
 7. **Either use or remove `src/lib/`**.
 
 ## Quick Stats
 
-| Metric | Value |
-|---|---|
-| Exported functions | 18 (17 v2, 1 v1) |
-| Test files | 0 |
-| Duplicate admin inits | 2 files |
-| maxInstances | 1 (global) |
-| concurrency | Not set anywhere |
-| ChatAttachment support | media.js: yes; chat.js: no |
-| Deployment manifest | None |
+| Metric | Value (2026-06-16) | Value (2026-06-28) |
+|---|---|---|
+| Exported functions | 18 (17 v2, 1 v1) | 20 (19 v2, 1 v1) + 2 scheduled |
+| Test files | 0 | 1 (`booking.test.js`, 46 cases) |
+| Duplicate admin inits | 2 files | 2 files (unchanged) |
+| maxInstances | 1 (global) | 1 (global) (unchanged) |
+| concurrency | Not set anywhere | Not set anywhere (unchanged) |
+| ChatAttachment support | media.js: yes; chat.js: no | media.js: yes; chat.js: yes |
+| Deployment manifest | None | None (unchanged) |

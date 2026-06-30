@@ -1033,7 +1033,7 @@ async function getReviewStatistics_review(request) {
   const context = {auth: request.auth, rawRequest: request};
 
   const authInfo = getAuthInfo(context, data);
-  if (!authInfo.hasAuth) {
+  if (!authInfo.hasAuth || !authInfo.isAdmin) {
     throw new HttpsError("permission-denied", "Admin access required");
   }
 

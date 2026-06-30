@@ -2,7 +2,9 @@
 tags: [backend, ai, reviews, gemini]
 date: 2026-06-16
 sources:
-  - raw/specs/gemini_integration.md
+  - functions/src/utils/geminiClient.js
+  - functions/src/utils/reviewAnalyzer.js
+  - functions/src/queueReviewAnalysis.js
 related:
   - [[Reputation System Overview]]
   - [[Reputation Scoring Algorithm]]
@@ -14,15 +16,18 @@ Integration of Google Gemini 2.5 Flash with the review system for AI-powered rev
 
 ## Architecture
 
-Flow: `submitReview()` → Firestore write → `analyzeReviewContentBackground()` (Cloud Tasks) → Gemini API → update review with `aiAnalysis` fields → `checkConsecutiveBadReviews()` enhancement.
+Flow: `submitReview()` → Firestore write → `analyzeNewReview` (Firestore `onDocumentCreated` trigger) → `processReviewAnalysisWithRetry()` → `analyzeReviewContent()` (Gemini API) → update review with `aiAnalysis` fields → `checkConsecutiveBadReviews()` for both provider and client → optional consolidated AI report.
+
+> **Note**: Analysis is triggered by the Firestore trigger `analyzeNewReview` in `queueReviewAnalysis.js`, not by Cloud Tasks. The trigger runs inline in the same Cloud Functions runtime with a concurrency limit of 5 (`MAX_CONCURRENT_ANALYSES`).
 
 ## Gemini Analysis
 
-- **Sentiment Analysis**: LLM rates sentiment 0.0–1.0
+The Gemini prompt (`buildSingleReviewPrompt` in `reviewAnalyzer.js`) asks the LLM to detect suspicious patterns:
 - **Template Detection**: Identifies copied or generic language patterns
 - **Text Similarity**: Flags high similarity between recent reviews
 - **Velocity Check**: Detects coordinated bursts of negative reviews
-- **Consistency Verification**: Compares numeric rating with LLM sentiment score — flags mismatches (e.g., 5 stars with negative comment)
+- **Rating Mismatch**: Flags suspicious rating/content combinations (e.g., 5 stars with no comment)
+- **Competitive Sabotage**: Detects language suggesting unfair targeting
 
 ## Firestore Schema Addition
 

@@ -1,6 +1,14 @@
 node_modules/
 *.local
 .runtimeconfig.json
+.env
+.env.test
 
 bun.lock
 package-lock.json
+
+test/test-output-booking.log
+test/test-output-review.log
+test/test-output-service.log
+test/test-output-account.log
+test/test-output-reputation.log

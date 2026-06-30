@@ -1,11 +1,15 @@
 ---
 tags: [backend, booking, state-machine, workflow]
-date: 2026-06-17
+date: 2026-06-27
 related:
   - [[Service Creation Workflow]]
   - [[Service and Booking Models]]
   - [[Service Discovery and Listing]]
   - [[Firebase Architecture]]
+  - [[Online Projects]]
+  - [[Grill Record: Online Services Integration]]
+  - [[Booking Test Infrastructure]]
+  - [[Booking Test QA Findings 2026-06-28]]
 sources:
   - functions/src/booking.js
   - src/frontend/src/services/bookingCanisterService.ts
@@ -13,6 +17,8 @@ sources:
   - src/frontend/src/hooks/bookingManagement.tsx
   - src/frontend/src/pages/client/book/[id].tsx
   - src/frontend/src/pages/client/booking/
+  - functions/test/booking.test.js
+  - docs/OnlineService.md
 ---
 
 # Booking System
@@ -100,7 +106,8 @@ bookings/{bookingId}: {
   attachments: string[],           // problem proof media URLs
   notes: string | null,
   paymentMethod: "CashOnHand" | "GCash" | "SRVWallet",
-  locationDetection: "automatic" | "manual",
+  locationDetection: "automatic" | "manual",  // how client location was captured
+  navigationStartedNotified: false | true,     // set by startNavigation
   paymentStatus: "PENDING" | "PAID_HELD",  // PAID_HELD if GCash
   paymentId: string | null,        // GCash payment reference
   heldAmount: number | null,
@@ -168,9 +175,10 @@ All via `bookingAction` Cloud Function:
 |--------|----------|--------------|
 | `acceptBooking` | `bookingAction` | Validates transition Requested→Accepted, creates notification for client |
 | `declineBooking` | `bookingAction` | Validates transition Requested→Declined |
-| `cancelBooking` | `bookingAction` | Either party: transitions to Cancelled from Requested/Accepted/InProgress |
-| `startService` | `bookingAction` | Transition Accepted→InProgress; starts GPS tracking publishing |
-| `completeService` | `bookingAction` | Transition InProgress→Completed; provider marks job done |
+| `cancelBooking` | `bookingAction` | Either party: transitions to Cancelled from Requested/Accepted/InProgress. Deducts reputation via `deductReputationForCancellationInternal`. Auto-creates `reports` doc with cancellation details. |
+| `startNavigation` | `bookingAction` | **Status-neutral** — sends notification, initializes RTDB `providerLocations/{bookingId}` node for GPS tracking |
+| `startService` | `bookingAction` | Transition Accepted→InProgress; marks startedDate; cleans up RTDB node |
+| `completeService` | `bookingAction` | Transition InProgress→Completed; provider marks job done; sends review reminders |
 | `releasePayment` | `bookingAction` | Admin action: releases held GCash funds to provider |
 | `getBookingAnalytics` | `bookingAction` | Provider booking statistics |
 
@@ -180,6 +188,24 @@ All via `bookingAction` Cloud Function:
 |--------|----------|--------------|
 | `clientCancelBooking` | `bookingAction` | Client cancels (with rules per status) |
 | `disputeBooking` | `bookingAction` | Client disputes a completed booking |
+
+## Phase 1 — Online Service Validation
+
+Phase 1 of the Online Services rollout changes the **validation rules** for the existing `createBooking` action:
+
+- **Service mode check**: `createBooking` rejects services where `service.serviceMode === 'Online'` (those use `createOnlineProject` instead). Hybrid services are allowed.
+- **Payment method check**: `createBooking` rejects `paymentMethod === 'CashOnHand'` when `service.serviceMode !== 'InPerson'`. Online and Hybrid services must use `SRVWallet` or `GCash`.
+- **ScheduledSessions handling**: When the booked `service_package.type === 'Session'`, `createBooking` requires `scheduledSessions` in the `BookingRequest` with one entry per `sessionCount`. Backend validates count matches, sessions are in the future, and times don't overlap with provider's availability.
+
+## Phase 1 — Online Service Payment Rules
+
+| Service Mode | Allowed Payment Methods | CashOnHand |
+|---|---|---|
+| `InPerson` | `CashOnHand`, `GCash`, `SRVWallet` | ✓ |
+| `Online` | `SRVWallet` (manual) only for product; `SRVWallet` or `GCash` for sessions | ✗ |
+| `Hybrid` | `SRVWallet` or `GCash` (in-person leg can use CashOnHand) | ✗ |
+
+The reputation gate (trustScore > 5) and the existing conflict detection (no time-slot overlap) continue to apply to online and hybrid bookings.
 
 ## Real-Time Subscriptions
 
@@ -203,12 +229,150 @@ All via `bookingAction` Cloud Function:
 | `/provider/complete-service/:bookingId` | `ProviderCompleteService` | Service completion flow |
 | `/provider/directions/:bookingId` | `ProviderDirections` | Navigation to client location |
 
+## Hidden / Undocumented Features
+
+### `startNavigation` Action
+
+`booking.js:771-862` — does **not** change booking status. Called by the provider before `startBooking`:
+- Sends `START_NAVIGATION` notification to client
+- Initializes Firebase Realtime Database node at `providerLocations/{bookingId}` with provider/client IDs
+- Sets `navigationStartedNotified: true` flag on booking
+
+### `cancelConflictingBookings`
+
+When a provider **accepts** one booking (`Accept` transition), all other `Requested` bookings for the same provider/service/day that overlap with the accepted time slot are **automatically cancelled** with reason `"auto_cancelled_not_chosen"`. Creates `BOOKING_AUTO_CANCELLED_NOT_CHOSEN` notifications for affected clients.
+
+### Cancellation Reputation Deduction + Report
+
+`booking.js:1148-1239` — when cancelled from `Accepted`/`InProgress`/`Requested`:
+- `deductReputationForCancellationInternal(authInfo.uid)` is called on the canceller
+- A detailed report is auto-created in the `reports` collection with cancellation reason, role, service name, and user info
+
+### Shared Booking Listener Pattern
+
+`bookingCanisterService.ts:762-842` — `createSharedBookingListener` + `sharedBookingListeners` Map. Multiple React components can subscribe to the same Firestore query without creating extra `onSnapshot` listeners. Deduplicates by `listenerId` (`client-{clientId}`, `provider-{providerId}`, `status-{status}`, `booking-{bookingId}`). Cleanup uses a 1000ms timeout before removing the underlying listener.
+
+### `servicePackageId` / `servicePackageIds` Duality
+
+`bookingCanisterService.ts:154-157` — backend returns `servicePackageIds`, frontend legacy interface uses `servicePackageId`. The `mapBookingFields` function bridges them:
+
+```typescript
+servicePackageId: booking.servicePackageIds || booking.servicePackageId || [],
+```
+
+## Multi-Session Booking Extension (Phase 2)
+
+> **Status**: Phase 2 of the Online Services rollout. Not yet implemented in the codebase. Triggered by `service_package.type === 'Session'`. See `docs/OnlineService.md` §7 and [[Grill Record: Online Services Integration]] for the canonical design.
+
+The existing `Booking` entity is extended with `scheduledSessions[]` to support session-based services (Tutoring, Coaching, Music Instruction, Coding Training, Fitness Coaching, IT Support & Troubleshooting). All other booking behavior is unchanged.
+
+### `scheduledSessions` Field
+
+```typescript
+interface ScheduledSession {
+  id: string;                       // uuid, stable across reschedules
+  date: string;                     // ISO 8601 date (YYYY-MM-DD)
+  startTime: string;                // "HH:mm"
+  endTime: string;                  // "HH:mm"
+  status: 'Scheduled' | 'Completed' | 'Rescheduled' | 'Cancelled' | 'NoShow';
+  completedAt?: string;             // ISO 8601
+  rescheduledFrom?: {               // populated when this session is a reschedule
+    date: string;
+    startTime: string;
+    endTime: string;
+  };
+  notes?: string;
+}
+```
+
+The field is `undefined` for all existing in-person bookings. It's populated only when the booked `service_package.type === 'Session'`.
+
+### Session-Level Lifecycle
+
+```
+Session created (Scheduled)
+  ├── Provider marks Completed → [Completed]
+  ├── Either party reschedules (24h+ notice) → [Rescheduled] (new date populated, rescheduledFrom set)
+  ├── Either party cancels session → [Cancelled]
+  ├── No provider action within 24h after end time → [NoShow] (cron auto-marks)
+  └── Either party reschedules (within 24h) → [Rescheduled] + reputation penalty on rescheduler
+```
+
+### Booking-Level Lifecycle (unchanged for session bookings)
+
+The 7-status booking state machine is unchanged. Two transition rules are added for session bookings:
+
+- **Booking transitions to `InProgress`** when the first session's start time passes (auto) OR when the provider manually marks the first session `Started` (future enhancement).
+- **Booking transitions to `Completed`** when all sessions are `Completed` or `Cancelled`. `NoShow` sessions prevent auto-completion (booking stays in `InProgress` until resolved).
+- **Booking `Cancelled`** from `Accepted` / `InProgress` cancels all remaining `Scheduled` sessions.
+
+### New Booking Actions (5)
+
+`bookingAction` adds 5 new actions (no new Cloud Function — dispatched via the existing `bookingAction` switch):
+
+| # | Action | Description |
+|---|--------|-------------|
+| 1 | `markSessionCompleted` | Provider marks a session `Completed`. Triggers booking-level completion check. |
+| 2 | `markSessionNoShow` | Provider or client marks a session `NoShow`. |
+| 3 | `rescheduleSession` | Either party. Validates 24h notice (or triggers late-reschedule reputation penalty). |
+| 4 | `cancelSession` | Either party. Sets session `Cancelled`. Does not change booking status. |
+| 5 | `getBookingAnalytics` (extension) | Adds per-session stats: completion rate, average attendance, etc. |
+
+### Reschedule Validation (24h rule)
+
+Enforced server-side in the `rescheduleSession` action:
+
+```javascript
+const now = new Date();
+const sessionStart = new Date(`${session.date}T${session.startTime}`);
+const hoursUntilStart = (sessionStart - now) / (1000 * 60 * 60);
+const isLate = hoursUntilStart < 24;
+```
+
+- If `isLate && reschedulerRole === 'provider'`: provider's reputation is decremented via the new `deductReputationForLateReschedule` internal helper
+- If `isLate && reschedulerRole === 'client'`: client's reputation is decremented
+- If `!isLate`: no reputation impact
+
+### Frontend Hook Extensions
+
+- `useBookingManagement.tsx` and `useProviderBookingManagement.tsx` add session UI components
+- `/client/booking/:id` and `/provider/booking/:id` show `scheduledSessions[]` as a list with status badges
+- Per-session reschedule, complete, no-show, and cancel actions
+
+### Payment Model (Phase 2)
+
+- **Method**: `SRVWallet` or `GCash` only. `CashOnHand` is rejected server-side for online services.
+- **Flow**: Upfront, single charge at booking creation. Amount = package price × session count.
+- **Escrow**: Same as existing booking — `GCash` goes `PENDING` → `PAID_HELD` → `RELEASED` on booking completion.
+- **Refund**: Per session if the booking itself is cancelled before any session starts. No refund for individual cancelled sessions after the first session starts.
+
+## Test Coverage
+
+The backend integration test suite at `functions/test/booking.test.js` was significantly expanded to **97 cases across all 17 actions** (~95% edge case coverage). It uses Mocha + `firebase-functions-test` against the real Firestore emulator.
+
+**Stack**: `firebase-functions-test` 3.4 wraps `bookingAction`; tests run against the Firestore + Auth emulator (no mocks); scenario-based seeders (`seedPendingBooking`, `seedActiveBooking`, etc.) build a complete client/provider/service/package/reputation chain for each test.
+
+**Coverage summary** (see [[Booking Test Infrastructure]] for full matrix):
+- 🟢 All 17 actions are now strongly covered
+- 11/11 doc-not-found paths tested
+- 5/5 empty-result list/analytics paths tested
+- All 3 critical bugs from the initial QA review are resolved
+
+**Remaining minor gaps** (see [[Booking Test QA Findings 2026-06-28]] for full resolution log):
+- `acceptBooking` direct time-conflict guard (`booking.js:618-623`) not yet tested
+- 2 of 3 silent error-swallow try-catches in `cancelBooking` not directly tested (report creation, RTDB cleanup)
+- Date fragility in `getServiceAvailableSlots` (`new Date().getDay()` for day-of-week)
+
+**Imports**: The test file imports `NOTIFICATION_TYPES` from `notification.js` and `CANCELLATION_PENALTY` from `reputationMath.js` to keep assertions in sync with the source-of-truth constants.
+
 ## Key Architecture Notes
 
 1. **Firestore-native** — all booking data lives in Firestore's `bookings` collection; no ICP canisters
-2. **Callable-only mutation** — all writes go through `bookingAction` Cloud Function (no direct Firestore client writes)
+2. **Almost callable-only mutation** — most writes go through `bookingAction` Cloud Function, but `updateProviderAttachments()` uses direct Firestore `updateDoc` + `arrayUnion` client-side (`bookingCanisterService.ts:608-622`)
 3. **Real-time reads** — Firestore `onSnapshot` subscriptions for booking lists and detail pages
 4. **Payment is separate** — GCash flow (directPay) is independent of booking creation; only `createBookingRequest` ties them together
 5. **Draft auto-save** — booking form saves/restores drafts from localStorage
-6. **Reputation gate** — both client and provider must have trustScore ≥ 5 to create a booking
+6. **Reputation gate** — both client and provider must have trustScore **above** 5 (backend rejects `trustScore <= 5`; frontend gate uses `>= 5`)
 7. **No service-level booking limits** — `maxBookingsPerDay` on service exists but not enforced in booking creation v1
+8. **Phase 2 multi-session extension** — `scheduledSessions[]` array on Booking entity enables session-based services (tutoring, coaching, etc.); 5 new `bookingAction` actions added; 24h reschedule rule with reputation penalty; `CashOnHand` rejected for online services
+9. **Test infrastructure added (2026-06-28)** — first integration test suite covers all 17 `bookingAction` cases; see [[Booking Test Infrastructure]]

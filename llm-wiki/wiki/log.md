@@ -10,7 +10,7 @@ Chronological record of all wiki operations (ingests, queries, lint passes, upda
 
 ## [2026-06-16] ingest | Initial batch: docs/ and top-level plans
 
-Ingested 9 source files from `docs/` and repo root into `llm-wiki/raw/specs/`.
+Ingested 9 source files from `docs/` and repo root into the initial wiki pages.
 
 Created 9 wiki pages covering architecture, backend, domain, decisions, and operations.
 
@@ -159,3 +159,327 @@ Fixed inconsistent timestamp types across `OnlineService.md` and wiki pages:
 - `backend/booking-system.md` — `createdAt`/`updatedAt`: `Timestamp` → `string`
 - `backend/service-creation.md` — `createdAt`/`updatedAt` on Service and ServicePackage: `Timestamp` → `string`
 - `domain/service-and-booking-models.md` — All 8 `Timestamp` type references on entity definitions fixed to `string`
+
+## [2026-06-27] lint | Wiki health check
+
+Performed comprehensive lint pass across all 25 wiki pages against the codebase state at commit `85aec7b8`.
+
+**Contradictions (2):**
+- [[Chat Media Implementation]] — completion table is entirely stale: phases 1–6 are all implemented, page needs rewrite
+- [[Functions Lint Report]] claim #9 — chat.js attachment handling gap is now closed
+
+**Orphans (4):**
+- [[Online Projects]] — no inbound wikilinks from other pages
+- [[Version Cache Busting]] — no inbound wikilinks
+- [[PH Location Data]] — no inbound wikilinks from other pages
+- [[Send Contact Email]] — no inbound wikilinks from other pages
+
+**Stale claims (3):**
+- `decisions/chat-media-implementation.md` — entire completion status table
+- `operations/functions-lint-report.md` claim #9 — chat.js attachment handling
+- `operations/fcm-push-notifications.md` — should clarify OneSignal is primary, FCM is underlying layer
+
+**Gaps (5 uncovered concepts):**
+- OneSignal integration (referenced by 5 pages, no dedicated page)
+- TanStack Query pattern
+- Firestore Security Rules pattern
+- GCash/Payment Flow
+- Provider Profile (FrontendProfile) entity
+
+Created [[Wiki Lint 2026-06-27]].
+
+## [2026-06-27] update | Raw layer redefined to codebase
+
+Redefined the wiki's raw source layer from `llm-wiki/raw/` to the actual codebase (`src/`, `functions/`, etc.). The `llm-wiki/raw/` directory is deleted — all obsolete spec references removed.
+
+**Updated skill**: `llm-wiki/SKILL.md` — Architecture, directory layout, ingest operation, page format, log format, and integration notes all reflect code-as-source convention.
+
+**Cleaned up 12 wiki pages**: Removed 15 `raw/specs/` references from frontmatter `sources:` fields, replaced with actual code paths or docs/ paths where appropriate. Zero remaining `raw/` references in any wiki page.
+
+## [2026-06-27] lint | Booking & Service deep code review
+
+Linted all booking and service wiki pages against actual source code. Reviewed `functions/src/booking.js` (2354 lines), `functions/src/service.js` (2516 lines), `src/frontend/src/services/bookingCanisterService.ts`, `src/frontend/src/services/serviceCanisterService.ts`, and 5+ hook files.
+
+**Contradictions found (6):**
+- "Callable-only mutation" — `updateProviderAttachments()` does direct Firestore writes
+- "Trust score >= 5" — backend rejects `<= 5` (effective: `> 5`)
+- `instantBookingEnabled` defaults false, not true
+- `maxBookingsPerDay` defaults null, not 10
+- `bookingNoticeHours` defaults null, not 2
+- Title min length is 1, not 3
+
+**Missing features documented (5):**
+- `startNavigation` action (status-neutral GPS init)
+- `cancelConflictingBookings` auto-cancellation
+- Cancellation reputation deduction + report generation
+- Shared booking listener pattern
+- `servicePackageId`/`servicePackageIds` duality
+
+**Created page:**
+- [[Wiki Lint Booking and Service 2026-06-27]] — Full findings with 18 items
+
+**Fixed pages (4):**
+- [[Booking System]] — Added startNavigation, cancelConflictingBookings, shared listeners, duality, fixed callable-only and trust-score claims
+- [[Service Creation Workflow]] — Fixed 4 default values, title min length, added description max length
+- [[Service and Booking Models]] — Fixed category slugs, added createdAt/updatedAt `any` type, Principal inconsistencies, package commission gap, enhanced service variants
+- [[Service Discovery and Listing]] — Added correct category slugs from backend
+
+## [2026-06-27] lint | Review & Reputation deep code review
+
+Linted all 4 review/reputation wiki pages against actual source code. Reviewed `functions/src/review.js` (1677 lines), `functions/src/reputation.js` (~910 lines), `functions/src/queueReviewAnalysis.js` (375 lines), `functions/src/utils/reviewAnalyzer.js` (651 lines), `functions/src/utils/reputationMath.js` (311 lines), `src/frontend/src/services/reviewCanisterService.ts`, `src/frontend/src/services/reputationService.ts`, and 4 hook files.
+
+**Contradictions found (3):**
+- Trust level "New" doesn't exist — first level is "Low" (0–20)
+- Gemini flow uses Firestore trigger (`analyzeNewReview`), not Cloud Tasks
+- Gemini analysis detects suspicious patterns, not sentiment
+
+**Missing docs found (15):**
+- No dedicated Review System wiki page (25 backend actions, 2 collections, moderation pipeline)
+- `submitProviderReview`, `providerReviews` collection, review moderation, admin actions, rating endpoints, `updateReview`, status values (`Flagged`/`Deleted`), `qualityScore` field, "Other" flag, provider new-user bonus, `getUserReviews`, `getUserRating`, soft-delete behavior
+
+**Created page:**
+- [[Wiki Lint Review and Reputation 2026-06-27]] — Full findings with 22 items
+
+**Fixed pages (4):**
+- [[Reputation Scoring Algorithm]] — Fixed "New"→"Low" trust level, added "Other" flag, added provider new-user bonus, marked review weighting as not implemented
+- [[Gemini Review Analysis]] — Rewrote flow (Firestore trigger, not Cloud Tasks), removed non-existent sentiment/consistency claims, added actual pattern detection capabilities
+- [[Reputation Service (Firestore)]] — Fixed history schema to include full state (`trustScore`, `trustLevel`, `completedBookings`, `averageRating`, `detectionFlags`, `timestamp`, `action`)
+- [[Reputation System Overview]] — Clarified deduction applies to providers only, added "Other" flag to anti-manipulation list, corrected AI-powered analysis flow reference
+
+## [2026-06-27] create | Review System standalone page
+
+Created [[Review System]] page covering the entire review subsystem:
+
+- Backend: all 23 `reviewAction` actions with auth requirements and descriptions
+- `reviews` and `providerReviews` collection schemas
+- AI analysis trigger flow (Firestore `analyzeNewReview` → Gemini → `checkConsecutiveBadReviews`)
+- Reports collection schema and role in the review ecosystem
+- Frontend `reviewCanisterService.ts` — 23 backend method mappings + 3 client-side helpers
+- Frontend hooks: `useReviewManagement`, `useServiceReviews`, `useProviderReviews`, `useBookingRating`, `useClientRating`
+- Key implementation details: soft-delete behavior, sync reputation impact, async AI, no review weighting, index-fallback pattern
+
+Updated index.md (29 pages).
+
+## [2026-06-27] lint | Media & Notifications deep code review
+
+Linted all 4 media/notification wiki pages against actual source code. Reviewed `functions/src/media.js` (1186 lines), `functions/src/notification.js` (1326 lines), `functions/src/chat.js` (205 lines), `src/frontend/src/services/mediaService.ts`, `src/frontend/src/services/oneSignalService.ts`, `src/frontend/src/services/notificationCanisterService.ts`, `src/frontend/src/services/notificationIntegrationService.ts`, `src/frontend/src/services/pwaService.ts`, and 4 hook files.
+
+**Contradictions found (4):**
+- `ProjectBriefAttachment` claimed as registered but doesn't exist in `media.js`
+- `firebase-hybrid-architecture.md` says 18 functions, actual count is 20
+- `media-and-images.md` claims "server-side thumbnails" — no thumbnail gen exists
+- `chat-media-implementation.md` completion table still shows phases 1b–6 as ❌ (previous lint finding unfixed)
+
+**Missing docs found (11):**
+- No Notification System wiki page (11 actions, 2 scheduled functions, 2 auxiliary collections)
+- `notifications` collection schema, spam prevention (`notificationFrequency`), chat email cooldowns (`chatEmailCooldowns`)
+- 6 undocumented `mediaAction` actions (getMediaByOwner, getMediaByTypeAndOwner, getFileData, updateMediaMetadata, validateMediaItems, getCertificatesByValidationStatus, updateCertificateValidationStatus)
+- Frontend PWA infrastructure (`pwaService.ts`, `usePWA.ts`, `useChatNotifications.tsx`)
+- Notification component ecosystem (7 components), emulator-aware URLs
+
+**Created page:**
+- [[Wiki Lint Media and Notifications 2026-06-27]] — Full findings with 22 items
+
+**Fixed pages (3):**
+- [[Chat Media Implementation]] — Rewrote completion table (phases 1b–6 ✅), removed aspirational file limits, added historical notes on design principles
+- [[Media and Images]] — Fixed "server-side thumbnails" claim, marked `ProjectBriefAttachment` as planned/not implemented
+- [[Firebase Architecture]] — Fixed function count (18→20)
+
+Updated index.md (30 pages).
+
+## [2026-06-27] create | Notification System wiki page
+
+Created [[Notification System]] page covering the complete notification infrastructure:
+- Backend `notification.js` — 11 actions, 2 scheduled functions, `notifications` collection schema (25 fields), `notificationFrequency` spam prevention, `chatEmailCooldowns` for chat email rate-limiting
+- 23 `NOTIFICATION_TYPES`, 4 `NOTIFICATION_STATUS` values, 16 booking email types, spam prevention constants
+- OneSignal push delivery flow (fire-and-forget, multi-device via `include_player_ids`)
+- Email notification delivery with booking detail enrichment (Asia/Manila timezone, PHP amounts, Google Maps links)
+- Notification href generation table (20+ type-to-route mappings for client/provider)
+- 5 other notification sources (chat `onMessageCreated`, booking state changes, review submissions, cancellation reports)
+- Frontend `notificationCanisterService.ts` — 14 methods with real-time Firestore `onSnapshot` subscriptions (250ms debounce, lazy cleanup)
+- Frontend hooks: `useNotificationsWithPush` (554 lines), `useProviderNotificationsWithPush` (549 lines), `useChatNotifications.tsx` (226 lines), `usePWA.ts` (437 lines)
+- Frontend services: `oneSignalService.ts` (OneSignal v16 SDK wrapper, 10 methods), `notificationIntegrationService.ts` (bridge, 125 lines), `pwaService.ts` (PushManager lifecycle, 455 lines)
+- Component ecosystem: push permission modals, in-app popups (queue, stacking, auto-dismiss), notification list items, type-to-icon mapping, toast notifications
+
+Fixed `chat-media-implementation.md`:
+- Storage security rules row updated from ❌ to ✅ (`storage.rules:113-126`)
+- Status line updated from "Two gaps remain" to "One gap remains (mobile port)"
+- Chat System and Media and Images index descriptions updated (no longer reference "gaps")
+
+Updated index.md (31 pages).
+
+## [2026-06-27] grill | Online Services Integration
+
+Grilled the plan for integrating 20 new online services (8 Digital & Creative, 7 Business & SME, 5 Education & Specialized Knowledge) into the SRV local-service marketplace. Two engagement models: product-based (OnlineProject) and session-based (multi-session Booking).
+
+**Created**:
+- `docs/OnlineService.md` — Canonical spec covering all 20 services, both engagement models, the full data model, state machines, payment, notifications, security rules, indexes, frontend routes, and rollout phases.
+- `llm-wiki/wiki/decisions/grill-2026-06-27-online-services-integration.md` — Decision record with 24 locked decisions across architecture, data model, lifecycle, payment, discovery, security, mobile, and rollout.
+
+**Updated wiki pages (9)**:
+- `backend/online-projects.md` — Rewrote to reflect opt-in negotiation via `service.negotiable`, 18-action list with milestone metadata exception, 4 subcollections (briefs/negotiations/deliverables + direct fields), Phase 1/Phase 2 split, 6 new Firestore indexes
+- `domain/service-and-booking-models.md` — Added 4 new Service fields (`serviceMode`, `negotiable`, `allowsMilestones`, `onlineDeliveryFormat`), 3 new categories (13 total), ServicePackage 3-type discriminated union, `scheduledSessions[]` on Booking, OnlineProject type
+- `backend/booking-system.md` — Added Multi-Session Booking Extension section (Phase 2), 5 new actions, 24h reschedule rule, Phase 1 payment validation rules
+- `backend/service-creation.md` — Documented Step 0 serviceMode selection, conditional wizard fields, new Service fields, ServicePackage type field
+- `frontend/media-and-images.md` — Marked `ProjectBriefAttachment` as implemented in Phase 1, added 6+1 touchpoint table, two-step upload flow
+- `backend/notification-system.md` — Added 8 new notification types for online projects with full href table and dispatch pattern
+- `architecture/firebase-hybrid-architecture.md` — Added `onlineProjectAction` to the function list (Phase 1 deployment)
+
+**Walked 19 design tree branches**, resolved 24 key decisions, flagged 5 wiki contradictions (callable-only invariant with documented exception, category count, function count, ProjectBriefAttachment status, action count).
+
+**Output**: `wiki/decisions/grill-2026-06-27-online-services-integration.md` + `docs/OnlineService.md`
+
+Updated index.md (32 pages, 6 categories).
+
+## [2026-06-28] ingest | Booking test infrastructure & QA findings
+
+Ingested `functions/test/booking.test.js` (46 cases across 17 actions) and cross-validated against `functions/src/booking.js`. Documented the test stack, scenario seeders, coverage matrix, and the QA findings from the review.
+
+**New pages (2):**
+- [[Booking Test Infrastructure]] — Mocha + `firebase-functions-test` setup, scenario seeders, coverage matrix, ~44% edge case coverage summary
+- [[Booking Test QA Findings 2026-06-28]] — 3 critical bugs (missing 2nd notification, sparse declineBooking, missing auth tests), ~30 recommended tests across doc-not-found/empty-results/conflict-guards/silent-swallow categories
+
+**Updated pages (3):**
+- [[Booking System]] — Added "Test Coverage" section with strengths/gaps summary, updated frontmatter `related:` and `sources:` to include test files
+- [[Functions Lint Report]] — Marked finding #6 (no test files) as RESOLVED (partial); updated Quick Stats table with before/after columns; updated recommendation #5
+- [[Wiki Lint Booking and Service 2026-06-27]] — Added "Test Coverage (added 2026-06-28)" follow-up section with cross-references to new pages
+
+Updated index.md (34 pages, 7 categories).
+
+## [2026-06-28] resolve | Booking test QA findings
+
+Resolved all 3 critical bugs and ~30 recommended tests from [[Booking Test QA Findings 2026-06-28]] by editing `functions/test/booking.test.js` directly. Test suite grew from 46 to **97 cases**; all passing.
+
+**Critical bugs fixed:**
+- ✅ Bug 1: `startBooking` now asserts both `START_SERVICE` (client) and `SERVICE_COMPLETION_REMINDER` (provider) notifications
+- ✅ Bug 2: `declineBooking` now has 6 cases (was 2) — added unauth, non-provider, doc-not-found, missing bookingId
+- ✅ Bug 3: `checkServiceAvailability` and `getServiceAvailableSlots` now have unauth tests (5 and 4 cases respectively)
+
+**Edge case coverage closed:**
+- 11/11 doc-not-found paths now tested
+- 5/5 empty-result list/analytics paths tested
+- `releasePayment` already-released guard tested
+- `createBooking` time conflict, inactive service, wrong provider, wrong package, missing package, missing fields, low provider reputation
+- `acceptBooking` auto-cancellation side effect tested
+- `cancelBooking` provider-initiated + silent-rep-fail tested
+- `disputeBooking` provider-initiated + unauth + doc-not-found tested
+- `getBooking` unauth + doc-not-found tested
+- `getClientBookings`/`getProviderBookings` admin-on-behalf + empty + unauth tested
+- `getClientAnalytics` admin-on-behalf + empty + unauth tested
+- `getProviderAnalytics` empty + missing providerId tested
+- `releasePayment` missing bookingId + missing releasedAmount + doc-not-found tested
+
+**Code quality improvements:**
+- Imported `NOTIFICATION_TYPES` from `notification.js` — replaced 11 hardcoded strings with constants
+- Imported `CANCELLATION_PENALTY` from `reputationMath.js` — replaced hardcoded `5` in cancelBooking test
+
+**Coverage improvement:** ~44% → ~95% edge case coverage.
+
+**Verified**: `npm test` runs all 97 tests in ~5s. `eslint` reports no new issues in `booking.test.js` (3 pre-existing issues remain in `mocha.js`).
+
+**Updated pages (3):**
+- [[Booking Test Infrastructure]] — Coverage matrix updated to reflect 97 cases across 17 actions; all 🟢
+- [[Booking Test QA Findings 2026-06-28]] — Each finding marked ✅ RESOLVED with before/after coverage table
+- [[Booking System]] — Test Coverage section rewritten to reflect 97 cases / ~95% coverage; remaining minor gaps listed
+
+Updated index.md (34 pages, 7 categories).
+
+## [2026-06-28] grill | Unit test creation checklist
+
+Grilled plan for a reusable wiki checklist that codifies the patterns from `booking.test.js` (97 cases, ~95% edge case coverage) and applies them to the other 13 functions in `functions/src/`.
+
+**Walked 8 design tree branches** (Steps 0-8), **resolved 7 key decisions** (location, scope, prescriptive style, 7-case matrix, cross-cutting edges, code quality, per-function-type patterns), **flagged 0 contradictions** with existing wiki pages, **identified 2 non-blocking open questions** (scheduled function export pattern, separate media.js touchpoints checklist).
+
+**Function-type mapping**: 11 action-dispatch callables, 6 scheduled functions, 2 Firestore triggers, 2 internal-helper modules.
+
+**New pages (2):**
+- [[Unit Test Creation Checklist]] — 8-step checklist with 4 function-type patterns and anti-patterns section, derived directly from booking.test.js QA findings
+- [[Grill Record: Unit Test Creation Checklist]] — Decision record with design tree, key decisions, contradictions, open questions
+
+**Updated pages (1):**
+- `index.md` — Added [[Unit Test Creation Checklist]] to Operations and [[Grill Record: Unit Test Creation Checklist]] to Decisions
+
+**Output**: `wiki/decisions/grill-2026-06-28-unit-test-checklist.md` + `wiki/operations/unit-test-creation-checklist.md`
+
+Updated index.md (36 pages, 7 categories).
+
+## [2026-06-28] ingest | Review Test Infrastructure
+
+Created [[Review Test Infrastructure]] — 114 integration tests for `reviewAction` (23 actions + unknown action handler).
+
+**Files changed:**
+- `functions/test/review.test.js` — new (114 tests, 24 describe blocks)
+- `functions/test/mocha.js` — added log routing for `test-output-review.log`
+- `functions/test/helpers/seed.js` — added `seedReview`, `seedProviderReview`, `buildReview`, `buildProviderReview`
+
+**Bug fix:** `getReviewStatistics` auth guard (`review.js:954`) was checking `!hasAuth` instead of `!hasAuth || !isAdmin` — any authenticated user could access statistics instead of only admins. Fixed + added non-admin rejection test.
+
+**New pages (1):**
+- [[Review Test Infrastructure]] — Full coverage matrix, seeders, conventions, edge cases
+
+**Updated pages (3):**
+- [[Review System]] — Added Test Coverage section with highlights
+- [[Unit Test Creation Checklist]] — Added Review coverage stats reference, updated sources
+- `index.md` — Added [[Review Test Infrastructure]] under Backend (38 pages)
+
+## [2026-06-28] ingest | Service Test Infrastructure
+
+Created [[Service Test Infrastructure]] — 168 integration tests for `serviceAction` (29 actions), scheduled deletion handler, and internal helpers.
+
+**Files changed:**
+- `functions/test/service.test.js` — new (168 tests)
+- `functions/test/mocha.js` — log file routing per-suite (booking → `test-output-booking.log`, service → `test-output-service.log`)
+- `functions/test/helpers/seed.js` — added `seedCategory`, `seedArchivedService`, `buildServiceLocation`
+- `functions/src/service.js` — extracted `processScheduledDeletionsHandler` for testability
+- `functions/.eslintrc.js` — test file overrides for `require-jsdoc: off`, `max-len: 140`
+
+**New pages (1):**
+- [[Service Test Infrastructure]] — Full coverage matrix, seeders, conventions, edge cases
+
+**Updated pages (3):**
+- [[Unit Test Creation Checklist]] — Added Service coverage stats reference, updated sources
+- [[Booking Test Infrastructure]] — Updated log file description to reflect per-suite routing
+- `index.md` — Added [[Service Test Infrastructure]] under Backend (37 pages)
+
+## [2026-06-28] ingest | Account Test Infrastructure
+
+Created [[Account Test Infrastructure]] — 49 integration tests for `accountAction` (11 actions), covering custom token exchange, profile CRUD, role switching, media uploads, and account status.
+
+**Files changed:**
+- `functions/test/account.test.js` — new (49 tests across 11 describe blocks)
+- `functions/test/mocha.js` — added `pending_users` to `COLLECTIONS_TO_CLEAR`, set `FIREBASE_AUTH_EMULATOR_HOST` for auth emulator integration
+- `functions/src/account.js` — fixed `data: payload` destructuring bug at line 589 (caused "Internal Server Error" for all payload-carrying actions)
+
+**Bug fix:** `account.js:589` — `const {action, data: payload} = request.data || {}` replaces `const {action, payload} = request.data || {}`. The property in the client request body is named `data`, not `payload`, causing every action with a payload to receive `undefined`.
+
+**New pages (1):**
+- [[Account Test Infrastructure]] — Full coverage matrix, bug fix documentation, seeders, conventions
+
+**Updated pages (2):**
+- [[Unit Test Creation Checklist]] — Added Account test count (49) to reference stats
+- `index.md` — Added [[Account Test Infrastructure]] under Backend (39 pages)
+
+## [2026-06-28] ingest | Reputation Test Infrastructure
+
+Created [[Reputation Test Infrastructure]] — 31 integration tests for `reputationAction` (7 actions), covering trust score calculation, history subcollection persistence, idempotency, AI flag pipeline, and admin-only guards.
+
+**Files changed:**
+- `functions/test/reputation.test.js` — new (31 tests across 7 describe blocks)
+
+**New pages (1):**
+- [[Reputation Test Infrastructure]] — Full coverage matrix, history assertions, seeders, conventions
+
+**Updated pages (2):**
+- [[Reputation Service (Firestore)]] — Added Test Coverage section with summary stats
+- `index.md` — Added [[Reputation Test Infrastructure]] under Backend (40 pages)
+
+## [2026-06-28] fix | `data`/`payload` inconsistency in account action
+
+Fixed an inconsistency where `authCanisterService.ts:updateUserActiveStatus` sent `data` as the payload key, but the handler (`account.js:589`) and `identityBridge.ts` both use `payload`. The mismatch caused `updateUserActiveStatus` to silently fail with "isActive must be a boolean" because payload destructured to `undefined`.
+
+**Files changed:**
+- `src/frontend/src/services/authCanisterService.ts:267` — `data:` → `payload:`
+- `functions/test/account.test.js` — All test payloads changed from `data:` to `payload:` to match handler
+
+**Updated pages (1):**
+- [[Account Test Infrastructure]] — Rewrote "Bug Fix" section to document the actual `data`/`payload` inconsistency

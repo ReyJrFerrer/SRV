@@ -1,55 +1,70 @@
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const {onSchedule} = require("firebase-functions/v2/scheduler");
-const {admin, getFirestore} = require("../firebase-admin");
-const {FieldValue} = require("firebase-admin/firestore");
-const {
-  NOTIFICATION_TYPES,
-  USER_TYPES,
-  NOTIFICATION_STATUS,
-  generateNotificationHref,
-  isSpamming,
-  updateNotificationFrequency,
-  sendOneSignalNotification,
-  sendEmailForNotification,
-  BOOKING_EMAIL_TYPES,
-} = require("./notification");
+/**
+ * Online Project Management Cloud Functions
+ *
+ * Consolidates all online-project-related operations into a single
+ * entrypoint following the same action-dispatch pattern as
+ * `bookingAction` and `serviceAction`. Handles two engagement models:
+ *   - Product model: 15 services with deliverable + negotiation + revisions
+ *   - Session model: 5 services + IT Support (Phase 2 — uses extended Booking)
+ *
+ * This is a Phase 1 skeleton. Each action handler is stubbed to throw
+ * "not yet implemented" so the test suite can assert the dispatch and
+ * 18-action surface area. Real implementations land in subsequent tasks.
+ */
 
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {getFirestore} = require("../firebase-admin");
+
+/* eslint-disable-next-line no-unused-vars */
 const db = getFirestore();
 
-const NOTIFICATION_EXPIRY_DAYS = 30;
-const MAX_NEGOTIATION_ROUNDS = 10;
-const MAX_BRIEF_LENGTH = 2000;
-const MIN_BRIEF_LENGTH = 50;
-
-const VALID_TRANSITIONS = {
-  Pending: ["Active", "Negotiating", "Declined", "Cancelled"],
-  Negotiating: ["Active", "Declined", "Cancelled"],
-  Active: ["InReview", "Cancelled"],
-  InReview: ["Completed", "RevisionsRequested", "Active", "Disputed"],
-  RevisionsRequested: ["InReview", "Cancelled", "Disputed"],
-  Completed: ["Disputed"],
-  Disputed: ["ResolvedForClient", "ResolvedForProvider"],
-  Declined: [],
-  Cancelled: [],
-  ResolvedForClient: [],
-  ResolvedForProvider: [],
+/**
+ * OnlineProject status enum (matches `docs/OnlineService.md` §6.6).
+ */
+const ONLINE_PROJECT_STATUS = {
+  PENDING: "Pending",
+  NEGOTIATING: "Negotiating",
+  ACTIVE: "Active",
+  IN_REVIEW: "InReview",
+  REVISIONS_REQUESTED: "RevisionsRequested",
+  COMPLETED: "Completed",
+  DECLINED: "Declined",
+  CANCELLED: "Cancelled",
+  DISPUTED: "Disputed",
 };
 
 /**
- * Check if a status transition is valid
- * @param {string} from The current status
- * @param {string} to The target status
- * @return {boolean} Whether the transition is valid
+ * ServicePackage type enum (matches `docs/OnlineService.md` §5).
  */
-function isValidTransition(from, to) {
-  return VALID_TRANSITIONS[from]?.includes(to) ?? false;
-}
+const SERVICE_PACKAGE_TYPE = {
+  FIXED: "Fixed",
+  MILESTONE: "Milestone",
+  SESSION: "Session",
+};
 
 /**
- * Extract auth info from context and data
- * @param {Object} context The request context
- * @param {Object} data The request data
- * @return {Object} Auth info with uid, isAdmin, hasAuth
+ * Service mode enum (matches `docs/OnlineService.md` §4.1).
+ */
+const SERVICE_MODE = {
+  IN_PERSON: "InPerson",
+  ONLINE: "Online",
+  HYBRID: "Hybrid",
+};
+
+/**
+ * Online delivery format enum (matches `docs/OnlineService.md` §4.1).
+ */
+const ONLINE_DELIVERY_FORMAT = {
+  LIVE: "live",
+  ASYNC: "async",
+  MIXED: "mixed",
+};
+
+/**
+ * Helper function to safely get user authentication info
+ * @param {object} context - Firebase Functions context
+ * @param {object} data - Request data
+ * @return {object} User authentication info
  */
 function getAuthInfo(context, data) {
   const auth = context.auth || data.auth;
@@ -61,1899 +76,251 @@ function getAuthInfo(context, data) {
 }
 
 /**
- * Generate a unique project ID
- * @return {string} A unique project ID
+ * Generates a unique online project ID
+ * @return {string} A unique project identifier
  */
-function generateProjectId() {
-  const now = Date.now();
+function generateOnlineProjectId() {
+  const timestamp = Date.now();
   const random = Math.floor(Math.random() * 10000);
-  return `op_${now}_${random}`;
+  return `op-${timestamp}-${random}`;
+}
+
+// =============================================================================
+// ACTION HANDLERS — STUBS
+// =============================================================================
+//
+// Each handler will be implemented in the corresponding phase task.
+// Until then, each stub throws HttpsError("internal") so the dispatcher
+// returns a clean 500-equivalent and the test suite can assert the
+// 18-action surface area.
+
+/**
+ * Creates a new online project in Pending status.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The created project
+ */
+async function createOnlineProject_onlineProject(_request) {
+  throw new HttpsError("internal", "createOnlineProject not yet implemented");
 }
 
 /**
- * Create a notification for a user
- * @param {string} targetUserId The target user ID
- * @param {string} userType The user type (client/provider)
- * @param {string} notificationType The notification type
- * @param {string} title The notification title
- * @param {string} message The notification message
- * @param {string} onlineProjectId The related project ID
- * @param {Object|null} metadata Additional metadata
- * @return {Promise<void>}
+ * Provider accepts a Pending project → Active.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function createNotification(
-  targetUserId,
-  userType,
-  notificationType,
-  title,
-  message,
-  onlineProjectId,
-  metadata = null,
-) {
-  try {
-    if (!targetUserId || !userType || !notificationType || !title || !message) {
-      console.error("Error creating notification: Required parameters missing");
-      return;
-    }
-
-    if (!Object.values(USER_TYPES).includes(userType)) {
-      console.error(`Error creating notification: Invalid userType: ${userType}`);
-      return;
-    }
-
-    if (!Object.values(NOTIFICATION_TYPES).includes(notificationType)) {
-      console.error(`Error creating notification: Invalid notificationType: ${notificationType}`);
-      return;
-    }
-
-    const spamming = await isSpamming(targetUserId, notificationType);
-    if (spamming) {
-      console.log("Notification spam prevention failed");
-      return;
-    }
-
-    const now = new Date();
-    const expiresAt = new Date(
-      now.getTime() + NOTIFICATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-    );
-
-    const href = generateNotificationHref(
-      notificationType,
-      userType,
-      onlineProjectId,
-    );
-
-    const notificationRef = db.collection("notifications").doc();
-    const notification = {
-      id: notificationRef.id,
-      userId: targetUserId,
-      userType,
-      notificationType,
-      title,
-      message,
-      relatedEntityId: onlineProjectId || null,
-      metadata: metadata,
-      href,
-      status: NOTIFICATION_STATUS.UNREAD,
-      createdAt: FieldValue.serverTimestamp(),
-      readAt: null,
-      pushSentAt: null,
-      expiresAt,
-    };
-
-    await notificationRef.set(notification);
-    await updateNotificationFrequency(targetUserId, notificationType);
-
-    sendOneSignalNotification(targetUserId, {
-      ...notification,
-      createdAt: now,
-    }).catch((error) => {
-      console.error("Failed to send OneSignal notification:", error);
-    });
-
-    if (BOOKING_EMAIL_TYPES.has(notificationType)) {
-      sendEmailForNotification(targetUserId, notification).catch((error) => {
-        console.error("Failed to send notification email:", error);
-      });
-    }
-  } catch (error) {
-    console.error("Error creating notification:", error);
-  }
+async function acceptProject_onlineProject(_request) {
+  throw new HttpsError("internal", "acceptProject not yet implemented");
 }
 
 /**
- * Get a project and validate the caller has access
- * @param {string} projectId The project ID
- * @param {Object} authInfo The auth info
- * @return {Promise<Object>} The project ref and data
+ * Provider declines a Pending project → Declined.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function getProjectAndValidateAccess(projectId, authInfo) {
-  const projectRef = db.collection("online_projects").doc(projectId);
-  const projectSnap = await projectRef.get();
-
-  if (!projectSnap.exists) {
-    throw new HttpsError("not-found", "Online project not found");
-  }
-
-  const project = projectSnap.data();
-  const isParticipant =
-    project.clientId === authInfo.uid || project.providerId === authInfo.uid;
-
-  if (!isParticipant && !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Not authorized to access this project");
-  }
-
-  return {projectRef, project};
+async function declineProject_onlineProject(_request) {
+  throw new HttpsError("internal", "declineProject not yet implemented");
 }
 
 /**
- * Get the display name for a user
- * @param {string} userId The user ID
- * @return {Promise<string>} The display name
+ * Counter-offer written to negotiations subcollection; status → Negotiating.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The negotiation offer
  */
-async function getUserDisplayName(userId) {
-  try {
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (userDoc.exists) {
-      return userDoc.data().name || "Unknown";
-    }
-  } catch (e) {
-    console.error("Failed to get user display name:", e);
-  }
-  return "Unknown";
+async function negotiateProject_onlineProject(_request) {
+  throw new HttpsError("internal", "negotiateProject not yet implemented");
 }
 
 /**
- * Get service and package names for display
- * @param {string} serviceId The service ID
- * @param {string|null} packageId The package ID
- * @return {Promise<Object>} Object with serviceName and packageName
+ * Client or provider accepts the latest counter-offer → Active.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function getServiceAndPackageName(serviceId, packageId) {
-  let serviceName = "Unknown Service";
-  let packageName = "Unknown Package";
-  try {
-    const serviceDoc = await db.collection("services").doc(serviceId).get();
-    if (serviceDoc.exists) {
-      serviceName = serviceDoc.data().title || serviceName;
-    }
-    if (packageId) {
-      const packageDoc = await db.collection("service_packages").doc(packageId).get();
-      if (packageDoc.exists) {
-        packageName = packageDoc.data().title || packageName;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to get service/package name:", e);
-  }
-  return {serviceName, packageName};
-}
-
-// ============================================================================
-// ACTION HANDLERS
-// ============================================================================
-
-/**
- * Create a new online project
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID
- */
-async function createOnlineProject_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {
-    serviceId,
-    servicePackageId,
-    brief,
-    desiredDeadline,
-    referenceAttachments = [],
-    idempotencyKey,
-  } = payload;
-
-  if (!idempotencyKey || typeof idempotencyKey !== "string") {
-    throw new HttpsError("invalid-argument", "idempotencyKey is required");
-  }
-
-  if (!serviceId) {
-    throw new HttpsError("invalid-argument", "serviceId is required");
-  }
-
-  if (!servicePackageId) {
-    throw new HttpsError("invalid-argument", "servicePackageId is required");
-  }
-
-  if (!brief || brief.length < MIN_BRIEF_LENGTH || brief.length > MAX_BRIEF_LENGTH) {
-    throw new HttpsError(
-      "invalid-argument",
-      `Project brief must be between ${MIN_BRIEF_LENGTH} and ${MAX_BRIEF_LENGTH} characters`,
-    );
-  }
-
-  if (!desiredDeadline) {
-    throw new HttpsError("invalid-argument", "desiredDeadline is required");
-  }
-
-  const existingKey = await db.collection("online_project_idempotency")
-    .doc(idempotencyKey)
-    .get();
-
-  if (existingKey.exists) {
-    if (existingKey.data().clientId !== authInfo.uid) {
-      throw new HttpsError("permission-denied",
-        "Idempotency key belongs to a different user");
-    }
-    return {success: true, data: {projectId: existingKey.data().projectId}};
-  }
-
-  const serviceDoc = await db.collection("services").doc(serviceId).get();
-  if (!serviceDoc.exists) {
-    throw new HttpsError("not-found", "Service not found");
-  }
-
-  const service = serviceDoc.data();
-
-  if (service.serviceMode !== "OnlineService") {
-    throw new HttpsError("invalid-argument", "Service is not an online service");
-  }
-
-  if (service.status !== "Available") {
-    throw new HttpsError("failed-precondition", "Service is not currently available");
-  }
-
-  if (service.providerId === authInfo.uid) {
-    throw new HttpsError("permission-denied", "Cannot create a project for your own service");
-  }
-
-  const packageDoc = await db.collection("service_packages").doc(servicePackageId).get();
-  if (!packageDoc.exists) {
-    throw new HttpsError("not-found", "Service package not found");
-  }
-
-  const packageData = packageDoc.data();
-  if (packageData.serviceId !== serviceId) {
-    throw new HttpsError("invalid-argument", "Package does not belong to this service");
-  }
-
-  const onlineConfig = service.onlineConfig || {};
-  const packageSettings = onlineConfig.packageSettings?.[servicePackageId] || {};
-
-  const minDeliveryDays =
-    packageSettings.deliveryMinDays ?? onlineConfig.defaultDeliveryMinDays ?? 3;
-  const maxDeliveryDays =
-    packageSettings.deliveryMaxDays ?? onlineConfig.defaultDeliveryMaxDays ?? 14;
-  const revisionRounds = packageSettings.revisionRounds ?? onlineConfig.defaultRevisionRounds ?? 3;
-  const milestones = packageSettings.milestones || null;
-
-  const deliverableMode = milestones && milestones.length > 0 ? "Milestone" : "Simple";
-
-  const now = new Date().toISOString();
-  const projectId = generateProjectId();
-
-  const newProject = {
-    id: projectId,
-    clientId: authInfo.uid,
-    providerId: service.providerId,
-    serviceId,
-    servicePackageId,
-    status: "Pending",
-    desiredDeadline,
-    agreedDeadline: null,
-    originalPrice: packageData.price || 0,
-    agreedPrice: null,
-    amountPaid: 0,
-    paymentStatus: "Pending",
-    paymentNotes: null,
-    brief,
-    referenceAttachments: Array.isArray(referenceAttachments) ? referenceAttachments : [],
-    deliverableConfig: {
-      mode: deliverableMode,
-      minDeliveryDays,
-      maxDeliveryDays,
-      revisionRounds,
-      milestones: milestones || undefined,
-    },
-    currentMilestoneIndex: 0,
-    deliverableCount: 0,
-    meetingUrl: null,
-    disputeReason: null,
-    disputeInitiatedBy: null,
-    disputeInitiatedAt: null,
-    disputePreStatus: null,
-    resolutionNote: null,
-    resolvedBy: null,
-    resolvedAt: null,
-    createdAt: now,
-    updatedAt: now,
-    acceptedAt: null,
-    completedAt: null,
-    lastNegotiationAt: now,
-    autoCancelled: null,
-  };
-
-  await db.collection("online_projects").doc(projectId).set(newProject);
-
-  await db.collection("online_project_idempotency").doc(idempotencyKey).set({
-    projectId,
-    clientId: authInfo.uid,
-    createdAt: now,
-  });
-
-  const clientName = await getUserDisplayName(authInfo.uid);
-  const {serviceName, packageName} = await getServiceAndPackageName(serviceId, servicePackageId);
-
-  createNotification(
-    service.providerId,
-    USER_TYPES.PROVIDER,
-    NOTIFICATION_TYPES.NEW_ONLINE_PROJECT_REQUEST,
-    "New Online Project Request",
-    `${clientName} requested ${serviceName} — ${packageName}`,
-    projectId,
-    {
-      clientId: authInfo.uid,
-      clientName,
-      serviceId,
-      serviceName,
-      packageId: servicePackageId,
-      packageName,
-      projectId,
-    },
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId}};
+async function acceptCounterOffer_onlineProject(_request) {
+  throw new HttpsError("internal", "acceptCounterOffer not yet implemented");
 }
 
 /**
- * Accept an online project
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * Reject a counter-offer → Declined or stay Negotiating.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function acceptProject_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  const {projectRef, project} = await getProjectAndValidateAccess(projectId, authInfo);
-
-  if (project.providerId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Only the provider can accept a project");
-  }
-
-  const currentStatus = project.status;
-  if (!isValidTransition(currentStatus, "Active")) {
-    throw new HttpsError(
-      "failed-precondition",
-      `Cannot transition from ${currentStatus} to Active`,
-    );
-  }
-
-  if (currentStatus !== "Pending" && currentStatus !== "Negotiating") {
-    throw new HttpsError("failed-precondition", `Cannot accept project in ${currentStatus} status`);
-  }
-
-  const now = new Date().toISOString();
-  const isFromNegotiation = currentStatus === "Negotiating";
-
-  let agreedPrice = project.originalPrice;
-  let agreedDeadline = project.desiredDeadline;
-
-  if (isFromNegotiation) {
-    const offersSnap = await db.collection("online_projects")
-      .doc(projectId)
-      .collection("negotiations")
-      .orderBy("createdAt", "desc")
-      .limit(1)
-      .get();
-
-    if (!offersSnap.empty) {
-      const lastOffer = offersSnap.docs[0].data();
-      if (lastOffer.proposedPrice !== undefined) agreedPrice = lastOffer.proposedPrice;
-      if (lastOffer.proposedDeadline) agreedDeadline = lastOffer.proposedDeadline;
-    }
-  }
-
-  await projectRef.update({
-    status: "Active",
-    agreedPrice,
-    agreedDeadline,
-    acceptedAt: now,
-    updatedAt: now,
-  });
-
-  const providerName = await getUserDisplayName(authInfo.uid);
-  const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-  createNotification(
-    project.clientId,
-    USER_TYPES.CLIENT,
-    NOTIFICATION_TYPES.ONLINE_PROJECT_ACCEPTED,
-    "Project Accepted",
-    `${providerName} accepted your project request for ${serviceName}`,
-    projectId,
-    {
-      providerId: authInfo.uid,
-      providerName,
-      serviceId: project.serviceId,
-      serviceName,
-      projectId,
-    },
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: "Active"}};
+async function rejectCounterOffer_onlineProject(_request) {
+  throw new HttpsError("internal", "rejectCounterOffer not yet implemented");
 }
 
 /**
- * Decline an online project
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * Provider submits a deliverable → InReview.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The deliverable
  */
-async function declineProject_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  const {projectRef, project} = await getProjectAndValidateAccess(projectId, authInfo);
-
-  if (project.providerId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Only the provider can decline a project");
-  }
-
-  const currentStatus = project.status;
-  if (currentStatus !== "Pending" && currentStatus !== "Negotiating") {
-    throw new HttpsError(
-      "failed-precondition",
-      `Cannot decline project in ${currentStatus} status`,
-    );
-  }
-
-  const now = new Date().toISOString();
-  await projectRef.update({
-    status: "Declined",
-    updatedAt: now,
-  });
-
-  const providerName = await getUserDisplayName(authInfo.uid);
-  const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-  createNotification(
-    project.clientId,
-    USER_TYPES.CLIENT,
-    NOTIFICATION_TYPES.ONLINE_PROJECT_DECLINED,
-    "Project Declined",
-    `${providerName} declined your project request for ${serviceName}`,
-    projectId,
-    {
-      providerId: authInfo.uid,
-      providerName,
-      serviceId: project.serviceId,
-      serviceName,
-      projectId,
-    },
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: "Declined"}};
+async function submitDeliverable_onlineProject(_request) {
+  throw new HttpsError("internal", "submitDeliverable not yet implemented");
 }
 
 /**
- * Negotiate project terms (counter offer)
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID, status, and offer ID
+ * Client approves deliverable(s); all milestones approved → Completed.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function negotiateProject_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {
-    projectId,
-    proposedPrice,
-    proposedDeadline,
-    proposedRevisionRounds,
-    proposedScope,
-    message,
-  } = payload;
-
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  if (!message || typeof message !== "string" || message.trim().length === 0) {
-    throw new HttpsError("invalid-argument", "A message is required for negotiation");
-  }
-
-  const projectRef = db.collection("online_projects").doc(projectId);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const projectSnap = await transaction.get(projectRef);
-
-    if (!projectSnap.exists) {
-      throw new HttpsError("not-found", "Online project not found");
-    }
-
-    const project = projectSnap.data();
-
-    if (project.providerId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new HttpsError("permission-denied", "Only the provider can negotiate");
-    }
-
-    const currentStatus = project.status;
-    if (currentStatus !== "Pending" && currentStatus !== "Negotiating") {
-      throw new HttpsError(
-        "failed-precondition",
-        `Cannot negotiate project in ${currentStatus} status`,
-      );
-    }
-
-    const negotiationsRef = db.collection("online_projects")
-      .doc(projectId)
-      .collection("negotiations");
-
-    const offersSnap = await transaction.get(negotiationsRef);
-    if (offersSnap.size >= MAX_NEGOTIATION_ROUNDS) {
-      throw new HttpsError(
-        "failed-precondition",
-        `Maximum negotiation rounds (${MAX_NEGOTIATION_ROUNDS}) reached. ` +
-        "Accept, decline, or cancel the project.",
-      );
-    }
-
-    const now = new Date().toISOString();
-    const offerRef = negotiationsRef.doc();
-
-    const offerData = {
-      id: offerRef.id,
-      offeredBy: "provider",
-      proposedPrice: proposedPrice !== undefined ? proposedPrice : null,
-      proposedDeadline: proposedDeadline || null,
-      proposedRevisionRounds: proposedRevisionRounds !== undefined ? proposedRevisionRounds : null,
-      proposedScope: proposedScope || null,
-      message,
-      createdAt: now,
-      status: "Pending",
-      clientId: project.clientId,
-      providerId: project.providerId,
-    };
-
-    transaction.set(offerRef, offerData);
-    transaction.update(projectRef, {
-      status: "Negotiating",
-      lastNegotiationAt: now,
-      updatedAt: now,
-    });
-
-    return {project, offerId: offerRef.id};
-  });
-
-  const providerName = await getUserDisplayName(authInfo.uid);
-  const {serviceName} = await getServiceAndPackageName(result.project.serviceId, null);
-
-  createNotification(
-    result.project.clientId,
-    USER_TYPES.CLIENT,
-    NOTIFICATION_TYPES.ONLINE_PROJECT_COUNTER_OFFER,
-    "Counter Offer Received",
-    `${providerName} sent a counter offer for ${serviceName}`,
-    projectId,
-    {
-      providerId: authInfo.uid,
-      providerName,
-      serviceId: result.project.serviceId,
-      serviceName,
-      projectId,
-      offerId: result.offerId,
-    },
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: "Negotiating", offerId: result.offerId}};
+async function approveDeliverable_onlineProject(_request) {
+  throw new HttpsError("internal", "approveDeliverable not yet implemented");
 }
 
 /**
- * Accept a counter offer from the provider
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * Client requests a revision → RevisionsRequested.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function acceptCounterOffer_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  const projectRef = db.collection("online_projects").doc(projectId);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const projectSnap = await transaction.get(projectRef);
-
-    if (!projectSnap.exists) {
-      throw new HttpsError("not-found", "Online project not found");
-    }
-
-    const project = projectSnap.data();
-
-    if (project.clientId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new HttpsError("permission-denied", "Only the client can accept a counter offer");
-    }
-
-    if (project.status !== "Negotiating") {
-      throw new HttpsError(
-        "failed-precondition",
-        `Cannot accept counter offer in ${project.status} status`,
-      );
-    }
-
-    const negotiationsRef = db.collection("online_projects")
-      .doc(projectId)
-      .collection("negotiations");
-
-    const offersSnap = await transaction.get(negotiationsRef);
-    if (offersSnap.size >= MAX_NEGOTIATION_ROUNDS) {
-      throw new HttpsError(
-        "failed-precondition",
-        `Maximum negotiation rounds (${MAX_NEGOTIATION_ROUNDS}) reached.`,
-      );
-    }
-
-    const offers = offersSnap.docs.map((d) => ({id: d.id, ...d.data()}));
-    offers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    const latestOffer = offers[0];
-    if (!latestOffer) {
-      throw new HttpsError("failed-precondition", "No negotiation offers found");
-    }
-
-    let agreedPrice = project.originalPrice;
-    let agreedDeadline = project.desiredDeadline;
-
-    if (latestOffer.proposedPrice !== undefined && latestOffer.proposedPrice !== null) {
-      agreedPrice = latestOffer.proposedPrice;
-    }
-    if (latestOffer.proposedDeadline) {
-      agreedDeadline = latestOffer.proposedDeadline;
-    }
-
-    const now = new Date().toISOString();
-
-    const latestOfferRef = negotiationsRef.doc(latestOffer.id);
-    transaction.update(latestOfferRef, {status: "Accepted"});
-
-    for (const offer of offers) {
-      if (offer.id !== latestOffer.id && offer.status === "Pending") {
-        transaction.update(negotiationsRef.doc(offer.id), {status: "Rejected"});
-      }
-    }
-
-    transaction.update(projectRef, {
-      status: "Active",
-      agreedPrice,
-      agreedDeadline,
-      acceptedAt: now,
-      lastNegotiationAt: now,
-      updatedAt: now,
-    });
-
-    return {project, agreedPrice, agreedDeadline};
-  });
-
-  const clientName = await getUserDisplayName(authInfo.uid);
-  const {serviceName} = await getServiceAndPackageName(result.project.serviceId, null);
-
-  createNotification(
-    result.project.providerId,
-    USER_TYPES.PROVIDER,
-    NOTIFICATION_TYPES.ONLINE_PROJECT_ACCEPTED,
-    "Counter Offer Accepted",
-    `${clientName} accepted your counter offer for ${serviceName}`,
-    projectId,
-    {
-      clientId: authInfo.uid,
-      clientName,
-      serviceId: result.project.serviceId,
-      serviceName,
-      projectId,
-    },
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: "Active"}};
+async function requestRevision_onlineProject(_request) {
+  throw new HttpsError("internal", "requestRevision not yet implemented");
 }
 
 /**
- * Submit a deliverable for review
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and deliverable ID
+ * Either party cancels the project → Cancelled.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function submitDeliverable_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId, files, notes, milestoneIndex} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  if (!files || !Array.isArray(files) || files.length === 0) {
-    throw new HttpsError("invalid-argument", "At least one file is required");
-  }
-
-  const projectRef = db.collection("online_projects").doc(projectId);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const projectSnap = await transaction.get(projectRef);
-
-    if (!projectSnap.exists) {
-      throw new HttpsError("not-found", "Online project not found");
-    }
-
-    const project = projectSnap.data();
-
-    if (project.providerId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new HttpsError("permission-denied", "Only the provider can submit deliverables");
-    }
-
-    const currentStatus = project.status;
-    if (currentStatus !== "Active" && currentStatus !== "RevisionsRequested") {
-      throw new HttpsError(
-        "failed-precondition",
-        `Cannot submit deliverable in ${currentStatus} status`,
-      );
-    }
-
-    const deliverableConfig = project.deliverableConfig;
-    const isMilestoneMode = deliverableConfig?.mode === "Milestone" &&
-      deliverableConfig.milestones && deliverableConfig.milestones.length > 0;
-
-    if (isMilestoneMode) {
-      const expectedIndex = project.currentMilestoneIndex;
-      if (milestoneIndex === undefined || milestoneIndex === null) {
-        throw new HttpsError("invalid-argument", "milestoneIndex is required in milestone mode");
-      }
-      if (milestoneIndex !== expectedIndex) {
-        throw new HttpsError("invalid-argument",
-          `milestone-index-mismatch: expected ${expectedIndex}, got ${milestoneIndex}`);
-      }
-    }
-
-    const deliverablesRef = db.collection("online_projects")
-      .doc(projectId)
-      .collection("deliverables");
-
-    const existingDeliverablesSnap = await transaction.get(deliverablesRef);
-    const existingDeliverables = existingDeliverablesSnap.docs.map((d) => d.data());
-
-    let previousRevisionCount = 0;
-    if (currentStatus === "RevisionsRequested") {
-      const relevantSubmissions = existingDeliverables.filter((d) => {
-        if (isMilestoneMode) {
-          return d.milestoneIndex === milestoneIndex;
-        }
-        return true;
-      });
-      if (relevantSubmissions.length > 0) {
-        relevantSubmissions.sort((a, b) =>
-          new Date(b.submittedAt) - new Date(a.submittedAt));
-        previousRevisionCount = relevantSubmissions[0].revisionCount || 0;
-      }
-    }
-
-    const newRevisionCount = currentStatus === "RevisionsRequested" ?
-      previousRevisionCount + 1 :
-      0;
-
-    if (newRevisionCount > 0 && newRevisionCount > deliverableConfig.revisionRounds) {
-      throw new HttpsError(
-        "failed-precondition",
-        `Maximum revision rounds (${deliverableConfig.revisionRounds}) exceeded`,
-      );
-    }
-
-    const now = new Date().toISOString();
-    const deliverableRef = deliverablesRef.doc();
-
-    const deliverableData = {
-      id: deliverableRef.id,
-      milestoneIndex: isMilestoneMode ? milestoneIndex : null,
-      files: files.map((f) => ({
-        fileName: f.fileName,
-        fileUrl: f.fileUrl,
-        fileSize: f.fileSize,
-        fileType: f.fileType,
-      })),
-      notes: notes || null,
-      submittedAt: now,
-      status: "Submitted",
-      clientFeedback: null,
-      revisionCount: newRevisionCount,
-      clientId: project.clientId,
-      providerId: project.providerId,
-    };
-
-    transaction.set(deliverableRef, deliverableData);
-    transaction.update(projectRef, {
-      status: "InReview",
-      deliverableCount: (project.deliverableCount || 0) + 1,
-      updatedAt: now,
-    });
-
-    return {project, deliverableId: deliverableRef.id};
-  });
-
-  const providerName = await getUserDisplayName(authInfo.uid);
-  const {serviceName} = await getServiceAndPackageName(result.project.serviceId, null);
-
-  createNotification(
-    result.project.clientId,
-    USER_TYPES.CLIENT,
-    NOTIFICATION_TYPES.DELIVERABLE_SUBMITTED,
-    "Deliverable Ready for Review",
-    `${providerName} submitted a deliverable for ${serviceName}`,
-    projectId,
-    {
-      providerId: authInfo.uid,
-      providerName,
-      deliverableId: result.deliverableId,
-      milestoneIndex: milestoneIndex !== undefined ? milestoneIndex : null,
-      projectId,
-    },
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {
-    success: true,
-    data: {projectId, deliverableId: result.deliverableId, status: "InReview"},
-  };
+async function cancelProject_onlineProject(_request) {
+  throw new HttpsError("internal", "cancelProject not yet implemented");
 }
 
 /**
- * Approve a submitted deliverable
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and new status
+ * Either party disputes the project → Disputed.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function approveDeliverable_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId, deliverableId} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-  if (!deliverableId) {
-    throw new HttpsError("invalid-argument", "deliverableId is required");
-  }
-
-  const projectRef = db.collection("online_projects").doc(projectId);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const projectSnap = await transaction.get(projectRef);
-
-    if (!projectSnap.exists) {
-      throw new HttpsError("not-found", "Online project not found");
-    }
-
-    const project = projectSnap.data();
-
-    if (project.clientId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new HttpsError("permission-denied", "Only the client can approve deliverables");
-    }
-
-    if (project.status !== "InReview") {
-      throw new HttpsError(
-        "failed-precondition",
-        `Cannot approve deliverable in ${project.status} status`,
-      );
-    }
-
-    const deliverableRef = db.collection("online_projects")
-      .doc(projectId)
-      .collection("deliverables")
-      .doc(deliverableId);
-
-    const deliverableSnap = await transaction.get(deliverableRef);
-    if (!deliverableSnap.exists) {
-      throw new HttpsError("not-found", "Deliverable not found");
-    }
-
-    const deliverable = deliverableSnap.data();
-    const deliverableConfig = project.deliverableConfig;
-    const isMilestoneMode = deliverableConfig?.mode === "Milestone" &&
-      deliverableConfig.milestones && deliverableConfig.milestones.length > 0;
-
-    if (isMilestoneMode) {
-      if (deliverable.milestoneIndex !== project.currentMilestoneIndex) {
-        throw new HttpsError("invalid-argument",
-          `Deliverable milestone index mismatch: expected ${project.currentMilestoneIndex}`);
-      }
-    }
-
-    const now = new Date().toISOString();
-    transaction.update(deliverableRef, {status: "Approved"});
-
-    let newStatus;
-    let newMilestoneIndex = project.currentMilestoneIndex;
-    let completedAt = null;
-
-    if (isMilestoneMode) {
-      const nextIndex = project.currentMilestoneIndex + 1;
-      if (nextIndex >= deliverableConfig.milestones.length) {
-        newStatus = "Completed";
-        completedAt = now;
-        newMilestoneIndex = nextIndex;
-      } else {
-        newStatus = "Active";
-        newMilestoneIndex = nextIndex;
-      }
-    } else {
-      newStatus = "Completed";
-      completedAt = now;
-    }
-
-    const updates = {
-      status: newStatus,
-      currentMilestoneIndex: newMilestoneIndex,
-      updatedAt: now,
-    };
-
-    if (completedAt) {
-      updates.completedAt = completedAt;
-    }
-
-    transaction.update(projectRef, updates);
-
-    return {
-      project,
-      newStatus,
-      deliverable,
-      isMilestoneMode,
-      milestoneTitle: isMilestoneMode ?
-        deliverableConfig.milestones[project.currentMilestoneIndex]?.title :
-        null,
-      milestoneIndex: project.currentMilestoneIndex,
-    };
-  });
-
-  const clientName = await getUserDisplayName(authInfo.uid);
-  const {serviceName} = await getServiceAndPackageName(result.project.serviceId, null);
-
-  if (result.newStatus === "Completed") {
-    createNotification(
-      result.project.providerId,
-      USER_TYPES.PROVIDER,
-      NOTIFICATION_TYPES.ONLINE_PROJECT_COMPLETED,
-      "Project Completed",
-      `${clientName} approved your deliverable — ${serviceName} is complete`,
-      projectId,
-      {clientId: authInfo.uid, clientName, projectId},
-    ).catch((e) => console.error("Notification dispatch error:", e));
-
-    createNotification(
-      authInfo.uid,
-      USER_TYPES.CLIENT,
-      NOTIFICATION_TYPES.REVIEW_REMINDER,
-      "Share Your Experience",
-      `Please review your "${serviceName}" project with ` +
-      `${await getUserDisplayName(result.project.providerId)}`,
-      projectId,
-      {
-        providerId: result.project.providerId,
-        providerName: await getUserDisplayName(result.project.providerId),
-        projectId,
-      },
-    ).catch((e) => console.error("Notification dispatch error:", e));
-
-    createNotification(
-      result.project.providerId,
-      USER_TYPES.PROVIDER,
-      NOTIFICATION_TYPES.REVIEW_REQUEST,
-      "Rate Your Client",
-      `Rate your experience with ${clientName} for "${serviceName}"`,
-      projectId,
-      {clientId: authInfo.uid, clientName, projectId},
-    ).catch((e) => console.error("Notification dispatch error:", e));
-  } else if (result.isMilestoneMode) {
-    createNotification(
-      result.project.providerId,
-      USER_TYPES.PROVIDER,
-      NOTIFICATION_TYPES.MILESTONE_APPROVED,
-      "Milestone Approved",
-      `${clientName} approved milestone "${result.milestoneTitle}" for ${serviceName}`,
-      projectId,
-      {
-        clientId: authInfo.uid,
-        clientName,
-        milestoneTitle: result.milestoneTitle,
-        milestoneIndex: result.milestoneIndex,
-        projectId,
-      },
-    ).catch((e) => console.error("Notification dispatch error:", e));
-  }
-
-  return {success: true, data: {projectId, status: result.newStatus}};
+async function disputeProject_onlineProject(_request) {
+  throw new HttpsError("internal", "disputeProject not yet implemented");
 }
 
 /**
- * Request revisions for a deliverable
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * Updates amountPaid and paymentStatus.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated project
  */
-async function requestRevisions_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId, deliverableId, feedback} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-  if (!deliverableId) {
-    throw new HttpsError("invalid-argument", "deliverableId is required");
-  }
-
-  const projectRef = db.collection("online_projects").doc(projectId);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const projectSnap = await transaction.get(projectRef);
-
-    if (!projectSnap.exists) {
-      throw new HttpsError("not-found", "Online project not found");
-    }
-
-    const project = projectSnap.data();
-
-    if (project.clientId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new HttpsError("permission-denied", "Only the client can request revisions");
-    }
-
-    if (project.status !== "InReview") {
-      throw new HttpsError(
-        "failed-precondition",
-        `Cannot request revisions in ${project.status} status`,
-      );
-    }
-
-    const deliverableRef = db.collection("online_projects")
-      .doc(projectId)
-      .collection("deliverables")
-      .doc(deliverableId);
-
-    const deliverableSnap = await transaction.get(deliverableRef);
-    if (!deliverableSnap.exists) {
-      throw new HttpsError("not-found", "Deliverable not found");
-    }
-
-    const deliverableData = deliverableSnap.data();
-    const deliverableConfig = project.deliverableConfig;
-    const existingDeliverablesRef = db.collection("online_projects")
-      .doc(projectId)
-      .collection("deliverables");
-    const existingSnap = await transaction.get(existingDeliverablesRef);
-    const existingDeliverables = existingSnap.docs.map((d) => d.data());
-
-    const isMilestoneMode = deliverableConfig?.mode === "Milestone" &&
-      deliverableConfig.milestones && deliverableConfig.milestones.length > 0;
-    const currentMilestone = deliverableData.milestoneIndex;
-
-    const relevantSubmissions = existingDeliverables.filter((d) => {
-      if (isMilestoneMode) return d.milestoneIndex === currentMilestone;
-      return true;
-    });
-
-    const maxRevisions = deliverableConfig.revisionRounds || 0;
-    const latestSubmission = relevantSubmissions
-      .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
-    const currentRevisionCount = latestSubmission?.revisionCount || 0;
-
-    if (currentRevisionCount >= maxRevisions) {
-      throw new HttpsError(
-        "failed-precondition",
-        `Maximum revision rounds (${maxRevisions}) reached`,
-      );
-    }
-
-    const now = new Date().toISOString();
-    transaction.update(deliverableRef, {
-      status: "RevisionsRequested",
-      clientFeedback: feedback || null,
-    });
-
-    transaction.update(projectRef, {
-      status: "RevisionsRequested",
-      updatedAt: now,
-    });
-
-    return {project};
-  });
-
-  const clientName = await getUserDisplayName(authInfo.uid);
-  const {serviceName} = await getServiceAndPackageName(result.project.serviceId, null);
-
-  createNotification(
-    result.project.providerId,
-    USER_TYPES.PROVIDER,
-    NOTIFICATION_TYPES.REVISIONS_REQUESTED,
-    "Revisions Requested",
-    `${clientName} requested revisions for ${serviceName} — ${feedback || "No notes provided"}`,
-    projectId,
-    {clientId: authInfo.uid, clientName, deliverableId, projectId},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: "RevisionsRequested"}};
+async function recordPayment_onlineProject(_request) {
+  throw new HttpsError("internal", "recordPayment not yet implemented");
 }
 
 /**
- * Cancel an online project
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * Client approves a single milestone.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The updated milestone
  */
-async function cancelProject_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  const {projectRef, project} = await getProjectAndValidateAccess(projectId, authInfo);
-
-  const currentStatus = project.status;
-  const allowedStatuses = ["Active", "InReview", "RevisionsRequested", "Negotiating", "Pending"];
-  if (!allowedStatuses.includes(currentStatus)) {
-    throw new HttpsError("failed-precondition", `Cannot cancel project in ${currentStatus} status`);
-  }
-
-  if (currentStatus === "Pending" && project.providerId === authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Provider cannot cancel a Pending project. Use declineProject instead.",
-    );
-  }
-
-  const isClient = project.clientId === authInfo.uid;
-  const isProvider = project.providerId === authInfo.uid;
-  if (!isClient && !isProvider && !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Only participants can cancel a project");
-  }
-
-  const now = new Date().toISOString();
-  await projectRef.update({
-    status: "Cancelled",
-    updatedAt: now,
-  });
-
-  const cancellerName = await getUserDisplayName(authInfo.uid);
-  const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-  if (isClient) {
-    createNotification(
-      project.providerId,
-      USER_TYPES.PROVIDER,
-      NOTIFICATION_TYPES.ONLINE_PROJECT_CANCELLED,
-      "Project Cancelled",
-      `${cancellerName} cancelled the project ${serviceName}`,
-      projectId,
-      {clientId: authInfo.uid, clientName: cancellerName, projectId},
-    ).catch((e) => console.error("Notification dispatch error:", e));
-  } else {
-    createNotification(
-      project.clientId,
-      USER_TYPES.CLIENT,
-      NOTIFICATION_TYPES.ONLINE_PROJECT_CANCELLED,
-      "Project Cancelled",
-      `${cancellerName} cancelled the project ${serviceName}`,
-      projectId,
-      {providerId: authInfo.uid, providerName: cancellerName, projectId},
-    ).catch((e) => console.error("Notification dispatch error:", e));
-  }
-
-  return {success: true, data: {projectId, status: "Cancelled"}};
+async function markMilestoneApproved_onlineProject(_request) {
+  throw new HttpsError("internal", "markMilestoneApproved not yet implemented");
 }
 
 /**
- * Initiate a dispute on a project
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * Read a single online project.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} The project document
  */
-async function disputeProject_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId, disputeReason} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-  if (!disputeReason || typeof disputeReason !== "string" || disputeReason.trim().length === 0) {
-    throw new HttpsError("invalid-argument", "disputeReason is required");
-  }
-
-  const {projectRef, project} = await getProjectAndValidateAccess(projectId, authInfo);
-
-  const currentStatus = project.status;
-  const allowedStatuses = ["InReview", "Completed", "RevisionsRequested"];
-  if (!allowedStatuses.includes(currentStatus)) {
-    throw new HttpsError(
-      "failed-precondition",
-      `Cannot dispute project in ${currentStatus} status`,
-    );
-  }
-
-  const initiatedBy = project.clientId === authInfo.uid ? "client" : "provider";
-  const now = new Date().toISOString();
-
-  await projectRef.update({
-    status: "Disputed",
-    disputePreStatus: currentStatus,
-    disputeReason,
-    disputeInitiatedBy: initiatedBy,
-    disputeInitiatedAt: now,
-    updatedAt: now,
-  });
-
-  const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-  createNotification(
-    project.clientId,
-    USER_TYPES.CLIENT,
-    NOTIFICATION_TYPES.ONLINE_PROJECT_DISPUTED,
-    "Project Disputed",
-    `${serviceName} has been marked as disputed. An admin will review the case.`,
-    projectId,
-    {projectId, initiatedBy},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  createNotification(
-    project.providerId,
-    USER_TYPES.PROVIDER,
-    NOTIFICATION_TYPES.ONLINE_PROJECT_DISPUTED,
-    "Project Disputed",
-    `${serviceName} has been marked as disputed. An admin will review the case.`,
-    projectId,
-    {projectId, initiatedBy},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: "Disputed"}};
+async function getOnlineProject_onlineProject(_request) {
+  throw new HttpsError("internal", "getOnlineProject not yet implemented");
 }
 
 /**
- * Resolve a dispute in favor of the client
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * List a client's online projects, paginated, with status filter.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} List of projects
  */
-async function resolveDisputeForClient_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Admin access required");
-  }
-
-  const {projectId, resolutionNote} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  const {projectRef, project} = await getProjectAndValidateAccess(projectId, authInfo);
-
-  if (project.status !== "Disputed") {
-    throw new HttpsError(
-      "failed-precondition",
-      `Cannot resolve project in ${project.status} status`,
-    );
-  }
-
-  const now = new Date().toISOString();
-  await projectRef.update({
-    status: "ResolvedForClient",
-    resolutionNote: resolutionNote || null,
-    resolvedBy: authInfo.uid,
-    resolvedAt: now,
-    updatedAt: now,
-  });
-
-  const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-  createNotification(
-    project.clientId,
-    USER_TYPES.CLIENT,
-    NOTIFICATION_TYPES.DISPUTE_RESOLVED_FOR_CLIENT,
-    "Dispute Resolved — Client",
-    `The dispute for ${serviceName} has been resolved in the client's favor. ` +
-    `Resolution: ${resolutionNote || "N/A"}`,
-    projectId,
-    {projectId, resolvedBy: authInfo.uid, resolutionNote},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  createNotification(
-    project.providerId,
-    USER_TYPES.PROVIDER,
-    NOTIFICATION_TYPES.DISPUTE_RESOLVED_FOR_CLIENT,
-    "Dispute Resolved — Client",
-    `The dispute for ${serviceName} has been resolved in the client's favor. ` +
-    `Resolution: ${resolutionNote || "N/A"}`,
-    projectId,
-    {projectId, resolvedBy: authInfo.uid, resolutionNote},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: "ResolvedForClient"}};
+async function listClientOnlineProjects_onlineProject(_request) {
+  throw new HttpsError("internal", "listClientOnlineProjects not yet implemented");
 }
 
 /**
- * Resolve a dispute in favor of the provider
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * List a provider's online projects, paginated, with status filter.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} List of projects
  */
-async function resolveDisputeForProvider_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Admin access required");
-  }
-
-  const {projectId, resolutionNote} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  const {projectRef, project} = await getProjectAndValidateAccess(projectId, authInfo);
-
-  if (project.status !== "Disputed") {
-    throw new HttpsError(
-      "failed-precondition",
-      `Cannot resolve project in ${project.status} status`,
-    );
-  }
-
-  const now = new Date().toISOString();
-  await projectRef.update({
-    status: "ResolvedForProvider",
-    resolutionNote: resolutionNote || null,
-    resolvedBy: authInfo.uid,
-    resolvedAt: now,
-    updatedAt: now,
-  });
-
-  const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-  createNotification(
-    project.clientId,
-    USER_TYPES.CLIENT,
-    NOTIFICATION_TYPES.DISPUTE_RESOLVED_FOR_PROVIDER,
-    "Dispute Resolved — Provider",
-    `The dispute for ${serviceName} has been resolved in the provider's favor. ` +
-    `Resolution: ${resolutionNote || "N/A"}`,
-    projectId,
-    {projectId, resolvedBy: authInfo.uid, resolutionNote},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  createNotification(
-    project.providerId,
-    USER_TYPES.PROVIDER,
-    NOTIFICATION_TYPES.DISPUTE_RESOLVED_FOR_PROVIDER,
-    "Dispute Resolved — Provider",
-    `The dispute for ${serviceName} has been resolved in the provider's favor. ` +
-    `Resolution: ${resolutionNote || "N/A"}`,
-    projectId,
-    {projectId, resolvedBy: authInfo.uid, resolutionNote},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: "ResolvedForProvider"}};
+async function listProviderOnlineProjects_onlineProject(_request) {
+  throw new HttpsError("internal", "listProviderOnlineProjects not yet implemented");
 }
 
 /**
- * Dismiss a dispute and restore previous status
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project ID and status
+ * Provider analytics: total, by status, revenue, average completion time.
+ * @param {object} _request - The callable request
+ * @return {Promise<object>} Analytics summary
  */
-async function dismissDispute_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
+async function getProjectAnalytics_onlineProject(_request) {
+  throw new HttpsError("internal", "getProjectAnalytics not yet implemented");
+}
 
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Admin access required");
-  }
+// =============================================================================
+// INTERNAL HELPERS — STUBS
+// =============================================================================
+//
+// These will be tested directly in the same file as the dispatch tests
+// once their full implementations land.
 
-  const {projectId, resolutionNote} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  const {projectRef, project} = await getProjectAndValidateAccess(projectId, authInfo);
-
-  if (project.status !== "Disputed") {
-    throw new HttpsError(
-      "failed-precondition",
-      `Cannot dismiss dispute in ${project.status} status`,
-    );
-  }
-
-  const preStatus = project.disputePreStatus;
-  if (!preStatus) {
-    throw new HttpsError("internal", "disputePreStatus is missing from project document");
-  }
-
-  const now = new Date().toISOString();
-  await projectRef.update({
-    status: preStatus,
-    resolutionNote: resolutionNote || null,
-    resolvedBy: authInfo.uid,
-    resolvedAt: now,
-    updatedAt: now,
-  });
-
-  const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-  createNotification(
-    project.clientId,
-    USER_TYPES.CLIENT,
-    NOTIFICATION_TYPES.DISPUTE_DISMISSED,
-    "Dispute Dismissed",
-    `The dispute for ${serviceName} has been dismissed. Note: ${resolutionNote || "N/A"}`,
-    projectId,
-    {projectId, resolvedBy: authInfo.uid, resolutionNote},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  createNotification(
-    project.providerId,
-    USER_TYPES.PROVIDER,
-    NOTIFICATION_TYPES.DISPUTE_DISMISSED,
-    "Dispute Dismissed",
-    `The dispute for ${serviceName} has been dismissed. Note: ${resolutionNote || "N/A"}`,
-    projectId,
-    {projectId, resolvedBy: authInfo.uid, resolutionNote},
-  ).catch((e) => console.error("Notification dispatch error:", e));
-
-  return {success: true, data: {projectId, status: preStatus}};
+/**
+ * Validates a status transition for an OnlineProject.
+ * State machine per `docs/OnlineService.md` §6.6.
+ * @param {string} _currentStatus - The current status
+ * @param {string} _newStatus - The proposed new status
+ */
+function isValidOnlineProjectTransition(_currentStatus, _newStatus) {
+  throw new HttpsError("internal", "isValidOnlineProjectTransition not yet implemented");
 }
 
 /**
- * Record a payment for a project
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with payment record
+ * Deducts reputation points for a late session reschedule.
+ * Phase 2 helper; tested now for direct unit-testability.
+ * @param {string} _userId - The user whose reputation to deduct
+ * @param {string} _reschedulerRole - "client" or "provider"
+ * @return {Promise<number>} The new trust score
  */
-async function recordPayment_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId, amountDelta, notes} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  if (amountDelta === undefined || amountDelta === null || typeof amountDelta !== "number") {
-    throw new HttpsError("invalid-argument", "amountDelta is required and must be a number");
-  }
-
-  const projectRef = db.collection("online_projects").doc(projectId);
-
-  const result = await db.runTransaction(async (transaction) => {
-    const projectSnap = await transaction.get(projectRef);
-
-    if (!projectSnap.exists) {
-      throw new HttpsError("not-found", "Online project not found");
-    }
-
-    const project = projectSnap.data();
-
-    if (project.clientId !== authInfo.uid && !authInfo.isAdmin) {
-      throw new HttpsError("permission-denied", "Only the project client can record payments");
-    }
-
-    const amountBefore = project.amountPaid || 0;
-    const amountAfter = amountBefore + amountDelta;
-
-    if (amountAfter < 0) {
-      throw new HttpsError("invalid-argument", "Payment amount cannot result in negative total");
-    }
-
-    const price = project.agreedPrice || project.originalPrice || 0;
-    let paymentStatusAfter;
-    if (amountAfter >= price && price > 0) {
-      paymentStatusAfter = "Full";
-    } else if (amountAfter > 0) {
-      paymentStatusAfter = "Partial";
-    } else {
-      paymentStatusAfter = "Pending";
-    }
-
-    const now = new Date().toISOString();
-    const paymentHistoryRef = db.collection("online_projects")
-      .doc(projectId)
-      .collection("payment_history")
-      .doc();
-
-    const paymentRecord = {
-      id: paymentHistoryRef.id,
-      projectId,
-      recordedBy: authInfo.uid,
-      recordedByRole: authInfo.isAdmin ? "admin" : "provider",
-      amountDelta,
-      amountBefore,
-      amountAfter,
-      paymentStatusBefore: project.paymentStatus || "Pending",
-      paymentStatusAfter,
-      notes: notes || null,
-      createdAt: now,
-      clientId: project.clientId,
-      providerId: project.providerId,
-    };
-
-    transaction.set(paymentHistoryRef, paymentRecord);
-    transaction.update(projectRef, {
-      amountPaid: amountAfter,
-      paymentStatus: paymentStatusAfter,
-      paymentNotes: notes || null,
-      updatedAt: now,
-    });
-
-    return {paymentRecord};
-  });
-
-  return {success: true, data: result.paymentRecord};
+async function deductReputationForLateReschedule(_userId, _reschedulerRole) {
+  throw new HttpsError("internal", "deductReputationForLateReschedule not yet implemented");
 }
 
-/**
- * Get a single project by ID
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with project data
- */
-async function getProject_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {projectId} = payload;
-  if (!projectId) {
-    throw new HttpsError("invalid-argument", "projectId is required");
-  }
-
-  const {project} = await getProjectAndValidateAccess(projectId, authInfo);
-
-  return {success: true, data: project};
-}
-
-/**
- * Get all projects for a client
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with list of projects
- */
-async function getClientProjects_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {clientId, limit = 50} = payload;
-
-  const targetClientId = clientId || authInfo.uid;
-  if (targetClientId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Not authorized to view these projects");
-  }
-
-  try {
-    const projectsQuery = await db.collection("online_projects")
-      .where("clientId", "==", targetClientId)
-      .orderBy("createdAt", "desc")
-      .limit(limit)
-      .get();
-
-    const projects = projectsQuery.docs.map((doc) => ({id: doc.id, ...doc.data()}));
-    return {success: true, data: projects};
-  } catch (error) {
-    console.error("Error in getClientProjects:", error);
-    throw new HttpsError("internal", error.message);
-  }
-}
-
-/**
- * Get all projects for a provider
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with list of projects
- */
-async function getProviderProjects_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {providerId, limit = 50} = payload;
-
-  const targetProviderId = providerId || authInfo.uid;
-  if (targetProviderId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Not authorized to view these projects");
-  }
-
-  try {
-    const projectsQuery = await db.collection("online_projects")
-      .where("providerId", "==", targetProviderId)
-      .orderBy("createdAt", "desc")
-      .limit(limit)
-      .get();
-
-    const projects = projectsQuery.docs.map((doc) => ({id: doc.id, ...doc.data()}));
-    return {success: true, data: projects};
-  } catch (error) {
-    console.error("Error in getProviderProjects:", error);
-    throw new HttpsError("internal", error.message);
-  }
-}
-
-/**
- * Get project analytics for a client
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with analytics data
- */
-async function getClientProjectAnalytics_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth) {
-    throw new HttpsError("unauthenticated", "User must be authenticated");
-  }
-
-  const {clientId, startDate, endDate} = payload;
-
-  const targetClientId = clientId || authInfo.uid;
-  if (targetClientId !== authInfo.uid && !authInfo.isAdmin) {
-    throw new HttpsError("permission-denied", "Not authorized to view these analytics");
-  }
-
-  try {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const actualStartDate = startDate ? new Date(startDate) : thirtyDaysAgo;
-    const actualEndDate = endDate ? new Date(endDate) : now;
-
-    let memberSinceDate = now;
-    try {
-      const userDoc = await db.collection("users").doc(targetClientId).get();
-      if (userDoc.exists) {
-        const userData = userDoc.data();
-        memberSinceDate = userData.createdAt ? new Date(userData.createdAt) : now;
-      }
-    } catch (error) {
-      console.log("Could not get user profile, using default member date");
-    }
-
-    const projectsQuery = await db.collection("online_projects")
-      .where("clientId", "==", targetClientId)
-      .where("createdAt", ">=", actualStartDate.toISOString())
-      .where("createdAt", "<=", actualEndDate.toISOString())
-      .get();
-
-    const projects = projectsQuery.docs.map((doc) => doc.data());
-
-    const totalProjects = projects.length;
-    const completedProjects = projects.filter((p) => p.status === "Completed").length;
-    const activeProjects = projects.filter((p) =>
-      ["Active", "InReview", "RevisionsRequested"].includes(p.status),
-    ).length;
-    const pendingProjects = projects.filter((p) =>
-      ["Pending", "Negotiating"].includes(p.status),
-    ).length;
-    const cancelledProjects = projects.filter((p) => p.status === "Cancelled").length;
-    const disputedProjects = projects.filter((p) =>
-      ["Disputed", "ResolvedForClient", "ResolvedForProvider"].includes(p.status),
-    ).length;
-    const totalSpent = projects
-      .filter((p) => p.status === "Completed")
-      .reduce((sum, p) => sum + (p.amountPaid || 0), 0);
-
-    return {
-      success: true,
-      data: {
-        clientId: targetClientId,
-        totalProjects,
-        completedProjects,
-        activeProjects,
-        pendingProjects,
-        totalSpent,
-        cancelledProjects,
-        disputedProjects,
-        memberSince: memberSinceDate.toISOString(),
-        startDate: actualStartDate.toISOString(),
-        endDate: actualEndDate.toISOString(),
-      },
-    };
-  } catch (error) {
-    console.error("Error in getClientProjectAnalytics:", error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message);
-  }
-}
-
-/**
- * Get project analytics for a provider (admin only)
- * @param {Object} request The callable request
- * @param {Object} data The request data
- * @return {Promise<Object>} Result with analytics data
- */
-async function getProviderProjectAnalytics_handler(request, data) {
-  const payload = data.data || data;
-  const authInfo = getAuthInfo({auth: request.auth}, data);
-
-  if (!authInfo.hasAuth || !authInfo.isAdmin) {
-    throw new HttpsError(
-      "permission-denied",
-      "Only ADMIN users can get provider project analytics",
-    );
-  }
-
-  const {providerId, startDate, endDate} = payload;
-  if (!providerId) {
-    throw new HttpsError("invalid-argument", "Provider ID is required");
-  }
-
-  try {
-    const now = new Date();
-    const actualStartDate = startDate ? new Date(startDate) : new Date(0);
-    const actualEndDate = endDate ? new Date(endDate) : now;
-
-    let query = db.collection("online_projects").where("providerId", "==", providerId);
-
-    if (startDate) {
-      query = query.where("createdAt", ">=", actualStartDate.toISOString());
-    }
-    if (endDate) {
-      query = query.where("createdAt", "<=", actualEndDate.toISOString());
-    }
-
-    const projectsSnapshot = await query.get();
-    const projects = projectsSnapshot.docs.map((doc) => doc.data());
-
-    const totalProjects = projects.length;
-
-    if (totalProjects === 0) {
-      return {
-        success: true,
-        data: {
-          providerId,
-          totalProjects: 0,
-          completedJobs: 0,
-          cancelledJobs: 0,
-          activeJobs: 0,
-          disputedProjects: 0,
-          completionRate: 0,
-          totalEarnings: 0,
-          packageBreakdown: [],
-          startDate: startDate || null,
-          endDate: endDate || null,
-        },
-      };
-    }
-
-    const completedJobs = projects.filter((p) => p.status === "Completed").length;
-    const cancelledJobs = projects.filter((p) =>
-      p.status === "Cancelled" || p.status === "Declined",
-    ).length;
-    const activeJobs = projects.filter((p) =>
-      ["Active", "InReview", "RevisionsRequested"].includes(p.status),
-    ).length;
-    const disputedProjects = projects.filter((p) =>
-      ["Disputed", "ResolvedForClient", "ResolvedForProvider"].includes(p.status),
-    ).length;
-
-    const acceptedJobs = projects.filter((p) =>
-      ["Completed", "Active", "InReview", "RevisionsRequested"].includes(p.status),
-    ).length;
-
-    const completionRate = acceptedJobs === 0 ?
-      0 :
-      (completedJobs * 100) / acceptedJobs;
-
-    const totalEarnings = projects
-      .filter((p) => p.status === "Completed")
-      .reduce((sum, p) => sum + (p.amountPaid || 0), 0);
-
-    const packageCounts = {};
-    for (const project of projects.filter((p) => p.status === "Completed")) {
-      if (project.servicePackageId) {
-        packageCounts[project.servicePackageId] =
-          (packageCounts[project.servicePackageId] || 0) + 1;
-      }
-    }
-
-    const packageBreakdown = Object.entries(packageCounts);
-
-    return {
-      success: true,
-      data: {
-        providerId,
-        totalProjects,
-        completedJobs,
-        cancelledJobs,
-        activeJobs,
-        disputedProjects,
-        completionRate: Number(completionRate.toFixed(2)),
-        totalEarnings,
-        packageBreakdown,
-        startDate: startDate || null,
-        endDate: endDate || null,
-      },
-    };
-  } catch (error) {
-    console.error("Error in getProviderProjectAnalytics:", error);
-    throw new HttpsError("internal", error.message);
-  }
-}
-
-// ============================================================================
+// =============================================================================
 // TRANSPORT LAYER: SINGLE CONSOLIDATED ENTRYPOINT
-// ============================================================================
+// =============================================================================
 
+/**
+ * Action names recognized by `onlineProjectAction` (17 callable dispatchers)
+ * plus `updateMilestoneMetadata` which is a direct Firestore write
+ * governed by a security-rule exception (not a callable). Together
+ * these form the 18-action surface listed in `docs/OnlineService.md`
+ * §6.7. Exported for use in tests and other modules.
+ */
+const ONLINE_PROJECT_ACTIONS = [
+  "createOnlineProject",
+  "acceptProject",
+  "declineProject",
+  "negotiateProject",
+  "acceptCounterOffer",
+  "rejectCounterOffer",
+  "submitDeliverable",
+  "approveDeliverable",
+  "requestRevision",
+  "cancelProject",
+  "disputeProject",
+  "recordPayment",
+  "markMilestoneApproved",
+  "updateMilestoneMetadata", // rule-only, not dispatched
+  "getOnlineProject",
+  "listClientOnlineProjects",
+  "listProviderOnlineProjects",
+  "getProjectAnalytics",
+];
+
+/**
+ * The subset of `ONLINE_PROJECT_ACTIONS` that route through the
+ * `onlineProjectAction` dispatcher. `updateMilestoneMetadata` is
+ * intentionally excluded — it is enforced by a security-rule
+ * exception, not a callable.
+ */
+const ONLINE_PROJECT_CALLABLE_ACTIONS = ONLINE_PROJECT_ACTIONS.filter(
+  (a) => a !== "updateMilestoneMetadata",
+);
+
+/**
+ * Single action-dispatch Cloud Function for all online-project operations.
+ * 18 actions per `docs/OnlineService.md` §6.7.
+ */
 exports.onlineProjectAction = onCall(
   {
     memory: "256MiB",
@@ -1965,48 +332,42 @@ exports.onlineProjectAction = onCall(
       throw new HttpsError("invalid-argument", "An action must be specified.");
     }
 
-    const data = request.data;
-
     try {
       switch (action) {
       case "createOnlineProject":
-        return await createOnlineProject_handler(request, data);
+        return await createOnlineProject_onlineProject(request);
       case "acceptProject":
-        return await acceptProject_handler(request, data);
+        return await acceptProject_onlineProject(request);
       case "declineProject":
-        return await declineProject_handler(request, data);
+        return await declineProject_onlineProject(request);
       case "negotiateProject":
-        return await negotiateProject_handler(request, data);
+        return await negotiateProject_onlineProject(request);
       case "acceptCounterOffer":
-        return await acceptCounterOffer_handler(request, data);
+        return await acceptCounterOffer_onlineProject(request);
+      case "rejectCounterOffer":
+        return await rejectCounterOffer_onlineProject(request);
       case "submitDeliverable":
-        return await submitDeliverable_handler(request, data);
+        return await submitDeliverable_onlineProject(request);
       case "approveDeliverable":
-        return await approveDeliverable_handler(request, data);
-      case "requestRevisions":
-        return await requestRevisions_handler(request, data);
+        return await approveDeliverable_onlineProject(request);
+      case "requestRevision":
+        return await requestRevision_onlineProject(request);
       case "cancelProject":
-        return await cancelProject_handler(request, data);
+        return await cancelProject_onlineProject(request);
       case "disputeProject":
-        return await disputeProject_handler(request, data);
-      case "resolveDisputeForClient":
-        return await resolveDisputeForClient_handler(request, data);
-      case "resolveDisputeForProvider":
-        return await resolveDisputeForProvider_handler(request, data);
-      case "dismissDispute":
-        return await dismissDispute_handler(request, data);
+        return await disputeProject_onlineProject(request);
       case "recordPayment":
-        return await recordPayment_handler(request, data);
-      case "getProject":
-        return await getProject_handler(request, data);
-      case "getClientProjects":
-        return await getClientProjects_handler(request, data);
-      case "getProviderProjects":
-        return await getProviderProjects_handler(request, data);
-      case "getClientProjectAnalytics":
-        return await getClientProjectAnalytics_handler(request, data);
-      case "getProviderProjectAnalytics":
-        return await getProviderProjectAnalytics_handler(request, data);
+        return await recordPayment_onlineProject(request);
+      case "markMilestoneApproved":
+        return await markMilestoneApproved_onlineProject(request);
+      case "getOnlineProject":
+        return await getOnlineProject_onlineProject(request);
+      case "listClientOnlineProjects":
+        return await listClientOnlineProjects_onlineProject(request);
+      case "listProviderOnlineProjects":
+        return await listProviderOnlineProjects_onlineProject(request);
+      case "getProjectAnalytics":
+        return await getProjectAnalytics_onlineProject(request);
       default:
         throw new HttpsError("invalid-argument", `Unknown action: ${action}`);
       }
@@ -2020,111 +381,13 @@ exports.onlineProjectAction = onCall(
   },
 );
 
-// ============================================================================
-// SCHEDULED FUNCTIONS
-// ============================================================================
-
-exports.autoCancelExpiredProjects = onSchedule("every day 00:00", async () => {
-  const now = admin.firestore.Timestamp.now();
-  const sevenDaysAgo = new Date(now.toMillis() - 7 * 24 * 60 * 60 * 1000);
-  const fourteenDaysAgo = new Date(now.toMillis() - 14 * 24 * 60 * 60 * 1000);
-
-  try {
-    const pendingExpired = await db.collection("online_projects")
-      .where("status", "==", "Pending")
-      .where("createdAt", "<", sevenDaysAgo.toISOString())
-      .get();
-
-    const pendingBatch = db.batch();
-    const pendingProjects = [];
-
-    pendingExpired.forEach((doc) => {
-      pendingBatch.update(doc.ref, {
-        status: "Cancelled",
-        autoCancelled: true,
-        updatedAt: new Date().toISOString(),
-      });
-      pendingProjects.push({id: doc.id, ...doc.data()});
-    });
-
-    if (pendingProjects.length > 0) {
-      await pendingBatch.commit();
-
-      for (const project of pendingProjects) {
-        const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-        createNotification(
-          project.clientId,
-          USER_TYPES.CLIENT,
-          NOTIFICATION_TYPES.ONLINE_PROJECT_CANCELLED,
-          "Project Auto-Cancelled",
-          `${serviceName} was automatically cancelled due to inactivity.`,
-          project.id,
-          {projectId: project.id, autoCancelled: true, reason: "pending_expired"},
-        ).catch((e) => console.error("Auto-cancel notification error:", e));
-
-        createNotification(
-          project.providerId,
-          USER_TYPES.PROVIDER,
-          NOTIFICATION_TYPES.ONLINE_PROJECT_CANCELLED,
-          "Project Auto-Cancelled",
-          `${serviceName} was automatically cancelled due to inactivity.`,
-          project.id,
-          {projectId: project.id, autoCancelled: true, reason: "pending_expired"},
-        ).catch((e) => console.error("Auto-cancel notification error:", e));
-      }
-    }
-
-    const negotiatingExpired = await db.collection("online_projects")
-      .where("status", "==", "Negotiating")
-      .where("lastNegotiationAt", "<", fourteenDaysAgo.toISOString())
-      .get();
-
-    const negotiatingBatch = db.batch();
-    const negotiatingProjects = [];
-
-    negotiatingExpired.forEach((doc) => {
-      negotiatingBatch.update(doc.ref, {
-        status: "Cancelled",
-        autoCancelled: true,
-        updatedAt: new Date().toISOString(),
-      });
-      negotiatingProjects.push({id: doc.id, ...doc.data()});
-    });
-
-    if (negotiatingProjects.length > 0) {
-      await negotiatingBatch.commit();
-
-      for (const project of negotiatingProjects) {
-        const {serviceName} = await getServiceAndPackageName(project.serviceId, null);
-
-        createNotification(
-          project.clientId,
-          USER_TYPES.CLIENT,
-          NOTIFICATION_TYPES.ONLINE_PROJECT_CANCELLED,
-          "Project Auto-Cancelled",
-          `${serviceName} was automatically cancelled due to inactivity.`,
-          project.id,
-          {projectId: project.id, autoCancelled: true, reason: "negotiating_expired"},
-        ).catch((e) => console.error("Auto-cancel notification error:", e));
-
-        createNotification(
-          project.providerId,
-          USER_TYPES.PROVIDER,
-          NOTIFICATION_TYPES.ONLINE_PROJECT_CANCELLED,
-          "Project Auto-Cancelled",
-          `${serviceName} was automatically cancelled due to inactivity.`,
-          project.id,
-          {projectId: project.id, autoCancelled: true, reason: "negotiating_expired"},
-        ).catch((e) => console.error("Auto-cancel notification error:", e));
-      }
-    }
-
-    console.log(
-      `Auto-cancel complete: ${pendingProjects.length} pending, ` +
-      `${negotiatingProjects.length} negotiating expired`,
-    );
-  } catch (error) {
-    console.error("Error in autoCancelExpiredProjects:", error);
-  }
-});
+exports.ONLINE_PROJECT_ACTIONS = ONLINE_PROJECT_ACTIONS;
+exports.ONLINE_PROJECT_CALLABLE_ACTIONS = ONLINE_PROJECT_CALLABLE_ACTIONS;
+exports.ONLINE_PROJECT_STATUS = ONLINE_PROJECT_STATUS;
+exports.SERVICE_PACKAGE_TYPE = SERVICE_PACKAGE_TYPE;
+exports.SERVICE_MODE = SERVICE_MODE;
+exports.ONLINE_DELIVERY_FORMAT = ONLINE_DELIVERY_FORMAT;
+exports.getAuthInfo = getAuthInfo;
+exports.generateOnlineProjectId = generateOnlineProjectId;
+exports.isValidOnlineProjectTransition = isValidOnlineProjectTransition;
+exports.deductReputationForLateReschedule = deductReputationForLateReschedule;

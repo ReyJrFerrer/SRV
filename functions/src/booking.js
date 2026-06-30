@@ -82,7 +82,7 @@ function isValidStatusTransition(currentStatus, newStatus) {
     "Cancelled": [],
     "Disputed": [],
   };
-  return validTransitions[currentStatus]?.includes(newStatus) || newStatus === "Disputed";
+  return validTransitions[currentStatus]?.includes(newStatus);
 }
 
 /**

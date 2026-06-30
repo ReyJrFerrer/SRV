@@ -2,8 +2,8 @@
 tags: [operations, firebase, notifications, fcm]
 date: 2026-06-16
 sources:
-  - raw/specs/FCM_TEST_COMMANDS.md
-  - raw/specs/FCM_TROUBLESHOOTING.md
+  - docs/FCM_TEST_COMMANDS.md
+  - docs/FCM_TROUBLESHOOTING.md
 related:
   - [[Chat Media Implementation]]
 ---
@@ -27,7 +27,7 @@ Firebase Cloud Messaging (FCM) configuration, testing, and troubleshooting for t
 
 ## Testing
 
-Browser console test commands at `raw/specs/FCM_TEST_COMMANDS.md` include:
+Browser console test commands at `docs/FCM_TEST_COMMANDS.md` include:
 - Full diagnostic (`printDiagnostics()`)
 - Comprehensive test (`testFCMConfiguration()`)
 - Raw Firebase FCM test (bypasses OneSignal)

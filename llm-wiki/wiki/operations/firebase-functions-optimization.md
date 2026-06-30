@@ -2,8 +2,8 @@
 tags: [operations, firebase, functions, deployment]
 date: 2026-06-16
 sources:
-  - raw/specs/Firebase-Optimization.md
   - functions/index.js
+  - functions/package.json
 related:
   - [[Firebase Hybrid Architecture]]
   - [[Version Cache Busting]]

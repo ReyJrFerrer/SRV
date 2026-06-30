@@ -49,6 +49,7 @@ Rendered by `ClientHome` in `pages/client/home.tsx`. Three main sections:
 
 - Loads categories via `useServiceManagement().getAllCategories()`
 - Reorders by predefined display priority: General Repair, Cleaning, Gadget Repair, Automotive, Beauty, Massage, Tutoring, Delivery, Photography
+- Actual category slugs from backend (`service.js:initializeCategoriesDirectly`): `home-services`, `cleaning-services`, `automobile-repairs`, `gadget-technicians`, `beauty-services`, `delivery-errands`, `beauty-wellness`, `tutoring`, `photographer`, `others`
 - Maps names to specific SVG icons
 - Skeleton loading; error state with red text
 
