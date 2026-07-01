@@ -18,7 +18,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Review Test Infrastructure]] — Mocha + firebase-functions-test, 115 cases, 23 actions, per-action coverage matrix
 - [[Account Test Infrastructure]] — Mocha + firebase-functions-test, 49 cases, 11 actions, per-action coverage matrix, bug fix (payload destructuring)
 - [[Reputation Test Infrastructure]] — Mocha + firebase-functions-test, 31 cases, 7 actions, per-action coverage matrix, history subcollection assertions
-- [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections; **Phase 0+1+2 complete (2026-06-29, 72 tests passing)**
+- [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections; **Phase 0+1+2 complete (2026-06-29, 72 tests passing); Phase 10 Tasks 72-74 (service + 2 hooks) complete (2026-07-01)**
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
 - [[Review System]] — 23 backend actions, 2 Firestore collections, AI analysis, moderation, frontend hooks
@@ -31,9 +31,9 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Frontend Overview]] — Stack, entry point chain, directory structure, conventions
 - [[Routing and Layouts]] — HashRouter route groups, client/provider layouts, auth guards
 - [[Authentication Flow]] — zkLogin (Google OAuth via Sui) + Firebase custom token bridge
-- [[Services Layer]] — All 20 service modules (Firebase, auth, booking, chat, media, wallet); Phase 1: +1 `onlineProjectCanisterService.ts`
+- [[Services Layer]] — All 21 service modules (Firebase, auth, booking, chat, media, wallet); Phase 1: +1 `onlineProjectCanisterService.ts`
 - [[Service Discovery and Listing]] — How clients find, search, browse, and view services; Phase 1: +serviceMode filter
-- [[State and Hooks]] — Zustand stores, React contexts, 26 custom hooks; Phase 1: +2 online project hooks
+- [[State and Hooks]] — Zustand stores, React contexts, 28 custom hooks; Phase 1: +2 online project hooks (`useOnlineProject` + `useProviderOnlineProject`)
 - [[Chat System]] — Firestore-based chat architecture, data model, chat notifications
 - [[Media and Images]] — Upload pipeline, 3-layer caching, Firebase Storage, chat attachments, **ProjectBriefAttachment (Phase 1)**
 - [[Version Cache Busting]] — Multi-layered cache clearing for Firebase deployments
@@ -69,5 +69,5 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 ---
 
-_Last updated: 2026-06-29_
+_Last updated: 2026-07-01_
 _Pages: 40_

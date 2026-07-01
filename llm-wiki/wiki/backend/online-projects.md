@@ -6,8 +6,8 @@ sources:
   - functions/src/onlineProject.js
   - functions/test/onlineProject.test.js
   - src/frontend/src/services/onlineProjectCanisterService.ts (planned)
-  - src/frontend/src/hooks/useOnlineProject.tsx (planned)
-  - src/frontend/src/hooks/useProviderOnlineProject.tsx (planned)
+  - src/frontend/src/hooks/useOnlineProject.tsx
+  - src/frontend/src/hooks/useProviderOnlineProject.tsx
 related:
 - [[Booking System]]
 - [[Service Creation Workflow]]
@@ -237,15 +237,15 @@ The trigger for using multi-session Booking vs. OnlineProject is `package.type =
 
 ## Key Files
 
-**Planned for Phase 1:**
-- `functions/src/onlineProject.js` — new Cloud Function (18 actions)
-- `src/frontend/src/services/onlineProjectCanisterService.ts` — API service
-- `src/frontend/src/hooks/useOnlineProject.tsx` — client-side hooks
-- `src/frontend/src/hooks/useProviderOnlineProject.tsx` — provider-side hooks
-- `src/frontend/src/pages/client/project/` — 3 new pages (new, list, detail)
-- `src/frontend/src/pages/provider/project/` — 2 new pages (list, detail)
-- `src/frontend/src/components/client/project/` — brief form, deliverable viewer, milestone tracker, negotiation UI
-- `src/frontend/src/components/provider/project/` — deliverable uploader, milestone editor, negotiation responder
+**Implemented (Phase 1 + Phase 10 Tasks 72–74):**
+- `functions/src/onlineProject.js` — new Cloud Function (18 actions; 8 of 18 GREEN as of 2026-06-29, see [[Online Project Test Infrastructure]])
+- `src/frontend/src/services/onlineProjectCanisterService.ts` — API service (18 callable wrappers + `subscribeToProject` / `subscribeToBrief` / `subscribeToNegotiations` / `subscribeToDeliverables` Firestore subscriptions + rule-only `updateMilestoneMetadata` direct write)
+- `src/frontend/src/hooks/useOnlineProject.tsx` — client hook; 4 real-time subscriptions + client action surface
+- `src/frontend/src/hooks/useProviderOnlineProject.tsx` — provider hook; 4 real-time subscriptions + provider action surface
+- `src/frontend/src/pages/client/project/` — 3 new pages (new, list, detail) — pending
+- `src/frontend/src/pages/provider/project/` — 2 new pages (list, detail) — pending
+- `src/frontend/src/components/client/project/` — brief form, deliverable viewer, milestone tracker, negotiation UI — pending
+- `src/frontend/src/components/provider/project/` — deliverable uploader, milestone editor, negotiation responder — pending
 
 **Modified for Phase 1:**
 - `functions/src/service.js` — add 4 new fields to `createService_service` validation

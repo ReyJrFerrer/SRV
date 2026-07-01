@@ -1,6 +1,6 @@
 # Online Services Phase 1 — Test-Driven Implementation Checklist
 
-**Status**: In progress (Phase 0 + 1 + 2 complete: 42/93 tasks done, 290 service+online tests passing; Phase 3+ pending)
+**Status**: In progress (Phase 0 + 1 + 2 + Phase 10 Tasks 72–74 complete: 45/93 tasks done, 290 service+online tests passing; Phase 3+ pending)
 **Date**: 2026-06-28
 **Source spec**: `docs/OnlineService.md` (ratified 2026-06-27)
 **Source decision record**: `llm-wiki/wiki/decisions/grill-2026-06-27-online-services-integration.md`
@@ -380,9 +380,9 @@ Apply this template to every action unless the per-action delta overrides:
 
 ### Phase 10 — Frontend (12 no-test items)
 
-- [ ] **Task 72**: Create `onlineProjectCanisterService.ts` (18 action methods + 3 subcollection methods `getBrief`/`getNegotiations`/`getDeliverables`).
-- [ ] **Task 73**: Create `useOnlineProject.tsx` hook (client-side, real-time via `onSnapshot` on project + 3 subcollections).
-- [ ] **Task 74**: Create `useProviderOnlineProject.tsx` hook (provider-side, same shape).
+- [x] **Task 72**: Create `onlineProjectCanisterService.ts` (18 action methods + 3 subcollection methods `getBrief`/`getNegotiations`/`getDeliverables` + `subscribeToProject` for the real-time project doc).
+- [x] **Task 73**: Create `useOnlineProject.tsx` hook (client-side, real-time via `onSnapshot` on project + 3 subcollections).
+- [x] **Task 74**: Create `useProviderOnlineProject.tsx` hook (provider-side, same shape).
 - [ ] **Task 75**: Create 3 client pages: `CreateProject` (brief form), `MyProjectsIndex` (status tabs), `ClientProjectDetail`.
 - [ ] **Task 76**: Create 3 provider pages: `ProviderProjects` (status tabs), `ProviderProjectDetail`, `ProviderDeliveredProjects` (portfolio filter).
 - [ ] **Task 77**: Modify `pages/provider/services/add.tsx`: add Step 0 serviceMode selector + package type field.

@@ -536,3 +536,24 @@ Implemented all 8 lifecycle actions of `onlineProjectAction` in `functions/src/o
 **Updated pages (2)**:
 - `docs/OnlineService-Implementation-Checklist.md` — Tasks 26-42 marked done; new "Phase 2 — ✅ COMPLETE 2026-06-29" section with per-task line references; status line bumped to 42/93 tasks
 - `llm-wiki/wiki/backend/online-projects.md` — Implementation status updated; new "Phase 2 Implementation Status" table with line refs and test counts; `related:` adds [[Service Test Infrastructure]]; tags include `online-project`
+
+## [2026-07-01] hook | OnlineProject client + provider hooks (Phase 10, Tasks 72-74)
+
+Implemented the two single-project real-time hooks for the Online Services rollout.
+
+**Files changed**:
+- `src/frontend/src/services/onlineProjectCanisterService.ts` — added `subscribeToProject(projectId, onChange, onError?)` real-time Firestore listener on `online_projects/{id}` (was missing; needed by the hooks to subscribe to the project doc itself in addition to the 3 subcollections)
+- `src/frontend/src/hooks/useOnlineProject.tsx` — NEW; client hook. 4 subscriptions (`subscribeToProject` + `subscribeToBrief` + `subscribeToNegotiations` + `subscribeToDeliverables`); client action surface (`createProject`, `negotiate`, `acceptCounterOffer`, `rejectCounterOffer`, `approveDeliverable`, `requestRevision`, `cancelProject`, `disputeProject`, `recordPayment`, `refresh`)
+- `src/frontend/src/hooks/useProviderOnlineProject.tsx` — NEW; provider hook. Same 4 subscriptions; provider action surface (`acceptProject`, `declineProject`, `negotiate`, `submitDeliverable`, `markMilestoneApproved`, `updateMilestoneMetadata`, `cancelProject`, `disputeProject`, `recordPayment`, `refresh`)
+
+**Lint status**:
+- `bunx tsc --noEmit --project src/frontend/tsconfig.json` → 0 errors
+- `bunx prettier --check` on the 3 files → all clean
+- `bun run test:online-project` → 51/51 pass (no regressions on the existing service unit tests)
+
+**Updated pages (3)**:
+- `docs/OnlineService-Implementation-Checklist.md` — Tasks 72, 73, 74 marked done; status line bumped to 45/93 tasks
+- `llm-wiki/wiki/frontend/state-and-hooks.md` — new "Online Projects (Phase 1)" section in the hooks table; total count bumped 26 → 28
+- `llm-wiki/wiki/frontend/services.md` — service count 20 → 21; added `onlineProjectCanisterService` row under "Booking & Service Management"
+- `llm-wiki/wiki/frontend/overview.md` — directory tree updated (services 20 → 21; hooks 26 → 28)
+- `llm-wiki/wiki/backend/online-projects.md` — `useOnlineProject.tsx` and `useProviderOnlineProject.tsx` marked implemented (no longer "planned"); "Key Files" section split into Implemented vs pending

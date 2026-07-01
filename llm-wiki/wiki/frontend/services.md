@@ -12,7 +12,7 @@ related:
 
 # Services Layer
 
-All 20 service modules in `src/frontend/src/services/`. Services abstract Firebase SDKs (Auth, Firestore, Functions, Storage, Realtime Database) and provide domain-specific APIs. Original ICP canister calls have all been replaced — these are Firebase-only wrappers.
+All 21 service modules in `src/frontend/src/services/`. Services abstract Firebase SDKs (Auth, Firestore, Functions, Storage, Realtime Database) and provide domain-specific APIs. Original ICP canister calls have all been replaced — these are Firebase-only wrappers.
 
 ## Firebase Foundation
 
@@ -33,12 +33,13 @@ All 20 service modules in `src/frontend/src/services/`. Services abstract Fireba
 
 ## Booking & Service Management
 
-| Service                  | File                        | Purpose                                                                                                                                                                      |
-| ------------------------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bookingCanisterService` | `bookingCanisterService.ts` | Booking CRUD + real-time Firestore listeners: `createBooking()`, `acceptBooking()`, `declineBooking()`, `cancelBooking()`, `startService()`, `completeService()` + analytics |
-| `serviceCanisterService` | `serviceCanisterService.ts` | Service CRUD: `createService()`, `updateService()`, `deleteService()`, `getAllServices()`, `getService()`, `searchServicesByLocation()`, availability, certificate media, commission quote, packages |
-| `reviewCanisterService`  | `reviewCanisterService.ts`  | Review CRUD via Cloud Functions: `submitReview()`, `getReview()`, `getProviderRating()`, `getServiceRating()`, `getUserRating()`, `hideReview()`, `flagReview()`             |
-| `reputationService`      | `reputationService.ts`      | Reputation score fetching from Firestore doc `reputations/{userId}`                                                                                                          |
+| Service                      | File                              | Purpose                                                                                                                                                                                                                            |
+| ---------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bookingCanisterService`     | `bookingCanisterService.ts`       | Booking CRUD + real-time Firestore listeners: `createBooking()`, `acceptBooking()`, `declineBooking()`, `cancelBooking()`, `startService()`, `completeService()` + analytics                                                       |
+| `serviceCanisterService`     | `serviceCanisterService.ts`       | Service CRUD: `createService()`, `updateService()`, `deleteService()`, `getAllServices()`, `getService()`, `searchServicesByLocation()`, availability, certificate media, commission quote, packages                             |
+| `onlineProjectCanisterService` | `onlineProjectCanisterService.ts` | **Online services (Phase 1)** — `onlineProjectAction` callable: 18 actions (`createOnlineProject`, `acceptProject`, `declineProject`, `negotiateProject`, `acceptCounterOffer`, `rejectCounterOffer`, `submitDeliverable`, `approveDeliverable`, `requestRevision`, `cancelProject`, `disputeProject`, `recordPayment`, `markMilestoneApproved`, `updateMilestoneMetadata` [rule-only direct write], `getOnlineProject`, `listClientOnlineProjects`, `listProviderOnlineProjects`, `getProjectAnalytics`) + 4 Firestore subscriptions (`subscribeToProject`, `subscribeToBrief`, `subscribeToNegotiations`, `subscribeToDeliverables`). |
+| `reviewCanisterService`      | `reviewCanisterService.ts`        | Review CRUD via Cloud Functions: `submitReview()`, `getReview()`, `getProviderRating()`, `getServiceRating()`, `getUserRating()`, `hideReview()`, `flagReview()`                                                                  |
+| `reputationService`          | `reputationService.ts`            | Reputation score fetching from Firestore doc `reputations/{userId}`                                                                                                                                                                |
 
 ## Chat & Notifications
 

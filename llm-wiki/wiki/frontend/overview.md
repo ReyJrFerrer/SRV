@@ -56,8 +56,8 @@ src/frontend/src/
 │   ├── client/        — Client-facing pages (home, search, booking, chat, etc.)
 │   ├── provider/      — Provider-facing pages (services, bookings, wallet, etc.)
 │   └── auth/          — Login callback handling
-├── services/          — 20 service modules (Firebase, auth, booking, chat, media, etc.)
-├── hooks/             — 26 custom React hooks
+├── services/          — 21 service modules (Firebase, auth, booking, chat, media, onlineProject, etc.)
+├── hooks/             — 28 custom React hooks (Phase 1: +2 for online projects)
 ├── store/             — Zustand stores (locationStore, locationDataStore)
 ├── context/           — React contexts (Auth, BookingCache, InAppNotification)
 ├── utils/             — Utilities (session, version checker, image cache, asset resolver)

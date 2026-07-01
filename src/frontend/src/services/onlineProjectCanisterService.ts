@@ -252,7 +252,7 @@ export interface ProjectAnalytics {
  */
 async function call(action: string, data: object = {}): Promise<any> {
   const fn = httpsCallable(getFunctions(), "onlineProjectAction");
-  const result = await fn({action, data});
+  const result = await fn({ action, data });
   return result.data;
 }
 
@@ -282,7 +282,7 @@ export const onlineProjectCanisterService = {
     success: boolean;
     project: OnlineProject;
   }> {
-    return await call("acceptProject", {projectId});
+    return await call("acceptProject", { projectId });
   },
 
   // ==========================================================================
@@ -292,8 +292,8 @@ export const onlineProjectCanisterService = {
   async declineProject(
     projectId: string,
     reason?: string,
-  ): Promise<{success: boolean; project: OnlineProject}> {
-    return await call("declineProject", {projectId, reason});
+  ): Promise<{ success: boolean; project: OnlineProject }> {
+    return await call("declineProject", { projectId, reason });
   },
 
   // ==========================================================================
@@ -305,8 +305,12 @@ export const onlineProjectCanisterService = {
   async negotiateProject(
     projectId: string,
     offer: NegotiateOfferInput,
-  ): Promise<{success: boolean; offer: NegotiationOffer; project: OnlineProject}> {
-    return await call("negotiateProject", {projectId, ...offer});
+  ): Promise<{
+    success: boolean;
+    offer: NegotiationOffer;
+    project: OnlineProject;
+  }> {
+    return await call("negotiateProject", { projectId, ...offer });
   },
 
   // ==========================================================================
@@ -318,7 +322,7 @@ export const onlineProjectCanisterService = {
     success: boolean;
     project: OnlineProject;
   }> {
-    return await call("acceptCounterOffer", {projectId});
+    return await call("acceptCounterOffer", { projectId });
   },
 
   // ==========================================================================
@@ -330,7 +334,7 @@ export const onlineProjectCanisterService = {
     success: boolean;
     project: OnlineProject;
   }> {
-    return await call("rejectCounterOffer", {projectId});
+    return await call("rejectCounterOffer", { projectId });
   },
 
   // ==========================================================================
@@ -341,8 +345,12 @@ export const onlineProjectCanisterService = {
   async submitDeliverable(
     projectId: string,
     input: SubmitDeliverableInput,
-  ): Promise<{success: boolean; deliverable: DeliverableSubmission; project: OnlineProject}> {
-    return await call("submitDeliverable", {projectId, ...input});
+  ): Promise<{
+    success: boolean;
+    deliverable: DeliverableSubmission;
+    project: OnlineProject;
+  }> {
+    return await call("submitDeliverable", { projectId, ...input });
   },
 
   // ==========================================================================
@@ -353,8 +361,8 @@ export const onlineProjectCanisterService = {
   async approveDeliverable(
     projectId: string,
     deliverableId: string,
-  ): Promise<{success: boolean; project: OnlineProject}> {
-    return await call("approveDeliverable", {projectId, deliverableId});
+  ): Promise<{ success: boolean; project: OnlineProject }> {
+    return await call("approveDeliverable", { projectId, deliverableId });
   },
 
   // ==========================================================================
@@ -366,8 +374,8 @@ export const onlineProjectCanisterService = {
     projectId: string,
     deliverableId: string,
     notes?: string,
-  ): Promise<{success: boolean; project: OnlineProject}> {
-    return await call("requestRevision", {projectId, deliverableId, notes});
+  ): Promise<{ success: boolean; project: OnlineProject }> {
+    return await call("requestRevision", { projectId, deliverableId, notes });
   },
 
   // ==========================================================================
@@ -378,8 +386,8 @@ export const onlineProjectCanisterService = {
   async cancelProject(
     projectId: string,
     reason?: string,
-  ): Promise<{success: boolean; project: OnlineProject}> {
-    return await call("cancelProject", {projectId, reason});
+  ): Promise<{ success: boolean; project: OnlineProject }> {
+    return await call("cancelProject", { projectId, reason });
   },
 
   // ==========================================================================
@@ -389,8 +397,8 @@ export const onlineProjectCanisterService = {
   async disputeProject(
     projectId: string,
     reason?: string,
-  ): Promise<{success: boolean; project: OnlineProject}> {
-    return await call("disputeProject", {projectId, reason});
+  ): Promise<{ success: boolean; project: OnlineProject }> {
+    return await call("disputeProject", { projectId, reason });
   },
 
   // ==========================================================================
@@ -400,8 +408,8 @@ export const onlineProjectCanisterService = {
   async recordPayment(
     projectId: string,
     input: RecordPaymentInput,
-  ): Promise<{success: boolean; project: OnlineProject}> {
-    return await call("recordPayment", {projectId, ...input});
+  ): Promise<{ success: boolean; project: OnlineProject }> {
+    return await call("recordPayment", { projectId, ...input });
   },
 
   // ==========================================================================
@@ -412,8 +420,8 @@ export const onlineProjectCanisterService = {
   async markMilestoneApproved(
     projectId: string,
     milestoneId: string,
-  ): Promise<{success: boolean; project: OnlineProject}> {
-    return await call("markMilestoneApproved", {projectId, milestoneId});
+  ): Promise<{ success: boolean; project: OnlineProject }> {
+    return await call("markMilestoneApproved", { projectId, milestoneId });
   },
 
   // ==========================================================================
@@ -425,17 +433,21 @@ export const onlineProjectCanisterService = {
   async updateMilestoneMetadata(
     projectId: string,
     milestoneId: string,
-    fields: {title?: string; description?: string; dueDate?: string},
+    fields: { title?: string; description?: string; dueDate?: string },
   ): Promise<void> {
     const db = getDb();
     const projectRef = doc(db, "online_projects", projectId);
     // Direct write is allowed by the security rule for the provider;
     // status, percentage, and other fields are blocked at the rule layer.
     const updatePayload: Record<string, any> = {};
-    if (fields.title !== undefined) updatePayload[`milestones.${milestoneId}.title`] = fields.title;
-    if (fields.description !== undefined) updatePayload[`milestones.${milestoneId}.description`] = fields.description;
-    if (fields.dueDate !== undefined) updatePayload[`milestones.${milestoneId}.dueDate`] = fields.dueDate;
-    const {updateDoc} = await import("firebase/firestore");
+    if (fields.title !== undefined)
+      updatePayload[`milestones.${milestoneId}.title`] = fields.title;
+    if (fields.description !== undefined)
+      updatePayload[`milestones.${milestoneId}.description`] =
+        fields.description;
+    if (fields.dueDate !== undefined)
+      updatePayload[`milestones.${milestoneId}.dueDate`] = fields.dueDate;
+    const { updateDoc } = await import("firebase/firestore");
     await updateDoc(projectRef, updatePayload);
   },
 
@@ -447,30 +459,34 @@ export const onlineProjectCanisterService = {
     success: boolean;
     project: OnlineProject;
   }> {
-    return await call("getOnlineProject", {projectId});
+    return await call("getOnlineProject", { projectId });
   },
 
   // ==========================================================================
   // 16. listClientOnlineProjects (httpsCallable)
   // ==========================================================================
-  async listClientOnlineProjects(opts: {
-    limit?: number;
-    status?: OnlineProjectStatus;
-    clientId?: string; // admin override
-    adminOnBehalf?: boolean;
-  } = {}): Promise<{success: boolean; projects: OnlineProject[]; count: number}> {
+  async listClientOnlineProjects(
+    opts: {
+      limit?: number;
+      status?: OnlineProjectStatus;
+      clientId?: string; // admin override
+      adminOnBehalf?: boolean;
+    } = {},
+  ): Promise<{ success: boolean; projects: OnlineProject[]; count: number }> {
     return await call("listClientOnlineProjects", opts);
   },
 
   // ==========================================================================
   // 17. listProviderOnlineProjects (httpsCallable)
   // ==========================================================================
-  async listProviderOnlineProjects(opts: {
-    limit?: number;
-    status?: OnlineProjectStatus;
-    providerId?: string; // admin override
-    adminOnBehalf?: boolean;
-  } = {}): Promise<{success: boolean; projects: OnlineProject[]; count: number}> {
+  async listProviderOnlineProjects(
+    opts: {
+      limit?: number;
+      status?: OnlineProjectStatus;
+      providerId?: string; // admin override
+      adminOnBehalf?: boolean;
+    } = {},
+  ): Promise<{ success: boolean; projects: OnlineProject[]; count: number }> {
     return await call("listProviderOnlineProjects", opts);
   },
 
@@ -482,12 +498,42 @@ export const onlineProjectCanisterService = {
     success: boolean;
     analytics: ProjectAnalytics;
   }> {
-    return await call("getProjectAnalytics", {providerId});
+    return await call("getProjectAnalytics", { providerId });
   },
 
   // ==========================================================================
   // SUBCOLLECTION SUBSCRIPTIONS — direct Firestore, not callables
   // ==========================================================================
+
+  /**
+   * Subscribe to a single project's main document. Emits `null` when the
+   * project doesn't exist (or is hidden from the current user — Firestore
+   * rules gate this). Used by `useOnlineProject` / `useProviderOnlineProject`
+   * to drive detail pages.
+   * @param {string} projectId
+   * @param {(project: OnlineProject | null) => void} onChange
+   * @param {(error: Error) => void} onError
+   * @return {Unsubscribe}
+   */
+  subscribeToProject(
+    projectId: string,
+    onChange: (project: OnlineProject | null) => void,
+    onError?: (error: Error) => void,
+  ): Unsubscribe {
+    const db = getDb();
+    const projectRef = doc(db, "online_projects", projectId);
+    return onSnapshot(
+      projectRef,
+      (snap) => {
+        if (!snap.exists()) {
+          onChange(null);
+          return;
+        }
+        onChange({ id: snap.id, ...snap.data() } as OnlineProject);
+      },
+      onError,
+    );
+  },
 
   /**
    * Subscribe to a project's brief subcollection. Returns the first/only
@@ -515,7 +561,7 @@ export const onlineProjectCanisterService = {
           return;
         }
         const first = snap.docs[0];
-        onChange({id: first.id, ...first.data()} as ProjectBrief);
+        onChange({ id: first.id, ...first.data() } as ProjectBrief);
       },
       onError,
     );
@@ -535,13 +581,20 @@ export const onlineProjectCanisterService = {
     onError?: (error: Error) => void,
   ): Unsubscribe {
     const db = getDb();
-    const offersRef = collection(db, "online_projects", projectId, "negotiations");
+    const offersRef = collection(
+      db,
+      "online_projects",
+      projectId,
+      "negotiations",
+    );
     const q = query(offersRef, orderBy("createdAt", "desc"));
     return onSnapshot(
       q,
       (snap) => {
         const offers: NegotiationOffer[] = [];
-        snap.forEach((d) => offers.push({id: d.id, ...d.data()} as NegotiationOffer));
+        snap.forEach((d) =>
+          offers.push({ id: d.id, ...d.data() } as NegotiationOffer),
+        );
         onChange(offers);
       },
       onError,
@@ -561,14 +614,20 @@ export const onlineProjectCanisterService = {
     onError?: (error: Error) => void,
   ): Unsubscribe {
     const db = getDb();
-    const delivRef = collection(db, "online_projects", projectId, "deliverables");
+    const delivRef = collection(
+      db,
+      "online_projects",
+      projectId,
+      "deliverables",
+    );
     const q = query(delivRef, orderBy("submittedAt", "desc"));
     return onSnapshot(
       q,
       (snap) => {
         const deliverables: DeliverableSubmission[] = [];
         snap.forEach((d) =>
-          deliverables.push({id: d.id, ...d.data()} as DeliverableSubmission));
+          deliverables.push({ id: d.id, ...d.data() } as DeliverableSubmission),
+        );
         onChange(deliverables);
       },
       onError,

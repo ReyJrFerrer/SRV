@@ -54,7 +54,7 @@ Toast notification manager:
 - **Actions**: `showNotification(message, duration)` (auto-dismiss), `dismissNotification()` (exit animation → state removal at 220ms)
 - **Renders**: `InAppNotificationPopup` component
 
-## Custom Hooks (26 total)
+## Custom Hooks (28 total — Phase 1: +2 for online projects)
 
 ### Auth & Profile
 
@@ -71,6 +71,13 @@ Toast notification manager:
 | `useProviderBookingManagement` | `hooks/useProviderBookingManagement.tsx` | Provider bookings, accept/decline/start/complete                                         |
 | `useCachedBooking`             | `hooks/useCachedBooking.ts`              | Single-booking cache for detail pages                                                    |
 | `bookRequest`                  | `hooks/bookRequest.tsx`                  | Service booking flow: load service/packages/provider, availability slots, create booking |
+
+### Online Projects (Phase 1)
+
+| Hook                        | File                                            | Purpose                                                                                                                                                                                       |
+| --------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useOnlineProject`          | `hooks/useOnlineProject.tsx`                    | Client-side single-project hook. Subscribes via `onSnapshot` to `online_projects/{id}` + 3 subcollections (`briefs/`, `negotiations/`, `deliverables/`). Exposes client action surface (create / negotiate / accept-counter / reject-counter / approve / request-revision / cancel / dispute / recordPayment). |
+| `useProviderOnlineProject`  | `hooks/useProviderOnlineProject.tsx`            | Provider-side single-project hook. Same 4 real-time subscriptions; provider action surface (accept / decline / negotiate / submit-deliverable / mark-milestone-approved / update-milestone-metadata / cancel / dispute / recordPayment). |
 
 ### Service
 
