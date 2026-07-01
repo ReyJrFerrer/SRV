@@ -9,7 +9,7 @@
     "start": "npm run shell",
     "deploy": "npm run lint && firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "mocha --file test/mocha.js --reporter spec --timeout 30000 --exit 'test/**/*.test.js'; echo \"Full test log: test/test-output.log\"",
+    "test": "mocha --file test/mocha.js --reporter spec --timeout 30000 --exit",
     "emulators:kill": "lsof -ti:5001 -ti:5002 -ti:8080 -ti:8085 -ti:9000 -ti:9099 -ti:9199 -ti:4000 | xargs kill -9 2>/dev/null || true"
   },
   "engines": {

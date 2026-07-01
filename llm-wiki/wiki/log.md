@@ -501,3 +501,38 @@ Verified that Tasks 23 (weeklySchedule required for InPerson/Hybrid), 24 (1–5 
 - `llm-wiki/wiki/index.md` — updated descriptions of [[Online Projects]] and [[Service Test Infrastructure]] to reflect Phase 0+1 status; bumped last-updated date to 2026-06-29
 
 **Test verification**: `npx mocha test/service.test.js test/service.online.test.js` → **218 passing (17s)**.
+
+## [2026-06-29] ingest | Phase 2 OnlineProject lifecycle (17 tasks, 66 cases)
+
+Implemented all 8 lifecycle actions of `onlineProjectAction` in `functions/src/onlineProject.js`, plus added the 3 new categories to `STATIC_CATEGORIES` in `service.js:initializeCategoriesDirectly()`. All tests written first (RED) and then implementation (GREEN), per the strict TDD loop.
+
+**Tasks completed (17/17)**:
+- Task 26 — 3 new categories (cat-011/012/013) added to `STATIC_CATEGORIES`; auto-seeded via `getAllCategories` defensive init
+- Tasks 27-28 — `createOnlineProject` (11 cases): reputation gate, serviceMode/packageType/negotiable validation, atomic project+brief write via `db.runTransaction`
+- Tasks 29-30 — `acceptProject` (9 cases): Pending/Negotiating → Active, provider-only, sets `acceptedAt`
+- Tasks 31-32 — `declineProject` (9 cases): Pending/Negotiating → Declined, provider-only, sets `declinedAt` + optional `declineReason`
+- Tasks 33-34 — `cancelProject` (12 cases): either-party from any non-terminal status, sets `cancelledAt`/`cancelledBy`/`cancelReason`; workStarted boundary tested
+- Tasks 35-36 — `disputeProject` (10 cases): either-party, only Completed → Disputed, sets `disputedAt`/`disputedBy`/`disputeReason`
+- Tasks 37-38 — `getOnlineProject` (5 cases): client/provider/admin read, project-doc-only (subcollections via direct Firestore), stranger denied
+- Tasks 39-40 — `listClientOnlineProjects` (5 cases): clientId-filtered, status filter, admin-on-behalf, pagination
+- Tasks 41-42 — `listProviderOnlineProjects` (5 cases): same shape as client list, providerId-filtered
+
+**Test verification**:
+- `npx mocha test/onlineProject.test.js` → **72 passing, 11 pending** (8s). The 11 pending are `it.skip` placeholders for unimplemented Phases 3-7 actions (1 analytics + 3 negotiation + 4 deliverables + 1 payment + 2 internal helpers).
+- `npx mocha test/service.test.js test/service.online.test.js test/onlineProject.test.js` → **290 passing, 11 pending** (21s). Zero regressions.
+
+**Implementation patterns established**:
+- `getAuthInfo(context, data)` from `onlineProject.js:69-76` mirrors `service.js` / `booking.js`
+- `checkUserReputationInternal` from `reputation.js` enforces the `trustScore > 5` gate (same as `createBooking`)
+- All write actions use direct `db.collection().doc().update()` for status flips (atomic enough for single-doc state machine)
+- `createOnlineProject` uses `db.runTransaction` for the project+brief pair to ensure both are written or neither
+- List actions support `adminOnBehalf: true` for admin impersonation; `status` filter + `limit` (max 100)
+
+**Files changed**:
+- `functions/src/onlineProject.js` — 8 handlers implemented (~600 lines added)
+- `functions/src/service.js:1903-1926` — 3 new categories added to `STATIC_CATEGORIES`
+- `functions/test/onlineProject.test.js` — 66 new test cases across 8 action blocks; new helpers `makeAuth`, `fetchDoc`, `baseCreatePayload`; imports for new seed helpers
+
+**Updated pages (2)**:
+- `docs/OnlineService-Implementation-Checklist.md` — Tasks 26-42 marked done; new "Phase 2 — ✅ COMPLETE 2026-06-29" section with per-task line references; status line bumped to 42/93 tasks
+- `llm-wiki/wiki/backend/online-projects.md` — Implementation status updated; new "Phase 2 Implementation Status" table with line refs and test counts; `related:` adds [[Service Test Infrastructure]]; tags include `online-project`

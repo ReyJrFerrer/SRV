@@ -1899,6 +1899,30 @@ async function initializeCategoriesDirectly() {
       slug: "others",
       imageUrl: "/images/HomeServices-CoverImage.jpg",
     },
+    {
+      id: "cat-011",
+      name: "Digital & Creative Services",
+      description: "Online digital and creative services: web dev, design, marketing",
+      parentId: null,
+      slug: "digital-creative-services",
+      imageUrl: "",
+    },
+    {
+      id: "cat-012",
+      name: "Business & SME Services",
+      description: "Online business services: registration, tax, legal, bookkeeping",
+      parentId: null,
+      slug: "business-sme-services",
+      imageUrl: "",
+    },
+    {
+      id: "cat-013",
+      name: "Education & Specialized Knowledge",
+      description: "Online education and coaching: tutoring, music, coding, fitness",
+      parentId: null,
+      slug: "education-knowledge",
+      imageUrl: "",
+    },
 
   ];
 

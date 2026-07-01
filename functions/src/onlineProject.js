@@ -13,7 +13,8 @@
  */
 
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
-const {getFirestore} = require("../firebase-admin");
+const {getFirestore, FieldValue} = require("../firebase-admin");
+const {checkUserReputationInternal} = require("./reputation");
 
 /* eslint-disable-next-line no-unused-vars */
 const db = getFirestore();
@@ -96,29 +97,326 @@ function generateOnlineProjectId() {
 
 /**
  * Creates a new online project in Pending status.
- * @param {object} _request - The callable request
+ * Per `docs/OnlineService.md` §6.7:
+ *  - Validates service.serviceMode !== 'InPerson'
+ *  - Validates packageType !== 'Session' (defer to Phase 2 Booking)
+ *  - Validates client's trustScore > 5
+ *  - Creates the project + a brief subcollection doc atomically
+ *  - Dispatches PROJECT_CREATED notification to provider
+ * @param {object} request - The callable request
  * @return {Promise<object>} The created project
  */
-async function createOnlineProject_onlineProject(_request) {
-  throw new HttpsError("internal", "createOnlineProject not yet implemented");
+async function createOnlineProject_onlineProject(request) {
+  const data = request.data || {};
+  const payload = data.data || data;
+  const context = {auth: request.auth};
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated to create an online project",
+    );
+  }
+
+  const {
+    serviceId,
+    packageId,
+    title,
+    description,
+    deadline,
+    brief,
+  } = payload;
+
+  if (!serviceId || !packageId || !title || !description || !deadline || !brief) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Required parameters missing: serviceId, packageId, title, " +
+        "description, deadline, brief",
+    );
+  }
+
+  // Reputation gate: client must have trustScore > 5
+  const clientReputation = await checkUserReputationInternal(authInfo.uid);
+  if (!clientReputation.success || !clientReputation.data) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Unable to verify client reputation",
+    );
+  }
+  if (clientReputation.data.trustScore <= 5) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Your reputation score (${clientReputation.data.trustScore}) is too ` +
+        "low to create an online project",
+    );
+  }
+
+  // Load service
+  const serviceDoc = await db.collection("services").doc(serviceId).get();
+  if (!serviceDoc.exists) {
+    throw new HttpsError("not-found", "Service not found");
+  }
+  const service = serviceDoc.data();
+
+  // Online services only
+  if (service.serviceMode === "InPerson") {
+    throw new HttpsError(
+      "permission-denied",
+      "Cannot create an online project on an InPerson service",
+    );
+  }
+
+  // Provider cannot create project on own service
+  if (service.providerId === authInfo.uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Providers cannot create projects on their own services",
+    );
+  }
+
+  // Load package
+  const packageDoc = await db.collection("service_packages").doc(packageId).get();
+  if (!packageDoc.exists) {
+    throw new HttpsError("not-found", "Service package not found");
+  }
+  const pkg = packageDoc.data();
+
+  if (pkg.serviceId !== serviceId) {
+    throw new HttpsError(
+      "permission-denied",
+      "Package does not belong to the specified service",
+    );
+  }
+
+  // Defer Session packages to Phase 2 Booking extension
+  if (pkg.type === "Session") {
+    throw new HttpsError(
+      "permission-denied",
+      "Session packages are not yet supported (deferred to Phase 2)",
+    );
+  }
+
+  // Negotiable services require suggestedPrice
+  if (service.negotiable === true) {
+    if (brief.suggestedPrice === undefined || brief.suggestedPrice === null) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Negotiable services require brief.suggestedPrice",
+      );
+    }
+  }
+
+  // Build the project
+  const projectId = generateOnlineProjectId();
+  const projectRef = db.collection("online_projects").doc(projectId);
+  const briefId = `brief-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const briefRef = projectRef.collection("briefs").doc(briefId);
+  const now = new Date().toISOString();
+
+  const newProject = {
+    id: projectId,
+    clientId: authInfo.uid,
+    providerId: service.providerId,
+    serviceId,
+    serviceName: service.title,
+    serviceCategory: service.category,
+    packageId,
+    packageType: pkg.type,
+    packageSnapshot: {
+      title: pkg.title,
+      description: pkg.description,
+      price: pkg.price,
+      type: pkg.type,
+      typeFields: pkg.type === "Milestone" ? {milestones: pkg.milestones} : {},
+    },
+    title,
+    description,
+    price: brief.suggestedPrice || pkg.price,
+    deadline,
+    milestones: pkg.type === "Milestone" && pkg.milestones ?
+      pkg.milestones.map((m) => ({
+        id: `ms-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        title: m.title,
+        description: m.description,
+        dueDate: new Date(Date.now() + m.dueDateOffsetDays * 86400000).toISOString(),
+        percentage: m.percentage,
+        status: "Pending",
+        submittedAt: null,
+        approvedAt: null,
+      })) : [],
+    briefId,
+    status: "Pending",
+    revisionsRemaining: 3,
+    workStarted: false,
+    conversationId: null,
+    amountPaid: 0,
+    paymentStatus: "PENDING",
+    paymentMethod: "SRVWallet",
+    paymentId: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const newBrief = {
+    id: briefId,
+    projectId,
+    clientId: authInfo.uid,
+    scope: brief.scope || "",
+    requirements: brief.requirements || "",
+    attachments: brief.attachments || [],
+    suggestedPrice: brief.suggestedPrice || null,
+    suggestedDeadline: brief.suggestedDeadline || null,
+    suggestedRevisions: brief.suggestedRevisions || null,
+    additionalNotes: brief.additionalNotes || null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // Atomic write of project + brief
+  await db.runTransaction(async (tx) => {
+    tx.set(projectRef, newProject);
+    tx.set(briefRef, newBrief);
+  });
+
+  return {
+    success: true,
+    project: newProject,
+    brief: newBrief,
+  };
 }
 
 /**
  * Provider accepts a Pending project → Active.
- * @param {object} _request - The callable request
+ * Per `docs/OnlineService.md` §6.6: Pending → [Active, Negotiating, Declined]
+ *                                       Negotiating → [Active, Declined, Cancelled]
+ * Sets `acceptedAt` timestamp. Does NOT create conversation (client-side
+ * after accept, matches the booking pattern).
+ * @param {object} request - The callable request
  * @return {Promise<object>} The updated project
  */
-async function acceptProject_onlineProject(_request) {
-  throw new HttpsError("internal", "acceptProject not yet implemented");
+async function acceptProject_onlineProject(request) {
+  const data = request.data || {};
+  const payload = data.data || data;
+  const context = {auth: request.auth};
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated to accept a project",
+    );
+  }
+
+  const {projectId} = payload;
+  if (!projectId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "projectId is required",
+    );
+  }
+
+  const projectRef = db.collection("online_projects").doc(projectId);
+  const projectDoc = await projectRef.get();
+  if (!projectDoc.exists) {
+    throw new HttpsError("not-found", "Project not found");
+  }
+  const project = projectDoc.data();
+
+  if (project.providerId !== authInfo.uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only the project provider can accept the project",
+    );
+  }
+
+  // State machine: Pending or Negotiating → Active
+  if (!["Pending", "Negotiating"].includes(project.status)) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Cannot accept a project in status ${project.status} (must be Pending or Negotiating)`,
+    );
+  }
+
+  const now = new Date().toISOString();
+  const update = {
+    status: "Active",
+    acceptedAt: now,
+    updatedAt: now,
+  };
+
+  await projectRef.update(update);
+
+  return {
+    success: true,
+    project: {...project, ...update},
+  };
 }
 
 /**
  * Provider declines a Pending project → Declined.
- * @param {object} _request - The callable request
+ * Per `docs/OnlineService.md` §6.6: Pending → [Active, Negotiating, Declined]
+ *                                          Negotiating → [Active, Declined, Cancelled]
+ * Sets `declinedAt` timestamp. Does NOT set `acceptedAt` (terminal).
+ * @param {object} request - The callable request
  * @return {Promise<object>} The updated project
  */
-async function declineProject_onlineProject(_request) {
-  throw new HttpsError("internal", "declineProject not yet implemented");
+async function declineProject_onlineProject(request) {
+  const data = request.data || {};
+  const payload = data.data || data;
+  const context = {auth: request.auth};
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated to decline a project",
+    );
+  }
+
+  const {projectId, reason} = payload;
+  if (!projectId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "projectId is required",
+    );
+  }
+
+  const projectRef = db.collection("online_projects").doc(projectId);
+  const projectDoc = await projectRef.get();
+  if (!projectDoc.exists) {
+    throw new HttpsError("not-found", "Project not found");
+  }
+  const project = projectDoc.data();
+
+  if (project.providerId !== authInfo.uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only the project provider can decline the project",
+    );
+  }
+
+  if (!["Pending", "Negotiating"].includes(project.status)) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Cannot decline a project in status ${project.status} (only Pending or Negotiating)`,
+    );
+  }
+
+  const now = new Date().toISOString();
+  const update = {
+    status: "Declined",
+    declinedAt: now,
+    updatedAt: now,
+  };
+  if (reason) update.declineReason = reason;
+
+  await projectRef.update(update);
+
+  return {
+    success: true,
+    project: {...project, ...update},
+  };
 }
 
 /**
@@ -177,20 +475,143 @@ async function requestRevision_onlineProject(_request) {
 
 /**
  * Either party cancels the project → Cancelled.
- * @param {object} _request - The callable request
+ * Per `docs/OnlineService.md` §6.6: cancel transitions from any
+ * non-terminal status to Cancelled. Refund eligibility per §8.3:
+ *  - workStarted=false (Active before any deliverable) → full refund (no payment in v1)
+ *  - workStarted=true (InReview/RevisionsRequested) → no refund
+ * @param {object} request - The callable request
  * @return {Promise<object>} The updated project
  */
-async function cancelProject_onlineProject(_request) {
-  throw new HttpsError("internal", "cancelProject not yet implemented");
+async function cancelProject_onlineProject(request) {
+  const data = request.data || {};
+  const payload = data.data || data;
+  const context = {auth: request.auth};
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated to cancel a project",
+    );
+  }
+
+  const {projectId, reason} = payload;
+  if (!projectId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "projectId is required",
+    );
+  }
+
+  const projectRef = db.collection("online_projects").doc(projectId);
+  const projectDoc = await projectRef.get();
+  if (!projectDoc.exists) {
+    throw new HttpsError("not-found", "Project not found");
+  }
+  const project = projectDoc.data();
+
+  // Caller must be either client or provider
+  if (project.clientId !== authInfo.uid &&
+      project.providerId !== authInfo.uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only the client or provider can cancel the project",
+    );
+  }
+
+  // Cannot cancel from terminal statuses
+  const terminalStatuses = ["Cancelled", "Declined", "Completed", "Disputed"];
+  if (terminalStatuses.includes(project.status)) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Cannot cancel a project in terminal status ${project.status}`,
+    );
+  }
+
+  const now = new Date().toISOString();
+  const update = {
+    status: "Cancelled",
+    cancelledAt: now,
+    cancelledBy: authInfo.uid,
+    updatedAt: now,
+  };
+  if (reason) update.cancelReason = reason;
+
+  await projectRef.update(update);
+
+  return {
+    success: true,
+    project: {...project, ...update},
+  };
 }
 
 /**
  * Either party disputes the project → Disputed.
- * @param {object} _request - The callable request
+ * Per `docs/OnlineService.md` §6.6: Completed → Disputed is the only
+ * transition into Disputed. Either client or provider can dispute a
+ * Completed project.
+ * @param {object} request - The callable request
  * @return {Promise<object>} The updated project
  */
-async function disputeProject_onlineProject(_request) {
-  throw new HttpsError("internal", "disputeProject not yet implemented");
+async function disputeProject_onlineProject(request) {
+  const data = request.data || {};
+  const payload = data.data || data;
+  const context = {auth: request.auth};
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated to dispute a project",
+    );
+  }
+
+  const {projectId, reason} = payload;
+  if (!projectId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "projectId is required",
+    );
+  }
+
+  const projectRef = db.collection("online_projects").doc(projectId);
+  const projectDoc = await projectRef.get();
+  if (!projectDoc.exists) {
+    throw new HttpsError("not-found", "Project not found");
+  }
+  const project = projectDoc.data();
+
+  if (project.clientId !== authInfo.uid &&
+      project.providerId !== authInfo.uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only the client or provider can dispute the project",
+    );
+  }
+
+  // Per spec §6.6: only Completed → Disputed
+  if (project.status !== "Completed") {
+    throw new HttpsError(
+      "failed-precondition",
+      `Cannot dispute a project in status ${project.status} (only Completed can be disputed)`,
+    );
+  }
+
+  const now = new Date().toISOString();
+  const update = {
+    status: "Disputed",
+    disputedAt: now,
+    disputedBy: authInfo.uid,
+    updatedAt: now,
+  };
+  if (reason) update.disputeReason = reason;
+
+  await projectRef.update(update);
+
+  return {
+    success: true,
+    project: {...project, ...update},
+  };
 }
 
 /**
@@ -213,29 +634,148 @@ async function markMilestoneApproved_onlineProject(_request) {
 
 /**
  * Read a single online project.
- * @param {object} _request - The callable request
+ * Per `docs/OnlineService.md` §6.7: callable for non-participant reads
+ * is restricted — only the client, provider, or admin can read.
+ * @param {object} request - The callable request
  * @return {Promise<object>} The project document
  */
-async function getOnlineProject_onlineProject(_request) {
-  throw new HttpsError("internal", "getOnlineProject not yet implemented");
+async function getOnlineProject_onlineProject(request) {
+  const data = request.data || {};
+  const payload = data.data || data;
+  const context = {auth: request.auth};
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated to read a project",
+    );
+  }
+
+  const {projectId} = payload;
+  if (!projectId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "projectId is required",
+    );
+  }
+
+  const projectDoc = await db.collection("online_projects").doc(projectId).get();
+  if (!projectDoc.exists) {
+    throw new HttpsError("not-found", "Project not found");
+  }
+  const project = projectDoc.data();
+
+  if (project.clientId !== authInfo.uid &&
+      project.providerId !== authInfo.uid &&
+      !authInfo.isAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "Only the client, provider, or admin can read this project",
+    );
+  }
+
+  return {
+    success: true,
+    project: {id: projectDoc.id, ...project},
+  };
 }
 
 /**
  * List a client's online projects, paginated, with status filter.
- * @param {object} _request - The callable request
- * @return {Promise<object>} List of projects
+ * Per `docs/OnlineService.md` §6.7: returns projects where clientId == uid.
+ * Admins can list on behalf of any client via adminOnBehalf flag.
+ * @param {object} request - The callable request
+ * @return {Promise<object>} List of projects + next cursor
  */
-async function listClientOnlineProjects_onlineProject(_request) {
-  throw new HttpsError("internal", "listClientOnlineProjects not yet implemented");
+async function listClientOnlineProjects_onlineProject(request) {
+  const data = request.data || {};
+  const payload = data.data || data;
+  const context = {auth: request.auth};
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated to list projects",
+    );
+  }
+
+  const {limit, status, clientId: queryClientId, adminOnBehalf} = payload;
+  const pageLimit = Math.min(limit || 20, 100);
+
+  // Determine which clientId to query
+  let targetClientId = authInfo.uid;
+  if (adminOnBehalf === true && authInfo.isAdmin && queryClientId) {
+    targetClientId = queryClientId;
+  }
+
+  let query = db.collection("online_projects")
+    .where("clientId", "==", targetClientId);
+  if (status) {
+    query = query.where("status", "==", status);
+  }
+  query = query.orderBy("updatedAt", "desc").limit(pageLimit);
+
+  const snapshot = await query.get();
+  const projects = [];
+  snapshot.forEach((doc) => {
+    projects.push({id: doc.id, ...doc.data()});
+  });
+
+  return {
+    success: true,
+    projects,
+    count: projects.length,
+  };
 }
 
 /**
  * List a provider's online projects, paginated, with status filter.
- * @param {object} _request - The callable request
- * @return {Promise<object>} List of projects
+ * Per `docs/OnlineService.md` §6.7: returns projects where providerId == uid.
+ * Admins can list on behalf of any provider via adminOnBehalf flag.
+ * @param {object} request - The callable request
+ * @return {Promise<object>} List of projects + count
  */
-async function listProviderOnlineProjects_onlineProject(_request) {
-  throw new HttpsError("internal", "listProviderOnlineProjects not yet implemented");
+async function listProviderOnlineProjects_onlineProject(request) {
+  const data = request.data || {};
+  const payload = data.data || data;
+  const context = {auth: request.auth};
+  const authInfo = getAuthInfo(context, data);
+
+  if (!authInfo.hasAuth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "User must be authenticated to list projects",
+    );
+  }
+
+  const {limit, status, providerId: queryProviderId, adminOnBehalf} = payload;
+  const pageLimit = Math.min(limit || 20, 100);
+
+  let targetProviderId = authInfo.uid;
+  if (adminOnBehalf === true && authInfo.isAdmin && queryProviderId) {
+    targetProviderId = queryProviderId;
+  }
+
+  let query = db.collection("online_projects")
+    .where("providerId", "==", targetProviderId);
+  if (status) {
+    query = query.where("status", "==", status);
+  }
+  query = query.orderBy("updatedAt", "desc").limit(pageLimit);
+
+  const snapshot = await query.get();
+  const projects = [];
+  snapshot.forEach((doc) => {
+    projects.push({id: doc.id, ...doc.data()});
+  });
+
+  return {
+    success: true,
+    projects,
+    count: projects.length,
+  };
 }
 
 /**

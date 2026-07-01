@@ -18,7 +18,7 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Review Test Infrastructure]] — Mocha + firebase-functions-test, 115 cases, 23 actions, per-action coverage matrix
 - [[Account Test Infrastructure]] — Mocha + firebase-functions-test, 49 cases, 11 actions, per-action coverage matrix, bug fix (payload destructuring)
 - [[Reputation Test Infrastructure]] — Mocha + firebase-functions-test, 31 cases, 7 actions, per-action coverage matrix, history subcollection assertions
-- [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections; **Phase 0+1 in progress (2026-06-29)**
+- [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections; **Phase 0+1+2 complete (2026-06-29, 72 tests passing)**
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
 - [[Review System]] — 23 backend actions, 2 Firestore collections, AI analysis, moderation, frontend hooks

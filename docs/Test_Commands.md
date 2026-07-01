@@ -1,0 +1,2 @@
+- All tests: npm run test --prefix functions
+- Single file: npm run test --prefix functions -- test/review.test.js

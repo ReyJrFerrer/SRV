@@ -1,28 +1,30 @@
 ---
 tags: [backend, cloud-functions, online-service, online-project]
-date: 2026-06-27
+date: 2026-06-29
 sources:
   - docs/OnlineService.md
-  - functions/src/onlineProject.js (planned, not yet implemented)
+  - functions/src/onlineProject.js
+  - functions/test/onlineProject.test.js
   - src/frontend/src/services/onlineProjectCanisterService.ts (planned)
   - src/frontend/src/hooks/useOnlineProject.tsx (planned)
   - src/frontend/src/hooks/useProviderOnlineProject.tsx (planned)
 related:
-  - [[Booking System]]
-  - [[Service Creation Workflow]]
-  - [[Service and Booking Models]]
-  - [[Service Discovery and Listing]]
-  - [[Chat System]]
-  - [[Notification System]]
-  - [[Media and Images]]
-  - [[Grill Record: Online Services Integration]]
+- [[Booking System]]
+- [[Service Creation Workflow]]
+- [[Service and Booking Models]]
+- [[Service Discovery and Listing]]
+- [[Chat System]]
+- [[Notification System]]
+- [[Media and Images]]
+- [[Grill Record: Online Services Integration]]
+- [[Service Test Infrastructure]]
 ---
 
 # Online Projects
 
 Online/Digital Service Modes extend the SRV marketplace with 20 new online services across 3 new top-level categories (Digital & Creative, Business & SME, Education & Specialized Knowledge). Supports two engagement models: product-based (deliverable + negotiation + revisions) via `OnlineProject`, and session-based (multi-session bookings) via an extended `Booking`. The canonical spec is at `docs/OnlineService.md` (ratified 2026-06-27).
 
-> **Implementation status (2026-06-29)**: Phase 0 + Phase 1 (Service entity) **complete**. The `onlineProjectAction` Cloud Function exists in skeleton form at `functions/src/onlineProject.js` with a 17-action dispatcher and 2 internal helpers, but every action handler still throws `HttpsError("internal", "<action> not yet implemented")`. Phase 1 added the 4 new Service fields, `ServicePackage` 3-type discriminated union, `weeklySchedule` requirement, 1–5 packages rule, and `Service.price = min(package.prices)` invariant to `service.js`; these are GREEN with 50/50 cases in `service.online.test.js`. Phases 2–11 (lifecycle, analytics, negotiation, deliverables, payment, helpers, notification/media wiring, rules, indexes, frontend, wiki batch) remain pending. See `docs/OnlineService-Implementation-Checklist.md` for the full 93-task plan.
+> **Implementation status (2026-06-29)**: Phase 0 + Phase 1 (Service entity) + Phase 2 (OnlineProject lifecycle) **complete**. The `onlineProjectAction` Cloud Function at `functions/src/onlineProject.js` now has 8 fully-implemented lifecycle actions (`createOnlineProject`, `acceptProject`, `declineProject`, `cancelProject`, `disputeProject`, `getOnlineProject`, `listClientOnlineProjects`, `listProviderOnlineProjects`) plus 9 stubbed actions still throwing `HttpsError("internal", "<action> not yet implemented")` (analytics, 3 negotiation, 4 deliverables, payment). 72/72 lifecycle tests pass; 290/290 across the full service+onlineProject test suite. Phases 3–11 (analytics, negotiation, deliverables, payment, helpers, notification/media wiring, security rules, indexes, frontend, wiki batch) remain pending. See `docs/OnlineService-Implementation-Checklist.md` for the full 93-task plan.
 
 ## Entity Model
 
@@ -79,6 +81,32 @@ A single callable entrypoint `onlineProjectAction` in `functions/src/onlineProje
 | 16 | `listProviderOnlineProjects` | Provider's projects, paginated, status filter. |
 | 17 | `listClientOnlineProjects` | Client's projects, paginated, status filter. |
 | 18 | `getProjectAnalytics` | Provider stats: total, by status, revenue, average completion time. |
+
+### Phase 2 Implementation Status (2026-06-29)
+
+8 of 18 actions are GREEN (lifecycle + reads). Implementation lives at `functions/src/onlineProject.js:103-714`:
+
+| # | Action | Implemented | Lines | Test file location |
+|---|--------|-------------|-------|--------------------|
+| 1 | `createOnlineProject` | ✅ | `:103-273` | `onlineProject.test.js:82-389` (11 cases) |
+| 2 | `acceptProject` | ✅ | `:280-339` | `onlineProject.test.js:393-505` (9 cases) |
+| 3 | `declineProject` | ✅ | `:345-407` | `onlineProject.test.js:507-620` (9 cases) |
+| 4 | `cancelProject` | ✅ | `:413-479` | `onlineProject.test.js:622-805` (12 cases) |
+| 5 | `disputeProject` | ✅ | `:485-549` | `onlineProject.test.js:807-925` (10 cases) |
+| 15 | `getOnlineProject` | ✅ | `:555-605` | `onlineProject.test.js:927-993` (5 cases) |
+| 16 | `listProviderOnlineProjects` | ✅ | `:666-714` | `onlineProject.test.js:1065-1132` (5 cases) |
+| 17 | `listClientOnlineProjects` | ✅ | `:611-660` | `onlineProject.test.js:995-1063` (5 cases) |
+
+**Key implementation decisions**:
+- All actions use `getAuthInfo(context, data)` to extract `uid` + `isAdmin` from `request.auth` (matches `service.js` / `booking.js` pattern)
+- `createOnlineProject` writes project + brief atomically via `db.runTransaction` to prevent half-created state
+- `createOnlineProject` enforces the same reputation gate as `createBooking` (`trustScore > 5`) via `checkUserReputationInternal` from `reputation.js`
+- `createOnlineProject` rejects `InPerson` services (`serviceMode === 'InPerson'`) and `Session` packages (deferred to Phase 2 Booking extension)
+- `acceptProject` and `declineProject` accept both `Pending` and `Negotiating` source states; only the provider can perform both
+- `cancelProject` allows either party from any non-terminal status; sets `cancelledAt` + `cancelledBy` + optional `cancelReason`
+- `disputeProject` is the only path into `Disputed` (must be `Completed`); either party can dispute
+- `getOnlineProject` returns project doc only — subcollections (`briefs`/`negotiations`/`deliverables`) are accessed via the `online_projects/{id}/{subcollection}` Firestore client subscriptions, NOT the callable
+- List actions support `adminOnBehalf: true` for admin impersonation; `status` filter + `limit` (max 100)
 
 > **Negotiation simplification**: The "sub-feature" decision means `negotiateProject` is reused for both sides (no separate `counterNegotiateOffer` action). When `service.negotiable=false`, the negotiation path is hidden in the UI and the backend rejects any `negotiateProject` call with `permission-denied`.
 

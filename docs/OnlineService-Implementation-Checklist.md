@@ -1,6 +1,6 @@
 # Online Services Phase 1 — Test-Driven Implementation Checklist
 
-**Status**: In progress (Phase 0 + 1 complete: 25/93 tasks done, 218 service tests passing; Phase 2 onward pending)
+**Status**: In progress (Phase 0 + 1 + 2 complete: 42/93 tasks done, 290 service+online tests passing; Phase 3+ pending)
 **Date**: 2026-06-28
 **Source spec**: `docs/OnlineService.md` (ratified 2026-06-27)
 **Source decision record**: `llm-wiki/wiki/decisions/grill-2026-06-27-online-services-integration.md`
@@ -306,25 +306,27 @@ Apply this template to every action unless the per-action delta overrides:
 
 **Test verification**: 50/50 cases pass in `service.online.test.js` (Group A2 + A3 + A4). Combined with 168/168 cases in `service.test.js`, **218 service-related tests pass with zero regressions**.
 
-### Phase 2 — OnlineProject lifecycle (17 tasks, 66 cases)
+### Phase 2 — OnlineProject lifecycle (17 tasks, 66 cases) — ✅ COMPLETE 2026-06-29
 
-- [ ] **Task 26 (NEW)**: Add 3 new categories to `STATIC_CATEGORIES` in `functions/src/service.js:initializeCategoriesDirectly()`. Each gets `imageUrl: ""`. IDs `cat-011/012/013`, slugs `digital-creative-services/business-sme-services/education-knowledge`, names per spec §2.4. No test. The next call to `getAllCategories` will auto-seed via the existing defensive `initializeCategoriesDirectly()` call.
-- [ ] **Task 27**: Write 11 cases for `createOnlineProject` (RED).
-- [ ] **Task 28**: Implement: `createOnlineProject_project` function. Validates `service.serviceMode !== 'InPerson'`, validates `packageType !== 'Session'`, creates project + brief in transaction. GREEN.
-- [ ] **Task 29**: Write 9 cases for `acceptProject` (RED).
-- [ ] **Task 30**: Implement. GREEN.
-- [ ] **Task 31**: Write 9 cases for `declineProject` (RED).
-- [ ] **Task 32**: Implement. GREEN.
-- [ ] **Task 33**: Write 12 cases for `cancelProject` (including `workStarted` boundary + reports doc + reputation deduction) (RED).
-- [ ] **Task 34**: Implement. GREEN.
-- [ ] **Task 35**: Write 10 cases for `disputeProject` (RED).
-- [ ] **Task 36**: Implement. GREEN.
-- [ ] **Task 37**: Write 5 cases for `getOnlineProject` (client/provider/admin/stranger/empty — doc-only return) (RED).
-- [ ] **Task 38**: Implement. GREEN.
-- [ ] **Task 39**: Write 5 cases for `listClientOnlineProjects` (RED).
-- [ ] **Task 40**: Implement. GREEN.
-- [ ] **Task 41**: Write 5 cases for `listProviderOnlineProjects` (RED).
-- [ ] **Task 42**: Implement. GREEN.
+- [x] **Task 26 (NEW)**: Add 3 new categories to `STATIC_CATEGORIES` in `functions/src/service.js:initializeCategoriesDirectly()`. GREEN — `service.js:1903-1926` adds `cat-011` (Digital & Creative Services), `cat-012` (Business & SME Services), `cat-013` (Education & Specialized Knowledge). Auto-seeded via the existing `getAllCategories` defensive init call.
+- [x] **Task 27**: Write 11 cases for `createOnlineProject` (RED). GREEN — `onlineProject.test.js:82-389` (11 cases).
+- [x] **Task 28**: Implement: `createOnlineProject_onlineProject`. Validates `service.serviceMode !== 'InPerson'`, validates `packageType !== 'Session'`, validates client `trustScore > 5`, validates `negotiable` services have `brief.suggestedPrice`, creates project + brief atomically via `db.runTransaction`. GREEN — `onlineProject.js:103-273`.
+- [x] **Task 29**: Write 9 cases for `acceptProject` (RED). GREEN — `onlineProject.test.js:393-505`.
+- [x] **Task 30**: Implement. `acceptProject_onlineProject` validates Pending/Negotiating → Active transition, sets `acceptedAt`, provider-only. GREEN — `onlineProject.js:280-339`.
+- [x] **Task 31**: Write 9 cases for `declineProject` (RED). GREEN — `onlineProject.test.js:507-620`.
+- [x] **Task 32**: Implement. `declineProject_onlineProject` validates Pending/Negotiating → Declined, sets `declinedAt`, provider-only, no `acceptedAt`. GREEN — `onlineProject.js:345-407`.
+- [x] **Task 33**: Write 12 cases for `cancelProject` (including `workStarted` boundary + reports doc + reputation deduction) (RED). GREEN — `onlineProject.test.js:622-805`.
+- [x] **Task 34**: Implement. `cancelProject_onlineProject` allows either party to cancel non-terminal projects, sets `cancelledAt` + `cancelledBy` + optional `cancelReason`. GREEN — `onlineProject.js:413-479`.
+- [x] **Task 35**: Write 10 cases for `disputeProject` (RED). GREEN — `onlineProject.test.js:807-925`.
+- [x] **Task 36**: Implement. `disputeProject_onlineProject` allows either party to dispute a Completed project, sets `disputedAt` + `disputedBy` + optional `disputeReason`. GREEN — `onlineProject.js:485-549`.
+- [x] **Task 37**: Write 5 cases for `getOnlineProject` (client/provider/admin/stranger/empty — doc-only return) (RED). GREEN — `onlineProject.test.js:927-993`.
+- [x] **Task 38**: Implement. `getOnlineProject_onlineProject` returns project doc only (no subcollections); gates by clientId/providerId/admin. GREEN — `onlineProject.js:555-605`.
+- [x] **Task 39**: Write 5 cases for `listClientOnlineProjects` (RED). GREEN — `onlineProject.test.js:995-1063`.
+- [x] **Task 40**: Implement. `listClientOnlineProjects_onlineProject` queries `online_projects` by `clientId` (admin override via `adminOnBehalf`), supports status filter + limit. GREEN — `onlineProject.js:611-660`.
+- [x] **Task 41**: Write 5 cases for `listProviderOnlineProjects` (RED). GREEN — `onlineProject.test.js:1065-1132`.
+- [x] **Task 42**: Implement. `listProviderOnlineProjects_onlineProject` queries by `providerId` (admin override), supports status filter + limit. GREEN — `onlineProject.js:666-714`.
+
+**Phase 2 verification**: 72/72 online-project tests pass (66 lifecycle + 2 rule-only dispatch + 4 dispatch surface); 290/290 across service+onlineProject suites (no regressions). 11 `it.skip` placeholders remain for Phases 3-7 actions (1 analytics + 3 negotiation + 4 deliverables + 1 payment + 2 helpers).
 
 ### Phase 3 — Analytics (1 action, 5 cases)
 
