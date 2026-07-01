@@ -14,11 +14,11 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 - [[Service Creation Workflow]] — Provider service creation, 6-step wizard (Phase 1: +1 Step 0 serviceMode) → Cloud Function → Firestore
 - [[Booking System]] — Client booking creation, state machine, payment lifecycle, all status transitions; Phase 2: multi-session `scheduledSessions[]`
 - [[Booking Test Infrastructure]] — Mocha + firebase-functions-test, 97 cases, scenario seeders, coverage matrix
-- [[Service Test Infrastructure]] — Mocha + firebase-functions-test, 168 cases, 29 actions, per-action coverage matrix
+- [[Service Test Infrastructure]] — Mocha + firebase-functions-test, **218 cases** (168 base + 50 Phase 1), 29 actions + 4 new validations (serviceMode/weeklySchedule/1-5 packages rule/Service.price invariant)
 - [[Review Test Infrastructure]] — Mocha + firebase-functions-test, 115 cases, 23 actions, per-action coverage matrix
 - [[Account Test Infrastructure]] — Mocha + firebase-functions-test, 49 cases, 11 actions, per-action coverage matrix, bug fix (payload destructuring)
 - [[Reputation Test Infrastructure]] — Mocha + firebase-functions-test, 31 cases, 7 actions, per-action coverage matrix, history subcollection assertions
-- [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections
+- [[Online Projects]] — Online/digital service entity, state machine, 18 Cloud Function actions, client-side conversation creation, brief/negotiations/deliverables subcollections; **Phase 0+1 in progress (2026-06-29)**
 - [[Reputation Service (Firestore)]] — Actual production reputation implementation (Firestore + JS)
 - [[Gemini Review Analysis]] — Gemini 2.5 Flash for review bombing detection
 - [[Review System]] — 23 backend actions, 2 Firestore collections, AI analysis, moderation, frontend hooks
@@ -69,5 +69,5 @@ This is the page catalog for the LLM-compiled knowledge base. Every wiki page is
 
 ---
 
-_Last updated: 2026-06-28_
+_Last updated: 2026-06-29_
 _Pages: 40_

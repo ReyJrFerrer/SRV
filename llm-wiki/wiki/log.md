@@ -483,3 +483,21 @@ Fixed an inconsistency where `authCanisterService.ts:updateUserActiveStatus` sen
 
 **Updated pages (1):**
 - [[Account Test Infrastructure]] — Rewrote "Bug Fix" section to document the actual `data`/`payload` inconsistency
+
+## [2026-06-29] ingest | Phase 1 Online Services tasks 23/24/25 + wiki sync
+
+Verified that Tasks 23 (weeklySchedule required for InPerson/Hybrid), 24 (1–5 packages-per-service rule), and 25 (Service.price = min(package.prices) invariant) were **already implemented** in `functions/src/service.js` and tested in `functions/test/service.online.test.js` — the implementation checklist was stale. All 50 cases in `service.online.test.js` pass alongside the 168 cases in `service.test.js` (combined 218/218 in 17s, no regressions).
+
+**Implementation verified** (all GREEN as of 2026-06-29):
+- Task 23: `service.js:219-226` in `validateServiceMode()` — 7 cases
+- Task 24: `service.js:1987-1997` with `MAX_PACKAGES_PER_SERVICE = 5` at `service.js:52` — 7 cases
+- Task 25: `service.js:2050-2070` transactional price update with race-safe re-read — 7 cases (incl. 2-write concurrent test)
+
+**Updated pages (4):**
+- `docs/OnlineService-Implementation-Checklist.md` — marked Tasks 23/24/25 done; added Phase 1.5 closure section; bumped status line
+- `llm-wiki/wiki/backend/online-projects.md` — replaced the stale "Not yet implemented" note with the accurate Phase 0+1 status (skeleton dispatcher + 50/50 service tests GREEN; Phases 2–11 still pending)
+- `llm-wiki/wiki/backend/service-test-infrastructure.md` — added a new "Phase 1 — Online Services Test Suite" section documenting the 50-case layout, per-group coverage matrix, and the 3 cross-cutting validations; bumped combined coverage to 218/218
+- `llm-wiki/wiki/backend/service-creation.md` — added 3 new validation notes to the `createService_service` Validates list (serviceMode fields, weeklySchedule requirement) and to the Phase 1 changes (1–5 packages rule, Service.price invariant)
+- `llm-wiki/wiki/index.md` — updated descriptions of [[Online Projects]] and [[Service Test Infrastructure]] to reflect Phase 0+1 status; bumped last-updated date to 2026-06-29
+
+**Test verification**: `npx mocha test/service.test.js test/service.online.test.js` → **218 passing (17s)**.

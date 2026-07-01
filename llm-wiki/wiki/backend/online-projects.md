@@ -22,7 +22,7 @@ related:
 
 Online/Digital Service Modes extend the SRV marketplace with 20 new online services across 3 new top-level categories (Digital & Creative, Business & SME, Education & Specialized Knowledge). Supports two engagement models: product-based (deliverable + negotiation + revisions) via `OnlineProject`, and session-based (multi-session bookings) via an extended `Booking`. The canonical spec is at `docs/OnlineService.md` (ratified 2026-06-27).
 
-> **Implementation status**: Not yet implemented in the codebase. `onlineProject.js` and the related frontend modules are scheduled for Phase 1 of the rollout. This page documents the **ratified design**, not the running code.
+> **Implementation status (2026-06-29)**: Phase 0 + Phase 1 (Service entity) **complete**. The `onlineProjectAction` Cloud Function exists in skeleton form at `functions/src/onlineProject.js` with a 17-action dispatcher and 2 internal helpers, but every action handler still throws `HttpsError("internal", "<action> not yet implemented")`. Phase 1 added the 4 new Service fields, `ServicePackage` 3-type discriminated union, `weeklySchedule` requirement, 1–5 packages rule, and `Service.price = min(package.prices)` invariant to `service.js`; these are GREEN with 50/50 cases in `service.online.test.js`. Phases 2–11 (lifecycle, analytics, negotiation, deliverables, payment, helpers, notification/media wiring, rules, indexes, frontend, wiki batch) remain pending. See `docs/OnlineService-Implementation-Checklist.md` for the full 93-task plan.
 
 ## Entity Model
 

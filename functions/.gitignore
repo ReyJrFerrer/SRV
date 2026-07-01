@@ -12,3 +12,6 @@ test/test-output-review.log
 test/test-output-service.log
 test/test-output-account.log
 test/test-output-reputation.log
+test/test-output-onlineProject.log
+test/test-output-rules.log
+test/test-output-service-online.log

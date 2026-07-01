@@ -1,6 +1,6 @@
 ---
-tags: [backend, service, provider, workflow]
-date: 2026-06-27
+tags: [backend, service, provider, workflow, online-services]
+date: 2026-06-29
 related:
   - [[Service Creation Workflow]]
   - [[Service and Booking Models]]
@@ -8,6 +8,7 @@ related:
   - [[Firebase Architecture]]
   - [[Online Projects]]
   - [[Grill Record: Online Services Integration]]
+  - [[Service Test Infrastructure]]
 sources:
   - src/frontend/src/pages/provider/services/add.tsx
   - src/frontend/src/hooks/serviceManagement.tsx
@@ -77,11 +78,13 @@ In `useServiceManagement.tsx` (lines ~489-598), images are converted `File → U
 
 Validates:
 - Auth exists
-- Title 3-500 chars, description present
-- Price > 0
-- Location has latitude/longitude
+- Title 1-500 chars (corrected from 3-500 in Wiki Lint 2026-06-27), description 1-1000 chars
+- Price ≥ 1 and ≤ 1,000,000 PHP
+- Location has latitude/longitude (when required by `serviceMode`)
 - Category exists in Firestore `categories` collection
 - No duplicate title for this provider
+- **NEW (Phase 1)**: `serviceMode`, `negotiable`, `allowsMilestones`, `onlineDeliveryFormat` are validated by `validateServiceMode()` at `service.js:161-234`
+- **NEW (Phase 1)**: `weeklySchedule` is required when `serviceMode ∈ {InPerson, Hybrid}` (skipped for `Online` services). Validated inside `validateServiceMode()` at `service.js:219-226`
 
 Then:
 1. Fetches provider profile for name/avatar
@@ -150,6 +153,8 @@ service_packages/{autoId}: {
 - For `Milestone` packages, backend validates that `milestones[].percentage` sums to exactly 100
 - For `Session` packages, backend validates `sessionCount` (1–50) and `sessionDurationMinutes` (15–240)
 - The package form in Step 1 reveals a type-specific field editor based on the `type` selection
+- **NEW (Phase 1)**: 1–5 packages per service is now backend-enforced at `service.js:1987-1997` (`MAX_PACKAGES_PER_SERVICE = 5`). The existing UI already limited to 5; the rule is now a server-side invariant.
+- **NEW (Phase 1)**: `Service.price = min(package.prices)` invariant. When a new package is created with `price < service.price`, the service's `price` is updated transactionally at `service.js:2050-2070` (re-reads `service.price` inside the transaction to prevent race-condition overwrites). 7 cases including a 2-write concurrent test verify this end-to-end in `service.online.test.js:592-770`.
 
 ## Post-Creation
 

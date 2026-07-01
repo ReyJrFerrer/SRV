@@ -1,6 +1,6 @@
 # Online Services Phase 1 — Test-Driven Implementation Checklist
 
-**Status**: In progress (Phase 0 + 1 complete; Phase 2 onward pending)
+**Status**: In progress (Phase 0 + 1 complete: 25/93 tasks done, 218 service tests passing; Phase 2 onward pending)
 **Date**: 2026-06-28
 **Source spec**: `docs/OnlineService.md` (ratified 2026-06-27)
 **Source decision record**: `llm-wiki/wiki/decisions/grill-2026-06-27-online-services-integration.md`
@@ -294,9 +294,17 @@ Apply this template to every action unless the per-action delta overrides:
 - [x] **Task 20**: TDD: `ServicePackage.type` missing → defaults to `Fixed` (backward-compat). GREEN.
 - [x] **Task 21**: TDD: `ServicePackage.type` invalid value → `invalid-argument`. GREEN.
 - [x] **Task 22**: Refactor `service.js` to share validation logic via a single `validateServiceMode(serviceMode, negotiable, allowsMilestones, onlineDeliveryFormat)` helper. Re-run all 29 tests. GREEN.
-- [ ] **Task 23 (NEW)**: TDD: `weeklySchedule` required for `serviceMode='InPerson'` and `serviceMode='Hybrid'`; optional for `Online` (7 cases). (RED → GREEN).
-- [ ] **Task 24 (NEW)**: TDD: 1-5 packages-per-service rule in `createServicePackage_service` (7 cases). (RED → GREEN).
-- [ ] **Task 25 (NEW)**: TDD: `Service.price = min(package.prices)` invariant. On `createServicePackage` with `price < current`, update service.price transactionally (7 cases). (RED → GREEN).
+- [x] **Task 23 (NEW)**: TDD: `weeklySchedule` required for `serviceMode='InPerson'` and `serviceMode='Hybrid'`; optional for `Online` (7 cases). GREEN — `service.js:219-226` enforces it via `validateServiceMode`; 7 cases pass in `service.online.test.js:253-396`.
+- [x] **Task 24 (NEW)**: TDD: 1-5 packages-per-service rule in `createServicePackage_service` (7 cases). GREEN — `service.js:1987-1997` queries `service_packages` by `serviceId` and rejects when `size >= MAX_PACKAGES_PER_SERVICE` (5); 7 cases pass in `service.online.test.js:405-581`.
+- [x] **Task 25 (NEW)**: TDD: `Service.price = min(package.prices)` invariant. On `createServicePackage` with `price < current`, update service.price transactionally (7 cases). GREEN — `service.js:2050-2070` wraps the update in `db.runTransaction`; 7 cases pass in `service.online.test.js:592-770` (including a concurrent 2-write race test that verifies final price = min).
+
+### Phase 1.5 — Phase 1 closure (3 tasks, 21 cases) — ✅ COMPLETE 2026-06-29
+
+- [x] **Task 23** (7 cases) — `weeklySchedule` requirement for InPerson/Hybrid. Implemented at `service.js:219-226` in `validateServiceMode()`.
+- [x] **Task 24** (7 cases) — 1-5 packages-per-service rule. Implemented at `service.js:1987-1997`; constant `MAX_PACKAGES_PER_SERVICE = 5` at `service.js:52`.
+- [x] **Task 25** (7 cases) — `Service.price = min(package.prices)` invariant. Implemented at `service.js:2050-2070` via `db.runTransaction` with re-read of `service.price` to prevent race-condition overwrites.
+
+**Test verification**: 50/50 cases pass in `service.online.test.js` (Group A2 + A3 + A4). Combined with 168/168 cases in `service.test.js`, **218 service-related tests pass with zero regressions**.
 
 ### Phase 2 — OnlineProject lifecycle (17 tasks, 66 cases)
 
